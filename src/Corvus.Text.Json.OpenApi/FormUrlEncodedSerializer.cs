@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text;
+using System.Buffers;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
@@ -36,6 +36,20 @@ namespace Corvus.Text.Json.OpenApi;
 /// </remarks>
 public static class FormUrlEncodedSerializer
 {
+    // Worst-case percent-encoding expands every byte to 3 bytes (%XX).
+    private const int PercentEncodingExpansionFactor = 3;
+
+    // Initial scratch buffer size for encoding work.
+    private const int InitialScratchSize = 1024;
+
+    private static readonly byte[] AmpersandByte = [(byte)'&'];
+    private static readonly byte[] EqualsByte = [(byte)'='];
+    private static readonly byte[] OpenBracketByte = [(byte)'['];
+    private static readonly byte[] CloseBracketEqualsByte = [(byte)']', (byte)'='];
+    private static readonly byte[] CommaByte = [(byte)','];
+    private static readonly byte[] SpaceByte = [(byte)' '];
+    private static readonly byte[] PipeByte = [(byte)'|'];
+
     /// <summary>
     /// Serializes a JSON object's properties directly to a <see cref="Stream"/>
     /// in <c>application/x-www-form-urlencoded</c> format using default encoding.
@@ -78,18 +92,35 @@ public static class FormUrlEncodedSerializer
             ThrowHelper.ThrowFormBodyMustBeObject();
         }
 
-        using StreamWriter writer = new(output, new UTF8Encoding(false), bufferSize: 256, leaveOpen: true);
-        bool first = true;
+        // Two separate buffers: valueBuf for formatting JSON values, encodeBuf for percent-encoding.
+        // Keeping them separate avoids ref-struct lifetime issues (CS8350).
+        byte[] valueBuf = ArrayPool<byte>.Shared.Rent(InitialScratchSize);
+        byte[] encodeBuf = ArrayPool<byte>.Shared.Rent(InitialScratchSize);
 
-        foreach (JsonProperty<JsonElement> property in JsonElement.From(value).EnumerateObject())
+        try
         {
-            string name = property.Name;
-            JsonElement propValue = property.Value;
+            bool first = true;
 
-            PropertyEncoding enc = default;
-            encodings?.TryGetValue(name, out enc);
+            foreach (JsonProperty<JsonElement> property in JsonElement.From(value).EnumerateObject())
+            {
+                JsonElement propValue = property.Value;
 
-            WriteProperty(writer, name, propValue, enc, ref first);
+                PropertyEncoding enc = default;
+                if (encodings is not null)
+                {
+                    // Look up encoding by matching the UTF-8 property name against dictionary keys.
+                    using UnescapedUtf8JsonString utf8Name = property.Utf8NameSpan;
+                    string nameKey = System.Text.Encoding.UTF8.GetString(utf8Name.Span);
+                    encodings.TryGetValue(nameKey, out enc);
+                }
+
+                WriteProperty(output, property, propValue, enc, ref first, ref valueBuf, ref encodeBuf);
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(valueBuf);
+            ArrayPool<byte>.Shared.Return(encodeBuf);
         }
     }
 
@@ -147,11 +178,13 @@ public static class FormUrlEncodedSerializer
     }
 
     private static void WriteProperty(
-        StreamWriter writer,
-        string name,
+        Stream output,
+        JsonProperty<JsonElement> property,
         JsonElement propValue,
         PropertyEncoding enc,
-        ref bool first)
+        ref bool first,
+        ref byte[] valueBuf,
+        ref byte[] encodeBuf)
     {
         bool explode = enc.EffectiveExplode;
         string style = enc.Style ?? "form";
@@ -159,179 +192,386 @@ public static class FormUrlEncodedSerializer
         switch (propValue.ValueKind)
         {
             case JsonValueKind.Array when explode:
-                WriteExplodedArray(writer, name, propValue, enc.AllowReserved, ref first);
+                WriteExplodedArray(output, property, propValue, enc.AllowReserved, ref first, ref valueBuf, ref encodeBuf);
                 return;
 
             case JsonValueKind.Array:
-                WritePair(writer, name, FormatArray(propValue, style), enc.AllowReserved, ref first);
+                WriteArrayPair(output, property, propValue, style, enc.AllowReserved, ref first, ref valueBuf, ref encodeBuf);
                 return;
 
             case JsonValueKind.Object when style == "deepObject":
-                WriteDeepObject(writer, name, propValue, enc.AllowReserved, ref first);
+                WriteDeepObject(output, property, propValue, enc.AllowReserved, ref first, ref valueBuf, ref encodeBuf);
                 return;
 
             case JsonValueKind.Object when explode:
-                WriteExplodedObject(writer, propValue, enc.AllowReserved, ref first);
+                WriteExplodedObject(output, propValue, enc.AllowReserved, ref first, ref valueBuf, ref encodeBuf);
                 return;
 
             case JsonValueKind.Object:
-                WritePair(writer, name, FormatObject(propValue), enc.AllowReserved, ref first);
+                WriteObjectPair(output, property, propValue, enc.AllowReserved, ref first, ref valueBuf, ref encodeBuf);
                 return;
 
             case JsonValueKind.Null:
-                WritePair(writer, name, string.Empty, enc.AllowReserved, ref first);
+                WritePairFromNameAndEmptyValue(output, property, enc.AllowReserved, ref first, ref encodeBuf);
                 return;
 
             default:
-                WritePair(writer, name, GetPrimitiveString(propValue), enc.AllowReserved, ref first);
+                WritePrimitivePair(output, property, propValue, enc.AllowReserved, ref first, ref valueBuf, ref encodeBuf);
                 return;
         }
     }
 
-    private static void WritePair(
-        StreamWriter writer, string name, string value, bool allowReserved, ref bool first)
+    private static void WritePrimitivePair(
+        Stream output,
+        JsonProperty<JsonElement> property,
+        JsonElement value,
+        bool allowReserved,
+        ref bool first,
+        ref byte[] valueBuf,
+        ref byte[] encodeBuf)
+    {
+        int valueLen = FormatPrimitiveUtf8(value, ref valueBuf);
+        WritePairFromNameAndFormattedValue(output, property, valueBuf.AsSpan(0, valueLen), allowReserved, ref first, ref encodeBuf);
+    }
+
+    private static void WritePairFromNameAndEmptyValue(
+        Stream output,
+        JsonProperty<JsonElement> property,
+        bool allowReserved,
+        ref bool first,
+        ref byte[] encodeBuf)
     {
         if (!first)
         {
-            writer.Write('&');
+            output.Write(AmpersandByte);
         }
 
         first = false;
-        writer.Write(Encode(name, false));
-        writer.Write('=');
-        writer.Write(Encode(value, allowReserved));
+
+        using UnescapedUtf8JsonString utf8Name = property.Utf8NameSpan;
+        WriteEncoded(output, utf8Name.Span, allowReserved: false, ref encodeBuf);
+        output.Write(EqualsByte);
+    }
+
+    private static void WritePairFromNameAndFormattedValue(
+        Stream output,
+        JsonProperty<JsonElement> property,
+        ReadOnlySpan<byte> valueUtf8,
+        bool allowReserved,
+        ref bool first,
+        ref byte[] encodeBuf)
+    {
+        if (!first)
+        {
+            output.Write(AmpersandByte);
+        }
+
+        first = false;
+
+        using UnescapedUtf8JsonString utf8Name = property.Utf8NameSpan;
+        WriteEncoded(output, utf8Name.Span, allowReserved: false, ref encodeBuf);
+        output.Write(EqualsByte);
+        WriteEncoded(output, valueUtf8, allowReserved, ref encodeBuf);
+    }
+
+    private static void WritePairFromUtf8NameAndFormattedValue(
+        Stream output,
+        ReadOnlySpan<byte> nameUtf8,
+        ReadOnlySpan<byte> valueUtf8,
+        bool allowReserved,
+        ref bool first,
+        ref byte[] encodeBuf)
+    {
+        if (!first)
+        {
+            output.Write(AmpersandByte);
+        }
+
+        first = false;
+
+        WriteEncoded(output, nameUtf8, allowReserved: false, ref encodeBuf);
+        output.Write(EqualsByte);
+        WriteEncoded(output, valueUtf8, allowReserved, ref encodeBuf);
     }
 
     private static void WriteExplodedArray(
-        StreamWriter writer, string name, JsonElement array, bool allowReserved, ref bool first)
+        Stream output,
+        JsonProperty<JsonElement> property,
+        JsonElement array,
+        bool allowReserved,
+        ref bool first,
+        ref byte[] valueBuf,
+        ref byte[] encodeBuf)
     {
+        using UnescapedUtf8JsonString utf8Name = property.Utf8NameSpan;
+        ReadOnlySpan<byte> nameBytes = utf8Name.Span;
+
         foreach (JsonElement item in array.EnumerateArray())
         {
-            WritePair(writer, name, GetPrimitiveString(item), allowReserved, ref first);
+            int itemLen = FormatPrimitiveUtf8(item, ref valueBuf);
+            WritePairFromUtf8NameAndFormattedValue(output, nameBytes, valueBuf.AsSpan(0, itemLen), allowReserved, ref first, ref encodeBuf);
         }
     }
 
     private static void WriteExplodedObject(
-        StreamWriter writer, JsonElement obj, bool allowReserved, ref bool first)
+        Stream output,
+        JsonElement obj,
+        bool allowReserved,
+        ref bool first,
+        ref byte[] valueBuf,
+        ref byte[] encodeBuf)
     {
         foreach (JsonProperty<JsonElement> prop in obj.EnumerateObject())
         {
-            WritePair(writer, prop.Name, GetPrimitiveString(prop.Value), allowReserved, ref first);
+            int valueLen = FormatPrimitiveUtf8(prop.Value, ref valueBuf);
+            using UnescapedUtf8JsonString propName = prop.Utf8NameSpan;
+            WritePairFromUtf8NameAndFormattedValue(output, propName.Span, valueBuf.AsSpan(0, valueLen), allowReserved, ref first, ref encodeBuf);
         }
     }
 
     private static void WriteDeepObject(
-        StreamWriter writer, string name, JsonElement obj, bool allowReserved, ref bool first)
+        Stream output,
+        JsonProperty<JsonElement> property,
+        JsonElement obj,
+        bool allowReserved,
+        ref bool first,
+        ref byte[] valueBuf,
+        ref byte[] encodeBuf)
     {
-        foreach (JsonProperty<JsonElement> prop in obj.EnumerateObject())
-        {
-            if (!first)
-            {
-                writer.Write('&');
-            }
-
-            first = false;
-            writer.Write(Encode(name, false));
-            writer.Write('[');
-            writer.Write(Encode(prop.Name, false));
-            writer.Write("]=");
-            writer.Write(Encode(GetPrimitiveString(prop.Value), allowReserved));
-        }
-    }
-
-    private static string FormatArray(JsonElement array, string style)
-    {
-        string separator = style switch
-        {
-            "spaceDelimited" => " ",
-            "pipeDelimited" => "|",
-            _ => ",",
-        };
-
-        StringBuilder sb = new();
-        bool first = true;
-
-        foreach (JsonElement item in array.EnumerateArray())
-        {
-            if (!first)
-            {
-                sb.Append(separator);
-            }
-
-            first = false;
-            sb.Append(GetPrimitiveString(item));
-        }
-
-        return sb.ToString();
-    }
-
-    private static string FormatObject(JsonElement obj)
-    {
-        StringBuilder sb = new();
-        bool first = true;
+        using UnescapedUtf8JsonString outerName = property.Utf8NameSpan;
+        ReadOnlySpan<byte> outerNameBytes = outerName.Span;
 
         foreach (JsonProperty<JsonElement> prop in obj.EnumerateObject())
         {
             if (!first)
             {
-                sb.Append(',');
+                output.Write(AmpersandByte);
             }
 
             first = false;
-            sb.Append(prop.Name);
-            sb.Append(',');
-            sb.Append(GetPrimitiveString(prop.Value));
+
+            // Write: encodedOuterName[encodedInnerName]=encodedValue
+            WriteEncoded(output, outerNameBytes, allowReserved: false, ref encodeBuf);
+            output.Write(OpenBracketByte);
+
+            using UnescapedUtf8JsonString innerName = prop.Utf8NameSpan;
+            WriteEncoded(output, innerName.Span, allowReserved: false, ref encodeBuf);
+
+            output.Write(CloseBracketEqualsByte);
+
+            int valueLen = FormatPrimitiveUtf8(prop.Value, ref valueBuf);
+            WriteEncoded(output, valueBuf.AsSpan(0, valueLen), allowReserved, ref encodeBuf);
+        }
+    }
+
+    private static void WriteArrayPair(
+        Stream output,
+        JsonProperty<JsonElement> property,
+        JsonElement array,
+        string style,
+        bool allowReserved,
+        ref bool first,
+        ref byte[] valueBuf,
+        ref byte[] encodeBuf)
+    {
+        // Build the comma/pipe/space-separated value in a temporary buffer.
+        ReadOnlySpan<byte> separator = style switch
+        {
+            "spaceDelimited" => SpaceByte,
+            "pipeDelimited" => PipeByte,
+            _ => CommaByte,
+        };
+
+        byte[] compositeBuf = ArrayPool<byte>.Shared.Rent(InitialScratchSize);
+
+        try
+        {
+            int written = 0;
+            bool firstItem = true;
+
+            foreach (JsonElement item in array.EnumerateArray())
+            {
+                if (!firstItem)
+                {
+                    EnsureCapacity(ref compositeBuf, written + separator.Length);
+                    separator.CopyTo(compositeBuf.AsSpan(written));
+                    written += separator.Length;
+                }
+
+                firstItem = false;
+
+                int itemLen = FormatPrimitiveUtf8(item, ref valueBuf);
+                ReadOnlySpan<byte> itemBytes = valueBuf.AsSpan(0, itemLen);
+                EnsureCapacity(ref compositeBuf, written + itemLen);
+                itemBytes.CopyTo(compositeBuf.AsSpan(written));
+                written += itemLen;
+            }
+
+            WritePairFromNameAndFormattedValue(output, property, compositeBuf.AsSpan(0, written), allowReserved, ref first, ref encodeBuf);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(compositeBuf);
+        }
+    }
+
+    private static void WriteObjectPair(
+        Stream output,
+        JsonProperty<JsonElement> property,
+        JsonElement obj,
+        bool allowReserved,
+        ref bool first,
+        ref byte[] valueBuf,
+        ref byte[] encodeBuf)
+    {
+        // Format: name1,value1,name2,value2,...
+        byte[] compositeBuf = ArrayPool<byte>.Shared.Rent(InitialScratchSize);
+
+        try
+        {
+            int written = 0;
+            bool firstProp = true;
+
+            foreach (JsonProperty<JsonElement> prop in obj.EnumerateObject())
+            {
+                if (!firstProp)
+                {
+                    EnsureCapacity(ref compositeBuf, written + 1);
+                    compositeBuf[written++] = (byte)',';
+                }
+
+                firstProp = false;
+
+                // Write property name
+                using UnescapedUtf8JsonString propName = prop.Utf8NameSpan;
+                ReadOnlySpan<byte> nameBytes = propName.Span;
+                EnsureCapacity(ref compositeBuf, written + nameBytes.Length + 1);
+                nameBytes.CopyTo(compositeBuf.AsSpan(written));
+                written += nameBytes.Length;
+
+                // Comma separator between name and value
+                compositeBuf[written++] = (byte)',';
+
+                // Write value
+                int valueLen = FormatPrimitiveUtf8(prop.Value, ref valueBuf);
+                ReadOnlySpan<byte> valueBytes = valueBuf.AsSpan(0, valueLen);
+                EnsureCapacity(ref compositeBuf, written + valueLen);
+                valueBytes.CopyTo(compositeBuf.AsSpan(written));
+                written += valueLen;
+            }
+
+            WritePairFromNameAndFormattedValue(output, property, compositeBuf.AsSpan(0, written), allowReserved, ref first, ref encodeBuf);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(compositeBuf);
+        }
+    }
+
+    /// <summary>
+    /// Formats a JSON value as UTF-8 bytes into <paramref name="valueBuf"/>,
+    /// growing it if necessary. Returns the number of bytes written.
+    /// </summary>
+    private static int FormatPrimitiveUtf8(JsonElement value, ref byte[] valueBuf)
+    {
+        switch (value.ValueKind)
+        {
+            case JsonValueKind.True:
+                EnsureCapacity(ref valueBuf, 4);
+                "True"u8.CopyTo(valueBuf);
+                return 4;
+
+            case JsonValueKind.False:
+                EnsureCapacity(ref valueBuf, 5);
+                "False"u8.CopyTo(valueBuf);
+                return 5;
+
+            case JsonValueKind.Null:
+                return 0;
+
+            default:
+                // Numbers, strings, arrays, objects all use TryFormat.
+                int written;
+                while (!value.TryFormat(valueBuf, out written, default, null))
+                {
+                    GrowBuffer(ref valueBuf, valueBuf.Length * 2);
+                }
+
+                return written;
+        }
+    }
+
+    /// <summary>
+    /// Writes the percent-encoded form of <paramref name="utf8Bytes"/> directly to the stream.
+    /// Uses <see cref="Utf8Uri.TryEscapeUri"/> when <paramref name="allowReserved"/> is true,
+    /// or <see cref="Utf8Uri.TryEscapeDataString"/> when false.
+    /// </summary>
+    private static void WriteEncoded(
+        Stream output,
+        ReadOnlySpan<byte> utf8Bytes,
+        bool allowReserved,
+        ref byte[] encodeBuf)
+    {
+        if (utf8Bytes.IsEmpty)
+        {
+            return;
         }
 
-        return sb.ToString();
-    }
+        // Ensure buffer is large enough for worst-case encoding (3x expansion).
+        int requiredSize = utf8Bytes.Length * PercentEncodingExpansionFactor;
+        EnsureCapacity(ref encodeBuf, requiredSize);
 
-    private static string GetPrimitiveString(JsonElement value)
-    {
-        return value.ValueKind switch
-        {
-            JsonValueKind.String => value.GetString()!,
-            JsonValueKind.Null => string.Empty,
-            _ => value.ToString(),
-        };
-    }
+        bool success;
+        int bytesWritten;
 
-    private static string Encode(string value, bool allowReserved)
-    {
         if (allowReserved)
         {
-            // Only encode characters that are not unreserved or reserved per RFC 3986.
-            // Uri.EscapeDataString encodes everything except unreserved, so we
-            // un-encode reserved chars after escaping.
-            return UnescapeReserved(Uri.EscapeDataString(value));
+            success = Utf8Uri.TryEscapeUri(utf8Bytes, encodeBuf, out bytesWritten);
+        }
+        else
+        {
+            success = Utf8Uri.TryEscapeDataString(utf8Bytes, encodeBuf, out bytesWritten);
         }
 
-        return Uri.EscapeDataString(value);
+        if (success)
+        {
+            output.Write(encodeBuf.AsSpan(0, bytesWritten));
+        }
+        else
+        {
+            // Should not happen given our buffer sizing, but handle gracefully.
+            GrowBuffer(ref encodeBuf, requiredSize * 2);
+
+            if (allowReserved)
+            {
+                Utf8Uri.TryEscapeUri(utf8Bytes, encodeBuf, out bytesWritten);
+            }
+            else
+            {
+                Utf8Uri.TryEscapeDataString(utf8Bytes, encodeBuf, out bytesWritten);
+            }
+
+            output.Write(encodeBuf.AsSpan(0, bytesWritten));
+        }
     }
 
-    private static string UnescapeReserved(string encoded)
+    private static void GrowBuffer(ref byte[] buffer, int minimumSize)
     {
-        // Reserved characters per RFC 3986 §2.2:
-        // : / ? # [ ] @ ! $ & ' ( ) * + , ; =
-        // These are percent-encoded by EscapeDataString; we undo that.
-        return encoded
-            .Replace("%3A", ":")
-            .Replace("%2F", "/")
-            .Replace("%3F", "?")
-            .Replace("%23", "#")
-            .Replace("%5B", "[")
-            .Replace("%5D", "]")
-            .Replace("%40", "@")
-            .Replace("%21", "!")
-            .Replace("%24", "$")
-            .Replace("%26", "&")
-            .Replace("%27", "'")
-            .Replace("%28", "(")
-            .Replace("%29", ")")
-            .Replace("%2A", "*")
-            .Replace("%2B", "+")
-            .Replace("%2C", ",")
-            .Replace("%3B", ";")
-            .Replace("%3D", "=");
+        byte[] oldBuffer = buffer;
+        buffer = ArrayPool<byte>.Shared.Rent(minimumSize);
+        ArrayPool<byte>.Shared.Return(oldBuffer);
+    }
+
+    private static void EnsureCapacity(ref byte[] buffer, int requiredTotal)
+    {
+        if (buffer.Length >= requiredTotal)
+        {
+            return;
+        }
+
+        byte[] newBuffer = ArrayPool<byte>.Shared.Rent(requiredTotal * 2);
+        buffer.AsSpan().CopyTo(newBuffer);
+        ArrayPool<byte>.Shared.Return(buffer);
+        buffer = newBuffer;
     }
 }
