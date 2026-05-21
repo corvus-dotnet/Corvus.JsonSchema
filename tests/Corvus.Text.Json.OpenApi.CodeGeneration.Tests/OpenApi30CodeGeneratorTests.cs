@@ -4267,9 +4267,9 @@ public class OpenApi30CodeGeneratorTests
         Assert.IsTrue(req.Content.Contains("X", StringComparison.Ordinal));
     }
 
-    // ── Non-JSON body content falls back to JsonElement ────────────────
+    // ── Non-JSON body content is treated as raw stream ────────────────
     [TestMethod]
-    public void Generate_NonJsonBodyContent_FallsBackToJsonElement()
+    public void Generate_NonJsonBodyContent_FallsBackToStreamBody()
     {
         const string spec = """
             {
@@ -4298,7 +4298,7 @@ public class OpenApi30CodeGeneratorTests
         OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
         IReadOnlyList<GeneratedFile> files = gen.Generate(root);
         GeneratedFile client = GetFile(files, "ApiFilesClient.cs");
-        Assert.IsTrue(client.Content.Contains("JsonElement", StringComparison.Ordinal));
+        Assert.IsTrue(client.Content.Contains("Stream body", StringComparison.Ordinal));
     }
 
     // ── Malformed path template (unclosed brace) ──────────────────────

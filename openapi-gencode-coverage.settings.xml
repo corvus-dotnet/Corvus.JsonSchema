@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configuration>
+  <CodeCoverage>
+    <ModulePaths>
+      <Include>
+        <ModulePath>.*OpenApi32\.Server\.Runtime\.Tests\.dll$</ModulePath>
+        <ModulePath>.*OpenApi32\.Runtime\.Tests\.dll$</ModulePath>
+        <ModulePath>.*OpenApi31\.Server\.Runtime\.Tests\.dll$</ModulePath>
+        <ModulePath>.*OpenApi31\.Runtime\.Tests\.dll$</ModulePath>
+        <ModulePath>.*OpenApi30\.Server\.Runtime\.Tests\.dll$</ModulePath>
+        <ModulePath>.*OpenApi30\.Runtime\.Tests\.dll$</ModulePath>
+      </Include>
+    </ModulePaths>
+    <Sources>
+      <Exclude>
+        <Source>.*\\obj\\.*</Source>
+      </Exclude>
+    </Sources>
+  </CodeCoverage>
+</Configuration>

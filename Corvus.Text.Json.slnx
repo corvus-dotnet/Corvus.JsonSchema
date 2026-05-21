@@ -50,7 +50,9 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Corvus.Text.Json.OpenApi30.Runtime.Tests/Corvus.Text.Json.OpenApi30.Runtime.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.OpenApi30.Server.Runtime.Tests/Corvus.Text.Json.OpenApi30.Server.Runtime.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi31.Runtime.Tests/Corvus.Text.Json.OpenApi31.Runtime.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.OpenApi31.Server.Runtime.Tests/Corvus.Text.Json.OpenApi31.Server.Runtime.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi32.Runtime.Tests/Corvus.Text.Json.OpenApi32.Runtime.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi32.Server.Runtime.Tests/Corvus.Text.Json.OpenApi32.Server.Runtime.Tests.csproj" />
   </Folder>

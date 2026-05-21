@@ -4921,8 +4921,40 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine("public ValueTask DisposeAsync() => default;");
 
+        // Determine which send helpers this client actually needs.
+        bool needsSendAsync = false;
+        bool needsSendWithBody = false;
+        bool needsSendWithStreamBody = false;
+        bool needsSendWithBodyWriter = false;
+
+        foreach (OperationInfo op in operations)
+        {
+            bool hasBody = op.RequestBody is not null;
+            bool isMultipartMixed = hasBody && IsMultipartMixedRequestBody(op.RequestBody!.Value);
+            bool isRawStream = hasBody && !isMultipartMixed && IsRawStreamRequestBody(op.RequestBody!.Value);
+            bool isFormUrlEncoded = hasBody && !isRawStream && !isMultipartMixed && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
+            bool isMultipart = hasBody && !isRawStream && !isFormUrlEncoded && !isMultipartMixed && IsMultipartRequestBody(op.RequestBody!.Value);
+
+            if (isRawStream)
+            {
+                needsSendWithStreamBody = true;
+            }
+            else if (isFormUrlEncoded || isMultipart || isMultipartMixed)
+            {
+                needsSendWithBodyWriter = true;
+            }
+            else if (hasBody)
+            {
+                needsSendWithBody = true;
+            }
+            else
+            {
+                needsSendAsync = true;
+            }
+        }
+
         w.WriteLine();
-        CodeEmitHelpers.EmitSendAsyncCoreHelpers(w);
+        CodeEmitHelpers.EmitSendAsyncCoreHelpers(w, needsSendAsync, needsSendWithBody, needsSendWithStreamBody, needsSendWithBodyWriter);
 
         w.CloseBrace();
 

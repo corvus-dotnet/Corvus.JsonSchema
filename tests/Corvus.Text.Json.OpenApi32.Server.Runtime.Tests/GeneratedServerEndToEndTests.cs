@@ -81,10 +81,36 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task GetItems_WithAllOptionalQueryParams_ReturnsOk()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/items?active=true&category=electronics&page=1&sort=name&verbose=true");
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task GetItems_PageDecimal_ReturnsBadRequest()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/items?page=1.5");
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'page' failed schema validation.");
+    }
+
+    [TestMethod]
     public async Task PostItems_WithBody_ReturnsCreated()
     {
         StringContent content = new("""{"name":"Widget","price":9.99}""", Encoding.UTF8, "application/json");
         HttpResponseMessage response = await client!.PostAsync("/items", content);
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task PostItems_WithCorrelationIdHeader_ReturnsCreated()
+    {
+        HttpRequestMessage request = new(HttpMethod.Post, "/items")
+        {
+            Content = new StringContent("""{"name":"Test","price":1.0}""", Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("X-Correlation-Id", "corr-123");
+        HttpResponseMessage response = await client!.SendAsync(request);
         Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
     }
 
@@ -121,6 +147,82 @@ public class GeneratedServerEndToEndTests
         request.Headers.Add("Cookie", "session=abc123");
         HttpResponseMessage response = await client!.SendAsync(request);
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task SearchItems_MissingRequiredQuery_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search");
+        request.Headers.Add("X-Correlation-Id", "corr-001");
+        request.Headers.Add("Cookie", "session=abc123");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        StringAssert.Contains(body, "q");
+    }
+
+    [TestMethod]
+    public async Task SearchItems_MissingRequiredCookie_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test");
+        request.Headers.Add("X-Correlation-Id", "corr-001");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        StringAssert.Contains(body, "session");
+    }
+
+    [TestMethod]
+    public async Task SearchItems_MissingRequiredHeader_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test");
+        request.Headers.Add("Cookie", "session=abc123");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        StringAssert.Contains(body, "X-Correlation-Id");
+    }
+
+    [TestMethod]
+    public async Task SearchItems_WithPipeDelimitedTags_ReturnsOk()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test&tags=foo|bar|baz");
+        request.Headers.Add("X-Correlation-Id", "corr-001");
+        request.Headers.Add("Cookie", "session=abc123");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task SearchItems_WithSpaceDelimitedCoords_ReturnsOk()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test&coords=1.5%202.5%203.5");
+        request.Headers.Add("X-Correlation-Id", "corr-001");
+        request.Headers.Add("Cookie", "session=abc123");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task SearchItems_WithDeepObjectFilter_ReturnsOk()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test&filter[status]=active&filter[priority]=high");
+        request.Headers.Add("X-Correlation-Id", "corr-001");
+        request.Headers.Add("Cookie", "session=abc123");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task SearchItems_WithAllOptionalParams_ReturnsOk()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search?q=echo-me&tags=foo|bar|baz&coords=1.5%202.5%203.5&filter[status]=active&filter[priority]=high");
+        request.Headers.Add("X-Correlation-Id", "corr-001");
+        request.Headers.Add("Cookie", "session=abc123; prefs=dark");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual("""[{"id":1,"name":"echo-me"}]""", body);
     }
 
     [TestMethod]
@@ -429,6 +531,20 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task CopyResource_MissingRequiredHeader_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(new HttpMethod("COPY"), "/resources/res-1")
+        {
+            Content = new StringContent("""{"overwrite":true}""", Encoding.UTF8, "application/json"),
+        };
+
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        StringAssert.Contains(body, "Destination");
+    }
+
+    [TestMethod]
     public async Task Purge_Resource_ReturnsNoContent()
     {
         HttpRequestMessage request = new(new HttpMethod("PURGE"), "/resources/res-1");
@@ -442,6 +558,22 @@ public class GeneratedServerEndToEndTests
         HttpRequestMessage request = new(new HttpMethod("MOVE"), "/resources/res-1?destination=https://example.com/new");
         HttpResponseMessage response = await client!.SendAsync(request);
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Move_Resource_WithOptionsQuery_ReturnsOk()
+    {
+        HttpRequestMessage request = new(new HttpMethod("MOVE"), "/resources/res-1?options=target=https://example.com/new");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Move_Resource_InvalidOptionsQuery_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(new HttpMethod("MOVE"), "/resources/res-1?options=merge=true");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'options' failed schema validation.");
     }
 
     [TestMethod]
@@ -471,6 +603,21 @@ public class GeneratedServerEndToEndTests
         request.Headers.Add("X-File-Name", "test.bin");
         HttpResponseMessage response = await client!.SendAsync(request);
         Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task UploadFile_MissingRequiredHeader_ReturnsBadRequest()
+    {
+        byte[] data = new byte[256];
+        Random.Shared.NextBytes(data);
+        ByteArrayContent content = new(data);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+        HttpRequestMessage request = new(HttpMethod.Post, "/upload") { Content = content };
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        StringAssert.Contains(body, "X-File-Name");
     }
 
     [TestMethod]
@@ -527,6 +674,19 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task UploadAttachment_MissingRequiredHeader_ReturnsBadRequest()
+    {
+        MultipartFormDataContent content = new();
+        content.Add(new StringContent("doc.pdf"), "file", "doc.pdf");
+
+        HttpRequestMessage request = new(HttpMethod.Post, "/attachments") { Content = content };
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        StringAssert.Contains(body, "X-Upload-Token");
+    }
+
+    [TestMethod]
     public async Task UploadAttachmentEncoded_Multipart_ReturnsCreated()
     {
         MultipartFormDataContent content = new();
@@ -547,6 +707,27 @@ public class GeneratedServerEndToEndTests
         // Tests non-explode form-style query parameters (e.g., limit, weight, score)
         HttpResponseMessage response = await client!.GetAsync("/advanced-styles/id1,id2?matrixTags=a,b&limit=10&weight=3.5&score=99");
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task GetAdvancedStyles_LimitDecimal_ReturnsBadRequest()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/advanced-styles/id1?limit=1.5");
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'limit' failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task GetAdvancedStyles_WeightOverflow_ReturnsBadRequest()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/advanced-styles/id1?weight=1e50");
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'weight' failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task GetAdvancedStyles_ScoreOverflow_ReturnsBadRequest()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/advanced-styles/id1?score=1e500");
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'score' failed schema validation.");
     }
 
     [TestMethod]
@@ -589,6 +770,13 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task GetQuirky_WithWeirdLocQuery_ReturnsOk()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/quirky/q-1?weirdLoc=remote");
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
     public async Task GetStyledQuirky_BadQueryStyle_ReturnsOk()
     {
         HttpResponseMessage response = await client!.GetAsync("/quirky/s-1/styled?badQueryStyle=xyz");
@@ -606,6 +794,17 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task SearchWithQuerystring_WithCookieParams_ReturnsOk()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search-qs?q=hello");
+        request.Headers.Add("Cookie", "session_id=sid123; preferences=dark");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual("""{"results":[]}""", body);
+    }
+
+    [TestMethod]
     public async Task SearchItemsAdvanced_PostWithCookie_ReturnsOk()
     {
         StringContent content = new("""{"query":"test","filters":{}}""", Encoding.UTF8, "application/json");
@@ -615,6 +814,17 @@ public class GeneratedServerEndToEndTests
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         string body = await response.Content.ReadAsStringAsync();
         Assert.IsTrue(body.Contains("Advanced Result"));
+    }
+
+    [TestMethod]
+    public async Task SearchItemsAdvanced_MissingRequiredCookie_ReturnsBadRequest()
+    {
+        StringContent content = new("""{"query":"test","filters":{}}""", Encoding.UTF8, "application/json");
+        HttpRequestMessage request = new(HttpMethod.Post, "/search") { Content = content };
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        StringAssert.Contains(body, "session");
     }
 
     // =====================================================================
@@ -652,6 +862,34 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task Query_MonitoringStatus_ReturnsOk()
+    {
+        HttpRequestMessage request = new(new HttpMethod("QUERY"), "/monitoring/status")
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+        };
+
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual("""{}""", body);
+    }
+
+    [TestMethod]
+    public async Task Query_QueryEndpoint_ReturnsOk()
+    {
+        HttpRequestMessage request = new(new HttpMethod("QUERY"), "/query-endpoint")
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+        };
+
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual("""[]""", body);
+    }
+
+    [TestMethod]
     public async Task PutMonitoringStatus_ReturnsOk()
     {
         StringContent content = new("""{"status":"maintenance"}""", Encoding.UTF8, "application/json");
@@ -678,5 +916,554 @@ public class GeneratedServerEndToEndTests
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         string body = await response.Content.ReadAsStringAsync();
         Assert.AreEqual("{\"ok\":true}", body);
+    }
+
+    private static async Task AssertProblemDetailsAsync(HttpResponseMessage response, HttpStatusCode expectedStatusCode, string expectedDetail)
+    {
+        Assert.AreEqual(expectedStatusCode, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        string title = expectedStatusCode == HttpStatusCode.BadRequest ? "Bad Request" : "Internal Server Error";
+        Assert.AreEqual($$"""{"type":"about:blank","title":"{{title}}","status":{{(int)expectedStatusCode}},"detail":"{{expectedDetail}}"}""", body);
+    }
+
+    private static HttpRequestMessage CreateQueryRequest(string path, string body, string mediaType = "application/json")
+        => new(new HttpMethod("QUERY"), path)
+        {
+            Content = new StringContent(body, Encoding.UTF8, mediaType),
+        };
+
+    private static async Task AssertInvalidResponseBodyAsync(Func<Task<HttpResponseMessage>> sendRequest)
+    {
+        MockDefaultHandler.ReturnInvalidResponse = true;
+        try
+        {
+            HttpResponseMessage response = await sendRequest();
+            await AssertProblemDetailsAsync(response, HttpStatusCode.InternalServerError, "The response body failed schema validation.");
+        }
+        finally
+        {
+            MockDefaultHandler.ReturnInvalidResponse = false;
+        }
+    }
+
+    private static ByteArrayContent CreateInvalidFormUrlEncodedContent()
+    {
+        ByteArrayContent content = new([0xFF]);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-www-form-urlencoded");
+        return content;
+    }
+
+    private static ByteArrayContent CreateInvalidMultipartContent()
+    {
+        ByteArrayContent content = new("not-a-multipart-body"u8.ToArray());
+        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("multipart/form-data; boundary=abc");
+        return content;
+    }
+
+    // =====================================================================
+    // Server-side validation coverage
+    // =====================================================================
+    [TestMethod]
+    public async Task PostItems_InvalidJsonBody_ReturnsBadRequest()
+    {
+        StringContent content = new("not json", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PostAsync("/items", content);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task PatchItem_InvalidJsonBody_ReturnsBadRequest()
+    {
+        StringContent content = new("{broken", Encoding.UTF8, "application/merge-patch+json");
+        HttpRequestMessage request = new(HttpMethod.Patch, "/items/item-1") { Content = content };
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task SearchItemsAdvanced_InvalidJsonBody_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(HttpMethod.Post, "/search")
+        {
+            Content = new StringContent("[incomplete", Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("Cookie", "session=sess-abc");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task PutMonitoringStatus_InvalidJsonBody_ReturnsBadRequest()
+    {
+        StringContent content = new("@#$", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PutAsync("/monitoring/status", content);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task PostMonitoringStatus_EmptyJsonBody_ReturnsBadRequest()
+    {
+        StringContent content = new(string.Empty, Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PostAsync("/monitoring/status", content);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task QueryEndpoint_InvalidJsonBody_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = CreateQueryRequest("/query-endpoint", "null null");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task QueryMonitoringStatus_InvalidJsonBody_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = CreateQueryRequest("/monitoring/status", "{");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task PostItems_MissingRequiredName_ReturnsBadRequest()
+    {
+        StringContent content = new("""{}""", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PostAsync("/items", content);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task PostItems_WrongPropertyTypes_ReturnsBadRequest()
+    {
+        StringContent content = new("""{"name":123,"metadata":"bad","tag":false}""", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PostAsync("/items", content);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task PatchItem_WrongPropertyType_ReturnsBadRequest()
+    {
+        StringContent content = new("""{"status":123}""", Encoding.UTF8, "application/merge-patch+json");
+        HttpRequestMessage request = new(HttpMethod.Patch, "/items/item-1") { Content = content };
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task SearchItemsAdvanced_WrongBodyType_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(HttpMethod.Post, "/search")
+        {
+            Content = new StringContent("""{"query":123}""", Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("Cookie", "session=sess-abc");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task PutMonitoringStatus_WrongBodyType_ReturnsBadRequest()
+    {
+        StringContent content = new("""{"enabled":"no"}""", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PutAsync("/monitoring/status", content);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task PostMonitoringStatus_WrongBodyType_ReturnsBadRequest()
+    {
+        StringContent content = new("""{"rule":123}""", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PostAsync("/monitoring/status", content);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task QueryEndpoint_WrongBodyType_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = CreateQueryRequest("/query-endpoint", """{"limit":"bad"}""");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task QueryMonitoringStatus_WrongBodyType_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = CreateQueryRequest("/monitoring/status", """{"filter":1}""");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task QueryEndpoint_WithFormatParam_ReturnsOk()
+    {
+        HttpRequestMessage request = CreateQueryRequest("/query-endpoint?format=json", "{}");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task CopyResource_InvalidJsonBody_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(new HttpMethod("COPY"), "/resources/res-1")
+        {
+            Content = new StringContent("{", Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("Destination", "https://example.com/resources/res-2");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task CopyResource_WrongBodyType_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(new HttpMethod("COPY"), "/resources/res-1")
+        {
+            Content = new StringContent("""[]""", Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("Destination", "https://example.com/resources/res-2");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task Batch_Resource_WithJsonBody_ReturnsOk()
+    {
+        HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1")
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+        };
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Batch_Resource_InvalidJsonBody_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1")
+        {
+            Content = new StringContent("{", Encoding.UTF8, "application/json"),
+        };
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task PutDocument_InvalidJsonBody_ReturnsBadRequest()
+    {
+        HttpResponseMessage response = await client!.PutAsync(
+            "/documents/550e8400-e29b-41d4-a716-446655440000",
+            new StringContent("{", Encoding.UTF8, "application/json"));
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
+    }
+
+    [TestMethod]
+    public async Task PutDocument_WrongBodyType_ReturnsBadRequest()
+    {
+        HttpResponseMessage response = await client!.PutAsync(
+            "/documents/550e8400-e29b-41d4-a716-446655440000",
+            new StringContent("""[]""", Encoding.UTF8, "application/json"));
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task SearchItems_FilterWrongType_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test&filter[min]=abc");
+        request.Headers.Add("X-Correlation-Id", "corr-001");
+        request.Headers.Add("Cookie", "session=abc123");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'filter' failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task GetItems_InvalidResponseBody_ReturnsInternalServerError()
+    {
+        MockDefaultHandler.ReturnInvalidResponse = true;
+        try
+        {
+            HttpResponseMessage response = await client!.GetAsync("/items");
+            await AssertProblemDetailsAsync(response, HttpStatusCode.InternalServerError, "The response body failed schema validation.");
+        }
+        finally
+        {
+            MockDefaultHandler.ReturnInvalidResponse = false;
+        }
+    }
+
+    [TestMethod]
+    public async Task GetItem_InvalidResponseBody_ReturnsInternalServerError()
+    {
+        MockDefaultHandler.ReturnInvalidResponse = true;
+        try
+        {
+            HttpResponseMessage response = await client!.GetAsync("/items/item-1");
+            await AssertProblemDetailsAsync(response, HttpStatusCode.InternalServerError, "The response body failed schema validation.");
+        }
+        finally
+        {
+            MockDefaultHandler.ReturnInvalidResponse = false;
+        }
+    }
+
+    [TestMethod]
+    public async Task PostItems_InvalidResponseBody_ReturnsInternalServerError()
+    {
+        MockDefaultHandler.ReturnInvalidResponse = true;
+        try
+        {
+            StringContent content = new("""{"name":"Widget"}""", Encoding.UTF8, "application/json");
+            HttpResponseMessage response = await client!.PostAsync("/items", content);
+            await AssertProblemDetailsAsync(response, HttpStatusCode.InternalServerError, "The response body failed schema validation.");
+        }
+        finally
+        {
+            MockDefaultHandler.ReturnInvalidResponse = false;
+        }
+    }
+
+    [TestMethod]
+    public async Task PatchItem_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(async () =>
+        {
+            HttpRequestMessage request = new(HttpMethod.Patch, "/items/item-1")
+            {
+                Content = new StringContent("""{"name":"Updated"}""", Encoding.UTF8, "application/merge-patch+json"),
+            };
+            return await client!.SendAsync(request);
+        });
+
+    [TestMethod]
+    public async Task UploadItemData_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(async () =>
+        {
+            MultipartFormDataContent content = new();
+            content.Add(new StringContent("test.jpg"), "file", "test.jpg");
+            content.Add(new StringContent("A test file"), "description");
+            return await client!.PostAsync("/items/item-5/upload", content);
+        });
+
+    [TestMethod]
+    public async Task GetQuirky_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/quirky/q-1?weirdLoc=remote"));
+
+    [TestMethod]
+    public async Task GetStyledQuirky_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/quirky/s-1/styled?badQueryStyle=xyz"));
+
+    [TestMethod]
+    public async Task GetEmptyServers_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/empty-servers"));
+
+    [TestMethod]
+    public async Task GetAdvancedStyles_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/advanced-styles/id1?limit=10"));
+
+    [TestMethod]
+    public async Task GetByMatrixCodes_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/matrix-test/;codes=abc,def"));
+
+    [TestMethod]
+    public async Task GetByMatrixTags_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/matrix-no-explode/;tags=red,green"));
+
+    [TestMethod]
+    public async Task GetByLabelItems_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/label-no-explode/.apple.banana"));
+
+    [TestMethod]
+    public async Task GetByStyledObject_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/styled-object/name,Widget"));
+
+    [TestMethod]
+    public async Task QueryEndpoint_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.SendAsync(CreateQueryRequest("/query-endpoint", "{}")));
+
+    [TestMethod]
+    public async Task SearchItemsAdvanced_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(async () =>
+        {
+            HttpRequestMessage request = new(HttpMethod.Post, "/search")
+            {
+                Content = new StringContent("""{"query":"test","filters":{}}""", Encoding.UTF8, "application/json"),
+            };
+            request.Headers.Add("Cookie", "session=sess-abc");
+            return await client!.SendAsync(request);
+        });
+
+    [TestMethod]
+    public async Task GetResource_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/resources/res-42"));
+
+    [TestMethod]
+    public async Task CopyResource_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(async () =>
+        {
+            HttpRequestMessage request = new(new HttpMethod("COPY"), "/resources/res-1")
+            {
+                Content = new StringContent("""{"overwrite":true}""", Encoding.UTF8, "application/json"),
+            };
+            request.Headers.Add("Destination", "https://example.com/resources/res-2");
+            return await client!.SendAsync(request);
+        });
+
+    [TestMethod]
+    public async Task SearchWithQuerystring_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(async () =>
+        {
+            HttpRequestMessage request = new(HttpMethod.Get, "/search-qs?qs=q=hello,limit=10");
+            request.Headers.Add("Cookie", "session_id=sid123; preferences=dark");
+            return await client!.SendAsync(request);
+        });
+
+    [TestMethod]
+    public async Task GetDocument_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/documents/550e8400-e29b-41d4-a716-446655440000"));
+
+    [TestMethod]
+    public async Task PutDocument_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.PutAsync("/documents/550e8400-e29b-41d4-a716-446655440000", new StringContent("""{"title":"Updated Doc"}""", Encoding.UTF8, "application/json")));
+
+    [TestMethod]
+    public async Task BatchResource_InvalidResponseBody_ReturnsInternalServerError()
+    {
+        await AssertInvalidResponseBodyAsync(() =>
+        {
+            HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1")
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            };
+            return client!.SendAsync(request);
+        });
+    }
+
+    [TestMethod]
+    public async Task UploadRawFile_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() =>
+        {
+            ByteArrayContent content = new("raw file content"u8.ToArray());
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            return client!.PostAsync("/upload-raw", content);
+        });
+
+    [TestMethod]
+    public async Task GetVersion_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/versions/v1"));
+
+    [TestMethod]
+    public async Task GetMonitoringStatus_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.GetAsync("/monitoring/status"));
+
+    [TestMethod]
+    public async Task PutMonitoringStatus_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.PutAsync("/monitoring/status", new StringContent("""{"status":"maintenance"}""", Encoding.UTF8, "application/json")));
+
+    [TestMethod]
+    public async Task PostMonitoringStatus_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.PostAsync("/monitoring/status", new StringContent("""{"status":"new"}""", Encoding.UTF8, "application/json")));
+
+    [TestMethod]
+    public async Task QueryMonitoringStatus_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(() => client!.SendAsync(CreateQueryRequest("/monitoring/status", "{}")));
+
+    [TestMethod]
+    public async Task SearchItems_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(async () =>
+        {
+            HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test&filter[status]=active");
+            request.Headers.Add("X-Correlation-Id", "corr-001");
+            request.Headers.Add("Cookie", "session=abc123; prefs=dark");
+            return await client!.SendAsync(request);
+        });
+
+    [TestMethod]
+    public async Task UploadFile_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(async () =>
+        {
+            ByteArrayContent content = new("binary-data"u8.ToArray());
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            HttpRequestMessage request = new(HttpMethod.Post, "/upload") { Content = content };
+            request.Headers.Add("X-File-Name", "test.bin");
+            return await client!.SendAsync(request);
+        });
+
+    [TestMethod]
+    public async Task UploadAttachment_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(async () =>
+        {
+            MultipartFormDataContent content = new();
+            content.Add(new StringContent("doc.pdf"), "file", "doc.pdf");
+            HttpRequestMessage request = new(HttpMethod.Post, "/attachments") { Content = content };
+            request.Headers.Add("X-Upload-Token", "token-123");
+            return await client!.SendAsync(request);
+        });
+
+    [TestMethod]
+    public async Task UploadAttachmentEncoded_InvalidResponseBody_ReturnsInternalServerError()
+        => await AssertInvalidResponseBodyAsync(async () =>
+        {
+            MultipartFormDataContent content = new();
+            content.Add(new StringContent("data.csv"), "file", "data.csv");
+            HttpRequestMessage request = new(HttpMethod.Post, "/attachments-encoded") { Content = content };
+            request.Headers.Add("X-Batch-Id", "batch-789");
+            return await client!.SendAsync(request);
+        });
+
+    [TestMethod]
+    public async Task GetVersion_ReturnsOk()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/versions/v1");
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual("""{"version":1}""", body);
+    }
+
+    [TestMethod]
+    public async Task GetVersion_InvalidVersionParameter_IsIgnored()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/versions/v1?version=abc");
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual("""{"version":1}""", body);
+    }
+
+    [TestMethod]
+    public async Task GetVersion_DecimalVersion_ReturnsBadRequest()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/versions/v1?version=1.5");
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'version' failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task GetDocument_InvalidDocumentId_ReturnsBadRequest()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/documents/not-a-guid");
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'documentId' failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task PutDocument_InvalidDocumentId_ReturnsBadRequest()
+    {
+        StringContent content = new("""{"title":"Updated Doc"}""", Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await client!.PutAsync("/documents/not-a-guid", content);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'documentId' failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task CopyResource_InvalidDestinationHeader_ReturnsBadRequest()
+    {
+        HttpRequestMessage request = new(new HttpMethod("COPY"), "/resources/res-1")
+        {
+            Content = new StringContent("""{"overwrite":true}""", Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("Destination", "not-a-uri");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'Destination' failed schema validation.");
+    }
+
+    [TestMethod]
+    public async Task SearchWithQuerystring_InvalidQsParameter_ReturnsBadRequest()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/search-qs?qs=q=hello,page=abc");
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'qs' failed schema validation.");
     }
 }

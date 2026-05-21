@@ -97,28 +97,6 @@ public sealed class ApiTextClient : IApiTextClient
         }
     }
 
-    private async ValueTask<TResponse> SendWithBodyAsyncCore<TRequest, TBody, TResponse>(
-        JsonWorkspace workspace,
-        TRequest request,
-        TBody body,
-        ValidationMode responseValidationMode,
-        CancellationToken cancellationToken)
-        where TRequest : struct, IApiRequest<TRequest>
-        where TBody : struct, IJsonElement<TBody>
-        where TResponse : struct, IApiResponse<TResponse>
-    {
-        try
-        {
-            TResponse response = await this.transport.SendAsync<TRequest, TBody, TResponse>(in request, in body, cancellationToken).ConfigureAwait(false);
-            response.Validate(responseValidationMode);
-            return response;
-        }
-        finally
-        {
-            workspace.Dispose();
-        }
-    }
-
     private async ValueTask<TResponse> SendWithStreamBodyAsyncCore<TRequest, TResponse>(
         JsonWorkspace workspace,
         TRequest request,
@@ -132,28 +110,6 @@ public sealed class ApiTextClient : IApiTextClient
         try
         {
             TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, body, contentType, cancellationToken).ConfigureAwait(false);
-            response.Validate(responseValidationMode);
-            return response;
-        }
-        finally
-        {
-            workspace.Dispose();
-        }
-    }
-
-    private async ValueTask<TResponse> SendWithBodyWriterAsyncCore<TRequest, TResponse>(
-        JsonWorkspace workspace,
-        TRequest request,
-        Action<Stream> bodyWriter,
-        string contentType,
-        ValidationMode responseValidationMode,
-        CancellationToken cancellationToken)
-        where TRequest : struct, IApiRequest<TRequest>
-        where TResponse : struct, IApiResponse<TResponse>
-    {
-        try
-        {
-            TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, bodyWriter, contentType, cancellationToken).ConfigureAwait(false);
             response.Validate(responseValidationMode);
             return response;
         }

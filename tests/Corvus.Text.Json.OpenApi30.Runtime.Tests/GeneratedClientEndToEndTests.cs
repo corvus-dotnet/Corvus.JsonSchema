@@ -1940,6 +1940,68 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
+    public async Task Client_ApiItemsClient_HeadItemAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, string.Empty);
+        var client = new ApiItemsClient(harness.Transport);
+
+        await using HeadItemResponse response = await client.HeadItemAsync("head-1");
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Head, harness.CapturedRequest!.Method);
+        Assert.AreEqual("http://localhost/items/head-1", harness.CapturedRequest.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_PatchItemAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"id":"i-1","name":"patched"}""");
+        var client = new ApiItemsClient(harness.Transport);
+        using var bodyDoc = ParsedJsonDocument<PatchItemsByItemIdBody>.Parse("""{"name":"patched"}""");
+
+        await using PatchItemResponse response = await client.PatchItemAsync("i-1", bodyDoc.RootElement);
+
+        using var capturedBody = ParsedJsonDocument<JsonElement>.Parse(harness.CapturedRequestBody!);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(new HttpMethod("PATCH"), harness.CapturedRequest!.Method);
+        Assert.AreEqual("http://localhost/items/i-1", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.AreEqual("application/json", harness.CapturedRequest.Content?.Headers.ContentType?.MediaType);
+        Assert.AreEqual("patched", capturedBody.RootElement["name"].GetString());
+        Assert.IsTrue(response.TryGetOk(out var result));
+        Assert.AreEqual("patched", (string)result.Name);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_TraceItemAsync()
+    {
+        byte[] responseBody = Encoding.UTF8.GetBytes("TRACE /items/trace-1 HTTP/1.1");
+        using var harness = new TestHarness(HttpStatusCode.OK, responseBody, "text/plain");
+        var client = new ApiItemsClient(harness.Transport);
+
+        await using TraceItemResponse response = await client.TraceItemAsync("trace-1");
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Trace, harness.CapturedRequest!.Method);
+        Assert.AreEqual("http://localhost/items/trace-1", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.IsTrue(response.TryGetOkString(out string? text));
+        Assert.AreEqual("TRACE /items/trace-1 HTTP/1.1", text);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_OptionsItemsAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.NoContent, string.Empty);
+        var client = new ApiItemsClient(harness.Transport);
+
+        await using OptionsItemsResponse response = await client.OptionsItemsAsync();
+
+        Assert.AreEqual(204, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Options, harness.CapturedRequest!.Method);
+        Assert.AreEqual("http://localhost/items", harness.CapturedRequest.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
     public async Task Client_ApiOrdersClient_GetOrderAsync()
     {
         using var harness = new TestHarness(
@@ -2008,6 +2070,455 @@ public class GeneratedClientEndToEndTests
         await using SearchResponse response = await client.SearchAsync("widgets", page: 2, rating: 4.5f);
 
         Assert.AreEqual("http://localhost/search?q=widgets&page=2&rating=4.5", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_PathArraySimpleAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var idsDoc = ParsedJsonDocument<GetComplexPathArraySimpleByIdsIds>.Parse("""["id1","id2","id3"]""");
+
+        await using PathArraySimpleResponse response = await client.PathArraySimpleAsync(idsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/path-array-simple/id1,id2,id3", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_PathArrayLabelAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var idsDoc = ParsedJsonDocument<GetComplexPathArrayLabelByIdsIds>.Parse("""["id1","id2","id3"]""");
+
+        await using PathArrayLabelResponse response = await client.PathArrayLabelAsync(idsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/path-array-label/.id1,id2,id3", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_PathArrayMatrixAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var idsDoc = ParsedJsonDocument<GetComplexPathArrayMatrixByIdsIds>.Parse("""["id1","id2","id3"]""");
+
+        await using PathArrayMatrixResponse response = await client.PathArrayMatrixAsync(idsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/path-array-matrix/;ids=id1,id2,id3", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_PathObjectSimpleAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var dimsDoc = ParsedJsonDocument<GetComplexPathObjectSimpleByDimsDims>.Parse("""{"width":100,"height":200}""");
+
+        await using PathObjectSimpleResponse response = await client.PathObjectSimpleAsync(dimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/path-object-simple/width,100,height,200", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_PathObjectSimpleExplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var dimsDoc = ParsedJsonDocument<GetComplexPathObjectSimpleExplodeByDimsDims>.Parse("""{"width":100,"height":200}""");
+
+        await using PathObjectSimpleExplodeResponse response = await client.PathObjectSimpleExplodeAsync(dimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/path-object-simple-explode/width=100,height=200", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_PathObjectLabelAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var dimsDoc = ParsedJsonDocument<GetComplexPathObjectLabelByDimsDims>.Parse("""{"width":100,"height":200}""");
+
+        await using PathObjectLabelResponse response = await client.PathObjectLabelAsync(dimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/path-object-label/.width,100,height,200", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_PathObjectLabelExplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var dimsDoc = ParsedJsonDocument<GetComplexPathObjectLabelExplodeByDimsDims>.Parse("""{"width":100,"height":200}""");
+
+        await using PathObjectLabelExplodeResponse response = await client.PathObjectLabelExplodeAsync(dimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/path-object-label-explode/.width=100.height=200", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_PathObjectMatrixAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var dimsDoc = ParsedJsonDocument<GetComplexPathObjectMatrixByDimsDims>.Parse("""{"width":100,"height":200}""");
+
+        await using PathObjectMatrixResponse response = await client.PathObjectMatrixAsync(dimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/path-object-matrix/;dims=width,100,height,200", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_PathObjectMatrixExplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var dimsDoc = ParsedJsonDocument<GetComplexPathObjectMatrixExplodeByDimsDims>.Parse("""{"width":100,"height":200}""");
+
+        await using PathObjectMatrixExplodeResponse response = await client.PathObjectMatrixExplodeAsync(dimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/path-object-matrix-explode/;width=100;height=200", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_QueryArrayExplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var colorsDoc = ParsedJsonDocument<GetComplexQueryArrayExplodeColors>.Parse("""["red","green","blue"]""");
+
+        await using QueryArrayExplodeResponse response = await client.QueryArrayExplodeAsync(colorsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/query-array-explode?colors=red&colors=green&colors=blue", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_QueryArrayNonexplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var colorsDoc = ParsedJsonDocument<GetComplexQueryArrayNonexplodeColors>.Parse("""["red","green","blue"]""");
+
+        await using QueryArrayNonexplodeResponse response = await client.QueryArrayNonexplodeAsync(colorsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/query-array-nonexplode?colors=red,green,blue", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_QueryArraySpaceAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var colorsDoc = ParsedJsonDocument<GetComplexQueryArraySpaceColors>.Parse("""["red","green","blue"]""");
+
+        await using QueryArraySpaceResponse response = await client.QueryArraySpaceAsync(colorsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/query-array-space?colors=red%20green%20blue", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_QueryArrayPipeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var colorsDoc = ParsedJsonDocument<GetComplexQueryArrayPipeColors>.Parse("""["red","green","blue"]""");
+
+        await using QueryArrayPipeResponse response = await client.QueryArrayPipeAsync(colorsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/query-array-pipe?colors=red%7Cgreen%7Cblue", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_QueryObjectExplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var dimsDoc = ParsedJsonDocument<GetComplexQueryObjectExplodeDims>.Parse("""{"width":100,"height":200}""");
+
+        await using QueryObjectExplodeResponse response = await client.QueryObjectExplodeAsync(dimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/query-object-explode?width=100&height=200", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_QueryObjectNonexplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var dimsDoc = ParsedJsonDocument<GetComplexQueryObjectNonexplodeDims>.Parse("""{"width":100,"height":200}""");
+
+        await using QueryObjectNonexplodeResponse response = await client.QueryObjectNonexplodeAsync(dimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/query-object-nonexplode?dims=width,100,height,200", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_QueryObjectDeepAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var dimsDoc = ParsedJsonDocument<GetComplexQueryObjectDeepDims>.Parse("""{"width":100,"height":200}""");
+
+        await using QueryObjectDeepResponse response = await client.QueryObjectDeepAsync(dimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/complex/query-object-deep?dims%5Bwidth%5D=100&dims%5Bheight%5D=200", harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_HeaderArrayAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var xTagsDoc = ParsedJsonDocument<GetComplexHeaderArrayXTags>.Parse("""["red","green","blue"]""");
+
+        await using HeaderArrayResponse response = await client.HeaderArrayAsync(xTagsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("red,green,blue", harness.CapturedRequest!.Headers.GetValues("X-Tags").First());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_HeaderObjectAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var xDimsDoc = ParsedJsonDocument<GetComplexHeaderObjectXDims>.Parse("""{"width":100,"height":200}""");
+
+        await using HeaderObjectResponse response = await client.HeaderObjectAsync(xDimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("width,100,height,200", harness.CapturedRequest!.Headers.GetValues("X-Dims").First());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_HeaderObjectExplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var xDimsDoc = ParsedJsonDocument<GetComplexHeaderObjectExplodeXDims>.Parse("""{"width":100,"height":200}""");
+
+        await using HeaderObjectExplodeResponse response = await client.HeaderObjectExplodeAsync(xDimsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("width=100,height=200", harness.CapturedRequest!.Headers.GetValues("X-Dims").First());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_CookieArrayAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var colorsDoc = ParsedJsonDocument<GetComplexCookieArrayColors>.Parse("""["red","green","blue"]""");
+
+        await using CookieArrayResponse response = await client.CookieArrayAsync(colorsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("colors=red; colors=green; colors=blue", harness.CapturedRequest!.Headers.GetValues("Cookie").First());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_CookieArrayNonexplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var colorsDoc = ParsedJsonDocument<GetComplexCookieArrayNonexplodeColors>.Parse("""["red","green","blue"]""");
+
+        await using CookieArrayNonexplodeResponse response = await client.CookieArrayNonexplodeAsync(colorsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("colors=red,green,blue", harness.CapturedRequest!.Headers.GetValues("Cookie").First());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_CookieObjectAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var prefsDoc = ParsedJsonDocument<GetComplexCookieObjectPrefs>.Parse("""{"theme":"dark","lang":"en"}""");
+
+        await using CookieObjectResponse response = await client.CookieObjectAsync(prefsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("theme=dark; lang=en", harness.CapturedRequest!.Headers.GetValues("Cookie").First());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexParamsClient_CookieObjectNonexplodeAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiComplexParamsClient(harness.Transport);
+        using var prefsDoc = ParsedJsonDocument<GetComplexCookieObjectNonexplodePrefs>.Parse("""{"theme":"dark","lang":"en"}""");
+
+        await using CookieObjectNonexplodeResponse response = await client.CookieObjectNonexplodeAsync(prefsDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("prefs=theme,dark,lang,en", harness.CapturedRequest!.Headers.GetValues("Cookie").First());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFilesClient_DownloadFileAsync()
+    {
+        byte[] binaryData = [0x00, 0x01, 0x02, 0xFF];
+        using var harness = new TestHarness(HttpStatusCode.OK, binaryData, "application/octet-stream");
+        var client = new ApiFilesClient(harness.Transport);
+
+        await using DownloadFileResponse response = await client.DownloadFileAsync();
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/files/download", harness.CapturedRequest!.RequestUri!.OriginalString);
+        Assert.IsTrue(response.TryGetOkStream(out Stream? stream));
+        Assert.IsNotNull(stream);
+
+        using MemoryStream copy = new();
+        await stream.CopyToAsync(copy);
+        CollectionAssert.AreEqual(binaryData, copy.ToArray());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFilesClient_UploadFileAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Created, """{"id":"f-123"}""");
+        var client = new ApiFilesClient(harness.Transport);
+        byte[] fileContent = [0xDE, 0xAD, 0xBE, 0xEF];
+        using MemoryStream body = new(fileContent);
+
+        await using UploadFileResponse response = await client.UploadFileAsync(body);
+
+        Assert.AreEqual(201, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual("http://localhost/files/upload", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.AreEqual("application/octet-stream", harness.CapturedRequestContentType);
+        CollectionAssert.AreEqual(fileContent, harness.CapturedRequestBody);
+        Assert.IsTrue(response.TryGetCreated(out var created));
+        Assert.AreEqual("f-123", (string)created.Id);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFilesClient_DownloadMixedAsync()
+    {
+        byte[] binaryData = [0xAA, 0xBB, 0xCC];
+        using var harness = new TestHarness(HttpStatusCode.OK, binaryData, "application/octet-stream");
+        var client = new ApiFilesClient(harness.Transport);
+
+        await using DownloadMixedResponse response = await client.DownloadMixedAsync();
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/files/download-mixed", harness.CapturedRequest!.RequestUri!.OriginalString);
+        Assert.IsTrue(response.TryGetOkStream(out Stream? stream));
+        Assert.IsNotNull(stream);
+
+        using MemoryStream copy = new();
+        await stream.CopyToAsync(copy);
+        CollectionAssert.AreEqual(binaryData, copy.ToArray());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFilesClient_GetVendorJsonAsync()
+    {
+        byte[] responseBody = Encoding.UTF8.GetBytes("""{"data":"vendor-response"}""");
+        using var harness = new TestHarness(HttpStatusCode.OK, responseBody, "application/vnd.api+json");
+        var client = new ApiFilesClient(harness.Transport);
+
+        await using GetVendorJsonResponse response = await client.GetVendorJsonAsync();
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/files/vendor-json", harness.CapturedRequest!.RequestUri!.OriginalString);
+        Assert.IsTrue(response.TryGetOk(out var body));
+        Assert.AreEqual("vendor-response", (string)body.Data);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFilesClient_GetVendorJsonAsync_UsesVendorAcceptHeader()
+    {
+        byte[] responseBody = Encoding.UTF8.GetBytes("""{"data":"vendor-response"}""");
+        using var harness = new TestHarness(HttpStatusCode.OK, responseBody, "application/vnd.api+json");
+        var client = new ApiFilesClient(harness.Transport);
+
+        await using GetVendorJsonResponse response = await client.GetVendorJsonAsync();
+
+        Assert.IsTrue(
+            harness.CapturedRequest!.Headers.Accept.Any(a => a.MediaType == "application/vnd.api+json"),
+            "Accept header should include application/vnd.api+json");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiTextClient_EchoTextAsync()
+    {
+        byte[] responseBody = Encoding.UTF8.GetBytes("echoed");
+        using var harness = new TestHarness(HttpStatusCode.OK, responseBody, "text/plain");
+        var client = new ApiTextClient(harness.Transport);
+        using MemoryStream body = new(Encoding.UTF8.GetBytes("test input"));
+
+        await using EchoTextResponse response = await client.EchoTextAsync(body);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual("http://localhost/text/echo", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.AreEqual("text/plain", harness.CapturedRequestContentType);
+        CollectionAssert.AreEqual(Encoding.UTF8.GetBytes("test input"), harness.CapturedRequestBody);
+        Assert.IsTrue(response.TryGetOkString(out string? text));
+        Assert.AreEqual("echoed", text);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiTextClient_TextToJsonAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"parsed":"hello"}""");
+        var client = new ApiTextClient(harness.Transport);
+        using MemoryStream body = new(Encoding.UTF8.GetBytes("hello"));
+
+        await using TextToJsonResponse response = await client.TextToJsonAsync(body);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual("http://localhost/text/to-json", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.AreEqual("text/plain", harness.CapturedRequestContentType);
+        CollectionAssert.AreEqual(Encoding.UTF8.GetBytes("hello"), harness.CapturedRequestBody);
+        Assert.IsTrue(response.TryGetOk(out var parsed));
+        Assert.AreEqual("hello", (string)parsed.Parsed);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiTextClient_GetTextOrJsonAsync()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"value":"json-data"}""");
+        var client = new ApiTextClient(harness.Transport);
+
+        await using GetTextOrJsonResponse response = await client.GetTextOrJsonAsync();
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("http://localhost/text/mixed", harness.CapturedRequest!.RequestUri!.OriginalString);
+        Assert.IsTrue(response.TryGetOk(out var body));
+        Assert.AreEqual("json-data", (string)body.Value);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiTextClient_GetTextOrJsonAsync_ListsBothAcceptTypes()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"value":"x"}""");
+        var client = new ApiTextClient(harness.Transport);
+
+        await using GetTextOrJsonResponse response = await client.GetTextOrJsonAsync();
+
+        var acceptTypes = harness.CapturedRequest!.Headers.Accept.Select(a => a.MediaType).ToList();
+        CollectionAssert.Contains(acceptTypes, "application/json");
+        CollectionAssert.Contains(acceptTypes, "text/plain");
     }
 
     [TestMethod]
@@ -2275,6 +2786,81 @@ public class GeneratedClientEndToEndTests
             client.GetAsync("http://localhost/test").GetAwaiter().GetResult());
 
         handler.Dispose();
+    }
+
+    [TestMethod]
+    public async Task GetItem_TransportFailure_ThrowsHttpRequestException()
+    {
+        using var handler = new ThrowingHandler(new HttpRequestException("Connection refused"));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+        await using var transport = new HttpClientTransport(client);
+
+        var request = new GetItemRequest(JsonString.ParseValue("\"item-1\""u8));
+
+        await Assert.ThrowsExactlyAsync<HttpRequestException>(
+            async () =>
+            {
+                await using GetItemResponse response = await transport
+                    .SendAsync<GetItemRequest, GetItemResponse>(in request, CancellationToken.None);
+            });
+    }
+
+    [TestMethod]
+    public async Task GetItem_MalformedJsonResponse_ThrowsOnParse()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, "this is not json {{{{");
+
+        var request = new GetItemRequest(JsonString.ParseValue("\"item-1\""u8));
+
+        await Assert.ThrowsAsync<Corvus.Text.Json.JsonException>(
+            async () =>
+            {
+                await using GetItemResponse response = await harness.Transport
+                    .SendAsync<GetItemRequest, GetItemResponse>(in request, CancellationToken.None);
+            });
+    }
+
+    [TestMethod]
+    public async Task CreateItem_MalformedJson422_ThrowsOnParse()
+    {
+        using var harness = new TestHarness(HttpStatusCode.UnprocessableEntity, "not valid json");
+
+        PostItemsBody body = PostItemsBody.ParseValue("""{"name":"test","description":"d"}"""u8);
+
+        await Assert.ThrowsAsync<Corvus.Text.Json.JsonException>(
+            async () =>
+            {
+                await using CreateItemResponse response = await harness.Transport
+                    .SendAsync<CreateItemRequest, PostItemsBody, CreateItemResponse>(
+                        default(CreateItemRequest), in body, CancellationToken.None);
+            });
+    }
+
+    [TestMethod]
+    public async Task GetItem_TransportTimeout_ThrowsTaskCanceledException()
+    {
+        using var handler = new ThrowingHandler(new TaskCanceledException("Request timed out"));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+        await using var transport = new HttpClientTransport(client);
+
+        var request = new GetItemRequest(JsonString.ParseValue("\"item-1\""u8));
+
+        await Assert.ThrowsExactlyAsync<TaskCanceledException>(
+            async () =>
+            {
+                await using GetItemResponse response = await transport
+                    .SendAsync<GetItemRequest, GetItemResponse>(in request, CancellationToken.None);
+            });
+    }
+
+    private sealed class ThrowingHandler(Exception exception) : DelegatingHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            throw exception;
+        }
     }
 
     /// <summary>
@@ -3639,6 +4225,268 @@ public class GeneratedClientEndToEndTests
         StringAssert.Contains(ex.Message, "200");
         StringAssert.Contains(ex.Message, "evaluationPath");
         StringAssert.Contains(ex.Message, "instanceLocation");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_CreateItemAsync_DetailedValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Created, """{"id":"new","name":"w"}""");
+        var client = new ApiItemsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostItemsBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsDetailed(
+            async () => await client.CreateItemAsync(invalidBody.RootElement, validationMode: ValidationMode.Detailed));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_CreateItemAsync_BasicValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Created, """{"id":"new","name":"w"}""");
+        var client = new ApiItemsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostItemsBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsBasic(
+            async () => await client.CreateItemAsync(invalidBody.RootElement, validationMode: ValidationMode.Basic));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_UpdateItemAsync_DetailedValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"id":"up","name":"u"}""");
+        var client = new ApiItemsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PutItemsBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsDetailed(
+            async () => await client.UpdateItemAsync(invalidBody.RootElement, validationMode: ValidationMode.Detailed));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_UpdateItemAsync_BasicValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"id":"up","name":"u"}""");
+        var client = new ApiItemsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PutItemsBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsBasic(
+            async () => await client.UpdateItemAsync(invalidBody.RootElement, validationMode: ValidationMode.Basic));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_PatchItemAsync_DetailedValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"id":"x","name":"y"}""");
+        var client = new ApiItemsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PatchItemsByItemIdBody>.Parse("""[]""");
+
+        await AssertRequestBodyValidationFailsDetailed(
+            async () => await client.PatchItemAsync("item1", invalidBody.RootElement, validationMode: ValidationMode.Detailed));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_PatchItemAsync_BasicValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"id":"x","name":"y"}""");
+        var client = new ApiItemsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PatchItemsByItemIdBody>.Parse("""[]""");
+
+        await AssertRequestBodyValidationFailsBasic(
+            async () => await client.PatchItemAsync("item1", invalidBody.RootElement, validationMode: ValidationMode.Basic));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiOrdersClient_UpdateOrderAsync_DetailedValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"orderId":"550e8400-e29b-41d4-a716-446655440000","status":"ok","total":1}""");
+        var client = new ApiOrdersClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PutOrdersByOrderIdBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsDetailed(
+            async () => await client.UpdateOrderAsync(
+                Guid.Parse("550e8400-e29b-41d4-a716-446655440000"),
+                Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                invalidBody.RootElement,
+                validationMode: ValidationMode.Detailed));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiOrdersClient_UpdateOrderAsync_BasicValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"orderId":"550e8400-e29b-41d4-a716-446655440000","status":"ok","total":1}""");
+        var client = new ApiOrdersClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PutOrdersByOrderIdBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsBasic(
+            async () => await client.UpdateOrderAsync(
+                Guid.Parse("550e8400-e29b-41d4-a716-446655440000"),
+                Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                invalidBody.RootElement,
+                validationMode: ValidationMode.Basic));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitContactFormAsync_DetailedValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostFormsContactBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsDetailed(
+            async () => await client.SubmitContactFormAsync(invalidBody.RootElement, validationMode: ValidationMode.Detailed));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitContactFormAsync_BasicValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostFormsContactBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsBasic(
+            async () => await client.SubmitContactFormAsync(invalidBody.RootElement, validationMode: ValidationMode.Basic));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadDocumentAsync_DetailedValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostFormsUploadBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsDetailed(
+            async () => await client.UploadDocumentAsync(invalidBody.RootElement, validationMode: ValidationMode.Detailed));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadDocumentAsync_BasicValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostFormsUploadBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsBasic(
+            async () => await client.UploadDocumentAsync(invalidBody.RootElement, validationMode: ValidationMode.Basic));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitEncodedContactFormAsync_DetailedValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostFormsEncodedContactBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsDetailed(
+            async () => await client.SubmitEncodedContactFormAsync(invalidBody.RootElement, validationMode: ValidationMode.Detailed));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitEncodedContactFormAsync_BasicValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostFormsEncodedContactBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsBasic(
+            async () => await client.SubmitEncodedContactFormAsync(invalidBody.RootElement, validationMode: ValidationMode.Basic));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadEncodedDocumentAsync_DetailedValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostFormsEncodedUploadBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsDetailed(
+            async () => await client.UploadEncodedDocumentAsync(invalidBody.RootElement, validationMode: ValidationMode.Detailed));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadEncodedDocumentAsync_BasicValidation_InvalidBody_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+        using var invalidBody = ParsedJsonDocument<PostFormsEncodedUploadBody>.Parse("""{}""");
+
+        await AssertRequestBodyValidationFailsBasic(
+            async () => await client.UploadEncodedDocumentAsync(invalidBody.RootElement, validationMode: ValidationMode.Basic));
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_GetItemAsync_ResponseValidation_Detailed_InvalidResponse_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiItemsClient(harness.Transport);
+
+        await AssertResponseBodyValidationFailsDetailed(
+            async () => await client.GetItemAsync("item1", responseValidationMode: ValidationMode.Detailed),
+            200);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiItemsClient_GetItemAsync_ResponseValidation_Basic_InvalidResponse_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiItemsClient(harness.Transport);
+
+        await AssertResponseBodyValidationFailsBasic(
+            async () => await client.GetItemAsync("item1", responseValidationMode: ValidationMode.Basic),
+            200);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFilesClient_UploadFileAsync_ResponseValidation_Basic_InvalidResponse_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Created, """[]""");
+        var client = new ApiFilesClient(harness.Transport);
+        using MemoryStream body = new([0xDE, 0xAD, 0xBE, 0xEF]);
+
+        await AssertResponseBodyValidationFailsBasic(
+            async () => await client.UploadFileAsync(body, responseValidationMode: ValidationMode.Basic),
+            201);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitContactFormAsync_ResponseValidation_Basic_InvalidResponse_Throws()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+        var client = new ApiFormsClient(harness.Transport);
+        using var bodyDoc = ParsedJsonDocument<PostFormsContactBody>.Parse("""{"name":"Alice","email":"alice@example.com","message":"Hello"}""");
+
+        await AssertResponseBodyValidationFailsBasic(
+            async () => await client.SubmitContactFormAsync(bodyDoc.RootElement, responseValidationMode: ValidationMode.Basic),
+            200);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+    }
+
+    private static async Task AssertRequestBodyValidationFailsDetailed(Func<Task> action)
+    {
+        InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(action);
+        StringAssert.StartsWith(ex.Message, "The request body failed schema validation: ");
+    }
+
+    private static async Task AssertRequestBodyValidationFailsBasic(Func<Task> action)
+    {
+        InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(action);
+        Assert.AreEqual("The request body failed schema validation.", ex.Message);
+    }
+
+    private static async Task AssertResponseBodyValidationFailsDetailed(Func<Task> action, int statusCode)
+    {
+        InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(action);
+        StringAssert.StartsWith(ex.Message, $"The response body for status code {statusCode} failed schema validation: ");
+    }
+
+    private static async Task AssertResponseBodyValidationFailsBasic(Func<Task> action, int statusCode)
+    {
+        InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(action);
+        Assert.AreEqual($"The response body for status code {statusCode} failed schema validation.", ex.Message);
     }
 
     // ── PATCH / HEAD / OPTIONS / TRACE E2E tests ─────────────────────────

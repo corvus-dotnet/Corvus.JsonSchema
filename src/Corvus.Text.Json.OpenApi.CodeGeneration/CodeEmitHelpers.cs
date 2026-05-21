@@ -2071,113 +2071,149 @@ public static class CodeEmitHelpers
 
     /// <summary>
     /// Emits the <c>SendAsyncCore</c> and <c>SendWithBodyAsyncCore</c> helper methods.
+    /// Only emits the helpers that are actually used by the client's operations.
     /// </summary>
     /// <param name="w">The writer.</param>
-    public static void EmitSendAsyncCoreHelpers(IndentedWriter w)
+    /// <param name="needsSendAsync">Whether the client needs <c>SendAsyncCore</c> (no-body operations).</param>
+    /// <param name="needsSendWithBody">Whether the client needs <c>SendWithBodyAsyncCore</c> (JSON body operations).</param>
+    /// <param name="needsSendWithStreamBody">Whether the client needs <c>SendWithStreamBodyAsyncCore</c> (stream upload operations).</param>
+    /// <param name="needsSendWithBodyWriter">Whether the client needs <c>SendWithBodyWriterAsyncCore</c> (form/multipart operations).</param>
+    public static void EmitSendAsyncCoreHelpers(
+        IndentedWriter w,
+        bool needsSendAsync = true,
+        bool needsSendWithBody = true,
+        bool needsSendWithStreamBody = true,
+        bool needsSendWithBodyWriter = true)
     {
-        w.WriteLine("private async ValueTask<TResponse> SendAsyncCore<TRequest, TResponse>(");
-        w.PushIndent();
-        w.WriteLine("JsonWorkspace workspace,");
-        w.WriteLine("TRequest request,");
-        w.WriteLine("ValidationMode responseValidationMode,");
-        w.WriteLine("CancellationToken cancellationToken)");
-        w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
-        w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
-        w.PopIndent();
-        w.OpenBrace();
-        w.WriteLine("try");
-        w.OpenBrace();
-        w.WriteLine(
-            "TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, cancellationToken).ConfigureAwait(false);");
-        w.WriteLine("response.Validate(responseValidationMode);");
-        w.WriteLine("return response;");
-        w.CloseBrace();
-        w.WriteLine("finally");
-        w.OpenBrace();
-        w.WriteLine("workspace.Dispose();");
-        w.CloseBrace();
-        w.CloseBrace();
+        bool emittedAny = false;
 
-        w.WriteLine();
+        if (needsSendAsync)
+        {
+            w.WriteLine("private async ValueTask<TResponse> SendAsyncCore<TRequest, TResponse>(");
+            w.PushIndent();
+            w.WriteLine("JsonWorkspace workspace,");
+            w.WriteLine("TRequest request,");
+            w.WriteLine("ValidationMode responseValidationMode,");
+            w.WriteLine("CancellationToken cancellationToken)");
+            w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
+            w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
+            w.PopIndent();
+            w.OpenBrace();
+            w.WriteLine("try");
+            w.OpenBrace();
+            w.WriteLine(
+                "TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("response.Validate(responseValidationMode);");
+            w.WriteLine("return response;");
+            w.CloseBrace();
+            w.WriteLine("finally");
+            w.OpenBrace();
+            w.WriteLine("workspace.Dispose();");
+            w.CloseBrace();
+            w.CloseBrace();
+            emittedAny = true;
+        }
 
-        w.WriteLine("private async ValueTask<TResponse> SendWithBodyAsyncCore<TRequest, TBody, TResponse>(");
-        w.PushIndent();
-        w.WriteLine("JsonWorkspace workspace,");
-        w.WriteLine("TRequest request,");
-        w.WriteLine("TBody body,");
-        w.WriteLine("ValidationMode responseValidationMode,");
-        w.WriteLine("CancellationToken cancellationToken)");
-        w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
-        w.WriteLine("where TBody : struct, IJsonElement<TBody>");
-        w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
-        w.PopIndent();
-        w.OpenBrace();
-        w.WriteLine("try");
-        w.OpenBrace();
-        w.WriteLine(
-            "TResponse response = await this.transport.SendAsync<TRequest, TBody, TResponse>(in request, in body, cancellationToken).ConfigureAwait(false);");
-        w.WriteLine("response.Validate(responseValidationMode);");
-        w.WriteLine("return response;");
-        w.CloseBrace();
-        w.WriteLine("finally");
-        w.OpenBrace();
-        w.WriteLine("workspace.Dispose();");
-        w.CloseBrace();
-        w.CloseBrace();
+        if (needsSendWithBody)
+        {
+            if (emittedAny)
+            {
+                w.WriteLine();
+            }
 
-        w.WriteLine();
+            w.WriteLine("private async ValueTask<TResponse> SendWithBodyAsyncCore<TRequest, TBody, TResponse>(");
+            w.PushIndent();
+            w.WriteLine("JsonWorkspace workspace,");
+            w.WriteLine("TRequest request,");
+            w.WriteLine("TBody body,");
+            w.WriteLine("ValidationMode responseValidationMode,");
+            w.WriteLine("CancellationToken cancellationToken)");
+            w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
+            w.WriteLine("where TBody : struct, IJsonElement<TBody>");
+            w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
+            w.PopIndent();
+            w.OpenBrace();
+            w.WriteLine("try");
+            w.OpenBrace();
+            w.WriteLine(
+                "TResponse response = await this.transport.SendAsync<TRequest, TBody, TResponse>(in request, in body, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("response.Validate(responseValidationMode);");
+            w.WriteLine("return response;");
+            w.CloseBrace();
+            w.WriteLine("finally");
+            w.OpenBrace();
+            w.WriteLine("workspace.Dispose();");
+            w.CloseBrace();
+            w.CloseBrace();
+            emittedAny = true;
+        }
 
-        w.WriteLine("private async ValueTask<TResponse> SendWithStreamBodyAsyncCore<TRequest, TResponse>(");
-        w.PushIndent();
-        w.WriteLine("JsonWorkspace workspace,");
-        w.WriteLine("TRequest request,");
-        w.WriteLine("Stream body,");
-        w.WriteLine("string contentType,");
-        w.WriteLine("ValidationMode responseValidationMode,");
-        w.WriteLine("CancellationToken cancellationToken)");
-        w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
-        w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
-        w.PopIndent();
-        w.OpenBrace();
-        w.WriteLine("try");
-        w.OpenBrace();
-        w.WriteLine(
-            "TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, body, contentType, cancellationToken).ConfigureAwait(false);");
-        w.WriteLine("response.Validate(responseValidationMode);");
-        w.WriteLine("return response;");
-        w.CloseBrace();
-        w.WriteLine("finally");
-        w.OpenBrace();
-        w.WriteLine("workspace.Dispose();");
-        w.CloseBrace();
-        w.CloseBrace();
+        if (needsSendWithStreamBody)
+        {
+            if (emittedAny)
+            {
+                w.WriteLine();
+            }
 
-        w.WriteLine();
+            w.WriteLine("private async ValueTask<TResponse> SendWithStreamBodyAsyncCore<TRequest, TResponse>(");
+            w.PushIndent();
+            w.WriteLine("JsonWorkspace workspace,");
+            w.WriteLine("TRequest request,");
+            w.WriteLine("Stream body,");
+            w.WriteLine("string contentType,");
+            w.WriteLine("ValidationMode responseValidationMode,");
+            w.WriteLine("CancellationToken cancellationToken)");
+            w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
+            w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
+            w.PopIndent();
+            w.OpenBrace();
+            w.WriteLine("try");
+            w.OpenBrace();
+            w.WriteLine(
+                "TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, body, contentType, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("response.Validate(responseValidationMode);");
+            w.WriteLine("return response;");
+            w.CloseBrace();
+            w.WriteLine("finally");
+            w.OpenBrace();
+            w.WriteLine("workspace.Dispose();");
+            w.CloseBrace();
+            w.CloseBrace();
+            emittedAny = true;
+        }
 
-        w.WriteLine("private async ValueTask<TResponse> SendWithBodyWriterAsyncCore<TRequest, TResponse>(");
-        w.PushIndent();
-        w.WriteLine("JsonWorkspace workspace,");
-        w.WriteLine("TRequest request,");
-        w.WriteLine("Action<Stream> bodyWriter,");
-        w.WriteLine("string contentType,");
-        w.WriteLine("ValidationMode responseValidationMode,");
-        w.WriteLine("CancellationToken cancellationToken)");
-        w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
-        w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
-        w.PopIndent();
-        w.OpenBrace();
-        w.WriteLine("try");
-        w.OpenBrace();
-        w.WriteLine(
-            "TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, bodyWriter, contentType, cancellationToken).ConfigureAwait(false);");
-        w.WriteLine("response.Validate(responseValidationMode);");
-        w.WriteLine("return response;");
-        w.CloseBrace();
-        w.WriteLine("finally");
-        w.OpenBrace();
-        w.WriteLine("workspace.Dispose();");
-        w.CloseBrace();
-        w.CloseBrace();
+        if (needsSendWithBodyWriter)
+        {
+            if (emittedAny)
+            {
+                w.WriteLine();
+            }
+
+            w.WriteLine("private async ValueTask<TResponse> SendWithBodyWriterAsyncCore<TRequest, TResponse>(");
+            w.PushIndent();
+            w.WriteLine("JsonWorkspace workspace,");
+            w.WriteLine("TRequest request,");
+            w.WriteLine("Action<Stream> bodyWriter,");
+            w.WriteLine("string contentType,");
+            w.WriteLine("ValidationMode responseValidationMode,");
+            w.WriteLine("CancellationToken cancellationToken)");
+            w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
+            w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
+            w.PopIndent();
+            w.OpenBrace();
+            w.WriteLine("try");
+            w.OpenBrace();
+            w.WriteLine(
+                "TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, bodyWriter, contentType, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("response.Validate(responseValidationMode);");
+            w.WriteLine("return response;");
+            w.CloseBrace();
+            w.WriteLine("finally");
+            w.OpenBrace();
+            w.WriteLine("workspace.Dispose();");
+            w.CloseBrace();
+            w.CloseBrace();
+        }
     }
 
     /// <summary>
