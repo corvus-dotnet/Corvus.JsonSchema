@@ -3677,7 +3677,7 @@ public sealed class OpenApi31CodeGenerator
             w.WriteLine("/// </summary>");
             w.WriteLine("/// <returns>A <see cref=\"Uri\"/> for the server.</returns>");
             w.WriteLine(
-                $"static Uri CreateServerUri() => new({CodeEmitHelpers.FormatStringLiteral(resolvedUrl)});");
+                $"public static Uri CreateServerUri() => new({CodeEmitHelpers.FormatStringLiteral(resolvedUrl)});");
         }
         else
         {
@@ -3702,7 +3702,7 @@ public sealed class OpenApi31CodeGenerator
             w.WriteLine("/// <returns>A <see cref=\"Uri\"/> for the server.</returns>");
 
             // Build the parameter list.
-            w.Write("static Uri CreateServerUri(");
+            w.Write("public static Uri CreateServerUri(");
             for (int i = 0; i < serverInfo.Variables.Length; i++)
             {
                 if (i > 0)

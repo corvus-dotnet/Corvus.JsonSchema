@@ -121,6 +121,6 @@ public readonly struct PathArraySimpleRequest : IApiRequest<PathArraySimpleReque
     /// Creates a <see cref="Uri"/> for the default server.
     /// </summary>
     /// <returns>A <see cref="Uri"/> for the server.</returns>
-    static Uri CreateServerUri() => new("https://api.example.com/v1");
+    public static Uri CreateServerUri() => new("https://api.example.com/v1");
 
 }

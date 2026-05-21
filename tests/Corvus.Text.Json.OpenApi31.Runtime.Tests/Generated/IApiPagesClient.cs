@@ -23,7 +23,7 @@ public interface IApiPagesClient : IAsyncDisposable
     /// Creates a <see cref="Uri"/> for the default server.
     /// </summary>
     /// <returns>A <see cref="Uri"/> for the server.</returns>
-    static Uri CreateServerUri() => new("https://api.example.com/v1");
+    public static Uri CreateServerUri() => new("https://api.example.com/v1");
 
     /// <summary>
     /// Int32 path param with unbounded number query
