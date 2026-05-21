@@ -331,6 +331,1089 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual("default:ctx:boom", result);
     }
 
+    // ── Response Pattern Coverage ─────────────────────────────────────
+    [TestMethod]
+    public Task CookieArrayNonexplode_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<CookieArrayNonexplodeResponse, JsonObject>(
+            static (statusCode, stream) => CookieArrayNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CookieArrayNonexplodeResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task CookieArrayNonexplode_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<CookieArrayNonexplodeResponse, JsonObject>(
+            static (statusCode, stream) => CookieArrayNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CookieArrayNonexplodeResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task CookieArrayNonexplode_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<CookieArrayNonexplodeResponse>(
+            static (statusCode, stream) => CookieArrayNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task CookieArrayNonexplode_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<CookieArrayNonexplodeResponse, string>(
+            static (statusCode, stream) => CookieArrayNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task CookieArrayNonexplode_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<CookieArrayNonexplodeResponse>(
+            static (statusCode, stream) => CookieArrayNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task CookieArrayNonexplode_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<CookieArrayNonexplodeResponse>(
+            static (statusCode, stream) => CookieArrayNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task CookieArrayNonexplode_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CookieArrayNonexplodeResponse>(
+            static (statusCode, stream) => CookieArrayNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task CookieArrayNonexplode_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CookieArrayNonexplodeResponse>(
+            static (statusCode, stream) => CookieArrayNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task CookieArray_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<CookieArrayResponse, JsonObject>(
+            static (statusCode, stream) => CookieArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CookieArrayResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task CookieArray_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<CookieArrayResponse, JsonObject>(
+            static (statusCode, stream) => CookieArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CookieArrayResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task CookieArray_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<CookieArrayResponse>(
+            static (statusCode, stream) => CookieArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task CookieArray_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<CookieArrayResponse, string>(
+            static (statusCode, stream) => CookieArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task CookieArray_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<CookieArrayResponse>(
+            static (statusCode, stream) => CookieArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task CookieArray_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<CookieArrayResponse>(
+            static (statusCode, stream) => CookieArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task CookieArray_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CookieArrayResponse>(
+            static (statusCode, stream) => CookieArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task CookieArray_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CookieArrayResponse>(
+            static (statusCode, stream) => CookieArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task CookieObjectNonexplode_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<CookieObjectNonexplodeResponse, JsonObject>(
+            static (statusCode, stream) => CookieObjectNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CookieObjectNonexplodeResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task CookieObjectNonexplode_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<CookieObjectNonexplodeResponse, JsonObject>(
+            static (statusCode, stream) => CookieObjectNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CookieObjectNonexplodeResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task CookieObjectNonexplode_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<CookieObjectNonexplodeResponse>(
+            static (statusCode, stream) => CookieObjectNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task CookieObjectNonexplode_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<CookieObjectNonexplodeResponse, string>(
+            static (statusCode, stream) => CookieObjectNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task CookieObjectNonexplode_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<CookieObjectNonexplodeResponse>(
+            static (statusCode, stream) => CookieObjectNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task CookieObjectNonexplode_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<CookieObjectNonexplodeResponse>(
+            static (statusCode, stream) => CookieObjectNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task CookieObjectNonexplode_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CookieObjectNonexplodeResponse>(
+            static (statusCode, stream) => CookieObjectNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task CookieObjectNonexplode_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CookieObjectNonexplodeResponse>(
+            static (statusCode, stream) => CookieObjectNonexplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task CookieObject_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<CookieObjectResponse, JsonObject>(
+            static (statusCode, stream) => CookieObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CookieObjectResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task CookieObject_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<CookieObjectResponse, JsonObject>(
+            static (statusCode, stream) => CookieObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CookieObjectResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task CookieObject_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<CookieObjectResponse>(
+            static (statusCode, stream) => CookieObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task CookieObject_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<CookieObjectResponse, string>(
+            static (statusCode, stream) => CookieObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task CookieObject_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<CookieObjectResponse>(
+            static (statusCode, stream) => CookieObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task CookieObject_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<CookieObjectResponse>(
+            static (statusCode, stream) => CookieObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task CookieObject_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CookieObjectResponse>(
+            static (statusCode, stream) => CookieObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task CookieObject_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CookieObjectResponse>(
+            static (statusCode, stream) => CookieObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task HeaderArray_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<HeaderArrayResponse, JsonObject>(
+            static (statusCode, stream) => HeaderArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (HeaderArrayResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task HeaderArray_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<HeaderArrayResponse, JsonObject>(
+            static (statusCode, stream) => HeaderArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (HeaderArrayResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task HeaderArray_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<HeaderArrayResponse>(
+            static (statusCode, stream) => HeaderArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task HeaderArray_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<HeaderArrayResponse, string>(
+            static (statusCode, stream) => HeaderArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task HeaderArray_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<HeaderArrayResponse>(
+            static (statusCode, stream) => HeaderArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task HeaderArray_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<HeaderArrayResponse>(
+            static (statusCode, stream) => HeaderArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task HeaderArray_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<HeaderArrayResponse>(
+            static (statusCode, stream) => HeaderArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task HeaderArray_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<HeaderArrayResponse>(
+            static (statusCode, stream) => HeaderArrayResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task HeaderObject_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<HeaderObjectResponse, JsonObject>(
+            static (statusCode, stream) => HeaderObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (HeaderObjectResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task HeaderObject_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<HeaderObjectResponse, JsonObject>(
+            static (statusCode, stream) => HeaderObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (HeaderObjectResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task HeaderObject_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<HeaderObjectResponse>(
+            static (statusCode, stream) => HeaderObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task HeaderObject_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<HeaderObjectResponse, string>(
+            static (statusCode, stream) => HeaderObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task HeaderObject_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<HeaderObjectResponse>(
+            static (statusCode, stream) => HeaderObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task HeaderObject_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<HeaderObjectResponse>(
+            static (statusCode, stream) => HeaderObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task HeaderObject_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<HeaderObjectResponse>(
+            static (statusCode, stream) => HeaderObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task HeaderObject_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<HeaderObjectResponse>(
+            static (statusCode, stream) => HeaderObjectResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task HeaderObjectExplode_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<HeaderObjectExplodeResponse, JsonObject>(
+            static (statusCode, stream) => HeaderObjectExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (HeaderObjectExplodeResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task HeaderObjectExplode_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<HeaderObjectExplodeResponse, JsonObject>(
+            static (statusCode, stream) => HeaderObjectExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (HeaderObjectExplodeResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task HeaderObjectExplode_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<HeaderObjectExplodeResponse>(
+            static (statusCode, stream) => HeaderObjectExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task HeaderObjectExplode_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<HeaderObjectExplodeResponse, string>(
+            static (statusCode, stream) => HeaderObjectExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task HeaderObjectExplode_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<HeaderObjectExplodeResponse>(
+            static (statusCode, stream) => HeaderObjectExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task HeaderObjectExplode_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<HeaderObjectExplodeResponse>(
+            static (statusCode, stream) => HeaderObjectExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task HeaderObjectExplode_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<HeaderObjectExplodeResponse>(
+            static (statusCode, stream) => HeaderObjectExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task HeaderObjectExplode_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<HeaderObjectExplodeResponse>(
+            static (statusCode, stream) => HeaderObjectExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task PathArraySimple_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<PathArraySimpleResponse, JsonObject>(
+            static (statusCode, stream) => PathArraySimpleResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (PathArraySimpleResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task PathArraySimple_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<PathArraySimpleResponse, JsonObject>(
+            static (statusCode, stream) => PathArraySimpleResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (PathArraySimpleResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task PathArraySimple_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<PathArraySimpleResponse>(
+            static (statusCode, stream) => PathArraySimpleResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task PathArraySimple_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<PathArraySimpleResponse, string>(
+            static (statusCode, stream) => PathArraySimpleResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task PathArraySimple_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<PathArraySimpleResponse>(
+            static (statusCode, stream) => PathArraySimpleResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task PathArraySimple_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<PathArraySimpleResponse>(
+            static (statusCode, stream) => PathArraySimpleResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task PathArraySimple_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<PathArraySimpleResponse>(
+            static (statusCode, stream) => PathArraySimpleResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task PathArraySimple_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<PathArraySimpleResponse>(
+            static (statusCode, stream) => PathArraySimpleResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task PathArrayLabel_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<PathArrayLabelResponse, JsonObject>(
+            static (statusCode, stream) => PathArrayLabelResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (PathArrayLabelResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task PathArrayLabel_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<PathArrayLabelResponse, JsonObject>(
+            static (statusCode, stream) => PathArrayLabelResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (PathArrayLabelResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task PathArrayLabel_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<PathArrayLabelResponse>(
+            static (statusCode, stream) => PathArrayLabelResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task PathArrayLabel_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<PathArrayLabelResponse, string>(
+            static (statusCode, stream) => PathArrayLabelResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task PathArrayLabel_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<PathArrayLabelResponse>(
+            static (statusCode, stream) => PathArrayLabelResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task PathArrayLabel_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<PathArrayLabelResponse>(
+            static (statusCode, stream) => PathArrayLabelResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task PathArrayLabel_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<PathArrayLabelResponse>(
+            static (statusCode, stream) => PathArrayLabelResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task PathArrayLabel_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<PathArrayLabelResponse>(
+            static (statusCode, stream) => PathArrayLabelResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task PathArrayMatrix_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<PathArrayMatrixResponse, JsonObject>(
+            static (statusCode, stream) => PathArrayMatrixResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (PathArrayMatrixResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task PathArrayMatrix_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<PathArrayMatrixResponse, JsonObject>(
+            static (statusCode, stream) => PathArrayMatrixResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (PathArrayMatrixResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task PathArrayMatrix_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<PathArrayMatrixResponse>(
+            static (statusCode, stream) => PathArrayMatrixResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task PathArrayMatrix_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<PathArrayMatrixResponse, string>(
+            static (statusCode, stream) => PathArrayMatrixResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task PathArrayMatrix_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<PathArrayMatrixResponse>(
+            static (statusCode, stream) => PathArrayMatrixResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task PathArrayMatrix_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<PathArrayMatrixResponse>(
+            static (statusCode, stream) => PathArrayMatrixResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task PathArrayMatrix_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<PathArrayMatrixResponse>(
+            static (statusCode, stream) => PathArrayMatrixResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task PathArrayMatrix_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<PathArrayMatrixResponse>(
+            static (statusCode, stream) => PathArrayMatrixResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task QuerySearch_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<QuerySearchResponse, Schema2>(
+            static (statusCode, stream) => QuerySearchResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (QuerySearchResponse response, out Schema2 body) => response.TryGetOk(out body),
+            200,
+            """{"results":[{"id":"r1","title":"Result 1"}],"total":1}""");
+
+    [TestMethod]
+    public Task QuerySearch_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<QuerySearchResponse, Schema2>(
+            static (statusCode, stream) => QuerySearchResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (QuerySearchResponse response, out Schema2 body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task QuerySearch_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<QuerySearchResponse>(
+            static (statusCode, stream) => QuerySearchResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"results":[{"id":"r1","title":"Result 1"}],"total":1}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task QuerySearch_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<QuerySearchResponse, string>(
+            static (statusCode, stream) => QuerySearchResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task QuerySearch_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<QuerySearchResponse>(
+            static (statusCode, stream) => QuerySearchResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"results":[{"id":"r1","title":"Result 1"}],"total":1}""",
+            true);
+
+    [TestMethod]
+    public Task QuerySearch_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<QuerySearchResponse>(
+            static (statusCode, stream) => QuerySearchResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task QuerySearch_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<QuerySearchResponse>(
+            static (statusCode, stream) => QuerySearchResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task QuerySearch_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<QuerySearchResponse>(
+            static (statusCode, stream) => QuerySearchResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task QueryArrayExplode_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<QueryArrayExplodeResponse, JsonObject>(
+            static (statusCode, stream) => QueryArrayExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (QueryArrayExplodeResponse response, out JsonObject body) => response.TryGetOk(out body),
+            200,
+            """{"key":"value"}""");
+
+    [TestMethod]
+    public Task QueryArrayExplode_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<QueryArrayExplodeResponse, JsonObject>(
+            static (statusCode, stream) => QueryArrayExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (QueryArrayExplodeResponse response, out JsonObject body) => response.TryGetOk(out body),
+            503,
+            string.Empty);
+
+    [TestMethod]
+    public Task QueryArrayExplode_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<QueryArrayExplodeResponse>(
+            static (statusCode, stream) => QueryArrayExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task QueryArrayExplode_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<QueryArrayExplodeResponse, string>(
+            static (statusCode, stream) => QueryArrayExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:503:ctx");
+
+    [TestMethod]
+    public Task QueryArrayExplode_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<QueryArrayExplodeResponse>(
+            static (statusCode, stream) => QueryArrayExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"key":"value"}""",
+            true);
+
+    [TestMethod]
+    public Task QueryArrayExplode_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<QueryArrayExplodeResponse>(
+            static (statusCode, stream) => QueryArrayExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            503,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task QueryArrayExplode_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<QueryArrayExplodeResponse>(
+            static (statusCode, stream) => QueryArrayExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task QueryArrayExplode_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<QueryArrayExplodeResponse>(
+            static (statusCode, stream) => QueryArrayExplodeResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task UpdateItem_Response_TryGetOk_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<UpdateItemResponse, PutItemsOk>(
+            static (statusCode, stream) => UpdateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (UpdateItemResponse response, out PutItemsOk body) => response.TryGetOk(out body),
+            200,
+            """{"id":"up-1","name":"Updated"}""");
+
+    [TestMethod]
+    public Task UpdateItem_Response_TryGetOk_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<UpdateItemResponse, PutItemsOk>(
+            static (statusCode, stream) => UpdateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (UpdateItemResponse response, out PutItemsOk body) => response.TryGetOk(out body),
+            400,
+            string.Empty);
+
+    [TestMethod]
+    public Task UpdateItem_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<UpdateItemResponse>(
+            static (statusCode, stream) => UpdateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"id":"up-1","name":"Updated"}""",
+            static response => response.MatchResult(
+                matchOk: static body => "ok",
+                matchDefault: static code => $"error:{code}"),
+            "ok");
+
+    [TestMethod]
+    public Task UpdateItem_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<UpdateItemResponse, string>(
+            static (statusCode, stream) => UpdateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            400,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchOk: static (body, in ctx) => $"ok:{ctx}",
+                matchDefault: static (code, in ctx) => $"error:{code}:{ctx}"),
+            "error:400:ctx");
+
+    [TestMethod]
+    public Task UpdateItem_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<UpdateItemResponse>(
+            static (statusCode, stream) => UpdateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """{"id":"up-1","name":"Updated"}""",
+            true);
+
+    [TestMethod]
+    public Task UpdateItem_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<UpdateItemResponse>(
+            static (statusCode, stream) => UpdateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            400,
+            string.Empty,
+            false);
+
+    [TestMethod]
+    public Task UpdateItem_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<UpdateItemResponse>(
+            static (statusCode, stream) => UpdateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task UpdateItem_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<UpdateItemResponse>(
+            static (statusCode, stream) => UpdateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            200,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task CreateItem_Response_TryGetCreated_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<CreateItemResponse, PostItemsCreated>(
+            static (statusCode, stream) => CreateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CreateItemResponse response, out PostItemsCreated body) => response.TryGetCreated(out body),
+            201,
+            """{"id":"new-1","name":"Gadget"}""");
+
+    [TestMethod]
+    public Task CreateItem_Response_TryGetCreated_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<CreateItemResponse, PostItemsCreated>(
+            static (statusCode, stream) => CreateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (CreateItemResponse response, out PostItemsCreated body) => response.TryGetCreated(out body),
+            422,
+            """{"errors":["bad"]}""");
+
+    [TestMethod]
+    public Task CreateItem_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<CreateItemResponse>(
+            static (statusCode, stream) => CreateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            201,
+            """{"id":"new-1","name":"Gadget"}""",
+            static response => response.MatchResult(
+                matchCreated: static body => $"created:{(string)body.Id}",
+                matchUnprocessableEntity: static body => "unprocessable",
+                matchDefault: static code => $"default:{code}"),
+            "created:new-1");
+
+    [TestMethod]
+    public Task CreateItem_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<CreateItemResponse, string>(
+            static (statusCode, stream) => CreateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            422,
+            """{"errors":["bad"]}""",
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchCreated: static (body, in ctx) => $"{ctx}:created:{(string)body.Id}",
+                matchUnprocessableEntity: static (body, in ctx) => $"{ctx}:unprocessable",
+                matchDefault: static (code, in ctx) => $"{ctx}:default:{code}"),
+            "ctx:unprocessable");
+
+    [TestMethod]
+    public Task CreateItem_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<CreateItemResponse>(
+            static (statusCode, stream) => CreateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            201,
+            """{"id":"new-1","name":"Gadget"}""",
+            true);
+
+    [TestMethod]
+    public Task CreateItem_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<CreateItemResponse>(
+            static (statusCode, stream) => CreateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            422,
+            """{"errors":["bad"]}""",
+            false);
+
+    [TestMethod]
+    public Task CreateItem_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CreateItemResponse>(
+            static (statusCode, stream) => CreateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            201,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task CreateItem_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<CreateItemResponse>(
+            static (statusCode, stream) => CreateItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            422,
+            """42""",
+            ValidationMode.Basic);
+
+    [TestMethod]
+    public Task DeleteItem_Response_TryGetNotFound_ReturnsTrue()
+        => AssertResponseTryGetReturnsTrue<DeleteItemResponse, DeleteItemsByItemIdNotFound>(
+            static (statusCode, stream) => DeleteItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (DeleteItemResponse response, out DeleteItemsByItemIdNotFound body) => response.TryGetNotFound(out body),
+            404,
+            """{"code":404,"message":"not found"}""");
+
+    [TestMethod]
+    public Task DeleteItem_Response_TryGetNotFound_ReturnsFalse_WhenStatusDoesNotMatch()
+        => AssertResponseTryGetReturnsFalse<DeleteItemResponse, DeleteItemsByItemIdNotFound>(
+            static (statusCode, stream) => DeleteItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            static (DeleteItemResponse response, out DeleteItemsByItemIdNotFound body) => response.TryGetNotFound(out body),
+            204,
+            string.Empty);
+
+    [TestMethod]
+    public Task DeleteItem_Response_MatchResult_DispatchesCorrectly()
+        => AssertResponseMatchResult<DeleteItemResponse>(
+            static (statusCode, stream) => DeleteItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            404,
+            """{"code":404,"message":"not found"}""",
+            static response => response.MatchResult(
+                matchNotFound: static body => $"notfound:{(int)body.Code}",
+                matchDefault: static code => $"default:{code}"),
+            "notfound:404");
+
+    [TestMethod]
+    public Task DeleteItem_Response_MatchResultWithContext_DispatchesCorrectly()
+        => AssertResponseMatchResultWithContext<DeleteItemResponse, string>(
+            static (statusCode, stream) => DeleteItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            204,
+            string.Empty,
+            "ctx",
+            static (response, context) => response.MatchResult(
+                context,
+                matchNotFound: static (body, in ctx) => $"{ctx}:notfound:{(int)body.Code}",
+                matchDefault: static (code, in ctx) => $"{ctx}:default:{code}"),
+            "ctx:default:204");
+
+    [TestMethod]
+    public Task DeleteItem_Response_IsSuccess_True()
+        => AssertResponseIsSuccess<DeleteItemResponse>(
+            static (statusCode, stream) => DeleteItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            204,
+            string.Empty,
+            true);
+
+    [TestMethod]
+    public Task DeleteItem_Response_IsSuccess_False()
+        => AssertResponseIsSuccess<DeleteItemResponse>(
+            static (statusCode, stream) => DeleteItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            404,
+            """{"code":404,"message":"not found"}""",
+            false);
+
+    [TestMethod]
+    public Task DeleteItem_Response_Validate_Detailed_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<DeleteItemResponse>(
+            static (statusCode, stream) => DeleteItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            404,
+            """42""",
+            ValidationMode.Detailed);
+
+    [TestMethod]
+    public Task DeleteItem_Response_Validate_Basic_ThrowsOnInvalidBody()
+        => AssertResponseValidateThrows<DeleteItemResponse>(
+            static (statusCode, stream) => DeleteItemResponse.CreateAsync(statusCode, stream, "application/json"),
+            404,
+            """42""",
+            ValidationMode.Basic);
+
     [TestMethod]
     public async Task DeleteItem_204_NoBody()
     {
@@ -6154,6 +7237,91 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(200, response.StatusCode);
         Assert.IsTrue(response.TryGetOkString(out string? text));
         Assert.AreEqual("TRACE /items/t-1 HTTP/1.1", text);
+    }
+
+    private delegate ValueTask<TResponse> JsonResponseFactory<TResponse>(int statusCode, Stream contentStream)
+        where TResponse : IAsyncDisposable;
+
+    private delegate bool TryGetBody<TResponse, TBody>(TResponse response, out TBody body);
+
+    private static MemoryStream CreateResponseStream(string json)
+    {
+        return new(Encoding.UTF8.GetBytes(json));
+    }
+
+    private static async Task AssertResponseTryGetReturnsTrue<TResponse, TBody>(
+        JsonResponseFactory<TResponse> createResponse,
+        TryGetBody<TResponse, TBody> tryGet,
+        int statusCode,
+        string json)
+        where TResponse : IAsyncDisposable
+    {
+        using MemoryStream stream = CreateResponseStream(json);
+        await using TResponse response = await createResponse(statusCode, stream);
+        Assert.IsTrue(tryGet(response, out _));
+    }
+
+    private static async Task AssertResponseTryGetReturnsFalse<TResponse, TBody>(
+        JsonResponseFactory<TResponse> createResponse,
+        TryGetBody<TResponse, TBody> tryGet,
+        int statusCode,
+        string json)
+        where TResponse : IAsyncDisposable
+    {
+        using MemoryStream stream = CreateResponseStream(json);
+        await using TResponse response = await createResponse(statusCode, stream);
+        Assert.IsFalse(tryGet(response, out _));
+    }
+
+    private static async Task AssertResponseMatchResult<TResponse>(
+        JsonResponseFactory<TResponse> createResponse,
+        int statusCode,
+        string json,
+        Func<TResponse, string> matcher,
+        string expected)
+        where TResponse : IAsyncDisposable
+    {
+        using MemoryStream stream = CreateResponseStream(json);
+        await using TResponse response = await createResponse(statusCode, stream);
+        Assert.AreEqual(expected, matcher(response));
+    }
+
+    private static async Task AssertResponseMatchResultWithContext<TResponse, TContext>(
+        JsonResponseFactory<TResponse> createResponse,
+        int statusCode,
+        string json,
+        TContext context,
+        Func<TResponse, TContext, string> matcher,
+        string expected)
+        where TResponse : IAsyncDisposable
+    {
+        using MemoryStream stream = CreateResponseStream(json);
+        await using TResponse response = await createResponse(statusCode, stream);
+        Assert.AreEqual(expected, matcher(response, context));
+    }
+
+    private static async Task AssertResponseIsSuccess<TResponse>(
+        JsonResponseFactory<TResponse> createResponse,
+        int statusCode,
+        string json,
+        bool expected)
+        where TResponse : struct, IAsyncDisposable, IApiResponse<TResponse>
+    {
+        using MemoryStream stream = CreateResponseStream(json);
+        await using TResponse response = await createResponse(statusCode, stream);
+        Assert.AreEqual(expected, response.IsSuccess);
+    }
+
+    private static async Task AssertResponseValidateThrows<TResponse>(
+        JsonResponseFactory<TResponse> createResponse,
+        int statusCode,
+        string json,
+        ValidationMode mode)
+        where TResponse : struct, IAsyncDisposable, IApiResponse<TResponse>
+    {
+        using MemoryStream stream = CreateResponseStream(json);
+        await using TResponse response = await createResponse(statusCode, stream);
+        Assert.ThrowsExactly<InvalidOperationException>(() => response.Validate(mode));
     }
 
     private static async Task<GetItemResponse> CreateGetItemResponse(int statusCode, string json)
