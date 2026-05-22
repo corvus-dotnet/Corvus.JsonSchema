@@ -42,13 +42,13 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<GetItemResponse> GetItemAsync(CanonTests30.Client.JsonString.Source itemId, CanonTests30.Client.JsonString.Source filter = default, CanonTests30.Client.JsonInt32.Source limit = default, CanonTests30.Client.JsonBoolean.Source verbose = default, CanonTests30.Client.JsonString.Source xRequestId = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId).RootElement;
+        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId, 30).RootElement;
         GetItemRequest request = new(ItemIdValue)
         {
-            Filter = filter.IsUndefined ? default : (CanonTests30.Client.JsonString)CanonTests30.Client.JsonString.CreateBuilder(workspace, filter).RootElement,
-            Limit = limit.IsUndefined ? default : (CanonTests30.Client.JsonInt32)CanonTests30.Client.JsonInt32.CreateBuilder(workspace, limit).RootElement,
-            Verbose = verbose.IsUndefined ? default : (CanonTests30.Client.JsonBoolean)CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, verbose).RootElement,
-            XRequestId = xRequestId.IsUndefined ? default : (CanonTests30.Client.JsonString)CanonTests30.Client.JsonString.CreateBuilder(workspace, xRequestId).RootElement,
+            Filter = filter.IsUndefined ? default : (CanonTests30.Client.JsonString)CanonTests30.Client.JsonString.CreateBuilder(workspace, filter, 30).RootElement,
+            Limit = limit.IsUndefined ? default : (CanonTests30.Client.JsonInt32)CanonTests30.Client.JsonInt32.CreateBuilder(workspace, limit, 30).RootElement,
+            Verbose = verbose.IsUndefined ? default : (CanonTests30.Client.JsonBoolean)CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, verbose, 30).RootElement,
+            XRequestId = xRequestId.IsUndefined ? default : (CanonTests30.Client.JsonString)CanonTests30.Client.JsonString.CreateBuilder(workspace, xRequestId, 30).RootElement,
         }
         ;
 
@@ -73,7 +73,7 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<DeleteItemResponse> DeleteItemAsync(CanonTests30.Client.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId).RootElement;
+        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId, 30).RootElement;
         DeleteItemRequest request = new(ItemIdValue);
 
         request.Validate(validationMode);
@@ -89,7 +89,7 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<HeadItemResponse> HeadItemAsync(CanonTests30.Client.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId).RootElement;
+        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId, 30).RootElement;
         HeadItemRequest request = new(ItemIdValue);
 
         request.Validate(validationMode);
@@ -106,8 +106,8 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<PatchItemResponse> PatchItemAsync(CanonTests30.Client.JsonString.Source itemId, CanonTests30.Client.PatchItemsByItemIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PatchItemsByItemIdBody bodyValue = CanonTests30.Client.PatchItemsByItemIdBody.CreateBuilder(workspace, body, 0).RootElement;
-        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId).RootElement;
+        CanonTests30.Client.PatchItemsByItemIdBody bodyValue = CanonTests30.Client.PatchItemsByItemIdBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId, 30).RootElement;
         PatchItemRequest request = new(ItemIdValue);
 
         request.Validate(validationMode);
@@ -136,7 +136,7 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<TraceItemResponse> TraceItemAsync(CanonTests30.Client.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId).RootElement;
+        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId, 30).RootElement;
         TraceItemRequest request = new(ItemIdValue);
 
         request.Validate(validationMode);
@@ -154,11 +154,11 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<GetItemTagResponse> GetItemTagAsync(CanonTests30.Client.JsonInt64.Source itemId, CanonTests30.Client.JsonString.Source tagName, CanonTests30.Client.JsonDouble.Source score = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonInt64 ItemIdValue = CanonTests30.Client.JsonInt64.CreateBuilder(workspace, itemId).RootElement;
-        CanonTests30.Client.JsonString TagNameValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, tagName).RootElement;
+        CanonTests30.Client.JsonInt64 ItemIdValue = CanonTests30.Client.JsonInt64.CreateBuilder(workspace, itemId, 30).RootElement;
+        CanonTests30.Client.JsonString TagNameValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, tagName, 30).RootElement;
         GetItemTagRequest request = new(ItemIdValue, TagNameValue)
         {
-            Score = score.IsUndefined ? default : (CanonTests30.Client.JsonDouble)CanonTests30.Client.JsonDouble.CreateBuilder(workspace, score).RootElement,
+            Score = score.IsUndefined ? default : (CanonTests30.Client.JsonDouble)CanonTests30.Client.JsonDouble.CreateBuilder(workspace, score, 30).RootElement,
         }
         ;
 
@@ -175,7 +175,7 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<GetItemDetailsResponse> GetItemDetailsAsync(CanonTests30.Client.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId).RootElement;
+        CanonTests30.Client.JsonString ItemIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, itemId, 30).RootElement;
         GetItemDetailsRequest request = new(ItemIdValue);
 
         request.Validate(validationMode);
@@ -191,7 +191,7 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<UpdateItemResponse> UpdateItemAsync(CanonTests30.Client.PutItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PutItemsBody bodyValue = CanonTests30.Client.PutItemsBody.CreateBuilder(workspace, body, 0).RootElement;
+        CanonTests30.Client.PutItemsBody bodyValue = CanonTests30.Client.PutItemsBody.CreateBuilder(workspace, body, 30).RootElement;
         UpdateItemRequest request = new();
 
         request.Validate(validationMode);
@@ -220,7 +220,7 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<CreateItemResponse> CreateItemAsync(CanonTests30.Client.PostItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PostItemsBody bodyValue = CanonTests30.Client.PostItemsBody.CreateBuilder(workspace, body, 0).RootElement;
+        CanonTests30.Client.PostItemsBody bodyValue = CanonTests30.Client.PostItemsBody.CreateBuilder(workspace, body, 30).RootElement;
         CreateItemRequest request = new();
 
         request.Validate(validationMode);

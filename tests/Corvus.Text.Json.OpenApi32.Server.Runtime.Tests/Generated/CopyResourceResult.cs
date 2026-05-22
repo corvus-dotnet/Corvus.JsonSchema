@@ -48,7 +48,7 @@ public readonly struct CopyResourceResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="location">The value for the <c>Location</c> response header.</param>
     /// <returns>A <see cref="CopyResourceResult"/> with status 201.</returns>
-    public static CopyResourceResult Created(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonUri location = default) => new(201, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json", location: location);
+    public static CopyResourceResult Created(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonUri location = default) => new(201, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json", location: location);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

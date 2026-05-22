@@ -117,6 +117,67 @@ public interface IApiFormsClient : IAsyncDisposable
         /// Gets the device authorization URL for <c>oauth2</c>.
         /// </summary>
         public static string Oauth2DeviceAuthorizationUrl => "https://auth.example.com/device";
+
+        /// <summary>
+        /// Gets the token URL for <c>oauth2</c>.
+        /// </summary>
+        public static string Oauth2TokenUrl => "https://auth.example.com/token";
+
+        /// <summary>
+        /// Gets the authorization URL for <c>oauth2</c>.
+        /// </summary>
+        public static string Oauth2AuthorizationUrl => "https://auth.example.com/authorize";
+
+        /// <summary>
+        /// Gets all available scopes for <c>oauth2</c>.
+        /// </summary>
+        public static readonly string[] Oauth2AvailableScopes = ["read", "write"];
+    }
+
+    /// <summary>
+    /// Per-operation security requirements from the specification.
+    /// </summary>
+    public static class SecurityRequirements
+    {
+        /// <summary>
+        /// Gets the scopes required by <c>SubmitContactForm</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SubmitContactFormOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>UploadDocument</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] UploadDocumentOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SubmitEncodedContactForm</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SubmitEncodedContactFormOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>UploadEncodedDocument</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] UploadEncodedDocumentOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SubmitDefaultForm</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SubmitDefaultFormOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SubmitNonexplodedForm</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SubmitNonexplodedFormOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SubmitMultipartTypes</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SubmitMultipartTypesOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] AllOauth2Scopes = ["read"];
     }
 
     /// <summary>

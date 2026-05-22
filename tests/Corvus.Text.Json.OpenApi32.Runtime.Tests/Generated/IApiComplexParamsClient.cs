@@ -117,6 +117,147 @@ public interface IApiComplexParamsClient : IAsyncDisposable
         /// Gets the device authorization URL for <c>oauth2</c>.
         /// </summary>
         public static string Oauth2DeviceAuthorizationUrl => "https://auth.example.com/device";
+
+        /// <summary>
+        /// Gets the token URL for <c>oauth2</c>.
+        /// </summary>
+        public static string Oauth2TokenUrl => "https://auth.example.com/token";
+
+        /// <summary>
+        /// Gets the authorization URL for <c>oauth2</c>.
+        /// </summary>
+        public static string Oauth2AuthorizationUrl => "https://auth.example.com/authorize";
+
+        /// <summary>
+        /// Gets all available scopes for <c>oauth2</c>.
+        /// </summary>
+        public static readonly string[] Oauth2AvailableScopes = ["read", "write"];
+    }
+
+    /// <summary>
+    /// Per-operation security requirements from the specification.
+    /// </summary>
+    public static class SecurityRequirements
+    {
+        /// <summary>
+        /// Gets the scopes required by <c>PathArraySimple</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PathArraySimpleOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PathArrayLabel</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PathArrayLabelOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PathArrayMatrix</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PathArrayMatrixOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PathObjectSimple</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PathObjectSimpleOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PathObjectSimpleExplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PathObjectSimpleExplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PathObjectLabel</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PathObjectLabelOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PathObjectLabelExplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PathObjectLabelExplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PathObjectMatrix</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PathObjectMatrixOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PathObjectMatrixExplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PathObjectMatrixExplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QueryArrayExplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] QueryArrayExplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QueryArrayNonexplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] QueryArrayNonexplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QueryArraySpace</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] QueryArraySpaceOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QueryArrayPipe</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] QueryArrayPipeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QueryObjectExplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] QueryObjectExplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QueryObjectNonexplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] QueryObjectNonexplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QueryObjectDeep</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] QueryObjectDeepOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>HeaderArray</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] HeaderArrayOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>HeaderObject</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] HeaderObjectOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>HeaderObjectExplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] HeaderObjectExplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CookieArray</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CookieArrayOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CookieArrayNonexplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CookieArrayNonexplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CookieObject</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CookieObjectOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CookieObjectNonexplode</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CookieObjectNonexplodeOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] AllOauth2Scopes = ["read"];
     }
 
     /// <summary>

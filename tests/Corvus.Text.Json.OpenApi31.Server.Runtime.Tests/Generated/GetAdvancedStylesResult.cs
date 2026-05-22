@@ -69,7 +69,7 @@ public readonly struct GetAdvancedStylesResult
     /// <param name="xScores">The value for the <c>X-Scores</c> response header.</param>
     /// <param name="xWeights">The value for the <c>X-Weights</c> response header.</param>
     /// <returns>A <see cref="GetAdvancedStylesResult"/> with status 200.</returns>
-    public static GetAdvancedStylesResult Ok(CanonTests31.Server.GetAdvancedStylesByIdsOk.Source body, JsonWorkspace workspace, CanonTests31.Server.JsonString xRequestId = default, CanonTests31.Server.GetAdvancedStylesByIdsOkXCounts xCounts = default, CanonTests31.Server.GetAdvancedStylesByIdsOkXScores xScores = default, CanonTests31.Server.GetAdvancedStylesByIdsOkXWeights xWeights = default) => new(200, CanonTests31.Server.GetAdvancedStylesByIdsOk.CreateBuilder(workspace, body, 0).RootElement, "application/json", xRequestId: xRequestId, xCounts: xCounts, xScores: xScores, xWeights: xWeights);
+    public static GetAdvancedStylesResult Ok(CanonTests31.Server.GetAdvancedStylesByIdsOk.Source body, JsonWorkspace workspace, CanonTests31.Server.JsonString xRequestId = default, CanonTests31.Server.GetAdvancedStylesByIdsOkXCounts xCounts = default, CanonTests31.Server.GetAdvancedStylesByIdsOkXScores xScores = default, CanonTests31.Server.GetAdvancedStylesByIdsOkXWeights xWeights = default) => new(200, CanonTests31.Server.GetAdvancedStylesByIdsOk.CreateBuilder(workspace, body, 30).RootElement, "application/json", xRequestId: xRequestId, xCounts: xCounts, xScores: xScores, xWeights: xWeights);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

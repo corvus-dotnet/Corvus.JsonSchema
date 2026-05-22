@@ -40,11 +40,11 @@ public sealed class ApiTrackingClient : IApiTrackingClient
     public ValueTask<TrackEventResponse> TrackEventAsync(CanonTests32.Client.JsonString.Source tracker_id, CanonTests32.Client.PostTrackingBody.Source body, CanonTests32.Client.JsonString.Source ref_url = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostTrackingBody bodyValue = CanonTests32.Client.PostTrackingBody.CreateBuilder(workspace, body, 0).RootElement;
-        CanonTests32.Client.JsonString TrackerIdValue = CanonTests32.Client.JsonString.CreateBuilder(workspace, tracker_id).RootElement;
+        CanonTests32.Client.PostTrackingBody bodyValue = CanonTests32.Client.PostTrackingBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests32.Client.JsonString TrackerIdValue = CanonTests32.Client.JsonString.CreateBuilder(workspace, tracker_id, 30).RootElement;
         TrackEventRequest request = new(TrackerIdValue)
         {
-            RefUrl = ref_url.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, ref_url).RootElement,
+            RefUrl = ref_url.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, ref_url, 30).RootElement,
         }
         ;
 

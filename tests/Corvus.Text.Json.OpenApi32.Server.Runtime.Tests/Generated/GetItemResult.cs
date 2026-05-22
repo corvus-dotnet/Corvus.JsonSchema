@@ -83,7 +83,7 @@ public readonly struct GetItemResult
     /// <param name="xPageSizes">The value for the <c>X-Page-Sizes</c> response header.</param>
     /// <param name="xFlags">The value for the <c>X-Flags</c> response header.</param>
     /// <returns>A <see cref="GetItemResult"/> with status 200.</returns>
-    public static GetItemResult Ok(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xRateLimit = default, CanonTests32.Server.JsonBoolean xActive = default, JsonElement xRequestId = default, CanonTests32.Server.GetItemsByItemIdOkXTags xTags = default, CanonTests32.Server.GetItemsByItemIdOkXPageSizes xPageSizes = default, CanonTests32.Server.GetItemsByItemIdOkXFlags xFlags = default) => new(200, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json", xRateLimit: xRateLimit, xActive: xActive, xRequestId: xRequestId, xTags: xTags, xPageSizes: xPageSizes, xFlags: xFlags);
+    public static GetItemResult Ok(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xRateLimit = default, CanonTests32.Server.JsonBoolean xActive = default, JsonElement xRequestId = default, CanonTests32.Server.GetItemsByItemIdOkXTags xTags = default, CanonTests32.Server.GetItemsByItemIdOkXPageSizes xPageSizes = default, CanonTests32.Server.GetItemsByItemIdOkXFlags xFlags = default) => new(200, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json", xRateLimit: xRateLimit, xActive: xActive, xRequestId: xRequestId, xTags: xTags, xPageSizes: xPageSizes, xFlags: xFlags);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

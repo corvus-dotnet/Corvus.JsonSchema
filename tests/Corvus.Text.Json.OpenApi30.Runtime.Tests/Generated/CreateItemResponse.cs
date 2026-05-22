@@ -250,10 +250,10 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
             GetItemRequest request = new()
             {
                 ItemId = CanonTests30.Client.JsonString.From(this.response.CreatedBody.Id),
-                Filter = filter.IsUndefined ? default : (CanonTests30.Client.JsonString)CanonTests30.Client.JsonString.CreateBuilder(workspace, filter).RootElement,
-                Limit = limit.IsUndefined ? default : (CanonTests30.Client.JsonInt32)CanonTests30.Client.JsonInt32.CreateBuilder(workspace, limit).RootElement,
-                Verbose = verbose.IsUndefined ? default : (CanonTests30.Client.JsonBoolean)CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, verbose).RootElement,
-                XRequestId = xRequestId.IsUndefined ? default : (CanonTests30.Client.JsonString)CanonTests30.Client.JsonString.CreateBuilder(workspace, xRequestId).RootElement,
+                Filter = filter.IsUndefined ? default : (CanonTests30.Client.JsonString)CanonTests30.Client.JsonString.CreateBuilder(workspace, filter, 30).RootElement,
+                Limit = limit.IsUndefined ? default : (CanonTests30.Client.JsonInt32)CanonTests30.Client.JsonInt32.CreateBuilder(workspace, limit, 30).RootElement,
+                Verbose = verbose.IsUndefined ? default : (CanonTests30.Client.JsonBoolean)CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, verbose, 30).RootElement,
+                XRequestId = xRequestId.IsUndefined ? default : (CanonTests30.Client.JsonString)CanonTests30.Client.JsonString.CreateBuilder(workspace, xRequestId, 30).RootElement,
             };
 
             return this.response.transport!.SendAsync<GetItemRequest, GetItemResponse>(in request, cancellationToken);
@@ -268,8 +268,8 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
             SearchRequest request = new()
             {
                 Q = CanonTests30.Client.JsonString.From(this.response.sourceBody.Name),
-                Page = page.IsUndefined ? default : (CanonTests30.Client.JsonInt32)CanonTests30.Client.JsonInt32.CreateBuilder(workspace, page).RootElement,
-                Rating = rating.IsUndefined ? default : (CanonTests30.Client.JsonSingle)CanonTests30.Client.JsonSingle.CreateBuilder(workspace, rating).RootElement,
+                Page = page.IsUndefined ? default : (CanonTests30.Client.JsonInt32)CanonTests30.Client.JsonInt32.CreateBuilder(workspace, page, 30).RootElement,
+                Rating = rating.IsUndefined ? default : (CanonTests30.Client.JsonSingle)CanonTests30.Client.JsonSingle.CreateBuilder(workspace, rating, 30).RootElement,
             };
 
             return this.response.transport!.SendAsync<SearchRequest, SearchResponse>(in request, cancellationToken);

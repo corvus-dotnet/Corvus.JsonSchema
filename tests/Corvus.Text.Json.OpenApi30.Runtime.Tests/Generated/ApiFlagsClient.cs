@@ -42,13 +42,13 @@ public sealed class ApiFlagsClient : IApiFlagsClient
     public ValueTask<GetByFlagResponse> GetByFlagAsync(CanonTests30.Client.JsonBoolean.Source active, CanonTests30.Client.JsonString.Source xTraceId, CanonTests30.Client.JsonInt32.Source xRequestCount, CanonTests30.Client.JsonBoolean.Source xDebug = default, CanonTests30.Client.JsonDouble.Source xScore = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonBoolean ActiveValue = CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, active).RootElement;
-        CanonTests30.Client.JsonString XTraceIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, xTraceId).RootElement;
-        CanonTests30.Client.JsonInt32 XRequestCountValue = CanonTests30.Client.JsonInt32.CreateBuilder(workspace, xRequestCount).RootElement;
+        CanonTests30.Client.JsonBoolean ActiveValue = CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, active, 30).RootElement;
+        CanonTests30.Client.JsonString XTraceIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, xTraceId, 30).RootElement;
+        CanonTests30.Client.JsonInt32 XRequestCountValue = CanonTests30.Client.JsonInt32.CreateBuilder(workspace, xRequestCount, 30).RootElement;
         GetByFlagRequest request = new(ActiveValue, XTraceIdValue, XRequestCountValue)
         {
-            XDebug = xDebug.IsUndefined ? default : (CanonTests30.Client.JsonBoolean)CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, xDebug).RootElement,
-            XScore = xScore.IsUndefined ? default : (CanonTests30.Client.JsonDouble)CanonTests30.Client.JsonDouble.CreateBuilder(workspace, xScore).RootElement,
+            XDebug = xDebug.IsUndefined ? default : (CanonTests30.Client.JsonBoolean)CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, xDebug, 30).RootElement,
+            XScore = xScore.IsUndefined ? default : (CanonTests30.Client.JsonDouble)CanonTests30.Client.JsonDouble.CreateBuilder(workspace, xScore, 30).RootElement,
         }
         ;
 

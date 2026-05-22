@@ -41,7 +41,7 @@ public readonly struct SubmitFeedbackResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="SubmitFeedbackResult"/> with status 201.</returns>
-    public static SubmitFeedbackResult Created(CanonTests30.Server.ItemEntity.Source body, JsonWorkspace workspace) => new(201, CanonTests30.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static SubmitFeedbackResult Created(CanonTests30.Server.ItemEntity.Source body, JsonWorkspace workspace) => new(201, CanonTests30.Server.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

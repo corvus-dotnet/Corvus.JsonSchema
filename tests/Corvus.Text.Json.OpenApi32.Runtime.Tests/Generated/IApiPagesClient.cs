@@ -117,6 +117,37 @@ public interface IApiPagesClient : IAsyncDisposable
         /// Gets the device authorization URL for <c>oauth2</c>.
         /// </summary>
         public static string Oauth2DeviceAuthorizationUrl => "https://auth.example.com/device";
+
+        /// <summary>
+        /// Gets the token URL for <c>oauth2</c>.
+        /// </summary>
+        public static string Oauth2TokenUrl => "https://auth.example.com/token";
+
+        /// <summary>
+        /// Gets the authorization URL for <c>oauth2</c>.
+        /// </summary>
+        public static string Oauth2AuthorizationUrl => "https://auth.example.com/authorize";
+
+        /// <summary>
+        /// Gets all available scopes for <c>oauth2</c>.
+        /// </summary>
+        public static readonly string[] Oauth2AvailableScopes = ["read", "write"];
+    }
+
+    /// <summary>
+    /// Per-operation security requirements from the specification.
+    /// </summary>
+    public static class SecurityRequirements
+    {
+        /// <summary>
+        /// Gets the scopes required by <c>GetPage</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetPageOauth2Scopes = ["read"];
+
+        /// <summary>
+        /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] AllOauth2Scopes = ["read"];
     }
 
     /// <summary>

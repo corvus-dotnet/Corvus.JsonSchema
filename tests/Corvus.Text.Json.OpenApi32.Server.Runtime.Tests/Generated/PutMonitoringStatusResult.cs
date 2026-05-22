@@ -41,7 +41,7 @@ public readonly struct PutMonitoringStatusResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="PutMonitoringStatusResult"/> with status 200.</returns>
-    public static PutMonitoringStatusResult Ok(CanonTests32.Server.PutMonitoringStatusOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.PutMonitoringStatusOk.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static PutMonitoringStatusResult Ok(CanonTests32.Server.PutMonitoringStatusOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.PutMonitoringStatusOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

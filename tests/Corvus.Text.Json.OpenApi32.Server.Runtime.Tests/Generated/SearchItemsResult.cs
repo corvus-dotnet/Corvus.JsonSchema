@@ -48,7 +48,7 @@ public readonly struct SearchItemsResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="xFacets">The value for the <c>X-Facets</c> response header.</param>
     /// <returns>A <see cref="SearchItemsResult"/> with status 200.</returns>
-    public static SearchItemsResult Ok(CanonTests32.Server.GetSearchOk.Source body, JsonWorkspace workspace, CanonTests32.Server.GetSearchOkXFacets xFacets = default) => new(200, CanonTests32.Server.GetSearchOk.CreateBuilder(workspace, body, 0).RootElement, "application/json", xFacets: xFacets);
+    public static SearchItemsResult Ok(CanonTests32.Server.GetSearchOk.Source body, JsonWorkspace workspace, CanonTests32.Server.GetSearchOkXFacets xFacets = default) => new(200, CanonTests32.Server.GetSearchOk.CreateBuilder(workspace, body, 30).RootElement, "application/json", xFacets: xFacets);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

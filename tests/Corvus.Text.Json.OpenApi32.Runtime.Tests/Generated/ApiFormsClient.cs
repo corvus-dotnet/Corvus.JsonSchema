@@ -21,6 +21,31 @@ public sealed class ApiFormsClient : IApiFormsClient
 {
     private readonly IApiTransport transport;
 
+    private static readonly Dictionary<string, PropertyEncoding> SubmitEncodedContactFormEncodings = new(StringComparer.Ordinal)
+    {
+        ["tags"] = new(Style: "pipeDelimited", Explode: false),
+        ["address"] = new(Style: "deepObject", Explode: true),
+        ["email"] = new(AllowReserved: true),
+    };
+
+    private static readonly Dictionary<string, PropertyEncoding> UploadEncodedDocumentMultipartEncodings = new(StringComparer.Ordinal)
+    {
+        ["metadata"] = new(ContentType: "application/json"),
+        ["tags"] = new(ContentType: "application/json"),
+    };
+
+    private static readonly Dictionary<string, PropertyEncoding> SubmitNonexplodedFormEncodings = new(StringComparer.Ordinal)
+    {
+        ["keywords"] = new(Style: "spaceDelimited", Explode: false),
+        ["data"] = new(Style: "form", Explode: false),
+    };
+
+    private static readonly Dictionary<string, PropertyEncoding> SubmitMultipartTypesMultipartEncodings = new(StringComparer.Ordinal)
+    {
+        ["title"] = new(ContentType: "text/plain"),
+        ["file"] = new(ContentType: "application/octet-stream"),
+    };
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiFormsClient"/> class.
     /// </summary>
@@ -38,7 +63,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<SubmitContactFormResponse> SubmitContactFormAsync(CanonTests32.Client.PostFormsContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostFormsContactBody bodyValue = CanonTests32.Client.PostFormsContactBody.CreateBuilder(workspace, body, 0).RootElement;
+        CanonTests32.Client.PostFormsContactBody bodyValue = CanonTests32.Client.PostFormsContactBody.CreateBuilder(workspace, body, 30).RootElement;
         SubmitContactFormRequest request = new();
 
         request.Validate(validationMode);
@@ -56,7 +81,7 @@ public sealed class ApiFormsClient : IApiFormsClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyWriterAsyncCore<SubmitContactFormRequest, SubmitContactFormResponse>(workspace, request, stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<SubmitContactFormRequest, SubmitContactFormResponse>(workspace, request, (stream, ct) => { FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }, "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -67,7 +92,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<UploadDocumentResponse> UploadDocumentAsync(CanonTests32.Client.PostFormsUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostFormsUploadBody bodyValue = CanonTests32.Client.PostFormsUploadBody.CreateBuilder(workspace, body, 0).RootElement;
+        CanonTests32.Client.PostFormsUploadBody bodyValue = CanonTests32.Client.PostFormsUploadBody.CreateBuilder(workspace, body, 30).RootElement;
         UploadDocumentRequest request = new();
 
         request.Validate(validationMode);
@@ -86,7 +111,7 @@ public sealed class ApiFormsClient : IApiFormsClient
         }
 
         string boundary = MultipartFormDataSerializer.GenerateBoundary();
-        return SendWithBodyWriterAsyncCore<UploadDocumentRequest, UploadDocumentResponse>(workspace, request, stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<UploadDocumentRequest, UploadDocumentResponse>(workspace, request, (stream, ct) => { MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary); return default; }, "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -97,7 +122,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<SubmitEncodedContactFormResponse> SubmitEncodedContactFormAsync(CanonTests32.Client.PostFormsEncodedContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostFormsEncodedContactBody bodyValue = CanonTests32.Client.PostFormsEncodedContactBody.CreateBuilder(workspace, body, 0).RootElement;
+        CanonTests32.Client.PostFormsEncodedContactBody bodyValue = CanonTests32.Client.PostFormsEncodedContactBody.CreateBuilder(workspace, body, 30).RootElement;
         SubmitEncodedContactFormRequest request = new();
 
         request.Validate(validationMode);
@@ -115,13 +140,7 @@ public sealed class ApiFormsClient : IApiFormsClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)
-        {
-            ["tags"] = new(Style: "pipeDelimited", Explode: false),
-            ["address"] = new(Style: "deepObject", Explode: true),
-            ["email"] = new(AllowReserved: true),
-        };
-        return SendWithBodyWriterAsyncCore<SubmitEncodedContactFormRequest, SubmitEncodedContactFormResponse>(workspace, request, stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<SubmitEncodedContactFormRequest, SubmitEncodedContactFormResponse>(workspace, request, (stream, ct) => { FormUrlEncodedSerializer.Serialize(bodyValue, stream, SubmitEncodedContactFormEncodings); return default; }, "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -132,7 +151,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<UploadEncodedDocumentResponse> UploadEncodedDocumentAsync(CanonTests32.Client.PostFormsEncodedUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostFormsEncodedUploadBody bodyValue = CanonTests32.Client.PostFormsEncodedUploadBody.CreateBuilder(workspace, body, 0).RootElement;
+        CanonTests32.Client.PostFormsEncodedUploadBody bodyValue = CanonTests32.Client.PostFormsEncodedUploadBody.CreateBuilder(workspace, body, 30).RootElement;
         UploadEncodedDocumentRequest request = new();
 
         request.Validate(validationMode);
@@ -151,12 +170,7 @@ public sealed class ApiFormsClient : IApiFormsClient
         }
 
         string boundary = MultipartFormDataSerializer.GenerateBoundary();
-        Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)
-        {
-            ["metadata"] = new(ContentType: "application/json"),
-            ["tags"] = new(ContentType: "application/json"),
-        };
-        return SendWithBodyWriterAsyncCore<UploadEncodedDocumentRequest, UploadEncodedDocumentResponse>(workspace, request, stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<UploadEncodedDocumentRequest, UploadEncodedDocumentResponse>(workspace, request, (stream, ct) => { MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, UploadEncodedDocumentMultipartEncodings); return default; }, "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -167,7 +181,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<SubmitDefaultFormResponse> SubmitDefaultFormAsync(CanonTests32.Client.PostFormsDefaultFormBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostFormsDefaultFormBody bodyValue = CanonTests32.Client.PostFormsDefaultFormBody.CreateBuilder(workspace, body, 0).RootElement;
+        CanonTests32.Client.PostFormsDefaultFormBody bodyValue = CanonTests32.Client.PostFormsDefaultFormBody.CreateBuilder(workspace, body, 30).RootElement;
         SubmitDefaultFormRequest request = new();
 
         request.Validate(validationMode);
@@ -185,7 +199,7 @@ public sealed class ApiFormsClient : IApiFormsClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyWriterAsyncCore<SubmitDefaultFormRequest, SubmitDefaultFormResponse>(workspace, request, stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<SubmitDefaultFormRequest, SubmitDefaultFormResponse>(workspace, request, (stream, ct) => { FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }, "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -196,7 +210,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<SubmitNonexplodedFormResponse> SubmitNonexplodedFormAsync(CanonTests32.Client.PostFormsNonexplodedFormBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostFormsNonexplodedFormBody bodyValue = CanonTests32.Client.PostFormsNonexplodedFormBody.CreateBuilder(workspace, body, 0).RootElement;
+        CanonTests32.Client.PostFormsNonexplodedFormBody bodyValue = CanonTests32.Client.PostFormsNonexplodedFormBody.CreateBuilder(workspace, body, 30).RootElement;
         SubmitNonexplodedFormRequest request = new();
 
         request.Validate(validationMode);
@@ -214,12 +228,7 @@ public sealed class ApiFormsClient : IApiFormsClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)
-        {
-            ["keywords"] = new(Style: "spaceDelimited", Explode: false),
-            ["data"] = new(Style: "form", Explode: false),
-        };
-        return SendWithBodyWriterAsyncCore<SubmitNonexplodedFormRequest, SubmitNonexplodedFormResponse>(workspace, request, stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<SubmitNonexplodedFormRequest, SubmitNonexplodedFormResponse>(workspace, request, (stream, ct) => { FormUrlEncodedSerializer.Serialize(bodyValue, stream, SubmitNonexplodedFormEncodings); return default; }, "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -231,7 +240,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<SubmitMultipartTypesResponse> SubmitMultipartTypesAsync(CanonTests32.Client.PostFormsMultipartTypesBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostFormsMultipartTypesBody bodyValue = CanonTests32.Client.PostFormsMultipartTypesBody.CreateBuilder(workspace, body, 0).RootElement;
+        CanonTests32.Client.PostFormsMultipartTypesBody bodyValue = CanonTests32.Client.PostFormsMultipartTypesBody.CreateBuilder(workspace, body, 30).RootElement;
         SubmitMultipartTypesRequest request = new();
 
         request.Validate(validationMode);
@@ -254,12 +263,7 @@ public sealed class ApiFormsClient : IApiFormsClient
         {
             ["file"] = file,
         };
-        Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)
-        {
-            ["title"] = new(ContentType: "text/plain"),
-            ["file"] = new(ContentType: "application/octet-stream"),
-        };
-        return SendWithBodyWriterAsyncCore<SubmitMultipartTypesRequest, SubmitMultipartTypesResponse>(workspace, request, stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings, binaryParts), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<SubmitMultipartTypesRequest, SubmitMultipartTypesResponse>(workspace, request, (stream, ct) => MultipartFormDataSerializer.SerializeAsync(bodyValue, stream, boundary, SubmitMultipartTypesMultipartEncodings, binaryParts, ct), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -268,7 +272,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     private async ValueTask<TResponse> SendWithBodyWriterAsyncCore<TRequest, TResponse>(
         JsonWorkspace workspace,
         TRequest request,
-        Action<Stream> bodyWriter,
+        Func<Stream, CancellationToken, ValueTask> bodyWriter,
         string contentType,
         ValidationMode responseValidationMode,
         CancellationToken cancellationToken)

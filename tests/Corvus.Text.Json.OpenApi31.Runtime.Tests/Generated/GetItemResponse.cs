@@ -289,10 +289,10 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
             GetItemRequest request = new()
             {
                 ItemId = CanonTests31.Client.JsonString.From(this.response.sourceRequest.ItemId),
-                Filter = filter.IsUndefined ? default : (CanonTests31.Client.JsonString)CanonTests31.Client.JsonString.CreateBuilder(workspace, filter).RootElement,
-                Limit = limit.IsUndefined ? default : (CanonTests31.Client.JsonInt32)CanonTests31.Client.JsonInt32.CreateBuilder(workspace, limit).RootElement,
-                Verbose = verbose.IsUndefined ? default : (CanonTests31.Client.JsonBoolean)CanonTests31.Client.JsonBoolean.CreateBuilder(workspace, verbose).RootElement,
-                XRequestId = xRequestId.IsUndefined ? default : (CanonTests31.Client.JsonString)CanonTests31.Client.JsonString.CreateBuilder(workspace, xRequestId).RootElement,
+                Filter = filter.IsUndefined ? default : (CanonTests31.Client.JsonString)CanonTests31.Client.JsonString.CreateBuilder(workspace, filter, 30).RootElement,
+                Limit = limit.IsUndefined ? default : (CanonTests31.Client.JsonInt32)CanonTests31.Client.JsonInt32.CreateBuilder(workspace, limit, 30).RootElement,
+                Verbose = verbose.IsUndefined ? default : (CanonTests31.Client.JsonBoolean)CanonTests31.Client.JsonBoolean.CreateBuilder(workspace, verbose, 30).RootElement,
+                XRequestId = xRequestId.IsUndefined ? default : (CanonTests31.Client.JsonString)CanonTests31.Client.JsonString.CreateBuilder(workspace, xRequestId, 30).RootElement,
             };
 
             return this.response.transport!.SendAsync<GetItemRequest, GetItemResponse>(in request, cancellationToken);

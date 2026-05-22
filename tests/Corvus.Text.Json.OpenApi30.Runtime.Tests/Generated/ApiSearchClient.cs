@@ -40,11 +40,11 @@ public sealed class ApiSearchClient : IApiSearchClient
     public ValueTask<SearchResponse> SearchAsync(CanonTests30.Client.JsonString.Source q, CanonTests30.Client.JsonInt32.Source page = default, CanonTests30.Client.JsonSingle.Source rating = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonString QValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, q).RootElement;
+        CanonTests30.Client.JsonString QValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, q, 30).RootElement;
         SearchRequest request = new(QValue)
         {
-            Page = page.IsUndefined ? default : (CanonTests30.Client.JsonInt32)CanonTests30.Client.JsonInt32.CreateBuilder(workspace, page).RootElement,
-            Rating = rating.IsUndefined ? default : (CanonTests30.Client.JsonSingle)CanonTests30.Client.JsonSingle.CreateBuilder(workspace, rating).RootElement,
+            Page = page.IsUndefined ? default : (CanonTests30.Client.JsonInt32)CanonTests30.Client.JsonInt32.CreateBuilder(workspace, page, 30).RootElement,
+            Rating = rating.IsUndefined ? default : (CanonTests30.Client.JsonSingle)CanonTests30.Client.JsonSingle.CreateBuilder(workspace, rating, 30).RootElement,
         }
         ;
 

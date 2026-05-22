@@ -40,11 +40,11 @@ public sealed class ApiOrdersClient : IApiOrdersClient
     public ValueTask<GetOrderResponse> GetOrderAsync(CanonTests32.Client.JsonUuid.Source orderId, CanonTests32.Client.JsonString.Source xTraceId = default, CanonTests32.Client.JsonString.Source fields = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.JsonUuid OrderIdValue = CanonTests32.Client.JsonUuid.CreateBuilder(workspace, orderId).RootElement;
+        CanonTests32.Client.JsonUuid OrderIdValue = CanonTests32.Client.JsonUuid.CreateBuilder(workspace, orderId, 30).RootElement;
         GetOrderRequest request = new(OrderIdValue)
         {
-            XTraceId = xTraceId.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, xTraceId).RootElement,
-            Fields = fields.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, fields).RootElement,
+            XTraceId = xTraceId.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, xTraceId, 30).RootElement,
+            Fields = fields.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, fields, 30).RootElement,
         }
         ;
 
@@ -63,9 +63,9 @@ public sealed class ApiOrdersClient : IApiOrdersClient
     public ValueTask<UpdateOrderResponse> UpdateOrderAsync(CanonTests32.Client.JsonUuid.Source orderId, CanonTests32.Client.JsonUuid.Source xTraceId, CanonTests32.Client.PutOrdersByOrderIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PutOrdersByOrderIdBody bodyValue = CanonTests32.Client.PutOrdersByOrderIdBody.CreateBuilder(workspace, body, 0).RootElement;
-        CanonTests32.Client.JsonUuid OrderIdValue = CanonTests32.Client.JsonUuid.CreateBuilder(workspace, orderId).RootElement;
-        CanonTests32.Client.JsonUuid XTraceIdValue = CanonTests32.Client.JsonUuid.CreateBuilder(workspace, xTraceId).RootElement;
+        CanonTests32.Client.PutOrdersByOrderIdBody bodyValue = CanonTests32.Client.PutOrdersByOrderIdBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests32.Client.JsonUuid OrderIdValue = CanonTests32.Client.JsonUuid.CreateBuilder(workspace, orderId, 30).RootElement;
+        CanonTests32.Client.JsonUuid XTraceIdValue = CanonTests32.Client.JsonUuid.CreateBuilder(workspace, xTraceId, 30).RootElement;
         UpdateOrderRequest request = new(OrderIdValue, XTraceIdValue);
 
         request.Validate(validationMode);

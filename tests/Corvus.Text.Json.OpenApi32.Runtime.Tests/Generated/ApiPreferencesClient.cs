@@ -39,10 +39,10 @@ public sealed class ApiPreferencesClient : IApiPreferencesClient
     public ValueTask<GetPreferencesResponse> GetPreferencesAsync(CanonTests32.Client.JsonString.Source session_token, CanonTests32.Client.JsonString.Source theme = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.JsonString SessionTokenValue = CanonTests32.Client.JsonString.CreateBuilder(workspace, session_token).RootElement;
+        CanonTests32.Client.JsonString SessionTokenValue = CanonTests32.Client.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
         GetPreferencesRequest request = new(SessionTokenValue)
         {
-            Theme = theme.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, theme).RootElement,
+            Theme = theme.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, theme, 30).RootElement,
         }
         ;
 

@@ -41,7 +41,7 @@ public readonly struct ListItemsResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ListItemsResult"/> with status 200.</returns>
-    public static ListItemsResult Ok(CanonTests31.Server.GetItemsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests31.Server.GetItemsOk.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static ListItemsResult Ok(CanonTests31.Server.GetItemsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests31.Server.GetItemsOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a default error result.
@@ -50,7 +50,7 @@ public readonly struct ListItemsResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ListItemsResult"/> with status default.</returns>
-    public static ListItemsResult Default(int statusCode, CanonTests31.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, CanonTests31.Server.Error.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static ListItemsResult Default(int statusCode, CanonTests31.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, CanonTests31.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

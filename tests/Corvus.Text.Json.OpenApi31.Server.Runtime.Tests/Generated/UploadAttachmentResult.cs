@@ -41,7 +41,7 @@ public readonly struct UploadAttachmentResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="UploadAttachmentResult"/> with status 201.</returns>
-    public static UploadAttachmentResult Created(CanonTests31.Server.ItemEntity.Source body, JsonWorkspace workspace) => new(201, CanonTests31.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static UploadAttachmentResult Created(CanonTests31.Server.ItemEntity.Source body, JsonWorkspace workspace) => new(201, CanonTests31.Server.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

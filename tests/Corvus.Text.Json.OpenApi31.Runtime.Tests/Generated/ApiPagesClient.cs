@@ -39,10 +39,10 @@ public sealed class ApiPagesClient : IApiPagesClient
     public ValueTask<GetPageResponse> GetPageAsync(CanonTests31.Client.JsonInt32.Source pageNum, CanonTests31.Client.JsonInteger.Source offset = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests31.Client.JsonInt32 PageNumValue = CanonTests31.Client.JsonInt32.CreateBuilder(workspace, pageNum).RootElement;
+        CanonTests31.Client.JsonInt32 PageNumValue = CanonTests31.Client.JsonInt32.CreateBuilder(workspace, pageNum, 30).RootElement;
         GetPageRequest request = new(PageNumValue)
         {
-            Offset = offset.IsUndefined ? default : (CanonTests31.Client.JsonInteger)CanonTests31.Client.JsonInteger.CreateBuilder(workspace, offset).RootElement,
+            Offset = offset.IsUndefined ? default : (CanonTests31.Client.JsonInteger)CanonTests31.Client.JsonInteger.CreateBuilder(workspace, offset, 30).RootElement,
         }
         ;
 

@@ -41,7 +41,7 @@ public readonly struct GetByStyledObjectResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetByStyledObjectResult"/> with status 200.</returns>
-    public static GetByStyledObjectResult Ok(CanonTests32.Server.GetStyledObjectByObjOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.GetStyledObjectByObjOk.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static GetByStyledObjectResult Ok(CanonTests32.Server.GetStyledObjectByObjOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.GetStyledObjectByObjOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

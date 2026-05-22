@@ -3513,4 +3513,124 @@ public static class ApiEndpointRegistration
 
         return app;
     }
+    /// <summary>
+    /// Security scheme metadata from the specification.
+    /// </summary>
+    public static class SecuritySchemes
+    {
+
+        /// <summary>
+        /// Gets the name of the <c>bearerAuth</c> security scheme.
+        /// </summary>
+        public static string BearerAuthName => "bearerAuth";
+
+        /// <summary>
+        /// Gets the type of the <c>bearerAuth</c> security scheme.
+        /// </summary>
+        public static string BearerAuthType => "http";
+
+        /// <summary>
+        /// Gets the HTTP scheme for <c>bearerAuth</c>.
+        /// </summary>
+        public static string BearerAuthScheme => "bearer";
+
+
+        /// <summary>
+        /// Gets the name of the <c>apiKeyAuth</c> security scheme.
+        /// </summary>
+        public static string ApiKeyAuthName => "apiKeyAuth";
+
+        /// <summary>
+        /// Gets the type of the <c>apiKeyAuth</c> security scheme.
+        /// </summary>
+        public static string ApiKeyAuthType => "apiKey";
+
+        /// <summary>
+        /// Gets the API key parameter name for <c>apiKeyAuth</c>.
+        /// </summary>
+        public static string ApiKeyAuthKeyName => "X-API-Key";
+
+        /// <summary>
+        /// Gets the API key location for <c>apiKeyAuth</c>.
+        /// </summary>
+        public static string ApiKeyAuthKeyLocation => "header";
+
+
+        /// <summary>
+        /// Gets the name of the <c>legacyAuth</c> security scheme.
+        /// </summary>
+        [Obsolete("This security scheme is deprecated.")]
+        public static string LegacyAuthName => "legacyAuth";
+
+        /// <summary>
+        /// Gets the type of the <c>legacyAuth</c> security scheme.
+        /// </summary>
+        [Obsolete("This security scheme is deprecated.")]
+        public static string LegacyAuthType => "apiKey";
+
+        /// <summary>
+        /// Gets the API key parameter name for <c>legacyAuth</c>.
+        /// </summary>
+        [Obsolete("This security scheme is deprecated.")]
+        public static string LegacyAuthKeyName => "api_key";
+
+        /// <summary>
+        /// Gets the API key location for <c>legacyAuth</c>.
+        /// </summary>
+        [Obsolete("This security scheme is deprecated.")]
+        public static string LegacyAuthKeyLocation => "query";
+
+
+        /// <summary>
+        /// Gets the name of the <c>openIdAuth</c> security scheme.
+        /// </summary>
+        public static string OpenIdAuthName => "openIdAuth";
+
+        /// <summary>
+        /// Gets the type of the <c>openIdAuth</c> security scheme.
+        /// </summary>
+        public static string OpenIdAuthType => "openIdConnect";
+
+        /// <summary>
+        /// Gets the OpenID Connect discovery URL for <c>openIdAuth</c>.
+        /// </summary>
+        public static string OpenIdAuthOpenIdConnectUrl => "https://auth.example.com/.well-known/openid-configuration";
+
+
+        /// <summary>
+        /// Gets the name of the <c>oauth2Auth</c> security scheme.
+        /// </summary>
+        public static string Oauth2AuthName => "oauth2Auth";
+
+        /// <summary>
+        /// Gets the type of the <c>oauth2Auth</c> security scheme.
+        /// </summary>
+        public static string Oauth2AuthType => "oauth2";
+
+        /// <summary>
+        /// Gets the OAuth2 metadata URL for <c>oauth2Auth</c>.
+        /// </summary>
+        public static string Oauth2AuthOauth2MetadataUrl => "https://auth.example.com/.well-known/oauth-authorization-server";
+
+        /// <summary>
+        /// Gets the device authorization URL for <c>oauth2Auth</c>.
+        /// </summary>
+        public static string Oauth2AuthDeviceAuthorizationUrl => "https://auth.example.com/device";
+
+        /// <summary>
+        /// Gets the token URL for <c>oauth2Auth</c>.
+        /// </summary>
+        public static string Oauth2AuthTokenUrl => "https://auth.example.com/token";
+
+        /// <summary>
+        /// Gets the authorization URL for <c>oauth2Auth</c>.
+        /// </summary>
+        public static string Oauth2AuthAuthorizationUrl => "https://auth.example.com/authorize";
+
+        /// <summary>
+        /// Gets all available scopes for <c>oauth2Auth</c>.
+        /// </summary>
+        public static readonly string[] Oauth2AuthAvailableScopes = ["read", "write"];
+    }
+
 }
