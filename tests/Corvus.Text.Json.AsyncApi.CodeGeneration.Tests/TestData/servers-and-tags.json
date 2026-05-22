@@ -1,0 +1,121 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Event Service",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "production": {
+      "host": "broker.example.com:9092",
+      "protocol": "kafka",
+      "security": [
+        { "$ref": "#/components/securitySchemes/sasl" }
+      ],
+      "variables": {
+        "environment": {
+          "default": "prod",
+          "enum": ["prod", "staging"],
+          "description": "The deployment environment."
+        }
+      }
+    },
+    "staging": {
+      "host": "staging-broker.example.com:9092",
+      "protocol": "kafka",
+      "pathname": "/v2"
+    }
+  },
+  "channels": {
+    "userEvents": {
+      "address": "events.user.{userId}",
+      "messages": {
+        "UserCreated": { "$ref": "#/components/messages/UserCreated" },
+        "UserDeleted": { "$ref": "#/components/messages/UserDeleted" }
+      },
+      "parameters": {
+        "userId": {
+          "description": "The user ID."
+        }
+      }
+    },
+    "auditLog": {
+      "address": "events.audit",
+      "messages": {
+        "AuditEntry": { "$ref": "#/components/messages/AuditEntry" }
+      }
+    }
+  },
+  "operations": {
+    "publishUserCreated": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/userEvents" },
+      "messages": [
+        { "$ref": "#/channels/userEvents/messages/UserCreated" }
+      ],
+      "tags": [
+        { "name": "users" },
+        { "name": "lifecycle" }
+      ]
+    },
+    "publishUserDeleted": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/userEvents" },
+      "messages": [
+        { "$ref": "#/channels/userEvents/messages/UserDeleted" }
+      ],
+      "tags": [
+        { "name": "users" },
+        { "name": "lifecycle" }
+      ]
+    },
+    "publishAudit": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/auditLog" },
+      "messages": [
+        { "$ref": "#/channels/auditLog/messages/AuditEntry" }
+      ],
+      "tags": [
+        { "name": "audit" }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "UserCreated": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "userId": { "type": "string" },
+            "email": { "type": "string", "format": "email" }
+          },
+          "required": ["userId", "email"]
+        }
+      },
+      "UserDeleted": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "userId": { "type": "string" },
+            "reason": { "type": "string" }
+          },
+          "required": ["userId"]
+        }
+      },
+      "AuditEntry": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string" },
+            "timestamp": { "type": "string", "format": "date-time" }
+          },
+          "required": ["action", "timestamp"]
+        }
+      }
+    },
+    "securitySchemes": {
+      "sasl": {
+        "type": "scramSha256"
+      }
+    }
+  }
+}

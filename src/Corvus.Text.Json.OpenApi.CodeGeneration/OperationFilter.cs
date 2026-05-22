@@ -26,12 +26,17 @@ public sealed class OperationFilter
     /// <param name="excludePaths">
     /// Glob patterns for paths/channels to exclude from the include set.
     /// </param>
+    /// <param name="tags">
+    /// Tag names to filter by. If non-empty, only operations with at least one matching tag are included.
+    /// </param>
     public OperationFilter(
         IReadOnlyList<string>? includePaths = null,
-        IReadOnlyList<string>? excludePaths = null)
+        IReadOnlyList<string>? excludePaths = null,
+        IReadOnlyList<string>? tags = null)
     {
         this.IncludePaths = includePaths ?? Array.Empty<string>();
         this.ExcludePaths = excludePaths ?? Array.Empty<string>();
+        this.Tags = tags ?? Array.Empty<string>();
         this.includeRegexes = CompilePatterns(this.IncludePaths);
         this.excludeRegexes = CompilePatterns(this.ExcludePaths);
     }
@@ -45,6 +50,11 @@ public sealed class OperationFilter
     /// Gets the exclude patterns.
     /// </summary>
     public IReadOnlyList<string> ExcludePaths { get; }
+
+    /// <summary>
+    /// Gets the tag names to filter by. If empty, tags are not considered.
+    /// </summary>
+    public IReadOnlyList<string> Tags { get; }
 
     /// <summary>
     /// Determines whether the given path matches the filter.
@@ -81,6 +91,33 @@ public sealed class OperationFilter
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Determines whether the given operation tags satisfy the tag filter.
+    /// </summary>
+    /// <param name="operationTags">The tags declared on the operation.</param>
+    /// <returns><see langword="true"/> if no tag filter is set, or if at least
+    /// one operation tag matches a filter tag; otherwise <see langword="false"/>.</returns>
+    public bool MatchesTags(IReadOnlyList<string> operationTags)
+    {
+        if (this.Tags.Count == 0)
+        {
+            return true;
+        }
+
+        for (int i = 0; i < operationTags.Count; i++)
+        {
+            for (int j = 0; j < this.Tags.Count; j++)
+            {
+                if (string.Equals(operationTags[i], this.Tags[j], StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static Regex[] CompilePatterns(IReadOnlyList<string> patterns)

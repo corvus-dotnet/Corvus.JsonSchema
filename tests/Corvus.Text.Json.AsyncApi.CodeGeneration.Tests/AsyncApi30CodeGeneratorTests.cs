@@ -272,4 +272,58 @@ public class AsyncApi30CodeGeneratorTests
             pointers.Contains("#/components/messages/CalculateResponse/payload"),
             "Should collect reply payload schema pointer");
     }
+
+    [TestMethod]
+    public void ListServers_ReturnsServerInfo()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "servers-and-tags.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        ServerInfo[] servers = AsyncApi30CodeGenerator.ListServers(root);
+
+        Assert.AreEqual(2, servers.Length);
+
+        ServerInfo production = servers.First(s => s.Name == "production");
+        Assert.AreEqual("broker.example.com:9092", production.Host);
+        Assert.AreEqual("kafka", production.Protocol);
+        Assert.AreEqual(1, production.Variables.Count);
+        Assert.AreEqual("environment", production.Variables[0].Name);
+        Assert.AreEqual("prod", production.Variables[0].DefaultValue);
+        Assert.AreEqual(2, production.Variables[0].EnumValues.Count);
+        Assert.AreEqual(1, production.SecuritySchemes.Count);
+        Assert.AreEqual("sasl", production.SecuritySchemes[0]);
+
+        ServerInfo staging = servers.First(s => s.Name == "staging");
+        Assert.AreEqual("/v2", staging.Pathname);
+    }
+
+    [TestMethod]
+    public void ListOperations_WithTagFilter_FiltersOperations()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "servers-and-tags.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        // Filter to only "audit" tag
+        var filter = new OperationFilter(tags: ["audit"]);
+        AsyncApiOperationSummary[] ops = AsyncApi30CodeGenerator.ListOperations(root, filter);
+
+        Assert.AreEqual(1, ops.Length);
+        Assert.AreEqual("publishAudit", ops[0].OperationId);
+    }
+
+    [TestMethod]
+    public void ListOperations_WithTagFilter_MultipleTagsAreUnion()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "servers-and-tags.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        // Filter to "users" OR "audit" — should match all 3 operations
+        var filter = new OperationFilter(tags: ["users", "audit"]);
+        AsyncApiOperationSummary[] ops = AsyncApi30CodeGenerator.ListOperations(root, filter);
+
+        Assert.AreEqual(3, ops.Length);
+    }
 }

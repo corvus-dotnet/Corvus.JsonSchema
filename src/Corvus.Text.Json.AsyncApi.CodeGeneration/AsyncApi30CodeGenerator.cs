@@ -186,6 +186,11 @@ public sealed class AsyncApi30CodeGenerator
                 }
             }
 
+            if (filter?.MatchesTags(tags) == false)
+            {
+                continue;
+            }
+
             // Count messages
             int messageCount = 0;
             if (opElement.TryGetProperty("messages"u8, out JsonElement msgsEl) &&
@@ -206,6 +211,122 @@ public sealed class AsyncApi30CodeGenerator
                 summary,
                 messageCount,
                 Protocol: null));
+        }
+
+        return [.. result];
+    }
+
+    /// <summary>
+    /// Lists all servers defined in the AsyncAPI 3.0 specification.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <returns>An array of <see cref="ServerInfo"/> records.</returns>
+    public static ServerInfo[] ListServers(JsonElement specRoot)
+    {
+        AsyncApiDocument doc = specRoot;
+        List<ServerInfo> result = [];
+
+        JsonElement root = (JsonElement)doc;
+        if (!root.TryGetProperty("servers"u8, out JsonElement serversEl) ||
+            serversEl.ValueKind != JsonValueKind.Object)
+        {
+            return [];
+        }
+
+        foreach (var serverProp in serversEl.EnumerateObject())
+        {
+            string name = serverProp.Name;
+            JsonElement server = serverProp.Value;
+
+            string host = string.Empty;
+            if (server.TryGetProperty("host"u8, out JsonElement hostEl) &&
+                hostEl.ValueKind == JsonValueKind.String)
+            {
+                host = hostEl.GetString()!;
+            }
+
+            string protocol = string.Empty;
+            if (server.TryGetProperty("protocol"u8, out JsonElement protocolEl) &&
+                protocolEl.ValueKind == JsonValueKind.String)
+            {
+                protocol = protocolEl.GetString()!;
+            }
+
+            string? pathname = null;
+            if (server.TryGetProperty("pathname"u8, out JsonElement pathnameEl) &&
+                pathnameEl.ValueKind == JsonValueKind.String)
+            {
+                pathname = pathnameEl.GetString();
+            }
+
+            // Parse variables
+            List<ServerVariable> variables = [];
+            if (server.TryGetProperty("variables"u8, out JsonElement varsEl) &&
+                varsEl.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var varProp in varsEl.EnumerateObject())
+                {
+                    string varName = varProp.Name;
+                    JsonElement varObj = varProp.Value;
+
+                    string? defaultValue = null;
+                    if (varObj.TryGetProperty("default"u8, out JsonElement defEl) &&
+                        defEl.ValueKind == JsonValueKind.String)
+                    {
+                        defaultValue = defEl.GetString();
+                    }
+
+                    List<string> enumValues = [];
+                    if (varObj.TryGetProperty("enum"u8, out JsonElement enumEl) &&
+                        enumEl.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (JsonElement e in enumEl.EnumerateArray())
+                        {
+                            if (e.ValueKind == JsonValueKind.String)
+                            {
+                                enumValues.Add(e.GetString()!);
+                            }
+                        }
+                    }
+
+                    string? description = null;
+                    if (varObj.TryGetProperty("description"u8, out JsonElement descEl) &&
+                        descEl.ValueKind == JsonValueKind.String)
+                    {
+                        description = descEl.GetString();
+                    }
+
+                    variables.Add(new ServerVariable(varName, defaultValue, enumValues, description));
+                }
+            }
+
+            // Parse security schemes
+            List<string> securitySchemes = [];
+            if (server.TryGetProperty("security"u8, out JsonElement secEl) &&
+                secEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement secItem in secEl.EnumerateArray())
+                {
+                    if (secItem.TryGetProperty("$ref"u8, out JsonElement refEl) &&
+                        refEl.ValueKind == JsonValueKind.String)
+                    {
+                        string refStr = refEl.GetString()!;
+                        const string prefix = "#/components/securitySchemes/";
+                        if (refStr.StartsWith(prefix, StringComparison.Ordinal))
+                        {
+                            securitySchemes.Add(refStr[prefix.Length..]);
+                        }
+                    }
+                    else if (secItem.TryGetProperty("type"u8, out JsonElement typeEl) &&
+                             typeEl.ValueKind == JsonValueKind.String)
+                    {
+                        // Inline security scheme — use type as name
+                        securitySchemes.Add(typeEl.GetString()!);
+                    }
+                }
+            }
+
+            result.Add(new ServerInfo(name, host, protocol, pathname, variables, securitySchemes));
         }
 
         return [.. result];

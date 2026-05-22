@@ -157,13 +157,14 @@ internal sealed class AsyncApiShowCommand : AsyncCommand<AsyncApiSettings>
     {
         string[] includes = settings.IncludeChannel ?? [];
         string[] excludes = settings.ExcludeChannel ?? [];
+        string[] tags = settings.Tags ?? [];
 
-        if (includes.Length == 0 && excludes.Length == 0)
+        if (includes.Length == 0 && excludes.Length == 0 && tags.Length == 0)
         {
             return null;
         }
 
-        return new OperationFilter(includes, excludes);
+        return new OperationFilter(includes, excludes, tags);
     }
 
     private static string? GetTitle(JsonElement specRoot)
