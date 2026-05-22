@@ -13,6 +13,7 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration.Tests;
 public class OpenApi31CodeGeneratorTests
 {
     private static JsonElement petstoreRoot;
+    private static JsonElement callbacksSpecRoot;
 
     // Complete schema-type map for the petstore spec
     private static readonly Dictionary<string, string> PetstoreSchemaTypeMap = new(StringComparer.Ordinal)
@@ -51,6 +52,11 @@ public class OpenApi31CodeGeneratorTests
             Path.Combine(AppContext.BaseDirectory, "TestData", "petstore-3.1.json"));
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
         petstoreRoot = doc.RootElement.Clone();
+
+        string callbacksJson = File.ReadAllText(
+            Path.Combine(AppContext.BaseDirectory, "TestData", "callbacks-3.1.json"));
+        using ParsedJsonDocument<JsonElement> callbacksDoc = ParsedJsonDocument<JsonElement>.Parse(callbacksJson);
+        callbacksSpecRoot = callbacksDoc.RootElement.Clone();
     }
 
     private static OpenApi31CodeGenerator CreateGenerator(
@@ -507,7 +513,7 @@ public class OpenApi31CodeGeneratorTests
 
         Assert.IsTrue(
             impl.Content.Contains(
-                "Petstore.Client.JsonString.CreateBuilder(workspace, petId).RootElement",
+                "Petstore.Client.JsonString.CreateBuilder(workspace, petId, 30).RootElement",
                 StringComparison.Ordinal));
     }
 
@@ -533,7 +539,7 @@ public class OpenApi31CodeGeneratorTests
 
         Assert.IsTrue(
             impl.Content.Contains(
-                "Petstore.Client.NewPet.CreateBuilder(workspace, body, 0).RootElement",
+                "Petstore.Client.NewPet.CreateBuilder(workspace, body, 30).RootElement",
                 StringComparison.Ordinal));
     }
 
@@ -6700,8 +6706,8 @@ public class OpenApi31CodeGeneratorTests
             && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
 
         Assert.IsTrue(
-            client.Content.Contains("Dictionary<string, PropertyEncoding> encodings", StringComparison.Ordinal),
-            "Client should emit encodings dictionary for form-urlencoded body with encoding object");
+            client.Content.Contains("private static readonly Dictionary<string, PropertyEncoding>", StringComparison.Ordinal),
+            "Client should emit static readonly encodings field for form-urlencoded body with encoding object");
     }
 
     [TestMethod]
@@ -8357,5 +8363,226 @@ public class OpenApi31CodeGeneratorTests
         Assert.AreEqual(2, tags.Length);
         Assert.AreEqual("valid", tags[0].Name);
         Assert.AreEqual("also-valid", tags[1].Name);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Webhook and callback tests
+    // ═══════════════════════════════════════════════════════════════════
+    [TestMethod]
+    public void WalkWebhookAndCallbackOperations_FindsWebhooks()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListWebhookAndCallbackOperations(callbacksSpecRoot);
+
+        Assert.IsTrue(
+            ops.Any(o => o.OperationId == "petAdoptedWebhook"),
+            "Expected petAdoptedWebhook from webhooks section");
+        Assert.IsTrue(
+            ops.Any(o => o.OperationId == "inventoryUpdateWebhook"),
+            "Expected inventoryUpdateWebhook from webhooks section");
+    }
+
+    [TestMethod]
+    public void WalkWebhookAndCallbackOperations_FindsCallbacks()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListWebhookAndCallbackOperations(callbacksSpecRoot);
+
+        Assert.IsTrue(
+            ops.Any(o => o.OperationId == "onEventCallback"),
+            "Expected onEventCallback from per-operation callbacks");
+    }
+
+    [TestMethod]
+    public void WalkWebhookAndCallbackOperations_CorrectMethods()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListWebhookAndCallbackOperations(callbacksSpecRoot);
+
+        OperationSummary petAdopted = ops.First(o => o.OperationId == "petAdoptedWebhook");
+        Assert.AreEqual(OperationMethod.Post, petAdopted.Method);
+
+        OperationSummary inventoryUpdate = ops.First(o => o.OperationId == "inventoryUpdateWebhook");
+        Assert.AreEqual(OperationMethod.Put, inventoryUpdate.Method);
+
+        OperationSummary onEvent = ops.First(o => o.OperationId == "onEventCallback");
+        Assert.AreEqual(OperationMethod.Post, onEvent.Method);
+    }
+
+    [TestMethod]
+    public void WalkWebhookAndCallbackOperations_CorrectTags()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListWebhookAndCallbackOperations(callbacksSpecRoot);
+
+        OperationSummary petAdopted = ops.First(o => o.OperationId == "petAdoptedWebhook");
+        CollectionAssert.Contains(petAdopted.Tags, "webhooks");
+
+        OperationSummary onEvent = ops.First(o => o.OperationId == "onEventCallback");
+        CollectionAssert.Contains(onEvent.Tags, "callbacks");
+    }
+
+    [TestMethod]
+    public void WalkWebhookAndCallbackOperations_CorrectParameterCount()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListWebhookAndCallbackOperations(callbacksSpecRoot);
+
+        OperationSummary inventoryUpdate = ops.First(o => o.OperationId == "inventoryUpdateWebhook");
+        Assert.AreEqual(1, inventoryUpdate.ParameterCount, "inventoryUpdateWebhook has X-Signature header parameter");
+
+        OperationSummary onEvent = ops.First(o => o.OperationId == "onEventCallback");
+        Assert.AreEqual(0, onEvent.ParameterCount, "onEventCallback has no parameters");
+    }
+
+    [TestMethod]
+    public void WalkWebhookAndCallbackOperations_HasRequestBody()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListWebhookAndCallbackOperations(callbacksSpecRoot);
+
+        Assert.IsTrue(ops.All(o => o.HasRequestBody), "All webhook/callback operations have request bodies");
+    }
+
+    [TestMethod]
+    public void CollectWebhookAndCallbackSchemaPointers_FindsWebhookSchemas()
+    {
+        string[] pointers = [.. OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
+            callbacksSpecRoot, out _).Select(r => r.PositionalPointer)];
+
+        // Webhook request body schemas — the pointer builder uses #/paths/<key>/... format
+        // even for webhooks (the key is the webhook name)
+        CollectionAssert.Contains(
+            pointers,
+            "#/paths/petAdopted/post/requestBody/content/application~1json/schema");
+        CollectionAssert.Contains(
+            pointers,
+            "#/paths/inventoryUpdate/put/requestBody/content/application~1json/schema");
+    }
+
+    [TestMethod]
+    public void CollectWebhookAndCallbackSchemaPointers_FindsWebhookParameterSchemas()
+    {
+        string[] pointers = [.. OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
+            callbacksSpecRoot, out var parameterNames).Select(r => r.PositionalPointer)];
+
+        // inventoryUpdate has X-Signature header parameter
+        CollectionAssert.Contains(
+            pointers,
+            "#/paths/inventoryUpdate/put/parameters/0/schema");
+
+        Assert.AreEqual("X-Signature", parameterNames["/paths/inventoryUpdate/put/parameters/0/schema"]);
+    }
+
+    [TestMethod]
+    public void CollectWebhookAndCallbackSchemaPointers_FindsCallbackSchemas()
+    {
+        string[] pointers = [.. OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
+            callbacksSpecRoot, out _).Select(r => r.PositionalPointer)];
+
+        // Callback request body schema — the key is the runtime expression
+        // {$request.body#/callbackUrl} with / escaped as ~1 in JSON Pointer
+        Assert.IsTrue(
+            pointers.Any(p => p.Contains("request.body") && p.Contains("requestBody")),
+            "Expected callback request body schema pointer containing the runtime expression key");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackServer_ProducesFiles()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        // Map the webhook/callback schemas
+        foreach (SchemaReference schemaRef in OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi31CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        Assert.IsTrue(files.Count > 0, "Expected generated callback server files");
+
+        // Should produce handler interfaces
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("Handler.cs")),
+            "Expected handler interface files");
+
+        // Should produce endpoint registration
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("EndpointRegistration.cs")),
+            "Expected endpoint registration file");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackClient_ProducesFiles()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi31CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackClient(callbacksSpecRoot);
+
+        Assert.IsTrue(files.Count > 0, "Expected generated callback client files");
+
+        // Should produce client class
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("Client.cs")),
+            "Expected client class file");
+
+        // Should produce request/response types
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("Request.cs")),
+            "Expected request type files");
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("Response.cs")),
+            "Expected response type files");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackServer_DoesNotIncludePathsOperations()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi31CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        // Should NOT include the createSubscription operation from paths
+        Assert.IsFalse(
+            files.Any(f => f.FileName.Contains("CreateSubscription")),
+            "Callback server should not include paths operations like createSubscription");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackClient_DoesNotIncludePathsOperations()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi31CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackClient(callbacksSpecRoot);
+
+        // Should NOT include the createSubscription operation from paths
+        Assert.IsFalse(
+            files.Any(f => f.FileName.Contains("CreateSubscription")),
+            "Callback client should not include paths operations like createSubscription");
+    }
+
+    [TestMethod]
+    public void WalkWebhookAndCallbackOperations_WithFilter_FiltersCorrectly()
+    {
+        // Filter to only "petAdopted" webhook
+        OperationFilter filter = new(["petAdopted"]);
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListWebhookAndCallbackOperations(callbacksSpecRoot, filter);
+
+        Assert.AreEqual(1, ops.Length, "Filter should match only petAdopted webhook");
+        Assert.AreEqual("petAdoptedWebhook", ops[0].OperationId);
     }
 }

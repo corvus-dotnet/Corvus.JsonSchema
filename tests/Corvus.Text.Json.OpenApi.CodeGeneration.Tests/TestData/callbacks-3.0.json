@@ -1,0 +1,177 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Callback Test API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/subscriptions": {
+      "post": {
+        "operationId": "createSubscription",
+        "tags": ["subscriptions"],
+        "summary": "Subscribe to events",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["callbackUrl", "eventType"],
+                "properties": {
+                  "callbackUrl": { "type": "string", "format": "uri" },
+                  "eventType": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "subscriptionId": { "type": "string" },
+                    "status": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "onEvent": {
+            "{$request.body#/callbackUrl}": {
+              "post": {
+                "operationId": "onEventCallback",
+                "tags": ["callbacks"],
+                "summary": "Receive event notification",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "required": ["eventId", "eventType", "data"],
+                        "properties": {
+                          "eventId": { "type": "string" },
+                          "eventType": { "type": "string" },
+                          "data": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Event received"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "post": {
+        "operationId": "registerNotifications",
+        "tags": ["notifications"],
+        "summary": "Register for push notifications",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["webhookUrl"],
+                "properties": {
+                  "webhookUrl": { "type": "string", "format": "uri" },
+                  "events": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registration successful"
+          }
+        },
+        "callbacks": {
+          "pushNotification": {
+            "{$request.body#/webhookUrl}": {
+              "post": {
+                "operationId": "pushNotificationCallback",
+                "tags": ["callbacks"],
+                "parameters": [
+                  {
+                    "name": "X-Webhook-Secret",
+                    "in": "header",
+                    "required": true,
+                    "schema": { "type": "string" }
+                  }
+                ],
+                "summary": "Receive push notification",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "required": ["notificationId", "event"],
+                        "properties": {
+                          "notificationId": { "type": "string" },
+                          "event": { "type": "string" },
+                          "payload": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Notification received"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "callbacks": {
+      "statusChange": {
+        "{$request.body#/callbackUrl}": {
+          "post": {
+            "operationId": "statusChangeCallback",
+            "tags": ["callbacks"],
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "newStatus": { "type": "string" },
+                      "previousStatus": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": { "description": "Status update acknowledged" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
