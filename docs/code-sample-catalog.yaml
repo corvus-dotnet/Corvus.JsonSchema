@@ -398,6 +398,72 @@ example-recipes:
       - {index: 17, language: csharp, lines: [214, 241], category: compilable, verified: true}
       - {index: 18, language: csharp, lines: [243, 249], category: compilable, verified: false}
       - {index: 19, language: bash, lines: [253, 256]}
+  - path: "docs/ExampleRecipes/029-OpenApiClient/README.md"
+    companion_project: "docs/ExampleRecipes/029-OpenApiClient/"
+    blocks:
+      - {index: 0, language: json, lines: [32, 76]}
+      - {index: 1, language: bash, lines: [80, 84]}
+      - {index: 2, language: csharp, lines: [100, 108], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [114, 139], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [145, 163], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [175, 189], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [197, 201], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [207, 221], category: compilable, verified: false}
+  - path: "docs/ExampleRecipes/030-OpenApiServer/README.md"
+    companion_project: "docs/ExampleRecipes/030-OpenApiServer/"
+    blocks:
+      - {index: 0, language: bash, lines: [28, 32]}
+      - {index: 1, language: csharp, lines: [47, 57], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [63, 90], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [96, 105], category: compilable, verified: false}
+  - path: "docs/ExampleRecipes/031-OpenApiAdvancedClient/README.md"
+    companion_project: "docs/ExampleRecipes/031-OpenApiAdvancedClient/"
+    blocks:
+      - {index: 0, language: bash, lines: [22, 24]}
+      - {index: 1, language: bash, lines: [28, 33]}
+      - {index: 2, language: csharp, lines: [46, 63], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [69, 77], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [84, 96], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [100, 105], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [111, 122], category: compilable, verified: false}
+      - {index: 7, language: bash, lines: [126, 129]}
+      - {index: 8, language: , lines: [135, 147]}
+      - {index: 9, language: csharp, lines: [155, 159], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [165, 170], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [176, 185], category: compilable, verified: false}
+  - path: "docs/ExampleRecipes/032-OpenApiAdvancedServer/README.md"
+    companion_project: "docs/ExampleRecipes/032-OpenApiAdvancedServer/"
+    blocks:
+      - {index: 0, language: bash, lines: [21, 23]}
+      - {index: 1, language: bash, lines: [27, 32]}
+      - {index: 2, language: csharp, lines: [49, 67], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [71, 78], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [92, 106], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [112, 118], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [124, 130], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [136, 140], category: compilable, verified: false}
+      - {index: 8, language: bash, lines: [144, 147]}
+      - {index: 9, language: , lines: [153, 168]}
+  - path: "docs/ExampleRecipes/033-OpenApiEndToEnd/README.md"
+    companion_project: "docs/ExampleRecipes/033-OpenApiEndToEnd/"
+    blocks:
+      - {index: 0, language: bash, lines: [21, 23]}
+      - {index: 1, language: csharp, lines: [43, 45], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [57, 66], category: compilable, verified: false}
+      - {index: 3, language: bash, lines: [82, 92]}
+  - path: "docs/ExampleRecipes/034-OpenApiCallbackServer/README.md"
+    companion_project: "docs/ExampleRecipes/034-OpenApiCallbackServer/"
+    blocks:
+      - {index: 0, language: bash, lines: [21, 25]}
+      - {index: 1, language: csharp, lines: [42, 61], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [69, 79], category: compilable, verified: false}
+      - {index: 3, language: bash, lines: [87, 89]}
+  - path: "docs/ExampleRecipes/035-OpenApiCallbackClient/README.md"
+    companion_project: "docs/ExampleRecipes/035-OpenApiCallbackClient/"
+    blocks:
+      - {index: 0, language: bash, lines: [18, 22]}
+      - {index: 1, language: csharp, lines: [36, 57], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [63, 72], category: compilable, verified: false}
 
 main-docs:
   - path: "docs/AddingKeywords.md"
@@ -923,6 +989,70 @@ main-docs:
       - {index: 1, language: , lines: [73, 75]}
       - {index: 2, language: csharp, lines: [107, 111], category: compilable, verified: false}
       - {index: 3, language: csharp, lines: [142, 150], category: compilable, verified: false}
+  - path: "docs/OpenApi.md"
+    blocks:
+      - {index: 0, language: bash, lines: [13, 19]}
+      - {index: 1, language: bash, lines: [23, 25]}
+      - {index: 2, language: bash, lines: [29, 31]}
+      - {index: 3, language: bash, lines: [35, 37]}
+      - {index: 4, language: bash, lines: [43, 47]}
+      - {index: 5, language: csharp, lines: [51, 78], category: compilable, verified: false}
+      - {index: 6, language: bash, lines: [84, 88]}
+      - {index: 7, language: csharp, lines: [92, 103], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [107, 130], category: compilable, verified: false}
+      - {index: 9, language: , lines: [158, 165]}
+      - {index: 10, language: , lines: [169, 176]}
+      - {index: 11, language: csharp, lines: [194, 208], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [212, 229], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [237, 242], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [250, 254], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [262, 277], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [283, 299], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [305, 316], category: compilable, verified: false}
+      - {index: 18, language: csharp, lines: [320, 334], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [342, 358], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [362, 370], category: compilable, verified: false}
+      - {index: 21, language: csharp, lines: [376, 384], category: compilable, verified: false}
+      - {index: 22, language: csharp, lines: [390, 399], category: compilable, verified: false}
+      - {index: 23, language: csharp, lines: [403, 408], category: compilable, verified: false}
+      - {index: 24, language: csharp, lines: [414, 431], category: compilable, verified: false}
+      - {index: 25, language: csharp, lines: [439, 452], category: fragment, verified: false}
+      - {index: 26, language: csharp, lines: [488, 498], category: fragment, verified: false}
+      - {index: 27, language: csharp, lines: [502, 524], category: fragment, verified: false}
+      - {index: 28, language: csharp, lines: [528, 558], category: fragment, verified: false}
+      - {index: 29, language: csharp, lines: [562, 572], category: fragment, verified: false}
+      - {index: 30, language: csharp, lines: [578, 603], category: fragment, verified: false}
+      - {index: 31, language: csharp, lines: [611, 631], category: fragment, verified: false}
+      - {index: 32, language: csharp, lines: [637, 642], category: fragment, verified: false}
+      - {index: 33, language: csharp, lines: [648, 666], category: fragment, verified: false}
+      - {index: 34, language: csharp, lines: [670, 677], category: fragment, verified: false}
+      - {index: 35, language: csharp, lines: [683, 689], category: fragment, verified: false}
+      - {index: 36, language: csharp, lines: [695, 703], category: fragment, verified: false}
+      - {index: 37, language: csharp, lines: [715, 721], category: fragment, verified: false}
+      - {index: 38, language: csharp, lines: [725, 734], category: fragment, verified: false}
+      - {index: 39, language: csharp, lines: [746, 775], category: fragment, verified: false}
+      - {index: 40, language: csharp, lines: [779, 805], category: fragment, verified: false}
+      - {index: 41, language: csharp, lines: [809, 822], category: fragment, verified: false}
+      - {index: 42, language: csharp, lines: [839, 854], category: compilable, verified: false}
+      - {index: 43, language: csharp, lines: [862, 878], category: compilable, verified: false}
+      - {index: 44, language: csharp, lines: [886, 897], category: compilable, verified: false}
+      - {index: 45, language: , lines: [907, 915]}
+      - {index: 46, language: bash, lines: [928, 932]}
+      - {index: 47, language: csharp, lines: [941, 952], category: compilable, verified: false}
+      - {index: 48, language: bash, lines: [958, 962]}
+      - {index: 49, language: csharp, lines: [970, 984], category: compilable, verified: false}
+      - {index: 50, language: csharp, lines: [1000, 1013], category: compilable, verified: false}
+      - {index: 51, language: csharp, lines: [1023, 1040], category: compilable, verified: false}
+      - {index: 52, language: json, lines: [1046, 1090]}
+      - {index: 53, language: bash, lines: [1096, 1098]}
+      - {index: 54, language: bash, lines: [1114, 1116]}
+      - {index: 55, language: bash, lines: [1122, 1124]}
+      - {index: 56, language: bash, lines: [1132, 1134]}
+      - {index: 57, language: bash, lines: [1142, 1144]}
+      - {index: 58, language: bash, lines: [1172, 1189]}
+      - {index: 59, language: bash, lines: [1193, 1203]}
+      - {index: 60, language: bash, lines: [1211, 1223]}
+      - {index: 61, language: bash, lines: [1229, 1244]}
   - path: "docs/ParsedJsonDocument.md"
     blocks:
       - {index: 0, language: csharp, lines: [40, 56], category: compilable, verified: false}
@@ -1285,17 +1415,17 @@ copilot-instructions:
       - {index: 1, language: powershell, lines: [99, 102]}
       - {index: 2, language: csharp, lines: [157, 167], category: compilable, verified: false}
       - {index: 3, language: csharp, lines: [184, 203], category: compilable, verified: false}
-      - {index: 4, language: powershell, lines: [246, 248]}
-      - {index: 5, language: powershell, lines: [260, 264]}
-      - {index: 6, language: powershell, lines: [302, 307]}
-      - {index: 7, language: powershell, lines: [334, 340]}
-      - {index: 8, language: csharp, lines: [350, 360], category: compilable, verified: false}
-      - {index: 9, language: powershell, lines: [429, 438]}
-      - {index: 10, language: bash, lines: [466, 472]}
-      - {index: 11, language: bash, lines: [478, 481]}
-      - {index: 12, language: powershell, lines: [491, 506]}
-      - {index: 13, language: powershell, lines: [514, 516]}
-      - {index: 14, language: bash, lines: [549, 551]}
+      - {index: 4, language: powershell, lines: [247, 249]}
+      - {index: 5, language: powershell, lines: [261, 265]}
+      - {index: 6, language: powershell, lines: [303, 308]}
+      - {index: 7, language: powershell, lines: [335, 341]}
+      - {index: 8, language: csharp, lines: [351, 361], category: compilable, verified: false}
+      - {index: 9, language: powershell, lines: [430, 439]}
+      - {index: 10, language: bash, lines: [467, 473]}
+      - {index: 11, language: bash, lines: [479, 482]}
+      - {index: 12, language: powershell, lines: [492, 507]}
+      - {index: 13, language: powershell, lines: [515, 517]}
+      - {index: 14, language: bash, lines: [550, 552]}
 
 skills:
   - path: ".github/skills/corvus-analyzers/SKILL.md"
