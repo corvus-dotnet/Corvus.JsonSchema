@@ -87,6 +87,27 @@ public sealed class AsyncApi30CodeGenerator
                     pointers.Add(AsyncApiSchemaPointerBuilder.ComponentSchema(schemaProp.Name));
                 }
             }
+
+            // Collect inline payload/headers schemas from component messages
+            if (components.TryGetProperty("messages"u8, out JsonElement messages) &&
+                messages.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var msgProp in messages.EnumerateObject())
+                {
+                    string msgName = msgProp.Name;
+                    JsonElement msg = msgProp.Value;
+
+                    if (HasProperty(msg, "payload"u8))
+                    {
+                        pointers.Add(AsyncApiSchemaPointerBuilder.ComponentMessagePayload(msgName));
+                    }
+
+                    if (HasProperty(msg, "headers"u8))
+                    {
+                        pointers.Add(AsyncApiSchemaPointerBuilder.ComponentMessageHeaders(msgName));
+                    }
+                }
+            }
         }
 
         return [.. pointers];
@@ -234,13 +255,15 @@ public sealed class AsyncApi30CodeGenerator
             string operationName = operationProp.Name;
             List<MessageInfo> messages = CollectOperationMessages(opElement, doc);
             List<ChannelParameter> parameters = CollectChannelParameters(opElement, doc);
+            ReplyInfo? reply = CollectReplyInfo(opElement, doc);
 
             OperationInfo info = new(
                 operationName,
                 action,
                 channelAddress,
                 messages,
-                parameters);
+                parameters,
+                reply);
 
             if (action == OperationAction.Send)
             {
@@ -294,7 +317,14 @@ public sealed class AsyncApi30CodeGenerator
         OperationAction Action,
         string ChannelAddress,
         List<MessageInfo> Messages,
-        List<ChannelParameter> Parameters);
+        List<ChannelParameter> Parameters,
+        ReplyInfo? Reply);
+
+    private readonly record struct ReplyInfo(
+        string ChannelAddress,
+        string? AddressLocationExpression,
+        List<MessageInfo> Messages,
+        string? CorrelationIdLocation);
 
     private readonly record struct MessageInfo(
         string Name,
@@ -542,6 +572,120 @@ public sealed class AsyncApi30CodeGenerator
         }
 
         return parameters;
+    }
+
+    private ReplyInfo? CollectReplyInfo(JsonElement operation, AsyncApiDocument doc)
+    {
+        if (!operation.TryGetProperty("reply"u8, out JsonElement replyEl) ||
+            replyEl.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        // Resolve reply channel address
+        string replyChannelAddress = string.Empty;
+        if (replyEl.TryGetProperty("channel"u8, out JsonElement channelRef))
+        {
+            JsonElement resolvedChannel = ResolveRef(channelRef, doc);
+            if (resolvedChannel.ValueKind == JsonValueKind.Object)
+            {
+                if (resolvedChannel.TryGetProperty("address"u8, out JsonElement addrEl) &&
+                    addrEl.ValueKind == JsonValueKind.String)
+                {
+                    replyChannelAddress = addrEl.GetString()!;
+                }
+            }
+        }
+
+        // Check for address.location (runtime expression for dynamic reply address)
+        string? addressLocationExpression = null;
+        if (replyEl.TryGetProperty("address"u8, out JsonElement addressEl) &&
+            addressEl.ValueKind == JsonValueKind.Object &&
+            addressEl.TryGetProperty("location"u8, out JsonElement locationEl) &&
+            locationEl.ValueKind == JsonValueKind.String)
+        {
+            // Dynamic reply address — stored separately from the static channel address.
+            // (e.g., "$message.header#/replyTo" means the message header contains the reply-to address)
+            addressLocationExpression = locationEl.GetString()!;
+        }
+
+        // Collect reply messages
+        List<MessageInfo> replyMessages = [];
+        if (replyEl.TryGetProperty("messages"u8, out JsonElement msgsEl) &&
+            msgsEl.ValueKind == JsonValueKind.Array)
+        {
+            int index = 0;
+            foreach (JsonElement msgRef in msgsEl.EnumerateArray())
+            {
+                JsonElement resolved = ResolveRef(msgRef, doc);
+                string messageName = $"Reply{index}";
+
+                if (TryGetPropertyWithTraits(resolved, "name"u8, doc, out JsonElement nameEl) &&
+                    nameEl.ValueKind == JsonValueKind.String)
+                {
+                    messageName = nameEl.GetString()!;
+                }
+                else if (msgRef.TryGetProperty("$ref"u8, out JsonElement refEl) &&
+                         refEl.ValueKind == JsonValueKind.String)
+                {
+                    string refStr = refEl.GetString()!;
+                    int lastSlash = refStr.LastIndexOf('/');
+                    if (lastSlash >= 0)
+                    {
+                        messageName = refStr[(lastSlash + 1)..];
+                    }
+                }
+
+                string? payloadPointer = null;
+                string? payloadTypeName = null;
+                string? headersPointer = null;
+                string? headersTypeName = null;
+
+                if (TryGetPropertyWithTraits(resolved, "payload"u8, doc, out JsonElement payloadEl))
+                {
+                    payloadEl = UnwrapMultiFormatSchema(payloadEl);
+                    payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload", doc);
+                    if (payloadPointer is not null)
+                    {
+                        this.schemaTypeMap.TryGetValue(payloadPointer, out payloadTypeName);
+                    }
+                }
+
+                if (TryGetPropertyWithTraits(resolved, "headers"u8, doc, out JsonElement headersEl))
+                {
+                    headersEl = UnwrapMultiFormatSchema(headersEl);
+                    headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers", doc);
+                    if (headersPointer is not null)
+                    {
+                        this.schemaTypeMap.TryGetValue(headersPointer, out headersTypeName);
+                    }
+                }
+
+                replyMessages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, null));
+                index++;
+            }
+        }
+
+        // Extract correlation ID location from the operation's request messages
+        string? correlationIdLocation = null;
+        if (operation.TryGetProperty("messages"u8, out JsonElement opMsgsEl) &&
+            opMsgsEl.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement msgRef in opMsgsEl.EnumerateArray())
+            {
+                JsonElement resolved = ResolveRef(msgRef, doc);
+                if (TryGetPropertyWithTraits(resolved, "correlationId"u8, doc, out JsonElement corrIdEl) &&
+                    corrIdEl.ValueKind == JsonValueKind.Object &&
+                    corrIdEl.TryGetProperty("location"u8, out JsonElement locEl) &&
+                    locEl.ValueKind == JsonValueKind.String)
+                {
+                    correlationIdLocation = locEl.GetString();
+                    break;
+                }
+            }
+        }
+
+        return new ReplyInfo(replyChannelAddress, addressLocationExpression, replyMessages, correlationIdLocation);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -944,6 +1088,128 @@ public sealed class AsyncApi30CodeGenerator
 
             w.WriteLine($"return PublishAsyncCore(workspace, {addressArg}, payloadValue, {headersArg}, cancellationToken);");
             w.CloseBrace();
+        }
+
+        // Emit request/reply methods if this operation has a reply
+        if (op.Reply is { } reply)
+        {
+            foreach (MessageInfo msg in op.Messages)
+            {
+                string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
+                string requestMethodName = $"SendAndReceive{ToPascalCase(msg.Name)}Async";
+
+                // Determine reply type
+                string replyType = reply.Messages.Count == 1
+                    ? reply.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement"
+                    : "Corvus.Text.Json.JsonElement";
+
+                w.WriteLine();
+                w.WriteLine($"/// <summary>");
+                w.WriteLine($"/// Sends a <c>{msg.Name}</c> request and waits for a reply.");
+                w.WriteLine($"/// </summary>");
+                w.WriteLine($"/// <param name=\"payload\">The request payload.</param>");
+
+                if (msg.HeadersTypeName is not null)
+                {
+                    w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
+                }
+
+                foreach (ChannelParameter p in op.Parameters)
+                {
+                    w.WriteLine($"/// <param name=\"{ToCamelCase(p.Name)}\">{p.Description ?? $"The {p.Name} channel parameter."}</param>");
+                }
+
+                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
+                w.WriteLine($"/// <returns>The reply payload.</returns>");
+
+                // Build method signature
+                List<string> reqParams = [$"{payloadType}.Source payload"];
+                if (msg.HeadersTypeName is not null)
+                {
+                    reqParams.Add($"{msg.HeadersTypeName}.Source headers");
+                }
+
+                foreach (ChannelParameter p in op.Parameters)
+                {
+                    string paramDecl = $"string {ToCamelCase(p.Name)}";
+                    if (p.DefaultValue is not null)
+                    {
+                        paramDecl += $" = \"{EscapeString(p.DefaultValue)}\"";
+                    }
+
+                    reqParams.Add(paramDecl);
+                }
+
+                reqParams.Add("CancellationToken cancellationToken = default");
+
+                w.WriteLine($"public async ValueTask<{replyType}> {requestMethodName}({string.Join(", ", reqParams)})");
+                w.OpenBrace();
+
+                w.WriteLine($"JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
+                w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(workspace, payload, 30).RootElement;");
+
+                if (msg.HeadersTypeName is not null)
+                {
+                    w.WriteLine($"{msg.HeadersTypeName} headersValue = {msg.HeadersTypeName}.CreateBuilder(workspace, headers, 10).RootElement;");
+                }
+
+                // Validation
+                w.WriteLine();
+                w.WriteLine("if (this.validationMode != ValidationMode.None)");
+                w.OpenBrace();
+                w.WriteLine("ValidatePayload(payloadValue, this.validationMode);");
+                if (msg.HeadersTypeName is not null)
+                {
+                    w.WriteLine("ValidateHeaders(headersValue, this.validationMode);");
+                }
+
+                w.CloseBrace();
+
+                // Build channel address
+                w.WriteLine();
+                if (op.Parameters.Count > 0)
+                {
+                    w.Write("string channelAddress = ChannelAddressTemplate");
+                    foreach (ChannelParameter p in op.Parameters)
+                    {
+                        w.Write($".Replace(\"{{{p.Name}}}\", {ToCamelCase(p.Name)})");
+                    }
+
+                    w.WriteLine(";");
+                }
+
+                // Generate correlation ID
+                w.WriteLine($"string correlationId = System.Guid.NewGuid().ToString();");
+
+                // Reply channel address
+                string replyAddr = !string.IsNullOrEmpty(reply.ChannelAddress)
+                    ? $"\"{EscapeString(reply.ChannelAddress)}\""
+                    : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress"; // fallback to same channel
+
+                string headersArg = msg.HeadersTypeName is not null
+                    ? "(Corvus.Text.Json.JsonElement)headersValue"
+                    : "default";
+                string addressArg = op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
+
+                w.WriteLine();
+                w.WriteLine("try");
+                w.OpenBrace();
+                w.WriteLine($"var (replyPayload, _) = await this.transport.RequestAsync<{payloadType}, {replyType}>(");
+                w.WriteLine($"    {addressArg},");
+                w.WriteLine($"    {replyAddr},");
+                w.WriteLine($"    in payloadValue,");
+                w.WriteLine($"    correlationId,");
+                w.WriteLine($"    {headersArg},");
+                w.WriteLine($"    cancellationToken).ConfigureAwait(false);");
+                w.WriteLine("return replyPayload;");
+                w.CloseBrace();
+                w.WriteLine("finally");
+                w.OpenBrace();
+                w.WriteLine("workspace.Dispose();");
+                w.CloseBrace();
+
+                w.CloseBrace();
+            }
         }
 
         // Emit the shared PublishAsyncCore helper

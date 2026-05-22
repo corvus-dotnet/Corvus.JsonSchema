@@ -1,0 +1,86 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Calculator Service",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "calculate": {
+      "address": "calc/requests",
+      "messages": {
+        "CalculateRequest": { "$ref": "#/components/messages/CalculateRequest" },
+        "CalculateResponse": { "$ref": "#/components/messages/CalculateResponse" }
+      }
+    },
+    "calcResults": {
+      "address": "calc/results",
+      "messages": {
+        "CalculateResponse": { "$ref": "#/components/messages/CalculateResponse" }
+      }
+    }
+  },
+  "operations": {
+    "calculate": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/calculate" },
+      "messages": [
+        { "$ref": "#/channels/calculate/messages/CalculateRequest" }
+      ],
+      "reply": {
+        "channel": { "$ref": "#/channels/calcResults" },
+        "messages": [
+          { "$ref": "#/channels/calcResults/messages/CalculateResponse" }
+        ],
+        "address": {
+          "location": "$message.header#/replyTo"
+        }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "CalculateRequest": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "operation": { "type": "string", "enum": ["add", "subtract", "multiply", "divide"] },
+            "left": { "type": "number" },
+            "right": { "type": "number" }
+          },
+          "required": ["operation", "left", "right"]
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "replyTo": { "type": "string" },
+            "correlationId": { "type": "string" }
+          },
+          "required": ["replyTo", "correlationId"]
+        },
+        "correlationId": {
+          "location": "$message.header#/correlationId"
+        }
+      },
+      "CalculateResponse": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "result": { "type": "number" },
+            "error": { "type": "string" }
+          },
+          "required": ["result"]
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlationId": { "type": "string" }
+          },
+          "required": ["correlationId"]
+        },
+        "correlationId": {
+          "location": "$message.header#/correlationId"
+        }
+      }
+    }
+  }
+}

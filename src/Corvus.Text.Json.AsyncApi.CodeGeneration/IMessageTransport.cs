@@ -51,6 +51,28 @@ public interface IMessageTransport : IAsyncDisposable
         where TPayload : struct, IJsonElement<TPayload>;
 
     /// <summary>
+    /// Sends a request message and waits for a correlated reply.
+    /// </summary>
+    /// <typeparam name="TRequest">The request payload type.</typeparam>
+    /// <typeparam name="TReply">The expected reply payload type.</typeparam>
+    /// <param name="requestChannel">The channel to send the request on.</param>
+    /// <param name="replyChannel">The channel to listen for the reply on.</param>
+    /// <param name="request">The request payload.</param>
+    /// <param name="correlationId">A correlation identifier linking request to reply.</param>
+    /// <param name="headers">Optional message headers.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The reply payload and headers.</returns>
+    ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
+        string requestChannel,
+        string replyChannel,
+        in TRequest request,
+        string correlationId,
+        in JsonElement headers = default,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>;
+
+    /// <summary>
     /// Subscribes to messages on the specified channel, delivering typed payloads.
     /// </summary>
     /// <typeparam name="TPayload">The payload type. The transport parses incoming

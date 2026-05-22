@@ -204,4 +204,72 @@ public class AsyncApi30CodeGeneratorTests
         StringAssert.Contains(ex.Message, "avroMessage");
         StringAssert.Contains(ex.Message, "application/vnd.apache.avro");
     }
+
+    [TestMethod]
+    public void Generate_RequestReply_ProducerContainsSendAndReceiveMethod()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/messages/CalculateRequest/payload"] = "Calculator.CalculateRequest",
+            ["#/components/messages/CalculateRequest/headers"] = "Calculator.CalculateRequestHeaders",
+            ["#/components/messages/CalculateResponse/payload"] = "Calculator.CalculateResponse",
+            ["#/components/messages/CalculateResponse/headers"] = "Calculator.CalculateResponseHeaders",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Calculator", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile producerFile = files.First(f => f.FileName.Contains("Producer"));
+        Assert.IsTrue(
+            producerFile.Content.Contains("SendAndReceiveCalculateRequestAsync"),
+            "Producer should contain a SendAndReceive method for request/reply operations");
+        Assert.IsTrue(
+            producerFile.Content.Contains("RequestAsync"),
+            "Producer should call transport.RequestAsync for request/reply");
+    }
+
+    [TestMethod]
+    public void Generate_RequestReply_IncludesCorrelationId()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/messages/CalculateRequest/payload"] = "Calculator.CalculateRequest",
+            ["#/components/messages/CalculateRequest/headers"] = "Calculator.CalculateRequestHeaders",
+            ["#/components/messages/CalculateResponse/payload"] = "Calculator.CalculateResponse",
+            ["#/components/messages/CalculateResponse/headers"] = "Calculator.CalculateResponseHeaders",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Calculator", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile producerFile = files.First(f => f.FileName.Contains("Producer"));
+        Assert.IsTrue(
+            producerFile.Content.Contains("correlationId"),
+            "Producer SendAndReceive method should generate a correlation ID");
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_RequestReply_FindsReplyPayloadSchemas()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        string[] pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(root);
+
+        Assert.IsTrue(
+            pointers.Contains("#/components/messages/CalculateRequest/payload"),
+            "Should collect request payload schema pointer");
+        Assert.IsTrue(
+            pointers.Contains("#/components/messages/CalculateResponse/payload"),
+            "Should collect reply payload schema pointer");
+    }
 }
