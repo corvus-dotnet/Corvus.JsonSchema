@@ -580,7 +580,7 @@ public sealed class AsyncApi30CodeGenerator
 
             string actionStr = actionEl.GetString()!;
             OperationAction action = actionStr == "send" ? OperationAction.Send : OperationAction.Receive;
-            string channelAddress = ResolveChannelAddress(opElement, doc);
+            (string channelAddress, bool isDynamicAddress) = ResolveChannelAddressInfo(opElement, doc);
 
             if (filter?.Matches(channelAddress) == false)
             {
@@ -596,6 +596,7 @@ public sealed class AsyncApi30CodeGenerator
                 operationName,
                 action,
                 channelAddress,
+                isDynamicAddress,
                 messages,
                 parameters,
                 reply);
@@ -651,6 +652,7 @@ public sealed class AsyncApi30CodeGenerator
         string Name,
         OperationAction Action,
         string ChannelAddress,
+        bool IsDynamicAddress,
         List<MessageInfo> Messages,
         List<ChannelParameter> Parameters,
         ReplyInfo? Reply);
@@ -716,25 +718,40 @@ public sealed class AsyncApi30CodeGenerator
         }
     }
 
-    private static string GetChannelAddress(AsyncApiDocument.Channel channel, string channelName)
+    private static (string Address, bool IsDynamic) GetChannelAddressInfo(AsyncApiDocument.Channel channel, string channelName)
     {
         if (channel.Address.IsNotUndefined())
         {
             JsonElement addr = (JsonElement)channel.Address;
             if (addr.ValueKind == JsonValueKind.String)
             {
-                return addr.GetString()!;
+                return (addr.GetString()!, false);
+            }
+
+            if (addr.ValueKind == JsonValueKind.Null)
+            {
+                return (channelName, true);
             }
         }
 
-        return channelName;
+        return (channelName, false);
+    }
+
+    private static string GetChannelAddress(AsyncApiDocument.Channel channel, string channelName)
+    {
+        return GetChannelAddressInfo(channel, channelName).Address;
     }
 
     private static string ResolveChannelAddress(JsonElement operation, AsyncApiDocument doc)
     {
+        return ResolveChannelAddressInfo(operation, doc).Address;
+    }
+
+    private static (string Address, bool IsDynamic) ResolveChannelAddressInfo(JsonElement operation, AsyncApiDocument doc)
+    {
         if (!operation.TryGetProperty("channel"u8, out JsonElement channelRef))
         {
-            return string.Empty;
+            return (string.Empty, false);
         }
 
         // Channel is a $ref to #/channels/{name}
@@ -753,14 +770,14 @@ public sealed class AsyncApi30CodeGenerator
                 if (doc.ChannelsValue.TryGetProperty(channelName, out var channelEntity))
                 {
                     AsyncApiDocument.Channel channel = (AsyncApiDocument.Channel)channelEntity;
-                    return GetChannelAddress(channel, channelName);
+                    return GetChannelAddressInfo(channel, channelName);
                 }
 
-                return channelName;
+                return (channelName, false);
             }
         }
 
-        return string.Empty;
+        return (string.Empty, false);
     }
 
     private List<MessageInfo> CollectOperationMessages(JsonElement operation, AsyncApiDocument doc)
@@ -1312,7 +1329,11 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("private readonly IMessageTransport transport;");
         w.WriteLine("private readonly ValidationMode validationMode;");
 
-        if (op.Parameters.Count == 0)
+        if (op.IsDynamicAddress)
+        {
+            // No constant — channel address is provided at call time
+        }
+        else if (op.Parameters.Count == 0)
         {
             w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
         }
@@ -1350,6 +1371,11 @@ public sealed class AsyncApi30CodeGenerator
                 w.WriteLine($"/// <param name=\"headers\">The message headers.</param>");
             }
 
+            if (op.IsDynamicAddress)
+            {
+                w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
+            }
+
             foreach (ChannelParameter p in op.Parameters)
             {
                 w.WriteLine($"/// <param name=\"{ToCamelCase(p.Name)}\">{p.Description ?? $"The {p.Name} channel parameter."}</param>");
@@ -1363,6 +1389,11 @@ public sealed class AsyncApi30CodeGenerator
             if (msg.HeadersTypeName is not null)
             {
                 methodParams.Add($"{msg.HeadersTypeName}.Source headers");
+            }
+
+            if (op.IsDynamicAddress)
+            {
+                methodParams.Add("string channel");
             }
 
             foreach (ChannelParameter p in op.Parameters)
@@ -1419,7 +1450,9 @@ public sealed class AsyncApi30CodeGenerator
             string headersArg = msg.HeadersTypeName is not null
                 ? "(Corvus.Text.Json.JsonElement)headersValue"
                 : "default";
-            string addressArg = op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
+            string addressArg = op.IsDynamicAddress
+                ? "channel"
+                : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
 
             w.WriteLine($"return PublishAsyncCore(workspace, {addressArg}, payloadValue, {headersArg}, cancellationToken);");
             w.CloseBrace();
@@ -1449,6 +1482,11 @@ public sealed class AsyncApi30CodeGenerator
                     w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
                 }
 
+                if (op.IsDynamicAddress)
+                {
+                    w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
+                }
+
                 foreach (ChannelParameter p in op.Parameters)
                 {
                     w.WriteLine($"/// <param name=\"{ToCamelCase(p.Name)}\">{p.Description ?? $"The {p.Name} channel parameter."}</param>");
@@ -1462,6 +1500,11 @@ public sealed class AsyncApi30CodeGenerator
                 if (msg.HeadersTypeName is not null)
                 {
                     reqParams.Add($"{msg.HeadersTypeName}.Source headers");
+                }
+
+                if (op.IsDynamicAddress)
+                {
+                    reqParams.Add("string channel");
                 }
 
                 foreach (ChannelParameter p in op.Parameters)
@@ -1524,7 +1567,9 @@ public sealed class AsyncApi30CodeGenerator
                 string headersArg = msg.HeadersTypeName is not null
                     ? "(Corvus.Text.Json.JsonElement)headersValue"
                     : "default";
-                string addressArg = op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
+                string addressArg = op.IsDynamicAddress
+                    ? "channel"
+                    : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
 
                 w.WriteLine();
                 w.WriteLine("try");
@@ -1650,7 +1695,16 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("private readonly IMessageTransport transport;");
         w.WriteLine($"private readonly {handlerInterface} handler;");
         w.WriteLine("private readonly ValidationMode validationMode;");
-        w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
+
+        if (op.IsDynamicAddress)
+        {
+            w.WriteLine("private string? subscribedChannel;");
+        }
+        else
+        {
+            w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
+        }
+
         w.WriteLine();
 
         w.WriteLine($"/// <summary>");
@@ -1671,19 +1725,36 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"/// <summary>");
         w.WriteLine($"/// Starts consuming messages from the channel.");
         w.WriteLine($"/// </summary>");
+
+        if (op.IsDynamicAddress)
+        {
+            w.WriteLine($"/// <param name=\"channel\">The channel address to subscribe to (dynamic routing).</param>");
+        }
+
         w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-        w.WriteLine($"public ValueTask StartAsync(CancellationToken cancellationToken = default)");
+
+        string startParams = op.IsDynamicAddress
+            ? "string channel, CancellationToken cancellationToken = default"
+            : "CancellationToken cancellationToken = default";
+        w.WriteLine($"public ValueTask StartAsync({startParams})");
         w.OpenBrace();
+
+        if (op.IsDynamicAddress)
+        {
+            w.WriteLine("this.subscribedChannel = channel;");
+        }
+
+        string subscribeAddr = op.IsDynamicAddress ? "channel" : "ChannelAddress";
 
         if (op.Messages.Count == 1)
         {
             string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-            w.WriteLine($"return this.transport.SubscribeAsync<{payloadType}>(ChannelAddress, this.HandleMessageAsync, cancellationToken);");
+            w.WriteLine($"return this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
         }
         else
         {
             // Multi-message: subscribe with JsonElement, wrap in discriminated type
-            w.WriteLine("return this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>(ChannelAddress, this.HandleMessageAsync, cancellationToken);");
+            w.WriteLine($"return this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
         }
 
         w.CloseBrace();
@@ -1696,7 +1767,16 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
         w.WriteLine($"public ValueTask StopAsync(CancellationToken cancellationToken = default)");
         w.OpenBrace();
-        w.WriteLine("return this.transport.UnsubscribeAsync(ChannelAddress, cancellationToken);");
+
+        if (op.IsDynamicAddress)
+        {
+            w.WriteLine("return this.transport.UnsubscribeAsync(this.subscribedChannel ?? throw new InvalidOperationException(\"Consumer has not been started.\"), cancellationToken);");
+        }
+        else
+        {
+            w.WriteLine("return this.transport.UnsubscribeAsync(ChannelAddress, cancellationToken);");
+        }
+
         w.CloseBrace();
 
         // HandleMessageAsync

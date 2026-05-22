@@ -1,0 +1,62 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Dynamic Routing Service",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "dynamicEvents": {
+      "address": null,
+      "messages": {
+        "event": {
+          "$ref": "#/components/messages/event"
+        }
+      }
+    },
+    "staticEvents": {
+      "address": "events/fixed",
+      "messages": {
+        "event": {
+          "$ref": "#/components/messages/event"
+        }
+      }
+    }
+  },
+  "operations": {
+    "publishDynamic": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/dynamicEvents" },
+      "messages": [
+        { "$ref": "#/channels/dynamicEvents/messages/event" }
+      ]
+    },
+    "subscribeDynamic": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/dynamicEvents" },
+      "messages": [
+        { "$ref": "#/channels/dynamicEvents/messages/event" }
+      ]
+    },
+    "publishStatic": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/staticEvents" },
+      "messages": [
+        { "$ref": "#/channels/staticEvents/messages/event" }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "event": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "eventType": { "type": "string" },
+            "data": {}
+          },
+          "required": ["eventType"]
+        }
+      }
+    }
+  }
+}

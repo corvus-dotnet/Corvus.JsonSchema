@@ -375,4 +375,64 @@ public class AsyncApi30CodeGeneratorTests
 
         Assert.IsNull(bindings);
     }
+
+    [TestMethod]
+    public void DynamicAddress_ProducerHasChannelParameter()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "dynamic-routing.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>();
+        var generator = new AsyncApi30CodeGenerator("Dynamic", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? producer = files.FirstOrDefault(f => f.FileName == "PublishDynamicProducer.cs");
+        Assert.IsNotNull(producer);
+
+        // Dynamic address: method should accept 'string channel' parameter
+        StringAssert.Contains(producer.Content, "string channel");
+        // Should NOT have a const ChannelAddress
+        Assert.IsFalse(producer.Content.Contains("const string ChannelAddress"));
+    }
+
+    [TestMethod]
+    public void DynamicAddress_ConsumerStartAcceptsChannel()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "dynamic-routing.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>();
+        var generator = new AsyncApi30CodeGenerator("Dynamic", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName == "SubscribeDynamicConsumer.cs");
+        Assert.IsNotNull(consumer);
+
+        // Dynamic: StartAsync should accept channel parameter
+        StringAssert.Contains(consumer.Content, "StartAsync(string channel");
+        // Should store the channel for stop
+        StringAssert.Contains(consumer.Content, "subscribedChannel");
+    }
+
+    [TestMethod]
+    public void StaticAddress_ProducerUsesConstant()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "dynamic-routing.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>();
+        var generator = new AsyncApi30CodeGenerator("Dynamic", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? producer = files.FirstOrDefault(f => f.FileName == "PublishStaticProducer.cs");
+        Assert.IsNotNull(producer);
+
+        // Static address: should have const
+        StringAssert.Contains(producer.Content, "const string ChannelAddress = \"events/fixed\"");
+        // Should NOT have a dynamic 'string channel' method parameter
+        Assert.IsFalse(producer.Content.Contains("(string channel"), $"Found 'string channel' in static producer:\n{producer.Content}");
+    }
 }
