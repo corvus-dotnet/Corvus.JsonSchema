@@ -53,6 +53,7 @@ public static class PropertyDeclarationExtensions
             ValueSpan.CopyTo(buffer[written..]);
             written += ValueSpan.Length;
             currentName = buffer[..written];
+            appendBuffer = buffer[written..];
         }
 
         // Build a HashSet of already-assigned sibling names once for O(1) collision checks

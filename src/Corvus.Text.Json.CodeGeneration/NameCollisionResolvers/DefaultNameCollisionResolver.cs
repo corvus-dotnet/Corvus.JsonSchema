@@ -88,7 +88,7 @@ public class DefaultNameCollisionResolver : INameCollisionResolver
                     ReadOnlySpan<char> previousNode = updatedReference.Fragment[(slashIndex + 1)..];
                     previousNode.CopyTo(typeNameBuffer);
                     length = Formatting.ToPascalCase(typeNameBuffer[..previousNode.Length]);
-                    trimmedString.CopyTo(typeNameBuffer[previousNode.Length..]);
+                    trimmedString.CopyTo(typeNameBuffer[length..]);
                     length += trimmedString.Length;
                 }
                 else if (!trimmedString.Equals(parentName, StringComparison.Ordinal))
