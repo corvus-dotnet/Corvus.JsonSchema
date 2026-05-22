@@ -11,7 +11,6 @@ using Corvus.Json.Internal;
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
 using Corvus.Text.Json.CodeGeneration;
-using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -50,8 +49,11 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         string specVersion = AsyncApiShowCommand.DetectAsyncApiVersion(specRoot, settings.SpecVersion);
         OperationFilter? filter = AsyncApiShowCommand.BuildFilter(settings);
 
+        // Create external reference resolver for multi-file specs
+        using AsyncApiExternalReferenceResolver referenceResolver = new(specRoot, specFilePath);
+
         // Collect schema pointers from the spec
-        string[] pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, filter);
+        string[] pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver);
 
         string? title = GetTitle(specRoot);
         string? version = GetVersion(specRoot);
@@ -79,7 +81,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         AsyncApi30CodeGenerator generator = new(
             rootNamespace,
             schemaTypeMap ?? new Dictionary<string, string>());
-        IReadOnlyList<GeneratedFile> files = generator.Generate(specRoot, filter);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(specRoot, filter, referenceResolver);
 
         // Filter by mode
         IReadOnlyList<GeneratedFile> filteredFiles = FilterByMode(files, settings.Mode);

@@ -4,7 +4,6 @@
 
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi30;
-using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.AsyncApi.CodeGeneration;
 
@@ -47,10 +46,15 @@ public sealed class AsyncApi30CodeGenerator
     /// </summary>
     /// <param name="specRoot">The root element of the parsed spec document.</param>
     /// <param name="filter">Optional operation filter (filters by channel address).</param>
+    /// <param name="referenceResolver">
+    /// Optional external reference resolver. When provided, external <c>$ref</c> pointers
+    /// are resolved to absolute paths via <see cref="IAsyncApiReferenceResolver.ResolveToAbsolute"/>.
+    /// </param>
     /// <returns>An array of schema pointer strings.</returns>
     public static string[] CollectSchemaPointers(
         JsonElement specRoot,
-        OperationFilter? filter = null)
+        OperationFilter? filter = null,
+        IAsyncApiReferenceResolver? referenceResolver = null)
     {
         AsyncApiDocument doc = specRoot;
         List<string> pointers = [];
@@ -552,10 +556,16 @@ public sealed class AsyncApi30CodeGenerator
     /// </summary>
     /// <param name="specRoot">The root element of the parsed spec document.</param>
     /// <param name="filter">Optional operation filter (filters by channel address).</param>
+    /// <param name="referenceResolver">
+    /// Optional external reference resolver. When provided, <c>$ref</c> values that point
+    /// outside the entry document are resolved through this resolver. When <see langword="null"/>,
+    /// only local fragment-only references are supported.
+    /// </param>
     /// <returns>The generated source files.</returns>
     public IReadOnlyList<GeneratedFile> Generate(
         JsonElement specRoot,
-        OperationFilter? filter = null)
+        OperationFilter? filter = null,
+        IAsyncApiReferenceResolver? referenceResolver = null)
     {
         AsyncApiDocument doc = specRoot;
         List<GeneratedFile> files = [];
@@ -588,9 +598,9 @@ public sealed class AsyncApi30CodeGenerator
             }
 
             string operationName = operationProp.Name;
-            List<MessageInfo> messages = CollectOperationMessages(opElement, doc);
-            List<ChannelParameter> parameters = CollectChannelParameters(opElement, doc);
-            ReplyInfo? reply = CollectReplyInfo(opElement, doc);
+            List<MessageInfo> messages = CollectOperationMessages(opElement, doc, referenceResolver);
+            List<ChannelParameter> parameters = CollectChannelParameters(opElement, doc, referenceResolver);
+            ReplyInfo? reply = CollectReplyInfo(opElement, doc, referenceResolver);
 
             OperationInfo info = new(
                 operationName,
@@ -780,7 +790,7 @@ public sealed class AsyncApi30CodeGenerator
         return (string.Empty, false);
     }
 
-    private List<MessageInfo> CollectOperationMessages(JsonElement operation, AsyncApiDocument doc)
+    private List<MessageInfo> CollectOperationMessages(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
         List<MessageInfo> messages = [];
 
@@ -801,10 +811,10 @@ public sealed class AsyncApi30CodeGenerator
             string? contentType = null;
 
             // Resolve $ref if present
-            JsonElement resolved = ResolveRef(msgRef, doc);
+            JsonElement resolved = ResolveRef(msgRef, doc, resolver);
 
             // Try to extract the name (checking traits for fallback)
-            if (TryGetPropertyWithTraits(resolved, "name"u8, doc, out JsonElement nameEl) &&
+            if (TryGetPropertyWithTraits(resolved, "name"u8, doc, resolver, out JsonElement nameEl) &&
                 nameEl.ValueKind == JsonValueKind.String)
             {
                 messageName = nameEl.GetString()!;
@@ -822,19 +832,19 @@ public sealed class AsyncApi30CodeGenerator
             }
 
             // Check contentType (from message/traits or root defaultContentType)
-            contentType = GetMessageContentType(resolved, doc);
+            contentType = GetMessageContentType(resolved, doc, resolver);
             ValidateContentType(contentType, messageName);
 
             // Check schemaFormat for unsupported formats
             ValidateSchemaFormat(resolved, messageName);
 
             // Get payload (checking traits for fallback)
-            if (TryGetPropertyWithTraits(resolved, "payload"u8, doc, out JsonElement payloadEl))
+            if (TryGetPropertyWithTraits(resolved, "payload"u8, doc, resolver, out JsonElement payloadEl))
             {
                 // Handle multiFormatSchema wrapping
                 payloadEl = UnwrapMultiFormatSchema(payloadEl);
 
-                payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload", doc);
+                payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload", doc, resolver);
                 if (payloadPointer is not null)
                 {
                     this.schemaTypeMap.TryGetValue(payloadPointer, out payloadTypeName);
@@ -842,12 +852,12 @@ public sealed class AsyncApi30CodeGenerator
             }
 
             // Get headers (checking traits for fallback)
-            if (TryGetPropertyWithTraits(resolved, "headers"u8, doc, out JsonElement headersEl))
+            if (TryGetPropertyWithTraits(resolved, "headers"u8, doc, resolver, out JsonElement headersEl))
             {
                 // Handle multiFormatSchema wrapping
                 headersEl = UnwrapMultiFormatSchema(headersEl);
 
-                headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers", doc);
+                headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers", doc, resolver);
                 if (headersPointer is not null)
                 {
                     this.schemaTypeMap.TryGetValue(headersPointer, out headersTypeName);
@@ -861,7 +871,7 @@ public sealed class AsyncApi30CodeGenerator
         return messages;
     }
 
-    private static List<ChannelParameter> CollectChannelParameters(JsonElement operation, AsyncApiDocument doc)
+    private static List<ChannelParameter> CollectChannelParameters(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
         List<ChannelParameter> parameters = [];
 
@@ -871,7 +881,7 @@ public sealed class AsyncApi30CodeGenerator
             return parameters;
         }
 
-        JsonElement channelElement = ResolveRef(channelRef, doc);
+        JsonElement channelElement = ResolveRef(channelRef, doc, resolver);
         if (channelElement.ValueKind != JsonValueKind.Object)
         {
             return parameters;
@@ -926,7 +936,7 @@ public sealed class AsyncApi30CodeGenerator
         return parameters;
     }
 
-    private ReplyInfo? CollectReplyInfo(JsonElement operation, AsyncApiDocument doc)
+    private ReplyInfo? CollectReplyInfo(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
         if (!operation.TryGetProperty("reply"u8, out JsonElement replyEl) ||
             replyEl.ValueKind != JsonValueKind.Object)
@@ -938,7 +948,7 @@ public sealed class AsyncApi30CodeGenerator
         string replyChannelAddress = string.Empty;
         if (replyEl.TryGetProperty("channel"u8, out JsonElement channelRef))
         {
-            JsonElement resolvedChannel = ResolveRef(channelRef, doc);
+            JsonElement resolvedChannel = ResolveRef(channelRef, doc, resolver);
             if (resolvedChannel.ValueKind == JsonValueKind.Object)
             {
                 if (resolvedChannel.TryGetProperty("address"u8, out JsonElement addrEl) &&
@@ -969,10 +979,10 @@ public sealed class AsyncApi30CodeGenerator
             int index = 0;
             foreach (JsonElement msgRef in msgsEl.EnumerateArray())
             {
-                JsonElement resolved = ResolveRef(msgRef, doc);
+                JsonElement resolved = ResolveRef(msgRef, doc, resolver);
                 string messageName = $"Reply{index}";
 
-                if (TryGetPropertyWithTraits(resolved, "name"u8, doc, out JsonElement nameEl) &&
+                if (TryGetPropertyWithTraits(resolved, "name"u8, doc, resolver, out JsonElement nameEl) &&
                     nameEl.ValueKind == JsonValueKind.String)
                 {
                     messageName = nameEl.GetString()!;
@@ -993,20 +1003,20 @@ public sealed class AsyncApi30CodeGenerator
                 string? headersPointer = null;
                 string? headersTypeName = null;
 
-                if (TryGetPropertyWithTraits(resolved, "payload"u8, doc, out JsonElement payloadEl))
+                if (TryGetPropertyWithTraits(resolved, "payload"u8, doc, resolver, out JsonElement payloadEl))
                 {
                     payloadEl = UnwrapMultiFormatSchema(payloadEl);
-                    payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload", doc);
+                    payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload", doc, resolver);
                     if (payloadPointer is not null)
                     {
                         this.schemaTypeMap.TryGetValue(payloadPointer, out payloadTypeName);
                     }
                 }
 
-                if (TryGetPropertyWithTraits(resolved, "headers"u8, doc, out JsonElement headersEl))
+                if (TryGetPropertyWithTraits(resolved, "headers"u8, doc, resolver, out JsonElement headersEl))
                 {
                     headersEl = UnwrapMultiFormatSchema(headersEl);
-                    headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers", doc);
+                    headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers", doc, resolver);
                     if (headersPointer is not null)
                     {
                         this.schemaTypeMap.TryGetValue(headersPointer, out headersTypeName);
@@ -1025,8 +1035,8 @@ public sealed class AsyncApi30CodeGenerator
         {
             foreach (JsonElement msgRef in opMsgsEl.EnumerateArray())
             {
-                JsonElement resolved = ResolveRef(msgRef, doc);
-                if (TryGetPropertyWithTraits(resolved, "correlationId"u8, doc, out JsonElement corrIdEl) &&
+                JsonElement resolved = ResolveRef(msgRef, doc, resolver);
+                if (TryGetPropertyWithTraits(resolved, "correlationId"u8, doc, resolver, out JsonElement corrIdEl) &&
                     corrIdEl.ValueKind == JsonValueKind.Object &&
                     corrIdEl.TryGetProperty("location"u8, out JsonElement locEl) &&
                     locEl.ValueKind == JsonValueKind.String)
@@ -1053,6 +1063,7 @@ public sealed class AsyncApi30CodeGenerator
         JsonElement element,
         ReadOnlySpan<byte> propertyName,
         AsyncApiDocument doc,
+        IAsyncApiReferenceResolver? resolver,
         out JsonElement result)
     {
         // Target property takes precedence
@@ -1071,7 +1082,7 @@ public sealed class AsyncApi30CodeGenerator
 
             for (int i = traitList.Length - 1; i >= 0; i--)
             {
-                JsonElement resolvedTrait = ResolveRef(traitList[i], doc);
+                JsonElement resolvedTrait = ResolveRef(traitList[i], doc, resolver);
                 if (resolvedTrait.ValueKind == JsonValueKind.Object &&
                     resolvedTrait.TryGetProperty(propertyName, out result) &&
                     result.ValueKind != JsonValueKind.Undefined)
@@ -1085,10 +1096,10 @@ public sealed class AsyncApi30CodeGenerator
         return false;
     }
 
-    private static string? GetMessageContentType(JsonElement message, AsyncApiDocument doc)
+    private static string? GetMessageContentType(JsonElement message, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
         // Message-level contentType takes precedence (including from traits)
-        if (TryGetPropertyWithTraits(message, "contentType"u8, doc, out JsonElement ctEl) &&
+        if (TryGetPropertyWithTraits(message, "contentType"u8, doc, resolver, out JsonElement ctEl) &&
             ctEl.ValueKind == JsonValueKind.String)
         {
             return ctEl.GetString();
@@ -1172,7 +1183,7 @@ public sealed class AsyncApi30CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     // Reference resolution
     // ═══════════════════════════════════════════════════════════════════
-    private static JsonElement ResolveRef(JsonElement element, AsyncApiDocument doc)
+    private static JsonElement ResolveRef(JsonElement element, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
         // Resolve up to 10 levels of $ref to handle chained references
         for (int i = 0; i < 10; i++)
@@ -1182,11 +1193,18 @@ public sealed class AsyncApi30CodeGenerator
             {
                 string refStr = refEl.GetString()!;
 
-                // Navigate the pointer within the document
+                // Local fragment-only references — navigate within the document
                 if (refStr.StartsWith("#/", StringComparison.Ordinal))
                 {
                     JsonElement root = (JsonElement)doc;
                     element = NavigatePointer(root, refStr[2..]);
+                    continue;
+                }
+
+                // External references — delegate to the resolver if available
+                if (resolver is not null && resolver.TryResolve(refStr, out JsonElement resolved))
+                {
+                    element = resolved;
                     continue;
                 }
             }
@@ -1225,14 +1243,16 @@ public sealed class AsyncApi30CodeGenerator
         JsonElement schemaElement,
         JsonElement msgRef,
         string suffix,
-        AsyncApiDocument doc)
+        AsyncApiDocument doc,
+        IAsyncApiReferenceResolver? resolver = null)
     {
         // If the schema element is itself a $ref (e.g. payload: { $ref: "#/components/schemas/X" }),
-        // the canonical pointer is the $ref target.
+        // the canonical pointer is the $ref target — resolve to absolute if external.
         if (schemaElement.TryGetProperty("$ref"u8, out JsonElement schemaRefEl) &&
             schemaRefEl.ValueKind == JsonValueKind.String)
         {
-            return schemaRefEl.GetString();
+            string schemaRef = schemaRefEl.GetString()!;
+            return resolver is not null ? resolver.ResolveToAbsolute(schemaRef) : schemaRef;
         }
 
         // Otherwise the schema is inline — construct from the message ref path
@@ -1240,6 +1260,13 @@ public sealed class AsyncApi30CodeGenerator
             msgRefEl.ValueKind == JsonValueKind.String)
         {
             string refStr = msgRefEl.GetString()!;
+
+            // If the message ref is external, resolve the full path and append suffix
+            if (resolver is not null && !refStr.StartsWith("#", StringComparison.Ordinal))
+            {
+                string absoluteRef = resolver.ResolveToAbsolute(refStr);
+                return $"{absoluteRef}/{suffix}";
+            }
 
             // Follow the ref chain to find where the message is actually defined
             JsonElement root = (JsonElement)doc;

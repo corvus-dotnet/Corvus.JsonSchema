@@ -6,7 +6,6 @@
 
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
-using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Spectre.Console;
 using Spectre.Console.Cli;
 

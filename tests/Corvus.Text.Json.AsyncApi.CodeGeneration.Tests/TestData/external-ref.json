@@ -1,0 +1,26 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "External Ref Test",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "lightMeasured": {
+      "address": "light/measured",
+      "messages": {
+        "measurement": {
+          "$ref": "./external-messages.json#/components/messages/LightMeasured"
+        }
+      }
+    }
+  },
+  "operations": {
+    "publishLightMeasured": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/lightMeasured" },
+      "messages": [
+        { "$ref": "./external-messages.json#/components/messages/LightMeasured" }
+      ]
+    }
+  }
+}
