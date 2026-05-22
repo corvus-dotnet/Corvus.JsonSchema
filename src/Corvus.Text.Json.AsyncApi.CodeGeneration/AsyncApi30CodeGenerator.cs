@@ -233,12 +233,14 @@ public sealed class AsyncApi30CodeGenerator
 
             string operationName = operationProp.Name;
             List<MessageInfo> messages = CollectOperationMessages(opElement, doc);
+            List<ChannelParameter> parameters = CollectChannelParameters(opElement, doc);
 
             OperationInfo info = new(
                 operationName,
                 action,
                 channelAddress,
-                messages);
+                messages,
+                parameters);
 
             if (action == OperationAction.Send)
             {
@@ -291,7 +293,8 @@ public sealed class AsyncApi30CodeGenerator
         string Name,
         OperationAction Action,
         string ChannelAddress,
-        List<MessageInfo> Messages);
+        List<MessageInfo> Messages,
+        List<ChannelParameter> Parameters);
 
     private readonly record struct MessageInfo(
         string Name,
@@ -299,6 +302,12 @@ public sealed class AsyncApi30CodeGenerator
         string? PayloadTypeName,
         string? HeadersPointer,
         string? HeadersTypeName);
+
+    private readonly record struct ChannelParameter(
+        string Name,
+        string? Description,
+        string[]? EnumValues,
+        string? DefaultValue);
 
     // ═══════════════════════════════════════════════════════════════════
     // Walk helpers
@@ -451,6 +460,71 @@ public sealed class AsyncApi30CodeGenerator
         }
 
         return messages;
+    }
+
+    private static List<ChannelParameter> CollectChannelParameters(JsonElement operation, AsyncApiDocument doc)
+    {
+        List<ChannelParameter> parameters = [];
+
+        // Resolve the channel $ref to get the channel object
+        if (!operation.TryGetProperty("channel"u8, out JsonElement channelRef))
+        {
+            return parameters;
+        }
+
+        JsonElement channelElement = ResolveRef(channelRef, doc);
+        if (channelElement.ValueKind != JsonValueKind.Object)
+        {
+            return parameters;
+        }
+
+        if (!channelElement.TryGetProperty("parameters"u8, out JsonElement paramsEl) ||
+            paramsEl.ValueKind != JsonValueKind.Object)
+        {
+            return parameters;
+        }
+
+        foreach (var paramProp in paramsEl.EnumerateObject())
+        {
+            string paramName = paramProp.Name;
+            string? description = null;
+            string[]? enumValues = null;
+            string? defaultValue = null;
+
+            if (paramProp.Value.ValueKind == JsonValueKind.Object)
+            {
+                if (paramProp.Value.TryGetProperty("description"u8, out JsonElement descEl) &&
+                    descEl.ValueKind == JsonValueKind.String)
+                {
+                    description = descEl.GetString();
+                }
+
+                if (paramProp.Value.TryGetProperty("enum"u8, out JsonElement enumEl) &&
+                    enumEl.ValueKind == JsonValueKind.Array)
+                {
+                    List<string> values = [];
+                    foreach (JsonElement v in enumEl.EnumerateArray())
+                    {
+                        if (v.ValueKind == JsonValueKind.String)
+                        {
+                            values.Add(v.GetString()!);
+                        }
+                    }
+
+                    enumValues = [.. values];
+                }
+
+                if (paramProp.Value.TryGetProperty("default"u8, out JsonElement defEl) &&
+                    defEl.ValueKind == JsonValueKind.String)
+                {
+                    defaultValue = defEl.GetString();
+                }
+            }
+
+            parameters.Add(new ChannelParameter(paramName, description, enumValues, defaultValue));
+        }
+
+        return parameters;
     }
 
     private static JsonElement ResolveRef(JsonElement element, AsyncApiDocument doc)
@@ -608,15 +682,29 @@ public sealed class AsyncApi30CodeGenerator
         w.OpenBrace();
 
         w.WriteLine("private readonly IMessageTransport transport;");
-        w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
+        w.WriteLine("private readonly ValidationMode validationMode;");
+
+        if (op.Parameters.Count == 0)
+        {
+            w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
+        }
+        else
+        {
+            // Channel address is a template — store the pattern for runtime substitution
+            w.WriteLine($"private const string ChannelAddressTemplate = \"{EscapeString(op.ChannelAddress)}\";");
+        }
+
         w.WriteLine();
 
         w.WriteLine($"/// <summary>");
         w.WriteLine($"/// Initializes a new instance of the <see cref=\"{className}\"/> class.");
         w.WriteLine($"/// </summary>");
-        w.WriteLine($"public {className}(IMessageTransport transport)");
+        w.WriteLine($"/// <param name=\"transport\">The message transport.</param>");
+        w.WriteLine($"/// <param name=\"validationMode\">The level of validation to apply to outgoing messages.</param>");
+        w.WriteLine($"public {className}(IMessageTransport transport, ValidationMode validationMode = ValidationMode.Basic)");
         w.OpenBrace();
         w.WriteLine("this.transport = transport;");
+        w.WriteLine("this.validationMode = validationMode;");
         w.CloseBrace();
 
         foreach (MessageInfo msg in op.Messages)
@@ -628,29 +716,104 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"/// Publishes a <c>{msg.Name}</c> message.");
             w.WriteLine($"/// </summary>");
             w.WriteLine($"/// <param name=\"payload\">The message payload.</param>");
+
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"/// <param name=\"headers\">The message headers.</param>");
+            }
+
+            foreach (ChannelParameter p in op.Parameters)
+            {
+                w.WriteLine($"/// <param name=\"{ToCamelCase(p.Name)}\">{p.Description ?? $"The {p.Name} channel parameter."}</param>");
+            }
+
             w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-            w.WriteLine($"public ValueTask {methodName}({payloadType}.Source payload, CancellationToken cancellationToken = default)");
+
+            // Build method signature
+            List<string> methodParams = [$"{payloadType}.Source payload"];
+
+            if (msg.HeadersTypeName is not null)
+            {
+                methodParams.Add($"{msg.HeadersTypeName}.Source headers");
+            }
+
+            foreach (ChannelParameter p in op.Parameters)
+            {
+                string paramDecl = $"string {ToCamelCase(p.Name)}";
+                if (p.DefaultValue is not null)
+                {
+                    paramDecl += $" = \"{EscapeString(p.DefaultValue)}\"";
+                }
+
+                methodParams.Add(paramDecl);
+            }
+
+            methodParams.Add("CancellationToken cancellationToken = default");
+
+            w.WriteLine($"public ValueTask {methodName}({string.Join(", ", methodParams)})");
             w.OpenBrace();
+
             w.WriteLine($"JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
             w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(workspace, payload, 30).RootElement;");
-            w.WriteLine($"return PublishAsyncCore(workspace, payloadValue, cancellationToken);");
+
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"{msg.HeadersTypeName} headersValue = {msg.HeadersTypeName}.CreateBuilder(workspace, headers, 10).RootElement;");
+            }
+
+            // Validation
+            w.WriteLine();
+            w.WriteLine("if (this.validationMode != ValidationMode.None)");
+            w.OpenBrace();
+            w.WriteLine("ValidatePayload(payloadValue, this.validationMode);");
+
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine("ValidateHeaders(headersValue, this.validationMode);");
+            }
+
+            w.CloseBrace();
+
+            // Build channel address
+            w.WriteLine();
+            if (op.Parameters.Count > 0)
+            {
+                w.Write("string channelAddress = ChannelAddressTemplate");
+                foreach (ChannelParameter p in op.Parameters)
+                {
+                    w.Write($".Replace(\"{{{p.Name}}}\", {ToCamelCase(p.Name)})");
+                }
+
+                w.WriteLine(";");
+            }
+
+            // Call PublishAsyncCore
+            string headersArg = msg.HeadersTypeName is not null
+                ? "(Corvus.Text.Json.JsonElement)headersValue"
+                : "default";
+            string addressArg = op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
+
+            w.WriteLine($"return PublishAsyncCore(workspace, {addressArg}, payloadValue, {headersArg}, cancellationToken);");
             w.CloseBrace();
         }
 
-        // Emit the shared PublishAsyncCore helper (same pattern as OpenAPI SendAsyncCore)
+        // Emit the shared PublishAsyncCore helper
         w.WriteLine();
-        w.WriteLine("private async ValueTask PublishAsyncCore<TPayload>(JsonWorkspace workspace, TPayload payload, CancellationToken cancellationToken)");
+        w.WriteLine("private async ValueTask PublishAsyncCore<TPayload>(JsonWorkspace workspace, string channel, TPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
         w.WriteLine("    where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>");
         w.OpenBrace();
         w.WriteLine("try");
         w.OpenBrace();
-        w.WriteLine("await this.transport.PublishAsync(ChannelAddress, in payload, cancellationToken).ConfigureAwait(false);");
+        w.WriteLine("await this.transport.PublishAsync(channel, in payload, in headers, cancellationToken).ConfigureAwait(false);");
         w.CloseBrace();
         w.WriteLine("finally");
         w.OpenBrace();
         w.WriteLine("workspace.Dispose();");
         w.CloseBrace();
         w.CloseBrace();
+
+        // Emit validation helpers
+        EmitValidationHelpers(w);
 
         w.CloseBrace();
 
@@ -663,6 +826,7 @@ public sealed class AsyncApi30CodeGenerator
         IndentedWriter w = new();
 
         w.WriteLine("// <auto-generated/>");
+        w.WriteLine($"using Corvus.Text.Json;");
         w.WriteLine($"using Corvus.Text.Json.AsyncApi.CodeGeneration;");
         w.WriteLine();
         w.WriteLine($"namespace {this.rootNamespace};");
@@ -683,8 +847,18 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"/// Handles a <c>{msg.Name}</c> message.");
             w.WriteLine($"/// </summary>");
             w.WriteLine($"/// <param name=\"payload\">The deserialized message payload.</param>");
-            w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-            w.WriteLine($"ValueTask {methodName}({payloadType} payload, CancellationToken cancellationToken = default);");
+
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"/// <param name=\"headers\">The deserialized message headers.</param>");
+                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
+                w.WriteLine($"ValueTask {methodName}({payloadType} payload, {msg.HeadersTypeName} headers, CancellationToken cancellationToken = default);");
+            }
+            else
+            {
+                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
+                w.WriteLine($"ValueTask {methodName}({payloadType} payload, CancellationToken cancellationToken = default);");
+            }
         }
         else
         {
@@ -725,16 +899,21 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine("private readonly IMessageTransport transport;");
         w.WriteLine($"private readonly {handlerInterface} handler;");
+        w.WriteLine("private readonly ValidationMode validationMode;");
         w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
         w.WriteLine();
 
         w.WriteLine($"/// <summary>");
         w.WriteLine($"/// Initializes a new instance of the <see cref=\"{className}\"/> class.");
         w.WriteLine($"/// </summary>");
-        w.WriteLine($"public {className}(IMessageTransport transport, {handlerInterface} handler)");
+        w.WriteLine($"/// <param name=\"transport\">The message transport.</param>");
+        w.WriteLine($"/// <param name=\"handler\">The message handler.</param>");
+        w.WriteLine($"/// <param name=\"validationMode\">The level of validation to apply to incoming messages.</param>");
+        w.WriteLine($"public {className}(IMessageTransport transport, {handlerInterface} handler, ValidationMode validationMode = ValidationMode.Basic)");
         w.OpenBrace();
         w.WriteLine("this.transport = transport;");
         w.WriteLine("this.handler = handler;");
+        w.WriteLine("this.validationMode = validationMode;");
         w.CloseBrace();
 
         // StartAsync
@@ -778,15 +957,39 @@ public sealed class AsyncApi30CodeGenerator
             MessageInfo msg = op.Messages[0];
             string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
             string handlerMethod = $"Handle{ToPascalCase(msg.Name)}Async";
-            w.WriteLine($"private ValueTask HandleMessageAsync({payloadType} payload, CancellationToken cancellationToken)");
+
+            w.WriteLine($"private ValueTask HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
-            w.WriteLine($"return this.handler.{handlerMethod}(payload, cancellationToken);");
+
+            // Validation
+            w.WriteLine("if (this.validationMode != ValidationMode.None)");
+            w.OpenBrace();
+            w.WriteLine("ValidatePayload(payload, this.validationMode);");
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"{msg.HeadersTypeName} typedHeaders = {msg.HeadersTypeName}.From(headers);");
+                w.WriteLine("ValidateHeaders(typedHeaders, this.validationMode);");
+            }
+
+            w.CloseBrace();
+            w.WriteLine();
+
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"{msg.HeadersTypeName} h = {msg.HeadersTypeName}.From(headers);");
+                w.WriteLine($"return this.handler.{handlerMethod}(payload, h, cancellationToken);");
+            }
+            else
+            {
+                w.WriteLine($"return this.handler.{handlerMethod}(payload, cancellationToken);");
+            }
+
             w.CloseBrace();
         }
         else
         {
             string messageTypeName = $"{ToPascalCase(op.Name)}ReceivedMessage";
-            w.WriteLine("private ValueTask HandleMessageAsync(Corvus.Text.Json.JsonElement payload, CancellationToken cancellationToken)");
+            w.WriteLine("private ValueTask HandleMessageAsync(Corvus.Text.Json.JsonElement payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
             w.WriteLine($"return this.handler.HandleAsync(new {messageTypeName}(payload), cancellationToken);");
             w.CloseBrace();
@@ -799,6 +1002,9 @@ public sealed class AsyncApi30CodeGenerator
         w.OpenBrace();
         w.WriteLine("return StopAsync();");
         w.CloseBrace();
+
+        // Validation helpers
+        EmitValidationHelpers(w);
 
         w.CloseBrace();
 
@@ -953,24 +1159,133 @@ public sealed class AsyncApi30CodeGenerator
         IndentedWriter w = new();
 
         w.WriteLine("// <auto-generated/>");
+        w.WriteLine($"using Corvus.Text.Json;");
+        w.WriteLine($"using Corvus.Text.Json.AsyncApi.CodeGeneration;");
+        w.WriteLine();
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
         w.WriteLine($"/// <summary>");
         w.WriteLine($"/// Typed message wrapper for <c>{msg.Name}</c> in operation <c>{op.Name}</c>.");
         w.WriteLine($"/// </summary>");
+        w.WriteLine($"public readonly struct {className}");
+        w.OpenBrace();
+
+        // Properties
+        w.WriteLine($"/// <summary>Gets the message payload.</summary>");
+        w.WriteLine($"public {payloadType} Payload {{ get; init; }}");
+
         if (msg.HeadersTypeName is not null)
         {
-            w.WriteLine($"public readonly record struct {className}(");
-            w.WriteLine($"    {payloadType} Payload,");
-            w.WriteLine($"    {msg.HeadersTypeName} Headers);");
-        }
-        else
-        {
-            w.WriteLine($"public readonly record struct {className}(");
-            w.WriteLine($"    {payloadType} Payload);");
+            w.WriteLine();
+            w.WriteLine($"/// <summary>Gets the message headers.</summary>");
+            w.WriteLine($"public {msg.HeadersTypeName} Headers {{ get; init; }}");
         }
 
+        // Validate method
+        w.WriteLine();
+        w.WriteLine($"/// <summary>");
+        w.WriteLine($"/// Validates the message payload and headers against their schemas.");
+        w.WriteLine($"/// </summary>");
+        w.WriteLine($"/// <param name=\"mode\">The validation mode.</param>");
+        w.WriteLine($"/// <exception cref=\"System.ArgumentException\">");
+        w.WriteLine($"/// The payload or headers do not conform to their schema.");
+        w.WriteLine($"/// </exception>");
+        w.WriteLine($"public void Validate(ValidationMode mode = ValidationMode.Basic)");
+        w.OpenBrace();
+        w.WriteLine("if (mode == ValidationMode.None)");
+        w.OpenBrace();
+        w.WriteLine("return;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine("if (mode == ValidationMode.Basic)");
+        w.OpenBrace();
+        w.WriteLine("if (!this.Payload.EvaluateSchema())");
+        w.OpenBrace();
+        w.WriteLine($"throw new System.ArgumentException(\"Message payload does not conform to schema.\", nameof(this.Payload));");
+        w.CloseBrace();
+
+        if (msg.HeadersTypeName is not null)
+        {
+            w.WriteLine();
+            w.WriteLine("if (!this.Headers.EvaluateSchema())");
+            w.OpenBrace();
+            w.WriteLine($"throw new System.ArgumentException(\"Message headers do not conform to schema.\", nameof(this.Headers));");
+            w.CloseBrace();
+        }
+
+        w.CloseBrace();
+        w.WriteLine("else");
+        w.OpenBrace();
+
+        // Detailed validation with JsonSchemaResultsCollector
+        w.WriteLine("JsonSchemaResultsCollector collector = new();");
+        w.WriteLine("if (!this.Payload.EvaluateSchema(collector))");
+        w.OpenBrace();
+        w.WriteLine($"throw new System.ArgumentException($\"Message payload does not conform to schema: {{collector}}\", nameof(this.Payload));");
+        w.CloseBrace();
+
+        if (msg.HeadersTypeName is not null)
+        {
+            w.WriteLine();
+            w.WriteLine("collector = new();");
+            w.WriteLine("if (!this.Headers.EvaluateSchema(collector))");
+            w.OpenBrace();
+            w.WriteLine($"throw new System.ArgumentException($\"Message headers do not conform to schema: {{collector}}\", nameof(this.Headers));");
+            w.CloseBrace();
+        }
+
+        w.CloseBrace();
+        w.CloseBrace();
+
+        w.CloseBrace();
+
         return new GeneratedFile($"{className}.cs", w.ToString());
+    }
+
+    private static void EmitValidationHelpers(IndentedWriter w)
+    {
+        w.WriteLine();
+        w.WriteLine("private static void ValidatePayload<TPayload>(TPayload payload, ValidationMode mode)");
+        w.WriteLine("    where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>");
+        w.OpenBrace();
+        w.WriteLine("if (mode == ValidationMode.Basic)");
+        w.OpenBrace();
+        w.WriteLine("if (!payload.EvaluateSchema())");
+        w.OpenBrace();
+        w.WriteLine("throw new System.ArgumentException(\"Message payload does not conform to schema.\", nameof(payload));");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine("else if (mode == ValidationMode.Detailed)");
+        w.OpenBrace();
+        w.WriteLine("Corvus.Text.Json.JsonSchemaResultsCollector collector = new();");
+        w.WriteLine("if (!payload.EvaluateSchema(collector))");
+        w.OpenBrace();
+        w.WriteLine("throw new System.ArgumentException($\"Message payload does not conform to schema: {collector}\", nameof(payload));");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.CloseBrace();
+
+        w.WriteLine();
+        w.WriteLine("private static void ValidateHeaders<THeaders>(THeaders headers, ValidationMode mode)");
+        w.WriteLine("    where THeaders : struct, Corvus.Text.Json.Internal.IJsonElement<THeaders>");
+        w.OpenBrace();
+        w.WriteLine("if (mode == ValidationMode.Basic)");
+        w.OpenBrace();
+        w.WriteLine("if (!headers.EvaluateSchema())");
+        w.OpenBrace();
+        w.WriteLine("throw new System.ArgumentException(\"Message headers do not conform to schema.\", nameof(headers));");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine("else if (mode == ValidationMode.Detailed)");
+        w.OpenBrace();
+        w.WriteLine("Corvus.Text.Json.JsonSchemaResultsCollector collector = new();");
+        w.WriteLine("if (!headers.EvaluateSchema(collector))");
+        w.OpenBrace();
+        w.WriteLine("throw new System.ArgumentException($\"Message headers do not conform to schema: {collector}\", nameof(headers));");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.CloseBrace();
     }
 
     private static string ToPascalCase(string name)
@@ -982,6 +1297,16 @@ public sealed class AsyncApi30CodeGenerator
 
         // Simple PascalCase: capitalize first letter, preserve rest
         return char.ToUpperInvariant(name[0]) + name[1..];
+    }
+
+    private static string ToCamelCase(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return name;
+        }
+
+        return char.ToLowerInvariant(name[0]) + name[1..];
     }
 
     private static string EscapeString(string value)

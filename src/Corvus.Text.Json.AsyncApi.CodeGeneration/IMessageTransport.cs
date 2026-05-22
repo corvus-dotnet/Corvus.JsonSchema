@@ -39,11 +39,14 @@ public interface IMessageTransport : IAsyncDisposable
     /// <param name="channel">The channel address.</param>
     /// <param name="payload">The message payload, passed by <c>in</c> reference.
     /// The transport must consume the payload synchronously before any async I/O.</param>
+    /// <param name="headers">Optional message headers. When not <c>default</c>,
+    /// the transport should deliver these alongside the payload.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
     ValueTask PublishAsync<TPayload>(
         string channel,
         in TPayload payload,
+        in JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>;
 
@@ -53,12 +56,13 @@ public interface IMessageTransport : IAsyncDisposable
     /// <typeparam name="TPayload">The payload type. The transport parses incoming
     /// bytes into this type before invoking the handler.</typeparam>
     /// <param name="channel">The channel address.</param>
-    /// <param name="handler">The message handler delegate receiving typed payloads.</param>
+    /// <param name="handler">The message handler delegate receiving typed payloads
+    /// and optional headers.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
     ValueTask SubscribeAsync<TPayload>(
         string channel,
-        Func<TPayload, CancellationToken, ValueTask> handler,
+        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>;
 
