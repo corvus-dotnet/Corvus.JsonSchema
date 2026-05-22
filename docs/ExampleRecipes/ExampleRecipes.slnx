@@ -86,4 +86,19 @@
   <Folder Name="/028-JsonPath/">
     <Project Path="028-JsonPath\JsonPath.csproj" />
   </Folder>
+  <Folder Name="/029-OpenApiClient/">
+    <Project Path="029-OpenApiClient\OpenApiClient.csproj" />
+  </Folder>
+  <Folder Name="/030-OpenApiServer/">
+    <Project Path="030-OpenApiServer\OpenApiServer.csproj" />
+  </Folder>
+  <Folder Name="/031-OpenApiAdvancedClient/">
+    <Project Path="031-OpenApiAdvancedClient\OpenApiAdvancedClient.csproj" />
+  </Folder>
+  <Folder Name="/032-OpenApiAdvancedServer/">
+    <Project Path="032-OpenApiAdvancedServer\OpenApiAdvancedServer.csproj" />
+  </Folder>
+  <Folder Name="/033-OpenApiEndToEnd/">
+    <Project Path="033-OpenApiEndToEnd\OpenApiEndToEnd.csproj" />
+  </Folder>
 </Solution>
