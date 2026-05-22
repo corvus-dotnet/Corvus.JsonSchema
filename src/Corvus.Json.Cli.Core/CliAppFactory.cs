@@ -37,6 +37,10 @@ public static class CliAppFactory
                     .WithDescription("Generate API client code from an OpenAPI specification.");
                 c.AddCommand<OpenApiServerCommand>("openapi-server")
                     .WithDescription("Generate API server stubs from an OpenAPI specification.");
+                c.AddCommand<OpenApiCallbackServerCommand>("openapi-callback-server")
+                    .WithDescription("Generate server stubs from OpenAPI webhooks and callbacks.");
+                c.AddCommand<OpenApiCallbackClientCommand>("openapi-callback-client")
+                    .WithDescription("Generate a client for invoking OpenAPI webhooks and callbacks.");
                 c.AddCommand<OpenApiShowCommand>("openapi-show")
                     .WithDescription("Display the operation tree of an OpenAPI specification.");
 #endif

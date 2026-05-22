@@ -34,6 +34,7 @@ public sealed class OpenApi30CodeGenerator
 {
     private readonly string rootNamespace;
     private readonly string? clientNamePrefix;
+    private readonly bool ignoreEmptyFormUrlEncodedBody;
     private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
 
     /// <summary>
@@ -49,14 +50,20 @@ public sealed class OpenApi30CodeGenerator
     /// Optional prefix for client type names. If <see langword="null"/>,
     /// <c>"Api"</c> is used.
     /// </param>
+    /// <param name="ignoreEmptyFormUrlEncodedBody">
+    /// When <see langword="true"/>, form-urlencoded request bodies whose schema defines
+    /// no properties are treated as if the body were absent.
+    /// </param>
     public OpenApi30CodeGenerator(
         string rootNamespace,
         IReadOnlyDictionary<string, string> schemaTypeMap,
-        string? clientNamePrefix = null)
+        string? clientNamePrefix = null,
+        bool ignoreEmptyFormUrlEncodedBody = false)
     {
         this.rootNamespace = rootNamespace;
         this.schemaTypeMap = schemaTypeMap;
         this.clientNamePrefix = clientNamePrefix;
+        this.ignoreEmptyFormUrlEncodedBody = ignoreEmptyFormUrlEncodedBody;
     }
 
     // ── Walk-phase reference (typed model objects, no strings extracted) ──
@@ -662,6 +669,146 @@ public sealed class OpenApi30CodeGenerator
         }
     }
 
+    private static IEnumerable<OperationRef> WalkCallbackOperationRefs(
+        JsonElement specRoot,
+        OperationFilter? filter,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        OpenApiDocument doc = specRoot;
+
+        if (doc.PathsValue.IsUndefined())
+        {
+            yield break;
+        }
+
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+
+        // Walk each operation in paths and check for callbacks
+        foreach (JsonProperty<JsonElement> pathProp in doc.PathsValue.EnumerateObject())
+        {
+            OpenApiDocument.PathItem pathItem = OpenApiDocument.PathItem.From(pathProp.Value);
+
+            if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
+            {
+                continue;
+            }
+
+            using (pathItemScope)
+            {
+                foreach (OpenApiDocument.Operation operation in EnumerateOperationsInPathItem(resolved))
+                {
+                    OpenApiDocument.Operation.CallbacksEntity callbacks = operation.Callbacks;
+                    if (callbacks.IsUndefined())
+                    {
+                        continue;
+                    }
+
+                    foreach (JsonProperty<OpenApiDocument.Operation.CallbacksEntity.AdditionalPropertiesEntity> callbackProp in callbacks.EnumerateObject())
+                    {
+                        // Resolve the callback-or-reference union
+                        OpenApiDocument.Callback? resolvedCallback = ResolveCallbackOrReference(callbackProp.Value, referenceResolver);
+                        if (resolvedCallback is null)
+                        {
+                            continue;
+                        }
+
+                        // Each property in the Callback object is a runtime-expression → path-item
+                        foreach (JsonProperty<OpenApiDocument.PathItem> callbackPathProp in resolvedCallback.Value.EnumerateObject())
+                        {
+                            if (filter is not null)
+                            {
+                                using UnescapedUtf16JsonString name = callbackPathProp.Utf16NameSpan;
+                                if (!filter.Matches(name.Span))
+                                {
+                                    continue;
+                                }
+                            }
+
+                            foreach (OperationRef entry in WalkPathItemRefs(callbackPathProp.AsJsonElementProperty(), referenceResolver))
+                            {
+                                yield return entry;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Enumerates all operations in a path item (yielding just the Operation).
+    /// </summary>
+    private static IEnumerable<OpenApiDocument.Operation> EnumerateOperationsInPathItem(OpenApiDocument.PathItem resolved)
+    {
+        if (resolved.Get.IsNotUndefined())
+        {
+            yield return resolved.Get;
+        }
+
+        if (resolved.Put.IsNotUndefined())
+        {
+            yield return resolved.Put;
+        }
+
+        if (resolved.Post.IsNotUndefined())
+        {
+            yield return resolved.Post;
+        }
+
+        if (resolved.Delete.IsNotUndefined())
+        {
+            yield return resolved.Delete;
+        }
+
+        if (resolved.Options.IsNotUndefined())
+        {
+            yield return resolved.Options;
+        }
+
+        if (resolved.Head.IsNotUndefined())
+        {
+            yield return resolved.Head;
+        }
+
+        if (resolved.Patch.IsNotUndefined())
+        {
+            yield return resolved.Patch;
+        }
+
+        if (resolved.Trace.IsNotUndefined())
+        {
+            yield return resolved.Trace;
+        }
+    }
+
+    private static OpenApiDocument.Callback? ResolveCallbackOrReference(
+        OpenApiDocument.Operation.CallbacksEntity.AdditionalPropertiesEntity callbackOrRef,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        // Check if it's a $ref
+        if (callbackOrRef.TryGetAsReference(out OpenApiDocument.Reference reference))
+        {
+            if (reference.Ref.IsNotUndefined())
+            {
+                string refStr = reference.Ref.GetString()!;
+                if (referenceResolver.TryResolve(refStr, out JsonElement element))
+                {
+                    return OpenApiDocument.Callback.From(element);
+                }
+            }
+
+            return null;
+        }
+
+        // It's an inline callback object
+        if (callbackOrRef.TryGetAsCallback(out OpenApiDocument.Callback callback))
+        {
+            return callback;
+        }
+
+        return null;
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // Parameter merging — typed dedup via JsonString equality
     // ═══════════════════════════════════════════════════════════════════
@@ -1036,7 +1183,7 @@ public sealed class OpenApi30CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     // Preparation — converts typed model to emit-boundary records
     // ═══════════════════════════════════════════════════════════════════
-    private static OperationInfo PrepareOperation(
+    private OperationInfo PrepareOperation(
         OperationRef opRef,
         IOpenApiReferenceResolver referenceResolver,
         ServerInfo? rootServer)
@@ -1062,7 +1209,7 @@ public sealed class OpenApi30CodeGenerator
         ParameterInfo[] parameters = PrepareParameters(
             opRef.Operation, opRef.PathItem, pathNameUtf8, opRef.Method, referenceResolver);
         RequestBodyInfo? requestBody = PrepareRequestBody(
-            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver);
+            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver, this.ignoreEmptyFormUrlEncodedBody);
         ResponseInfo[] responses = PrepareResponses(
             opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver);
 
@@ -1154,7 +1301,8 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.Operation operation,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
-        IOpenApiReferenceResolver referenceResolver)
+        IOpenApiReferenceResolver referenceResolver,
+        bool ignoreEmptyFormUrlEncodedBody = false)
     {
         OpenApiDocument.Operation.RequestBodyEntity requestBodyOrRef = operation.RequestBody;
         if (requestBodyOrRef.IsUndefined())
@@ -1169,6 +1317,11 @@ public sealed class OpenApi30CodeGenerator
 
         using (rbScope)
         {
+            if (ignoreEmptyFormUrlEncodedBody && IsEmptyFormUrlEncodedBody(requestBody.Content))
+            {
+                return null;
+            }
+
             bool required = requestBody.Required;
             string? description = requestBody.Description.IsNotUndefined()
                 ? requestBody.Description.GetString()
@@ -1808,6 +1961,44 @@ public sealed class OpenApi30CodeGenerator
             {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the content map contains only a form-urlencoded
+    /// media type whose schema defines no properties (i.e. the body is empty/redundant).
+    /// </summary>
+    private static bool IsEmptyFormUrlEncodedBody(OpenApiDocument.RequestBody.ContentEntity contentMap)
+    {
+        if (contentMap.IsUndefined())
+        {
+            return false;
+        }
+
+        foreach (var mediaTypeProp in contentMap.EnumerateObject())
+        {
+            if (!CodeEmitHelpers.IsFormUrlEncodedMediaType(mediaTypeProp.Name))
+            {
+                return false;
+            }
+
+            OpenApiDocument.MediaType mediaType = mediaTypeProp.Value;
+            if (mediaType.Schema.IsUndefined())
+            {
+                return true;
+            }
+
+            JsonElement schema = JsonElement.From(mediaType.Schema);
+            if (!schema.TryGetProperty("properties"u8, out JsonElement properties)
+                || properties.ValueKind != JsonValueKind.Object)
+            {
+                return true;
+            }
+
+            var enumerator = properties.EnumerateObject();
+            return !enumerator.MoveNext();
         }
 
         return false;
@@ -2848,7 +3039,7 @@ public sealed class OpenApi30CodeGenerator
 
             if (param.IsRequired)
             {
-                w.WriteLine($"{propertyName} = ({typeName}){typeName}.CreateBuilder(workspace, {paramName}).RootElement,");
+                w.WriteLine($"{propertyName} = ({typeName}){typeName}.CreateBuilder(workspace, {paramName}, 30).RootElement,");
             }
             else
             {
@@ -2856,7 +3047,7 @@ public sealed class OpenApi30CodeGenerator
                     typeName, param.DefaultValueJson, param.DefaultValueKind);
                 w.WriteLine(
                     $"{propertyName} = {paramName}.IsUndefined ? {undefinedFallback} : " +
-                    $"({typeName}){typeName}.CreateBuilder(workspace, {paramName}).RootElement,");
+                    $"({typeName}){typeName}.CreateBuilder(workspace, {paramName}, 30).RootElement,");
             }
         }
 
@@ -3743,6 +3934,10 @@ public sealed class OpenApi30CodeGenerator
         w.OpenBrace();
 
         w.WriteLine("private readonly IApiTransport transport;");
+
+        // Emit static readonly encoding dictionaries for all operations that need them.
+        Dictionary<string, string> encodingFieldNames = EmitStaticEncodingFields(w, operations);
+
         w.WriteLine();
 
         w.WriteLine("/// <summary>");
@@ -3760,7 +3955,7 @@ public sealed class OpenApi30CodeGenerator
         for (int i = 0; i < operations.Count; i++)
         {
             w.WriteLine();
-            this.EmitClientMethod(w, operations[i]);
+            this.EmitClientMethod(w, operations[i], encodingFieldNames);
         }
 
         w.WriteLine();
@@ -3806,7 +4001,7 @@ public sealed class OpenApi30CodeGenerator
         return new GeneratedFile($"{clientName}Client.cs", w.ToString());
     }
 
-    private void EmitClientMethod(IndentedWriter w, OperationInfo op)
+    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames)
     {
         string requestName = $"{op.MethodName}Request";
         string responseName = $"{op.MethodName}Response";
@@ -3844,7 +4039,7 @@ public sealed class OpenApi30CodeGenerator
         {
             bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
             w.WriteLine(
-                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 0).RootElement;");
+                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement;");
         }
 
         if (hasParams)
@@ -3859,7 +4054,7 @@ public sealed class OpenApi30CodeGenerator
                     CodeEmitHelpers.SanitizeParameterName(param.Name));
                 string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
                 w.WriteLine(
-                    $"{typeName} {fieldName}Value = {typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement;");
+                    $"{typeName} {fieldName}Value = {typeName}.CreateBuilder(workspace, {paramIdentifier}, 30).RootElement;");
             }
 
             string ctorArgs = string.Join(
@@ -3885,7 +4080,7 @@ public sealed class OpenApi30CodeGenerator
 
                     w.WriteLine(
                         $"{fieldName} = {paramIdentifier}.IsUndefined ? {undefinedFallback} : " +
-                        $"({typeName}){typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement,");
+                        $"({typeName}){typeName}.CreateBuilder(workspace, {paramIdentifier}, 30).RootElement,");
                 }
 
                 w.CloseBrace().Write(";");
@@ -3950,19 +4145,17 @@ public sealed class OpenApi30CodeGenerator
         }
         else if (isFormUrlEncodedBody)
         {
-            IReadOnlyDictionary<string, EncodingInfo>? encodings =
-                GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
+            string formEncodingsFieldName = encodingFieldNames.GetValueOrDefault(op.MethodName + "_Form", string.Empty);
 
-            if (encodings is { Count: > 0 })
+            if (formEncodingsFieldName.Length > 0)
             {
-                EmitEncodingsDictionary(w, encodings);
                 if (hasRequestExprLinks)
                 {
                     w.WriteLine(
                         $"return CaptureRequestAsync(" +
                         $"SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), " +
+                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream, {formEncodingsFieldName}); return default; }}, " +
                         $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
                 }
                 else
@@ -3970,7 +4163,7 @@ public sealed class OpenApi30CodeGenerator
                     w.WriteLine(
                         $"return SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(workspace, request, " +
-                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), " +
+                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream, {formEncodingsFieldName}); return default; }}, " +
                         $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
                 }
             }
@@ -3982,7 +4175,7 @@ public sealed class OpenApi30CodeGenerator
                         $"return CaptureRequestAsync(" +
                         $"SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
+                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }}, " +
                         $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
                 }
                 else
@@ -3990,15 +4183,14 @@ public sealed class OpenApi30CodeGenerator
                     w.WriteLine(
                         $"return SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(workspace, request, " +
-                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
+                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }}, " +
                         $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
                 }
             }
         }
         else if (isMultipartBody)
         {
-            IReadOnlyDictionary<string, EncodingInfo>? encodings =
-                GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsMultipartMediaType);
+            string multipartEncodingsFieldName = encodingFieldNames.GetValueOrDefault(op.MethodName + "_Multipart", string.Empty);
 
             BinaryPropertyInfo[] binaryProps = op.RequestBody!.Value.BinaryProperties;
             bool hasBinaryParts = binaryProps.Length > 0;
@@ -4010,37 +4202,54 @@ public sealed class OpenApi30CodeGenerator
                 EmitBinaryPartsDictionary(w, binaryProps);
             }
 
-            string encodingsArg = encodings is { Count: > 0 } ? ", encodings" : ", null";
-            string binaryPartsArg = hasBinaryParts ? ", binaryParts" : "";
-
-            if (encodings is { Count: > 0 })
+            if (hasBinaryParts)
             {
-                EmitEncodingsDictionary(w, encodings);
-            }
+                // Async path: binary parts use WriteContentAsync which is async.
+                string encodingsArg = multipartEncodingsFieldName.Length > 0 ? $", {multipartEncodingsFieldName}" : ", null";
+                string serializeAsyncArgs = $"bodyValue, stream, boundary{encodingsArg}, binaryParts, ct";
 
-            // Build the Serialize call arguments.
-            string serializeArgs = hasBinaryParts
-                ? $"bodyValue, stream, boundary{encodingsArg}, binaryParts"
-                : encodings is { Count: > 0 }
-                    ? "bodyValue, stream, boundary, encodings"
-                    : "bodyValue, stream, boundary";
-
-            if (hasRequestExprLinks)
-            {
-                w.WriteLine(
-                    $"return CaptureRequestAsync(" +
-                    $"SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                    $"stream => MultipartFormDataSerializer.Serialize({serializeArgs}), " +
-                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
+                if (hasRequestExprLinks)
+                {
+                    w.WriteLine(
+                        $"return CaptureRequestAsync(" +
+                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
+                        $"(stream, ct) => MultipartFormDataSerializer.SerializeAsync({serializeAsyncArgs}), " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
+                }
+                else
+                {
+                    w.WriteLine(
+                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"(stream, ct) => MultipartFormDataSerializer.SerializeAsync({serializeAsyncArgs}), " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                }
             }
             else
             {
-                w.WriteLine(
-                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, " +
-                    $"stream => MultipartFormDataSerializer.Serialize({serializeArgs}), " +
-                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                // Sync path: no binary parts, wrap sync Serialize in async delegate.
+                string serializeArgs = multipartEncodingsFieldName.Length > 0
+                    ? $"bodyValue, stream, boundary, {multipartEncodingsFieldName}"
+                    : "bodyValue, stream, boundary";
+
+                if (hasRequestExprLinks)
+                {
+                    w.WriteLine(
+                        $"return CaptureRequestAsync(" +
+                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
+                        $"(stream, ct) => {{ MultipartFormDataSerializer.Serialize({serializeArgs}); return default; }}, " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
+                }
+                else
+                {
+                    w.WriteLine(
+                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"(stream, ct) => {{ MultipartFormDataSerializer.Serialize({serializeArgs}); return default; }}, " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                }
             }
         }
         else if (hasBody)
@@ -4110,11 +4319,61 @@ public sealed class OpenApi30CodeGenerator
         w.CloseBrace();
     }
 
-    private static void EmitEncodingsDictionary(
+    private Dictionary<string, string> EmitStaticEncodingFields(
         IndentedWriter w,
+        IReadOnlyList<OperationInfo> operations)
+    {
+        Dictionary<string, string> fieldNames = [];
+
+        foreach (OperationInfo op in operations)
+        {
+            if (op.RequestBody is null)
+            {
+                continue;
+            }
+
+            bool isRawStream = IsRawStreamRequestBody(op.RequestBody!.Value);
+            bool isFormUrlEncoded = !isRawStream && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
+            bool isMultipart = !isRawStream && !isFormUrlEncoded && IsMultipartRequestBody(op.RequestBody!.Value);
+
+            if (isFormUrlEncoded)
+            {
+                IReadOnlyDictionary<string, EncodingInfo>? encodings =
+                    GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
+
+                if (encodings is { Count: > 0 })
+                {
+                    string fieldName = $"{op.MethodName}Encodings";
+                    fieldNames[op.MethodName + "_Form"] = fieldName;
+                    w.WriteLine();
+                    EmitEncodingsField(w, fieldName, encodings);
+                }
+            }
+
+            if (isMultipart)
+            {
+                IReadOnlyDictionary<string, EncodingInfo>? encodings =
+                    GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsMultipartMediaType);
+
+                if (encodings is { Count: > 0 })
+                {
+                    string fieldName = $"{op.MethodName}MultipartEncodings";
+                    fieldNames[op.MethodName + "_Multipart"] = fieldName;
+                    w.WriteLine();
+                    EmitEncodingsField(w, fieldName, encodings);
+                }
+            }
+        }
+
+        return fieldNames;
+    }
+
+    private static void EmitEncodingsField(
+        IndentedWriter w,
+        string fieldName,
         IReadOnlyDictionary<string, EncodingInfo> encodings)
     {
-        w.WriteLine("Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)");
+        w.WriteLine($"private static readonly Dictionary<string, PropertyEncoding> {fieldName} = new(StringComparer.Ordinal)");
         w.WriteLine("{");
         w.PushIndent();
 
@@ -4217,17 +4476,21 @@ public sealed class OpenApi30CodeGenerator
             paramParts.Add($"{typeName} {paramIdentifier}");
         }
 
-        // Request body (always required when present).
+        // Request body parameter.
         if (op.RequestBody is not null)
         {
+            bool bodyRequired = op.RequestBody.Value.IsRequired;
+
             if (IsRawStreamRequestBody(op.RequestBody.Value))
             {
-                paramParts.Add("Stream body");
+                string suffix = bodyRequired ? string.Empty : " = default";
+                paramParts.Add($"Stream body{suffix}");
             }
             else
             {
                 string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
-                paramParts.Add($"{bodyTypeName}.Source body");
+                string suffix = bodyRequired ? string.Empty : " = default";
+                paramParts.Add($"{bodyTypeName}.Source body{suffix}");
             }
         }
 
@@ -4374,6 +4637,243 @@ public sealed class OpenApi30CodeGenerator
         files.Add(this.EmitServerEndpointRegistration(groups));
 
         return files;
+    }
+
+    /// <summary>
+    /// Generates server stubs from callbacks defined in the OpenAPI 3.0 spec.
+    /// </summary>
+    /// <remarks>
+    /// OpenAPI 3.0 does not support top-level webhooks — only per-operation callbacks.
+    /// </remarks>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter (matches against callback names).</param>
+    /// <param name="referenceResolver">Optional reference resolver.</param>
+    /// <returns>The list of generated server stub files.</returns>
+    public IReadOnlyList<GeneratedFile> GenerateCallbackServer(
+        JsonElement specRoot,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+        List<OperationInfo> operations = [];
+        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+
+        foreach (OperationRef opRef in WalkCallbackOperationRefs(specRoot, filter, referenceResolver))
+        {
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
+        }
+
+        List<GeneratedFile> files = [];
+        Dictionary<string, List<OperationInfo>> groups = GroupOperationsByTag(operations);
+
+        foreach (OperationInfo op in operations)
+        {
+            files.Add(this.EmitServerOperationParams(op));
+            files.Add(this.EmitServerOperationResult(op));
+        }
+
+        foreach ((string tag, List<OperationInfo> tagOps) in groups)
+        {
+            string handlerName = this.GetHandlerName(tag);
+            files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
+        }
+
+        files.Add(this.EmitServerEndpointRegistration(groups));
+
+        return files;
+    }
+
+    /// <summary>
+    /// Generates a client for invoking callbacks defined in the OpenAPI 3.0 spec.
+    /// </summary>
+    /// <remarks>
+    /// OpenAPI 3.0 does not support top-level webhooks — only per-operation callbacks.
+    /// </remarks>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter (matches against callback names).</param>
+    /// <param name="referenceResolver">Optional reference resolver.</param>
+    /// <returns>The list of generated client files.</returns>
+    public IReadOnlyList<GeneratedFile> GenerateCallbackClient(
+        JsonElement specRoot,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+        List<OperationInfo> operations = [];
+        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+
+        foreach (OperationRef opRef in WalkCallbackOperationRefs(specRoot, filter, referenceResolver))
+        {
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
+        }
+
+        List<GeneratedFile> files = [];
+        Dictionary<string, List<OperationInfo>> groups = GroupOperationsByTag(operations);
+
+        foreach (OperationInfo op in operations)
+        {
+            files.Add(this.EmitRequestStruct(op));
+            files.Add(this.EmitResponseStruct(op, operations));
+        }
+
+        foreach ((string tag, List<OperationInfo> tagOps) in groups)
+        {
+            string clientName = this.GetClientName(tag);
+            files.Add(this.EmitInterface(clientName, tagOps, rootServer));
+            files.Add(this.EmitImplementation(clientName, tagOps));
+        }
+
+        return files;
+    }
+
+    /// <summary>
+    /// Collects JSON Schema pointers from callbacks in the specification.
+    /// </summary>
+    /// <remarks>
+    /// OpenAPI 3.0 does not support top-level webhooks — only per-operation callbacks.
+    /// </remarks>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="parameterNames">Receives parameter name overrides from callback path-items.</param>
+    /// <param name="filter">Optional operation filter.</param>
+    /// <param name="referenceResolver">Optional reference resolver.</param>
+    /// <returns>An array of schema references found in callback path-items.</returns>
+    public static SchemaReference[] CollectWebhookAndCallbackSchemaPointers(
+        JsonElement specRoot,
+        out Dictionary<string, string> parameterNames,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+        OpenApiDocument doc = specRoot;
+
+        List<SchemaReference> pointers = [];
+        Dictionary<string, string> paramNames = new(StringComparer.Ordinal);
+
+        // OA30 has no webhooks — only collect from callbacks
+        if (doc.PathsValue.IsNotUndefined())
+        {
+            foreach (JsonProperty<JsonElement> pathProp in doc.PathsValue.EnumerateObject())
+            {
+                OpenApiDocument.PathItem pathItem = OpenApiDocument.PathItem.From(pathProp.Value);
+
+                if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
+                {
+                    continue;
+                }
+
+                using (pathItemScope)
+                {
+                    foreach (OpenApiDocument.Operation operation in EnumerateOperationsInPathItem(resolved))
+                    {
+                        OpenApiDocument.Operation.CallbacksEntity callbacks = operation.Callbacks;
+                        if (callbacks.IsUndefined())
+                        {
+                            continue;
+                        }
+
+                        foreach (JsonProperty<OpenApiDocument.Operation.CallbacksEntity.AdditionalPropertiesEntity> callbackProp in callbacks.EnumerateObject())
+                        {
+                            OpenApiDocument.Callback? resolvedCallback = ResolveCallbackOrReference(callbackProp.Value, referenceResolver);
+                            if (resolvedCallback is null)
+                            {
+                                continue;
+                            }
+
+                            foreach (JsonProperty<OpenApiDocument.PathItem> callbackPathProp in resolvedCallback.Value.EnumerateObject())
+                            {
+                                if (filter is not null)
+                                {
+                                    using UnescapedUtf16JsonString cbName = callbackPathProp.Utf16NameSpan;
+                                    if (!filter.Matches(cbName.Span))
+                                    {
+                                        continue;
+                                    }
+                                }
+
+                                CollectPathItemPointers(callbackPathProp.AsJsonElementProperty(), pointers, paramNames, referenceResolver);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        parameterNames = paramNames;
+        return [.. pointers];
+    }
+
+    /// <summary>
+    /// Lists all callback operations in the OpenAPI 3.0 specification.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter.</param>
+    /// <returns>An array of <see cref="OperationSummary"/> records.</returns>
+    public static OperationSummary[] ListWebhookAndCallbackOperations(
+        JsonElement specRoot,
+        OperationFilter? filter = null)
+    {
+        List<OperationSummary> result = [];
+
+        foreach (OperationRef opRef in WalkCallbackOperationRefs(specRoot, filter))
+        {
+            using UnescapedUtf16JsonString pathName = opRef.PathProp.Utf16NameSpan;
+            string path = pathName.Span.ToString();
+
+            string? operationId = opRef.Operation.OperationId.IsNotUndefined()
+                ? opRef.Operation.OperationId.GetString()
+                : null;
+
+            string? summary = opRef.Operation.Summary.IsNotUndefined()
+                ? opRef.Operation.Summary.GetString()
+                : null;
+
+            bool isDeprecated = opRef.Operation.Deprecated.ValueKind == JsonValueKind.True;
+
+            List<string> tags = [];
+            if (opRef.Operation.Tags.IsNotUndefined())
+            {
+                foreach (var tag in opRef.Operation.Tags.EnumerateArray())
+                {
+                    if (tag.ValueKind == JsonValueKind.String)
+                    {
+                        tags.Add(tag.GetString()!);
+                    }
+                }
+            }
+
+            int paramCount = 0;
+            if (opRef.Operation.Parameters.IsNotUndefined())
+            {
+                foreach (var param in opRef.Operation.Parameters.EnumerateArray())
+                {
+                    _ = param;
+                    paramCount++;
+                }
+            }
+
+            if (opRef.PathItem.Parameters.IsNotUndefined())
+            {
+                foreach (var param in opRef.PathItem.Parameters.EnumerateArray())
+                {
+                    _ = param;
+                    paramCount++;
+                }
+            }
+
+            bool hasBody = opRef.Operation.RequestBody.IsNotUndefined();
+
+            result.Add(new OperationSummary(
+                path,
+                opRef.Method,
+                operationId,
+                [.. tags],
+                isDeprecated,
+                paramCount,
+                hasBody,
+                summary));
+        }
+
+        return [.. result];
     }
 
     private string GetHandlerName(string tag)
@@ -4760,7 +5260,7 @@ public sealed class OpenApi30CodeGenerator
 
         string statusExpr = isDefault ? "statusCode" : statusCode;
         string bodyExpr = hasBody
-            ? $"{bodyTypeName}.CreateBuilder(workspace, body, 0).RootElement"
+            ? $"{bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement"
             : "default";
         string contentTypeExpr = hasBody ? "\"application/json\"" : "null";
 

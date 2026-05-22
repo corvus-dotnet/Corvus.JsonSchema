@@ -34,6 +34,7 @@ public sealed class OpenApi32CodeGenerator
 {
     private readonly string rootNamespace;
     private readonly string? clientNamePrefix;
+    private readonly bool ignoreEmptyFormUrlEncodedBody;
     private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
 
     /// <summary>
@@ -49,14 +50,21 @@ public sealed class OpenApi32CodeGenerator
     /// Optional prefix for client type names. If <see langword="null"/>,
     /// <c>"Api"</c> is used.
     /// </param>
+    /// <param name="ignoreEmptyFormUrlEncodedBody">
+    /// When <see langword="true"/>, form-urlencoded request bodies whose schema defines
+    /// no properties are treated as if the body were absent. Useful for real-world APIs
+    /// (e.g. Stripe) that emit empty body definitions.
+    /// </param>
     public OpenApi32CodeGenerator(
         string rootNamespace,
         IReadOnlyDictionary<string, string> schemaTypeMap,
-        string? clientNamePrefix = null)
+        string? clientNamePrefix = null,
+        bool ignoreEmptyFormUrlEncodedBody = false)
     {
         this.rootNamespace = rootNamespace;
         this.schemaTypeMap = schemaTypeMap;
         this.clientNamePrefix = clientNamePrefix;
+        this.ignoreEmptyFormUrlEncodedBody = ignoreEmptyFormUrlEncodedBody;
     }
 
     // ── Walk-phase reference (typed model objects, no strings extracted) ──
@@ -81,7 +89,8 @@ public sealed class OpenApi32CodeGenerator
         ParameterInfo[] Parameters,
         RequestBodyInfo? RequestBody,
         ResponseInfo[] Responses,
-        ServerInfo? EffectiveServer);
+        ServerInfo? EffectiveServer,
+        OperationSecurityRequirement[]? SecurityRequirements = null);
 
     private readonly record struct ServerInfo(
         string UrlTemplate,
@@ -175,7 +184,14 @@ public sealed class OpenApi32CodeGenerator
         string? BearerFormat,
         string? OpenIdConnectUrl,
         string? Oauth2MetadataUrl,
-        string? DeviceAuthorizationUrl);
+        string? DeviceAuthorizationUrl,
+        string? TokenUrl = null,
+        string? AuthorizationUrl = null,
+        string[]? AvailableScopes = null);
+
+    private readonly record struct OperationSecurityRequirement(
+        string SchemeName,
+        string[] Scopes);
 
     /// <summary>
     /// Walks the OpenAPI 3.2 specification and collects all schema
@@ -370,13 +386,23 @@ public sealed class OpenApi32CodeGenerator
         referenceResolver ??= new LocalReferenceResolver(specRoot);
         List<OperationInfo> operations = [];
         ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
-        string? documentSelf = GetDocumentSelf(specRoot);
-        SecuritySchemeInfo[] securitySchemes = PrepareSecuritySchemes(specRoot);
 
         foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
         {
-            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
         }
+
+        return this.EmitClientFiles(operations, specRoot, referenceResolver);
+    }
+
+    private IReadOnlyList<GeneratedFile> EmitClientFiles(
+        List<OperationInfo> operations,
+        JsonElement specRoot,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        string? documentSelf = GetDocumentSelf(specRoot);
+        SecuritySchemeInfo[] securitySchemes = PrepareSecuritySchemes(specRoot);
+        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
 
         List<GeneratedFile> files = [];
         Dictionary<string, List<OperationInfo>> groups = GroupOperationsByTag(operations);
@@ -1159,6 +1185,203 @@ public sealed class OpenApi32CodeGenerator
         }
     }
 
+    private static IEnumerable<OperationRef> WalkWebhookOperationRefs(
+        JsonElement specRoot,
+        OperationFilter? filter,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        OpenApiDocument doc = specRoot;
+
+        if (doc.Webhooks.IsUndefined())
+        {
+            yield break;
+        }
+
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+
+        foreach (JsonProperty<OpenApiDocument.PathItem> webhookProp in doc.Webhooks.EnumerateObject())
+        {
+            if (filter is not null)
+            {
+                using UnescapedUtf16JsonString name = webhookProp.Utf16NameSpan;
+                if (!filter.Matches(name.Span))
+                {
+                    continue;
+                }
+            }
+
+            foreach (OperationRef entry in WalkPathItemRefs(webhookProp, referenceResolver))
+            {
+                yield return entry;
+            }
+        }
+    }
+
+    private static IEnumerable<OperationRef> WalkCallbackOperationRefs(
+        JsonElement specRoot,
+        OperationFilter? filter,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        OpenApiDocument doc = specRoot;
+
+        if (doc.PathsValue.IsUndefined())
+        {
+            yield break;
+        }
+
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+
+        // Walk each operation in paths and check for callbacks
+        foreach (JsonProperty<OpenApiDocument.PathItem> pathProp in doc.PathsValue.EnumerateObject())
+        {
+            OpenApiDocument.PathItem pathItem = pathProp.Value;
+
+            if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
+            {
+                continue;
+            }
+
+            using (pathItemScope)
+            {
+                foreach (OpenApiDocument.Operation operation in EnumerateOperationsInPathItem(resolved))
+                {
+                    OpenApiDocument.Operation.CallbacksEntity callbacks = operation.Callbacks;
+                    if (callbacks.IsUndefined())
+                    {
+                        continue;
+                    }
+
+                    foreach (JsonProperty<OpenApiDocument.CallbacksOrReference> callbackProp in callbacks.EnumerateObject())
+                    {
+                        // Resolve the callbacks-or-reference
+                        OpenApiDocument.Callbacks? resolvedCallbacks = ResolveCallbacksOrReference(callbackProp.Value, referenceResolver);
+                        if (resolvedCallbacks is null)
+                        {
+                            continue;
+                        }
+
+                        // Each property in the Callbacks object is a runtime-expression → path-item
+                        foreach (JsonProperty<OpenApiDocument.PathItem> callbackPathProp in resolvedCallbacks.Value.EnumerateObject())
+                        {
+                            if (filter is not null)
+                            {
+                                using UnescapedUtf16JsonString name = callbackPathProp.Utf16NameSpan;
+                                if (!filter.Matches(name.Span))
+                                {
+                                    continue;
+                                }
+                            }
+
+                            foreach (OperationRef entry in WalkPathItemRefs(callbackPathProp, referenceResolver))
+                            {
+                                yield return entry;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<OperationRef> WalkWebhookAndCallbackOperationRefs(
+        JsonElement specRoot,
+        OperationFilter? filter,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+
+        foreach (OperationRef opRef in WalkWebhookOperationRefs(specRoot, filter, referenceResolver))
+        {
+            yield return opRef;
+        }
+
+        foreach (OperationRef opRef in WalkCallbackOperationRefs(specRoot, filter, referenceResolver))
+        {
+            yield return opRef;
+        }
+    }
+
+    /// <summary>
+    /// Enumerates all operations in a path item (yielding just the Operation).
+    /// </summary>
+    private static IEnumerable<OpenApiDocument.Operation> EnumerateOperationsInPathItem(OpenApiDocument.PathItem resolved)
+    {
+        if (resolved.Get.IsNotUndefined())
+        {
+            yield return resolved.Get;
+        }
+
+        if (resolved.Put.IsNotUndefined())
+        {
+            yield return resolved.Put;
+        }
+
+        if (resolved.Post.IsNotUndefined())
+        {
+            yield return resolved.Post;
+        }
+
+        if (resolved.Delete.IsNotUndefined())
+        {
+            yield return resolved.Delete;
+        }
+
+        if (resolved.Options.IsNotUndefined())
+        {
+            yield return resolved.Options;
+        }
+
+        if (resolved.Head.IsNotUndefined())
+        {
+            yield return resolved.Head;
+        }
+
+        if (resolved.Patch.IsNotUndefined())
+        {
+            yield return resolved.Patch;
+        }
+
+        if (resolved.Trace.IsNotUndefined())
+        {
+            yield return resolved.Trace;
+        }
+
+        if (resolved.Query.IsNotUndefined())
+        {
+            yield return resolved.Query;
+        }
+    }
+
+    private static OpenApiDocument.Callbacks? ResolveCallbacksOrReference(
+        OpenApiDocument.CallbacksOrReference callbacksOrRef,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        // Check if it's a $ref
+        if (callbacksOrRef.TryGetAsRequiredRef(out OpenApiDocument.CallbacksOrReference.RequiredRef requiredRef))
+        {
+            // It's a reference — resolve it
+            OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(requiredRef);
+            if (asRef.Ref.IsNotUndefined())
+            {
+                string refStr = asRef.Ref.GetString()!;
+                if (referenceResolver.TryResolve(refStr, out JsonElement element))
+                {
+                    return OpenApiDocument.Callbacks.From(element);
+                }
+            }
+
+            return null;
+        }
+
+        // It's an inline callbacks object
+        if (callbacksOrRef.TryGetAsCallbacks(out OpenApiDocument.Callbacks callbacks))
+        {
+            return callbacks;
+        }
+
+        return null;
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // Parameter merging — typed dedup via JsonString equality
     // ═══════════════════════════════════════════════════════════════════
@@ -1479,10 +1702,11 @@ public sealed class OpenApi32CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     // Preparation — converts typed model to emit-boundary records
     // ═══════════════════════════════════════════════════════════════════
-    private static OperationInfo PrepareOperation(
+    private OperationInfo PrepareOperation(
         OperationRef opRef,
         IOpenApiReferenceResolver referenceResolver,
-        ServerInfo? rootServer)
+        ServerInfo? rootServer,
+        JsonElement specRoot = default)
     {
         using UnescapedUtf8JsonString pathName = opRef.PathProp.Utf8NameSpan;
         ReadOnlySpan<byte> pathNameUtf8 = pathName.Span;
@@ -1505,12 +1729,16 @@ public sealed class OpenApi32CodeGenerator
         ParameterInfo[] parameters = PrepareParameters(
             opRef.Operation, opRef.PathItem, pathNameUtf8, opRef.Method, referenceResolver, opRef.CustomMethodName);
         RequestBodyInfo? requestBody = PrepareRequestBody(
-            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver, opRef.CustomMethodName);
+            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver, opRef.CustomMethodName, this.ignoreEmptyFormUrlEncodedBody);
         ResponseInfo[] responses = PrepareResponses(
             opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver, opRef.CustomMethodName);
 
         ServerInfo? effectiveServer = ResolveEffectiveServer(
             opRef.Operation, opRef.PathItem, rootServer);
+
+        OperationSecurityRequirement[]? securityRequirements = specRoot.ValueKind != JsonValueKind.Undefined
+            ? ExtractSecurityRequirements(opRef.Operation, specRoot)
+            : null;
 
         return new OperationInfo(
             pathTemplate,
@@ -1525,7 +1753,8 @@ public sealed class OpenApi32CodeGenerator
             parameters,
             requestBody,
             responses,
-            effectiveServer);
+            effectiveServer,
+            securityRequirements);
     }
 
     private static ParameterInfo[] PrepareParameters(
@@ -1660,7 +1889,8 @@ public sealed class OpenApi32CodeGenerator
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         IOpenApiReferenceResolver referenceResolver,
-        string? customMethodName = null)
+        string? customMethodName = null,
+        bool ignoreEmptyFormUrlEncodedBody = false)
     {
         OpenApiDocument.RequestBodyOrReference requestBodyOrRef = operation.RequestBody;
         if (requestBodyOrRef.IsUndefined())
@@ -1675,6 +1905,14 @@ public sealed class OpenApi32CodeGenerator
 
         using (rbScope)
         {
+            // When --ignoreEmptyFormUrlEncodedBody is set, treat form-urlencoded bodies
+            // whose schema defines no properties as absent. This handles real-world APIs
+            // (e.g. Stripe) that emit empty body definitions for operations with no body.
+            if (ignoreEmptyFormUrlEncodedBody && IsEmptyFormUrlEncodedBody(requestBody.ContentValue))
+            {
+                return null;
+            }
+
             bool required = requestBody.Required;
             string? description = requestBody.Description.IsNotUndefined()
                 ? requestBody.Description.GetString()
@@ -2246,6 +2484,33 @@ public sealed class OpenApi32CodeGenerator
                         deviceAuthorizationUrl = deviceFlow.DeviceAuthorizationUrl.GetString();
                     }
                 }
+
+                // Extract tokenUrl and authorizationUrl from the first flow that has them
+                string? tokenUrl = null;
+                string? authorizationUrl = null;
+                HashSet<string> allScopes = [];
+
+                if (scheme.Flows.IsNotUndefined())
+                {
+                    ExtractOAuth2FlowDetails(scheme.Flows, ref tokenUrl, ref authorizationUrl, allScopes);
+                }
+
+                result.Add(new SecuritySchemeInfo(
+                    schemeName,
+                    schemeType,
+                    isDeprecated,
+                    description,
+                    apiKeyName,
+                    apiKeyIn,
+                    httpScheme,
+                    bearerFormat,
+                    openIdConnectUrl,
+                    oauth2MetadataUrl,
+                    deviceAuthorizationUrl,
+                    tokenUrl,
+                    authorizationUrl,
+                    allScopes.Count > 0 ? [.. allScopes.Order(StringComparer.Ordinal)] : null));
+                continue;
             }
 
             result.Add(new SecuritySchemeInfo(
@@ -2263,6 +2528,134 @@ public sealed class OpenApi32CodeGenerator
         }
 
         return [.. result];
+    }
+
+    private static void ExtractOAuth2FlowDetails(
+        OpenApiDocument.OauthFlows flows,
+        ref string? tokenUrl,
+        ref string? authorizationUrl,
+        HashSet<string> allScopes)
+    {
+        // AuthorizationCode flow
+        if (flows.AuthorizationCode.IsNotUndefined())
+        {
+            var flow = flows.AuthorizationCode;
+            tokenUrl ??= flow.TokenUrl.IsNotUndefined() ? flow.TokenUrl.GetString() : null;
+            authorizationUrl ??= flow.AuthorizationUrl.IsNotUndefined() ? flow.AuthorizationUrl.GetString() : null;
+            CollectScopes(flow.Scopes, allScopes);
+        }
+
+        // ClientCredentials flow
+        if (flows.ClientCredentials.IsNotUndefined())
+        {
+            var flow = flows.ClientCredentials;
+            tokenUrl ??= flow.TokenUrl.IsNotUndefined() ? flow.TokenUrl.GetString() : null;
+            CollectScopes(flow.Scopes, allScopes);
+        }
+
+        // Implicit flow
+        if (flows.Implicit.IsNotUndefined())
+        {
+            var flow = flows.Implicit;
+            authorizationUrl ??= flow.AuthorizationUrl.IsNotUndefined() ? flow.AuthorizationUrl.GetString() : null;
+            CollectScopes(flow.Scopes, allScopes);
+        }
+
+        // Password flow
+        if (flows.Password.IsNotUndefined())
+        {
+            var flow = flows.Password;
+            tokenUrl ??= flow.TokenUrl.IsNotUndefined() ? flow.TokenUrl.GetString() : null;
+            CollectScopes(flow.Scopes, allScopes);
+        }
+
+        // DeviceAuthorization flow
+        if (flows.DeviceAuthorization.IsNotUndefined())
+        {
+            var flow = flows.DeviceAuthorization;
+            tokenUrl ??= flow.TokenUrl.IsNotUndefined() ? flow.TokenUrl.GetString() : null;
+            CollectScopes(flow.Scopes, allScopes);
+        }
+    }
+
+    private static void CollectScopes(OpenApiDocument.MapOfStrings scopes, HashSet<string> allScopes)
+    {
+        if (scopes.IsNotUndefined())
+        {
+            foreach (var scopeProp in scopes.EnumerateObject())
+            {
+                allScopes.Add(scopeProp.Name);
+            }
+        }
+    }
+
+    private static OperationSecurityRequirement[]? ExtractSecurityRequirements(
+        OpenApiDocument.Operation operation,
+        OpenApiDocument doc)
+    {
+        // Operation-level security overrides document-level
+        if (operation.Security.IsNotUndefined())
+        {
+            return ParseSecurityRequirements(operation.Security);
+        }
+
+        // Fall back to document-level security
+        if (doc.Security.IsNotUndefined())
+        {
+            return ParseSecurityRequirements(doc.Security);
+        }
+
+        return null;
+    }
+
+    private static OperationSecurityRequirement[]? ParseSecurityRequirements(
+        OpenApiDocument.Operation.SecurityRequirementArray securityArray)
+    {
+        List<OperationSecurityRequirement> result = [];
+
+        foreach (OpenApiDocument.SecurityRequirement requirement in securityArray.EnumerateArray())
+        {
+            // Each security requirement is an object: { "schemeName": ["scope1", "scope2"] }
+            foreach (var schemeProp in requirement.EnumerateObject())
+            {
+                string schemeName = schemeProp.Name;
+                List<string> scopes = [];
+
+                // The value is an array of scope strings
+                foreach (var scope in schemeProp.Value.EnumerateArray())
+                {
+                    scopes.Add(scope.GetString()!);
+                }
+
+                result.Add(new OperationSecurityRequirement(schemeName, [.. scopes]));
+            }
+        }
+
+        return result.Count > 0 ? [.. result] : null;
+    }
+
+    private static OperationSecurityRequirement[]? ParseSecurityRequirements(
+        OpenApiDocument.SecurityRequirementArray securityArray)
+    {
+        List<OperationSecurityRequirement> result = [];
+
+        foreach (OpenApiDocument.SecurityRequirement requirement in securityArray.EnumerateArray())
+        {
+            foreach (var schemeProp in requirement.EnumerateObject())
+            {
+                string schemeName = schemeProp.Name;
+                List<string> scopes = [];
+
+                foreach (var scope in schemeProp.Value.EnumerateArray())
+                {
+                    scopes.Add(scope.GetString()!);
+                }
+
+                result.Add(new OperationSecurityRequirement(schemeName, [.. scopes]));
+            }
+        }
+
+        return result.Count > 0 ? [.. result] : null;
     }
 
     private static ServerInfo? ExtractServerInfo(OpenApiDocument.Server server)
@@ -2426,6 +2819,44 @@ public sealed class OpenApi32CodeGenerator
             {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the content map contains only a form-urlencoded
+    /// media type whose schema defines no properties (i.e. the body is empty/redundant).
+    /// </summary>
+    private static bool IsEmptyFormUrlEncodedBody(OpenApiDocument.Content contentMap)
+    {
+        if (contentMap.IsUndefined())
+        {
+            return false;
+        }
+
+        foreach (var mediaTypeProp in contentMap.EnumerateObject())
+        {
+            if (!CodeEmitHelpers.IsFormUrlEncodedMediaType(mediaTypeProp.Name))
+            {
+                return false;
+            }
+
+            OpenApiDocument.MediaType mediaType = OpenApiDocument.MediaType.From(mediaTypeProp.Value);
+            if (mediaType.SchemaValue.IsUndefined())
+            {
+                return true;
+            }
+
+            JsonElement schema = JsonElement.From(mediaType.SchemaValue);
+            if (!schema.TryGetProperty("properties"u8, out JsonElement properties)
+                || properties.ValueKind != JsonValueKind.Object)
+            {
+                return true;
+            }
+
+            var enumerator = properties.EnumerateObject();
+            return !enumerator.MoveNext();
         }
 
         return false;
@@ -3740,7 +4171,7 @@ public sealed class OpenApi32CodeGenerator
 
             if (param.IsRequired)
             {
-                w.WriteLine($"{propertyName} = ({typeName}){typeName}.CreateBuilder(workspace, {paramName}).RootElement,");
+                w.WriteLine($"{propertyName} = ({typeName}){typeName}.CreateBuilder(workspace, {paramName}, 30).RootElement,");
             }
             else
             {
@@ -3748,7 +4179,7 @@ public sealed class OpenApi32CodeGenerator
                     typeName, param.DefaultValueJson, param.DefaultValueKind);
                 w.WriteLine(
                     $"{propertyName} = {paramName}.IsUndefined ? {undefinedFallback} : " +
-                    $"({typeName}){typeName}.CreateBuilder(workspace, {paramName}).RootElement,");
+                    $"({typeName}){typeName}.CreateBuilder(workspace, {paramName}, 30).RootElement,");
             }
         }
 
@@ -4692,6 +5123,8 @@ public sealed class OpenApi32CodeGenerator
             EmitSecuritySchemeMetadata(w, securitySchemes);
         }
 
+        EmitSecurityRequirements(w, operations, securitySchemes);
+
         for (int i = 0; i < operations.Count; i++)
         {
             if (i > 0)
@@ -4836,6 +5269,29 @@ public sealed class OpenApi32CodeGenerator
                 EmitSecurityProperty(w, scheme, propName, "DeviceAuthorizationUrl", scheme.DeviceAuthorizationUrl,
                     $"Gets the device authorization URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
             }
+
+            if (scheme.TokenUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "TokenUrl", scheme.TokenUrl,
+                    $"Gets the token URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.AuthorizationUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "AuthorizationUrl", scheme.AuthorizationUrl,
+                    $"Gets the authorization URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.AvailableScopes is { Length: > 0 })
+            {
+                w.WriteLine();
+                EmitDeprecatedAttribute(w, scheme);
+                w.WriteLine("/// <summary>");
+                w.WriteLine($"/// Gets all available scopes for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+                w.WriteLine("/// </summary>");
+                string scopeArray = string.Join(", ", scheme.AvailableScopes.Select(s => CodeEmitHelpers.FormatStringLiteral(s)));
+                w.WriteLine($"public static readonly string[] {propName}AvailableScopes = [{scopeArray}];");
+            }
         }
 
         w.CloseBrace();
@@ -4861,6 +5317,99 @@ public sealed class OpenApi32CodeGenerator
 
         w.WriteLine(
             $"public static string {propName}{suffix} => {CodeEmitHelpers.FormatStringLiteral(value)};");
+    }
+
+    private static void EmitDeprecatedAttribute(IndentedWriter w, SecuritySchemeInfo scheme)
+    {
+        if (scheme.IsDeprecated)
+        {
+            w.WriteLine("[Obsolete(\"This security scheme is deprecated.\")]");
+        }
+    }
+
+    private static void EmitSecurityRequirements(
+        IndentedWriter w,
+        IReadOnlyList<OperationInfo> operations,
+        SecuritySchemeInfo[]? securitySchemes)
+    {
+        // Collect all operation security requirements into per-operation arrays
+        List<(string MethodName, string SchemePropName, string[] Scopes)> perOperationEntries = [];
+
+        foreach (OperationInfo op in operations)
+        {
+            if (op.SecurityRequirements is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            foreach (OperationSecurityRequirement req in op.SecurityRequirements)
+            {
+                if (req.Scopes.Length == 0)
+                {
+                    continue;
+                }
+
+                string schemePropName = CodeEmitHelpers.SanitizeIdentifier(req.SchemeName);
+                perOperationEntries.Add((op.MethodName, schemePropName, req.Scopes));
+            }
+        }
+
+        if (perOperationEntries.Count == 0)
+        {
+            return;
+        }
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Per-operation security requirements from the specification.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public static class SecurityRequirements");
+        w.OpenBrace();
+
+        // Emit per-operation scope arrays
+        bool first = true;
+        foreach ((string methodName, string schemePropName, string[] scopes) in perOperationEntries)
+        {
+            if (!first)
+            {
+                w.WriteLine();
+            }
+
+            first = false;
+            string scopeArray = string.Join(", ", scopes.Select(s => CodeEmitHelpers.FormatStringLiteral(s)));
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Gets the scopes required by <c>{CodeEmitHelpers.EscapeXml(methodName)}</c> for the <c>{CodeEmitHelpers.EscapeXml(schemePropName)}</c> scheme.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine($"public static readonly string[] {methodName}{schemePropName}Scopes = [{scopeArray}];");
+        }
+
+        // Emit union scope arrays per scheme (deduplicated)
+        Dictionary<string, SortedSet<string>> unionByScheme = new(StringComparer.Ordinal);
+        foreach ((_, string schemePropName, string[] scopes) in perOperationEntries)
+        {
+            if (!unionByScheme.TryGetValue(schemePropName, out SortedSet<string>? unionScopes))
+            {
+                unionScopes = new SortedSet<string>(StringComparer.Ordinal);
+                unionByScheme[schemePropName] = unionScopes;
+            }
+
+            foreach (string scope in scopes)
+            {
+                unionScopes.Add(scope);
+            }
+        }
+
+        foreach ((string schemePropName, SortedSet<string> scopes) in unionByScheme)
+        {
+            w.WriteLine();
+            string allScopeArray = string.Join(", ", scopes.Select(s => CodeEmitHelpers.FormatStringLiteral(s)));
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Gets all scopes required by any operation for the <c>{CodeEmitHelpers.EscapeXml(schemePropName)}</c> scheme.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine($"public static readonly string[] All{schemePropName}Scopes = [{allScopeArray}];");
+        }
+
+        w.CloseBrace();
+        w.WriteLine();
     }
 
     private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op)
@@ -4897,6 +5446,10 @@ public sealed class OpenApi32CodeGenerator
         w.OpenBrace();
 
         w.WriteLine("private readonly IApiTransport transport;");
+
+        // Emit static readonly encoding dictionaries for all operations that need them.
+        Dictionary<string, string> encodingFieldNames = EmitStaticEncodingFields(w, operations);
+
         w.WriteLine();
 
         w.WriteLine("/// <summary>");
@@ -4914,7 +5467,7 @@ public sealed class OpenApi32CodeGenerator
         for (int i = 0; i < operations.Count; i++)
         {
             w.WriteLine();
-            this.EmitClientMethod(w, operations[i]);
+            this.EmitClientMethod(w, operations[i], encodingFieldNames);
         }
 
         w.WriteLine();
@@ -4961,7 +5514,7 @@ public sealed class OpenApi32CodeGenerator
         return new GeneratedFile($"{clientName}Client.cs", w.ToString());
     }
 
-    private void EmitClientMethod(IndentedWriter w, OperationInfo op)
+    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames)
     {
         string requestName = $"{op.MethodName}Request";
         string responseName = $"{op.MethodName}Response";
@@ -5024,7 +5577,7 @@ public sealed class OpenApi32CodeGenerator
         {
             bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
             w.WriteLine(
-                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 0).RootElement;");
+                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement;");
         }
 
         if (hasParams)
@@ -5039,7 +5592,7 @@ public sealed class OpenApi32CodeGenerator
                     CodeEmitHelpers.SanitizeParameterName(param.Name));
                 string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
                 w.WriteLine(
-                    $"{typeName} {fieldName}Value = {typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement;");
+                    $"{typeName} {fieldName}Value = {typeName}.CreateBuilder(workspace, {paramIdentifier}, 30).RootElement;");
             }
 
             string ctorArgs = string.Join(
@@ -5065,7 +5618,7 @@ public sealed class OpenApi32CodeGenerator
 
                     w.WriteLine(
                         $"{fieldName} = {paramIdentifier}.IsUndefined ? {undefinedFallback} : " +
-                        $"({typeName}){typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement,");
+                        $"({typeName}){typeName}.CreateBuilder(workspace, {paramIdentifier}, 30).RootElement,");
                 }
 
                 w.CloseBrace().Write(";");
@@ -5130,19 +5683,17 @@ public sealed class OpenApi32CodeGenerator
         }
         else if (isFormUrlEncodedBody)
         {
-            IReadOnlyDictionary<string, EncodingInfo>? encodings =
-                GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
+            string formEncodingsFieldName = encodingFieldNames.GetValueOrDefault(op.MethodName + "_Form", string.Empty);
 
-            if (encodings is { Count: > 0 })
+            if (formEncodingsFieldName.Length > 0)
             {
-                EmitEncodingsDictionary(w, encodings);
                 if (hasRequestExprLinks)
                 {
                     w.WriteLine(
                         $"return CaptureRequestAsync(" +
                         $"SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), " +
+                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream, {formEncodingsFieldName}); return default; }}, " +
                         $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
                 }
                 else
@@ -5150,7 +5701,7 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine(
                         $"return SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(workspace, request, " +
-                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), " +
+                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream, {formEncodingsFieldName}); return default; }}, " +
                         $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
                 }
             }
@@ -5162,7 +5713,7 @@ public sealed class OpenApi32CodeGenerator
                         $"return CaptureRequestAsync(" +
                         $"SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
+                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }}, " +
                         $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
                 }
                 else
@@ -5170,7 +5721,7 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine(
                         $"return SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(workspace, request, " +
-                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
+                        $"(stream, ct) => {{ FormUrlEncodedSerializer.Serialize(bodyValue, stream); return default; }}, " +
                         $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
                 }
             }
@@ -5191,8 +5742,7 @@ public sealed class OpenApi32CodeGenerator
         }
         else if (isMultipartBody)
         {
-            IReadOnlyDictionary<string, EncodingInfo>? encodings =
-                GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsMultipartMediaType);
+            string multipartEncodingsFieldName = encodingFieldNames.GetValueOrDefault(op.MethodName + "_Multipart", string.Empty);
 
             BinaryPropertyInfo[] binaryProps = op.RequestBody!.Value.BinaryProperties;
             bool hasBinaryParts = binaryProps.Length > 0;
@@ -5204,37 +5754,54 @@ public sealed class OpenApi32CodeGenerator
                 EmitBinaryPartsDictionary(w, binaryProps);
             }
 
-            string encodingsArg = encodings is { Count: > 0 } ? ", encodings" : ", null";
-            string binaryPartsArg = hasBinaryParts ? ", binaryParts" : "";
-
-            if (encodings is { Count: > 0 })
+            if (hasBinaryParts)
             {
-                EmitEncodingsDictionary(w, encodings);
-            }
+                // Async path: binary parts use WriteContentAsync which is async.
+                string encodingsArg = multipartEncodingsFieldName.Length > 0 ? $", {multipartEncodingsFieldName}" : ", null";
+                string serializeAsyncArgs = $"bodyValue, stream, boundary{encodingsArg}, binaryParts, ct";
 
-            // Build the Serialize call arguments.
-            string serializeArgs = hasBinaryParts
-                ? $"bodyValue, stream, boundary{encodingsArg}, binaryParts"
-                : encodings is { Count: > 0 }
-                    ? "bodyValue, stream, boundary, encodings"
-                    : "bodyValue, stream, boundary";
-
-            if (hasRequestExprLinks)
-            {
-                w.WriteLine(
-                    $"return CaptureRequestAsync(" +
-                    $"SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                    $"stream => MultipartFormDataSerializer.Serialize({serializeArgs}), " +
-                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
+                if (hasRequestExprLinks)
+                {
+                    w.WriteLine(
+                        $"return CaptureRequestAsync(" +
+                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
+                        $"(stream, ct) => MultipartFormDataSerializer.SerializeAsync({serializeAsyncArgs}), " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
+                }
+                else
+                {
+                    w.WriteLine(
+                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"(stream, ct) => MultipartFormDataSerializer.SerializeAsync({serializeAsyncArgs}), " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                }
             }
             else
             {
-                w.WriteLine(
-                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, " +
-                    $"stream => MultipartFormDataSerializer.Serialize({serializeArgs}), " +
-                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                // Sync path: no binary parts, wrap sync Serialize in async delegate.
+                string serializeArgs = multipartEncodingsFieldName.Length > 0
+                    ? $"bodyValue, stream, boundary, {multipartEncodingsFieldName}"
+                    : "bodyValue, stream, boundary";
+
+                if (hasRequestExprLinks)
+                {
+                    w.WriteLine(
+                        $"return CaptureRequestAsync(" +
+                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
+                        $"(stream, ct) => {{ MultipartFormDataSerializer.Serialize({serializeArgs}); return default; }}, " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
+                }
+                else
+                {
+                    w.WriteLine(
+                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"(stream, ct) => {{ MultipartFormDataSerializer.Serialize({serializeArgs}); return default; }}, " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                }
             }
         }
         else if (hasBody)
@@ -5304,11 +5871,62 @@ public sealed class OpenApi32CodeGenerator
         w.CloseBrace();
     }
 
-    private static void EmitEncodingsDictionary(
+    private Dictionary<string, string> EmitStaticEncodingFields(
         IndentedWriter w,
+        IReadOnlyList<OperationInfo> operations)
+    {
+        Dictionary<string, string> fieldNames = [];
+
+        foreach (OperationInfo op in operations)
+        {
+            if (op.RequestBody is null)
+            {
+                continue;
+            }
+
+            bool isMultipartMixed = IsMultipartMixedRequestBody(op.RequestBody!.Value);
+            bool isRawStream = !isMultipartMixed && IsRawStreamRequestBody(op.RequestBody!.Value);
+            bool isFormUrlEncoded = !isRawStream && !isMultipartMixed && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
+            bool isMultipart = !isRawStream && !isFormUrlEncoded && !isMultipartMixed && IsMultipartRequestBody(op.RequestBody!.Value);
+
+            if (isFormUrlEncoded)
+            {
+                IReadOnlyDictionary<string, EncodingInfo>? encodings =
+                    GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
+
+                if (encodings is { Count: > 0 })
+                {
+                    string fieldName = $"{op.MethodName}Encodings";
+                    fieldNames[op.MethodName + "_Form"] = fieldName;
+                    w.WriteLine();
+                    EmitEncodingsField(w, fieldName, encodings);
+                }
+            }
+
+            if (isMultipart)
+            {
+                IReadOnlyDictionary<string, EncodingInfo>? encodings =
+                    GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsMultipartMediaType);
+
+                if (encodings is { Count: > 0 })
+                {
+                    string fieldName = $"{op.MethodName}MultipartEncodings";
+                    fieldNames[op.MethodName + "_Multipart"] = fieldName;
+                    w.WriteLine();
+                    EmitEncodingsField(w, fieldName, encodings);
+                }
+            }
+        }
+
+        return fieldNames;
+    }
+
+    private static void EmitEncodingsField(
+        IndentedWriter w,
+        string fieldName,
         IReadOnlyDictionary<string, EncodingInfo> encodings)
     {
-        w.WriteLine("Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)");
+        w.WriteLine($"private static readonly Dictionary<string, PropertyEncoding> {fieldName} = new(StringComparer.Ordinal)");
         w.WriteLine("{");
         w.PushIndent();
 
@@ -5418,9 +6036,11 @@ public sealed class OpenApi32CodeGenerator
             paramParts.Add($"{typeName} {paramIdentifier}");
         }
 
-        // Request body (always required when present).
+        // Request body parameter.
         if (op.RequestBody is not null)
         {
+            bool bodyRequired = op.RequestBody.Value.IsRequired;
+
             if (IsMultipartMixedRequestBody(op.RequestBody.Value))
             {
                 // multipart/mixed with prefixEncoding: one parameter per position.
@@ -5458,12 +6078,14 @@ public sealed class OpenApi32CodeGenerator
             }
             else if (IsRawStreamRequestBody(op.RequestBody.Value))
             {
-                paramParts.Add("Stream body");
+                string suffix = bodyRequired ? string.Empty : " = default";
+                paramParts.Add($"Stream body{suffix}");
             }
             else
             {
                 string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
-                paramParts.Add($"{bodyTypeName}.Source body");
+                string suffix = bodyRequired ? string.Empty : " = default";
+                paramParts.Add($"{bodyTypeName}.Source body{suffix}");
             }
         }
 
@@ -5534,54 +6156,78 @@ public sealed class OpenApi32CodeGenerator
                 {
                     string typeName = this.ResolveSchemaTypeName(part.SchemaPointer);
                     w.WriteLine(
-                        $"var part{i}Builder = {typeName}.CreateBuilder(workspace, part{i});");
+                        $"var part{i}Builder = {typeName}.CreateBuilder(workspace, part{i}, 30);");
                     w.WriteLine(
                         $"{typeName} part{i}Value = part{i}Builder.RootElement;");
                 }
             }
 
+            bool hasBinaryPrefix = Array.Exists(prefixParts, p => p.IsBinary);
+
             // Transfer workspace ownership to the async helper. From this point,
             // SendWithBodyWriterAsyncCore disposes workspace in its finally block.
             // The returned ValueTask is awaited exactly once by the caller — no leak.
-            w.WriteLine(
-                $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                $"{responseName}>(workspace, request, stream =>");
-            w.OpenBrace();
-
-            for (int i = 0; i < prefixParts.Length; i++)
+            if (hasBinaryPrefix)
             {
-                MixedPartInfo part = prefixParts[i];
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, async (stream, ct) =>");
+                w.OpenBrace();
 
-                if (part.IsBinary)
+                for (int i = 0; i < prefixParts.Length; i++)
                 {
-                    w.WriteLine(
-                        $"MultipartMixedSerializer.WriteBinaryPart(stream, guid, part{i});");
+                    MixedPartInfo part = prefixParts[i];
+
+                    if (part.IsBinary)
+                    {
+                        w.WriteLine(
+                            $"await MultipartMixedSerializer.WriteBinaryPartAsync(stream, guid, part{i}, ct).ConfigureAwait(false);");
+                    }
+                    else
+                    {
+                        w.WriteLine(
+                            $"MultipartMixedSerializer.WriteJsonPart(stream, guid, part{i}Value);");
+                    }
                 }
-                else
+
+                w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, guid);");
+                w.CloseBraceNoNewline();
+                w.WriteLine(
+                    ", MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, (stream, ct) =>");
+                w.OpenBrace();
+
+                for (int i = 0; i < prefixParts.Length; i++)
                 {
                     w.WriteLine(
                         $"MultipartMixedSerializer.WriteJsonPart(stream, guid, part{i}Value);");
                 }
-            }
 
-            w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, guid);");
-            w.CloseBraceNoNewline();
-            w.WriteLine(
-                ", MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);");
+                w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, guid);");
+                w.WriteLine("return default;");
+                w.CloseBraceNoNewline();
+                w.WriteLine(
+                    ", MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);");
+            }
         }
         else if (rb.ItemPart is { } itemPart)
         {
             if (itemPart.IsBinary)
             {
-                // Homogeneous binary batch.
+                // Homogeneous binary batch — async.
                 w.WriteLine(
                     $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, stream =>");
+                    $"{responseName}>(workspace, request, async (stream, ct) =>");
                 w.OpenBrace();
                 w.WriteLine("foreach (BinaryPartData item in items)");
                 w.OpenBrace();
                 w.WriteLine(
-                    "MultipartMixedSerializer.WriteBinaryPart(stream, guid, item);");
+                    "await MultipartMixedSerializer.WriteBinaryPartAsync(stream, guid, item, ct).ConfigureAwait(false);");
                 w.CloseBrace();
                 w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, guid);");
                 w.CloseBraceNoNewline();
@@ -5590,22 +6236,23 @@ public sealed class OpenApi32CodeGenerator
             }
             else
             {
-                // Homogeneous JSON batch — workspace manages builder lifetimes.
+                // Homogeneous JSON batch — sync wrapper, workspace manages builder lifetimes.
                 string typeName = this.ResolveSchemaTypeName(itemPart.SchemaPointer);
                 w.WriteLine(
                     $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, stream =>");
+                    $"{responseName}>(workspace, request, (stream, ct) =>");
                 w.OpenBrace();
                 w.WriteLine($"foreach ({typeName}.Source item in items)");
                 w.OpenBrace();
                 w.WriteLine(
-                    $"var itemBuilder = {typeName}.CreateBuilder(workspace, item);");
+                    $"var itemBuilder = {typeName}.CreateBuilder(workspace, item, 30);");
                 w.WriteLine(
                     $"{typeName} itemValue = itemBuilder.RootElement;");
                 w.WriteLine(
                     "MultipartMixedSerializer.WriteJsonPart(stream, guid, itemValue);");
                 w.CloseBrace();
                 w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, guid);");
+                w.WriteLine("return default;");
                 w.CloseBraceNoNewline();
                 w.WriteLine(
                     ", MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);");
@@ -5640,10 +6287,11 @@ public sealed class OpenApi32CodeGenerator
         referenceResolver ??= new LocalReferenceResolver(specRoot);
         List<OperationInfo> operations = [];
         ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+        SecuritySchemeInfo[] securitySchemes = PrepareSecuritySchemes(specRoot);
 
         foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
         {
-            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
         }
 
         List<GeneratedFile> files = [];
@@ -5661,9 +6309,269 @@ public sealed class OpenApi32CodeGenerator
             files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
         }
 
-        files.Add(this.EmitServerEndpointRegistration(groups));
+        files.Add(this.EmitServerEndpointRegistration(groups, securitySchemes, operations));
 
         return files;
+    }
+
+    /// <summary>
+    /// Generates server stubs for webhooks and callbacks defined in the OpenAPI spec.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This produces the same output form as <see cref="GenerateServer"/> (handler interfaces,
+    /// parameter structs, result types, endpoint registration) but walks webhook and callback
+    /// path-items instead of the main <c>paths</c> object.
+    /// </para>
+    /// <para>
+    /// Use this when building the <em>client</em> side of an API that defines callbacks/webhooks:
+    /// the service expects your client to expose server endpoints that it will call into.
+    /// </para>
+    /// </remarks>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter (matches against webhook/callback names).</param>
+    /// <param name="referenceResolver">
+    /// Optional reference resolver. If <see langword="null"/>,
+    /// a <see cref="LocalReferenceResolver"/> is used.
+    /// </param>
+    /// <returns>The list of generated server stub files.</returns>
+    public IReadOnlyList<GeneratedFile> GenerateCallbackServer(
+        JsonElement specRoot,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+        List<OperationInfo> operations = [];
+        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+        SecuritySchemeInfo[] securitySchemes = PrepareSecuritySchemes(specRoot);
+
+        foreach (OperationRef opRef in WalkWebhookAndCallbackOperationRefs(specRoot, filter, referenceResolver))
+        {
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
+        }
+
+        List<GeneratedFile> files = [];
+        Dictionary<string, List<OperationInfo>> groups = GroupOperationsByTag(operations);
+
+        foreach (OperationInfo op in operations)
+        {
+            files.Add(this.EmitServerOperationParams(op));
+            files.Add(this.EmitServerOperationResult(op));
+        }
+
+        foreach ((string tag, List<OperationInfo> tagOps) in groups)
+        {
+            string handlerName = this.GetHandlerName(tag);
+            files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
+        }
+
+        files.Add(this.EmitServerEndpointRegistration(groups, securitySchemes, operations));
+
+        return files;
+    }
+
+    /// <summary>
+    /// Generates a client for invoking webhooks and callbacks defined in the OpenAPI spec.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This produces the same output form as <see cref="Generate"/> (client class, request/response
+    /// types, <c>SendAsyncCore</c>) but walks webhook and callback path-items instead of the main
+    /// <c>paths</c> object.
+    /// </para>
+    /// <para>
+    /// Use this when building the <em>server</em> side of an API that defines callbacks/webhooks:
+    /// your server implementation needs to call back into the client at the URLs specified by
+    /// runtime expressions in the callback keys.
+    /// </para>
+    /// </remarks>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter (matches against webhook/callback names).</param>
+    /// <param name="referenceResolver">
+    /// Optional reference resolver. If <see langword="null"/>,
+    /// a <see cref="LocalReferenceResolver"/> is used.
+    /// </param>
+    /// <returns>The list of generated client files.</returns>
+    public IReadOnlyList<GeneratedFile> GenerateCallbackClient(
+        JsonElement specRoot,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+        List<OperationInfo> operations = [];
+        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+
+        foreach (OperationRef opRef in WalkWebhookAndCallbackOperationRefs(specRoot, filter, referenceResolver))
+        {
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
+        }
+
+        return this.EmitClientFiles(operations, specRoot, referenceResolver);
+    }
+
+    /// <summary>
+    /// Collects JSON Schema pointers from webhooks and callbacks in the specification.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="parameterNames">Receives parameter name overrides from webhook/callback path-items.</param>
+    /// <param name="filter">Optional operation filter.</param>
+    /// <param name="referenceResolver">Optional reference resolver.</param>
+    /// <returns>An array of schema references found in webhook/callback path-items.</returns>
+    public static SchemaReference[] CollectWebhookAndCallbackSchemaPointers(
+        JsonElement specRoot,
+        out Dictionary<string, string> parameterNames,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+        OpenApiDocument doc = specRoot;
+
+        List<SchemaReference> pointers = [];
+        Dictionary<string, string> paramNames = new(StringComparer.Ordinal);
+
+        // Collect from webhooks
+        if (doc.Webhooks.IsNotUndefined())
+        {
+            foreach (JsonProperty<OpenApiDocument.PathItem> webhookProp in doc.Webhooks.EnumerateObject())
+            {
+                if (filter is not null)
+                {
+                    using UnescapedUtf16JsonString name = webhookProp.Utf16NameSpan;
+                    if (!filter.Matches(name.Span))
+                    {
+                        continue;
+                    }
+                }
+
+                CollectPathItemPointers(webhookProp, pointers, paramNames, referenceResolver);
+            }
+        }
+
+        // Collect from per-operation callbacks
+        if (doc.PathsValue.IsNotUndefined())
+        {
+            foreach (JsonProperty<OpenApiDocument.PathItem> pathProp in doc.PathsValue.EnumerateObject())
+            {
+                OpenApiDocument.PathItem pathItem = pathProp.Value;
+
+                if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
+                {
+                    continue;
+                }
+
+                using (pathItemScope)
+                {
+                    foreach (OpenApiDocument.Operation operation in EnumerateOperationsInPathItem(resolved))
+                    {
+                        OpenApiDocument.Operation.CallbacksEntity callbacks = operation.Callbacks;
+                        if (callbacks.IsUndefined())
+                        {
+                            continue;
+                        }
+
+                        foreach (JsonProperty<OpenApiDocument.CallbacksOrReference> callbackProp in callbacks.EnumerateObject())
+                        {
+                            OpenApiDocument.Callbacks? resolvedCallbacks = ResolveCallbacksOrReference(callbackProp.Value, referenceResolver);
+                            if (resolvedCallbacks is null)
+                            {
+                                continue;
+                            }
+
+                            foreach (JsonProperty<OpenApiDocument.PathItem> callbackPathProp in resolvedCallbacks.Value.EnumerateObject())
+                            {
+                                if (filter is not null)
+                                {
+                                    using UnescapedUtf16JsonString name = callbackPathProp.Utf16NameSpan;
+                                    if (!filter.Matches(name.Span))
+                                    {
+                                        continue;
+                                    }
+                                }
+
+                                CollectPathItemPointers(callbackPathProp, pointers, paramNames, referenceResolver);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        parameterNames = paramNames;
+        return [.. pointers];
+    }
+
+    /// <summary>
+    /// Lists all operations found in webhooks and callbacks.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter.</param>
+    /// <returns>An array of <see cref="OperationSummary"/> records.</returns>
+    public static OperationSummary[] ListWebhookAndCallbackOperations(
+        JsonElement specRoot,
+        OperationFilter? filter = null)
+    {
+        List<OperationSummary> result = [];
+
+        foreach (OperationRef opRef in WalkWebhookAndCallbackOperationRefs(specRoot, filter))
+        {
+            using UnescapedUtf16JsonString pathName = opRef.PathProp.Utf16NameSpan;
+            string path = pathName.Span.ToString();
+
+            string? operationId = opRef.Operation.OperationId.IsNotUndefined()
+                ? opRef.Operation.OperationId.GetString()
+                : null;
+
+            string? summary = opRef.Operation.Summary.IsNotUndefined()
+                ? opRef.Operation.Summary.GetString()
+                : null;
+
+            bool isDeprecated = opRef.Operation.Deprecated.ValueKind == JsonValueKind.True;
+
+            List<string> tags = [];
+            if (opRef.Operation.Tags.IsNotUndefined())
+            {
+                foreach (var tag in opRef.Operation.Tags.EnumerateArray())
+                {
+                    if (tag.ValueKind == JsonValueKind.String)
+                    {
+                        tags.Add(tag.GetString()!);
+                    }
+                }
+            }
+
+            int paramCount = 0;
+            if (opRef.Operation.ParametersValue.IsNotUndefined())
+            {
+                foreach (var param in opRef.Operation.ParametersValue.EnumerateArray())
+                {
+                    _ = param;
+                    paramCount++;
+                }
+            }
+
+            if (opRef.PathItem.ParametersValue.IsNotUndefined())
+            {
+                foreach (var param in opRef.PathItem.ParametersValue.EnumerateArray())
+                {
+                    _ = param;
+                    paramCount++;
+                }
+            }
+
+            bool hasBody = opRef.Operation.RequestBody.IsNotUndefined();
+
+            result.Add(new OperationSummary(
+                path,
+                opRef.Method,
+                operationId,
+                [.. tags],
+                isDeprecated,
+                paramCount,
+                hasBody,
+                summary));
+        }
+
+        return [.. result];
     }
 
     private string GetHandlerName(string tag)
@@ -6063,7 +6971,7 @@ public sealed class OpenApi32CodeGenerator
         // Method signature + body
         string statusExpr = isDefault ? "statusCode" : statusCode;
         string bodyExpr = hasBody
-            ? $"{bodyTypeName}.CreateBuilder(workspace, body, 0).RootElement"
+            ? $"{bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement"
             : "default";
         string contentTypeExpr = hasBody ? "\"application/json\"" : "null";
 
@@ -6086,7 +6994,9 @@ public sealed class OpenApi32CodeGenerator
     }
 
     private GeneratedFile EmitServerEndpointRegistration(
-        Dictionary<string, List<OperationInfo>> groups)
+        Dictionary<string, List<OperationInfo>> groups,
+        SecuritySchemeInfo[] securitySchemes,
+        IReadOnlyList<OperationInfo> operations)
     {
         string prefix = this.clientNamePrefix ?? "Api";
         string className = $"{prefix}EndpointRegistration";
@@ -6401,6 +7311,13 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine();
         w.WriteLine("return app;");
         w.CloseBrace();
+
+        if (securitySchemes is { Length: > 0 })
+        {
+            EmitSecuritySchemeMetadata(w, securitySchemes);
+        }
+
+        EmitSecurityRequirements(w, operations, securitySchemes);
 
         w.CloseBrace();
 
