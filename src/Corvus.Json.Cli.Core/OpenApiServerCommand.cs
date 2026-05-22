@@ -7,6 +7,7 @@
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
+using Corvus.Json.Internal;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi30;
@@ -109,7 +110,8 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             OpenApi32CodeGenerator generator = new(
                 rootNamespace,
                 schemaTypeMap ?? new Dictionary<string, string>(),
-                settings.ClientName);
+                settings.ClientName,
+                settings.IgnoreEmptyFormUrlEncodedBody);
             files = generator.GenerateServer(specRoot, filter, referenceResolver);
         }
         else if (specVersion is "3.1" or not "3.0")
@@ -134,7 +136,8 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             OpenApi31CodeGenerator generator = new(
                 rootNamespace,
                 schemaTypeMap ?? new Dictionary<string, string>(),
-                settings.ClientName);
+                settings.ClientName,
+                settings.IgnoreEmptyFormUrlEncodedBody);
             files = generator.GenerateServer(specRoot, filter, referenceResolver);
         }
         else
@@ -159,7 +162,8 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             OpenApi30CodeGenerator generator = new(
                 rootNamespace,
                 schemaTypeMap ?? new Dictionary<string, string>(),
-                settings.ClientName);
+                settings.ClientName,
+                settings.IgnoreEmptyFormUrlEncodedBody);
             files = generator.GenerateServer(specRoot, filter, referenceResolver);
         }
 
@@ -272,14 +276,15 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
 
         Directory.CreateDirectory(outputPath);
 
+        HashSet<string> writtenFiles = new(StringComparer.OrdinalIgnoreCase);
         List<string> schemaFileNames = [];
         foreach (GeneratedCodeFile codeFile in generatedCode)
         {
-            string filePath = Path.Combine(outputPath, codeFile.FileName);
+            string filePath = TruncateFileNameIfRequired(outputPath, writtenFiles, codeFile);
             await File.WriteAllTextAsync(filePath, codeFile.FileContent, cancellationToken)
                 .ConfigureAwait(false);
             AnsiConsole.MarkupLine($"  [cyan]Schema type:[/] {filePath}");
-            schemaFileNames.Add(codeFile.FileName);
+            schemaFileNames.Add(Path.GetFileName(filePath));
         }
 
         AnsiConsole.MarkupLine($"[green]Generated {schemaFileNames.Count} schema type files[/]");
@@ -338,6 +343,32 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
         }
 
         return Path.GetFullPath(docPart);
+    }
+
+    private static string TruncateFileNameIfRequired(string outputPath, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile)
+    {
+        string outputFile = Path.Combine(outputPath, generatedCodeFile.FileName);
+        string originalFileName = PathTruncator.NormalizePath(outputFile);
+        outputFile = PathTruncator.TruncatePath(originalFileName);
+        if (!writtenFiles.Add(outputFile))
+        {
+            string path = Path.GetDirectoryName(outputFile)!;
+            string baseName = Path.GetFileNameWithoutExtension(outputFile);
+            string extension = Path.GetExtension(outputFile);
+            int counter = 1;
+            do
+            {
+                outputFile = PathTruncator.TruncatePath(Path.Combine(path, $"{baseName}{counter++}{extension}"));
+            }
+            while (!writtenFiles.Add(outputFile) && counter < 1000);
+
+            if (counter == 1000)
+            {
+                throw new InvalidOperationException("Unexpected duplicate file generated.");
+            }
+        }
+
+        return outputFile;
     }
 }
 
