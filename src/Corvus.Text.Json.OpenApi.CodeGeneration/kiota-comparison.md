@@ -130,54 +130,66 @@ await client.Pets.PostAsync(new NewPet { Name = "Rex", Tag = "dog" });
 All benchmarks use mock transports (no real I/O) measuring the full client pipeline:
 construct request → serialize → transport → parse response → typed access.
 
+```
+BenchmarkDotNet v0.15.8, Windows 11, .NET 10.0.8
+13th Gen Intel Core i7-13800H 2.90GHz, 1 CPU, 20 logical / 14 physical cores
+Last run: 2026-05-22
+```
+
 ### GET /pets (10-item array response)
 
 | Client | Mean | Allocated |
 |--------|------|-----------|
-| Corvus (no validation) | 1.39 μs | 1.03 KB |
-| Corvus (with validation) | 3.32 μs | 1.03 KB |
-| Kiota (no validation) | 6.62 μs | 17.48 KB |
+| Corvus (no validation) | 1.34 μs | 1.02 KB |
+| Corvus (with validation) | 3.06 μs | 1.02 KB |
+| Kiota (no validation) | 6.09 μs | 17.45 KB |
 
 ### GET /pets/{petId} (single object, path parameter)
 
 | Client | Mean | Allocated |
 |--------|------|-----------|
-| Corvus (no validation) | 435 ns | 560 B |
-| Corvus (with validation) | 646 ns | 560 B |
-| Kiota (no validation) | 2,314 ns | 8,017 B |
+| Corvus (no validation) | 409 ns | 560 B |
+| Corvus (with validation) | 610 ns | 560 B |
+| Kiota (no validation) | 2,290 ns | 8,017 B |
 
 ### POST /pets (JSON body via builder delegate)
 
 | Client | Mean | Allocated |
 |--------|------|-----------|
-| Corvus (no validation) | 530 ns | 560 B |
-| Corvus (with validation) | 763 ns | 560 B |
-| Kiota (no validation) | 3,290 ns | 8,665 B |
+| Corvus (no validation) | 434 ns | 560 B |
+| Corvus (with validation) | 701 ns | 560 B |
+| Kiota (no validation) | 2,910 ns | 8,665 B |
 
 ### PUT /pets/{petId} (form-urlencoded body + path parameter)
 
 | Client | Mean | Allocated |
 |--------|------|-----------|
-| Corvus (no validation) | 611 ns | 792 B |
-| Corvus (with validation) | 925 ns | 792 B |
-| Kiota (no validation) | 3,295 ns | 9,497 B |
+| Corvus (no validation) | 536 ns | 792 B |
+| Corvus (with validation) | 833 ns | 792 B |
+| Kiota (no validation) | 2,957 ns | 9,497 B |
+
+### Response Header Parsing
+
+| Client | Mean | Allocated |
+|--------|------|-----------|
+| Corvus (with x-next header access) | 472 ns | 896 B |
 
 ### Validation Mode Comparison (GET /pets, 3-item array)
 
-| Mode | Mean | Ratio to None |
-|------|------|---------------|
-| None | 651 ns | 1.0× |
-| Basic | 1,320 ns | 2.0× |
-| Detailed | 2,193 ns | 3.4× |
+| Mode | Mean | Ratio to None | Allocated |
+|------|------|---------------|-----------|
+| None | 616 ns | 1.0× | 1.02 KB |
+| Basic | 1,272 ns | 2.1× | 1.02 KB |
+| Detailed | 2,039 ns | 3.3× | 1.02 KB |
 
-All validation modes produce zero additional allocation (1.03 KB throughout).
+All validation modes produce zero additional allocation.
 
 ### Summary
 
-- **Corvus WITH full validation is 2–4× faster than Kiota WITHOUT validation** across all operation types
-- **Corvus allocates 10–15× less memory** than Kiota per request/response cycle
+- **Corvus WITH full validation is 2–5× faster than Kiota WITHOUT validation** across all operation types
+- **Corvus allocates 12–17× less memory** than Kiota per request/response cycle
 - Validation overhead in Basic mode is ~2× the no-validation baseline — still faster than Kiota without any validation
-- Response header parsing adds negligible cost (528 ns including the full request cycle)
+- Response header parsing adds negligible cost (472 ns including the full request cycle)
 
 ## Feature Support Matrix
 

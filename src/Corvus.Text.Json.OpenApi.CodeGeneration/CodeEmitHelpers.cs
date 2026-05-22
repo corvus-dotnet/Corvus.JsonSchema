@@ -2193,7 +2193,7 @@ public static class CodeEmitHelpers
             w.PushIndent();
             w.WriteLine("JsonWorkspace workspace,");
             w.WriteLine("TRequest request,");
-            w.WriteLine("Action<Stream> bodyWriter,");
+            w.WriteLine("Func<Stream, CancellationToken, ValueTask> bodyWriter,");
             w.WriteLine("string contentType,");
             w.WriteLine("ValidationMode responseValidationMode,");
             w.WriteLine("CancellationToken cancellationToken)");
