@@ -12,6 +12,7 @@ namespace Corvus.Text.Json.AsyncApi.CodeGeneration.Tests;
 public class AsyncApi30CodeGeneratorTests
 {
     private static JsonElement streetlightsRoot;
+    private static JsonElement traitsRoot;
 
     [ClassInitialize]
     public static void ClassInit(TestContext _)
@@ -19,6 +20,10 @@ public class AsyncApi30CodeGeneratorTests
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "streetlights.json"));
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
         streetlightsRoot = doc.RootElement.Clone();
+
+        byte[] traitsBytes = File.ReadAllBytes(Path.Combine("TestData", "traits-example.json"));
+        using ParsedJsonDocument<JsonElement> traitsDoc = ParsedJsonDocument<JsonElement>.Parse(traitsBytes);
+        traitsRoot = traitsDoc.RootElement.Clone();
     }
 
     [TestMethod]
@@ -144,5 +149,59 @@ public class AsyncApi30CodeGeneratorTests
         GeneratedFile handlerFile = files.First(f => f.FileName.Contains("Handler"));
         Assert.IsTrue(handlerFile.Content.Contains("HandleLightMeasuredAsync"), "Handler should contain HandleLightMeasuredAsync method");
         Assert.IsTrue(handlerFile.Content.Contains("LightMeasuredPayload"), "Handler should reference the payload type");
+    }
+
+    [TestMethod]
+    public void Generate_TraitsProvideHeadersToMessage()
+    {
+        // The traits-example.json has a message trait that supplies headers
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/UserSignedUpPayload"] = "Traits.UserSignedUpPayload",
+            ["#/components/schemas/CommonHeaders"] = "Traits.CommonHeaders",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Traits", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(traitsRoot);
+
+        // The producer should include typed headers from the trait
+        GeneratedFile producerFile = files.First(f => f.FileName.Contains("Producer"));
+        Assert.IsTrue(
+            producerFile.Content.Contains("CommonHeaders"),
+            "Producer should reference headers type provided by message trait");
+    }
+
+    [TestMethod]
+    public void Generate_TraitsProvidedHeaders_ConsumerHandlerIncludesHeaders()
+    {
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/UserSignedUpPayload"] = "Traits.UserSignedUpPayload",
+            ["#/components/schemas/CommonHeaders"] = "Traits.CommonHeaders",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Traits", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(traitsRoot);
+
+        // The consumer handler interface should include headers parameter
+        GeneratedFile handlerFile = files.First(f => f.FileName.Contains("Handler"));
+        Assert.IsTrue(
+            handlerFile.Content.Contains("CommonHeaders"),
+            "Handler should include headers type from trait in method signature");
+    }
+
+    [TestMethod]
+    public void Generate_UnsupportedSchemaFormat_ThrowsNotSupportedException()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "unsupported-schema-format.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>();
+        var generator = new AsyncApi30CodeGenerator("Avro", schemaTypeMap);
+
+        var ex = Assert.ThrowsExactly<NotSupportedException>(() => generator.Generate(root));
+        StringAssert.Contains(ex.Message, "avroMessage");
+        StringAssert.Contains(ex.Message, "application/vnd.apache.avro");
     }
 }

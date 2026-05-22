@@ -301,7 +301,8 @@ public sealed class AsyncApi30CodeGenerator
         string? PayloadPointer,
         string? PayloadTypeName,
         string? HeadersPointer,
-        string? HeadersTypeName);
+        string? HeadersTypeName,
+        string? ContentType);
 
     private readonly record struct ChannelParameter(
         string Name,
@@ -415,12 +416,13 @@ public sealed class AsyncApi30CodeGenerator
             string? headersPointer = null;
             string? headersTypeName = null;
             string messageName = $"Message{index}";
+            string? contentType = null;
 
             // Resolve $ref if present
             JsonElement resolved = ResolveRef(msgRef, doc);
 
-            // Try to extract the name from the resolved message
-            if (resolved.TryGetProperty("name"u8, out JsonElement nameEl) &&
+            // Try to extract the name (checking traits for fallback)
+            if (TryGetPropertyWithTraits(resolved, "name"u8, doc, out JsonElement nameEl) &&
                 nameEl.ValueKind == JsonValueKind.String)
             {
                 messageName = nameEl.GetString()!;
@@ -437,8 +439,19 @@ public sealed class AsyncApi30CodeGenerator
                 }
             }
 
-            if (resolved.TryGetProperty("payload"u8, out JsonElement payloadEl))
+            // Check contentType (from message/traits or root defaultContentType)
+            contentType = GetMessageContentType(resolved, doc);
+            ValidateContentType(contentType, messageName);
+
+            // Check schemaFormat for unsupported formats
+            ValidateSchemaFormat(resolved, messageName);
+
+            // Get payload (checking traits for fallback)
+            if (TryGetPropertyWithTraits(resolved, "payload"u8, doc, out JsonElement payloadEl))
             {
+                // Handle multiFormatSchema wrapping
+                payloadEl = UnwrapMultiFormatSchema(payloadEl);
+
                 payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload", doc);
                 if (payloadPointer is not null)
                 {
@@ -446,8 +459,12 @@ public sealed class AsyncApi30CodeGenerator
                 }
             }
 
-            if (resolved.TryGetProperty("headers"u8, out JsonElement headersEl))
+            // Get headers (checking traits for fallback)
+            if (TryGetPropertyWithTraits(resolved, "headers"u8, doc, out JsonElement headersEl))
             {
+                // Handle multiFormatSchema wrapping
+                headersEl = UnwrapMultiFormatSchema(headersEl);
+
                 headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers", doc);
                 if (headersPointer is not null)
                 {
@@ -455,7 +472,7 @@ public sealed class AsyncApi30CodeGenerator
                 }
             }
 
-            messages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName));
+            messages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, contentType));
             index++;
         }
 
@@ -527,6 +544,138 @@ public sealed class AsyncApi30CodeGenerator
         return parameters;
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // Traits merge + content type / schema format
+    // ═══════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Gets a property from a message, checking its traits array for fallbacks.
+    /// In JSON Merge Patch semantics: traits provide defaults, the message itself wins.
+    /// Traits are checked in reverse array order (later traits have higher priority).
+    /// </summary>
+    private static bool TryGetPropertyWithTraits(
+        JsonElement element,
+        ReadOnlySpan<byte> propertyName,
+        AsyncApiDocument doc,
+        out JsonElement result)
+    {
+        // Target property takes precedence
+        if (element.TryGetProperty(propertyName, out result) &&
+            result.ValueKind != JsonValueKind.Undefined)
+        {
+            return true;
+        }
+
+        // Check traits in reverse order (later traits override earlier ones)
+        if (element.TryGetProperty("traits"u8, out JsonElement traitsEl) &&
+            traitsEl.ValueKind == JsonValueKind.Array)
+        {
+            // Walk traits in reverse so the last one wins
+            JsonElement[] traitList = [.. traitsEl.EnumerateArray()];
+
+            for (int i = traitList.Length - 1; i >= 0; i--)
+            {
+                JsonElement resolvedTrait = ResolveRef(traitList[i], doc);
+                if (resolvedTrait.ValueKind == JsonValueKind.Object &&
+                    resolvedTrait.TryGetProperty(propertyName, out result) &&
+                    result.ValueKind != JsonValueKind.Undefined)
+                {
+                    return true;
+                }
+            }
+        }
+
+        result = default;
+        return false;
+    }
+
+    private static string? GetMessageContentType(JsonElement message, AsyncApiDocument doc)
+    {
+        // Message-level contentType takes precedence (including from traits)
+        if (TryGetPropertyWithTraits(message, "contentType"u8, doc, out JsonElement ctEl) &&
+            ctEl.ValueKind == JsonValueKind.String)
+        {
+            return ctEl.GetString();
+        }
+
+        // Fall back to root defaultContentType
+        JsonElement root = (JsonElement)doc;
+        if (root.TryGetProperty("defaultContentType"u8, out JsonElement defaultCtEl) &&
+            defaultCtEl.ValueKind == JsonValueKind.String)
+        {
+            return defaultCtEl.GetString();
+        }
+
+        // AsyncAPI default is application/json when not specified
+        return "application/json";
+    }
+
+    private static void ValidateContentType(string? contentType, string messageName)
+    {
+        if (contentType is null)
+        {
+            return;
+        }
+
+        // Accept JSON-compatible content types
+        if (contentType.Contains("json", StringComparison.OrdinalIgnoreCase) ||
+            contentType.Contains("octet-stream", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        throw new NotSupportedException(
+            $"Message '{messageName}' has unsupported contentType '{contentType}'. " +
+            $"Only JSON-compatible content types (application/json, application/vnd.*+json) are supported.");
+    }
+
+    private static void ValidateSchemaFormat(JsonElement message, string messageName)
+    {
+        // Check payload for multiFormatSchema with unsupported schemaFormat
+        if (message.TryGetProperty("payload"u8, out JsonElement payloadEl) &&
+            payloadEl.ValueKind == JsonValueKind.Object &&
+            payloadEl.TryGetProperty("schemaFormat"u8, out JsonElement formatEl) &&
+            formatEl.ValueKind == JsonValueKind.String)
+        {
+            string format = formatEl.GetString()!;
+            if (!IsJsonSchemaFormat(format))
+            {
+                throw new NotSupportedException(
+                    $"Message '{messageName}' uses unsupported schema format '{format}'. " +
+                    $"Only JSON Schema formats are supported (application/schema+json, application/vnd.aai.asyncapi, etc.).");
+            }
+        }
+    }
+
+    private static bool IsJsonSchemaFormat(string format)
+    {
+        // Recognized JSON Schema format strings per AsyncAPI spec
+        return format.Contains("schema+json", StringComparison.OrdinalIgnoreCase) ||
+               format.Contains("asyncapi", StringComparison.OrdinalIgnoreCase) ||
+               format.Contains("json-schema", StringComparison.OrdinalIgnoreCase) ||
+               format.StartsWith("application/vnd.aai", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Unwraps a multiFormatSchema object to its inner <c>schema</c> property.
+    /// If the element has a <c>schemaFormat</c> and <c>schema</c>, returns the <c>schema</c>.
+    /// Otherwise returns the element unchanged.
+    /// </summary>
+    private static JsonElement UnwrapMultiFormatSchema(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object &&
+            element.TryGetProperty("schemaFormat"u8, out _) &&
+            element.TryGetProperty("schema"u8, out JsonElement innerSchema))
+        {
+            return innerSchema;
+        }
+
+        return element;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Reference resolution
+    // ═══════════════════════════════════════════════════════════════════
     private static JsonElement ResolveRef(JsonElement element, AsyncApiDocument doc)
     {
         // Resolve up to 10 levels of $ref to handle chained references
