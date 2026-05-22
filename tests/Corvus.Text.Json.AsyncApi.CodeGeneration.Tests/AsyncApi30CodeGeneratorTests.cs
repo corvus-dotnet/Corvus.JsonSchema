@@ -97,8 +97,8 @@ public class AsyncApi30CodeGeneratorTests
     {
         var schemaTypeMap = new Dictionary<string, string>
         {
-            ["#/channels/lightTurnOn/messages/turnOn/payload"] = "Streetlights.TurnOnOffPayload",
-            ["#/channels/lightingMeasured/messages/lightMeasured/payload"] = "Streetlights.LightMeasuredPayload",
+            ["#/components/schemas/turnOnOffPayload"] = "Streetlights.TurnOnOffPayload",
+            ["#/components/schemas/lightMeasuredPayload"] = "Streetlights.LightMeasuredPayload",
         };
 
         var generator = new AsyncApi30CodeGenerator("Streetlights", schemaTypeMap);
@@ -119,7 +119,7 @@ public class AsyncApi30CodeGeneratorTests
     {
         var schemaTypeMap = new Dictionary<string, string>
         {
-            ["#/channels/lightTurnOn/messages/turnOn/payload"] = "Streetlights.TurnOnOffPayload",
+            ["#/components/schemas/turnOnOffPayload"] = "Streetlights.TurnOnOffPayload",
         };
 
         var generator = new AsyncApi30CodeGenerator("Streetlights", schemaTypeMap);
@@ -135,7 +135,7 @@ public class AsyncApi30CodeGeneratorTests
     {
         var schemaTypeMap = new Dictionary<string, string>
         {
-            ["#/channels/lightingMeasured/messages/lightMeasured/payload"] = "Streetlights.LightMeasuredPayload",
+            ["#/components/schemas/lightMeasuredPayload"] = "Streetlights.LightMeasuredPayload",
         };
 
         var generator = new AsyncApi30CodeGenerator("Streetlights", schemaTypeMap);

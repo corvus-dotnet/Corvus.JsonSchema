@@ -43,6 +43,10 @@ public static class CliAppFactory
                     .WithDescription("Generate a client for invoking OpenAPI webhooks and callbacks.");
                 c.AddCommand<OpenApiShowCommand>("openapi-show")
                     .WithDescription("Display the operation tree of an OpenAPI specification.");
+                c.AddCommand<AsyncApiShowCommand>("asyncapi-show")
+                    .WithDescription("Display the channel/operation tree of an AsyncAPI specification.");
+                c.AddCommand<AsyncApiGenerateCommand>("asyncapi-generate")
+                    .WithDescription("Generate typed producers, consumers, and message types from an AsyncAPI specification.");
 #endif
             });
         return app;

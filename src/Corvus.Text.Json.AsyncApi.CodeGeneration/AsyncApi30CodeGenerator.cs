@@ -421,19 +421,18 @@ public sealed class AsyncApi30CodeGenerator
                 }
             }
 
-            if (resolved.TryGetProperty("payload"u8, out JsonElement _))
+            if (resolved.TryGetProperty("payload"u8, out JsonElement payloadEl))
             {
-                // Determine the pointer based on where this message is defined
-                payloadPointer = TryGetPointerFromRef(msgRef, "payload");
+                payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload", doc);
                 if (payloadPointer is not null)
                 {
                     this.schemaTypeMap.TryGetValue(payloadPointer, out payloadTypeName);
                 }
             }
 
-            if (resolved.TryGetProperty("headers"u8, out JsonElement _))
+            if (resolved.TryGetProperty("headers"u8, out JsonElement headersEl))
             {
-                headersPointer = TryGetPointerFromRef(msgRef, "headers");
+                headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers", doc);
                 if (headersPointer is not null)
                 {
                     this.schemaTypeMap.TryGetValue(headersPointer, out headersTypeName);
@@ -489,6 +488,78 @@ public sealed class AsyncApi30CodeGenerator
         }
 
         return current;
+    }
+
+    /// <summary>
+    /// Resolves the actual schema pointer for a payload or headers element.
+    /// If the schema element itself is a $ref, follows it to the target location.
+    /// Otherwise constructs the pointer from the message reference path.
+    /// </summary>
+    private static string? ResolveSchemaPointer(
+        JsonElement schemaElement,
+        JsonElement msgRef,
+        string suffix,
+        AsyncApiDocument doc)
+    {
+        // If the schema element is itself a $ref (e.g. payload: { $ref: "#/components/schemas/X" }),
+        // the canonical pointer is the $ref target.
+        if (schemaElement.TryGetProperty("$ref"u8, out JsonElement schemaRefEl) &&
+            schemaRefEl.ValueKind == JsonValueKind.String)
+        {
+            return schemaRefEl.GetString();
+        }
+
+        // Otherwise the schema is inline — construct from the message ref path
+        if (msgRef.TryGetProperty("$ref"u8, out JsonElement msgRefEl) &&
+            msgRefEl.ValueKind == JsonValueKind.String)
+        {
+            string refStr = msgRefEl.GetString()!;
+
+            // Follow the ref chain to find where the message is actually defined
+            JsonElement root = (JsonElement)doc;
+            string? resolvedMsgRef = ResolveRefChainPointer(refStr, root);
+            if (resolvedMsgRef is not null)
+            {
+                return $"{resolvedMsgRef}/{suffix}";
+            }
+
+            return $"{refStr}/{suffix}";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Follows a chain of $ref pointers and returns the final pointer string.
+    /// </summary>
+    private static string? ResolveRefChainPointer(string pointer, JsonElement root)
+    {
+        string currentPointer = pointer;
+
+        for (int i = 0; i < 10; i++)
+        {
+            if (!currentPointer.StartsWith("#/", StringComparison.Ordinal))
+            {
+                return currentPointer;
+            }
+
+            JsonElement target = NavigatePointer(root, currentPointer[2..]);
+            if (target.ValueKind == JsonValueKind.Undefined)
+            {
+                return currentPointer;
+            }
+
+            if (target.TryGetProperty("$ref"u8, out JsonElement refEl) &&
+                refEl.ValueKind == JsonValueKind.String)
+            {
+                currentPointer = refEl.GetString()!;
+                continue;
+            }
+
+            return currentPointer;
+        }
+
+        return currentPointer;
     }
 
     private static string? TryGetPointerFromRef(JsonElement msgRef, string suffix)
