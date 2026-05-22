@@ -81,10 +81,13 @@ public static class MultipartMixedSerializer
     /// <param name="output">The stream to write to.</param>
     /// <param name="guid">A <see cref="Guid"/> that uniquely identifies this multipart message.</param>
     /// <param name="binaryPart">The binary part data to write.</param>
-    public static void WriteBinaryPart(
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the async write operation.</returns>
+    public static async ValueTask WriteBinaryPartAsync(
         Stream output,
         Guid guid,
-        BinaryPartData binaryPart)
+        BinaryPartData binaryPart,
+        CancellationToken cancellationToken = default)
     {
         WriteBoundaryLine(output, guid, binaryPart.ContentType);
 
@@ -96,7 +99,7 @@ public static class MultipartMixedSerializer
         }
 
         output.Write(DoubleCrlf);
-        binaryPart.WriteContent(output);
+        await binaryPart.WriteContentAsync(output, cancellationToken).ConfigureAwait(false);
         output.Write(Crlf);
     }
 

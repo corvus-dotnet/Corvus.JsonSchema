@@ -98,14 +98,15 @@ public interface IApiTransport : IAsyncDisposable
         where TResponse : struct, IApiResponse<TResponse>;
 
     /// <summary>
-    /// Sends a typed API request with a body written by a delegate and returns a typed response.
+    /// Sends a typed API request with a body written by an async delegate and returns a typed response.
     /// </summary>
     /// <typeparam name="TRequest">The generated request type for this operation.</typeparam>
     /// <typeparam name="TResponse">The generated response type for this operation.</typeparam>
     /// <param name="request">The request, passed by <c>in</c> reference.</param>
-    /// <param name="bodyWriter">A delegate that writes the request body directly to the
+    /// <param name="bodyWriter">An async delegate that writes the request body directly to the
     /// transport's output stream. This enables zero-copy serialization for body formats
-    /// like <c>application/x-www-form-urlencoded</c>.</param>
+    /// like <c>application/x-www-form-urlencoded</c> and supports async streaming from
+    /// files, network resources, or other async sources.</param>
     /// <param name="contentType">The content type to set on the request.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>
@@ -114,7 +115,7 @@ public interface IApiTransport : IAsyncDisposable
     /// </returns>
     ValueTask<TResponse> SendAsync<TRequest, TResponse>(
         in TRequest request,
-        Action<Stream> bodyWriter,
+        Func<Stream, CancellationToken, ValueTask> bodyWriter,
         string contentType,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IApiRequest<TRequest>

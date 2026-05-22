@@ -108,7 +108,7 @@ public sealed class HttpClientTransport : IApiTransport
     /// <inheritdoc/>
     public ValueTask<TResponse> SendAsync<TRequest, TResponse>(
         in TRequest request,
-        Action<Stream> bodyWriter,
+        Func<Stream, CancellationToken, ValueTask> bodyWriter,
         string contentType,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IApiRequest<TRequest>
@@ -305,26 +305,26 @@ public sealed class HttpClientTransport : IApiTransport
     }
 
     /// <summary>
-    /// Custom <see cref="HttpContent"/> that writes the body via a delegate,
+    /// Custom <see cref="HttpContent"/> that writes the body via an async delegate,
     /// enabling zero-copy serialization for non-JSON body formats such as
-    /// <c>application/x-www-form-urlencoded</c>.
+    /// <c>application/x-www-form-urlencoded</c> and supporting async streaming from
+    /// files, network resources, or other async sources.
     /// </summary>
     private sealed class DelegatingContent : HttpContent
     {
-        private readonly Action<Stream> bodyWriter;
+        private readonly Func<Stream, CancellationToken, ValueTask> bodyWriter;
 
-        public DelegatingContent(Action<Stream> bodyWriter, string contentType)
+        public DelegatingContent(Func<Stream, CancellationToken, ValueTask> bodyWriter, string contentType)
         {
             this.bodyWriter = bodyWriter;
             this.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
         }
 
-        protected override Task SerializeToStreamAsync(
+        protected override async Task SerializeToStreamAsync(
             Stream stream,
             System.Net.TransportContext? context)
         {
-            this.bodyWriter(stream);
-            return Task.CompletedTask;
+            await this.bodyWriter(stream, CancellationToken.None).ConfigureAwait(false);
         }
 
         protected override bool TryComputeLength(out long length)

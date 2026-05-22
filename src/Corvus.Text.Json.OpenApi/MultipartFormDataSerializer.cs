@@ -86,7 +86,87 @@ public static class MultipartFormDataSerializer
         IReadOnlyDictionary<string, PropertyEncoding>? encodings)
         where T : struct, IJsonElement<T>
     {
-        Serialize(value, output, boundary, encodings, null);
+        if (value.ValueKind != JsonValueKind.Object)
+        {
+            ThrowHelper.ThrowFormBodyMustBeObject();
+        }
+
+        using StreamWriter writer = new(output, Utf8NoBom, bufferSize: 256, leaveOpen: true);
+
+        foreach (JsonProperty<JsonElement> property in JsonElement.From(value).EnumerateObject())
+        {
+            string name = property.Name;
+
+            writer.Write("--");
+            writer.Write(boundary);
+            writer.Write("\r\n");
+
+            writer.Write("Content-Disposition: form-data; name=\"");
+            writer.Write(name);
+            writer.Write("\"\r\n");
+
+            JsonElement propValue = property.Value;
+
+            PropertyEncoding enc = default;
+            encodings?.TryGetValue(name, out enc);
+
+            string? contentTypeOverride = enc.ContentType;
+
+            switch (propValue.ValueKind)
+            {
+                case JsonValueKind.String:
+                    if (contentTypeOverride is not null)
+                    {
+                        writer.Write("Content-Type: ");
+                        writer.Write(contentTypeOverride);
+                        writer.Write("\r\n");
+                    }
+
+                    writer.Write("\r\n");
+                    writer.Write(propValue.GetString());
+                    break;
+
+                case JsonValueKind.Number:
+                case JsonValueKind.True:
+                case JsonValueKind.False:
+                    if (contentTypeOverride is not null)
+                    {
+                        writer.Write("Content-Type: ");
+                        writer.Write(contentTypeOverride);
+                        writer.Write("\r\n");
+                    }
+
+                    writer.Write("\r\n");
+                    writer.Write(propValue.ToString());
+                    break;
+
+                case JsonValueKind.Null:
+                    if (contentTypeOverride is not null)
+                    {
+                        writer.Write("Content-Type: ");
+                        writer.Write(contentTypeOverride);
+                        writer.Write("\r\n");
+                    }
+
+                    writer.Write("\r\n");
+                    break;
+
+                case JsonValueKind.Object:
+                case JsonValueKind.Array:
+                    writer.Write("Content-Type: ");
+                    writer.Write(contentTypeOverride ?? "application/json");
+                    writer.Write("\r\n\r\n");
+                    writer.Write(propValue.ToString());
+                    break;
+            }
+
+            writer.Write("\r\n");
+        }
+
+        // Final boundary with closing "--".
+        writer.Write("--");
+        writer.Write(boundary);
+        writer.Write("--\r\n");
     }
 
     /// <summary>
@@ -107,15 +187,17 @@ public static class MultipartFormDataSerializer
     /// are no binary parts. Properties that appear here are written as raw binary
     /// content instead of their JSON representation.
     /// </param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <exception cref="InvalidOperationException">
     /// Thrown if <paramref name="value"/> is not a JSON object.
     /// </exception>
-    public static void Serialize<T>(
-        in T value,
+    public static async ValueTask SerializeAsync<T>(
+        T value,
         Stream output,
         string boundary,
         IReadOnlyDictionary<string, PropertyEncoding>? encodings,
-        IReadOnlyDictionary<string, BinaryPartData>? binaryParts)
+        IReadOnlyDictionary<string, BinaryPartData>? binaryParts,
+        CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
         if (value.ValueKind != JsonValueKind.Object)
@@ -132,7 +214,7 @@ public static class MultipartFormDataSerializer
             // Check if this property is a binary part.
             if (binaryParts is not null && binaryParts.TryGetValue(name, out BinaryPartData binaryPart))
             {
-                WriteBinaryPart(writer, output, boundary, name, binaryPart);
+                await WriteBinaryPartAsync(writer, output, boundary, name, binaryPart, cancellationToken).ConfigureAwait(false);
                 continue;
             }
 
@@ -216,7 +298,7 @@ public static class MultipartFormDataSerializer
             {
                 if (!seen.Contains(kvp.Key))
                 {
-                    WriteBinaryPart(writer, output, boundary, kvp.Key, kvp.Value);
+                    await WriteBinaryPartAsync(writer, output, boundary, kvp.Key, kvp.Value, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -379,12 +461,13 @@ public static class MultipartFormDataSerializer
         }
     }
 
-    private static void WriteBinaryPart(
+    private static async ValueTask WriteBinaryPartAsync(
         StreamWriter writer,
         Stream output,
         string boundary,
         string name,
-        BinaryPartData binaryPart)
+        BinaryPartData binaryPart,
+        CancellationToken cancellationToken)
     {
         writer.Write("--");
         writer.Write(boundary);
@@ -406,9 +489,9 @@ public static class MultipartFormDataSerializer
         writer.Write(binaryPart.ContentType);
         writer.Write("\r\n\r\n");
 
-        // Flush text writer before writing raw bytes via callback.
+        // Flush text writer before writing raw bytes via async callback.
         writer.Flush();
-        binaryPart.WriteContent(output);
+        await binaryPart.WriteContentAsync(output, cancellationToken).ConfigureAwait(false);
 
         writer.Write("\r\n");
     }
