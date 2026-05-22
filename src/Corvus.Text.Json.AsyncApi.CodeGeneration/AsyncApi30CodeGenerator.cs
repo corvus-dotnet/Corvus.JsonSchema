@@ -333,6 +333,220 @@ public sealed class AsyncApi30CodeGenerator
     }
 
     /// <summary>
+    /// Parses protocol bindings from channel and operation elements in the spec.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="channelName">The channel key to extract bindings from.</param>
+    /// <returns>A <see cref="ProtocolBindings"/> instance, or <see langword="null"/> if no bindings are present.</returns>
+    public static ProtocolBindings? ParseBindings(JsonElement specRoot, string channelName)
+    {
+        JsonElement root = specRoot;
+        ProtocolBindings? bindings = null;
+
+        // Channel-level bindings
+        if (root.TryGetProperty("channels"u8, out JsonElement channels) &&
+            channels.TryGetProperty(channelName, out JsonElement channel) &&
+            channel.TryGetProperty("bindings"u8, out JsonElement channelBindings) &&
+            channelBindings.ValueKind == JsonValueKind.Object)
+        {
+            bindings = ParseChannelBindings(channelBindings, bindings);
+        }
+
+        // Operation-level bindings (scan operations that reference this channel)
+        if (root.TryGetProperty("operations"u8, out JsonElement operations) &&
+            operations.ValueKind == JsonValueKind.Object)
+        {
+            string channelRef = $"#/channels/{channelName}";
+            foreach (var opProp in operations.EnumerateObject())
+            {
+                JsonElement op = opProp.Value;
+                if (op.TryGetProperty("channel"u8, out JsonElement chRef) &&
+                    chRef.TryGetProperty("$ref"u8, out JsonElement refEl) &&
+                    refEl.ValueKind == JsonValueKind.String &&
+                    string.Equals(refEl.GetString(), channelRef, StringComparison.Ordinal))
+                {
+                    if (op.TryGetProperty("bindings"u8, out JsonElement opBindings) &&
+                        opBindings.ValueKind == JsonValueKind.Object)
+                    {
+                        bindings = ParseOperationBindings(opBindings, bindings);
+                    }
+                }
+            }
+        }
+
+        return bindings;
+    }
+
+    private static ProtocolBindings ParseChannelBindings(JsonElement channelBindings, ProtocolBindings? bindings)
+    {
+        bindings ??= new ProtocolBindings();
+
+        // Kafka channel bindings
+        if (channelBindings.TryGetProperty("kafka"u8, out JsonElement kafka) &&
+            kafka.ValueKind == JsonValueKind.Object)
+        {
+            bindings.Kafka ??= new KafkaBindings();
+
+            if (kafka.TryGetProperty("groupId"u8, out JsonElement gId) &&
+                gId.ValueKind == JsonValueKind.String)
+            {
+                bindings.Kafka.GroupId = gId.GetString();
+            }
+
+            if (kafka.TryGetProperty("topicConfiguration"u8, out JsonElement topicConfig) &&
+                topicConfig.ValueKind == JsonValueKind.Object)
+            {
+                bindings.Kafka.TopicConfig ??= new KafkaTopicConfig();
+
+                if (topicConfig.TryGetProperty("partitions"u8, out JsonElement parts) &&
+                    parts.ValueKind == JsonValueKind.Number)
+                {
+                    bindings.Kafka.TopicConfig.Partitions = parts.GetInt32();
+                }
+
+                if (topicConfig.TryGetProperty("replicas"u8, out JsonElement reps) &&
+                    reps.ValueKind == JsonValueKind.Number)
+                {
+                    bindings.Kafka.TopicConfig.Replicas = reps.GetInt32();
+                }
+
+                if (topicConfig.TryGetProperty("retention.ms"u8, out JsonElement ret) &&
+                    ret.ValueKind == JsonValueKind.Number)
+                {
+                    bindings.Kafka.TopicConfig.RetentionMs = ret.GetInt64();
+                }
+
+                if (topicConfig.TryGetProperty("cleanup.policy"u8, out JsonElement cp) &&
+                    cp.ValueKind == JsonValueKind.String)
+                {
+                    bindings.Kafka.TopicConfig.CleanupPolicy = cp.GetString();
+                }
+            }
+        }
+
+        // AMQP channel bindings
+        if (channelBindings.TryGetProperty("amqp"u8, out JsonElement amqp) &&
+            amqp.ValueKind == JsonValueKind.Object)
+        {
+            bindings.Amqp ??= new AmqpBindings();
+
+            if (amqp.TryGetProperty("exchange"u8, out JsonElement exchange) &&
+                exchange.ValueKind == JsonValueKind.Object)
+            {
+                if (exchange.TryGetProperty("name"u8, out JsonElement exName) &&
+                    exName.ValueKind == JsonValueKind.String)
+                {
+                    bindings.Amqp.Exchange = exName.GetString();
+                }
+
+                if (exchange.TryGetProperty("type"u8, out JsonElement exType) &&
+                    exType.ValueKind == JsonValueKind.String)
+                {
+                    bindings.Amqp.ExchangeType = exType.GetString();
+                }
+            }
+
+            if (amqp.TryGetProperty("queue"u8, out JsonElement queue) &&
+                queue.ValueKind == JsonValueKind.Object)
+            {
+                if (queue.TryGetProperty("name"u8, out JsonElement qName) &&
+                    qName.ValueKind == JsonValueKind.String)
+                {
+                    bindings.Amqp.Queue = qName.GetString();
+                }
+
+                if (queue.TryGetProperty("durable"u8, out JsonElement dur))
+                {
+                    bindings.Amqp.Durable = dur.ValueKind == JsonValueKind.True;
+                }
+
+                if (queue.TryGetProperty("autoDelete"u8, out JsonElement ad))
+                {
+                    bindings.Amqp.AutoDelete = ad.ValueKind == JsonValueKind.True;
+                }
+            }
+        }
+
+        // MQTT operation bindings (can appear at channel level too)
+        if (channelBindings.TryGetProperty("mqtt"u8, out JsonElement mqtt) &&
+            mqtt.ValueKind == JsonValueKind.Object)
+        {
+            bindings.Mqtt ??= new MqttBindings();
+
+            if (mqtt.TryGetProperty("qos"u8, out JsonElement qos) &&
+                qos.ValueKind == JsonValueKind.Number)
+            {
+                bindings.Mqtt.Qos = qos.GetInt32();
+            }
+
+            if (mqtt.TryGetProperty("retain"u8, out JsonElement retain))
+            {
+                bindings.Mqtt.Retain = retain.ValueKind == JsonValueKind.True;
+            }
+        }
+
+        return bindings;
+    }
+
+    private static ProtocolBindings ParseOperationBindings(JsonElement opBindings, ProtocolBindings? bindings)
+    {
+        bindings ??= new ProtocolBindings();
+
+        // Kafka operation bindings
+        if (opBindings.TryGetProperty("kafka"u8, out JsonElement kafka) &&
+            kafka.ValueKind == JsonValueKind.Object)
+        {
+            bindings.Kafka ??= new KafkaBindings();
+
+            if (kafka.TryGetProperty("clientId"u8, out JsonElement cId) &&
+                cId.ValueKind == JsonValueKind.String)
+            {
+                bindings.Kafka.ClientId = cId.GetString();
+            }
+        }
+
+        // AMQP operation bindings
+        if (opBindings.TryGetProperty("amqp"u8, out JsonElement amqp) &&
+            amqp.ValueKind == JsonValueKind.Object)
+        {
+            bindings.Amqp ??= new AmqpBindings();
+
+            if (amqp.TryGetProperty("ack"u8, out JsonElement ack) &&
+                ack.ValueKind == JsonValueKind.Number)
+            {
+                bindings.Amqp.Ack = ack.GetInt32();
+            }
+
+            // Routing key in operation.bindings.amqp
+            if (amqp.TryGetProperty("routingKey"u8, out JsonElement rk) &&
+                rk.ValueKind == JsonValueKind.String)
+            {
+                bindings.Amqp.RoutingKey = rk.GetString();
+            }
+        }
+
+        // MQTT operation bindings
+        if (opBindings.TryGetProperty("mqtt"u8, out JsonElement mqtt) &&
+            mqtt.ValueKind == JsonValueKind.Object)
+        {
+            bindings.Mqtt ??= new MqttBindings();
+
+            if (mqtt.TryGetProperty("qos"u8, out JsonElement qos) &&
+                qos.ValueKind == JsonValueKind.Number)
+            {
+                bindings.Mqtt.Qos = qos.GetInt32();
+            }
+
+            if (mqtt.TryGetProperty("retain"u8, out JsonElement retain))
+            {
+                bindings.Mqtt.Retain = retain.ValueKind == JsonValueKind.True;
+            }
+        }
+
+        return bindings;
+    }
+
+    /// <summary>
     /// Walks the AsyncAPI 3.0 specification and emits C# source files for
     /// producers, consumers, and message wrapper types.
     /// </summary>

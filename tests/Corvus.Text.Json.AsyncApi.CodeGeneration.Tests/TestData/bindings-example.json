@@ -1,0 +1,86 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Bindings Example",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "orders": {
+      "address": "shop.orders",
+      "messages": {
+        "OrderCreated": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "orderId": { "type": "string" }
+            }
+          }
+        }
+      },
+      "bindings": {
+        "kafka": {
+          "groupId": "order-processors",
+          "topicConfiguration": {
+            "partitions": 12,
+            "replicas": 3,
+            "retention.ms": 604800000,
+            "cleanup.policy": "compact"
+          }
+        }
+      }
+    },
+    "notifications": {
+      "address": "shop.notifications",
+      "messages": {
+        "Notification": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string" }
+            }
+          }
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "exchange": {
+            "name": "shop-exchange",
+            "type": "topic"
+          },
+          "queue": {
+            "name": "notifications-queue",
+            "durable": true,
+            "autoDelete": false
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "processOrder": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/orders" },
+      "messages": [
+        { "$ref": "#/channels/orders/messages/OrderCreated" }
+      ],
+      "bindings": {
+        "kafka": {
+          "clientId": "order-service"
+        }
+      }
+    },
+    "sendNotification": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/notifications" },
+      "messages": [
+        { "$ref": "#/channels/notifications/messages/Notification" }
+      ],
+      "bindings": {
+        "amqp": {
+          "routingKey": "notifications.new",
+          "ack": 1
+        }
+      }
+    }
+  }
+}

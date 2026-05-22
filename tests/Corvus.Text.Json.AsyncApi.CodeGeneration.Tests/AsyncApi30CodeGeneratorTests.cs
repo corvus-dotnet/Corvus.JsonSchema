@@ -326,4 +326,53 @@ public class AsyncApi30CodeGeneratorTests
 
         Assert.AreEqual(3, ops.Length);
     }
+
+    [TestMethod]
+    public void ParseBindings_Kafka_ExtractsChannelAndOperationBindings()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "bindings-example.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        ProtocolBindings? bindings = AsyncApi30CodeGenerator.ParseBindings(root, "orders");
+
+        Assert.IsNotNull(bindings);
+        Assert.IsNotNull(bindings.Kafka);
+        Assert.AreEqual("order-processors", bindings.Kafka.GroupId);
+        Assert.AreEqual("order-service", bindings.Kafka.ClientId);
+        Assert.IsNotNull(bindings.Kafka.TopicConfig);
+        Assert.AreEqual(12, bindings.Kafka.TopicConfig.Partitions);
+        Assert.AreEqual(3, bindings.Kafka.TopicConfig.Replicas);
+        Assert.AreEqual(604800000L, bindings.Kafka.TopicConfig.RetentionMs);
+        Assert.AreEqual("compact", bindings.Kafka.TopicConfig.CleanupPolicy);
+    }
+
+    [TestMethod]
+    public void ParseBindings_Amqp_ExtractsExchangeQueueAndRoutingKey()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "bindings-example.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        ProtocolBindings? bindings = AsyncApi30CodeGenerator.ParseBindings(root, "notifications");
+
+        Assert.IsNotNull(bindings);
+        Assert.IsNotNull(bindings.Amqp);
+        Assert.AreEqual("shop-exchange", bindings.Amqp.Exchange);
+        Assert.AreEqual("topic", bindings.Amqp.ExchangeType);
+        Assert.AreEqual("notifications-queue", bindings.Amqp.Queue);
+        Assert.AreEqual(true, bindings.Amqp.Durable);
+        Assert.AreEqual(false, bindings.Amqp.AutoDelete);
+        Assert.AreEqual("notifications.new", bindings.Amqp.RoutingKey);
+        Assert.AreEqual(1, bindings.Amqp.Ack);
+    }
+
+    [TestMethod]
+    public void ParseBindings_NoBindings_ReturnsNull()
+    {
+        // streetlights.json has no bindings
+        ProtocolBindings? bindings = AsyncApi30CodeGenerator.ParseBindings(streetlightsRoot, "lightingMeasured");
+
+        Assert.IsNull(bindings);
+    }
 }
