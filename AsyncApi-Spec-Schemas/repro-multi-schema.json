@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://test.example/repro.json",
+  "type": "object",
+  "properties": {
+    "schemaFormat": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": { "not": { "required": ["schemaFormat"] } },
+      "then": {
+        "properties": {
+          "schema": { "type": "object", "properties": { "a": { "type": "string" } } }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "schemaFormat": { "const": "json" } },
+        "required": ["schemaFormat"]
+      },
+      "then": {
+        "properties": {
+          "schema": { "type": "object", "properties": { "b": { "type": "number" } } }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "schemaFormat": { "const": "avro" } },
+        "required": ["schemaFormat"]
+      },
+      "then": {
+        "properties": {
+          "schema": { "type": "object", "properties": { "c": { "type": "boolean" } } }
+        }
+      }
+    }
+  ]
+}
