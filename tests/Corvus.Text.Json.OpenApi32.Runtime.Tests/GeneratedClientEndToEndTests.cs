@@ -4977,7 +4977,7 @@ public class GeneratedClientEndToEndTests
         using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
             """{"count":42,"active":true,"title":"Hello"}""");
 
-        BinaryPartData dummyFile = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData dummyFile = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
             bodyDoc.RootElement, dummyFile);
@@ -4998,7 +4998,7 @@ public class GeneratedClientEndToEndTests
         using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
             """{"count":99,"active":true,"title":"Test"}""");
 
-        BinaryPartData dummyFile = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData dummyFile = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
             bodyDoc.RootElement, dummyFile);
@@ -5019,7 +5019,7 @@ public class GeneratedClientEndToEndTests
         using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
             """{"count":1,"active":false,"title":"Test"}""");
 
-        BinaryPartData dummyFile = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData dummyFile = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
             bodyDoc.RootElement, dummyFile);
@@ -5048,7 +5048,7 @@ public class GeneratedClientEndToEndTests
         using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
             """{"count":1,"active":true,"title":"My Title"}""");
 
-        BinaryPartData dummyFile = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData dummyFile = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
             bodyDoc.RootElement, dummyFile);
@@ -5076,7 +5076,7 @@ public class GeneratedClientEndToEndTests
         using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
             """{"count":1,"active":true,"title":"T","label":"optional-value"}""");
 
-        BinaryPartData dummyFile = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData dummyFile = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
             bodyDoc.RootElement, dummyFile);
@@ -5097,7 +5097,7 @@ public class GeneratedClientEndToEndTests
         using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
             """{"count":1,"active":true,"title":"T","label":null}""");
 
-        BinaryPartData dummyFile = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData dummyFile = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
             bodyDoc.RootElement, dummyFile);
@@ -5120,7 +5120,7 @@ public class GeneratedClientEndToEndTests
             """{"count":1,"active":true,"title":"T"}""");
 
         byte[] fileContent = [0x01, 0x02, 0x03, 0x04];
-        BinaryPartData file = new(s => s.Write(fileContent), "application/octet-stream", "data.bin");
+        BinaryPartData file = new((s, ct) => { s.Write(fileContent); return default; }, "application/octet-stream", "data.bin");
 
         await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
             bodyDoc.RootElement, file);
@@ -5145,7 +5145,7 @@ public class GeneratedClientEndToEndTests
         using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
             """{"count":1,"active":true,"title":"T"}""");
 
-        BinaryPartData dummyFile = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData dummyFile = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
             bodyDoc.RootElement, dummyFile);
@@ -5248,7 +5248,7 @@ public class GeneratedClientEndToEndTests
 
         using var metadataDoc = ParsedJsonDocument<PostDocsUploadMixedBody.RequiredTitle>.Parse(
             """{"title":"Annual Report"}""");
-        BinaryPartData filePart = new(s => s.Write([0x25, 0x50, 0x44, 0x46]), "application/pdf", "report.pdf");
+        BinaryPartData filePart = new((s, ct) => { s.Write([0x25, 0x50, 0x44, 0x46]); return default; }, "application/pdf", "report.pdf");
 
         await using UploadDocMixedResponse response = await client.UploadDocMixedAsync(
             metadataDoc.RootElement, filePart);
@@ -5268,7 +5268,7 @@ public class GeneratedClientEndToEndTests
         using var metadataDoc = ParsedJsonDocument<PostDocsUploadMixedBody.RequiredTitle>.Parse(
             """{"title":"Spec Doc"}""");
         byte[] fileBytes = [0x89, 0x50, 0x4E, 0x47]; // PNG magic bytes
-        BinaryPartData filePart = new(s => s.Write(fileBytes), "image/png", "diagram.png");
+        BinaryPartData filePart = new((s, ct) => { s.Write(fileBytes); return default; }, "image/png", "diagram.png");
 
         await using UploadDocMixedResponse response = await client.UploadDocMixedAsync(
             metadataDoc.RootElement, filePart);
@@ -5306,7 +5306,7 @@ public class GeneratedClientEndToEndTests
         using var metadataDoc = ParsedJsonDocument<PostDocsUploadMixedBody.RequiredTitle>.Parse(
             """{"title":"Data"}""");
         byte[] payload = [0xDE, 0xAD, 0xBE, 0xEF];
-        BinaryPartData filePart = new(s => s.Write(payload), "application/octet-stream", "data.bin");
+        BinaryPartData filePart = new((s, ct) => { s.Write(payload); return default; }, "application/octet-stream", "data.bin");
 
         await using UploadDocMixedResponse response = await client.UploadDocMixedAsync(
             metadataDoc.RootElement, filePart);
@@ -5325,7 +5325,7 @@ public class GeneratedClientEndToEndTests
 
         using var metadataDoc = ParsedJsonDocument<PostDocsUploadMixedBody.RequiredTitle>.Parse(
             """{"title":"T"}""");
-        BinaryPartData filePart = new(s => s.Write([0xFF]), "application/octet-stream", null);
+        BinaryPartData filePart = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", null);
 
         await using UploadDocMixedResponse response = await client.UploadDocMixedAsync(
             metadataDoc.RootElement, filePart);
@@ -5636,7 +5636,7 @@ public class GeneratedClientEndToEndTests
         using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
         var client = new ApiFormsClient(harness.Transport);
         using var invalidBody = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse("""{}""");
-        BinaryPartData file = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData file = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await AssertRequestBodyValidationFailsDetailed(
             async () => await client.SubmitMultipartTypesAsync(invalidBody.RootElement, file, validationMode: ValidationMode.Detailed));
@@ -5648,7 +5648,7 @@ public class GeneratedClientEndToEndTests
         using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
         var client = new ApiFormsClient(harness.Transport);
         using var invalidBody = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse("""{}""");
-        BinaryPartData file = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData file = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await AssertRequestBodyValidationFailsBasic(
             async () => await client.SubmitMultipartTypesAsync(invalidBody.RootElement, file, validationMode: ValidationMode.Basic));

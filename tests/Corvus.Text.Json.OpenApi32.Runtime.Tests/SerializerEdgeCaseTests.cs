@@ -25,7 +25,7 @@ public class SerializerEdgeCaseTests
         using MemoryStream stream = new();
 
         Assert.ThrowsExactly<InvalidOperationException>(
-            () => MultipartFormDataSerializer.Serialize(array, stream, "boundary", null, null));
+            () => MultipartFormDataSerializer.SerializeAsync(array, stream, "boundary", null, null).AsTask().GetAwaiter().GetResult());
     }
 
     [TestMethod]
@@ -37,13 +37,12 @@ public class SerializerEdgeCaseTests
 
         Dictionary<string, BinaryPartData> binaryParts = new()
         {
-            ["file"] = new BinaryPartData(
-                s => s.Write(binaryContent),
+            ["file"] = new BinaryPartData((s, ct) => { s.Write(binaryContent); return default; },
                 "image/png",
                 "image.png"),
         };
 
-        MultipartFormDataSerializer.Serialize(obj, stream, "myboundary", null, binaryParts);
+        MultipartFormDataSerializer.SerializeAsync(obj, stream, "myboundary", null, binaryParts).AsTask().GetAwaiter().GetResult();
 
         string output = Encoding.UTF8.GetString(stream.ToArray());
 
@@ -63,7 +62,7 @@ public class SerializerEdgeCaseTests
             ["count"] = new PropertyEncoding(ContentType: "text/plain"),
         };
 
-        MultipartFormDataSerializer.Serialize(obj, stream, "boundary", encodings, null);
+        MultipartFormDataSerializer.SerializeAsync(obj, stream, "boundary", encodings, null).AsTask().GetAwaiter().GetResult();
 
         string output = Encoding.UTF8.GetString(stream.ToArray());
 
@@ -82,7 +81,7 @@ public class SerializerEdgeCaseTests
             ["active"] = new PropertyEncoding(ContentType: "text/plain"),
         };
 
-        MultipartFormDataSerializer.Serialize(obj, stream, "boundary", encodings, null);
+        MultipartFormDataSerializer.SerializeAsync(obj, stream, "boundary", encodings, null).AsTask().GetAwaiter().GetResult();
 
         string output = Encoding.UTF8.GetString(stream.ToArray());
 
@@ -101,7 +100,7 @@ public class SerializerEdgeCaseTests
             ["value"] = new PropertyEncoding(ContentType: "application/octet-stream"),
         };
 
-        MultipartFormDataSerializer.Serialize(obj, stream, "boundary", encodings, null);
+        MultipartFormDataSerializer.SerializeAsync(obj, stream, "boundary", encodings, null).AsTask().GetAwaiter().GetResult();
 
         string output = Encoding.UTF8.GetString(stream.ToArray());
 

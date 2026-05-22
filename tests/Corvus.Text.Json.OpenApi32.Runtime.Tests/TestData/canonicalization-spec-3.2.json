@@ -18,6 +18,11 @@
         "tags": [
           "items"
         ],
+        "security": [
+          {
+            "oauth2": ["read"]
+          }
+        ],
         "parameters": [
           {
             "name": "itemId",
@@ -138,6 +143,11 @@
         "summary": "Delete an item (204 no content)",
         "tags": [
           "items"
+        ],
+        "security": [
+          {
+            "oauth2": ["read", "write"]
+          }
         ],
         "parameters": [
           {
@@ -3295,5 +3305,10 @@
         }
       }
     }
-  }
+  },
+  "security": [
+    {
+      "oauth2": ["read"]
+    }
+  ]
 }

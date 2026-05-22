@@ -437,4 +437,64 @@ public class InterfaceMetadataTests
         Assert.AreEqual("https://auth.example.com/.well-known/oauth-authorization-server", IApiTrackingClient.SecuritySchemes.Oauth2Oauth2MetadataUrl);
         Assert.AreEqual("https://auth.example.com/device", IApiTrackingClient.SecuritySchemes.Oauth2DeviceAuthorizationUrl);
     }
+
+    // --- OAuth2 flow URLs and available scopes ---
+    [TestMethod]
+    public void SecuritySchemes_Oauth2FlowUrls()
+    {
+        Assert.AreEqual("https://auth.example.com/token", IApiItemsClient.SecuritySchemes.Oauth2TokenUrl);
+        Assert.AreEqual("https://auth.example.com/authorize", IApiItemsClient.SecuritySchemes.Oauth2AuthorizationUrl);
+    }
+
+    [TestMethod]
+    public void SecuritySchemes_Oauth2AvailableScopes()
+    {
+        CollectionAssert.AreEqual(
+            new[] { "read", "write" },
+            IApiItemsClient.SecuritySchemes.Oauth2AvailableScopes);
+    }
+
+    // --- SecurityRequirements: per-operation scopes ---
+    [TestMethod]
+    public void SecurityRequirements_GetItem_ReadOnly()
+    {
+        CollectionAssert.AreEqual(
+            new[] { "read" },
+            IApiItemsClient.SecurityRequirements.GetItemOauth2Scopes);
+    }
+
+    [TestMethod]
+    public void SecurityRequirements_DeleteItem_ReadWrite()
+    {
+        CollectionAssert.AreEqual(
+            new[] { "read", "write" },
+            IApiItemsClient.SecurityRequirements.DeleteItemOauth2Scopes);
+    }
+
+    [TestMethod]
+    public void SecurityRequirements_DocumentFallback_ReadOnly()
+    {
+        // Operations without explicit security inherit document-level ["read"]
+        CollectionAssert.AreEqual(
+            new[] { "read" },
+            IApiItemsClient.SecurityRequirements.PatchItemOauth2Scopes);
+    }
+
+    [TestMethod]
+    public void SecurityRequirements_AllOauth2Scopes_Union()
+    {
+        // Union of all per-operation scopes (sorted): "read" + "write"
+        CollectionAssert.AreEqual(
+            new[] { "read", "write" },
+            IApiItemsClient.SecurityRequirements.AllOauth2Scopes);
+    }
+
+    [TestMethod]
+    public void SecurityRequirements_OtherClient_InheritsDocLevel()
+    {
+        // Clients whose operations have no explicit security all get doc-level fallback
+        CollectionAssert.AreEqual(
+            new[] { "read" },
+            IApiSearchClient.SecurityRequirements.AllOauth2Scopes);
+    }
 }

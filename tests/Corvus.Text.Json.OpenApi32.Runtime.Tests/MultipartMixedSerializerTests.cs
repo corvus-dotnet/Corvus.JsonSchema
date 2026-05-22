@@ -74,9 +74,9 @@ public class MultipartMixedSerializerTests
         using MemoryStream stream = new();
         Guid guid = Guid.NewGuid();
         byte[] fileBytes = [0x89, 0x50, 0x4E, 0x47]; // PNG header
-        BinaryPartData part = new(s => s.Write(fileBytes), "image/png", "photo.png");
+        BinaryPartData part = new((s, ct) => { s.Write(fileBytes); return default; }, "image/png", "photo.png");
 
-        MultipartMixedSerializer.WriteBinaryPart(stream, guid, part);
+        MultipartMixedSerializer.WriteBinaryPartAsync(stream, guid, part).AsTask().GetAwaiter().GetResult();
 
         string output = Encoding.UTF8.GetString(stream.ToArray());
         string expectedBoundary = $"----CorvusBoundary{guid:N}";
@@ -96,9 +96,9 @@ public class MultipartMixedSerializerTests
     {
         using MemoryStream stream = new();
         Guid guid = Guid.NewGuid();
-        BinaryPartData part = new(s => s.Write([0xFF]), "application/octet-stream", null);
+        BinaryPartData part = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", null);
 
-        MultipartMixedSerializer.WriteBinaryPart(stream, guid, part);
+        MultipartMixedSerializer.WriteBinaryPartAsync(stream, guid, part).AsTask().GetAwaiter().GetResult();
 
         string output = Encoding.UTF8.GetString(stream.ToArray());
         Assert.IsFalse(output.Contains("Content-Disposition"), $"Should not have Content-Disposition. Got:\n{output}");
@@ -144,10 +144,10 @@ public class MultipartMixedSerializerTests
         // Simulate a prefix-encoded message: JSON metadata + binary file
         JsonElement metadata = JsonElement.ParseValue("""{"title":"Report Q4"}"""u8);
         byte[] fileData = Encoding.UTF8.GetBytes("PDF content here");
-        BinaryPartData filePart = new(s => s.Write(fileData), "application/pdf", "report.pdf");
+        BinaryPartData filePart = new((s, ct) => { s.Write(fileData); return default; }, "application/pdf", "report.pdf");
 
         MultipartMixedSerializer.WriteJsonPart(stream, guid, metadata);
-        MultipartMixedSerializer.WriteBinaryPart(stream, guid, filePart);
+        MultipartMixedSerializer.WriteBinaryPartAsync(stream, guid, filePart).AsTask().GetAwaiter().GetResult();
         MultipartMixedSerializer.WriteClosingBoundary(stream, guid);
 
         string output = Encoding.UTF8.GetString(stream.ToArray());

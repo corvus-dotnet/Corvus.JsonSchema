@@ -162,7 +162,7 @@ public class MultipartFormDataSerializerTests
             """{"avatar":"placeholder"}""",
             binaryParts: new Dictionary<string, BinaryPartData>
             {
-                ["avatar"] = new(s => s.Write(imageData), "image/png", "photo.png"),
+                ["avatar"] = new((s, ct) => { s.Write(imageData); return default; }, "image/png", "photo.png"),
             });
 
         StringAssert.Contains(result, "name=\"avatar\"; filename=\"photo.png\"");
@@ -180,7 +180,7 @@ public class MultipartFormDataSerializerTests
             """{"data":"placeholder"}""",
             binaryParts: new Dictionary<string, BinaryPartData>
             {
-                ["data"] = new(s => s.Write(data)),
+                ["data"] = new((s, ct) => { s.Write(data); return default; }),
             });
 
         StringAssert.Contains(result, "name=\"data\"");
@@ -198,7 +198,7 @@ public class MultipartFormDataSerializerTests
             """{"name":"Alice"}""",
             binaryParts: new Dictionary<string, BinaryPartData>
             {
-                ["attachment"] = new(s => s.Write(fileData), "image/jpeg", "image.jpg"),
+                ["attachment"] = new((s, ct) => { s.Write(fileData); return default; }, "image/jpeg", "image.jpg"),
             });
 
         // Both the JSON property and standalone binary part should appear.
@@ -217,10 +217,11 @@ public class MultipartFormDataSerializerTests
             binaryParts: new Dictionary<string, BinaryPartData>
             {
                 ["file"] = new(
-                    s =>
+                    (s, ct) =>
                     {
                         using MemoryStream ms = new(source);
                         ms.CopyTo(s);
+                        return default;
                     },
                     "text/plain",
                     "hello.txt"),
@@ -258,7 +259,7 @@ public class MultipartFormDataSerializerTests
 
         if (binaryParts is not null)
         {
-            MultipartFormDataSerializer.Serialize(doc.RootElement, ms, Boundary, encodings, binaryParts);
+            MultipartFormDataSerializer.SerializeAsync(doc.RootElement, ms, Boundary, encodings, binaryParts).AsTask().GetAwaiter().GetResult();
         }
         else
         {

@@ -958,7 +958,7 @@ public class ResponseAndClientCoverageTests
         using var harness = new ClientTestHarness(HttpStatusCode.OK, """{"ok":true}""");
         var client = new ApiFormsClient(harness.Transport);
         using var doc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse("""42""");
-        BinaryPartData dummyFile = new(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        BinaryPartData dummyFile = new((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
             async () => await client.SubmitMultipartTypesAsync(
@@ -1325,7 +1325,7 @@ public class ResponseAndClientCoverageTests
         using var harness = new ClientTestHarness(HttpStatusCode.OK, """{"ok":true}""");
         var client = new ApiFormsClient(harness.Transport);
         using var doc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse("""42""");
-        var file = new BinaryPartData(s => s.Write([0xFF]), "application/octet-stream", "test.bin");
+        var file = new BinaryPartData((s, ct) => { s.Write([0xFF]); return default; }, "application/octet-stream", "test.bin");
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
             async () => await client.SubmitMultipartTypesAsync(doc.RootElement, file, validationMode: ValidationMode.Basic));
     }
@@ -2115,7 +2115,7 @@ public class ResponseAndClientCoverageTests
     {
         using ClientTestHarness harness = new(HttpStatusCode.OK, """{}""");
         await using ApiFormsClient client = new(harness.Transport);
-        BinaryPartData file = new(_ => { });
+        BinaryPartData file = new((s, ct) => default);
         await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
             PostFormsMultipartTypesBody.ParseValue("""{"count":1,"active":true,"title":"T"}"""u8),
             file,
