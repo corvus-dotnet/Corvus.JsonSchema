@@ -130,4 +130,15 @@ public static class ThrowHelper
         throw new NotSupportedException(
             SR.Format(SR.UnsupportedBindingsFormat, channelName));
     }
+
+    /// <summary>
+    /// Throws an <see cref="ArgumentOutOfRangeException"/> for the specified parameter.
+    /// </summary>
+    /// <param name="parameterName">The name of the parameter.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowArgumentOutOfRange(string parameterName)
+    {
+        throw new ArgumentOutOfRangeException(parameterName);
+    }
 }

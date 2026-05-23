@@ -29,6 +29,8 @@
         <ModulePath>.*Corvus\.Text\.Json\.OpenApi30\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.OpenApi31\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.OpenApi32\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.CodeGeneration\.dll$</ModulePath>
       </Include>
     </ModulePaths>
     <Sources>

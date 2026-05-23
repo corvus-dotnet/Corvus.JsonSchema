@@ -97,4 +97,22 @@ public interface IMessageTransport : IAsyncDisposable
     ValueTask UnsubscribeAsync(
         string channel,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a failed message to a dead-letter channel for later inspection or reprocessing.
+    /// </summary>
+    /// <param name="deadLetterChannel">The dead-letter channel address.</param>
+    /// <param name="originalChannel">The original channel the message was received on.</param>
+    /// <param name="payload">The raw payload that could not be processed.</param>
+    /// <param name="headers">The raw headers associated with the failed message.</param>
+    /// <param name="exception">The exception that caused the message to be dead-lettered.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    ValueTask DeadLetterAsync(
+        string deadLetterChannel,
+        string originalChannel,
+        in JsonElement payload,
+        in JsonElement headers,
+        Exception exception,
+        CancellationToken cancellationToken = default);
 }

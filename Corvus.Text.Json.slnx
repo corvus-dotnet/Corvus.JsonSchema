@@ -54,6 +54,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Corvus.Text.Json.AsyncApi.CodeGeneration.Tests/Corvus.Text.Json.AsyncApi.CodeGeneration.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.AsyncApi.Runtime.Tests/Corvus.Text.Json.AsyncApi.Runtime.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.AsyncApi26.Tests/Corvus.Text.Json.AsyncApi26.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.AsyncApi30.Tests/Corvus.Text.Json.AsyncApi30.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi30.Runtime.Tests/Corvus.Text.Json.OpenApi30.Runtime.Tests.csproj" />
