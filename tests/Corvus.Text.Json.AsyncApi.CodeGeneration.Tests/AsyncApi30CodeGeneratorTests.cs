@@ -1098,8 +1098,66 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // Channel-server restriction tests
+    // AsyncApiRuntimeExpression parser tests
     // ═══════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void RuntimeExpression_ParseMessageHeader()
+    {
+        AsyncApiRuntimeExpression expr = AsyncApiRuntimeExpression.Parse("$message.header#/correlationId");
+
+        Assert.AreEqual(AsyncApiRuntimeExpressionKind.MessageHeader, expr.Kind);
+        Assert.AreEqual("/correlationId", expr.JsonPointer);
+        Assert.IsNull(expr.LiteralValue);
+    }
+
+    [TestMethod]
+    public void RuntimeExpression_ParseMessagePayload()
+    {
+        AsyncApiRuntimeExpression expr = AsyncApiRuntimeExpression.Parse("$message.payload#/orderId");
+
+        Assert.AreEqual(AsyncApiRuntimeExpressionKind.MessagePayload, expr.Kind);
+        Assert.AreEqual("/orderId", expr.JsonPointer);
+        Assert.IsNull(expr.LiteralValue);
+    }
+
+    [TestMethod]
+    public void RuntimeExpression_ParseNestedPointer()
+    {
+        AsyncApiRuntimeExpression expr = AsyncApiRuntimeExpression.Parse("$message.payload#/nested/deep/value");
+
+        Assert.AreEqual(AsyncApiRuntimeExpressionKind.MessagePayload, expr.Kind);
+        Assert.AreEqual("/nested/deep/value", expr.JsonPointer);
+    }
+
+    [TestMethod]
+    public void RuntimeExpression_ParseLiteralValue()
+    {
+        AsyncApiRuntimeExpression expr = AsyncApiRuntimeExpression.Parse("some-literal-value");
+
+        Assert.AreEqual(AsyncApiRuntimeExpressionKind.Literal, expr.Kind);
+        Assert.IsNull(expr.JsonPointer);
+        Assert.AreEqual("some-literal-value", expr.LiteralValue);
+    }
+
+    [TestMethod]
+    public void RuntimeExpression_ParseUnrecognizedDollarExpression()
+    {
+        AsyncApiRuntimeExpression expr = AsyncApiRuntimeExpression.Parse("$unknown.expression");
+
+        Assert.AreEqual(AsyncApiRuntimeExpressionKind.Literal, expr.Kind);
+        Assert.IsNull(expr.JsonPointer);
+        Assert.AreEqual("$unknown.expression", expr.LiteralValue);
+    }
+
+    [TestMethod]
+    public void RuntimeExpression_ParseHeaderWithEmptyPointer()
+    {
+        AsyncApiRuntimeExpression expr = AsyncApiRuntimeExpression.Parse("$message.header#");
+
+        Assert.AreEqual(AsyncApiRuntimeExpressionKind.MessageHeader, expr.Kind);
+        Assert.AreEqual(string.Empty, expr.JsonPointer);
+    }
 
     [TestMethod]
     public void Generate_ChannelServerRestriction_ProducerEmitsAllowedServers()

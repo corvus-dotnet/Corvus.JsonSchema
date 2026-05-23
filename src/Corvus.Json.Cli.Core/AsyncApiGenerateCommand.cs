@@ -183,6 +183,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
 
         CSharpLanguageProvider.Options options = new(rootNamespace);
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        languageProvider.RegisterNameHeuristics(AsyncApiSchemaNameHeuristic.Instance);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(languageProvider, typesToGenerate, cancellationToken);
 

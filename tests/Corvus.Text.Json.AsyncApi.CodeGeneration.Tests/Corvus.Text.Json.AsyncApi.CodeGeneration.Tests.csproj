@@ -13,7 +13,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.CodeGeneration\Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />

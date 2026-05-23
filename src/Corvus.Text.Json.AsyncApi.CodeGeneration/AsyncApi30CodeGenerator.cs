@@ -2337,30 +2337,19 @@ public sealed class AsyncApi30CodeGenerator
     /// if the expression cannot be parsed.</returns>
     internal static string? EmitRuntimeExpressionAccessor(string expression, string payloadVar, string headersVar)
     {
-        // AsyncAPI runtime expressions:
-        //   $message.header#/pointer — extract from headers JSON Pointer
-        //   $message.payload#/pointer — extract from payload JSON Pointer
-        const string headerPrefix = "$message.header#";
-        const string payloadPrefix = "$message.payload#";
+        AsyncApiRuntimeExpression parsed = AsyncApiRuntimeExpression.Parse(expression);
 
-        if (expression.StartsWith(headerPrefix, StringComparison.Ordinal))
+        return parsed.Kind switch
         {
-            string pointer = expression[headerPrefix.Length..];
-            return EmitPointerNavigation(headersVar, pointer);
-        }
-
-        if (expression.StartsWith(payloadPrefix, StringComparison.Ordinal))
-        {
-            string pointer = expression[payloadPrefix.Length..];
-            return EmitPointerNavigation(payloadVar, pointer);
-        }
-
-        return null;
+            AsyncApiRuntimeExpressionKind.MessageHeader => EmitPointerNavigation(headersVar, parsed.JsonPointer!),
+            AsyncApiRuntimeExpressionKind.MessagePayload => EmitPointerNavigation(payloadVar, parsed.JsonPointer!),
+            _ => null,
+        };
     }
 
     private static string EmitPointerNavigation(string sourceVar, string pointer)
     {
-        // Convert JSON Pointer "/foo/bar" into chained TryGetProperty calls
+        // Convert JSON Pointer "/foo/bar" into chained GetProperty calls.
         // For simple single-segment pointers like "/replyTo", emit:
         //   sourceVar.GetProperty("replyTo"u8).GetString()!
         // For multi-segment pointers like "/nested/path", emit chained navigation.

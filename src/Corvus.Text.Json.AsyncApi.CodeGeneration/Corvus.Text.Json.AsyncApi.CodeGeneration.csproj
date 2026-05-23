@@ -34,6 +34,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi30\Corvus.Text.Json.AsyncApi30.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi26\Corvus.Text.Json.AsyncApi26.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
