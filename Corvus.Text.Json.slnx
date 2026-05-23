@@ -44,6 +44,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Corvus.Text.Json.AsyncApi.CodeGeneration/Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.AsyncApi/Corvus.Text.Json.AsyncApi.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi26/Corvus.Text.Json.AsyncApi26.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi30/Corvus.Text.Json.AsyncApi30.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi32/Corvus.Text.Json.OpenApi32.csproj" />

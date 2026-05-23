@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-05-22T13:05:20.6336598\u002B00:00",
+  "generatedAt": "2026-05-22T22:22:15.2246102\u002B00:00",
   "generatedFiles": [
     "GetItemRequest.cs",
     "GetItemResponse.cs",

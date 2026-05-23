@@ -16,11 +16,17 @@
     <Description>Code generation for .NET API clients and servers from OpenAPI and AsyncAPI specifications. Produces strongly-typed C# using Corvus.Text.Json zero-allocation types.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+  <ItemGroup>
+    <Using Include="SR = Resources.Strings" />
+  </ItemGroup>
   <PropertyGroup>
     <CommonPath>..\..\Common\src\</CommonPath>
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.OpenApi.CodeGeneration.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.resx" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
   </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include="Schemas\corvusjson-openapi-lock.json" />
@@ -37,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
   </ItemGroup>

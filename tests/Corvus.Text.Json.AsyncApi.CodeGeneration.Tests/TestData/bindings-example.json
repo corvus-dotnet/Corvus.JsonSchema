@@ -9,22 +9,17 @@
       "address": "shop.orders",
       "messages": {
         "OrderCreated": {
-          "payload": {
-            "type": "object",
-            "properties": {
-              "orderId": { "type": "string" }
-            }
-          }
+          "$ref": "#/components/messages/OrderCreated"
         }
       },
       "bindings": {
         "kafka": {
-          "groupId": "order-processors",
+          "topic": "shop.orders",
+          "partitions": 12,
+          "replicas": 3,
           "topicConfiguration": {
-            "partitions": 12,
-            "replicas": 3,
-            "retention.ms": 604800000,
-            "cleanup.policy": "compact"
+            "cleanup.policy": ["compact"],
+            "retention.ms": 604800000
           }
         }
       }
@@ -33,22 +28,15 @@
       "address": "shop.notifications",
       "messages": {
         "Notification": {
-          "payload": {
-            "type": "object",
-            "properties": {
-              "message": { "type": "string" }
-            }
-          }
+          "$ref": "#/components/messages/Notification"
         }
       },
       "bindings": {
         "amqp": {
+          "is": "routingKey",
           "exchange": {
             "name": "shop-exchange",
-            "type": "topic"
-          },
-          "queue": {
-            "name": "notifications-queue",
+            "type": "topic",
             "durable": true,
             "autoDelete": false
           }
@@ -65,7 +53,8 @@
       ],
       "bindings": {
         "kafka": {
-          "clientId": "order-service"
+          "groupId": { "type": "string", "enum": ["order-processors"] },
+          "clientId": { "type": "string", "enum": ["order-service"] }
         }
       }
     },
@@ -77,8 +66,27 @@
       ],
       "bindings": {
         "amqp": {
-          "routingKey": "notifications.new",
-          "ack": 1
+          "ack": true
+        }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "OrderCreated": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "orderId": { "type": "string" }
+          }
+        }
+      },
+      "Notification": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "message": { "type": "string" }
+          }
         }
       }
     }

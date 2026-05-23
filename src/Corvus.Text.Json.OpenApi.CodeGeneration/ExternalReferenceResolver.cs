@@ -78,7 +78,7 @@ public sealed class ExternalReferenceResolver : IOpenApiReferenceResolver, IDisp
         if (!Path.IsPathFullyQualified(entryDocumentPath))
         {
             throw new ArgumentException(
-                $"Entry document path must be fully qualified: '{entryDocumentPath}'",
+                SR.Format(SR.EntryDocumentPathMustBeFullyQualified, entryDocumentPath),
                 nameof(entryDocumentPath));
         }
 

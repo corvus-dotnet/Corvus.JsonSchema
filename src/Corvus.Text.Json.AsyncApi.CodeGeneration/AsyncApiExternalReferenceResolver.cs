@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.AsyncApi.CodeGeneration;
@@ -50,7 +51,7 @@ public sealed class AsyncApiExternalReferenceResolver : IAsyncApiReferenceResolv
         if (!Path.IsPathFullyQualified(entryDocumentPath))
         {
             throw new ArgumentException(
-                $"Entry document path must be fully qualified: '{entryDocumentPath}'",
+                SR.Format(SR.EntryDocumentPathMustBeFullyQualified, entryDocumentPath),
                 nameof(entryDocumentPath));
         }
 
@@ -149,7 +150,76 @@ public sealed class AsyncApiExternalReferenceResolver : IAsyncApiReferenceResolv
     }
 
     /// <inheritdoc/>
-    public IDisposable PushBase(string refValue)
+    public bool TryResolve(ReadOnlySpan<byte> refValue, out JsonElement result)
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        if (refValue.IsEmpty)
+        {
+            result = default;
+            return false;
+        }
+
+        // Fragment-only reference — resolve within CURRENT base document (RFC 3986 §5)
+        if (refValue[0] == (byte)'#')
+        {
+            ReadOnlySpan<byte> pointer = refValue[1..];
+            if (Utf8JsonPointer.TryCreateJsonPointer(pointer, out Utf8JsonPointer ptr) &&
+                ptr.TryResolve<JsonElement, JsonElement>(this.CurrentBaseDocument, out JsonElement resolved))
+            {
+                result = resolved;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        // External reference — transcode to string for URI resolution
+        string refStr = System.Text.Encoding.UTF8.GetString(refValue);
+        return this.TryResolveExternal(refStr, out result);
+    }
+
+    /// <inheritdoc/>
+    public bool TryResolve<TTarget>(string refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>
+    {
+        if (this.TryResolve(refValue, out JsonElement element))
+        {
+            IJsonElement ie = element;
+            TTarget candidate = TTarget.CreateInstance(ie.ParentDocument, ie.ParentDocumentIndex);
+            if (candidate.EvaluateSchema())
+            {
+                result = candidate;
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public bool TryResolve<TTarget>(ReadOnlySpan<byte> refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>
+    {
+        if (this.TryResolve(refValue, out JsonElement element))
+        {
+            IJsonElement ie = element;
+            TTarget candidate = TTarget.CreateInstance(ie.ParentDocument, ie.ParentDocumentIndex);
+            if (candidate.EvaluateSchema())
+            {
+                result = candidate;
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public IDisposable PushResolvedBase(string refValue)
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
@@ -215,6 +285,23 @@ public sealed class AsyncApiExternalReferenceResolver : IAsyncApiReferenceResolv
         string absoluteDoc = resolved.IsFile ? resolved.LocalPath : resolved.AbsoluteUri;
 
         return string.Concat(absoluteDoc, fragment);
+    }
+
+    /// <inheritdoc/>
+    public string ResolveToAbsolute(ReadOnlySpan<byte> refValue)
+    {
+        // Transcode once here — URI resolution requires strings
+        return this.ResolveToAbsolute(System.Text.Encoding.UTF8.GetString(refValue));
+    }
+
+    /// <inheritdoc/>
+    public int ResolveToAbsolute(ReadOnlySpan<byte> refValue, Span<byte> destination)
+    {
+        // URI resolution requires strings internally, so transcode, resolve, then
+        // write the result back as UTF-8 into the destination (single allocation for the
+        // intermediate string; the caller avoids a second allocation for concatenation).
+        string resolved = this.ResolveToAbsolute(System.Text.Encoding.UTF8.GetString(refValue));
+        return System.Text.Encoding.UTF8.GetBytes(resolved.AsSpan(), destination);
     }
 
     /// <summary>

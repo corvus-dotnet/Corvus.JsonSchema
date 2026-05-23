@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text;
 using Corvus.Text.Json;
+using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi30;
 
 namespace Corvus.Text.Json.AsyncApi.CodeGeneration;
@@ -44,19 +46,18 @@ public sealed class AsyncApi30CodeGenerator
     /// Walks the AsyncAPI 3.0 specification and collects all schema
     /// JSON Pointer strings reachable from the selected operations.
     /// </summary>
-    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="doc">The parsed AsyncAPI document.</param>
     /// <param name="filter">Optional operation filter (filters by channel address).</param>
     /// <param name="referenceResolver">
     /// Optional external reference resolver. When provided, external <c>$ref</c> pointers
-    /// are resolved to absolute paths via <see cref="IAsyncApiReferenceResolver.ResolveToAbsolute"/>.
+    /// are resolved to absolute paths via <see cref="IAsyncApiReferenceResolver.ResolveToAbsolute(string)"/>.
     /// </param>
     /// <returns>An array of schema pointer strings.</returns>
     public static string[] CollectSchemaPointers(
-        JsonElement specRoot,
+        AsyncApiDocument doc,
         OperationFilter? filter = null,
         IAsyncApiReferenceResolver? referenceResolver = null)
     {
-        AsyncApiDocument doc = specRoot;
         List<string> pointers = [];
 
         if (doc.ChannelsValue.IsUndefined())
@@ -69,46 +70,54 @@ public sealed class AsyncApi30CodeGenerator
         {
             string channelName = channelProp.Name;
 
-            AsyncApiDocument.Channel channel = (AsyncApiDocument.Channel)channelProp.Value;
+            AsyncApiDocument.Channel channel = channelProp.Value.Match(
+                matchReference: static (in AsyncApiDocument.Reference _) => default,
+                matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
+                defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+
+            if (channel.IsUndefined())
+            {
+                continue;
+            }
 
             if (filter?.Matches(GetChannelAddress(channel, channelName)) == false)
             {
                 continue;
             }
 
-            CollectChannelSchemaPointers(channelName, channel, pointers);
+            using UnescapedUtf8JsonString channelNameUtf8 = channelProp.Utf8NameSpan;
+            CollectChannelSchemaPointers(channelNameUtf8.Span, channel, pointers);
         }
 
         // Collect schemas from components/schemas
         if (doc.ComponentsValue.IsNotUndefined())
         {
-            JsonElement components = (JsonElement)doc.ComponentsValue;
-            if (components.TryGetProperty("schemas"u8, out JsonElement schemas) &&
-                schemas.ValueKind == JsonValueKind.Object)
+            AsyncApiDocument.Components components = doc.ComponentsValue;
+            if (components.Schemas.IsNotUndefined())
             {
-                foreach (var schemaProp in schemas.EnumerateObject())
+                foreach (var schemaProp in components.Schemas.EnumerateObject())
                 {
-                    pointers.Add(AsyncApiSchemaPointerBuilder.ComponentSchema(schemaProp.Name));
+                    using UnescapedUtf8JsonString schemaName = schemaProp.Utf8NameSpan;
+                    pointers.Add(AsyncApiSchemaPointerBuilder.ComponentSchema(schemaName.Span));
                 }
             }
 
             // Collect inline payload/headers schemas from component messages
-            if (components.TryGetProperty("messages"u8, out JsonElement messages) &&
-                messages.ValueKind == JsonValueKind.Object)
+            if (components.Messages.IsNotUndefined())
             {
-                foreach (var msgProp in messages.EnumerateObject())
+                foreach (var msgProp in components.Messages.EnumerateObject())
                 {
-                    string msgName = msgProp.Name;
-                    JsonElement msg = msgProp.Value;
+                    using UnescapedUtf8JsonString msgName = msgProp.Utf8NameSpan;
+                    AsyncApiDocument.MessageObject msg = msgProp.Value;
 
-                    if (HasProperty(msg, "payload"u8))
+                    if (msg.Payload.IsNotUndefined())
                     {
-                        pointers.Add(AsyncApiSchemaPointerBuilder.ComponentMessagePayload(msgName));
+                        pointers.Add(AsyncApiSchemaPointerBuilder.ComponentMessagePayload(msgName.Span));
                     }
 
-                    if (HasProperty(msg, "headers"u8))
+                    if (msg.Headers.IsNotUndefined())
                     {
-                        pointers.Add(AsyncApiSchemaPointerBuilder.ComponentMessageHeaders(msgName));
+                        pointers.Add(AsyncApiSchemaPointerBuilder.ComponentMessageHeaders(msgName.Span));
                     }
                 }
             }
@@ -120,14 +129,13 @@ public sealed class AsyncApi30CodeGenerator
     /// <summary>
     /// Lists all operations in the AsyncAPI 3.0 specification, optionally filtered.
     /// </summary>
-    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="doc">The parsed AsyncAPI document.</param>
     /// <param name="filter">Optional operation filter (filters by channel address).</param>
     /// <returns>An array of <see cref="AsyncApiOperationSummary"/> records.</returns>
     public static AsyncApiOperationSummary[] ListOperations(
-        JsonElement specRoot,
+        AsyncApiDocument doc,
         OperationFilter? filter = null)
     {
-        AsyncApiDocument doc = specRoot;
         List<AsyncApiOperationSummary> result = [];
 
         if (doc.OperationsValue.IsUndefined())
@@ -137,47 +145,48 @@ public sealed class AsyncApi30CodeGenerator
 
         foreach (var operationProp in doc.OperationsValue.EnumerateObject())
         {
-            JsonElement opElement = (JsonElement)operationProp.Value;
+            AsyncApiDocument.Type300Operation operation = operationProp.Value.Match(
+                matchReference: static (in AsyncApiDocument.Reference _) => default,
+                matchType300Operation: static (in AsyncApiDocument.Type300Operation op) => op,
+                defaultMatch: static (in AsyncApiDocument.Operations.AdditionalPropertiesEntity _) => default);
 
-            // Get the action (send/receive)
-            if (!opElement.TryGetProperty("action"u8, out JsonElement actionEl) ||
-                actionEl.ValueKind != JsonValueKind.String)
+            if (operation.IsUndefined())
             {
                 continue;
             }
 
-            string actionStr = actionEl.GetString()!;
-            OperationAction action = actionStr == "send" ? OperationAction.Send : OperationAction.Receive;
+            // Get the action (send/receive)
+            if (operation.Action.IsUndefined())
+            {
+                continue;
+            }
+
+            OperationAction action = operation.Action == AsyncApiDocument.Type300Operation.ActionEntity.EnumValues.Send
+                ? OperationAction.Send
+                : OperationAction.Receive;
 
             // Resolve channel reference to get address
-            string channelAddress = ResolveChannelAddress(opElement, doc);
+            string channelAddress = ResolveChannelAddress(operation, doc);
 
             if (filter?.Matches(channelAddress) == false)
             {
                 continue;
             }
 
-            // Get operationId (the map key is often used as the id)
-            string? operationId = null;
-            if (opElement.TryGetProperty("operationId"u8, out JsonElement opIdEl) &&
-                opIdEl.ValueKind == JsonValueKind.String)
-            {
-                operationId = opIdEl.GetString();
-            }
+            // In AsyncAPI 3.0, operations are named at the map level — the key IS the operationId
+            string operationId = operationProp.Name;
 
-            operationId ??= operationProp.Name;
-
-            // Get summary
+            // Get summary (checking operation traits for fallback)
             string? summary = null;
-            if (opElement.TryGetProperty("summary"u8, out JsonElement summaryEl) &&
+            if (TryGetPropertyWithTraits(operation, "summary"u8, doc, null, out JsonElement summaryEl) &&
                 summaryEl.ValueKind == JsonValueKind.String)
             {
                 summary = summaryEl.GetString();
             }
 
-            // Get tags
+            // Get tags (checking operation traits for fallback)
             List<string> tags = [];
-            if (opElement.TryGetProperty("tags"u8, out JsonElement tagsEl) &&
+            if (TryGetPropertyWithTraits(operation, "tags"u8, doc, null, out JsonElement tagsEl) &&
                 tagsEl.ValueKind == JsonValueKind.Array)
             {
                 foreach (JsonElement tag in tagsEl.EnumerateArray())
@@ -195,9 +204,9 @@ public sealed class AsyncApi30CodeGenerator
                 continue;
             }
 
-            // Count messages
+            // Count messages (checking operation traits for fallback)
             int messageCount = 0;
-            if (opElement.TryGetProperty("messages"u8, out JsonElement msgsEl) &&
+            if (TryGetPropertyWithTraits(operation, "messages"u8, doc, null, out JsonElement msgsEl) &&
                 msgsEl.ValueKind == JsonValueKind.Array)
             {
                 foreach (var msg in msgsEl.EnumerateArray())
@@ -223,109 +232,89 @@ public sealed class AsyncApi30CodeGenerator
     /// <summary>
     /// Lists all servers defined in the AsyncAPI 3.0 specification.
     /// </summary>
-    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="doc">The parsed AsyncAPI document.</param>
     /// <returns>An array of <see cref="ServerInfo"/> records.</returns>
-    public static ServerInfo[] ListServers(JsonElement specRoot)
+    public static ServerInfo[] ListServers(AsyncApiDocument doc)
     {
-        AsyncApiDocument doc = specRoot;
         List<ServerInfo> result = [];
 
-        JsonElement root = (JsonElement)doc;
-        if (!root.TryGetProperty("servers"u8, out JsonElement serversEl) ||
-            serversEl.ValueKind != JsonValueKind.Object)
+        if (doc.ServersValue.IsUndefined())
         {
             return [];
         }
 
-        foreach (var serverProp in serversEl.EnumerateObject())
+        foreach (var serverProp in doc.ServersValue.EnumerateObject())
         {
             string name = serverProp.Name;
-            JsonElement server = serverProp.Value;
+            AsyncApiDocument.Type300Server server = serverProp.Value.Match(
+                matchReference: static (in AsyncApiDocument.Reference _) => default,
+                matchType300Server: static (in AsyncApiDocument.Type300Server s) => s,
+                defaultMatch: static (in AsyncApiDocument.Servers.AdditionalPropertiesEntity _) => default);
 
-            string host = string.Empty;
-            if (server.TryGetProperty("host"u8, out JsonElement hostEl) &&
-                hostEl.ValueKind == JsonValueKind.String)
+            if (server.IsUndefined())
             {
-                host = hostEl.GetString()!;
+                continue;
             }
 
-            string protocol = string.Empty;
-            if (server.TryGetProperty("protocol"u8, out JsonElement protocolEl) &&
-                protocolEl.ValueKind == JsonValueKind.String)
-            {
-                protocol = protocolEl.GetString()!;
-            }
+            string host = server.Host.IsNotUndefined() ? server.Host.GetString()! : string.Empty;
+            string protocol = server.Protocol.IsNotUndefined() ? server.Protocol.GetString()! : string.Empty;
+            string? pathname = server.Pathname.IsNotUndefined() ? server.Pathname.GetString() : null;
 
-            string? pathname = null;
-            if (server.TryGetProperty("pathname"u8, out JsonElement pathnameEl) &&
-                pathnameEl.ValueKind == JsonValueKind.String)
-            {
-                pathname = pathnameEl.GetString();
-            }
-
-            // Parse variables
             List<ServerVariable> variables = [];
-            if (server.TryGetProperty("variables"u8, out JsonElement varsEl) &&
-                varsEl.ValueKind == JsonValueKind.Object)
+            if (server.Variables.IsNotUndefined())
             {
-                foreach (var varProp in varsEl.EnumerateObject())
+                foreach (var varProp in server.Variables.EnumerateObject())
                 {
                     string varName = varProp.Name;
-                    JsonElement varObj = varProp.Value;
+                    AsyncApiDocument.ServerVariable variable = varProp.Value.Match(
+                        matchReference: static (in AsyncApiDocument.Reference _) => default,
+                        matchServerVariable: static (in AsyncApiDocument.ServerVariable v) => v,
+                        defaultMatch: static (in AsyncApiDocument.ServerVariables.AdditionalPropertiesEntity _) => default);
 
-                    string? defaultValue = null;
-                    if (varObj.TryGetProperty("default"u8, out JsonElement defEl) &&
-                        defEl.ValueKind == JsonValueKind.String)
+                    if (variable.IsUndefined())
                     {
-                        defaultValue = defEl.GetString();
+                        continue;
                     }
+
+                    string? defaultValue = variable.Default.IsNotUndefined() ? variable.Default.GetString() : null;
+                    string? description = variable.Description.IsNotUndefined() ? variable.Description.GetString() : null;
 
                     List<string> enumValues = [];
-                    if (varObj.TryGetProperty("enum"u8, out JsonElement enumEl) &&
-                        enumEl.ValueKind == JsonValueKind.Array)
+                    if (variable.Enum.IsNotUndefined())
                     {
-                        foreach (JsonElement e in enumEl.EnumerateArray())
+                        foreach (var enumValue in variable.Enum.EnumerateArray())
                         {
-                            if (e.ValueKind == JsonValueKind.String)
-                            {
-                                enumValues.Add(e.GetString()!);
-                            }
+                            enumValues.Add((string)enumValue);
                         }
-                    }
-
-                    string? description = null;
-                    if (varObj.TryGetProperty("description"u8, out JsonElement descEl) &&
-                        descEl.ValueKind == JsonValueKind.String)
-                    {
-                        description = descEl.GetString();
                     }
 
                     variables.Add(new ServerVariable(varName, defaultValue, enumValues, description));
                 }
             }
 
-            // Parse security schemes
             List<string> securitySchemes = [];
-            if (server.TryGetProperty("security"u8, out JsonElement secEl) &&
-                secEl.ValueKind == JsonValueKind.Array)
+            if (server.Security.IsNotUndefined())
             {
-                foreach (JsonElement secItem in secEl.EnumerateArray())
+                foreach (var secItem in server.Security.EnumerateArray())
                 {
-                    if (secItem.TryGetProperty("$ref"u8, out JsonElement refEl) &&
-                        refEl.ValueKind == JsonValueKind.String)
-                    {
-                        string refStr = refEl.GetString()!;
-                        const string prefix = "#/components/securitySchemes/";
-                        if (refStr.StartsWith(prefix, StringComparison.Ordinal))
+                    string? schemeName = secItem.Match<string?>(
+                        matchReference: static (in AsyncApiDocument.Reference asRef) =>
                         {
-                            securitySchemes.Add(refStr[prefix.Length..]);
-                        }
-                    }
-                    else if (secItem.TryGetProperty("type"u8, out JsonElement typeEl) &&
-                             typeEl.ValueKind == JsonValueKind.String)
+                            string refStr = asRef.Ref.GetString()!;
+                            const string prefix = "#/components/securitySchemes/";
+                            if (refStr.StartsWith(prefix, StringComparison.Ordinal))
+                            {
+                                return refStr[prefix.Length..];
+                            }
+
+                            return null;
+                        },
+                        matchSecurityScheme: static (in AsyncApiDocument.SecurityScheme _) => (string?)null,
+                        defaultMatch: static (in AsyncApiDocument.SecurityRequirements.ItemsEntity _) => (string?)null);
+
+                    if (schemeName is not null)
                     {
-                        // Inline security scheme — use type as name
-                        securitySchemes.Add(typeEl.GetString()!);
+                        securitySchemes.Add(schemeName);
                     }
                 }
             }
@@ -337,224 +326,105 @@ public sealed class AsyncApi30CodeGenerator
     }
 
     /// <summary>
-    /// Parses protocol bindings from channel and operation elements in the spec.
+    /// Extracts typed protocol bindings from channel and operation elements in the spec.
     /// </summary>
-    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="doc">The parsed AsyncAPI document.</param>
     /// <param name="channelName">The channel key to extract bindings from.</param>
-    /// <returns>A <see cref="ProtocolBindings"/> instance, or <see langword="null"/> if no bindings are present.</returns>
-    public static ProtocolBindings? ParseBindings(JsonElement specRoot, string channelName)
+    /// <param name="resolver">
+    /// Optional external reference resolver for <c>$ref</c> values pointing outside the document.
+    /// </param>
+    /// <returns>A <see cref="ChannelBindingInfo"/> containing the resolved bindings.</returns>
+    public static ChannelBindingInfo GetBindings(
+        AsyncApiDocument doc,
+        string channelName,
+        IAsyncApiReferenceResolver? resolver = null)
     {
-        JsonElement root = specRoot;
-        ProtocolBindings? bindings = null;
+        AsyncApiDocument.ChannelBindingsObject channelBindings = default;
+        AsyncApiDocument.OperationBindingsObject operationBindings = default;
 
         // Channel-level bindings
-        if (root.TryGetProperty("channels"u8, out JsonElement channels) &&
-            channels.TryGetProperty(channelName, out JsonElement channel) &&
-            channel.TryGetProperty("bindings"u8, out JsonElement channelBindings) &&
-            channelBindings.ValueKind == JsonValueKind.Object)
+        if (doc.ChannelsValue.IsNotUndefined() &&
+            doc.ChannelsValue.TryGetProperty(channelName, out var channelEntity))
         {
-            bindings = ParseChannelBindings(channelBindings, bindings);
+            AsyncApiDocument.Channel channel = channelEntity.Match(
+                matchReference: static (in AsyncApiDocument.Reference _) => default,
+                matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
+                defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+
+            if (channel.IsNotUndefined() && channel.Bindings.IsNotUndefined())
+            {
+                var ctx = (doc, channelName, resolver);
+                channelBindings = channel.Bindings.Match(
+                    in ctx,
+                    matchReference: static (in AsyncApiDocument.Reference r, in (AsyncApiDocument doc, string channelName, IAsyncApiReferenceResolver? resolver) c) =>
+                    {
+                        JsonElement resolved = ResolveRef(r, c.doc, c.resolver);
+                        return AsyncApiDocument.ChannelBindingsObject.From(resolved);
+                    },
+                    matchChannelBindingsObject: static (in AsyncApiDocument.ChannelBindingsObject b, in (AsyncApiDocument, string, IAsyncApiReferenceResolver?) _) => b,
+                    defaultMatch: static (in AsyncApiDocument.Channel.BindingsEntity _, in (AsyncApiDocument, string channelName, IAsyncApiReferenceResolver?) c) =>
+                    {
+                        ThrowHelper.ThrowUnsupportedBindingsFormat(c.channelName);
+                        return default;
+                    });
+            }
         }
 
-        // Operation-level bindings (scan operations that reference this channel)
-        if (root.TryGetProperty("operations"u8, out JsonElement operations) &&
-            operations.ValueKind == JsonValueKind.Object)
+        // Operation-level bindings (first operation referencing this channel)
+        if (doc.OperationsValue.IsNotUndefined())
         {
             string channelRef = $"#/channels/{channelName}";
-            foreach (var opProp in operations.EnumerateObject())
+            foreach (var opProp in doc.OperationsValue.EnumerateObject())
             {
-                JsonElement op = opProp.Value;
-                if (op.TryGetProperty("channel"u8, out JsonElement chRef) &&
-                    chRef.TryGetProperty("$ref"u8, out JsonElement refEl) &&
-                    refEl.ValueKind == JsonValueKind.String &&
-                    string.Equals(refEl.GetString(), channelRef, StringComparison.Ordinal))
+                AsyncApiDocument.Type300Operation operation = opProp.Value.Match(
+                    matchReference: static (in AsyncApiDocument.Reference _) => default,
+                    matchType300Operation: static (in AsyncApiDocument.Type300Operation op) => op,
+                    defaultMatch: static (in AsyncApiDocument.Operations.AdditionalPropertiesEntity _) => default);
+
+                if (operation.IsUndefined())
                 {
-                    if (op.TryGetProperty("bindings"u8, out JsonElement opBindings) &&
-                        opBindings.ValueKind == JsonValueKind.Object)
+                    continue;
+                }
+
+                AsyncApiDocument.Reference chAsRef = operation.Channel;
+                if (chAsRef.Ref.IsNotUndefined() &&
+                    chAsRef.Ref.ValueEquals(channelRef))
+                {
+                    if (operation.Bindings.IsNotUndefined())
                     {
-                        bindings = ParseOperationBindings(opBindings, bindings);
+                        var ctx = (doc, channelName, resolver);
+                        operationBindings = operation.Bindings.Match(
+                            in ctx,
+                            matchReference: static (in AsyncApiDocument.Reference r, in (AsyncApiDocument doc, string channelName, IAsyncApiReferenceResolver? resolver) c) =>
+                            {
+                                JsonElement resolved = ResolveRef(r, c.doc, c.resolver);
+                                return AsyncApiDocument.OperationBindingsObject.From(resolved);
+                            },
+                            matchOperationBindingsObject: static (in AsyncApiDocument.OperationBindingsObject b, in (AsyncApiDocument, string, IAsyncApiReferenceResolver?) _) => b,
+                            defaultMatch: static (in AsyncApiDocument.Type300Operation.BindingsEntity _, in (AsyncApiDocument, string channelName, IAsyncApiReferenceResolver?) c) =>
+                            {
+                                ThrowHelper.ThrowUnsupportedBindingsFormat(c.channelName);
+                                return default;
+                            });
+
+                        break;
                     }
                 }
             }
         }
 
-        return bindings;
-    }
-
-    private static ProtocolBindings ParseChannelBindings(JsonElement channelBindings, ProtocolBindings? bindings)
-    {
-        bindings ??= new ProtocolBindings();
-
-        // Kafka channel bindings
-        if (channelBindings.TryGetProperty("kafka"u8, out JsonElement kafka) &&
-            kafka.ValueKind == JsonValueKind.Object)
+        return new ChannelBindingInfo
         {
-            bindings.Kafka ??= new KafkaBindings();
-
-            if (kafka.TryGetProperty("groupId"u8, out JsonElement gId) &&
-                gId.ValueKind == JsonValueKind.String)
-            {
-                bindings.Kafka.GroupId = gId.GetString();
-            }
-
-            if (kafka.TryGetProperty("topicConfiguration"u8, out JsonElement topicConfig) &&
-                topicConfig.ValueKind == JsonValueKind.Object)
-            {
-                bindings.Kafka.TopicConfig ??= new KafkaTopicConfig();
-
-                if (topicConfig.TryGetProperty("partitions"u8, out JsonElement parts) &&
-                    parts.ValueKind == JsonValueKind.Number)
-                {
-                    bindings.Kafka.TopicConfig.Partitions = parts.GetInt32();
-                }
-
-                if (topicConfig.TryGetProperty("replicas"u8, out JsonElement reps) &&
-                    reps.ValueKind == JsonValueKind.Number)
-                {
-                    bindings.Kafka.TopicConfig.Replicas = reps.GetInt32();
-                }
-
-                if (topicConfig.TryGetProperty("retention.ms"u8, out JsonElement ret) &&
-                    ret.ValueKind == JsonValueKind.Number)
-                {
-                    bindings.Kafka.TopicConfig.RetentionMs = ret.GetInt64();
-                }
-
-                if (topicConfig.TryGetProperty("cleanup.policy"u8, out JsonElement cp) &&
-                    cp.ValueKind == JsonValueKind.String)
-                {
-                    bindings.Kafka.TopicConfig.CleanupPolicy = cp.GetString();
-                }
-            }
-        }
-
-        // AMQP channel bindings
-        if (channelBindings.TryGetProperty("amqp"u8, out JsonElement amqp) &&
-            amqp.ValueKind == JsonValueKind.Object)
-        {
-            bindings.Amqp ??= new AmqpBindings();
-
-            if (amqp.TryGetProperty("exchange"u8, out JsonElement exchange) &&
-                exchange.ValueKind == JsonValueKind.Object)
-            {
-                if (exchange.TryGetProperty("name"u8, out JsonElement exName) &&
-                    exName.ValueKind == JsonValueKind.String)
-                {
-                    bindings.Amqp.Exchange = exName.GetString();
-                }
-
-                if (exchange.TryGetProperty("type"u8, out JsonElement exType) &&
-                    exType.ValueKind == JsonValueKind.String)
-                {
-                    bindings.Amqp.ExchangeType = exType.GetString();
-                }
-            }
-
-            if (amqp.TryGetProperty("queue"u8, out JsonElement queue) &&
-                queue.ValueKind == JsonValueKind.Object)
-            {
-                if (queue.TryGetProperty("name"u8, out JsonElement qName) &&
-                    qName.ValueKind == JsonValueKind.String)
-                {
-                    bindings.Amqp.Queue = qName.GetString();
-                }
-
-                if (queue.TryGetProperty("durable"u8, out JsonElement dur))
-                {
-                    bindings.Amqp.Durable = dur.ValueKind == JsonValueKind.True;
-                }
-
-                if (queue.TryGetProperty("autoDelete"u8, out JsonElement ad))
-                {
-                    bindings.Amqp.AutoDelete = ad.ValueKind == JsonValueKind.True;
-                }
-            }
-        }
-
-        // MQTT operation bindings (can appear at channel level too)
-        if (channelBindings.TryGetProperty("mqtt"u8, out JsonElement mqtt) &&
-            mqtt.ValueKind == JsonValueKind.Object)
-        {
-            bindings.Mqtt ??= new MqttBindings();
-
-            if (mqtt.TryGetProperty("qos"u8, out JsonElement qos) &&
-                qos.ValueKind == JsonValueKind.Number)
-            {
-                bindings.Mqtt.Qos = qos.GetInt32();
-            }
-
-            if (mqtt.TryGetProperty("retain"u8, out JsonElement retain))
-            {
-                bindings.Mqtt.Retain = retain.ValueKind == JsonValueKind.True;
-            }
-        }
-
-        return bindings;
-    }
-
-    private static ProtocolBindings ParseOperationBindings(JsonElement opBindings, ProtocolBindings? bindings)
-    {
-        bindings ??= new ProtocolBindings();
-
-        // Kafka operation bindings
-        if (opBindings.TryGetProperty("kafka"u8, out JsonElement kafka) &&
-            kafka.ValueKind == JsonValueKind.Object)
-        {
-            bindings.Kafka ??= new KafkaBindings();
-
-            if (kafka.TryGetProperty("clientId"u8, out JsonElement cId) &&
-                cId.ValueKind == JsonValueKind.String)
-            {
-                bindings.Kafka.ClientId = cId.GetString();
-            }
-        }
-
-        // AMQP operation bindings
-        if (opBindings.TryGetProperty("amqp"u8, out JsonElement amqp) &&
-            amqp.ValueKind == JsonValueKind.Object)
-        {
-            bindings.Amqp ??= new AmqpBindings();
-
-            if (amqp.TryGetProperty("ack"u8, out JsonElement ack) &&
-                ack.ValueKind == JsonValueKind.Number)
-            {
-                bindings.Amqp.Ack = ack.GetInt32();
-            }
-
-            // Routing key in operation.bindings.amqp
-            if (amqp.TryGetProperty("routingKey"u8, out JsonElement rk) &&
-                rk.ValueKind == JsonValueKind.String)
-            {
-                bindings.Amqp.RoutingKey = rk.GetString();
-            }
-        }
-
-        // MQTT operation bindings
-        if (opBindings.TryGetProperty("mqtt"u8, out JsonElement mqtt) &&
-            mqtt.ValueKind == JsonValueKind.Object)
-        {
-            bindings.Mqtt ??= new MqttBindings();
-
-            if (mqtt.TryGetProperty("qos"u8, out JsonElement qos) &&
-                qos.ValueKind == JsonValueKind.Number)
-            {
-                bindings.Mqtt.Qos = qos.GetInt32();
-            }
-
-            if (mqtt.TryGetProperty("retain"u8, out JsonElement retain))
-            {
-                bindings.Mqtt.Retain = retain.ValueKind == JsonValueKind.True;
-            }
-        }
-
-        return bindings;
+            ChannelBindings = channelBindings,
+            OperationBindings = operationBindings,
+        };
     }
 
     /// <summary>
     /// Walks the AsyncAPI 3.0 specification and emits C# source files for
     /// producers, consumers, and message wrapper types.
     /// </summary>
-    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="doc">The parsed AsyncAPI document.</param>
     /// <param name="filter">Optional operation filter (filters by channel address).</param>
     /// <param name="referenceResolver">
     /// Optional external reference resolver. When provided, <c>$ref</c> values that point
@@ -563,11 +433,10 @@ public sealed class AsyncApi30CodeGenerator
     /// </param>
     /// <returns>The generated source files.</returns>
     public IReadOnlyList<GeneratedFile> Generate(
-        JsonElement specRoot,
+        AsyncApiDocument doc,
         OperationFilter? filter = null,
         IAsyncApiReferenceResolver? referenceResolver = null)
     {
-        AsyncApiDocument doc = specRoot;
         List<GeneratedFile> files = [];
 
         if (doc.OperationsValue.IsUndefined())
@@ -580,17 +449,26 @@ public sealed class AsyncApi30CodeGenerator
 
         foreach (var operationProp in doc.OperationsValue.EnumerateObject())
         {
-            JsonElement opElement = (JsonElement)operationProp.Value;
+            AsyncApiDocument.Type300Operation operation = operationProp.Value.Match(
+                matchReference: static (in AsyncApiDocument.Reference _) => default,
+                matchType300Operation: static (in AsyncApiDocument.Type300Operation op) => op,
+                defaultMatch: static (in AsyncApiDocument.Operations.AdditionalPropertiesEntity _) => default);
 
-            if (!opElement.TryGetProperty("action"u8, out JsonElement actionEl) ||
-                actionEl.ValueKind != JsonValueKind.String)
+            if (operation.IsUndefined())
             {
                 continue;
             }
 
-            string actionStr = actionEl.GetString()!;
-            OperationAction action = actionStr == "send" ? OperationAction.Send : OperationAction.Receive;
-            (string channelAddress, bool isDynamicAddress) = ResolveChannelAddressInfo(opElement, doc);
+            if (operation.Action.IsUndefined())
+            {
+                continue;
+            }
+
+            OperationAction action = operation.Action == AsyncApiDocument.Type300Operation.ActionEntity.EnumValues.Send
+                ? OperationAction.Send
+                : OperationAction.Receive;
+
+            (string channelAddress, bool isDynamicAddress) = ResolveChannelAddressInfo(operation, doc);
 
             if (filter?.Matches(channelAddress) == false)
             {
@@ -598,9 +476,15 @@ public sealed class AsyncApi30CodeGenerator
             }
 
             string operationName = operationProp.Name;
-            List<MessageInfo> messages = CollectOperationMessages(opElement, doc, referenceResolver);
-            List<ChannelParameter> parameters = CollectChannelParameters(opElement, doc, referenceResolver);
-            ReplyInfo? reply = CollectReplyInfo(opElement, doc, referenceResolver);
+            List<MessageInfo> messages = CollectOperationMessages(operation, doc, referenceResolver);
+            List<ChannelParameter> parameters = CollectChannelParameters(operation, doc, referenceResolver);
+            ReplyInfo? reply = CollectReplyInfo(operation, doc, referenceResolver);
+
+            // Extract channel name and allowed servers
+            string? channelName = ExtractChannelName(operation, doc);
+            IReadOnlyList<string>? allowedServers = channelName is not null
+                ? GetChannelAllowedServers(doc, channelName)
+                : null;
 
             OperationInfo info = new(
                 operationName,
@@ -609,7 +493,9 @@ public sealed class AsyncApi30CodeGenerator
                 isDynamicAddress,
                 messages,
                 parameters,
-                reply);
+                reply,
+                channelName,
+                allowedServers);
 
             if (action == OperationAction.Send)
             {
@@ -652,6 +538,13 @@ public sealed class AsyncApi30CodeGenerator
             }
         }
 
+        // Emit server URL builder if servers have variables
+        ServerInfo[] servers = ListServers(doc);
+        if (servers.Any(s => s.Variables.Count > 0))
+        {
+            files.Add(EmitServerUrlBuilder(servers));
+        }
+
         return files;
     }
 
@@ -665,7 +558,9 @@ public sealed class AsyncApi30CodeGenerator
         bool IsDynamicAddress,
         List<MessageInfo> Messages,
         List<ChannelParameter> Parameters,
-        ReplyInfo? Reply);
+        ReplyInfo? Reply,
+        string? ChannelName,
+        IReadOnlyList<string>? AllowedServers);
 
     private readonly record struct ReplyInfo(
         string ChannelAddress,
@@ -691,38 +586,35 @@ public sealed class AsyncApi30CodeGenerator
     // Walk helpers
     // ═══════════════════════════════════════════════════════════════════
     private static void CollectChannelSchemaPointers(
-        string channelName,
+        ReadOnlySpan<byte> channelNameUtf8,
         AsyncApiDocument.Channel channel,
         List<string> pointers)
     {
         if (channel.Messages.IsNotUndefined())
         {
-            JsonElement messages = (JsonElement)channel.Messages;
-            if (messages.ValueKind == JsonValueKind.Object)
+            foreach (var msgProp in channel.Messages.EnumerateObject())
             {
-                foreach (var msgProp in messages.EnumerateObject())
+                // Match discriminates references (collected separately) from inline messages
+                AsyncApiDocument.MessageObject msg = msgProp.Value.Match(
+                    matchReference: static (in AsyncApiDocument.Reference _) => default,
+                    matchMessageObject: static (in AsyncApiDocument.MessageObject m) => m,
+                    defaultMatch: static (in AsyncApiDocument.ChannelMessages.AdditionalPropertiesEntity _) => default);
+
+                if (msg.IsUndefined())
                 {
-                    string msgName = msgProp.Name;
-                    JsonElement msg = msgProp.Value;
+                    continue;
+                }
 
-                    // If message is a $ref, the pointer target has the payload.
-                    // Collect the channel-level pointer for inline payloads only.
-                    if (msg.TryGetProperty("$ref"u8, out JsonElement _))
-                    {
-                        // This is a reference — the payload pointer is at the ref target.
-                        // Component schemas are collected separately.
-                        continue;
-                    }
+                using UnescapedUtf8JsonString msgName = msgProp.Utf8NameSpan;
 
-                    if (HasProperty(msg, "payload"u8))
-                    {
-                        pointers.Add(AsyncApiSchemaPointerBuilder.ChannelMessagePayload(channelName, msgName));
-                    }
+                if (msg.Payload.IsNotUndefined())
+                {
+                    pointers.Add(AsyncApiSchemaPointerBuilder.ChannelMessagePayload(channelNameUtf8, msgName.Span));
+                }
 
-                    if (HasProperty(msg, "headers"u8))
-                    {
-                        pointers.Add(AsyncApiSchemaPointerBuilder.ChannelMessageHeaders(channelName, msgName));
-                    }
+                if (msg.Headers.IsNotUndefined())
+                {
+                    pointers.Add(AsyncApiSchemaPointerBuilder.ChannelMessageHeaders(channelNameUtf8, msgName.Span));
                 }
             }
         }
@@ -732,13 +624,12 @@ public sealed class AsyncApi30CodeGenerator
     {
         if (channel.Address.IsNotUndefined())
         {
-            JsonElement addr = (JsonElement)channel.Address;
-            if (addr.ValueKind == JsonValueKind.String)
+            if (channel.Address.ValueKind == JsonValueKind.String)
             {
-                return (addr.GetString()!, false);
+                return (channel.Address.GetString()!, false);
             }
 
-            if (addr.ValueKind == JsonValueKind.Null)
+            if (channel.Address.ValueKind == JsonValueKind.Null)
             {
                 return (channelName, true);
             }
@@ -759,42 +650,106 @@ public sealed class AsyncApi30CodeGenerator
 
     private static (string Address, bool IsDynamic) ResolveChannelAddressInfo(JsonElement operation, AsyncApiDocument doc)
     {
-        if (!operation.TryGetProperty("channel"u8, out JsonElement channelRef))
+        // Check operation traits for channel property fallback
+        if (!TryGetPropertyWithTraits(operation, "channel"u8, doc, null, out JsonElement channelRef))
         {
             return (string.Empty, false);
         }
 
         // Channel is a $ref to #/channels/{name}
-        if (channelRef.TryGetProperty("$ref"u8, out JsonElement refEl) &&
-            refEl.ValueKind == JsonValueKind.String)
+        AsyncApiDocument.Reference asRef = channelRef;
+        string refStr = asRef.Ref.GetString()!;
+
+        // Extract channel name from #/channels/{name}
+        const string prefix = "#/channels/";
+        if (refStr.StartsWith(prefix, StringComparison.Ordinal))
         {
-            string refStr = refEl.GetString()!;
+            string channelName = refStr[prefix.Length..];
 
-            // Extract channel name from #/channels/{name}
-            const string prefix = "#/channels/";
-            if (refStr.StartsWith(prefix, StringComparison.Ordinal))
+            // Try to get the channel and its address
+            AsyncApiDocument.Channels channels = doc.ChannelsValue;
+            if (channels.IsNotUndefined() &&
+                channels.TryGetProperty(channelName, out AsyncApiDocument.Channels.AdditionalPropertiesEntity channelEntity))
             {
-                string channelName = refStr[prefix.Length..];
+                AsyncApiDocument.Channel channel = channelEntity.Match(
+                    matchReference: static (in AsyncApiDocument.Reference _) => default,
+                    matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
+                    defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
 
-                // Try to get the channel and its address
-                if (doc.ChannelsValue.TryGetProperty(channelName, out var channelEntity))
+                if (channel.IsNotUndefined())
                 {
-                    AsyncApiDocument.Channel channel = (AsyncApiDocument.Channel)channelEntity;
                     return GetChannelAddressInfo(channel, channelName);
                 }
-
-                return (channelName, false);
             }
+
+            return (channelName, false);
         }
 
         return (string.Empty, false);
+    }
+
+    private static string? ExtractChannelName(JsonElement operation, AsyncApiDocument doc)
+    {
+        if (!TryGetPropertyWithTraits(operation, "channel"u8, doc, null, out JsonElement channelRef))
+        {
+            return null;
+        }
+
+        AsyncApiDocument.Reference asRef = channelRef;
+        string refStr = asRef.Ref.GetString()!;
+        const string prefix = "#/channels/";
+        if (refStr.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return refStr[prefix.Length..];
+        }
+
+        return null;
+    }
+
+    private static IReadOnlyList<string>? GetChannelAllowedServers(AsyncApiDocument doc, string channelName)
+    {
+        if (doc.ChannelsValue.IsUndefined())
+        {
+            return null;
+        }
+
+        if (!doc.ChannelsValue.TryGetProperty(channelName, out var channelEntity))
+        {
+            return null;
+        }
+
+        AsyncApiDocument.Channel channel = channelEntity.Match(
+            matchReference: static (in AsyncApiDocument.Reference _) => default,
+            matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
+            defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+
+        if (channel.IsUndefined() || channel.Servers.IsUndefined())
+        {
+            return null;
+        }
+
+        List<string> servers = [];
+        foreach (AsyncApiDocument.Reference serverRef in channel.Servers.EnumerateArray())
+        {
+            if (serverRef.Ref.IsNotUndefined())
+            {
+                string refStr = serverRef.Ref.GetString()!;
+                const string prefix = "#/servers/";
+                if (refStr.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    servers.Add(refStr[prefix.Length..]);
+                }
+            }
+        }
+
+        return servers.Count > 0 ? servers : null;
     }
 
     private List<MessageInfo> CollectOperationMessages(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
         List<MessageInfo> messages = [];
 
-        if (!operation.TryGetProperty("messages"u8, out JsonElement msgsEl) ||
+        if (!TryGetPropertyWithTraits(operation, "messages"u8, doc, resolver, out JsonElement msgsEl) ||
             msgsEl.ValueKind != JsonValueKind.Array)
         {
             return messages;
@@ -819,15 +774,18 @@ public sealed class AsyncApi30CodeGenerator
             {
                 messageName = nameEl.GetString()!;
             }
-            else if (msgRef.TryGetProperty("$ref"u8, out JsonElement refEl) &&
-                     refEl.ValueKind == JsonValueKind.String)
+            else
             {
                 // Extract name from ref path
-                string refStr = refEl.GetString()!;
-                int lastSlash = refStr.LastIndexOf('/');
-                if (lastSlash >= 0)
+                AsyncApiDocument.Reference msgAsRef = msgRef;
+                if (msgAsRef.Ref.IsNotUndefined())
                 {
-                    messageName = refStr[(lastSlash + 1)..];
+                    string refStr = msgAsRef.Ref.GetString()!;
+                    int lastSlash = refStr.LastIndexOf('/');
+                    if (lastSlash >= 0)
+                    {
+                        messageName = refStr[(lastSlash + 1)..];
+                    }
                 }
             }
 
@@ -844,7 +802,7 @@ public sealed class AsyncApi30CodeGenerator
                 // Handle multiFormatSchema wrapping
                 payloadEl = UnwrapMultiFormatSchema(payloadEl);
 
-                payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload", doc, resolver);
+                payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload"u8, doc, resolver);
                 if (payloadPointer is not null)
                 {
                     this.schemaTypeMap.TryGetValue(payloadPointer, out payloadTypeName);
@@ -857,7 +815,7 @@ public sealed class AsyncApi30CodeGenerator
                 // Handle multiFormatSchema wrapping
                 headersEl = UnwrapMultiFormatSchema(headersEl);
 
-                headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers", doc, resolver);
+                headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers"u8, doc, resolver);
                 if (headersPointer is not null)
                 {
                     this.schemaTypeMap.TryGetValue(headersPointer, out headersTypeName);
@@ -875,8 +833,8 @@ public sealed class AsyncApi30CodeGenerator
     {
         List<ChannelParameter> parameters = [];
 
-        // Resolve the channel $ref to get the channel object
-        if (!operation.TryGetProperty("channel"u8, out JsonElement channelRef))
+        // Resolve the channel $ref to get the channel object (checking operation traits)
+        if (!TryGetPropertyWithTraits(operation, "channel"u8, doc, resolver, out JsonElement channelRef))
         {
             return parameters;
         }
@@ -887,47 +845,43 @@ public sealed class AsyncApi30CodeGenerator
             return parameters;
         }
 
-        if (!channelElement.TryGetProperty("parameters"u8, out JsonElement paramsEl) ||
-            paramsEl.ValueKind != JsonValueKind.Object)
+        AsyncApiDocument.Channel channel = channelElement;
+        if (channel.ParametersValue.IsUndefined())
         {
             return parameters;
         }
 
-        foreach (var paramProp in paramsEl.EnumerateObject())
+        foreach (var paramProp in channel.ParametersValue.EnumerateObject())
         {
             string paramName = paramProp.Name;
-            string? description = null;
-            string[]? enumValues = null;
-            string? defaultValue = null;
+            AsyncApiDocument.Parameter param = paramProp.Value.Match(
+                matchReference: static (in AsyncApiDocument.Reference _) => default,
+                matchParameter: static (in AsyncApiDocument.Parameter p) => p,
+                defaultMatch: static (in AsyncApiDocument.Parameters.AdditionalPropertiesEntity _) => default);
 
-            if (paramProp.Value.ValueKind == JsonValueKind.Object)
+            if (param.IsUndefined())
             {
-                if (paramProp.Value.TryGetProperty("description"u8, out JsonElement descEl) &&
-                    descEl.ValueKind == JsonValueKind.String)
+                continue;
+            }
+
+            string? description = param.Description.IsNotUndefined()
+                ? param.Description.GetString()
+                : null;
+
+            string? defaultValue = param.Default.IsNotUndefined()
+                ? param.Default.GetString()
+                : null;
+
+            string[]? enumValues = null;
+            if (param.Enum.IsNotUndefined())
+            {
+                List<string> values = [];
+                foreach (var v in param.Enum.EnumerateArray())
                 {
-                    description = descEl.GetString();
+                    values.Add((string)v);
                 }
 
-                if (paramProp.Value.TryGetProperty("enum"u8, out JsonElement enumEl) &&
-                    enumEl.ValueKind == JsonValueKind.Array)
-                {
-                    List<string> values = [];
-                    foreach (JsonElement v in enumEl.EnumerateArray())
-                    {
-                        if (v.ValueKind == JsonValueKind.String)
-                        {
-                            values.Add(v.GetString()!);
-                        }
-                    }
-
-                    enumValues = [.. values];
-                }
-
-                if (paramProp.Value.TryGetProperty("default"u8, out JsonElement defEl) &&
-                    defEl.ValueKind == JsonValueKind.String)
-                {
-                    defaultValue = defEl.GetString();
-                }
+                enumValues = [.. values];
             }
 
             parameters.Add(new ChannelParameter(paramName, description, enumValues, defaultValue));
@@ -938,7 +892,7 @@ public sealed class AsyncApi30CodeGenerator
 
     private ReplyInfo? CollectReplyInfo(JsonElement operation, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
-        if (!operation.TryGetProperty("reply"u8, out JsonElement replyEl) ||
+        if (!TryGetPropertyWithTraits(operation, "reply"u8, doc, resolver, out JsonElement replyEl) ||
             replyEl.ValueKind != JsonValueKind.Object)
         {
             return null;
@@ -951,10 +905,10 @@ public sealed class AsyncApi30CodeGenerator
             JsonElement resolvedChannel = ResolveRef(channelRef, doc, resolver);
             if (resolvedChannel.ValueKind == JsonValueKind.Object)
             {
-                if (resolvedChannel.TryGetProperty("address"u8, out JsonElement addrEl) &&
-                    addrEl.ValueKind == JsonValueKind.String)
+                AsyncApiDocument.Channel channel = resolvedChannel;
+                if (channel.Address.IsNotUndefined() && channel.Address.ValueKind == JsonValueKind.String)
                 {
-                    replyChannelAddress = addrEl.GetString()!;
+                    replyChannelAddress = channel.Address.GetString()!;
                 }
             }
         }
@@ -987,14 +941,17 @@ public sealed class AsyncApi30CodeGenerator
                 {
                     messageName = nameEl.GetString()!;
                 }
-                else if (msgRef.TryGetProperty("$ref"u8, out JsonElement refEl) &&
-                         refEl.ValueKind == JsonValueKind.String)
+                else
                 {
-                    string refStr = refEl.GetString()!;
-                    int lastSlash = refStr.LastIndexOf('/');
-                    if (lastSlash >= 0)
+                    AsyncApiDocument.Reference replyMsgAsRef = msgRef;
+                    if (replyMsgAsRef.Ref.IsNotUndefined())
                     {
-                        messageName = refStr[(lastSlash + 1)..];
+                        string refStr = replyMsgAsRef.Ref.GetString()!;
+                        int lastSlash = refStr.LastIndexOf('/');
+                        if (lastSlash >= 0)
+                        {
+                            messageName = refStr[(lastSlash + 1)..];
+                        }
                     }
                 }
 
@@ -1006,7 +963,7 @@ public sealed class AsyncApi30CodeGenerator
                 if (TryGetPropertyWithTraits(resolved, "payload"u8, doc, resolver, out JsonElement payloadEl))
                 {
                     payloadEl = UnwrapMultiFormatSchema(payloadEl);
-                    payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload", doc, resolver);
+                    payloadPointer = ResolveSchemaPointer(payloadEl, msgRef, "payload"u8, doc, resolver);
                     if (payloadPointer is not null)
                     {
                         this.schemaTypeMap.TryGetValue(payloadPointer, out payloadTypeName);
@@ -1016,7 +973,7 @@ public sealed class AsyncApi30CodeGenerator
                 if (TryGetPropertyWithTraits(resolved, "headers"u8, doc, resolver, out JsonElement headersEl))
                 {
                     headersEl = UnwrapMultiFormatSchema(headersEl);
-                    headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers", doc, resolver);
+                    headersPointer = ResolveSchemaPointer(headersEl, msgRef, "headers"u8, doc, resolver);
                     if (headersPointer is not null)
                     {
                         this.schemaTypeMap.TryGetValue(headersPointer, out headersTypeName);
@@ -1106,11 +1063,9 @@ public sealed class AsyncApi30CodeGenerator
         }
 
         // Fall back to root defaultContentType
-        JsonElement root = (JsonElement)doc;
-        if (root.TryGetProperty("defaultContentType"u8, out JsonElement defaultCtEl) &&
-            defaultCtEl.ValueKind == JsonValueKind.String)
+        if (doc.DefaultContentType.IsNotUndefined())
         {
-            return defaultCtEl.GetString();
+            return doc.DefaultContentType.GetString();
         }
 
         // AsyncAPI default is application/json when not specified
@@ -1131,9 +1086,7 @@ public sealed class AsyncApi30CodeGenerator
             return;
         }
 
-        throw new NotSupportedException(
-            $"Message '{messageName}' has unsupported contentType '{contentType}'. " +
-            $"Only JSON-compatible content types (application/json, application/vnd.*+json) are supported.");
+        ThrowHelper.ThrowUnsupportedContentType(messageName, contentType);
     }
 
     private static void ValidateSchemaFormat(JsonElement message, string messageName)
@@ -1147,9 +1100,7 @@ public sealed class AsyncApi30CodeGenerator
             string format = formatEl.GetString()!;
             if (!IsJsonSchemaFormat(format))
             {
-                throw new NotSupportedException(
-                    $"Message '{messageName}' uses unsupported schema format '{format}'. " +
-                    $"Only JSON Schema formats are supported (application/schema+json, application/vnd.aai.asyncapi, etc.).");
+                ThrowHelper.ThrowUnsupportedSchemaFormat(messageName, format);
             }
         }
     }
@@ -1185,24 +1136,45 @@ public sealed class AsyncApi30CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     private static JsonElement ResolveRef(JsonElement element, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
+        return ResolveRef(element, doc, resolver, out _);
+    }
+
+    private static JsonElement ResolveRef(
+        JsonElement element,
+        AsyncApiDocument doc,
+        IAsyncApiReferenceResolver? resolver,
+        out string? lastRefPointer)
+    {
+        lastRefPointer = null;
+
         // Resolve up to 10 levels of $ref to handle chained references
         for (int i = 0; i < 10; i++)
         {
-            if (element.TryGetProperty("$ref"u8, out JsonElement refEl) &&
-                refEl.ValueKind == JsonValueKind.String)
+            AsyncApiDocument.Reference asRef = element;
+            if (!asRef.Ref.IsNotUndefined())
             {
-                string refStr = refEl.GetString()!;
+                break;
+            }
 
-                // Local fragment-only references — navigate within the document
-                if (refStr.StartsWith("#/", StringComparison.Ordinal))
+            using UnescapedUtf8JsonString refUtf8 = asRef.Ref.GetUtf8String();
+            ReadOnlySpan<byte> refSpan = refUtf8.Span;
+
+            if (refSpan.StartsWith("#"u8))
+            {
+                // Local fragment reference — resolve via built-in JSON Pointer
+                if (Utf8JsonPointer.TryCreateJsonPointer(refSpan[1..], out Utf8JsonPointer ptr) &&
+                    ptr.TryResolve<AsyncApiDocument, JsonElement>(doc, out JsonElement resolved))
                 {
-                    JsonElement root = (JsonElement)doc;
-                    element = NavigatePointer(root, refStr[2..]);
+                    lastRefPointer = asRef.Ref.GetString()!;
+                    element = resolved;
                     continue;
                 }
-
-                // External references — delegate to the resolver if available
-                if (resolver is not null && resolver.TryResolve(refStr, out JsonElement resolved))
+            }
+            else if (resolver is not null)
+            {
+                // External reference — resolve to absolute for the pointer
+                lastRefPointer = resolver.ResolveToAbsolute(refSpan);
+                if (resolver.TryResolve(refSpan, out JsonElement resolved))
                 {
                     element = resolved;
                     continue;
@@ -1215,122 +1187,50 @@ public sealed class AsyncApi30CodeGenerator
         return element;
     }
 
-    private static JsonElement NavigatePointer(JsonElement root, string pointer)
-    {
-        JsonElement current = root;
-        foreach (string segment in pointer.Split('/'))
-        {
-            string unescaped = segment.Replace("~1", "/").Replace("~0", "~");
-            if (current.TryGetProperty(unescaped, out JsonElement next))
-            {
-                current = next;
-            }
-            else
-            {
-                return default;
-            }
-        }
-
-        return current;
-    }
-
     /// <summary>
     /// Resolves the actual schema pointer for a payload or headers element.
-    /// If the schema element itself is a $ref, follows it to the target location.
-    /// Otherwise constructs the pointer from the message reference path.
+    /// If the schema element itself is a $ref, returns that ref target.
+    /// Otherwise follows the message ref chain via ResolveRef to find
+    /// the canonical message location, then appends the suffix (payload/headers).
     /// </summary>
     private static string? ResolveSchemaPointer(
         JsonElement schemaElement,
         JsonElement msgRef,
-        string suffix,
+        ReadOnlySpan<byte> suffix,
         AsyncApiDocument doc,
         IAsyncApiReferenceResolver? resolver = null)
     {
         // If the schema element is itself a $ref (e.g. payload: { $ref: "#/components/schemas/X" }),
         // the canonical pointer is the $ref target — resolve to absolute if external.
-        if (schemaElement.TryGetProperty("$ref"u8, out JsonElement schemaRefEl) &&
-            schemaRefEl.ValueKind == JsonValueKind.String)
+        AsyncApiDocument.Reference schemaAsRef = schemaElement;
+        if (schemaAsRef.Ref.IsNotUndefined())
         {
-            string schemaRef = schemaRefEl.GetString()!;
-            return resolver is not null ? resolver.ResolveToAbsolute(schemaRef) : schemaRef;
+            if (resolver is not null)
+            {
+                using UnescapedUtf8JsonString schemaRefUtf8 = schemaAsRef.Ref.GetUtf8String();
+                return resolver.ResolveToAbsolute(schemaRefUtf8.Span);
+            }
+
+            return schemaAsRef.Ref.GetString()!;
         }
 
-        // Otherwise the schema is inline — construct from the message ref path
-        if (msgRef.TryGetProperty("$ref"u8, out JsonElement msgRefEl) &&
-            msgRefEl.ValueKind == JsonValueKind.String)
+        // Otherwise the schema is inline — follow the message ref chain to find where
+        // the message actually lives, then append /suffix to get the schema location.
+        AsyncApiDocument.Reference msgAsRef = msgRef;
+        if (!msgAsRef.Ref.IsNotUndefined())
         {
-            string refStr = msgRefEl.GetString()!;
-
-            // If the message ref is external, resolve the full path and append suffix
-            if (resolver is not null && !refStr.StartsWith("#", StringComparison.Ordinal))
-            {
-                string absoluteRef = resolver.ResolveToAbsolute(refStr);
-                return $"{absoluteRef}/{suffix}";
-            }
-
-            // Follow the ref chain to find where the message is actually defined
-            JsonElement root = (JsonElement)doc;
-            string? resolvedMsgRef = ResolveRefChainPointer(refStr, root);
-            if (resolvedMsgRef is not null)
-            {
-                return $"{resolvedMsgRef}/{suffix}";
-            }
-
-            return $"{refStr}/{suffix}";
+            return null;
         }
 
-        return null;
-    }
+        // ResolveRef follows the chain and returns the last ref pointer it resolved through.
+        ResolveRef(msgRef, doc, resolver, out string? lastRefPointer);
 
-    /// <summary>
-    /// Follows a chain of $ref pointers and returns the final pointer string.
-    /// </summary>
-    private static string? ResolveRefChainPointer(string pointer, JsonElement root)
-    {
-        string currentPointer = pointer;
-
-        for (int i = 0; i < 10; i++)
+        if (lastRefPointer is null)
         {
-            if (!currentPointer.StartsWith("#/", StringComparison.Ordinal))
-            {
-                return currentPointer;
-            }
-
-            JsonElement target = NavigatePointer(root, currentPointer[2..]);
-            if (target.ValueKind == JsonValueKind.Undefined)
-            {
-                return currentPointer;
-            }
-
-            if (target.TryGetProperty("$ref"u8, out JsonElement refEl) &&
-                refEl.ValueKind == JsonValueKind.String)
-            {
-                currentPointer = refEl.GetString()!;
-                continue;
-            }
-
-            return currentPointer;
+            return null;
         }
 
-        return currentPointer;
-    }
-
-    private static string? TryGetPointerFromRef(JsonElement msgRef, string suffix)
-    {
-        if (msgRef.TryGetProperty("$ref"u8, out JsonElement refEl) &&
-            refEl.ValueKind == JsonValueKind.String)
-        {
-            string refStr = refEl.GetString()!;
-            return $"{refStr}/{suffix}";
-        }
-
-        return null;
-    }
-
-    private static bool HasProperty(JsonElement element, ReadOnlySpan<byte> propertyName)
-    {
-        return element.TryGetProperty(propertyName, out JsonElement prop) &&
-               prop.ValueKind != JsonValueKind.Undefined;
+        return $"{lastRefPointer}/{System.Text.Encoding.UTF8.GetString(suffix)}";
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1343,13 +1243,21 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine("// <auto-generated/>");
         w.WriteLine($"using Corvus.Text.Json;");
-        w.WriteLine($"using Corvus.Text.Json.AsyncApi.CodeGeneration;");
+        w.WriteLine($"using Corvus.Text.Json.AsyncApi;");
         w.WriteLine();
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
         w.WriteLine($"/// <summary>");
         w.WriteLine($"/// Producer for the <c>{op.Name}</c> operation on channel <c>{op.ChannelAddress}</c>.");
         w.WriteLine($"/// </summary>");
+
+        if (op.AllowedServers is { Count: > 0 } servers)
+        {
+            w.WriteLine($"/// <remarks>");
+            w.WriteLine($"/// This channel is restricted to the following servers: {string.Join(", ", servers)}.");
+            w.WriteLine($"/// </remarks>");
+        }
+
         w.WriteLine($"public sealed class {className}");
         w.OpenBrace();
 
@@ -1368,6 +1276,17 @@ public sealed class AsyncApi30CodeGenerator
         {
             // Channel address is a template — store the pattern for runtime substitution
             w.WriteLine($"private const string ChannelAddressTemplate = \"{EscapeString(op.ChannelAddress)}\";");
+        }
+
+        if (op.AllowedServers is { Count: > 0 })
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// The server names that this channel is restricted to.");
+            w.WriteLine("/// </summary>");
+            w.Write("public static readonly string[] AllowedServers = [");
+            w.Write(string.Join(", ", op.AllowedServers.Select(s => $"\"{EscapeString(s)}\"")));
+            w.WriteLine("];");
         }
 
         w.WriteLine();
@@ -1475,7 +1394,7 @@ public sealed class AsyncApi30CodeGenerator
 
             // Call PublishAsyncCore
             string headersArg = msg.HeadersTypeName is not null
-                ? "(Corvus.Text.Json.JsonElement)headersValue"
+                ? "Corvus.Text.Json.JsonElement.From(headersValue)"
                 : "default";
             string addressArg = op.IsDynamicAddress
                 ? "channel"
@@ -1586,13 +1505,34 @@ public sealed class AsyncApi30CodeGenerator
                 // Generate correlation ID
                 w.WriteLine($"string correlationId = System.Guid.NewGuid().ToString();");
 
-                // Reply channel address
-                string replyAddr = !string.IsNullOrEmpty(reply.ChannelAddress)
-                    ? $"\"{EscapeString(reply.ChannelAddress)}\""
-                    : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress"; // fallback to same channel
+                // Reply channel address (may be dynamic via runtime expression)
+                string replyAddr;
+                if (reply.AddressLocationExpression is { } addrExpr)
+                {
+                    // Dynamic reply address from runtime expression (e.g., $message.header#/replyTo)
+                    string headersSource = msg.HeadersTypeName is not null ? "Corvus.Text.Json.JsonElement.From(headersValue)" : "default";
+                    string? accessor = EmitRuntimeExpressionAccessor(addrExpr, "payloadValue", headersSource);
+                    if (accessor is not null)
+                    {
+                        w.WriteLine($"string replyAddress = {accessor};");
+                        replyAddr = "replyAddress";
+                    }
+                    else
+                    {
+                        replyAddr = !string.IsNullOrEmpty(reply.ChannelAddress)
+                            ? $"\"{EscapeString(reply.ChannelAddress)}\""
+                            : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
+                    }
+                }
+                else
+                {
+                    replyAddr = !string.IsNullOrEmpty(reply.ChannelAddress)
+                        ? $"\"{EscapeString(reply.ChannelAddress)}\""
+                        : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
+                }
 
                 string headersArg = msg.HeadersTypeName is not null
-                    ? "(Corvus.Text.Json.JsonElement)headersValue"
+                    ? "Corvus.Text.Json.JsonElement.From(headersValue)"
                     : "default";
                 string addressArg = op.IsDynamicAddress
                     ? "channel"
@@ -1649,7 +1589,7 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine("// <auto-generated/>");
         w.WriteLine($"using Corvus.Text.Json;");
-        w.WriteLine($"using Corvus.Text.Json.AsyncApi.CodeGeneration;");
+        w.WriteLine($"using Corvus.Text.Json.AsyncApi;");
         w.WriteLine();
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
@@ -1709,13 +1649,21 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine("// <auto-generated/>");
         w.WriteLine($"using Corvus.Text.Json;");
-        w.WriteLine($"using Corvus.Text.Json.AsyncApi.CodeGeneration;");
+        w.WriteLine($"using Corvus.Text.Json.AsyncApi;");
         w.WriteLine();
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
         w.WriteLine($"/// <summary>");
         w.WriteLine($"/// Consumer for the <c>{op.Name}</c> operation on channel <c>{op.ChannelAddress}</c>.");
         w.WriteLine($"/// </summary>");
+
+        if (op.AllowedServers is { Count: > 0 } servers)
+        {
+            w.WriteLine($"/// <remarks>");
+            w.WriteLine($"/// This channel is restricted to the following servers: {string.Join(", ", servers)}.");
+            w.WriteLine($"/// </remarks>");
+        }
+
         w.WriteLine($"public sealed class {className} : IAsyncDisposable");
         w.OpenBrace();
 
@@ -1730,6 +1678,17 @@ public sealed class AsyncApi30CodeGenerator
         else
         {
             w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
+        }
+
+        if (op.AllowedServers is { Count: > 0 })
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// The server names that this channel is restricted to.");
+            w.WriteLine("/// </summary>");
+            w.Write("public static readonly string[] AllowedServers = [");
+            w.Write(string.Join(", ", op.AllowedServers.Select(s => $"\"{EscapeString(s)}\"")));
+            w.WriteLine("];");
         }
 
         w.WriteLine();
@@ -1797,7 +1756,12 @@ public sealed class AsyncApi30CodeGenerator
 
         if (op.IsDynamicAddress)
         {
-            w.WriteLine("return this.transport.UnsubscribeAsync(this.subscribedChannel ?? throw new InvalidOperationException(\"Consumer has not been started.\"), cancellationToken);");
+            w.WriteLine("if (this.subscribedChannel is null)");
+            w.OpenBrace();
+            w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine("return this.transport.UnsubscribeAsync(this.subscribedChannel, cancellationToken);");
         }
         else
         {
@@ -1875,7 +1839,7 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine("// <auto-generated/>");
         w.WriteLine($"using Corvus.Text.Json;");
-        w.WriteLine($"using Corvus.Text.Json.AsyncApi.CodeGeneration;");
+        w.WriteLine($"using Corvus.Text.Json.AsyncApi;");
         w.WriteLine();
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
@@ -2017,7 +1981,7 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine("// <auto-generated/>");
         w.WriteLine($"using Corvus.Text.Json;");
-        w.WriteLine($"using Corvus.Text.Json.AsyncApi.CodeGeneration;");
+        w.WriteLine($"using Corvus.Text.Json.AsyncApi;");
         w.WriteLine();
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
@@ -2059,7 +2023,7 @@ public sealed class AsyncApi30CodeGenerator
         w.OpenBrace();
         w.WriteLine("if (!this.Payload.EvaluateSchema())");
         w.OpenBrace();
-        w.WriteLine($"throw new System.ArgumentException(\"Message payload does not conform to schema.\", nameof(this.Payload));");
+        w.WriteLine("ThrowHelper.ThrowMessagePayloadValidationFailed(\"payload\");");
         w.CloseBrace();
 
         if (msg.HeadersTypeName is not null)
@@ -2067,7 +2031,7 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine();
             w.WriteLine("if (!this.Headers.EvaluateSchema())");
             w.OpenBrace();
-            w.WriteLine($"throw new System.ArgumentException(\"Message headers do not conform to schema.\", nameof(this.Headers));");
+            w.WriteLine("ThrowHelper.ThrowMessageHeadersValidationFailed(\"headers\");");
             w.CloseBrace();
         }
 
@@ -2076,19 +2040,19 @@ public sealed class AsyncApi30CodeGenerator
         w.OpenBrace();
 
         // Detailed validation with JsonSchemaResultsCollector
-        w.WriteLine("JsonSchemaResultsCollector collector = new();");
-        w.WriteLine("if (!this.Payload.EvaluateSchema(collector))");
+        w.WriteLine("using JsonSchemaResultsCollector payloadCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+        w.WriteLine("if (!this.Payload.EvaluateSchema(payloadCollector))");
         w.OpenBrace();
-        w.WriteLine($"throw new System.ArgumentException($\"Message payload does not conform to schema: {{collector}}\", nameof(this.Payload));");
+        w.WriteLine("ThrowHelper.ThrowMessagePayloadValidationFailed(\"payload\", SchemaValidationDetail.FormatResults(payloadCollector));");
         w.CloseBrace();
 
         if (msg.HeadersTypeName is not null)
         {
             w.WriteLine();
-            w.WriteLine("collector = new();");
-            w.WriteLine("if (!this.Headers.EvaluateSchema(collector))");
+            w.WriteLine("using JsonSchemaResultsCollector headersCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+            w.WriteLine("if (!this.Headers.EvaluateSchema(headersCollector))");
             w.OpenBrace();
-            w.WriteLine($"throw new System.ArgumentException($\"Message headers do not conform to schema: {{collector}}\", nameof(this.Headers));");
+            w.WriteLine("ThrowHelper.ThrowMessageHeadersValidationFailed(\"headers\", SchemaValidationDetail.FormatResults(headersCollector));");
             w.CloseBrace();
         }
 
@@ -2110,15 +2074,15 @@ public sealed class AsyncApi30CodeGenerator
         w.OpenBrace();
         w.WriteLine("if (!payload.EvaluateSchema())");
         w.OpenBrace();
-        w.WriteLine("throw new System.ArgumentException(\"Message payload does not conform to schema.\", nameof(payload));");
+        w.WriteLine("ThrowHelper.ThrowMessagePayloadValidationFailed(\"payload\");");
         w.CloseBrace();
         w.CloseBrace();
         w.WriteLine("else if (mode == ValidationMode.Detailed)");
         w.OpenBrace();
-        w.WriteLine("Corvus.Text.Json.JsonSchemaResultsCollector collector = new();");
+        w.WriteLine("using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
         w.WriteLine("if (!payload.EvaluateSchema(collector))");
         w.OpenBrace();
-        w.WriteLine("throw new System.ArgumentException($\"Message payload does not conform to schema: {collector}\", nameof(payload));");
+        w.WriteLine("ThrowHelper.ThrowMessagePayloadValidationFailed(\"payload\", SchemaValidationDetail.FormatResults(collector));");
         w.CloseBrace();
         w.CloseBrace();
         w.CloseBrace();
@@ -2131,18 +2095,104 @@ public sealed class AsyncApi30CodeGenerator
         w.OpenBrace();
         w.WriteLine("if (!headers.EvaluateSchema())");
         w.OpenBrace();
-        w.WriteLine("throw new System.ArgumentException(\"Message headers do not conform to schema.\", nameof(headers));");
+        w.WriteLine("ThrowHelper.ThrowMessageHeadersValidationFailed(\"headers\");");
         w.CloseBrace();
         w.CloseBrace();
         w.WriteLine("else if (mode == ValidationMode.Detailed)");
         w.OpenBrace();
-        w.WriteLine("Corvus.Text.Json.JsonSchemaResultsCollector collector = new();");
+        w.WriteLine("using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
         w.WriteLine("if (!headers.EvaluateSchema(collector))");
         w.OpenBrace();
-        w.WriteLine("throw new System.ArgumentException($\"Message headers do not conform to schema: {collector}\", nameof(headers));");
+        w.WriteLine("ThrowHelper.ThrowMessageHeadersValidationFailed(\"headers\", SchemaValidationDetail.FormatResults(collector));");
         w.CloseBrace();
         w.CloseBrace();
         w.CloseBrace();
+    }
+
+    private GeneratedFile EmitServerUrlBuilder(ServerInfo[] servers)
+    {
+        IndentedWriter w = new();
+
+        w.WriteLine("// <auto-generated/>");
+        w.WriteLine();
+        w.WriteLine($"namespace {this.rootNamespace};");
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Builds server URLs with variable substitution for the AsyncAPI specification servers.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public static class ServerUrlBuilder");
+        w.OpenBrace();
+
+        foreach (ServerInfo server in servers)
+        {
+            if (server.Variables.Count == 0)
+            {
+                // Static URL — emit a constant
+                string url = server.Pathname is not null
+                    ? $"{server.Protocol}://{server.Host}{server.Pathname}"
+                    : $"{server.Protocol}://{server.Host}";
+                w.WriteLine($"/// <summary>Gets the URL for server <c>{server.Name}</c>.</summary>");
+                w.WriteLine($"public const string {ToPascalCase(server.Name)}Url = \"{EscapeString(url)}\";");
+                w.WriteLine();
+            }
+            else
+            {
+                // Variable URL — emit a method
+                string methodName = $"Build{ToPascalCase(server.Name)}Url";
+                w.WriteLine($"/// <summary>");
+                w.WriteLine($"/// Builds the URL for server <c>{server.Name}</c> with variable substitution.");
+                w.WriteLine($"/// </summary>");
+
+                foreach (ServerVariable v in server.Variables)
+                {
+                    string desc = v.Description ?? $"The {v.Name} variable.";
+                    w.WriteLine($"/// <param name=\"{ToCamelCase(v.Name)}\">{desc}</param>");
+                }
+
+                w.WriteLine($"/// <returns>The fully constructed server URL.</returns>");
+
+                string paramList = string.Join(", ", server.Variables.Select(v =>
+                    v.DefaultValue is not null
+                        ? $"string {ToCamelCase(v.Name)} = \"{EscapeString(v.DefaultValue)}\""
+                        : $"string {ToCamelCase(v.Name)}"));
+
+                w.WriteLine($"public static string {methodName}({paramList})");
+                w.OpenBrace();
+
+                // Build the URL by replacing {variable} placeholders
+                string hostTemplate = server.Host;
+                string? pathnameTemplate = server.Pathname;
+                w.WriteLine($"string url = \"{EscapeString(server.Protocol)}://\" +");
+                w.Write($"    \"{EscapeString(hostTemplate)}\"");
+
+                foreach (ServerVariable v in server.Variables)
+                {
+                    w.WriteLine();
+                    w.Write($"    .Replace(\"{{{v.Name}}}\", {ToCamelCase(v.Name)})");
+                }
+
+                if (pathnameTemplate is not null)
+                {
+                    w.WriteLine($" +");
+                    w.Write($"    \"{EscapeString(pathnameTemplate)}\"");
+
+                    foreach (ServerVariable v in server.Variables)
+                    {
+                        w.WriteLine();
+                        w.Write($"    .Replace(\"{{{v.Name}}}\", {ToCamelCase(v.Name)})");
+                    }
+                }
+
+                w.WriteLine(";");
+                w.WriteLine("return url;");
+                w.CloseBrace();
+                w.WriteLine();
+            }
+        }
+
+        w.CloseBrace();
+
+        return new GeneratedFile("ServerUrlBuilder.cs", w.ToString());
     }
 
     private static string ToPascalCase(string name)
@@ -2169,5 +2219,64 @@ public sealed class AsyncApi30CodeGenerator
     private static string EscapeString(string value)
     {
         return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Runtime expression parsing
+    // ═══════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Parses an AsyncAPI runtime expression (e.g., <c>$message.header#/replyTo</c>)
+    /// and returns a code expression that extracts the value at runtime.
+    /// </summary>
+    /// <param name="expression">The runtime expression string.</param>
+    /// <param name="payloadVar">The variable name holding the payload value.</param>
+    /// <param name="headersVar">The variable name holding the headers value (may be "default").</param>
+    /// <returns>A C# expression string that evaluates the runtime expression, or <see langword="null"/>
+    /// if the expression cannot be parsed.</returns>
+    internal static string? EmitRuntimeExpressionAccessor(string expression, string payloadVar, string headersVar)
+    {
+        // AsyncAPI runtime expressions:
+        //   $message.header#/pointer — extract from headers JSON Pointer
+        //   $message.payload#/pointer — extract from payload JSON Pointer
+        const string headerPrefix = "$message.header#";
+        const string payloadPrefix = "$message.payload#";
+
+        if (expression.StartsWith(headerPrefix, StringComparison.Ordinal))
+        {
+            string pointer = expression[headerPrefix.Length..];
+            return EmitPointerNavigation(headersVar, pointer);
+        }
+
+        if (expression.StartsWith(payloadPrefix, StringComparison.Ordinal))
+        {
+            string pointer = expression[payloadPrefix.Length..];
+            return EmitPointerNavigation(payloadVar, pointer);
+        }
+
+        return null;
+    }
+
+    private static string EmitPointerNavigation(string sourceVar, string pointer)
+    {
+        // Convert JSON Pointer "/foo/bar" into chained TryGetProperty calls
+        // For simple single-segment pointers like "/replyTo", emit:
+        //   sourceVar.GetProperty("replyTo"u8).GetString()!
+        // For multi-segment pointers like "/nested/path", emit chained navigation.
+        if (!pointer.StartsWith("/", StringComparison.Ordinal))
+        {
+            return $"{sourceVar}.ToString()";
+        }
+
+        string[] segments = pointer[1..].Split('/');
+        string nav = sourceVar;
+        foreach (string segment in segments)
+        {
+            // Unescape JSON Pointer (~1 = /, ~0 = ~)
+            string unescaped = segment.Replace("~1", "/").Replace("~0", "~");
+            nav = $"{nav}.GetProperty(\"{EscapeString(unescaped)}\"u8)";
+        }
+
+        return $"{nav}.GetString()!";
     }
 }

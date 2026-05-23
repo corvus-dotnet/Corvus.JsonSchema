@@ -4,7 +4,7 @@
 
 using Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.AsyncApi.CodeGeneration;
+namespace Corvus.Text.Json.AsyncApi;
 
 /// <summary>
 /// Abstraction for message transport (publish/subscribe).

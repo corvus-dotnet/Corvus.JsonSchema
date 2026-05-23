@@ -19,6 +19,7 @@
     "publishUserSignedUp": {
       "action": "send",
       "channel": { "$ref": "#/channels/events" },
+      "summary": "Publishes a user-signed-up event",
       "messages": [
         { "$ref": "#/channels/events/messages/userSignedUp" }
       ],
@@ -31,6 +32,9 @@
       "channel": { "$ref": "#/channels/events" },
       "messages": [
         { "$ref": "#/channels/events/messages/userSignedUp" }
+      ],
+      "traits": [
+        { "$ref": "#/components/operationTraits/logging" }
       ]
     }
   },
@@ -74,6 +78,7 @@
     },
     "operationTraits": {
       "logging": {
+        "summary": "Logged operation",
         "description": "Operation with logging enabled"
       }
     }

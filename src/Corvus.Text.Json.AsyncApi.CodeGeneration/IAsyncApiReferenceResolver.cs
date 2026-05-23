@@ -28,10 +28,46 @@ public interface IAsyncApiReferenceResolver
     /// <summary>
     /// Attempts to resolve a <c>$ref</c> URI-reference to the target JSON element.
     /// </summary>
+    /// <param name="refValue">The <c>$ref</c> value as a UTF-8 byte span (the raw URI-reference).</param>
+    /// <param name="result">When this method returns <see langword="true"/>, contains the resolved element.</param>
+    /// <returns><see langword="true"/> if the reference was resolved successfully; otherwise, <see langword="false"/>.</returns>
+    bool TryResolve(ReadOnlySpan<byte> refValue, out JsonElement result);
+
+    /// <summary>
+    /// Attempts to resolve a <c>$ref</c> URI-reference to the target JSON element.
+    /// </summary>
     /// <param name="refValue">The <c>$ref</c> value as a string (the raw URI-reference).</param>
     /// <param name="result">When this method returns <see langword="true"/>, contains the resolved element.</param>
     /// <returns><see langword="true"/> if the reference was resolved successfully; otherwise, <see langword="false"/>.</returns>
     bool TryResolve(string refValue, out JsonElement result);
+
+    /// <summary>
+    /// Attempts to resolve a <c>$ref</c> URI-reference to a strongly-typed target,
+    /// validating that the resolved element conforms to the target type's schema.
+    /// </summary>
+    /// <typeparam name="TTarget">The expected target type. The resolved element must
+    /// pass <c>EvaluateSchema()</c> for this type.</typeparam>
+    /// <param name="refValue">The <c>$ref</c> value as a string (the raw URI-reference).</param>
+    /// <param name="result">When this method returns <see langword="true"/>, contains
+    /// the resolved and validated instance of <typeparamref name="TTarget"/>.</param>
+    /// <returns><see langword="true"/> if the reference was resolved and the target validates
+    /// against its schema; otherwise, <see langword="false"/>.</returns>
+    bool TryResolve<TTarget>(string refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>;
+
+    /// <summary>
+    /// Attempts to resolve a <c>$ref</c> URI-reference to a strongly-typed target,
+    /// validating that the resolved element conforms to the target type's schema.
+    /// </summary>
+    /// <typeparam name="TTarget">The expected target type. The resolved element must
+    /// pass <c>EvaluateSchema()</c> for this type.</typeparam>
+    /// <param name="refValue">The <c>$ref</c> value as a UTF-8 byte span (the raw URI-reference).</param>
+    /// <param name="result">When this method returns <see langword="true"/>, contains
+    /// the resolved and validated instance of <typeparamref name="TTarget"/>.</param>
+    /// <returns><see langword="true"/> if the reference was resolved and the target validates
+    /// against its schema; otherwise, <see langword="false"/>.</returns>
+    bool TryResolve<TTarget>(ReadOnlySpan<byte> refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>;
 
     /// <summary>
     /// Pushes the base URI context for the document identified by the given <c>$ref</c> value.
@@ -51,7 +87,7 @@ public interface IAsyncApiReferenceResolver
     /// </remarks>
     /// <param name="refValue">The <c>$ref</c> URI-reference that was resolved.</param>
     /// <returns>An <see cref="IDisposable"/> that restores the previous base URI context when disposed.</returns>
-    IDisposable PushBase(string refValue);
+    IDisposable PushResolvedBase(string refValue);
 
     /// <summary>
     /// Resolves a raw <c>$ref</c> URI-reference against the current base URI per RFC 3986 §5,
@@ -75,4 +111,29 @@ public interface IAsyncApiReferenceResolver
     /// For non-file URIs, the full absolute URI with fragment is returned.
     /// </returns>
     string ResolveToAbsolute(string refValue);
+
+    /// <summary>
+    /// Resolves a raw <c>$ref</c> URI-reference against the current base URI per RFC 3986 §5,
+    /// returning an absolute reference string suitable for the JSON Schema type builder.
+    /// </summary>
+    /// <param name="refValue">The raw <c>$ref</c> value as a UTF-8 byte span.</param>
+    /// <returns>
+    /// The resolved absolute reference. For file-based URIs this is a local file path
+    /// with fragment (e.g. <c>D:\project\common\types.json#/components/schemas/Pet</c>).
+    /// For non-file URIs, the full absolute URI with fragment is returned.
+    /// </returns>
+    string ResolveToAbsolute(ReadOnlySpan<byte> refValue);
+
+    /// <summary>
+    /// Resolves a raw <c>$ref</c> URI-reference against the current base URI per RFC 3986 §5,
+    /// appending the resolved result as UTF-8 bytes to the provided buffer.
+    /// </summary>
+    /// <remarks>
+    /// This overload avoids intermediate string allocations when the caller needs to
+    /// append additional path segments after the resolved reference.
+    /// </remarks>
+    /// <param name="refValue">The raw <c>$ref</c> value as a UTF-8 byte span.</param>
+    /// <param name="destination">The buffer to append the resolved UTF-8 bytes to.</param>
+    /// <returns>The number of bytes written to <paramref name="destination"/>.</returns>
+    int ResolveToAbsolute(ReadOnlySpan<byte> refValue, Span<byte> destination);
 }

@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Text.Json.AsyncApi.CodeGeneration;
+namespace Corvus.Text.Json.AsyncApi;
 
 /// <summary>
 /// Provides authentication credentials for message transport connections.
