@@ -393,6 +393,7 @@ local-packages/
 tests/AnnotationDiag/
 petstore-generated/
 petstore-regen-temp/
+asyncapi-sample-output/
 
 # Build-time generated code (regenerated from OpenAPI specs by MSBuild targets)
 tests/Corvus.Text.Json.OpenApi.Runtime.Tests/Generated/
