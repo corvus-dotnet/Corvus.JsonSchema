@@ -5,6 +5,8 @@
 using System.Text;
 using Corvus.Text.Json.AsyncApi.Amqp;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests;
 
@@ -636,6 +638,92 @@ public class AmqpTransportTests
                 channel,
                 doc.RootElement,
                 "corr"u8.ToArray()));
+    }
+
+    [TestMethod]
+    public async Task RequestReplyRoundtripWithResponder()
+    {
+        // Arrange — create a fresh transport for request/reply
+        AmqpMessageTransport requesterTransport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.reqreply",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-reqreply",
+        });
+
+        // Set up a raw AMQP consumer that listens for requests and publishes replies
+        ConnectionFactory factory = new() { Uri = new Uri(AmqpFixture.ConnectionUri) };
+        using IConnection responderConn = await factory.CreateConnectionAsync();
+        using IChannel responderChannel = await responderConn.CreateChannelAsync();
+
+        await responderChannel.ExchangeDeclareAsync(
+            exchange: "corvus.test.reqreply",
+            type: "topic",
+            durable: false);
+
+        string responderQueue = (await responderChannel.QueueDeclareAsync(
+            queue: string.Empty,
+            durable: false,
+            exclusive: true,
+            autoDelete: true)).QueueName;
+
+        await responderChannel.QueueBindAsync(
+            queue: responderQueue,
+            exchange: "corvus.test.reqreply",
+            routingKey: "amqp.test.reqreply.request");
+
+        AsyncEventingBasicConsumer responder = new(responderChannel);
+        responder.ReceivedAsync += async (_, args) =>
+        {
+            // Read correlation ID and reply-to from message properties
+            string? corrId = args.BasicProperties?.CorrelationId;
+            string? replyTo = args.BasicProperties?.ReplyTo;
+
+            if (corrId is not null && replyTo is not null)
+            {
+                BasicProperties replyProps = new()
+                {
+                    ContentType = "application/json",
+                    CorrelationId = corrId,
+                };
+
+                await responderChannel.BasicPublishAsync(
+                    exchange: "corvus.test.reqreply",
+                    routingKey: replyTo,
+                    mandatory: false,
+                    basicProperties: replyProps,
+                    body: Encoding.UTF8.GetBytes("""{"result":"success","value":99}"""));
+            }
+
+            await responderChannel.BasicAckAsync(args.DeliveryTag, multiple: false);
+        };
+
+        await responderChannel.BasicConsumeAsync(
+            queue: responderQueue,
+            autoAck: false,
+            consumer: responder);
+
+        await Task.Delay(500);
+
+        // Act — send a request through the transport
+        ReadOnlyMemory<byte> requestChannel = "amqp.test.reqreply.request"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "amqp.test.reqreply.reply"u8.ToArray();
+        byte[] correlationId = "amqp-roundtrip-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"action":"compute"}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId);
+
+        // Assert
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(99, replyPayload.GetProperty("value"u8).GetInt32());
+
+        await requesterTransport.DisposeAsync();
     }
 
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy

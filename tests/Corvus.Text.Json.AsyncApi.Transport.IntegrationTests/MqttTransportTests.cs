@@ -550,6 +550,72 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyRoundtripWithResponder()
+    {
+        // Arrange — create a requester transport
+        MqttMessageTransport requesterTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-requester-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        // Set up a raw MQTT client as the responder
+        MqttClientOptions responderOptions = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-responder-" + Guid.NewGuid().ToString("N")[..8])
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
+            .Build();
+
+        IMqttClient responderClient = new MqttFactory().CreateMqttClient();
+        await responderClient.ConnectAsync(responderOptions);
+
+        // Subscribe the responder to the request topic
+        await responderClient.SubscribeAsync(
+            new MqttClientSubscribeOptionsBuilder()
+                .WithTopicFilter("mqtt/test/reqreply/request")
+                .Build());
+
+        responderClient.ApplicationMessageReceivedAsync += async args =>
+        {
+            byte[]? corrData = args.ApplicationMessage.CorrelationData;
+            if (corrData is { Length: > 0 })
+            {
+                // Echo back a reply on the reply topic with the same correlation data
+                MqttApplicationMessage reply = new MqttApplicationMessageBuilder()
+                    .WithTopic("mqtt/test/reqreply/reply")
+                    .WithPayload("""{"answer":"from-responder","value":77}"""u8.ToArray())
+                    .WithCorrelationData(corrData)
+                    .Build();
+
+                await responderClient.PublishAsync(reply);
+            }
+        };
+
+        await Task.Delay(500);
+
+        // Act — send a request through the transport
+        ReadOnlyMemory<byte> requestChannel = "mqtt/test/reqreply/request"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "mqtt/test/reqreply/reply"u8.ToArray();
+        byte[] correlationId = "mqtt-roundtrip-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"question":"what?"}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId);
+
+        // Assert
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(77, replyPayload.GetProperty("value"u8).GetInt32());
+
+        await requesterTransport.DisposeAsync();
+        await responderClient.DisconnectAsync();
+        responderClient.Dispose();
+    }
+
+    [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
         MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions

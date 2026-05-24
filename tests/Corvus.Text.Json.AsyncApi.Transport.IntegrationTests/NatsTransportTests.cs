@@ -805,4 +805,52 @@ public class NatsTransportTests
         await transport.DisposeAsync();
         await rawConn.DisposeAsync();
     }
+
+    [TestMethod]
+    public async Task RequestReplyRoundtripWithResponder()
+    {
+        // Arrange — transport for the requester
+        NatsMessageTransport requesterTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            RequestTimeout = TimeSpan.FromSeconds(10),
+        });
+
+        // Set up a raw NATS subscriber that replies to requests on "test.request-roundtrip"
+        NATS.Client.Core.NatsConnection responderConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await responderConn.ConnectAsync();
+
+        _ = Task.Run(async () =>
+        {
+            await foreach (NATS.Client.Core.NatsMsg<byte[]> msg in responderConn.SubscribeAsync<byte[]>("test.request-roundtrip"))
+            {
+                if (msg.ReplyTo is not null)
+                {
+                    // Echo back a response
+                    await responderConn.PublishAsync(msg.ReplyTo, """{"answer":42}"""u8.ToArray());
+                }
+            }
+        });
+
+        await Task.Delay(500);
+
+        // Act — send a request
+        ReadOnlyMemory<byte> requestChannel = "test.request-roundtrip"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "test.reply-roundtrip"u8.ToArray();
+        byte[] correlationId = "roundtrip-corr-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"question":"what is the meaning?"}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId);
+
+        // Assert
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("answer"u8).GetInt32());
+
+        await requesterTransport.DisposeAsync();
+        await responderConn.DisposeAsync();
+    }
 }

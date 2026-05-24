@@ -322,11 +322,11 @@ public sealed class AmqpMessageTransport : IMessageTransport
             // Wait for reply
             BasicDeliverEventArgs reply = await replyTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-            // Parse reply using pooled document
-            using ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Body.ToArray());
+            // Cold path — document not disposed; returned values reference its memory
+            ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Body.ToArray());
             TReply replyPayload = replyDoc.RootElement;
 
-            using ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
+            ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
             JsonElement replyHeaders = headersDoc?.RootElement ?? default;
 
             return (replyPayload, replyHeaders);

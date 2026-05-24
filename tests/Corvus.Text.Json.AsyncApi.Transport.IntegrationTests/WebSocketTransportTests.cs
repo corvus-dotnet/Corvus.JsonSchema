@@ -456,6 +456,106 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyRoundtripWithResponder()
+    {
+        // Arrange — requester transport subscribes to the reply channel so the relay forwards replies to it
+        WebSocketMessageTransport requesterTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        // Subscribe the requester to the reply channel (dummy handler — correlationId match takes priority)
+        ReadOnlyMemory<byte> replyChannel = "ws/test/reqreply/reply"u8.ToArray();
+        await requesterTransport.SubscribeAsync<JsonElement>(
+            replyChannel,
+            (_, _, _) => ValueTask.CompletedTask);
+
+        // Set up a raw WebSocket client as responder
+        using ClientWebSocket responderWs = new();
+        await responderWs.ConnectAsync(new Uri(WebSocketFixture.ServerUri), CancellationToken.None);
+
+        // Subscribe the responder to the request channel via the relay
+        byte[] subscribeEnvelope = Encoding.UTF8.GetBytes("""{"channel":"ws/test/reqreply/request","type":"subscribe"}""");
+        await responderWs.SendAsync(
+            new ArraySegment<byte>(subscribeEnvelope),
+            WebSocketMessageType.Text,
+            endOfMessage: true,
+            CancellationToken.None);
+
+        // Start a receive loop on the responder that echoes replies
+        using CancellationTokenSource responderCts = new();
+        _ = Task.Run(async () =>
+        {
+            byte[] buffer = new byte[8192];
+            try
+            {
+                while (!responderCts.Token.IsCancellationRequested)
+                {
+                    using MemoryStream ms = new();
+                    WebSocketReceiveResult result;
+                    do
+                    {
+                        result = await responderWs.ReceiveAsync(
+                            new ArraySegment<byte>(buffer),
+                            responderCts.Token);
+                        if (result.MessageType == WebSocketMessageType.Close)
+                        {
+                            return;
+                        }
+
+                        ms.Write(buffer, 0, result.Count);
+                    }
+                    while (!result.EndOfMessage);
+
+                    // Parse the envelope to extract correlationId
+                    byte[] msgBytes = ms.ToArray();
+                    using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(msgBytes);
+                    System.Text.Json.JsonElement root = doc.RootElement;
+
+                    if (root.TryGetProperty("correlationId", out System.Text.Json.JsonElement corrProp))
+                    {
+                        string? corrId = corrProp.GetString();
+                        if (corrId is not null)
+                        {
+                            // Build a reply envelope with same correlationId on the reply channel
+                            string replyEnvelope = @"{""channel"":""ws/test/reqreply/reply"",""correlationId"":""" + corrId + @""",""payload"":{""result"":""ws-reply"",""code"":55}}";
+                            byte[] replyBytes = Encoding.UTF8.GetBytes(replyEnvelope);
+                            await responderWs.SendAsync(
+                                new ArraySegment<byte>(replyBytes),
+                                WebSocketMessageType.Text,
+                                endOfMessage: true,
+                                CancellationToken.None);
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        });
+
+        await Task.Delay(500);
+
+        // Act — send a request through the transport
+        ReadOnlyMemory<byte> requestChannel = "ws/test/reqreply/request"u8.ToArray();
+        byte[] correlationId = "ws-roundtrip-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"action":"query"}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId);
+
+        // Assert
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(55, replyPayload.GetProperty("code"u8).GetInt32());
+
+        await responderCts.CancelAsync();
+        await requesterTransport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
         WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
