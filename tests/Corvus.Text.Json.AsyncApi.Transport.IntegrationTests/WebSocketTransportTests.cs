@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Net.WebSockets;
 using System.Text;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 using Corvus.Text.Json.AsyncApi.WebSocket;
@@ -250,6 +251,264 @@ public class WebSocketTransportTests
         Assert.AreEqual(0, receiveCount);
     }
 
+    [TestMethod]
+    public async Task DeserializationErrorInvokesErrorPolicy()
+    {
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.Skip);
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/deser-error"u8.ToArray();
+
+        await subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(200);
+
+        using ClientWebSocket rawWs = new();
+        await rawWs.ConnectAsync(new Uri(WebSocketFixture.ServerUri), CancellationToken.None);
+
+        byte[] envelopeBytes = Encoding.UTF8.GetBytes("""{"channel":"ws/test/deser-error","payload":{"ok":true},"correlationId":123}""");
+        await rawWs.SendAsync(envelopeBytes, WebSocketMessageType.Text, true, CancellationToken.None);
+        await Task.Delay(500);
+        await rawWs.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
+
+        Assert.IsTrue(policy.Invocations.Count > 0, "Error policy was not invoked for deserialization error.");
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+
+        await subscriber.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DeadLetterActionSendsToDeadLetterChannel()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+            DeadLetterSuffix = "/dlq",
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/deadletter"u8.ToArray();
+        ReadOnlyMemory<byte> dlqChannel = "ws/test/deadletter/dlq"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        JsonValueKind dlqKind = JsonValueKind.Undefined;
+
+        WebSocketMessageTransport dlqSubscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        await dlqSubscriber.SubscribeAsync<JsonElement>(
+            dlqChannel,
+            (payload, headers, ct) =>
+            {
+                dlqKind = payload.ValueKind;
+                dlqReceived.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        await subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => throw new InvalidOperationException("Intentional failure"));
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"item":"DL-001"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter message was not received on DLQ channel.");
+        Assert.AreNotEqual(JsonValueKind.Undefined, dlqKind);
+
+        await subscriber.DisposeAsync();
+        await dlqSubscriber.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task AbortActionStopsSubscription()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Abort);
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/abort"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                throw new InvalidOperationException("Trigger abort");
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":1}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc1.RootElement);
+        await Task.Delay(500);
+
+        int countAfterAbort = handlerCallCount;
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":2}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, policy.Invocations.Count, "Error policy should be invoked exactly once.");
+        Assert.AreEqual(countAfterAbort, handlerCallCount, "Handler should not be called after abort.");
+
+        await subscriber.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task MiddlewareWrapsHandlerExecution()
+    {
+        int middlewareCallCount = 0;
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            HandlerMiddleware = async (operation, ct) =>
+            {
+                Interlocked.Increment(ref middlewareCallCount);
+                await operation(ct).ConfigureAwait(false);
+            },
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/middleware"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+
+        await subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"data":"mw-test"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(wasReceived, "Message was not received through middleware.");
+        Assert.AreEqual(1, middlewareCallCount, "Middleware should be called exactly once.");
+
+        await subscriber.UnsubscribeAsync(channel);
+        await subscriber.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task MiddlewareExhaustionFallsThroughToErrorPolicy()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Skip);
+        int retryCount = 0;
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+            HandlerMiddleware = async (operation, ct) =>
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    try
+                    {
+                        await operation(ct).ConfigureAwait(false);
+                        return;
+                    }
+                    catch (InvalidOperationException) when (i < 2)
+                    {
+                        Interlocked.Increment(ref retryCount);
+                    }
+                }
+
+                await operation(ct).ConfigureAwait(false);
+            },
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/mw-exhaust"u8.ToArray();
+
+        await subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => throw new InvalidOperationException("Always fails"));
+
+        await Task.Delay(200);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"data":"exhaust"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(1000);
+
+        Assert.AreEqual(2, retryCount, "Middleware should have retried 2 times.");
+        Assert.IsTrue(policy.Invocations.Count > 0, "Error policy should be invoked after middleware exhaustion.");
+        Assert.AreEqual(MessageErrorKind.Handler, policy.Invocations[0].Kind);
+
+        await subscriber.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RequestReplyTimeoutThrows()
+    {
+        WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "ws/test/req-timeout"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "ws/test/reply-timeout"u8.ToArray();
+        byte[] correlationId = "timeout-corr-ws01"u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+
+        using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
+        await Assert.ThrowsExactlyAsync<TaskCanceledException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                default,
+                cts.Token));
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task OperationsAfterDisposeThrowObjectDisposedException()
+    {
+        WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        await transport.DisposeAsync();
+
+        ReadOnlyMemory<byte> channel = "ws/test/disposed"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}"""u8.ToArray());
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.PublishAsync(channel, doc.RootElement));
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.SubscribeAsync<JsonElement>(channel, (p, h, ct) => ValueTask.CompletedTask));
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                channel,
+                channel,
+                doc.RootElement,
+                "corr"u8.ToArray()));
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(
@@ -259,6 +518,31 @@ public class WebSocketTransportTests
         {
             actions.Add(context.ErrorKind);
             return ValueTask.FromResult(MessageErrorAction.Skip);
+        }
+    }
+
+    private sealed class ConfigurableErrorPolicy(
+        MessageErrorAction deserializationAction = MessageErrorAction.Skip,
+        MessageErrorAction handlerAction = MessageErrorAction.Skip,
+        MessageErrorAction transportAction = MessageErrorAction.Skip) : IMessageErrorPolicy
+    {
+        public List<(MessageErrorKind Kind, Exception Exception)> Invocations { get; } = [];
+
+        public ValueTask<MessageErrorAction> HandleErrorAsync(
+            Exception exception,
+            MessageErrorContext context,
+            CancellationToken cancellationToken)
+        {
+            this.Invocations.Add((context.ErrorKind, exception));
+            MessageErrorAction action = context.ErrorKind switch
+            {
+                MessageErrorKind.Deserialization => deserializationAction,
+                MessageErrorKind.Handler => handlerAction,
+                MessageErrorKind.Transport => transportAction,
+                _ => MessageErrorAction.Skip,
+            };
+
+            return ValueTask.FromResult(action);
         }
     }
 }

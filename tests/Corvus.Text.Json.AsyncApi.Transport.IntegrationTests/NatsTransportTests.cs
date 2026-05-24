@@ -5,6 +5,7 @@
 using System.Text;
 using Corvus.Text.Json.AsyncApi.Nats;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
+using NATS.Client.Core;
 
 namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests;
 
@@ -441,5 +442,367 @@ public class NatsTransportTests
             actions.Add(context.ErrorKind);
             return ValueTask.FromResult(MessageErrorAction.Skip);
         }
+    }
+
+    /// <summary>
+    /// Error policy that returns a configurable action for each error kind.
+    /// </summary>
+    private sealed class ConfigurableErrorPolicy(
+        MessageErrorAction deserializationAction = MessageErrorAction.Skip,
+        MessageErrorAction handlerAction = MessageErrorAction.Skip,
+        MessageErrorAction transportAction = MessageErrorAction.Skip) : IMessageErrorPolicy
+    {
+        public List<(MessageErrorKind Kind, Exception Exception)> Invocations { get; } = [];
+
+        public ValueTask<MessageErrorAction> HandleErrorAsync(
+            Exception exception,
+            MessageErrorContext context,
+            CancellationToken cancellationToken)
+        {
+            this.Invocations.Add((context.ErrorKind, exception));
+            MessageErrorAction action = context.ErrorKind switch
+            {
+                MessageErrorKind.Deserialization => deserializationAction,
+                MessageErrorKind.Handler => handlerAction,
+                MessageErrorKind.Transport => transportAction,
+                _ => MessageErrorAction.Skip,
+            };
+
+            return ValueTask.FromResult(action);
+        }
+    }
+
+    [TestMethod]
+    public async Task DeserializationErrorInvokesErrorPolicy()
+    {
+        // Arrange — create a transport with a tracking error policy
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.Skip);
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "test.deser-error"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(500);
+
+        // Act — publish raw invalid JSON via a separate NATS connection
+        NATS.Client.Core.NatsConnection rawConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await rawConn.ConnectAsync();
+        await rawConn.PublishAsync("test.deser-error", "this is not valid json!!!"u8.ToArray());
+        await Task.Delay(500);
+        await rawConn.DisposeAsync();
+
+        // Assert
+        Assert.IsTrue(policy.Invocations.Count > 0, "Error policy was not invoked for deserialization error.");
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DeadLetterActionSendsToDeadLetterChannel()
+    {
+        // Arrange — policy returns DeadLetter for handler errors
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            ErrorPolicy = policy,
+            DeadLetterSuffix = ".dlq",
+        });
+
+        ReadOnlyMemory<byte> channel = "test.deadletter"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        byte[]? dlqPayload = null;
+
+        // Subscribe to the dead-letter channel with a raw NATS connection to see DLQ messages
+        NATS.Client.Core.NatsConnection rawConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await rawConn.ConnectAsync();
+        _ = Task.Run(async () =>
+        {
+            await foreach (NATS.Client.Core.NatsMsg<byte[]> msg in rawConn.SubscribeAsync<byte[]>("test.deadletter.dlq"))
+            {
+                dlqPayload = msg.Data;
+                dlqReceived.Release();
+                break;
+            }
+        });
+
+        await Task.Delay(200);
+
+        // Subscribe on main channel with a handler that throws
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => throw new InvalidOperationException("Intentional handler failure"));
+
+        await Task.Delay(500);
+
+        // Act — publish a valid message
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"order":"O-123"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        // Assert — message should arrive on DLQ
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter message was not received on DLQ channel.");
+        Assert.IsNotNull(dlqPayload);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+        await rawConn.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task AbortActionStopsSubscription()
+    {
+        // Arrange — policy returns Abort for handler errors
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Abort);
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "test.abort"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                throw new InvalidOperationException("Trigger abort");
+            });
+
+        await Task.Delay(500);
+
+        // Act — publish first message (triggers abort)
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":1}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc1.RootElement);
+        await Task.Delay(1000);
+
+        // Publish second message — should NOT be received (subscription aborted)
+        int countAfterAbort = handlerCallCount;
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":2}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(1000);
+
+        // Assert
+        Assert.AreEqual(1, policy.Invocations.Count, "Error policy should be invoked exactly once.");
+        Assert.AreEqual(countAfterAbort, handlerCallCount, "Handler should not be called after abort.");
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task MiddlewareWrapsHandlerExecution()
+    {
+        // Arrange — middleware that counts invocations
+        int middlewareCallCount = 0;
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            HandlerMiddleware = async (operation, ct) =>
+            {
+                Interlocked.Increment(ref middlewareCallCount);
+                await operation(ct).ConfigureAwait(false);
+            },
+        });
+
+        ReadOnlyMemory<byte> channel = "test.middleware"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+
+        // Act
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"data":"test"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        // Assert
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(wasReceived, "Message was not received through middleware.");
+        Assert.AreEqual(1, middlewareCallCount, "Middleware should be called exactly once.");
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task MiddlewareExhaustionFallsThroughToErrorPolicy()
+    {
+        // Arrange — middleware retries 2 times then rethrows; policy catches
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Skip);
+        int retryCount = 0;
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            ErrorPolicy = policy,
+            HandlerMiddleware = async (operation, ct) =>
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    try
+                    {
+                        await operation(ct).ConfigureAwait(false);
+                        return;
+                    }
+                    catch (InvalidOperationException) when (i < 2)
+                    {
+                        Interlocked.Increment(ref retryCount);
+                    }
+                }
+
+                // Final attempt — let exception propagate
+                await operation(ct).ConfigureAwait(false);
+            },
+        });
+
+        ReadOnlyMemory<byte> channel = "test.middleware-exhaust"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => throw new InvalidOperationException("Always fails"));
+
+        await Task.Delay(500);
+
+        // Act
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"data":"retry-test"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(1000);
+
+        // Assert — middleware retried, then error policy caught the terminal failure
+        Assert.AreEqual(2, retryCount, "Middleware should have retried 2 times.");
+        Assert.IsTrue(policy.Invocations.Count > 0, "Error policy should be invoked after middleware exhaustion.");
+        Assert.AreEqual(MessageErrorKind.Handler, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RequestReplyTimeoutThrowsOperationCanceledException()
+    {
+        // Arrange — no responder, should timeout
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            RequestTimeout = TimeSpan.FromSeconds(2),
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "test.request-timeout"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "test.reply-timeout"u8.ToArray();
+        byte[] correlationId = "timeout-corr-001"u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+
+        // Act & Assert — should timeout or get "no responders" error
+        // NATS throws NatsNoRespondersException when no subscriber is available for request/reply
+        try
+        {
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId);
+
+            Assert.Fail("Expected an exception for request with no responder.");
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or NATS.Client.Core.NatsNoRespondersException)
+        {
+            // Either timeout or no-responders is acceptable — both indicate the request failed
+            // as expected when no handler is available.
+        }
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task OperationsAfterDisposeThrowObjectDisposedException()
+    {
+        // Arrange
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+        });
+
+        await transport.DisposeAsync();
+
+        // Act & Assert
+        ReadOnlyMemory<byte> channel = "test.disposed"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}"""u8.ToArray());
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.PublishAsync(channel, doc.RootElement));
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.SubscribeAsync<JsonElement>(channel, (p, h, ct) => ValueTask.CompletedTask));
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                channel, channel, doc.RootElement, "corr"u8.ToArray()));
+    }
+
+    [TestMethod]
+    public async Task SubjectWildcardSubscription()
+    {
+        // Arrange — NATS supports wildcard subjects (foo.* matches foo.bar, foo.baz)
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+        });
+
+        ReadOnlyMemory<byte> wildcardChannel = "test.wild.*"u8.ToArray();
+        List<string> receivedSubjects = [];
+        using var allReceived = new SemaphoreSlim(0, 1);
+
+        await transport.SubscribeAsync<JsonElement>(
+            wildcardChannel,
+            (payload, headers, ct) =>
+            {
+                string val = payload.GetProperty("src"u8).GetString()!;
+                lock (receivedSubjects)
+                {
+                    receivedSubjects.Add(val);
+                    if (receivedSubjects.Count == 2)
+                    {
+                        allReceived.Release();
+                    }
+                }
+
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+
+        // Act — publish to two subjects that match the wildcard
+        // Publish via raw NATS to specific subjects (wildcard only applies to subscription)
+        NATS.Client.Core.NatsConnection rawConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await rawConn.ConnectAsync();
+        await rawConn.PublishAsync("test.wild.alpha", """{"src":"alpha"}"""u8.ToArray());
+        await rawConn.PublishAsync("test.wild.beta", """{"src":"beta"}"""u8.ToArray());
+
+        // Assert
+        bool allArrived = await allReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(allArrived, "Not all wildcard messages were received.");
+        CollectionAssert.Contains(receivedSubjects.ToArray(), "alpha");
+        CollectionAssert.Contains(receivedSubjects.ToArray(), "beta");
+
+        await transport.UnsubscribeAsync(wildcardChannel);
+        await transport.DisposeAsync();
+        await rawConn.DisposeAsync();
     }
 }

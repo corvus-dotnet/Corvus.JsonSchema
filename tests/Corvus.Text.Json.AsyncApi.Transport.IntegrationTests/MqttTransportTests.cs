@@ -5,6 +5,8 @@
 using System.Text;
 using Corvus.Text.Json.AsyncApi.Mqtt;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
+using MQTTnet;
+using MQTTnet.Client;
 
 namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests;
 
@@ -327,6 +329,283 @@ public class MqttTransportTests
         Assert.AreEqual(0, receiveCount);
     }
 
+    [TestMethod]
+    public async Task DeserializationErrorInvokesErrorPolicy()
+    {
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.Skip);
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-deser-" + Guid.NewGuid().ToString("N")[..8],
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/deser-error"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(300);
+
+        MqttFactory factory = new();
+        using IMqttClient rawClient = factory.CreateMqttClient();
+        MqttClientOptions rawOpts = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-raw-" + Guid.NewGuid().ToString("N")[..8])
+            .Build();
+        await rawClient.ConnectAsync(rawOpts);
+        await rawClient.PublishBinaryAsync("mqtt/test/deser-error", "NOT VALID JSON!!!"u8.ToArray());
+        await rawClient.DisconnectAsync();
+
+        await Task.Delay(500);
+
+        Assert.IsTrue(policy.Invocations.Count > 0, "Error policy was not invoked for deserialization error.");
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DeadLetterActionSendsToDeadLetterChannel()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-dl-" + Guid.NewGuid().ToString("N")[..8],
+            ErrorPolicy = policy,
+            DeadLetterSuffix = "/dlq",
+        });
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/deadletter"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        byte[]? dlqPayload = null;
+
+        MqttFactory factory = new();
+        using IMqttClient dlqClient = factory.CreateMqttClient();
+        MqttClientOptions dlqOpts = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-dlq-reader-" + Guid.NewGuid().ToString("N")[..8])
+            .Build();
+        await dlqClient.ConnectAsync(dlqOpts);
+        dlqClient.ApplicationMessageReceivedAsync += args =>
+        {
+            dlqPayload = args.ApplicationMessage.PayloadSegment.ToArray();
+            dlqReceived.Release();
+            return Task.CompletedTask;
+        };
+        await dlqClient.SubscribeAsync("mqtt/test/deadletter/dlq");
+        await Task.Delay(200);
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => throw new InvalidOperationException("Intentional failure"));
+
+        await Task.Delay(300);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"item":"DL-001"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter message was not received on DLQ topic.");
+        Assert.IsNotNull(dlqPayload);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+        await dlqClient.DisconnectAsync();
+    }
+
+    [TestMethod]
+    public async Task AbortActionStopsSubscription()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Abort);
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-abort-" + Guid.NewGuid().ToString("N")[..8],
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/abort"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                throw new InvalidOperationException("Trigger abort");
+            });
+
+        await Task.Delay(300);
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":1}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc1.RootElement);
+        await Task.Delay(500);
+
+        int countAfterAbort = handlerCallCount;
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":2}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, policy.Invocations.Count, "Error policy should be invoked exactly once.");
+        Assert.AreEqual(countAfterAbort, handlerCallCount, "Handler should not be called after abort.");
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task MiddlewareWrapsHandlerExecution()
+    {
+        int middlewareCallCount = 0;
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-mw-" + Guid.NewGuid().ToString("N")[..8],
+            HandlerMiddleware = async (operation, ct) =>
+            {
+                Interlocked.Increment(ref middlewareCallCount);
+                await operation(ct).ConfigureAwait(false);
+            },
+        });
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/middleware"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(300);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"data":"mw-test"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(wasReceived, "Message was not received through middleware.");
+        Assert.AreEqual(1, middlewareCallCount, "Middleware should be called exactly once.");
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task MiddlewareExhaustionFallsThroughToErrorPolicy()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Skip);
+        int retryCount = 0;
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-mw-exhaust-" + Guid.NewGuid().ToString("N")[..8],
+            ErrorPolicy = policy,
+            HandlerMiddleware = async (operation, ct) =>
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    try
+                    {
+                        await operation(ct).ConfigureAwait(false);
+                        return;
+                    }
+                    catch (InvalidOperationException) when (i < 2)
+                    {
+                        Interlocked.Increment(ref retryCount);
+                    }
+                }
+
+                await operation(ct).ConfigureAwait(false);
+            },
+        });
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/mw-exhaust"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => throw new InvalidOperationException("Always fails"));
+
+        await Task.Delay(300);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"data":"exhaust"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(1000);
+
+        Assert.AreEqual(2, retryCount, "Middleware should have retried 2 times.");
+        Assert.IsTrue(policy.Invocations.Count > 0, "Error policy should be invoked after middleware exhaustion.");
+        Assert.AreEqual(MessageErrorKind.Handler, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RequestReplyTimeoutThrows()
+    {
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-req-timeout-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "mqtt/test/req-timeout"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "mqtt/test/reply-timeout"u8.ToArray();
+        byte[] correlationId = "timeout-corr-m01"u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+
+        using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                cancellationToken: cts.Token));
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task OperationsAfterDisposeThrowObjectDisposedException()
+    {
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-disposed-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        await transport.DisposeAsync();
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/disposed"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}"""u8.ToArray());
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.PublishAsync(channel, doc.RootElement));
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.SubscribeAsync<JsonElement>(channel, (p, h, ct) => ValueTask.CompletedTask));
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                channel,
+                channel,
+                doc.RootElement,
+                "corr"u8.ToArray()));
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(
@@ -336,6 +615,31 @@ public class MqttTransportTests
         {
             actions.Add(context.ErrorKind);
             return ValueTask.FromResult(MessageErrorAction.Skip);
+        }
+    }
+
+    private sealed class ConfigurableErrorPolicy(
+        MessageErrorAction deserializationAction = MessageErrorAction.Skip,
+        MessageErrorAction handlerAction = MessageErrorAction.Skip,
+        MessageErrorAction transportAction = MessageErrorAction.Skip) : IMessageErrorPolicy
+    {
+        public List<(MessageErrorKind Kind, Exception Exception)> Invocations { get; } = [];
+
+        public ValueTask<MessageErrorAction> HandleErrorAsync(
+            Exception exception,
+            MessageErrorContext context,
+            CancellationToken cancellationToken)
+        {
+            this.Invocations.Add((context.ErrorKind, exception));
+            MessageErrorAction action = context.ErrorKind switch
+            {
+                MessageErrorKind.Deserialization => deserializationAction,
+                MessageErrorKind.Handler => handlerAction,
+                MessageErrorKind.Transport => transportAction,
+                _ => MessageErrorAction.Skip,
+            };
+
+            return ValueTask.FromResult(action);
         }
     }
 }

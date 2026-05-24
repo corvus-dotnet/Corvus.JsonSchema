@@ -356,9 +356,17 @@ public sealed class KafkaMessageTransport : IMessageTransport
                 {
                     result = consumer.Consume(TimeSpan.FromMilliseconds(this.options.PollTimeoutMs));
                 }
-                catch (ConsumeException) when (!cancellationToken.IsCancellationRequested)
+                catch (ConsumeException ex) when (!cancellationToken.IsCancellationRequested)
                 {
-                    // Transient errors (e.g., topic not yet auto-created) — retry after a brief delay.
+                    // Transport-level errors (e.g., topic not yet auto-created, broker unavailable).
+                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Transport);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                    if (action == MessageErrorAction.Abort)
+                    {
+                        break;
+                    }
+
+                    // Skip or DeadLetter → continue polling after brief delay
                     await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
@@ -493,8 +501,16 @@ public sealed class KafkaMessageTransport : IMessageTransport
                 {
                     result = consumer.Consume(TimeSpan.FromMilliseconds(100));
                 }
-                catch (ConsumeException) when (!cancellationToken.IsCancellationRequested)
+                catch (ConsumeException ex) when (!cancellationToken.IsCancellationRequested)
                 {
+                    // Transport-level errors in reply loop — route through error policy.
+                    MessageErrorContext ctx = new(ReadOnlyMemory<byte>.Empty, MessageErrorKind.Transport);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                    if (action == MessageErrorAction.Abort)
+                    {
+                        break;
+                    }
+
                     await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                     continue;
                 }

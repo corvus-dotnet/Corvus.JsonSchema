@@ -333,6 +333,311 @@ public class AmqpTransportTests
         Assert.AreEqual(0, receiveCount);
     }
 
+    [TestMethod]
+    public async Task DeserializationErrorInvokesErrorPolicy()
+    {
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.Skip);
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.deser",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-deser",
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "amqp.test.deser"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(500);
+
+        RabbitMQ.Client.ConnectionFactory rawFactory = new() { Uri = new Uri(AmqpFixture.ConnectionUri) };
+        using RabbitMQ.Client.IConnection rawConn = await rawFactory.CreateConnectionAsync();
+        using RabbitMQ.Client.IChannel rawChannel = await rawConn.CreateChannelAsync();
+        await rawChannel.ExchangeDeclareAsync("corvus.test.deser", "topic", durable: false, autoDelete: false);
+        await rawChannel.BasicPublishAsync(
+            exchange: "corvus.test.deser",
+            routingKey: "amqp.test.deser",
+            mandatory: false,
+            basicProperties: new RabbitMQ.Client.BasicProperties(),
+            body: "THIS IS NOT VALID JSON!!!"u8.ToArray());
+
+        await Task.Delay(500);
+
+        Assert.IsTrue(policy.Invocations.Count > 0, "Error policy was not invoked for deserialization error.");
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DeadLetterActionSendsToDeadLetterChannel()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.dl",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-dl",
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "amqp.test.dl"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        byte[]? dlqPayload = null;
+
+        RabbitMQ.Client.ConnectionFactory dlqFactory = new() { Uri = new Uri(AmqpFixture.ConnectionUri) };
+        using RabbitMQ.Client.IConnection dlqConn = await dlqFactory.CreateConnectionAsync();
+        using RabbitMQ.Client.IChannel dlqChannel = await dlqConn.CreateChannelAsync();
+
+        await dlqChannel.ExchangeDeclareAsync("corvus.dead-letter", "topic", durable: true, autoDelete: false);
+        RabbitMQ.Client.QueueDeclareOk dlqQueue = await dlqChannel.QueueDeclareAsync(
+            queue: string.Empty,
+            durable: false,
+            exclusive: true,
+            autoDelete: true);
+        await dlqChannel.QueueBindAsync(dlqQueue.QueueName, "corvus.dead-letter", "amqp.test.dl.dead-letter");
+
+        RabbitMQ.Client.Events.AsyncEventingBasicConsumer dlqConsumer = new(dlqChannel);
+        dlqConsumer.ReceivedAsync += (sender, ea) =>
+        {
+            dlqPayload = ea.Body.ToArray();
+            dlqReceived.Release();
+            return Task.CompletedTask;
+        };
+
+        await dlqChannel.BasicConsumeAsync(
+            queue: dlqQueue.QueueName,
+            autoAck: true,
+            consumerTag: string.Empty,
+            noLocal: false,
+            exclusive: false,
+            arguments: null,
+            consumer: dlqConsumer,
+            cancellationToken: default);
+
+        await Task.Delay(300);
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => throw new InvalidOperationException("Intentional failure"));
+
+        await Task.Delay(300);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"order":"DL-001"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter message was not received on DLQ.");
+        Assert.IsNotNull(dlqPayload);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task AbortActionStopsSubscription()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Abort);
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.abort",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-abort",
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "amqp.test.abort"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                throw new InvalidOperationException("Trigger abort");
+            });
+
+        await Task.Delay(300);
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":1}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc1.RootElement);
+        await Task.Delay(500);
+
+        int countAfterAbort = handlerCallCount;
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":2}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(500);
+
+        Assert.AreEqual(1, policy.Invocations.Count, "Error policy should be invoked exactly once.");
+        Assert.AreEqual(countAfterAbort, handlerCallCount, "Handler should not be called after abort.");
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task MiddlewareWrapsHandlerExecution()
+    {
+        int middlewareCallCount = 0;
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.mw",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-mw",
+            HandlerMiddleware = async (operation, ct) =>
+            {
+                Interlocked.Increment(ref middlewareCallCount);
+                await operation(ct).ConfigureAwait(false);
+            },
+        });
+
+        ReadOnlyMemory<byte> channel = "amqp.test.mw"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(300);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"data":"mw-test"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(wasReceived, "Message was not received through middleware.");
+        Assert.AreEqual(1, middlewareCallCount, "Middleware should be called exactly once.");
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task MiddlewareExhaustionFallsThroughToErrorPolicy()
+    {
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Skip);
+        int retryCount = 0;
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.mw.exhaust",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-mw-exhaust",
+            ErrorPolicy = policy,
+            HandlerMiddleware = async (operation, ct) =>
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    try
+                    {
+                        await operation(ct).ConfigureAwait(false);
+                        return;
+                    }
+                    catch (InvalidOperationException) when (i < 2)
+                    {
+                        Interlocked.Increment(ref retryCount);
+                    }
+                }
+
+                await operation(ct).ConfigureAwait(false);
+            },
+        });
+
+        ReadOnlyMemory<byte> channel = "amqp.test.mw.exhaust"u8.ToArray();
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => throw new InvalidOperationException("Always fails"));
+
+        await Task.Delay(300);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"data":"exhaust"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(1000);
+
+        Assert.AreEqual(2, retryCount, "Middleware should have retried 2 times.");
+        Assert.IsTrue(policy.Invocations.Count > 0, "Error policy should be invoked after middleware exhaustion.");
+        Assert.AreEqual(MessageErrorKind.Handler, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RequestReplyTimeoutThrows()
+    {
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.req",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-req",
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "amqp.test.req"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "amqp.test.reply"u8.ToArray();
+        byte[] correlationId = "timeout-corr-a01"u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+        using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                cancellationToken: cts.Token));
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task OperationsAfterDisposeThrowObjectDisposedException()
+    {
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.disposed",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-disposed",
+        });
+
+        await transport.DisposeAsync();
+
+        ReadOnlyMemory<byte> channel = "amqp.test.disposed"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}"""u8.ToArray());
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.PublishAsync(channel, doc.RootElement));
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.SubscribeAsync<JsonElement>(channel, (p, h, ct) => ValueTask.CompletedTask));
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
+                channel,
+                channel,
+                doc.RootElement,
+                "corr"u8.ToArray()));
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(
@@ -342,6 +647,31 @@ public class AmqpTransportTests
         {
             actions.Add(context.ErrorKind);
             return ValueTask.FromResult(MessageErrorAction.Skip);
+        }
+    }
+
+    private sealed class ConfigurableErrorPolicy(
+        MessageErrorAction deserializationAction = MessageErrorAction.Skip,
+        MessageErrorAction handlerAction = MessageErrorAction.Skip,
+        MessageErrorAction transportAction = MessageErrorAction.Skip) : IMessageErrorPolicy
+    {
+        public List<(MessageErrorKind Kind, Exception Exception)> Invocations { get; } = [];
+
+        public ValueTask<MessageErrorAction> HandleErrorAsync(
+            Exception exception,
+            MessageErrorContext context,
+            CancellationToken cancellationToken)
+        {
+            this.Invocations.Add((context.ErrorKind, exception));
+            MessageErrorAction action = context.ErrorKind switch
+            {
+                MessageErrorKind.Deserialization => deserializationAction,
+                MessageErrorKind.Handler => handlerAction,
+                MessageErrorKind.Transport => transportAction,
+                _ => MessageErrorAction.Skip,
+            };
+
+            return ValueTask.FromResult(action);
         }
     }
 }
