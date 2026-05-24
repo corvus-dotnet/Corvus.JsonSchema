@@ -8,6 +8,7 @@ using System.Text;
 using Corvus.Text.Json.Internal;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Formatter;
 using MQTTnet.Packets;
 using MQTTnet.Protocol;
 
@@ -73,6 +74,7 @@ public sealed class MqttMessageTransport : IMessageTransport
 
         MqttClientOptionsBuilder optionsBuilder = new MqttClientOptionsBuilder()
             .WithTcpServer(options.Host, options.Port)
+            .WithProtocolVersion(MqttProtocolVersion.V500)
             .WithCleanSession(options.CleanSession)
             .WithKeepAlivePeriod(TimeSpan.FromSeconds(options.KeepAliveSeconds));
 

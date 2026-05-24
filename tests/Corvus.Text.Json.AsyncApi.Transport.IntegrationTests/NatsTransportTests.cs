@@ -31,7 +31,11 @@ public class NatsTransportTests
     [ClassCleanup]
     public static async Task ClassCleanup()
     {
-        await s_transport.DisposeAsync();
+        if (s_transport is not null)
+        {
+            await s_transport.DisposeAsync();
+        }
+
         await NatsFixture.StopAsync();
     }
 
@@ -41,13 +45,13 @@ public class NatsTransportTests
         // Arrange
         ReadOnlyMemory<byte> channel = "test.roundtrip"u8.ToArray();
         using var received = new SemaphoreSlim(0, 1);
-        JsonElement receivedPayload = default;
+        JsonValueKind receivedPayloadKind = JsonValueKind.Undefined;
 
         await s_transport.SubscribeAsync<JsonElement>(
             channel,
             (payload, headers, ct) =>
             {
-                receivedPayload = payload;
+                receivedPayloadKind = payload.ValueKind;
                 received.Release();
                 return ValueTask.CompletedTask;
             });
@@ -59,7 +63,7 @@ public class NatsTransportTests
         // Assert
         bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
-        Assert.AreEqual(JsonValueKind.Object, receivedPayload.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
 
         await s_transport.UnsubscribeAsync(channel);
     }
@@ -70,13 +74,13 @@ public class NatsTransportTests
         // Arrange
         ReadOnlyMemory<byte> channel = "test.sub-first"u8.ToArray();
         using var received = new SemaphoreSlim(0, 1);
-        JsonElement receivedPayload = default;
+        JsonValueKind receivedPayloadKind = JsonValueKind.Undefined;
 
         await s_transport.SubscribeAsync<JsonElement>(
             channel,
             (payload, headers, ct) =>
             {
-                receivedPayload = payload;
+                receivedPayloadKind = payload.ValueKind;
                 received.Release();
                 return ValueTask.CompletedTask;
             });
@@ -91,7 +95,7 @@ public class NatsTransportTests
         // Assert
         bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
-        Assert.AreEqual(JsonValueKind.Object, receivedPayload.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
 
         await s_transport.UnsubscribeAsync(channel);
     }
@@ -102,13 +106,13 @@ public class NatsTransportTests
         // Arrange
         ReadOnlyMemory<byte> channel = "test.headers"u8.ToArray();
         using var received = new SemaphoreSlim(0, 1);
-        JsonElement receivedHeaders = default;
+        JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
 
         await s_transport.SubscribeAsync<JsonElement>(
             channel,
             (payload, headers, ct) =>
             {
-                receivedHeaders = headers;
+                receivedHeadersKind = headers.ValueKind;
                 received.Release();
                 return ValueTask.CompletedTask;
             });
@@ -123,7 +127,7 @@ public class NatsTransportTests
         // Assert
         bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
-        Assert.AreEqual(JsonValueKind.Object, receivedHeaders.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
 
         await s_transport.UnsubscribeAsync(channel);
     }

@@ -37,7 +37,11 @@ public class KafkaTransportTests
     [ClassCleanup]
     public static async Task ClassCleanup()
     {
-        await s_transport.DisposeAsync();
+        if (s_transport is not null)
+        {
+            await s_transport.DisposeAsync();
+        }
+
         await KafkaFixture.StopAsync();
     }
 
@@ -47,13 +51,13 @@ public class KafkaTransportTests
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes($"kafka-roundtrip-{topicSuffix}");
         using var received = new SemaphoreSlim(0, 1);
-        JsonElement receivedPayload = default;
+        JsonValueKind receivedPayloadKind = JsonValueKind.Undefined;
 
         await s_transport.SubscribeAsync<JsonElement>(
             channel,
             (payload, headers, ct) =>
             {
-                receivedPayload = payload;
+                receivedPayloadKind = payload.ValueKind;
                 received.Release();
                 return ValueTask.CompletedTask;
             });
@@ -65,7 +69,7 @@ public class KafkaTransportTests
 
         bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
-        Assert.AreEqual(JsonValueKind.Object, receivedPayload.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
 
         await s_transport.UnsubscribeAsync(channel);
     }
@@ -76,13 +80,13 @@ public class KafkaTransportTests
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes($"kafka-headers-{topicSuffix}");
         using var received = new SemaphoreSlim(0, 1);
-        JsonElement receivedHeaders = default;
+        JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
 
         await s_transport.SubscribeAsync<JsonElement>(
             channel,
             (payload, headers, ct) =>
             {
-                receivedHeaders = headers;
+                receivedHeadersKind = headers.ValueKind;
                 received.Release();
                 return ValueTask.CompletedTask;
             });
@@ -95,7 +99,7 @@ public class KafkaTransportTests
 
         bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
-        Assert.AreEqual(JsonValueKind.Object, receivedHeaders.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
 
         await s_transport.UnsubscribeAsync(channel);
     }

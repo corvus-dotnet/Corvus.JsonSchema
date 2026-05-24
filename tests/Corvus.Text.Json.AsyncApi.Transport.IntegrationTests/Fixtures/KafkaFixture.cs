@@ -26,7 +26,6 @@ internal static class KafkaFixture
     public static async Task StartAsync()
     {
         s_container = new KafkaBuilder()
-            .WithStartupCallback((container, ct) => Task.CompletedTask)
             .Build();
         await s_container.StartAsync().ConfigureAwait(false);
     }

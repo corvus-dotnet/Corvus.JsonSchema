@@ -33,10 +33,13 @@ internal static class MqttFixture
     /// <returns>A task that completes when the container is ready.</returns>
     public static async Task StartAsync()
     {
+        // Mosquitto 2.x requires explicit config for anonymous access
+        byte[] config = "listener 1883\nallow_anonymous true\n"u8.ToArray();
+
         s_container = new ContainerBuilder()
             .WithImage("eclipse-mosquitto:2")
             .WithPortBinding(MqttPort, true)
-            .WithCommand("mosquitto", "-c", "/dev/null", "-p", MqttPort.ToString(), "-v")
+            .WithResourceMapping(config, "/mosquitto/config/mosquitto.conf")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(MqttPort))
             .Build();
 
