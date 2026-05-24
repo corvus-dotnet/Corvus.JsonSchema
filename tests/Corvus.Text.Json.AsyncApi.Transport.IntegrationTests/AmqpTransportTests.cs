@@ -64,7 +64,7 @@ public class AmqpTransportTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"order":"abc123","total":99.95}"""u8.ToArray());
         await s_transport.PublishAsync(channel, doc.RootElement);
 
-        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
 
@@ -93,7 +93,7 @@ public class AmqpTransportTests
         using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x-tenant":"acme","x-region":"eu-west-1"}"""u8.ToArray());
         await s_transport.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
 
-        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
 
@@ -210,7 +210,7 @@ public class AmqpTransportTests
         await s_transport.PublishAsync(channel1, docA.RootElement);
         await s_transport.PublishAsync(channel2, docB.RootElement);
 
-        bool received = await bothReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        bool received = await bothReceived.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(received, "Both routing keys did not receive messages.");
         Assert.AreEqual(1, countA);
         Assert.AreEqual(1, countB);

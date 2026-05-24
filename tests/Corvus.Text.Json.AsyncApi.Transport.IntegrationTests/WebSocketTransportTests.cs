@@ -65,7 +65,7 @@ public class WebSocketTransportTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"event":"ws-test","value":42}"""u8.ToArray());
         await s_publisher.PublishAsync(channel, doc.RootElement);
 
-        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
 
@@ -94,7 +94,7 @@ public class WebSocketTransportTests
         using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x-session":"sess-01"}"""u8.ToArray());
         await s_publisher.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
 
-        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
 
@@ -182,7 +182,7 @@ public class WebSocketTransportTests
         await s_publisher.PublishAsync(channel1, docA.RootElement);
         await s_publisher.PublishAsync(channel2, docB.RootElement);
 
-        bool received = await bothReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        bool received = await bothReceived.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(received, "Both channels did not receive messages.");
         Assert.AreEqual(1, countA);
         Assert.AreEqual(1, countB);

@@ -351,7 +351,18 @@ public sealed class KafkaMessageTransport : IMessageTransport
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                ConsumeResult<Null, byte[]>? result = consumer.Consume(TimeSpan.FromMilliseconds(this.options.PollTimeoutMs));
+                ConsumeResult<Null, byte[]>? result;
+                try
+                {
+                    result = consumer.Consume(TimeSpan.FromMilliseconds(this.options.PollTimeoutMs));
+                }
+                catch (ConsumeException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // Transient errors (e.g., topic not yet auto-created) — retry after a brief delay.
+                    await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
                 if (result?.IsPartitionEOF != false)
                 {
                     continue;
@@ -477,7 +488,17 @@ public sealed class KafkaMessageTransport : IMessageTransport
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                ConsumeResult<Null, byte[]>? result = consumer.Consume(TimeSpan.FromMilliseconds(100));
+                ConsumeResult<Null, byte[]>? result;
+                try
+                {
+                    result = consumer.Consume(TimeSpan.FromMilliseconds(100));
+                }
+                catch (ConsumeException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
                 if (result?.IsPartitionEOF != false)
                 {
                     continue;

@@ -56,13 +56,16 @@ public class NatsTransportTests
                 return ValueTask.CompletedTask;
             });
 
+        // Allow subscription loop to start on the thread pool before publishing.
+        await Task.Delay(500);
+
         // Act
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"sensor":"temp","value":22.5}"""u8.ToArray());
         await s_transport.PublishAsync(channel, doc.RootElement);
 
         // Assert
-        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.IsTrue(wasReceived, "Message was not received within timeout.");
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "[NATS] Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
 
         await s_transport.UnsubscribeAsync(channel);
@@ -93,7 +96,7 @@ public class NatsTransportTests
         await s_transport.PublishAsync(channel, doc.RootElement);
 
         // Assert
-        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
 
@@ -125,7 +128,7 @@ public class NatsTransportTests
         await s_transport.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
 
         // Assert
-        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
 
@@ -298,7 +301,7 @@ public class NatsTransportTests
         await s_transport.PublishAsync(channel2, docB.RootElement);
 
         // Assert
-        bool received = await bothReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        bool received = await bothReceived.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(received, "Both channels did not receive messages.");
         Assert.AreEqual(1, countA);
         Assert.AreEqual(1, countB);

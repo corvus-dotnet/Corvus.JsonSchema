@@ -28,6 +28,12 @@ public class KafkaTransportTests
             BootstrapServers = KafkaFixture.BootstrapServers,
             GroupId = "corvus-test-group",
             AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig
+            {
+                // Fast metadata refresh for tests — topics are auto-created
+                // by the producer and the consumer must discover them quickly.
+                TopicMetadataRefreshIntervalMs = 1000,
+            },
         });
 
         // Allow Kafka broker to be fully ready

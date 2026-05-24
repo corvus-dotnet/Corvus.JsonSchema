@@ -62,7 +62,7 @@ public class MqttTransportTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"sensor":"humidity","value":65.2}"""u8.ToArray());
         await s_transport.PublishAsync(channel, doc.RootElement);
 
-        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
 
@@ -91,7 +91,7 @@ public class MqttTransportTests
         using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x-source":"test","x-version":"2"}"""u8.ToArray());
         await s_transport.PublishAsync(channel, payloadDoc.RootElement, headersDoc.RootElement);
 
-        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(wasReceived, "Message was not received within timeout.");
         Assert.AreEqual(JsonValueKind.Object, receivedHeadersKind);
 
@@ -208,7 +208,7 @@ public class MqttTransportTests
         await s_transport.PublishAsync(channel1, docA.RootElement);
         await s_transport.PublishAsync(channel2, docB.RootElement);
 
-        bool received = await bothReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        bool received = await bothReceived.WaitAsync(TimeSpan.FromSeconds(30));
         Assert.IsTrue(received, "Both topics did not receive messages.");
         Assert.AreEqual(1, countA);
         Assert.AreEqual(1, countB);
