@@ -30,6 +30,10 @@ internal sealed class AsyncApiGenerateSettings : AsyncApiSettings
     [CommandOption("--force")]
     [Description("Force regeneration even if the lock file indicates no changes.")]
     public bool Force { get; init; }
+
+    [CommandOption("--spec-url")]
+    [Description("The original URL of the API description. When set, the spec is fetched from this URL and stored locally. The URL is recorded in the lock file for update-style re-fetch.")]
+    public string? SpecUrl { get; init; }
 }
 
 #endif

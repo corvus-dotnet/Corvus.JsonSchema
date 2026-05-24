@@ -1,0 +1,69 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Dynamic Multi-Message Consumer",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "production": {
+      "host": "broker.example.com:9092",
+      "protocol": "kafka",
+      "security": [
+        { "$ref": "#/components/securitySchemes/oauth" }
+      ]
+    }
+  },
+  "channels": {
+    "events": {
+      "address": null,
+      "servers": [
+        { "$ref": "#/servers/production" }
+      ],
+      "messages": {
+        "EventA": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "typeA": { "type": "string" }
+            },
+            "required": ["typeA"]
+          }
+        },
+        "EventB": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "typeB": { "type": "integer" }
+            },
+            "required": ["typeB"]
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "consumeEvents": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/events" },
+      "messages": [
+        { "$ref": "#/channels/events/messages/EventA" },
+        { "$ref": "#/channels/events/messages/EventB" }
+      ]
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://auth.example.com/token",
+            "scopes": {
+              "events:read": "Read events"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -12,14 +12,16 @@ namespace Corvus.Text.Json.AsyncApi.CodeGeneration;
 /// <param name="Protocol">The protocol (e.g., "kafka", "amqp", "mqtt").</param>
 /// <param name="Pathname">The optional pathname (e.g., "/vhost").</param>
 /// <param name="Variables">The server URL variables with default values.</param>
-/// <param name="SecuritySchemes">The security scheme names required by this server.</param>
+/// <param name="SecuritySchemes">The security scheme information for this server.</param>
+/// <param name="BindingsJson">The raw JSON of the server bindings, or <c>null</c> if no bindings are present.</param>
 public readonly record struct ServerInfo(
     string Name,
     string Host,
     string Protocol,
     string? Pathname,
     IReadOnlyList<ServerVariable> Variables,
-    IReadOnlyList<string> SecuritySchemes);
+    IReadOnlyList<SecuritySchemeInfo> SecuritySchemes,
+    string? BindingsJson);
 
 /// <summary>
 /// A server URL variable with optional enum constraint and default value.
@@ -33,3 +35,12 @@ public readonly record struct ServerVariable(
     string? DefaultValue,
     IReadOnlyList<string> EnumValues,
     string? Description);
+
+/// <summary>
+/// Describes a security scheme referenced by a server.
+/// </summary>
+/// <param name="Name">The security scheme name (key in components/securitySchemes).</param>
+/// <param name="Type">The scheme type string from the specification (e.g., "userPassword", "apiKey", "oauth2").</param>
+public readonly record struct SecuritySchemeInfo(
+    string Name,
+    string Type);

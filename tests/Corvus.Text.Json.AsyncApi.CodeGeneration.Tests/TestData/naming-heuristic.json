@@ -53,6 +53,21 @@
           }
         }
       }
+    },
+    "events/v2": {
+      "address": "events/v2/stream",
+      "messages": {
+        "eventPublished": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "eventType": { "type": "string" },
+              "eventData": { "type": "object" }
+            },
+            "required": ["eventType"]
+          }
+        }
+      }
     }
   },
   "components": {
@@ -74,6 +89,22 @@
           "email": { "type": "string", "format": "email" }
         },
         "required": ["customerId", "name"]
+      },
+      "data~format": {
+        "type": "object",
+        "properties": {
+          "encoding": { "type": "string" },
+          "compression": { "type": "string" }
+        },
+        "required": ["encoding"]
+      },
+      "v1/legacy": {
+        "type": "object",
+        "properties": {
+          "legacyId": { "type": "string" },
+          "migrated": { "type": "boolean" }
+        },
+        "required": ["legacyId"]
       }
     },
     "messages": {

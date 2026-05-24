@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.Internal;
@@ -22,6 +23,9 @@ namespace Corvus.Text.Json.AsyncApi.Runtime.Tests;
 /// </remarks>
 internal sealed class InMemoryMessageTransport : IMessageTransport
 {
+    [ThreadStatic]
+    private static ArrayBufferWriter<byte>? t_serializeBuffer;
+
     private readonly object syncRoot = new();
     private readonly List<PublishedMessage> publishedMessages = [];
     private readonly List<DeadLetteredMessage> deadLetteredMessages = [];
@@ -40,16 +44,17 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
 
     /// <inheritdoc/>
     public ValueTask PublishAsync<TPayload>(
-        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
         in TPayload payload,
         in JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
-        byte[] payloadBytes = SerializeToBytes(in payload);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        byte[] payloadBytes = SerializeToOwnedBytes(in payload);
         byte[] headerBytes = headers.ValueKind == JsonValueKind.Undefined
             ? []
-            : SerializeToBytes(in headers);
+            : SerializeToOwnedBytes(in headers);
 
         lock (this.syncRoot)
         {
@@ -61,19 +66,21 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
 
     /// <inheritdoc/>
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
-        string requestChannel,
-        string replyChannel,
+        ReadOnlyMemory<byte> requestChannelUtf8,
+        ReadOnlyMemory<byte> replyChannelUtf8,
         in TRequest request,
-        string correlationId,
+        ReadOnlyMemory<byte> correlationIdUtf8,
         in JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        byte[] requestBytes = SerializeToBytes(in request);
+        string requestChannel = Encoding.UTF8.GetString(requestChannelUtf8.Span);
+        string correlationId = Encoding.UTF8.GetString(correlationIdUtf8.Span);
+        byte[] requestBytes = SerializeToOwnedBytes(in request);
         byte[] headerBytes = headers.ValueKind == JsonValueKind.Undefined
             ? []
-            : SerializeToBytes(in headers);
+            : SerializeToOwnedBytes(in headers);
 
         lock (this.syncRoot)
         {
@@ -92,11 +99,13 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
 
     /// <inheritdoc/>
     public ValueTask SubscribeAsync<TPayload>(
-        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>
     {
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+
         lock (this.syncRoot)
         {
             this.subscriptions[channel] = handler;
@@ -106,8 +115,10 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
     }
 
     /// <inheritdoc/>
-    public ValueTask UnsubscribeAsync(string channel, CancellationToken cancellationToken = default)
+    public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+
         lock (this.syncRoot)
         {
             this.subscriptions.Remove(channel);
@@ -118,19 +129,22 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
 
     /// <inheritdoc/>
     public ValueTask DeadLetterAsync(
-        string deadLetterChannel,
-        string originalChannel,
+        ReadOnlyMemory<byte> deadLetterChannelUtf8,
+        ReadOnlyMemory<byte> originalChannelUtf8,
         in JsonElement payload,
         in JsonElement headers,
         Exception exception,
         CancellationToken cancellationToken = default)
     {
+        string deadLetterChannel = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
+        string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
+
         byte[] payloadBytes = payload.ValueKind != JsonValueKind.Undefined
-            ? SerializeToBytes(in payload)
+            ? SerializeToOwnedBytes(in payload)
             : [];
 
         byte[] headerBytes = headers.ValueKind != JsonValueKind.Undefined
-            ? SerializeToBytes(in headers)
+            ? SerializeToOwnedBytes(in headers)
             : [];
 
         lock (this.syncRoot)
@@ -172,9 +186,12 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
         }
 
         TPayload payload = JsonElementHelpers.ParseValue<TPayload>(payloadJson.Span);
-        JsonElement headers = headersJson.Length > 0
-            ? JsonElementHelpers.ParseValue<JsonElement>(headersJson.Span)
-            : default;
+
+        JsonElement headers = default;
+        if (headersJson.Length > 0)
+        {
+            headers = JsonElementHelpers.ParseValue<JsonElement>(headersJson.Span);
+        }
 
         await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
             payload, headers, cancellationToken).ConfigureAwait(false);
@@ -208,21 +225,22 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
     {
         (byte[] replyBytes, byte[] headerBytes) = await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-        TReply reply = ParseReply<TReply>(replyBytes);
-        JsonElement headers = headerBytes.Length > 0 ? ParseReply<JsonElement>(headerBytes) : default;
+        TReply reply = JsonElementHelpers.ParseValue<TReply>(replyBytes);
+
+        JsonElement headers = default;
+        if (headerBytes.Length > 0)
+        {
+            headers = JsonElementHelpers.ParseValue<JsonElement>(headerBytes);
+        }
+
         return (reply, headers);
     }
 
-    private static T ParseReply<T>(byte[] bytes)
+    private static byte[] SerializeToOwnedBytes<T>(in T value)
         where T : struct, IJsonElement<T>
     {
-        return JsonElementHelpers.ParseValue<T>(bytes);
-    }
-
-    private static byte[] SerializeToBytes<T>(in T value)
-        where T : struct, IJsonElement<T>
-    {
-        ArrayBufferWriter<byte> buffer = new(256);
+        ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
+        buffer.Clear();
         using Utf8JsonWriter writer = new(buffer);
         value.WriteTo(writer);
         writer.Flush();

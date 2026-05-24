@@ -1,0 +1,72 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Secured Consumer Service",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "production": {
+      "host": "{region}.broker.example.com:9092",
+      "protocol": "kafka",
+      "bindings": {
+        "kafka": {
+          "schemaRegistryUrl": "https://registry.example.com",
+          "schemaRegistryVendor": "confluent"
+        }
+      },
+      "variables": {
+        "region": {
+          "default": "us-east-1",
+          "enum": ["us-east-1", "eu-west-1"]
+        }
+      },
+      "security": [
+        { "$ref": "#/components/securitySchemes/apiKey" }
+      ]
+    }
+  },
+  "channels": {
+    "orders": {
+      "address": "shop.orders",
+      "servers": [
+        { "$ref": "#/servers/production" }
+      ],
+      "messages": {
+        "OrderPlaced": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "orderId": { "type": "string" },
+              "total": { "type": "number" }
+            },
+            "required": ["orderId", "total"]
+          },
+          "bindings": {
+            "kafka": {
+              "key": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "consumeOrders": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/orders" },
+      "messages": [
+        { "$ref": "#/channels/orders/messages/OrderPlaced" }
+      ]
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "user"
+      }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "AsyncApiLockFile",
+    "description": "Records the parameters used for a code generation run so subsequent runs can skip generation when nothing has changed.",
+    "type": "object",
+    "required": [
+        "specFileHash",
+        "specVersion",
+        "rootNamespace",
+        "mode",
+        "includeChannels",
+        "excludeChannels",
+        "tags",
+        "generatedFiles",
+        "generatedAt",
+        "generatorVersion"
+    ],
+    "properties": {
+        "specFileHash": {
+            "type": "string",
+            "description": "The SHA-256 hash of the RFC 8785 canonical form of the spec content."
+        },
+        "descriptionLocation": {
+            "type": "string",
+            "format": "uri",
+            "description": "The original URL of the API description, if fetched from a remote source."
+        },
+        "specVersion": {
+            "type": "string",
+            "description": "The AsyncAPI spec version used for generation (e.g. '3.0' or '2.6')."
+        },
+        "rootNamespace": {
+            "type": "string",
+            "description": "The root namespace for generated types."
+        },
+        "mode": {
+            "type": "string",
+            "description": "The generation mode: producer, consumer, or both."
+        },
+        "includeChannels": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The include channel patterns used for filtering."
+        },
+        "excludeChannels": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The exclude channel patterns used for filtering."
+        },
+        "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The tag filters used for operation selection."
+        },
+        "generatedFiles": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The list of generated file names, relative to the output directory."
+        },
+        "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The UTC timestamp of generation."
+        },
+        "generatorVersion": {
+            "type": "string",
+            "description": "The generator assembly version."
+        }
+    },
+    "additionalProperties": false
+}

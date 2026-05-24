@@ -234,6 +234,7 @@
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.CreationAndConversion.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.Numeric.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.Numeric.EnumSwitch.cs" />
+    <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.Reinterpret.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.Uri.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementTensorHelpers.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.DeepEquals.cs" />

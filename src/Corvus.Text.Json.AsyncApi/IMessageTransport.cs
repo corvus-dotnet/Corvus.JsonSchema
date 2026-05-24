@@ -27,6 +27,13 @@ namespace Corvus.Text.Json.AsyncApi;
 /// <item><description>Parse incoming bytes into typed payloads via
 /// <c>ParsedJsonDocument&lt;T&gt;.Parse()</c> for consumers.</description></item>
 /// </list>
+/// <para>
+/// Channel addresses are passed as <see cref="ReadOnlyMemory{T}"/> of UTF-8 bytes.
+/// Transport implementations that need a <see langword="string"/> for their broker API
+/// should convert at the outermost boundary via <c>Encoding.UTF8.GetString()</c>.
+/// This keeps the entire hot path in the UTF-8 domain with zero intermediate string
+/// allocations.
+/// </para>
 /// </remarks>
 public interface IMessageTransport : IAsyncDisposable
 {
@@ -36,7 +43,8 @@ public interface IMessageTransport : IAsyncDisposable
     /// <typeparam name="TPayload">The payload type. Must implement
     /// <see cref="IJsonElement{TPayload}"/> so the transport can serialize it
     /// directly via <c>WriteTo(Utf8JsonWriter)</c>.</typeparam>
-    /// <param name="channel">The channel address.</param>
+    /// <param name="channelUtf8">The channel address as UTF-8 bytes. The memory
+    /// remains valid until this method completes.</param>
     /// <param name="payload">The message payload, passed by <c>in</c> reference.
     /// The transport must consume the payload synchronously before any async I/O.</param>
     /// <param name="headers">Optional message headers. When not <c>default</c>,
@@ -44,73 +52,143 @@ public interface IMessageTransport : IAsyncDisposable
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
     ValueTask PublishAsync<TPayload>(
-        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
         in TPayload payload,
         in JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>;
 
     /// <summary>
+    /// Publishes a typed message payload to the specified channel with protocol-specific metadata.
+    /// </summary>
+    /// <typeparam name="TPayload">The payload type.</typeparam>
+    /// <param name="channelUtf8">The channel address as UTF-8 bytes.</param>
+    /// <param name="payload">The message payload.</param>
+    /// <param name="context">The message context containing bindings and content type.</param>
+    /// <param name="headers">Optional message headers.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    ValueTask PublishAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        in TPayload payload,
+        in MessageContext context,
+        in JsonElement headers = default,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        return PublishAsync(channelUtf8, in payload, in headers, cancellationToken);
+    }
+
+    /// <summary>
     /// Sends a request message and waits for a correlated reply.
     /// </summary>
     /// <typeparam name="TRequest">The request payload type.</typeparam>
     /// <typeparam name="TReply">The expected reply payload type.</typeparam>
-    /// <param name="requestChannel">The channel to send the request on.</param>
-    /// <param name="replyChannel">The channel to listen for the reply on.</param>
+    /// <param name="requestChannelUtf8">The channel to send the request on, as UTF-8 bytes.</param>
+    /// <param name="replyChannelUtf8">The channel to listen for the reply on, as UTF-8 bytes.</param>
     /// <param name="request">The request payload.</param>
-    /// <param name="correlationId">A correlation identifier linking request to reply.</param>
+    /// <param name="correlationIdUtf8">A correlation identifier linking request to reply, as UTF-8 bytes.
+    /// The memory must remain valid until this method completes. For GUIDs, use
+    /// <c>Guid.TryFormat(Span&lt;byte&gt;, out _, "D")</c> to format directly to a <c>byte[36]</c>
+    /// without allocating an intermediate string.</param>
     /// <param name="headers">Optional message headers.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The reply payload and headers.</returns>
     ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
-        string requestChannel,
-        string replyChannel,
+        ReadOnlyMemory<byte> requestChannelUtf8,
+        ReadOnlyMemory<byte> replyChannelUtf8,
         in TRequest request,
-        string correlationId,
+        ReadOnlyMemory<byte> correlationIdUtf8,
         in JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>;
 
     /// <summary>
+    /// Sends a request message and waits for a correlated reply, with protocol-specific metadata.
+    /// </summary>
+    /// <typeparam name="TRequest">The request payload type.</typeparam>
+    /// <typeparam name="TReply">The expected reply payload type.</typeparam>
+    /// <param name="requestChannelUtf8">The channel to send the request on, as UTF-8 bytes.</param>
+    /// <param name="replyChannelUtf8">The channel to listen for the reply on, as UTF-8 bytes.</param>
+    /// <param name="request">The request payload.</param>
+    /// <param name="correlationIdUtf8">A correlation identifier linking request to reply, as UTF-8 bytes.</param>
+    /// <param name="context">The message context containing bindings and content type.</param>
+    /// <param name="headers">Optional message headers.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The reply payload and headers.</returns>
+    ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> requestChannelUtf8,
+        ReadOnlyMemory<byte> replyChannelUtf8,
+        in TRequest request,
+        ReadOnlyMemory<byte> correlationIdUtf8,
+        in MessageContext context,
+        in JsonElement headers = default,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        return RequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, in request, correlationIdUtf8, in headers, cancellationToken);
+    }
+
+    /// <summary>
     /// Subscribes to messages on the specified channel, delivering typed payloads.
     /// </summary>
     /// <typeparam name="TPayload">The payload type. The transport parses incoming
     /// bytes into this type before invoking the handler.</typeparam>
-    /// <param name="channel">The channel address.</param>
+    /// <param name="channelUtf8">The channel address as UTF-8 bytes.</param>
     /// <param name="handler">The message handler delegate receiving typed payloads
     /// and optional headers.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
     ValueTask SubscribeAsync<TPayload>(
-        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
         CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload>;
 
     /// <summary>
+    /// Subscribes to messages on the specified channel with protocol-specific metadata.
+    /// </summary>
+    /// <typeparam name="TPayload">The payload type.</typeparam>
+    /// <param name="channelUtf8">The channel address as UTF-8 bytes.</param>
+    /// <param name="handler">The message handler delegate.</param>
+    /// <param name="context">The message context containing bindings and content type.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    ValueTask SubscribeAsync<TPayload>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        in MessageContext context,
+        CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        return SubscribeAsync(channelUtf8, handler, cancellationToken);
+    }
+
+    /// <summary>
     /// Unsubscribes from messages on the specified channel.
     /// </summary>
-    /// <param name="channel">The channel address.</param>
+    /// <param name="channelUtf8">The channel address as UTF-8 bytes.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
     ValueTask UnsubscribeAsync(
-        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Sends a failed message to a dead-letter channel for later inspection or reprocessing.
     /// </summary>
-    /// <param name="deadLetterChannel">The dead-letter channel address.</param>
-    /// <param name="originalChannel">The original channel the message was received on.</param>
+    /// <param name="deadLetterChannelUtf8">The dead-letter channel address as UTF-8 bytes.</param>
+    /// <param name="originalChannelUtf8">The original channel the message was received on, as UTF-8 bytes.</param>
     /// <param name="payload">The raw payload that could not be processed.</param>
     /// <param name="headers">The raw headers associated with the failed message.</param>
     /// <param name="exception">The exception that caused the message to be dead-lettered.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
     ValueTask DeadLetterAsync(
-        string deadLetterChannel,
-        string originalChannel,
+        ReadOnlyMemory<byte> deadLetterChannelUtf8,
+        ReadOnlyMemory<byte> originalChannelUtf8,
         in JsonElement payload,
         in JsonElement headers,
         Exception exception,

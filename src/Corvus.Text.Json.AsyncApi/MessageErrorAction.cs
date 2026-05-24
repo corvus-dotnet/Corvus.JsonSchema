@@ -5,7 +5,8 @@
 namespace Corvus.Text.Json.AsyncApi;
 
 /// <summary>
-/// Specifies the action to take when an error occurs during message processing.
+/// Specifies the action to take when an error occurs during message processing
+/// after the resilience middleware has exhausted all retry attempts.
 /// </summary>
 public enum MessageErrorAction
 {
@@ -15,17 +16,12 @@ public enum MessageErrorAction
     Skip,
 
     /// <summary>
-    /// Abort the consumer (unsubscribe and stop processing).
-    /// </summary>
-    Abort,
-
-    /// <summary>
-    /// Retry processing the current message.
-    /// </summary>
-    Retry,
-
-    /// <summary>
     /// Send the message to a dead-letter channel and continue consuming.
     /// </summary>
     DeadLetter,
+
+    /// <summary>
+    /// Abort the consumer (unsubscribe and stop processing).
+    /// </summary>
+    Abort,
 }

@@ -5,74 +5,66 @@
 namespace Corvus.Text.Json.AsyncApi;
 
 /// <summary>
-/// A default implementation of <see cref="IMessageErrorPolicy"/> with configurable
-/// retry limits and a fallback action after retries are exhausted.
+/// A default implementation of <see cref="IMessageErrorPolicy"/> that returns a
+/// configurable action for terminal failures.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The default policy allows up to <see cref="MaxRetries"/> retry attempts per message.
-/// If retries are exhausted, the <see cref="ExhaustedAction"/> is taken (which defaults
-/// to <see cref="MessageErrorAction.Skip"/>).
+/// Retry logic is handled by the <see cref="MessageHandlerMiddleware"/> (e.g., Polly).
+/// This policy only decides what to do with messages that have permanently failed
+/// (after all middleware retries are exhausted).
+/// </para>
+/// <para>
+/// Different actions can be configured per <see cref="MessageErrorKind"/>. By default,
+/// deserialization errors are dead-lettered, handler errors are dead-lettered, and
+/// transport errors abort the subscription.
 /// </para>
 /// </remarks>
 public sealed class DefaultMessageErrorPolicy : IMessageErrorPolicy
 {
     /// <summary>
-    /// The default maximum number of retry attempts.
-    /// </summary>
-    public const int DefaultMaxRetries = 3;
-
-    /// <summary>
-    /// The default action when retries are exhausted.
-    /// </summary>
-    public const MessageErrorAction DefaultExhaustedAction = MessageErrorAction.Skip;
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="DefaultMessageErrorPolicy"/> class
-    /// with default settings (3 retries, then skip).
+    /// with default settings: dead-letter handler/deserialization failures, abort on transport errors.
     /// </summary>
     public DefaultMessageErrorPolicy()
-        : this(DefaultMaxRetries, DefaultExhaustedAction)
+        : this(MessageErrorAction.DeadLetter, MessageErrorAction.DeadLetter, MessageErrorAction.Abort)
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DefaultMessageErrorPolicy"/> class.
     /// </summary>
-    /// <param name="maxRetries">The maximum number of retry attempts per message.
-    /// Set to 0 to disable retries (proceed directly to <paramref name="exhaustedAction"/>).</param>
-    /// <param name="exhaustedAction">The action to take after retries are exhausted.
-    /// Must be <see cref="MessageErrorAction.Skip"/>, <see cref="MessageErrorAction.Abort"/>,
-    /// or <see cref="MessageErrorAction.DeadLetter"/>.</param>
+    /// <param name="deserializationAction">The action to take when deserialization fails.</param>
+    /// <param name="handlerAction">The action to take when the handler throws
+    /// (after resilience middleware is exhausted).</param>
+    /// <param name="transportAction">The action to take on transport connectivity errors.</param>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// <paramref name="maxRetries"/> is negative, or <paramref name="exhaustedAction"/>
-    /// is <see cref="MessageErrorAction.Retry"/>.
+    /// Any action is not a valid <see cref="MessageErrorAction"/> value.
     /// </exception>
-    public DefaultMessageErrorPolicy(int maxRetries, MessageErrorAction exhaustedAction)
+    public DefaultMessageErrorPolicy(
+        MessageErrorAction deserializationAction,
+        MessageErrorAction handlerAction,
+        MessageErrorAction transportAction)
     {
-        if (maxRetries < 0)
-        {
-            ThrowHelper.ThrowArgumentOutOfRange(nameof(maxRetries));
-        }
-
-        if (exhaustedAction == MessageErrorAction.Retry)
-        {
-            ThrowHelper.ThrowArgumentOutOfRange(nameof(exhaustedAction));
-        }
-
-        this.MaxRetries = maxRetries;
-        this.ExhaustedAction = exhaustedAction;
+        this.DeserializationAction = deserializationAction;
+        this.HandlerAction = handlerAction;
+        this.TransportAction = transportAction;
     }
 
     /// <summary>
-    /// Gets the maximum number of retry attempts per message.
+    /// Gets the action taken on deserialization errors.
     /// </summary>
-    public int MaxRetries { get; }
+    public MessageErrorAction DeserializationAction { get; }
 
     /// <summary>
-    /// Gets the action to take after retries are exhausted.
+    /// Gets the action taken on handler errors (after middleware retries exhausted).
     /// </summary>
-    public MessageErrorAction ExhaustedAction { get; }
+    public MessageErrorAction HandlerAction { get; }
+
+    /// <summary>
+    /// Gets the action taken on transport connectivity errors.
+    /// </summary>
+    public MessageErrorAction TransportAction { get; }
 
     /// <inheritdoc/>
     public ValueTask<MessageErrorAction> HandleErrorAsync(
@@ -80,10 +72,13 @@ public sealed class DefaultMessageErrorPolicy : IMessageErrorPolicy
         MessageErrorContext context,
         CancellationToken cancellationToken = default)
     {
-        // AttemptNumber is 1-based; after MaxRetries retries, attempt == MaxRetries + 1
-        MessageErrorAction action = context.AttemptNumber <= this.MaxRetries
-            ? MessageErrorAction.Retry
-            : this.ExhaustedAction;
+        MessageErrorAction action = context.ErrorKind switch
+        {
+            MessageErrorKind.Deserialization => this.DeserializationAction,
+            MessageErrorKind.Handler => this.HandlerAction,
+            MessageErrorKind.Transport => this.TransportAction,
+            _ => MessageErrorAction.Skip,
+        };
 
         return new ValueTask<MessageErrorAction>(action);
     }

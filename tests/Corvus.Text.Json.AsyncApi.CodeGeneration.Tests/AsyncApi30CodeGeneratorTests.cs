@@ -335,7 +335,7 @@ public class AsyncApi30CodeGeneratorTests
         Assert.AreEqual("prod", production.Variables[0].DefaultValue);
         Assert.AreEqual(2, production.Variables[0].EnumValues.Count);
         Assert.AreEqual(1, production.SecuritySchemes.Count);
-        Assert.AreEqual("sasl", production.SecuritySchemes[0]);
+        Assert.AreEqual("sasl", production.SecuritySchemes[0].Name);
 
         ServerInfo staging = servers.First(s => s.Name == "staging");
         Assert.AreEqual("/v2", staging.Pathname);
@@ -424,6 +424,20 @@ public class AsyncApi30CodeGeneratorTests
         // Operation-level AMQP bindings (ack is a boolean)
         Assert.IsTrue(bindings.OperationBindings.Amqp.IsNotUndefined());
         Assert.IsTrue((bool)bindings.OperationBindings.Amqp.Ack);
+    }
+
+    [TestMethod]
+    public void ParseBindings_WithMessageName_ExtractsMessageBindings()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "bindings-example.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        ChannelBindingInfo bindings = AsyncApi30CodeGenerator.GetBindings(root, "notifications", "Notification");
+
+        Assert.IsTrue(bindings.HasBindings);
+        Assert.IsTrue(bindings.MessageBindings.IsNotUndefined());
+        Assert.IsTrue(bindings.MessageBindings.Amqp.IsNotUndefined());
     }
 
     [TestMethod]
@@ -1843,6 +1857,174 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Compile_WithBindings_GeneratedCodeCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "bindings-example.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/messages/OrderCreated/payload"] = "Shop.OrderCreatedPayload",
+            ["#/channels/notifications/messages/Notification/payload"] = "Shop.NotificationPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Shop", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Shop.Generated", stubs);
+    }
+
+    [TestMethod]
+    public void Generate_WithBindings_EmitsBindingsConstants()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "bindings-example.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/messages/OrderCreated/payload"] = "Shop.OrderCreatedPayload",
+            ["#/channels/notifications/messages/Notification/payload"] = "Shop.NotificationPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Shop", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // The producer (sendNotification) should have bindings constants
+        GeneratedFile? producer = files.FirstOrDefault(f => f.FileName.Contains("SendNotification"));
+        Assert.IsNotNull(producer, $"No file containing 'SendNotification' found. Files: {string.Join(", ", files.Select(f => f.FileName))}");
+        StringAssert.Contains(producer.Content, "ChannelBindingsBytes");
+        StringAssert.Contains(producer.Content, "OperationBindingsBytes");
+
+        // The consumer (processOrder) should also have bindings constants
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("ProcessOrderConsumer"));
+        Assert.IsNotNull(consumer);
+        StringAssert.Contains(consumer.Content, "ChannelBindingsBytes");
+        StringAssert.Contains(consumer.Content, "OperationBindingsBytes");
+
+        // The producer should reference message bindings from the message wrapper
+        StringAssert.Contains(producer.Content, "MessageBindingsJson");
+    }
+
+    [TestMethod]
+    public void Generate_WithSecuritySchemes_EmitsAuthContext()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "servers-and-tags.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/messages/UserCreated/payload"] = "Users.UserCreatedPayload",
+            ["#/components/messages/UserDeleted/payload"] = "Users.UserDeletedPayload",
+            ["#/components/messages/AuditEntry/payload"] = "Users.AuditEntryPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Users", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // Verify security scheme auth context is emitted in generated code
+        GeneratedFile? producer = files.FirstOrDefault(f => f.FileName.Contains("PublishUserCreated"));
+        Assert.IsNotNull(producer);
+        StringAssert.Contains(producer.Content, "SaslAuthContext");
+        StringAssert.Contains(producer.Content, "MessageAuthenticationContext");
+
+        // Verify compilation succeeds
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Users.Security.Generated", stubs);
+    }
+
+    [TestMethod]
+    public void Generate_ConsumerSecured_EmitsAuthenticationContext()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-secured.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/orders/messages/OrderPlaced/payload"] = "Shop.OrderPlacedPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Shop", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // Should generate consumer (action: receive)
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("ConsumeOrdersConsumer"));
+        Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
+
+        // Consumer should have auth context for apiKey scheme
+        StringAssert.Contains(consumer.Content, "ApiKeyAuthContext");
+        StringAssert.Contains(consumer.Content, "MessageAuthenticationContext");
+        StringAssert.Contains(consumer.Content, "AuthenticateAsync");
+    }
+
+    [TestMethod]
+    public void Generate_ConsumerSecured_ServerUrlBuilderHasBindings()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-secured.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/orders/messages/OrderPlaced/payload"] = "Shop.OrderPlacedPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Shop", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? urlBuilder = files.FirstOrDefault(f => f.FileName == "ServerUrlBuilder.cs");
+        Assert.IsNotNull(urlBuilder, "ServerUrlBuilder should be generated when servers have variables");
+
+        // Should emit server bindings constant
+        StringAssert.Contains(urlBuilder.Content, "ProductionBindingsJsonUtf8");
+        StringAssert.Contains(urlBuilder.Content, "schemaRegistryUrl");
+    }
+
+    [TestMethod]
+    public void Generate_ConsumerSecured_MessageBindingsEmitted()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-secured.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/orders/messages/OrderPlaced/payload"] = "Shop.OrderPlacedPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Shop", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // Message bindings are emitted in the message wrapper struct
+        GeneratedFile? wrapper = files.FirstOrDefault(f => f.FileName.Contains("OrderPlacedMessage"));
+        Assert.IsNotNull(wrapper, "Message wrapper struct should be generated");
+        StringAssert.Contains(wrapper.Content, "MessageBindingsBytes");
+    }
+
+    [TestMethod]
+    public void Compile_ConsumerSecured_GeneratedCodeCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-secured.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/orders/messages/OrderPlaced/payload"] = "Shop.OrderPlacedPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Shop", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Shop.Secured.Generated", stubs);
+    }
+
+    [TestMethod]
     public void SchemaPointerBuilder_ChannelSubscribePayload_BuildsCorrectPointer()
     {
         string result = AsyncApiSchemaPointerBuilder.ChannelSubscribePayload("sensors/readings"u8);
@@ -1868,5 +2050,164 @@ public class AsyncApi30CodeGeneratorTests
     {
         string result = AsyncApiSchemaPointerBuilder.ComponentSchema("a~/b"u8);
         Assert.AreEqual("#/components/schemas/a~0~1b", result);
+    }
+
+    [TestMethod]
+    public void Generate_ConsumerDynamicMultiMessage_EmitsDynamicAddressWithAuth()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-dynamic-multi.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/events/messages/EventA/payload"] = "DynMulti.EventAPayload",
+            ["#/channels/events/messages/EventB/payload"] = "DynMulti.EventBPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("DynMulti", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("ConsumeEventsConsumer"));
+        Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
+
+        // Dynamic address: StartAsync takes a channel parameter and stores it
+        StringAssert.Contains(consumer.Content, "string channel");
+        StringAssert.Contains(consumer.Content, "this.subscribedChannel = channel;");
+    }
+
+    [TestMethod]
+    public void Generate_ConsumerDynamicMultiMessage_EmitsMultiMessageSubscribeWithAuth()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-dynamic-multi.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/events/messages/EventA/payload"] = "DynMulti.EventAPayload",
+            ["#/channels/events/messages/EventB/payload"] = "DynMulti.EventBPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("DynMulti", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? consumer = files.FirstOrDefault(f => f.FileName.Contains("ConsumeEventsConsumer"));
+        Assert.IsNotNull(consumer, "A receive operation should generate a Consumer class");
+
+        // Multi-message with security: subscribes with JsonElement (generic dispatch)
+        StringAssert.Contains(consumer.Content, "SubscribeAsync<Corvus.Text.Json.JsonElement>");
+        // Auth context for OAuth
+        StringAssert.Contains(consumer.Content, "OauthAuthContext");
+        StringAssert.Contains(consumer.Content, "AuthenticateAsync");
+    }
+
+    [TestMethod]
+    public void Compile_ConsumerDynamicMultiMessage_GeneratedCodeCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "consumer-dynamic-multi.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/events/messages/EventA/payload"] = "DynMulti.EventAPayload",
+            ["#/channels/events/messages/EventB/payload"] = "DynMulti.EventBPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("DynMulti", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "DynMulti.Generated", stubs);
+    }
+
+    [TestMethod]
+    public void Generate_RequestReplyStaticAddress_EmitsRequestMethod()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply-static.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/commands/messages/CommandRequest/payload"] = "Cmd.CommandRequestPayload",
+            ["#/channels/commandResponses/messages/CommandResponse/payload"] = "Cmd.CommandResponsePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Cmd", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? producer = files.FirstOrDefault(f => f.FileName.Contains("SendCommandProducer"));
+        Assert.IsNotNull(producer, "A send operation should generate a Producer class");
+
+        // Static reply address: uses the reply channel address directly as a string literal
+        StringAssert.Contains(producer.Content, "SendAndReceiveCommandRequestAsync");
+        StringAssert.Contains(producer.Content, "RequestAsyncCore");
+        StringAssert.Contains(producer.Content, "\"service/command-responses\"");
+    }
+
+    [TestMethod]
+    public void Compile_RequestReplyStaticAddress_GeneratedCodeCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply-static.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/commands/messages/CommandRequest/payload"] = "Cmd.CommandRequestPayload",
+            ["#/channels/commandResponses/messages/CommandResponse/payload"] = "Cmd.CommandResponsePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Cmd", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Cmd.StaticReply.Generated", stubs);
+    }
+
+    [TestMethod]
+    public void Generate_RequestReplyDynamicAddress_EmitsDynamicChannelParam()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply-dynamic.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/rpc/messages/RpcRequest/payload"] = "Rpc.RpcRequestPayload",
+            ["#/channels/rpcResponses/messages/RpcResponse/payload"] = "Rpc.RpcResponsePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Rpc", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        GeneratedFile? producer = files.FirstOrDefault(f => f.FileName.Contains("InvokeRpcProducer"));
+        Assert.IsNotNull(producer, "A send operation should generate a Producer class");
+
+        // Dynamic address: request method takes a channel parameter
+        StringAssert.Contains(producer.Content, "SendAndReceiveRpcRequestAsync");
+        StringAssert.Contains(producer.Content, "string channel");
+    }
+
+    [TestMethod]
+    public void Compile_RequestReplyDynamicAddress_GeneratedCodeCompiles()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply-dynamic.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement;
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/channels/rpc/messages/RpcRequest/payload"] = "Rpc.RpcRequestPayload",
+            ["#/channels/rpcResponses/messages/RpcResponse/payload"] = "Rpc.RpcResponsePayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Rpc", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        string stubs = DynamicCompiler.GenerateTypeStubs(schemaTypeMap);
+        DynamicCompiler.AssertCompiles(files, "Rpc.DynReply.Generated", stubs);
     }
 }

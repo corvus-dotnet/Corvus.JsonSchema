@@ -28,7 +28,18 @@
       "address": "shop.notifications",
       "messages": {
         "Notification": {
-          "$ref": "#/components/messages/Notification"
+          "payload": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string" }
+            }
+          },
+          "bindings": {
+            "amqp": {
+              "contentEncoding": "utf-8",
+              "messageType": "notification.v1"
+            }
+          }
         }
       },
       "bindings": {
@@ -78,14 +89,6 @@
           "type": "object",
           "properties": {
             "orderId": { "type": "string" }
-          }
-        }
-      },
-      "Notification": {
-        "payload": {
-          "type": "object",
-          "properties": {
-            "message": { "type": "string" }
           }
         }
       }

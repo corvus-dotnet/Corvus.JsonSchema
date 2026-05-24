@@ -292,7 +292,7 @@ public sealed class AsyncApi30CodeGenerator
                 }
             }
 
-            List<string> securitySchemes = [];
+            List<SecuritySchemeInfo> securitySchemes = [];
             if (server.Security.IsNotUndefined())
             {
                 foreach (var secItem in server.Security.EnumerateArray())
@@ -314,12 +314,13 @@ public sealed class AsyncApi30CodeGenerator
 
                     if (schemeName is not null)
                     {
-                        securitySchemes.Add(schemeName);
+                        string schemeType = ResolveSecuritySchemeType(doc, schemeName);
+                        securitySchemes.Add(new SecuritySchemeInfo(schemeName, schemeType));
                     }
                 }
             }
 
-            result.Add(new ServerInfo(name, host, protocol, pathname, variables, securitySchemes));
+            result.Add(new ServerInfo(name, host, protocol, pathname, variables, securitySchemes, server.Bindings.IsNotUndefined() ? server.Bindings.ToString() : null));
         }
 
         return [.. result];
@@ -337,10 +338,12 @@ public sealed class AsyncApi30CodeGenerator
     public static ChannelBindingInfo GetBindings(
         AsyncApiDocument doc,
         string channelName,
+        string? messageName = null,
         IAsyncApiReferenceResolver? resolver = null)
     {
         AsyncApiDocument.ChannelBindingsObject channelBindings = default;
         AsyncApiDocument.OperationBindingsObject operationBindings = default;
+        AsyncApiDocument.MessageBindingsObject messageBindings = default;
 
         // Channel-level bindings
         if (doc.ChannelsValue.IsNotUndefined() &&
@@ -413,10 +416,41 @@ public sealed class AsyncApi30CodeGenerator
             }
         }
 
+        // Message-level bindings (from the named message, if specified)
+        if (messageName is not null &&
+            doc.ChannelsValue.IsNotUndefined() &&
+            doc.ChannelsValue.TryGetProperty(channelName, out var chEntityForMsg))
+        {
+            AsyncApiDocument.Channel channelForMsg = chEntityForMsg.Match(
+                matchReference: static (in AsyncApiDocument.Reference _) => default,
+                matchChannel: static (in AsyncApiDocument.Channel ch) => ch,
+                defaultMatch: static (in AsyncApiDocument.Channels.AdditionalPropertiesEntity _) => default);
+
+            if (channelForMsg.IsNotUndefined() && channelForMsg.Messages.IsNotUndefined())
+            {
+                if (channelForMsg.Messages.TryGetProperty(messageName, out var msgEntity))
+                {
+                    AsyncApiDocument.MessageObject msg = msgEntity.Match(
+                        matchReference: static (in AsyncApiDocument.Reference _) => default,
+                        matchMessageObject: static (in AsyncApiDocument.MessageObject m) => m,
+                        defaultMatch: static (in AsyncApiDocument.ChannelMessages.AdditionalPropertiesEntity _) => default);
+
+                    if (msg.IsNotUndefined() && msg.Bindings.IsNotUndefined())
+                    {
+                        messageBindings = msg.Bindings.Match(
+                            matchReference: static (in AsyncApiDocument.Reference _) => default,
+                            matchMessageBindingsObject: static (in AsyncApiDocument.MessageBindingsObject b) => b,
+                            defaultMatch: static (in AsyncApiDocument.MessageObject.BindingsEntity _) => default);
+                    }
+                }
+            }
+        }
+
         return new ChannelBindingInfo
         {
             ChannelBindings = channelBindings,
             OperationBindings = operationBindings,
+            MessageBindings = messageBindings,
         };
     }
 
@@ -486,6 +520,26 @@ public sealed class AsyncApi30CodeGenerator
                 ? GetChannelAllowedServers(doc, channelName)
                 : null;
 
+            // Collect security schemes from the servers this operation is allowed to use
+            IReadOnlyList<SecuritySchemeInfo> operationSecuritySchemes = CollectOperationSecuritySchemes(doc, allowedServers);
+
+            // Extract channel/operation bindings as raw JSON for the generated types
+            string? channelBindingsJson = null;
+            string? operationBindingsJson = null;
+            if (channelName is not null)
+            {
+                ChannelBindingInfo bindings = GetBindings(doc, channelName, resolver: referenceResolver);
+                if (bindings.ChannelBindings.IsNotUndefined())
+                {
+                    channelBindingsJson = bindings.ChannelBindings.ToString();
+                }
+
+                if (bindings.OperationBindings.IsNotUndefined())
+                {
+                    operationBindingsJson = bindings.OperationBindings.ToString();
+                }
+            }
+
             OperationInfo info = new(
                 operationName,
                 action,
@@ -495,7 +549,10 @@ public sealed class AsyncApi30CodeGenerator
                 parameters,
                 reply,
                 channelName,
-                allowedServers);
+                allowedServers,
+                channelBindingsJson,
+                operationBindingsJson,
+                operationSecuritySchemes);
 
             if (action == OperationAction.Send)
             {
@@ -560,7 +617,10 @@ public sealed class AsyncApi30CodeGenerator
         List<ChannelParameter> Parameters,
         ReplyInfo? Reply,
         string? ChannelName,
-        IReadOnlyList<string>? AllowedServers);
+        IReadOnlyList<string>? AllowedServers,
+        string? ChannelBindingsJson,
+        string? OperationBindingsJson,
+        IReadOnlyList<SecuritySchemeInfo> SecuritySchemes);
 
     private readonly record struct ReplyInfo(
         string ChannelAddress,
@@ -574,7 +634,8 @@ public sealed class AsyncApi30CodeGenerator
         string? PayloadTypeName,
         string? HeadersPointer,
         string? HeadersTypeName,
-        string? ContentType);
+        string? ContentType,
+        string? MessageBindingsJson);
 
     private readonly record struct ChannelParameter(
         string Name,
@@ -796,6 +857,14 @@ public sealed class AsyncApi30CodeGenerator
             // Check schemaFormat for unsupported formats
             ValidateSchemaFormat(resolved, messageName);
 
+            // Extract message bindings as raw JSON
+            string? messageBindingsJson = null;
+            if (TryGetPropertyWithTraits(resolved, "bindings"u8, doc, resolver, out JsonElement bindingsEl) &&
+                bindingsEl.ValueKind == JsonValueKind.Object)
+            {
+                messageBindingsJson = bindingsEl.ToString();
+            }
+
             // Get payload (checking traits for fallback)
             if (TryGetPropertyWithTraits(resolved, "payload"u8, doc, resolver, out JsonElement payloadEl))
             {
@@ -822,7 +891,7 @@ public sealed class AsyncApi30CodeGenerator
                 }
             }
 
-            messages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, contentType));
+            messages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, contentType, messageBindingsJson));
             index++;
         }
 
@@ -980,7 +1049,7 @@ public sealed class AsyncApi30CodeGenerator
                     }
                 }
 
-                replyMessages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, null));
+                replyMessages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, null, null));
                 index++;
             }
         }
@@ -1242,6 +1311,10 @@ public sealed class AsyncApi30CodeGenerator
         IndentedWriter w = new();
 
         w.WriteLine("// <auto-generated/>");
+        w.WriteLine("#nullable enable");
+        w.WriteLine("using System;");
+        w.WriteLine("using System.Buffers;");
+        w.WriteLine("using System.Text;");
         w.WriteLine("using System.Threading;");
         w.WriteLine("using System.Threading.Tasks;");
         w.WriteLine($"using Corvus.Text.Json;");
@@ -1265,6 +1338,7 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine("private readonly IMessageTransport transport;");
         w.WriteLine("private readonly ValidationMode validationMode;");
+        w.WriteLine("private readonly IMessageAuthenticationProvider? authProvider;");
 
         if (op.IsDynamicAddress)
         {
@@ -1273,6 +1347,7 @@ public sealed class AsyncApi30CodeGenerator
         else if (op.Parameters.Count == 0)
         {
             w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
+            w.WriteLine($"private static readonly byte[] ChannelAddressUtf8 = \"{EscapeString(op.ChannelAddress)}\"u8.ToArray();");
         }
         else
         {
@@ -1291,6 +1366,33 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("];");
         }
 
+        // Emit bindings constants as static byte[] fields (zero per-call allocation)
+        if (op.ChannelBindingsJson is not null)
+        {
+            w.WriteLine();
+            w.WriteLine("private static readonly byte[] ChannelBindingsBytes = \"\"\"");
+            w.WriteLine($"{op.ChannelBindingsJson}");
+            w.WriteLine("\"\"\"u8.ToArray();");
+        }
+
+        if (op.OperationBindingsJson is not null)
+        {
+            w.WriteLine();
+            w.WriteLine("private static readonly byte[] OperationBindingsBytes = \"\"\"");
+            w.WriteLine($"{op.OperationBindingsJson}");
+            w.WriteLine("\"\"\"u8.ToArray();");
+        }
+
+        // Emit security scheme constants
+        if (op.SecuritySchemes.Count > 0)
+        {
+            w.WriteLine();
+            foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
+            {
+                w.WriteLine($"private static readonly MessageAuthenticationContext {ToPascalCase(scheme.Name)}AuthContext = new(SecuritySchemeType.{MapSecuritySchemeTypeToEnum(scheme.Type)}, \"{EscapeString(scheme.Name)}\");");
+            }
+        }
+
         w.WriteLine();
 
         w.WriteLine($"/// <summary>");
@@ -1298,10 +1400,12 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"/// </summary>");
         w.WriteLine($"/// <param name=\"transport\">The message transport.</param>");
         w.WriteLine($"/// <param name=\"validationMode\">The level of validation to apply to outgoing messages.</param>");
-        w.WriteLine($"public {className}(IMessageTransport transport, ValidationMode validationMode = ValidationMode.Basic)");
+        w.WriteLine($"/// <param name=\"authProvider\">The optional authentication provider.</param>");
+        w.WriteLine($"public {className}(IMessageTransport transport, ValidationMode validationMode = ValidationMode.Basic, IMessageAuthenticationProvider? authProvider = null)");
         w.OpenBrace();
         w.WriteLine("this.transport = transport;");
         w.WriteLine("this.validationMode = validationMode;");
+        w.WriteLine("this.authProvider = authProvider;");
         w.CloseBrace();
 
         foreach (MessageInfo msg in op.Messages)
@@ -1381,28 +1485,60 @@ public sealed class AsyncApi30CodeGenerator
 
             w.CloseBrace();
 
-            // Build channel address
+            // Build channel address as UTF-8 bytes
             w.WriteLine();
             if (op.Parameters.Count > 0)
             {
-                w.Write("string channelAddress = ChannelAddressTemplate");
-                foreach (ChannelParameter p in op.Parameters)
-                {
-                    w.Write($".Replace(\"{{{p.Name}}}\", {ToCamelCase(p.Name)})");
-                }
-
-                w.WriteLine(";");
+                // Split the template into segments around parameters and encode directly to a rented buffer
+                EmitParameterizedChannelConstruction(w, op);
+            }
+            else if (op.IsDynamicAddress)
+            {
+                // Dynamic: convert user-provided string to UTF-8 bytes (one allocation)
+                w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
+                w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
+                w.WriteLine("int channelLen = Encoding.UTF8.GetBytes(channel, channelRental);");
+                w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelLen);");
             }
 
-            // Call PublishAsyncCore
+            // Call PublishAsyncCore with message context
             string headersArg = msg.HeadersTypeName is not null
                 ? "Corvus.Text.Json.JsonElement.From(headersValue)"
                 : "default";
-            string addressArg = op.IsDynamicAddress
-                ? "channel"
-                : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
 
-            w.WriteLine($"return PublishAsyncCore(workspace, {addressArg}, payloadValue, {headersArg}, cancellationToken);");
+            w.WriteLine($"MessageContext context = new()");
+            w.OpenBrace();
+            if (msg.ContentType is not null)
+            {
+                w.WriteLine($"ContentType = \"{EscapeString(msg.ContentType)}\",");
+            }
+
+            if (op.ChannelBindingsJson is not null)
+            {
+                w.WriteLine("ChannelBindingsJson = ChannelBindingsBytes,");
+            }
+
+            if (op.OperationBindingsJson is not null)
+            {
+                w.WriteLine("OperationBindingsJson = OperationBindingsBytes,");
+            }
+
+            if (msg.MessageBindingsJson is not null)
+            {
+                string wrapperClassName = $"{ToPascalCase(op.Name)}{ToPascalCase(msg.Name)}Message";
+                w.WriteLine($"MessageBindingsJson = {wrapperClassName}.MessageBindingsBytes,");
+            }
+
+            w.CloseBraceWithSemicolon();
+
+            string channelArg = op.IsDynamicAddress || op.Parameters.Count > 0
+                ? "channelUtf8"
+                : "ChannelAddressUtf8";
+            string rentalArg = op.IsDynamicAddress || op.Parameters.Count > 0
+                ? "channelRental"
+                : "null";
+
+            w.WriteLine($"return PublishAsyncCore(workspace, {channelArg}, {rentalArg}, payloadValue, {headersArg}, context, cancellationToken);");
             w.CloseBrace();
         }
 
@@ -1491,17 +1627,18 @@ public sealed class AsyncApi30CodeGenerator
 
                     w.CloseBrace();
 
-                    // Build channel address
+                    // Build channel address as UTF-8 bytes
                     w.WriteLine();
                     if (op.Parameters.Count > 0)
                     {
-                        w.Write("string channelAddress = ChannelAddressTemplate");
-                        foreach (ChannelParameter p in op.Parameters)
-                        {
-                            w.Write($".Replace(\"{{{p.Name}}}\", {ToCamelCase(p.Name)})");
-                        }
-
-                        w.WriteLine(";");
+                        EmitParameterizedChannelConstruction(w, op);
+                    }
+                    else if (op.IsDynamicAddress)
+                    {
+                        w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
+                        w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
+                        w.WriteLine("int channelLen = Encoding.UTF8.GetBytes(channel, channelRental);");
+                        w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelLen);");
                     }
 
                     // Reply channel address (may be dynamic via runtime expression)
@@ -1513,31 +1650,48 @@ public sealed class AsyncApi30CodeGenerator
                         string? accessor = EmitRuntimeExpressionAccessor(addrExpr, "payloadValue", headersSource);
                         if (accessor is not null)
                         {
-                            w.WriteLine($"string replyAddress = {accessor};");
-                            replyAddr = "replyAddress";
+                            w.WriteLine($"string replyAddressStr = {accessor};");
+                            w.WriteLine("byte[] replyRental = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetByteCount(replyAddressStr));");
+                            w.WriteLine("int replyLen = Encoding.UTF8.GetBytes(replyAddressStr, replyRental);");
+                            w.WriteLine("ReadOnlyMemory<byte> replyChannelUtf8 = replyRental.AsMemory(0, replyLen);");
+                            replyAddr = "replyChannelUtf8";
                         }
                         else
                         {
-                            replyAddr = !string.IsNullOrEmpty(reply.ChannelAddress)
-                                ? $"\"{EscapeString(reply.ChannelAddress)}\""
-                                : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
+                            if (!string.IsNullOrEmpty(reply.ChannelAddress))
+                            {
+                                replyAddr = $"\"{EscapeString(reply.ChannelAddress)}\"u8.ToArray()";
+                            }
+                            else
+                            {
+                                replyAddr = op.Parameters.Count > 0 || op.IsDynamicAddress ? "channelUtf8" : "ChannelAddressUtf8";
+                            }
                         }
                     }
                     else
                     {
-                        replyAddr = !string.IsNullOrEmpty(reply.ChannelAddress)
-                            ? $"\"{EscapeString(reply.ChannelAddress)}\""
-                            : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
+                        if (!string.IsNullOrEmpty(reply.ChannelAddress))
+                        {
+                            replyAddr = $"\"{EscapeString(reply.ChannelAddress)}\"u8.ToArray()";
+                        }
+                        else
+                        {
+                            replyAddr = op.Parameters.Count > 0 || op.IsDynamicAddress ? "channelUtf8" : "ChannelAddressUtf8";
+                        }
                     }
 
                     string headersArg = msg.HeadersTypeName is not null
                         ? "Corvus.Text.Json.JsonElement.From(headersValue)"
                         : "default";
-                    string addressArg = op.IsDynamicAddress
-                        ? "channel"
-                        : op.Parameters.Count > 0 ? "channelAddress" : "ChannelAddress";
 
-                    w.WriteLine($"return RequestAsyncCore<{payloadType}, {replyType}>(workspace, {addressArg}, {replyAddr}, payloadValue, {headersArg}, cancellationToken);");
+                    string channelArg = op.IsDynamicAddress || op.Parameters.Count > 0
+                        ? "channelUtf8"
+                        : "ChannelAddressUtf8";
+                    string rentalArg = op.IsDynamicAddress || op.Parameters.Count > 0
+                        ? "channelRental"
+                        : "null";
+
+                    w.WriteLine($"return RequestAsyncCore<{payloadType}, {replyType}>(workspace, {channelArg}, {rentalArg}, {replyAddr}, payloadValue, {headersArg}, cancellationToken);");
 
                     w.CloseBrace();
             }
@@ -1545,15 +1699,31 @@ public sealed class AsyncApi30CodeGenerator
 
         // Emit the shared PublishAsyncCore helper
         w.WriteLine();
-        w.WriteLine("private async ValueTask PublishAsyncCore<TPayload>(JsonWorkspace workspace, string channel, TPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+        w.WriteLine("private async ValueTask PublishAsyncCore<TPayload>(JsonWorkspace workspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, TPayload payload, Corvus.Text.Json.JsonElement headers, MessageContext context, CancellationToken cancellationToken)");
         w.WriteLine("    where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>");
         w.OpenBrace();
         w.WriteLine("try");
         w.OpenBrace();
-        w.WriteLine("await this.transport.PublishAsync(channel, in payload, in headers, cancellationToken).ConfigureAwait(false);");
+
+        // Emit authentication call if there are security schemes
+        if (op.SecuritySchemes.Count > 0)
+        {
+            w.WriteLine("if (this.authProvider is not null)");
+            w.OpenBrace();
+            foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
+            {
+                w.WriteLine($"await this.authProvider.AuthenticateAsync({ToPascalCase(scheme.Name)}AuthContext, cancellationToken).ConfigureAwait(false);");
+            }
+
+            w.CloseBrace();
+            w.WriteLine();
+        }
+
+        w.WriteLine("await this.transport.PublishAsync(channelUtf8, in payload, in context, in headers, cancellationToken).ConfigureAwait(false);");
         w.CloseBrace();
         w.WriteLine("finally");
         w.OpenBrace();
+        w.WriteLine("if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }");
         w.WriteLine("workspace.Dispose();");
         w.CloseBrace();
         w.CloseBrace();
@@ -1562,18 +1732,20 @@ public sealed class AsyncApi30CodeGenerator
         if (op.Reply is not null)
         {
             w.WriteLine();
-            w.WriteLine("private async ValueTask<TReply> RequestAsyncCore<TPayload, TReply>(JsonWorkspace workspace, string channel, string replyChannel, TPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+            w.WriteLine("private async ValueTask<TReply> RequestAsyncCore<TPayload, TReply>(JsonWorkspace workspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, ReadOnlyMemory<byte> replyChannelUtf8, TPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.WriteLine("    where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>");
             w.WriteLine("    where TReply : struct, Corvus.Text.Json.Internal.IJsonElement<TReply>");
             w.OpenBrace();
-            w.WriteLine("string correlationId = System.Guid.NewGuid().ToString();");
+            w.WriteLine("byte[] correlationIdUtf8 = new byte[36];");
+            w.WriteLine("System.Guid.NewGuid().TryFormat(correlationIdUtf8, out _, \"D\");");
             w.WriteLine("try");
             w.OpenBrace();
-            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channel, replyChannel, in payload, correlationId, headers, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, in payload, correlationIdUtf8, headers, cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return replyPayload;");
             w.CloseBrace();
             w.WriteLine("finally");
             w.OpenBrace();
+            w.WriteLine("if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }");
             w.WriteLine("workspace.Dispose();");
             w.CloseBrace();
             w.CloseBrace();
@@ -1593,6 +1765,7 @@ public sealed class AsyncApi30CodeGenerator
         IndentedWriter w = new();
 
         w.WriteLine("// <auto-generated/>");
+        w.WriteLine("#nullable enable");
         w.WriteLine("using System.Threading;");
         w.WriteLine("using System.Threading.Tasks;");
         w.WriteLine($"using Corvus.Text.Json;");
@@ -1657,6 +1830,8 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine("// <auto-generated/>");
         w.WriteLine("#nullable enable");
         w.WriteLine("using System;");
+        w.WriteLine("using System.Buffers;");
+        w.WriteLine("using System.Text;");
         w.WriteLine("using System.Threading;");
         w.WriteLine("using System.Threading.Tasks;");
         w.WriteLine($"using Corvus.Text.Json;");
@@ -1682,17 +1857,21 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"private readonly {handlerInterface} handler;");
         w.WriteLine("private readonly ValidationMode validationMode;");
         w.WriteLine("private readonly IMessageErrorPolicy errorPolicy;");
+        w.WriteLine("private readonly IMessageAuthenticationProvider? authProvider;");
 
         if (op.IsDynamicAddress)
         {
             w.WriteLine("private string? subscribedChannel;");
+            w.WriteLine("private byte[]? subscribedChannelUtf8;");
         }
         else
         {
             w.WriteLine($"private const string ChannelAddress = \"{EscapeString(op.ChannelAddress)}\";");
+            w.WriteLine($"private static readonly byte[] ChannelAddressUtf8 = \"{EscapeString(op.ChannelAddress)}\"u8.ToArray();");
         }
 
         w.WriteLine($"private const string DeadLetterChannel = \"dead-letter.{EscapeString(op.ChannelAddress)}\";");
+        w.WriteLine($"private static readonly byte[] DeadLetterChannelUtf8 = \"dead-letter.{EscapeString(op.ChannelAddress)}\"u8.ToArray();");
 
         if (op.AllowedServers is { Count: > 0 })
         {
@@ -1705,6 +1884,33 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("];");
         }
 
+        // Emit bindings constants as static byte[] fields (zero per-call allocation)
+        if (op.ChannelBindingsJson is not null)
+        {
+            w.WriteLine();
+            w.WriteLine("private static readonly byte[] ChannelBindingsBytes = \"\"\"");
+            w.WriteLine($"{op.ChannelBindingsJson}");
+            w.WriteLine("\"\"\"u8.ToArray();");
+        }
+
+        if (op.OperationBindingsJson is not null)
+        {
+            w.WriteLine();
+            w.WriteLine("private static readonly byte[] OperationBindingsBytes = \"\"\"");
+            w.WriteLine($"{op.OperationBindingsJson}");
+            w.WriteLine("\"\"\"u8.ToArray();");
+        }
+
+        // Emit security scheme constants
+        if (op.SecuritySchemes.Count > 0)
+        {
+            w.WriteLine();
+            foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
+            {
+                w.WriteLine($"private static readonly MessageAuthenticationContext {ToPascalCase(scheme.Name)}AuthContext = new(SecuritySchemeType.{MapSecuritySchemeTypeToEnum(scheme.Type)}, \"{EscapeString(scheme.Name)}\");");
+            }
+        }
+
         w.WriteLine();
 
         w.WriteLine($"/// <summary>");
@@ -1713,13 +1919,15 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"/// <param name=\"transport\">The message transport.</param>");
         w.WriteLine($"/// <param name=\"handler\">The message handler.</param>");
         w.WriteLine($"/// <param name=\"validationMode\">The level of validation to apply to incoming messages.</param>");
-        w.WriteLine($"/// <param name=\"errorPolicy\">The error policy. When <c>null</c>, uses <see cref=\"DefaultMessageErrorPolicy\"/> (3 retries, then skip).</param>");
-        w.WriteLine($"public {className}(IMessageTransport transport, {handlerInterface} handler, ValidationMode validationMode = ValidationMode.Basic, IMessageErrorPolicy? errorPolicy = null)");
+        w.WriteLine($"/// <param name=\"errorPolicy\">The error policy. When <c>null</c>, uses <see cref=\"DefaultMessageErrorPolicy\"/>.</param>");
+        w.WriteLine($"/// <param name=\"authProvider\">The optional authentication provider.</param>");
+        w.WriteLine($"public {className}(IMessageTransport transport, {handlerInterface} handler, ValidationMode validationMode = ValidationMode.Basic, IMessageErrorPolicy? errorPolicy = null, IMessageAuthenticationProvider? authProvider = null)");
         w.OpenBrace();
         w.WriteLine("this.transport = transport;");
         w.WriteLine("this.handler = handler;");
         w.WriteLine("this.validationMode = validationMode;");
         w.WriteLine("this.errorPolicy = errorPolicy ?? new DefaultMessageErrorPolicy();");
+        w.WriteLine("this.authProvider = authProvider;");
         w.CloseBrace();
 
         // StartAsync
@@ -1738,28 +1946,65 @@ public sealed class AsyncApi30CodeGenerator
         string startParams = op.IsDynamicAddress
             ? "string channel, CancellationToken cancellationToken = default"
             : "CancellationToken cancellationToken = default";
-        w.WriteLine($"public ValueTask StartAsync({startParams})");
-        w.OpenBrace();
 
-        if (op.IsDynamicAddress)
+        if (op.SecuritySchemes.Count > 0)
         {
-            w.WriteLine("this.subscribedChannel = channel;");
-        }
+            w.WriteLine($"public async ValueTask StartAsync({startParams})");
+            w.OpenBrace();
 
-        string subscribeAddr = op.IsDynamicAddress ? "channel" : "ChannelAddress";
+            if (op.IsDynamicAddress)
+            {
+                w.WriteLine("this.subscribedChannel = channel;");
+                w.WriteLine("this.subscribedChannelUtf8 = Encoding.UTF8.GetBytes(channel);");
+            }
 
-        if (op.Messages.Count == 1)
-        {
-            string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-            w.WriteLine($"return this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
+            w.WriteLine("if (this.authProvider is not null)");
+            w.OpenBrace();
+            foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
+            {
+                w.WriteLine($"await this.authProvider.AuthenticateAsync({ToPascalCase(scheme.Name)}AuthContext, cancellationToken).ConfigureAwait(false);");
+            }
+
+            w.CloseBrace();
+            w.WriteLine();
+
+            string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            if (op.Messages.Count == 1)
+            {
+                string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
+                w.WriteLine($"await this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);");
+            }
+            else
+            {
+                w.WriteLine($"await this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);");
+            }
+
+            w.CloseBrace();
         }
         else
         {
-            // Multi-message: subscribe with JsonElement, wrap in discriminated type
-            w.WriteLine($"return this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
-        }
+            w.WriteLine($"public ValueTask StartAsync({startParams})");
+            w.OpenBrace();
 
-        w.CloseBrace();
+            if (op.IsDynamicAddress)
+            {
+                w.WriteLine("this.subscribedChannel = channel;");
+                w.WriteLine("this.subscribedChannelUtf8 = Encoding.UTF8.GetBytes(channel);");
+            }
+
+            string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            if (op.Messages.Count == 1)
+            {
+                string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
+                w.WriteLine($"return this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
+            }
+            else
+            {
+                w.WriteLine($"return this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
+            }
+
+            w.CloseBrace();
+        }
 
         // StopAsync
         w.WriteLine();
@@ -1772,16 +2017,16 @@ public sealed class AsyncApi30CodeGenerator
 
         if (op.IsDynamicAddress)
         {
-            w.WriteLine("if (this.subscribedChannel is null)");
+            w.WriteLine("if (this.subscribedChannelUtf8 is null)");
             w.OpenBrace();
             w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine("return this.transport.UnsubscribeAsync(this.subscribedChannel, cancellationToken);");
+            w.WriteLine("return this.transport.UnsubscribeAsync(this.subscribedChannelUtf8, cancellationToken);");
         }
         else
         {
-            w.WriteLine("return this.transport.UnsubscribeAsync(ChannelAddress, cancellationToken);");
+            w.WriteLine("return this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken);");
         }
 
         w.CloseBrace();
@@ -1799,11 +2044,8 @@ public sealed class AsyncApi30CodeGenerator
             w.OpenBrace();
 
             string channelExpr = op.IsDynamicAddress ? "this.subscribedChannel!" : "ChannelAddress";
+            string channelUtf8Expr = op.IsDynamicAddress ? "this.subscribedChannelUtf8!" : "ChannelAddressUtf8";
 
-            w.WriteLine("int attempt = 0;");
-            w.WriteLine("while (true)");
-            w.OpenBrace();
-            w.WriteLine("attempt++;");
             w.WriteLine("try");
             w.OpenBrace();
 
@@ -1830,11 +2072,10 @@ public sealed class AsyncApi30CodeGenerator
                 w.WriteLine($"await this.handler.{handlerMethod}(payload, cancellationToken).ConfigureAwait(false);");
             }
 
-            w.WriteLine("return;");
             w.CloseBrace(); // try
             w.WriteLine("catch (Exception ex)");
             w.OpenBrace();
-            w.WriteLine($"MessageErrorContext errorContext = new({channelExpr}, attempt, JsonElement.From(payload), headers);");
+            w.WriteLine($"MessageErrorContext errorContext = new({channelUtf8Expr}, MessageErrorKind.Handler, JsonElement.From(payload), headers);");
             w.WriteLine("MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);");
             w.WriteLine();
             w.WriteLine("switch (action)");
@@ -1850,12 +2091,8 @@ public sealed class AsyncApi30CodeGenerator
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
             w.PushIndent();
-            w.WriteLine($"await this.transport.DeadLetterAsync(DeadLetterChannel, {channelExpr}, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine($"await this.transport.DeadLetterAsync(DeadLetterChannelUtf8, {channelUtf8Expr}, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return;");
-            w.PopIndent();
-            w.WriteLine("case MessageErrorAction.Retry:");
-            w.PushIndent();
-            w.WriteLine("continue;");
             w.PopIndent();
             w.WriteLine("default:");
             w.PushIndent();
@@ -1863,28 +2100,23 @@ public sealed class AsyncApi30CodeGenerator
             w.PopIndent();
             w.CloseBrace(); // switch
             w.CloseBrace(); // catch
-            w.CloseBrace(); // while
             w.CloseBrace(); // method
         }
         else
         {
             string messageTypeName = $"{ToPascalCase(op.Name)}ReceivedMessage";
             string channelExpr = op.IsDynamicAddress ? "this.subscribedChannel!" : "ChannelAddress";
+            string channelUtf8Expr = op.IsDynamicAddress ? "this.subscribedChannelUtf8!" : "ChannelAddressUtf8";
 
             w.WriteLine("private async ValueTask HandleMessageAsync(Corvus.Text.Json.JsonElement payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
-            w.WriteLine("int attempt = 0;");
-            w.WriteLine("while (true)");
-            w.OpenBrace();
-            w.WriteLine("attempt++;");
             w.WriteLine("try");
             w.OpenBrace();
             w.WriteLine($"await this.handler.HandleAsync(new {messageTypeName}(payload), cancellationToken).ConfigureAwait(false);");
-            w.WriteLine("return;");
             w.CloseBrace(); // try
             w.WriteLine("catch (Exception ex)");
             w.OpenBrace();
-            w.WriteLine($"MessageErrorContext errorContext = new({channelExpr}, attempt, payload, headers);");
+            w.WriteLine($"MessageErrorContext errorContext = new({channelUtf8Expr}, MessageErrorKind.Handler, payload, headers);");
             w.WriteLine("MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, errorContext, cancellationToken).ConfigureAwait(false);");
             w.WriteLine();
             w.WriteLine("switch (action)");
@@ -1900,12 +2132,8 @@ public sealed class AsyncApi30CodeGenerator
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
             w.PushIndent();
-            w.WriteLine($"await this.transport.DeadLetterAsync(DeadLetterChannel, {channelExpr}, payload, headers, ex, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine($"await this.transport.DeadLetterAsync(DeadLetterChannelUtf8, {channelUtf8Expr}, payload, headers, ex, cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return;");
-            w.PopIndent();
-            w.WriteLine("case MessageErrorAction.Retry:");
-            w.PushIndent();
-            w.WriteLine("continue;");
             w.PopIndent();
             w.WriteLine("default:");
             w.PushIndent();
@@ -1913,7 +2141,6 @@ public sealed class AsyncApi30CodeGenerator
             w.PopIndent();
             w.CloseBrace(); // switch
             w.CloseBrace(); // catch
-            w.CloseBrace(); // while
             w.CloseBrace(); // method
         }
 
@@ -2081,6 +2308,7 @@ public sealed class AsyncApi30CodeGenerator
         IndentedWriter w = new();
 
         w.WriteLine("// <auto-generated/>");
+        w.WriteLine("using System;");
         w.WriteLine($"using Corvus.Text.Json;");
         w.WriteLine($"using Corvus.Text.Json.AsyncApi;");
         w.WriteLine();
@@ -2091,6 +2319,24 @@ public sealed class AsyncApi30CodeGenerator
         w.WriteLine($"/// </summary>");
         w.WriteLine($"public readonly struct {className}");
         w.OpenBrace();
+
+        // Message bindings constant
+        if (msg.MessageBindingsJson is not null)
+        {
+            w.WriteLine($"/// <summary>Gets the message-level bindings as raw UTF-8 JSON.</summary>");
+            w.WriteLine("public static readonly byte[] MessageBindingsBytes = \"\"\"");
+            w.WriteLine($"{msg.MessageBindingsJson}");
+            w.WriteLine("\"\"\"u8.ToArray();");
+            w.WriteLine();
+        }
+
+        // Content type constant
+        if (msg.ContentType is not null)
+        {
+            w.WriteLine($"/// <summary>Gets the content type for this message.</summary>");
+            w.WriteLine($"public const string MessageContentType = \"{EscapeString(msg.ContentType)}\";");
+            w.WriteLine();
+        }
 
         // Properties
         w.WriteLine($"/// <summary>Gets the message payload.</summary>");
@@ -2216,6 +2462,13 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine("// <auto-generated/>");
         w.WriteLine();
+        bool needsSystem = servers.Any(s => s.BindingsJson is not null);
+        if (needsSystem)
+        {
+            w.WriteLine("using System;");
+            w.WriteLine();
+        }
+
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
         w.WriteLine("/// <summary>");
@@ -2289,6 +2542,16 @@ public sealed class AsyncApi30CodeGenerator
                 w.CloseBrace();
                 w.WriteLine();
             }
+
+            // Emit server bindings constant if present
+            if (server.BindingsJson is not null)
+            {
+                w.WriteLine($"/// <summary>Gets the server bindings for <c>{server.Name}</c> as raw UTF-8 JSON.</summary>");
+                w.WriteLine($"public static ReadOnlySpan<byte> {ToPascalCase(server.Name)}BindingsJsonUtf8 => \"\"\"");
+                w.WriteLine($"{server.BindingsJson}");
+                w.WriteLine("\"\"\"u8;");
+                w.WriteLine();
+            }
         }
 
         w.CloseBrace();
@@ -2317,9 +2580,154 @@ public sealed class AsyncApi30CodeGenerator
         return char.ToLowerInvariant(name[0]) + name[1..];
     }
 
+    private static string MapSecuritySchemeTypeToEnum(string schemeType)
+    {
+        return schemeType switch
+        {
+            "userPassword" => "UserPassword",
+            "apiKey" => "ApiKey",
+            "X509" => "X509",
+            "symmetricEncryption" => "SymmetricEncryption",
+            "asymmetricEncryption" => "AsymmetricEncryption",
+            "http" => "Http",
+            "oauth2" => "OAuth2",
+            "openIdConnect" => "OpenIdConnect",
+            "sasl" => "Plain", // Default SASL variant
+            _ => "UserPassword",
+        };
+    }
+
+    private static IReadOnlyList<SecuritySchemeInfo> CollectOperationSecuritySchemes(AsyncApiDocument doc, IReadOnlyList<string>? allowedServers)
+    {
+        ServerInfo[] servers = ListServers(doc);
+        HashSet<string> seen = [];
+        List<SecuritySchemeInfo> result = [];
+
+        foreach (ServerInfo server in servers)
+        {
+            // If the operation restricts to specific servers, only include those
+            if (allowedServers is { Count: > 0 } && !allowedServers.Contains(server.Name))
+            {
+                continue;
+            }
+
+            foreach (SecuritySchemeInfo scheme in server.SecuritySchemes)
+            {
+                if (seen.Add(scheme.Name))
+                {
+                    result.Add(scheme);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static string ResolveSecuritySchemeType(AsyncApiDocument doc, string schemeName)
+    {
+        if (doc.ComponentsValue.IsNotUndefined() && doc.ComponentsValue.SecuritySchemes.IsNotUndefined())
+        {
+            if (doc.ComponentsValue.SecuritySchemes.TryGetProperty(schemeName, out var element) && element.IsNotUndefined())
+            {
+                var schemeEntity = AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.WDEntity.From(element);
+                return schemeEntity.Match<string>(
+                    matchReference: static (in AsyncApiDocument.Reference _) => "unknown",
+                    matchSecurityScheme: static (in AsyncApiDocument.SecurityScheme scheme) =>
+                    {
+                        return scheme.Match<string>(
+                            matchUserPassword: static (in AsyncApiDocument.UserPassword _) => "userPassword",
+                            matchApiKey: static (in AsyncApiDocument.ApiKey _) => "apiKey",
+                            matchX509: static (in AsyncApiDocument.X509 _) => "X509",
+                            matchSymmetricEncryption: static (in AsyncApiDocument.SymmetricEncryption _) => "symmetricEncryption",
+                            matchAsymmetricEncryption: static (in AsyncApiDocument.AsymmetricEncryption _) => "asymmetricEncryption",
+                            matchHttpSecurityScheme: static (in AsyncApiDocument.HttpSecurityScheme _) => "http",
+                            matchOauth2Flows: static (in AsyncApiDocument.Oauth2Flows _) => "oauth2",
+                            matchOpenIdConnect: static (in AsyncApiDocument.OpenIdConnect _) => "openIdConnect",
+                            matchSaslSecurityScheme: static (in AsyncApiDocument.SaslSecurityScheme _) => "sasl",
+                            defaultMatch: static (in AsyncApiDocument.SecurityScheme _) => "unknown");
+                    },
+                    defaultMatch: static (in AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.WDEntity _) => "unknown");
+            }
+        }
+
+        return "unknown";
+    }
+
+    /// <summary>
+    /// Emits code to construct a parameterized channel address directly as UTF-8 bytes
+    /// using ArrayPool rent + inline encoding (zero intermediate string allocation).
+    /// </summary>
+    private void EmitParameterizedChannelConstruction(IndentedWriter w, OperationInfo op)
+    {
+        // Split the template into literal segments and parameter placeholders
+        // e.g., "orders/{orderId}/{region}/status" → ["orders/", "{orderId}", "/", "{region}", "/status"]
+        string template = op.ChannelAddress;
+        List<(bool IsParam, string Value)> segments = [];
+        int pos = 0;
+        while (pos < template.Length)
+        {
+            int braceStart = template.IndexOf('{', pos);
+            if (braceStart < 0)
+            {
+                segments.Add((false, template[pos..]));
+                break;
+            }
+
+            if (braceStart > pos)
+            {
+                segments.Add((false, template[pos..braceStart]));
+            }
+
+            int braceEnd = template.IndexOf('}', braceStart);
+            string paramName = template[(braceStart + 1)..braceEnd];
+            segments.Add((true, paramName));
+            pos = braceEnd + 1;
+        }
+
+        // Calculate total byte count (literal lengths are known at compile time)
+        int literalByteCount = segments.Where(s => !s.IsParam).Sum(s => System.Text.Encoding.UTF8.GetByteCount(s.Value));
+
+        // Emit byte count calculation
+        w.Write($"int channelByteCount = {literalByteCount}");
+        foreach ((bool isParam, string value) in segments.Where(s => s.IsParam))
+        {
+            w.Write($" + Encoding.UTF8.GetByteCount({ToCamelCase(value)})");
+        }
+
+        w.WriteLine(";");
+
+        // Rent buffer and copy segments
+        w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
+        w.WriteLine("int channelPos = 0;");
+
+        foreach ((bool isParam, string value) in segments)
+        {
+            if (isParam)
+            {
+                w.WriteLine($"channelPos += Encoding.UTF8.GetBytes({ToCamelCase(value)}, channelRental.AsSpan(channelPos));");
+            }
+            else
+            {
+                string escaped = EscapeString(value);
+                int byteCount = System.Text.Encoding.UTF8.GetByteCount(value);
+                w.WriteLine($"\"{escaped}\"u8.CopyTo(channelRental.AsSpan(channelPos));");
+                w.WriteLine($"channelPos += {byteCount};");
+            }
+        }
+
+        w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelPos);");
+    }
+
     private static string EscapeString(string value)
     {
         return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    }
+
+    private static string EscapeRawString(string value)
+    {
+        // Raw string literals delimited by """ cannot contain sequences of 3+ consecutive quotes.
+        // JSON content shouldn't have this, but escape defensively.
+        return value.Replace("\"\"\"", "\\\"\\\"\\\"");
     }
 
     // ═══════════════════════════════════════════════════════════════════

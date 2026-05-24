@@ -30,7 +30,16 @@ public readonly struct ChannelBindingInfo
     public AsyncApiDocument.OperationBindingsObject OperationBindings { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether any bindings are present at either the channel or operation level.
+    /// Gets the message-level bindings for the first message on the channel,
+    /// or <c>default</c> if no message bindings are present.
     /// </summary>
-    public bool HasBindings => ChannelBindings.IsNotUndefined() || OperationBindings.IsNotUndefined();
+    public AsyncApiDocument.MessageBindingsObject MessageBindings { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether any bindings are present at any level.
+    /// </summary>
+    public bool HasBindings =>
+        ChannelBindings.IsNotUndefined() ||
+        OperationBindings.IsNotUndefined() ||
+        MessageBindings.IsNotUndefined();
 }

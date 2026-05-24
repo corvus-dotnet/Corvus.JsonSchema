@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WebSocketEnvelope",
+  "description": "The framing envelope used by the WebSocket message transport.",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "description": "The logical channel (topic/routing key) for this message."
+    },
+    "type": {
+      "type": "string",
+      "description": "The envelope type: publish, subscribe, unsubscribe, or dead-letter."
+    },
+    "payload": {
+      "description": "The message payload (any JSON value)."
+    },
+    "headers": {
+      "description": "Optional message headers (any JSON value)."
+    },
+    "correlationId": {
+      "type": "string",
+      "description": "Correlation identifier for request/reply patterns."
+    },
+    "originalChannel": {
+      "type": "string",
+      "description": "The original channel when this is a dead-letter envelope."
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message when this is a dead-letter envelope."
+    },
+    "errorType": {
+      "type": "string",
+      "description": "Fully-qualified error type name when this is a dead-letter envelope."
+    }
+  },
+  "required": ["channel"]
+}

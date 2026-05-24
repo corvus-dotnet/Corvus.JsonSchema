@@ -30,6 +30,33 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SpecFile);
 
+        string outputPath = settings.OutputPath ?? Path.Combine(Directory.GetCurrentDirectory(), "Generated");
+
+        // Resolve the spec URL — explicit --spec-url takes priority, then lock file descriptionLocation
+        string? specUrl = settings.SpecUrl;
+        if (specUrl is null)
+        {
+            if (AsyncApiLockFile.TryLoad(outputPath, out AsyncApiLockFileModel lockCheck)
+                && lockCheck.DescriptionLocation.IsNotUndefined())
+            {
+                specUrl = lockCheck.DescriptionLocation.GetString();
+            }
+        }
+
+        // If we have a spec URL, fetch and overwrite the local file
+        if (specUrl is not null)
+        {
+            AnsiConsole.MarkupLine($"[green]Fetching spec from:[/] {specUrl}");
+            using HttpClient httpClient = new();
+            byte[] remoteBytes = await httpClient.GetByteArrayAsync(specUrl, cancellationToken)
+                .ConfigureAwait(false);
+            string dir = Path.GetDirectoryName(Path.GetFullPath(settings.SpecFile))!;
+            Directory.CreateDirectory(dir);
+            await File.WriteAllBytesAsync(settings.SpecFile, remoteBytes, cancellationToken)
+                .ConfigureAwait(false);
+            AnsiConsole.MarkupLine($"[green]Saved to:[/] {settings.SpecFile}");
+        }
+
         if (!File.Exists(settings.SpecFile))
         {
             AnsiConsole.MarkupLine($"[red]Error:[/] Spec file not found: {settings.SpecFile}");
@@ -37,7 +64,6 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         }
 
         string rootNamespace = settings.RootNamespace ?? "GeneratedAsyncApi";
-        string outputPath = settings.OutputPath ?? Path.Combine(Directory.GetCurrentDirectory(), "Generated");
         string specFilePath = Path.GetFullPath(settings.SpecFile);
 
         byte[] specBytes = await File.ReadAllBytesAsync(settings.SpecFile, cancellationToken)
@@ -49,69 +75,102 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         string specVersion = AsyncApiShowCommand.DetectAsyncApiVersion(specRoot, settings.SpecVersion);
         OperationFilter? filter = AsyncApiShowCommand.BuildFilter(settings);
 
-        // Create external reference resolver for multi-file specs
-        using AsyncApiExternalReferenceResolver referenceResolver = new(specRoot, specFilePath);
-
-        // Collect schema pointers from the spec
-        string[] pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver);
-
-        string? title = GetTitle(specRoot);
-        string? version = GetVersion(specRoot);
-        AnsiConsole.MarkupLine($"[green]API:[/] {title ?? "(untitled)"} v{version ?? "?"} [dim](AsyncAPI {specVersion})[/]");
-        AnsiConsole.MarkupLine($"[green]Schemas:[/] {pointers.Length}");
-
-        // Generate schema model types via the V5 code generator
-        Dictionary<string, string>? schemaTypeMap = null;
-        IReadOnlyList<string>? modelFileNames = null;
-        string modelsPath = Path.Combine(outputPath, "Models");
-
-        if (pointers.Length > 0)
+        // Check lock file (skip if up to date, unless --force)
+        if (!settings.Force)
         {
-            (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(
-                specFilePath, rootNamespace, modelsPath, pointers, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        if (schemaTypeMap is not null)
-        {
-            AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
-        }
-
-        // Generate producer/consumer code
-        AsyncApi30CodeGenerator generator = new(
-            rootNamespace,
-            schemaTypeMap ?? new Dictionary<string, string>());
-        IReadOnlyList<GeneratedFile> files = generator.Generate(specRoot, filter, referenceResolver);
-
-        // Filter by mode
-        IReadOnlyList<GeneratedFile> filteredFiles = FilterByMode(files, settings.Mode);
-
-        AnsiConsole.MarkupLine($"[green]Files:[/] {filteredFiles.Count}");
-
-        // Write output files
-        Directory.CreateDirectory(outputPath);
-        List<string> generatedFileNames = [];
-
-        foreach (GeneratedFile file in filteredFiles)
-        {
-            string filePath = Path.Combine(outputPath, file.FileName);
-            await File.WriteAllTextAsync(filePath, file.Content, cancellationToken)
-                .ConfigureAwait(false);
-            AnsiConsole.MarkupLine($"  [blue]Wrote:[/] {filePath}");
-            generatedFileNames.Add(file.FileName);
-        }
-
-        if (modelFileNames is not null)
-        {
-            foreach (string modelFile in modelFileNames)
+            if (AsyncApiLockFile.TryLoad(outputPath, out AsyncApiLockFileModel existingLock)
+                && AsyncApiLockFile.IsUpToDate(in existingLock, in specRoot, specVersion, rootNamespace, settings.Mode, filter))
             {
-                generatedFileNames.Add(Path.Combine("Models", modelFile));
+                AnsiConsole.MarkupLine("[green]Up to date — skipping generation.[/] Use --force to regenerate.");
+                return 0;
             }
         }
 
-        AnsiConsole.MarkupLine($"[green]Generated {generatedFileNames.Count} files ({filteredFiles.Count} client + {modelFileNames?.Count ?? 0} model) in {outputPath}[/]");
+        // Back up existing lock file before generation so we can restore on failure
+        bool hasBackup = AsyncApiLockFile.BackupLockFile(outputPath);
 
-        return 0;
+        // Create external reference resolver for multi-file specs
+        using AsyncApiExternalReferenceResolver referenceResolver = new(specRoot, specFilePath);
+
+        try
+        {
+            // Collect schema pointers from the spec
+            string[] pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver);
+
+            string? title = GetTitle(specRoot);
+            string? version = GetVersion(specRoot);
+            AnsiConsole.MarkupLine($"[green]API:[/] {title ?? "(untitled)"} v{version ?? "?"} [dim](AsyncAPI {specVersion})[/]");
+            AnsiConsole.MarkupLine($"[green]Schemas:[/] {pointers.Length}");
+
+            // Generate schema model types via the V5 code generator
+            Dictionary<string, string>? schemaTypeMap = null;
+            IReadOnlyList<string>? modelFileNames = null;
+            string modelsPath = Path.Combine(outputPath, "Models");
+
+            if (pointers.Length > 0)
+            {
+                (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(
+                    specFilePath, rootNamespace, modelsPath, pointers, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            if (schemaTypeMap is not null)
+            {
+                AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+            }
+
+            // Generate producer/consumer code
+            AsyncApi30CodeGenerator generator = new(
+                rootNamespace,
+                schemaTypeMap ?? new Dictionary<string, string>());
+            IReadOnlyList<GeneratedFile> files = generator.Generate(specRoot, filter, referenceResolver);
+
+            // Filter by mode
+            IReadOnlyList<GeneratedFile> filteredFiles = FilterByMode(files, settings.Mode);
+
+            AnsiConsole.MarkupLine($"[green]Files:[/] {filteredFiles.Count}");
+
+            // Write output files
+            Directory.CreateDirectory(outputPath);
+            List<string> generatedFileNames = [];
+
+            foreach (GeneratedFile file in filteredFiles)
+            {
+                string filePath = Path.Combine(outputPath, file.FileName);
+                await File.WriteAllTextAsync(filePath, file.Content, cancellationToken)
+                    .ConfigureAwait(false);
+                AnsiConsole.MarkupLine($"  [blue]Wrote:[/] {filePath}");
+                generatedFileNames.Add(file.FileName);
+            }
+
+            if (modelFileNames is not null)
+            {
+                foreach (string modelFile in modelFileNames)
+                {
+                    generatedFileNames.Add(Path.Combine("Models", modelFile));
+                }
+            }
+
+            AnsiConsole.MarkupLine($"[green]Generated {generatedFileNames.Count} files ({filteredFiles.Count} client + {modelFileNames?.Count ?? 0} model) in {outputPath}[/]");
+
+            // Write lock file and clean up backup
+            AsyncApiLockFileModel lockFile = AsyncApiLockFile.Create(in specRoot, specVersion, rootNamespace, settings.Mode, filter, generatedFileNames, specUrl);
+            AsyncApiLockFile.Save(in lockFile, outputPath);
+            AsyncApiLockFile.DeleteBackup(outputPath);
+
+            return 0;
+        }
+        catch
+        {
+            // Restore lock file to pre-generation state on failure
+            if (hasBackup)
+            {
+                AsyncApiLockFile.RestoreLockFile(outputPath);
+                AnsiConsole.MarkupLine("[yellow]Lock file restored from backup after generation failure.[/]");
+            }
+
+            throw;
+        }
     }
 
     private static IReadOnlyList<GeneratedFile> FilterByMode(IReadOnlyList<GeneratedFile> files, string mode)

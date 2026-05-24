@@ -74,53 +74,49 @@ public class ThrowHelperAndPolicyTests
     }
 
     [TestMethod]
-    public void DefaultMessageErrorPolicy_NegativeMaxRetries_Throws()
+    public void DefaultMessageErrorPolicy_DefaultConstructor_DeadLettersHandlerErrors()
     {
-        Assert.ThrowsExactly<ArgumentOutOfRangeException>(
-            () => new DefaultMessageErrorPolicy(-1, MessageErrorAction.Skip));
+        DefaultMessageErrorPolicy policy = new();
+
+        Assert.AreEqual(MessageErrorAction.DeadLetter, policy.HandlerAction);
+        Assert.AreEqual(MessageErrorAction.DeadLetter, policy.DeserializationAction);
+        Assert.AreEqual(MessageErrorAction.Abort, policy.TransportAction);
     }
 
     [TestMethod]
-    public void DefaultMessageErrorPolicy_RetryAsExhaustedAction_Throws()
+    public async Task DefaultMessageErrorPolicy_DeserializationError_ReturnsConfiguredAction()
     {
-        Assert.ThrowsExactly<ArgumentOutOfRangeException>(
-            () => new DefaultMessageErrorPolicy(3, MessageErrorAction.Retry));
-    }
-
-    [TestMethod]
-    public async Task DefaultMessageErrorPolicy_BelowMaxRetries_ReturnsRetry()
-    {
-        DefaultMessageErrorPolicy policy = new(3, MessageErrorAction.Skip);
-        MessageErrorContext context = new("test-channel", 1, default, default);
+        DefaultMessageErrorPolicy policy = new(MessageErrorAction.Skip, MessageErrorAction.DeadLetter, MessageErrorAction.Abort);
+        MessageErrorContext context = new("test-channel"u8.ToArray(), MessageErrorKind.Deserialization);
 
         MessageErrorAction action = await policy.HandleErrorAsync(
-            new Exception("transient"), context, CancellationToken.None);
+            new Exception("bad json"), context, CancellationToken.None);
 
-        Assert.AreEqual(MessageErrorAction.Retry, action);
+        Assert.AreEqual(MessageErrorAction.Skip, action);
     }
 
     [TestMethod]
-    public async Task DefaultMessageErrorPolicy_AtMaxRetries_ReturnsRetry()
+    public async Task DefaultMessageErrorPolicy_HandlerError_ReturnsConfiguredAction()
     {
-        DefaultMessageErrorPolicy policy = new(3, MessageErrorAction.Skip);
-        MessageErrorContext context = new("test-channel", 3, default, default);
+        DefaultMessageErrorPolicy policy = new(MessageErrorAction.Skip, MessageErrorAction.DeadLetter, MessageErrorAction.Abort);
+        MessageErrorContext context = new("test-channel"u8.ToArray(), MessageErrorKind.Handler);
 
         MessageErrorAction action = await policy.HandleErrorAsync(
-            new Exception("transient"), context, CancellationToken.None);
-
-        Assert.AreEqual(MessageErrorAction.Retry, action);
-    }
-
-    [TestMethod]
-    public async Task DefaultMessageErrorPolicy_ExceedsMaxRetries_ReturnsExhaustedAction()
-    {
-        DefaultMessageErrorPolicy policy = new(3, MessageErrorAction.DeadLetter);
-        MessageErrorContext context = new("test-channel", 4, default, default);
-
-        MessageErrorAction action = await policy.HandleErrorAsync(
-            new Exception("permanent"), context, CancellationToken.None);
+            new Exception("handler failed"), context, CancellationToken.None);
 
         Assert.AreEqual(MessageErrorAction.DeadLetter, action);
+    }
+
+    [TestMethod]
+    public async Task DefaultMessageErrorPolicy_TransportError_ReturnsConfiguredAction()
+    {
+        DefaultMessageErrorPolicy policy = new(MessageErrorAction.Skip, MessageErrorAction.DeadLetter, MessageErrorAction.Abort);
+        MessageErrorContext context = new("test-channel"u8.ToArray(), MessageErrorKind.Transport);
+
+        MessageErrorAction action = await policy.HandleErrorAsync(
+            new Exception("connection lost"), context, CancellationToken.None);
+
+        Assert.AreEqual(MessageErrorAction.Abort, action);
     }
 
     [TestMethod]

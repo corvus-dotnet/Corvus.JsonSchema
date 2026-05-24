@@ -58,10 +58,15 @@
     <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.7" />
 
     <!-- Third-party libraries -->
+    <PackageVersion Include="Confluent.Kafka" Version="2.8.0" />
     <PackageVersion Include="Corvus.HighPerformance" Version="1.0.4" />
     <PackageVersion Include="Corvus.UriTemplates" Version="2.3.2" />
     <PackageVersion Include="Mono.TextTemplating" Version="3.0.0" />
+    <PackageVersion Include="MQTTnet" Version="4.3.7.1207" />
+    <PackageVersion Include="NATS.Net" Version="2.8.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.5-beta1" />
+    <PackageVersion Include="Polly.Core" Version="8.5.2" />
+    <PackageVersion Include="RabbitMQ.Client" Version="7.1.2" />
     <PackageVersion Include="NodaTime" Version="3.3.1" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.55.0" />
     <PackageVersion Include="YamlDotNet" Version="16.3.0" />
@@ -78,6 +83,10 @@
     <PackageVersion Include="Microsoft.DotNet.RemoteExecutor" Version="10.0.0-beta.25228.101" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.2.2" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="Testcontainers" Version="4.4.0" />
+    <PackageVersion Include="Testcontainers.Kafka" Version="4.4.0" />
+    <PackageVersion Include="Testcontainers.Nats" Version="4.4.0" />
+    <PackageVersion Include="Testcontainers.RabbitMq" Version="4.4.0" />
     <PackageVersion Include="azurepipelines.testlogger" Version="1.2.3" />
 
     <!-- Benchmark tooling -->

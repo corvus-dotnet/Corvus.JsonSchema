@@ -156,7 +156,7 @@ public class GeneratedEndToEndTests
     {
         await using InMemoryMessageTransport transport = new();
         MockLightMeasurementHandler handler = new();
-        DefaultMessageErrorPolicy abortPolicy = new(0, MessageErrorAction.Abort);
+        DefaultMessageErrorPolicy abortPolicy = new(MessageErrorAction.Abort, MessageErrorAction.Abort, MessageErrorAction.Abort);
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Basic, abortPolicy);
 
         await consumer.StartAsync();
@@ -268,7 +268,7 @@ public class GeneratedEndToEndTests
     {
         await using InMemoryMessageTransport transport = new();
         MockLightMeasurementHandler handler = new();
-        DefaultMessageErrorPolicy deadLetterPolicy = new(0, MessageErrorAction.DeadLetter);
+        DefaultMessageErrorPolicy deadLetterPolicy = new(MessageErrorAction.DeadLetter, MessageErrorAction.DeadLetter, MessageErrorAction.Abort);
         await using ReceiveLightMeasurementConsumer consumer = new(transport, handler, ValidationMode.Basic, deadLetterPolicy);
 
         await consumer.StartAsync();
@@ -284,22 +284,19 @@ public class GeneratedEndToEndTests
     }
 
     [TestMethod]
-    public async Task Consumer_RetryPolicy_RetriesBeforeExhausted()
+    public async Task Consumer_SkipPolicy_HandlerFailure_SkipsMessage()
     {
         await using InMemoryMessageTransport transport = new();
         int callCount = 0;
         ThrowingHandler throwingHandler = new(() =>
         {
             callCount++;
-            if (callCount <= 2)
-            {
-                throw new InvalidOperationException("Transient failure");
-            }
+            throw new InvalidOperationException("Permanent failure");
         });
 
-        // 3 retries — handler succeeds on 3rd call
-        DefaultMessageErrorPolicy retryPolicy = new(3, MessageErrorAction.Skip);
-        await using ReceiveLightMeasurementConsumer consumer = new(transport, throwingHandler, ValidationMode.None, retryPolicy);
+        // Skip on handler errors — no retry (retry is middleware's job)
+        DefaultMessageErrorPolicy skipPolicy = new(MessageErrorAction.Skip, MessageErrorAction.Skip, MessageErrorAction.Abort);
+        await using ReceiveLightMeasurementConsumer consumer = new(transport, throwingHandler, ValidationMode.None, skipPolicy);
 
         await consumer.StartAsync();
 
@@ -307,8 +304,8 @@ public class GeneratedEndToEndTests
             LightMeasurementChannel,
             """{"lumens":100,"sentAt":"2024-01-01T00:00:00Z"}"""u8.ToArray());
 
-        // Handler was called 3 times (2 failures + 1 success)
-        Assert.AreEqual(3, callCount);
+        // Handler called once, error skipped (no retry loop)
+        Assert.AreEqual(1, callCount);
     }
 
     private sealed class ThrowingHandler : IReceiveLightMeasurementHandler

@@ -10,8 +10,8 @@ namespace Corvus.Text.Json.AsyncApi;
 /// <remarks>
 /// <para>
 /// This is passed to <see cref="IMessageErrorPolicy.HandleErrorAsync"/> so that the
-/// policy can make decisions based on the channel, the number of delivery attempts,
-/// and any payload/header data available at the time of the error.
+/// policy can make decisions based on the channel, error kind, and any payload/header
+/// data available at the time of the error.
 /// </para>
 /// </remarks>
 public readonly struct MessageErrorContext
@@ -20,36 +20,33 @@ public readonly struct MessageErrorContext
     /// Initializes a new instance of the <see cref="MessageErrorContext"/> struct.
     /// </summary>
     /// <param name="channel">The channel address on which the error occurred.</param>
-    /// <param name="attemptNumber">The 1-based attempt number for this message delivery.</param>
+    /// <param name="errorKind">The kind of error that occurred.</param>
     /// <param name="payload">The raw payload element, if available.</param>
     /// <param name="headers">The raw headers element, if available.</param>
-    public MessageErrorContext(string channel, int attemptNumber, JsonElement payload = default, JsonElement headers = default)
+    public MessageErrorContext(ReadOnlyMemory<byte> channel, MessageErrorKind errorKind, JsonElement payload = default, JsonElement headers = default)
     {
         this.Channel = channel;
-        this.AttemptNumber = attemptNumber;
+        this.ErrorKind = errorKind;
         this.Payload = payload;
         this.Headers = headers;
     }
 
     /// <summary>
-    /// Gets the channel address on which the error occurred.
+    /// Gets the channel address (UTF-8) on which the error occurred.
     /// </summary>
-    public string Channel { get; }
+    public ReadOnlyMemory<byte> Channel { get; }
 
     /// <summary>
-    /// Gets the 1-based attempt number for this message delivery.
+    /// Gets the kind of error that occurred.
     /// </summary>
-    /// <remarks>
-    /// On the first delivery attempt this is 1. After a <see cref="MessageErrorAction.Retry"/>,
-    /// this increments for each subsequent attempt.
-    /// </remarks>
-    public int AttemptNumber { get; }
+    public MessageErrorKind ErrorKind { get; }
 
     /// <summary>
     /// Gets the raw payload element, if available.
     /// </summary>
     /// <remarks>
-    /// This may be <c>default</c> (undefined) if the error occurred before parsing.
+    /// This may be <c>default</c> (undefined) if the error occurred before parsing
+    /// (e.g., a <see cref="MessageErrorKind.Deserialization"/> failure).
     /// </remarks>
     public JsonElement Payload { get; }
 

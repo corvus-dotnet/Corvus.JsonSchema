@@ -43,7 +43,14 @@
     <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi31/Corvus.Json.CodeGeneration.OpenApi31.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Corvus.Text.Json.AsyncApi.Amqp/Corvus.Text.Json.AsyncApi.Amqp.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi.CodeGeneration/Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.AsyncApi.Kafka/Corvus.Text.Json.AsyncApi.Kafka.csproj" />
+    <Project Path="src/Corvus.Text.Json.AsyncApi.Mqtt/Corvus.Text.Json.AsyncApi.Mqtt.csproj" />
+    <Project Path="src/Corvus.Text.Json.AsyncApi.Nats/Corvus.Text.Json.AsyncApi.Nats.csproj" />
+    <Project Path="src/Corvus.Text.Json.AsyncApi.Polly/Corvus.Text.Json.AsyncApi.Polly.csproj" />
+    <Project Path="src/Corvus.Text.Json.AsyncApi.Testing/Corvus.Text.Json.AsyncApi.Testing.csproj" />
+    <Project Path="src/Corvus.Text.Json.AsyncApi.WebSocket/Corvus.Text.Json.AsyncApi.WebSocket.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi/Corvus.Text.Json.AsyncApi.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi26/Corvus.Text.Json.AsyncApi26.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi30/Corvus.Text.Json.AsyncApi30.csproj" />
@@ -55,6 +62,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Corvus.Text.Json.AsyncApi.CodeGeneration.Tests/Corvus.Text.Json.AsyncApi.CodeGeneration.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.AsyncApi.Runtime.Tests/Corvus.Text.Json.AsyncApi.Runtime.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.csproj" />
     <Project Path="tests/Corvus.Text.Json.AsyncApi26.Tests/Corvus.Text.Json.AsyncApi26.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.AsyncApi30.Tests/Corvus.Text.Json.AsyncApi30.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi30.Runtime.Tests/Corvus.Text.Json.OpenApi30.Runtime.Tests.csproj" />

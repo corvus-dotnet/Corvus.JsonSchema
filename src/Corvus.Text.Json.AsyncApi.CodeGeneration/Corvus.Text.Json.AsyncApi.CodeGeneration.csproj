@@ -9,6 +9,7 @@
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <NoWarn>$(NoWarn);NU1504;CS8500;CS8969;CS1591;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>Code generation engine for AsyncAPI specifications. Walks AsyncAPI 2.6 and 3.0 typed models to emit producer, consumer, and message types.</Description>
@@ -30,11 +31,15 @@
     <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.AppendHelpers.cs" Link="Common\Utf8ValueStringBuilder.AppendHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
+    <AdditionalFiles Include="Schemas\corvusjson-asyncapi-lock.json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi30\Corvus.Text.Json.AsyncApi30.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi26\Corvus.Text.Json.AsyncApi26.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
