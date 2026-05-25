@@ -200,7 +200,7 @@ jobs:
           NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
 
       - name: Publish Test Results
-        uses: dorny/test-reporter@a3478a7bb6bd8473a21ad12eb9b5ea54e82ea0ab # v2.0.0
+        uses: dorny/test-reporter@df6247429542221bc30d46a036ee47af1102c451 # v2.7.0
         if: always()
         with:
           name: Integration Test Results
