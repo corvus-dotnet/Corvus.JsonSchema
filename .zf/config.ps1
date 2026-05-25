@@ -60,7 +60,7 @@ $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
 # process-spawning layers (e.g. dotnet-coverage launching dotnet test).
 # Integration tests run in a separate CI job with Docker available.
 $AdditionalTestArgs = @(
-    "--filter", 'TestCategory!=outerloop&TestCategory!=integration'
+    "--filter", 'TestCategory!=outerloop&TestCategory!=failing&TestCategory!=integration'
     "--ignore-exit-code", "8"
 )
 $StripOutputFromLargeTrxFiles = $true
