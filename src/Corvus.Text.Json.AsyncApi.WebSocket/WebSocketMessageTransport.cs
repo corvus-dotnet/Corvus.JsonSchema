@@ -121,6 +121,8 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         ObjectDisposedException.ThrowIf(this.disposed, this);
         this.handlers[channel] = (payload, headers, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, handler, payload, headers, ct);
 
+        this.options.Heartbeat?.Start(channel, "websocket");
+
         // Send a subscribe envelope to the server
         (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
         return SendAndReturnAsync(rented, length, cancellationToken);
@@ -131,6 +133,8 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         this.handlers.TryRemove(channel, out _);
+
+        this.options.Heartbeat?.Stop(channel, "websocket");
 
         // Send an unsubscribe envelope to the server
         (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "unsubscribe"u8);
@@ -282,6 +286,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             if (payload.ValueKind != JsonValueKind.Undefined &&
                 this.handlers.TryGetValue(channel, out Func<JsonElement, JsonElement, CancellationToken, ValueTask>? handler))
             {
+                this.options.Heartbeat?.Tick(channel, "websocket");
                 await handler(payload, headers, cancellationToken).ConfigureAwait(false);
             }
         }

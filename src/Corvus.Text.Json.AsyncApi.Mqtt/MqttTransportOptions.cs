@@ -76,4 +76,7 @@ public sealed class MqttTransportOptions : ITransportOptions
 
     /// <inheritdoc/>
     public MessageHandlerMiddleware? HandlerMiddleware { get; set; }
+
+    /// <inheritdoc/>
+    public ProcessingLoopHeartbeat? Heartbeat { get; set; }
 }

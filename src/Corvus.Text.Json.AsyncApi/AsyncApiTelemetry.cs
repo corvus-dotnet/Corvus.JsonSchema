@@ -164,6 +164,24 @@ public static class AsyncApiTelemetry
             "Size of message payload in bytes");
 
     /// <summary>
+    /// Gets the counter for heartbeat ping attempts (success and failure).
+    /// </summary>
+    public static Counter<long> Heartbeats { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.heartbeats",
+            "{heartbeat}",
+            "Transport heartbeat ping attempts");
+
+    /// <summary>
+    /// Gets the counter for transport state transitions (connected↔disconnected).
+    /// </summary>
+    public static Counter<long> TransportStateTransitions { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.transport_state_transitions",
+            "{event}",
+            "Transport connectivity state transitions");
+
+    /// <summary>
     /// Records a successful dead-letter operation from within a transport's internal error handling.
     /// </summary>
     /// <param name="destination">The dead-letter channel name.</param>

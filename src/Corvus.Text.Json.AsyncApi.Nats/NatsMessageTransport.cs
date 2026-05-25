@@ -315,6 +315,8 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         string dlChannel = channel + this.options.DeadLetterSuffix;
 
+        this.options.Heartbeat?.Start(channel, "nats");
+
         Task consumeTask = Task.Run(
             async () =>
             {
@@ -324,6 +326,8 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
                         subject: channel,
                         cancellationToken: cts.Token).ConfigureAwait(false))
                     {
+                        this.options.Heartbeat?.Tick(channel, "nats");
+
                         if (msg.Data is null)
                         {
                             continue;
@@ -460,6 +464,10 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
                 catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
                 {
                     // Normal shutdown via UnsubscribeAsync or parent cancellation
+                }
+                finally
+                {
+                    this.options.Heartbeat?.Stop(channel, "nats");
                 }
             },
             CancellationToken.None);

@@ -57,4 +57,7 @@ public sealed class KafkaTransportOptions : ITransportOptions
 
     /// <inheritdoc/>
     public MessageHandlerMiddleware? HandlerMiddleware { get; set; }
+
+    /// <inheritdoc/>
+    public ProcessingLoopHeartbeat? Heartbeat { get; set; }
 }

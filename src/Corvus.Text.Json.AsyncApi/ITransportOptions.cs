@@ -41,4 +41,20 @@ public interface ITransportOptions
     /// </para>
     /// </remarks>
     MessageHandlerMiddleware? HandlerMiddleware { get; set; }
+
+    /// <summary>
+    /// Gets or sets the processing loop heartbeat tracker.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When set, the transport's subscribe loop will call <see cref="ProcessingLoopHeartbeat.Tick"/>
+    /// on every iteration, and <see cref="ProcessingLoopHeartbeat.Start"/>/<see cref="ProcessingLoopHeartbeat.Stop"/>
+    /// on subscription lifecycle events. This enables external monitoring to detect
+    /// when a processing loop silently dies.
+    /// </para>
+    /// <para>
+    /// If <see langword="null"/>, no heartbeat tracking occurs (zero overhead).
+    /// </para>
+    /// </remarks>
+    ProcessingLoopHeartbeat? Heartbeat { get; set; }
 }

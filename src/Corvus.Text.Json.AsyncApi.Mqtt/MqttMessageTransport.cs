@@ -160,6 +160,8 @@ public sealed class MqttMessageTransport : IMessageTransport
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         this.handlers.TryRemove(channel, out _);
 
+        this.options.Heartbeat?.Stop(channel, "mqtt");
+
         MqttClientUnsubscribeOptions unsubOptions = new MqttFactory().CreateUnsubscribeOptionsBuilder()
             .WithTopicFilter(channel)
             .Build();
@@ -309,6 +311,8 @@ public sealed class MqttMessageTransport : IMessageTransport
         string dlChannel = channel + this.options.DeadLetterSuffix;
         this.handlers[channel] = (message, ct) => this.DispatchToHandlerAsync(channel, channelUtf8, dlChannel, handler, message, ct);
 
+        this.options.Heartbeat?.Start(channel, "mqtt");
+
         MqttClientSubscribeOptions subOptions = new MqttFactory().CreateSubscribeOptionsBuilder()
             .WithTopicFilter(channel, this.options.QualityOfServiceLevel)
             .Build();
@@ -450,6 +454,8 @@ public sealed class MqttMessageTransport : IMessageTransport
         CancellationToken cancellationToken)
         where TPayload : struct, IJsonElement<TPayload>
     {
+        this.options.Heartbeat?.Tick(channel, "mqtt");
+
         ParsedJsonDocument<TPayload> payloadDoc;
         try
         {

@@ -373,10 +373,14 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
         // Pre-compute dead-letter channel string once (for Kafka SDK which takes string)
         string dlChannel = channel + this.options.DeadLetterSuffix;
 
+        this.options.Heartbeat?.Start(channel, "kafka");
+
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
+                this.options.Heartbeat?.Tick(channel, "kafka");
+
                 ConsumeResult<Null, byte[]>? result;
                 try
                 {
@@ -542,6 +546,10 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
         catch (OperationCanceledException)
         {
             // Normal shutdown
+        }
+        finally
+        {
+            this.options.Heartbeat?.Stop(channel, "kafka");
         }
     }
 

@@ -189,6 +189,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         if (this.subscriptions.TryRemove(channel, out SubscriptionState? state))
         {
+            this.options.Heartbeat?.Stop(channel, "amqp");
             await state.CancellationSource.CancelAsync().ConfigureAwait(false);
             await state.Channel.BasicCancelAsync(state.ConsumerTag, cancellationToken: cancellationToken).ConfigureAwait(false);
             await state.Channel.CloseAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -406,6 +407,8 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                 return;
             }
 
+            this.options.Heartbeat?.Tick(channel, "amqp");
+
             ParsedJsonDocument<TPayload> payloadDoc;
             try
             {
@@ -565,6 +568,8 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
             consumerTag: consumerTag,
             consumer: consumer,
             cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        this.options.Heartbeat?.Start(channel, "amqp");
 
         SubscriptionState state = new(consumerChannel, cts, actualTag);
         this.subscriptions[channel] = state;
