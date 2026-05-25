@@ -1,6 +1,7 @@
 <Project Sdk="MSTest.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <Net10Only>true</Net10Only>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
   </PropertyGroup>

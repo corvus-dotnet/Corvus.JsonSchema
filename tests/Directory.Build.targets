@@ -13,4 +13,33 @@
     <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 
+  <!--
+    Net10.0-only test projects set Net10Only=true and multi-target net10.0;net481.
+    On net481 they produce a valid MTP test host with zero test methods, so
+    'dotnet test' reports "Zero tests ran" and exits with code 8
+    (handled by - -ignore-exit-code 8 in .zf/config.ps1).
+
+    Source files and references that don't support net481 (ASP.NET Core, etc.)
+    are stripped. The MSTest SDK infrastructure is preserved so MTP can still
+    launch the test host cleanly.
+  -->
+  <PropertyGroup Condition="'$(Net10Only)' == 'true' and '$(TargetFramework)' == 'net481'">
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Net10Only)' == 'true' and '$(TargetFramework)' == 'net481'">
+    <Compile Remove="**\*.cs" />
+    <EmbeddedResource Remove="@(EmbeddedResource)" />
+    <Content Remove="@(Content)" />
+    <ProjectReference Remove="@(ProjectReference)" />
+    <FrameworkReference Remove="@(FrameworkReference)" />
+    <!-- Remove ASP.NET Core packages that don't support net481.
+         Analyzer-only packages (StyleCop, Roslynator, Endjin) and MSTest SDK
+         packages are kept so MTP can still launch the empty test host. -->
+    <PackageReference Remove="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Remove="Testcontainers" />
+    <PackageReference Remove="Testcontainers.Nats" />
+    <PackageReference Remove="Testcontainers.RabbitMq" />
+    <PackageReference Remove="Testcontainers.Kafka" />
+  </ItemGroup>
+
 </Project>
