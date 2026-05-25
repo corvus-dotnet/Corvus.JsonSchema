@@ -755,6 +755,134 @@ public class WebSocketTransportTests
         await transport.DisposeAsync();
     }
 
+    [TestMethod]
+    public async Task DoubleDisposeDoesNotThrow()
+    {
+        WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        await transport.DisposeAsync();
+        await transport.DisposeAsync(); // Should be safe — no exception
+    }
+
+    [TestMethod]
+    public async Task HandlerErrorWithSkipContinuesDelivery()
+    {
+        // Arrange — policy returns Skip for handler errors
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Skip);
+
+        WebSocketMessageTransport publisher = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/skip-continues"u8.ToArray();
+        int handlerSuccessCount = 0;
+        using var secondReceived = new SemaphoreSlim(0, 1);
+
+        await subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                if (payload.GetProperty("fail"u8).ValueKind == JsonValueKind.True)
+                {
+                    throw new InvalidOperationException("Intentional handler failure");
+                }
+
+                Interlocked.Increment(ref handlerSuccessCount);
+                secondReceived.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+
+        // Act — publish a message that triggers handler error (will be skipped)
+        using ParsedJsonDocument<JsonElement> badDoc = ParsedJsonDocument<JsonElement>.Parse("""{"fail":true}"""u8.ToArray());
+        await publisher.PublishAsync(channel, badDoc.RootElement);
+        await Task.Delay(500);
+
+        // Now publish a valid message — subscription should still be alive
+        using ParsedJsonDocument<JsonElement> goodDoc = ParsedJsonDocument<JsonElement>.Parse("""{"fail":false}"""u8.ToArray());
+        await publisher.PublishAsync(channel, goodDoc.RootElement);
+
+        // Assert
+        bool received = await secondReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Second message was not received — subscription stopped after skip.");
+        Assert.AreEqual(1, handlerSuccessCount);
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Handler, policy.Invocations[0].Kind);
+
+        await subscriber.UnsubscribeAsync(channel);
+        await subscriber.DisposeAsync();
+        await publisher.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DeserializationErrorWithSkipContinuesDelivery()
+    {
+        // Arrange — policy returns Skip for deserialization errors
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.Skip);
+
+        WebSocketMessageTransport publisher = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        WebSocketMessageTransport subscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/deser-skip-continues"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        JsonValueKind receivedKind = JsonValueKind.Undefined;
+
+        await subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedKind = payload.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+
+        // Act — publish a valid envelope that triggers deserialization error in the subscriber.
+        // The WebSocket transport's DispatchEnvelopeAsync calls GetString() on correlationId;
+        // sending a numeric correlationId causes it to throw (same pattern as existing deser error tests).
+        using ClientWebSocket rawWs = new();
+        await rawWs.ConnectAsync(new Uri(WebSocketFixture.ServerUri), CancellationToken.None);
+        byte[] badEnvelope = """{"channel":"ws/test/deser-skip-continues","correlationId":999,"payload":{"data":1}}"""u8.ToArray();
+        await rawWs.SendAsync(new ArraySegment<byte>(badEnvelope), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+        await Task.Delay(500);
+
+        // Now publish a valid message — subscription should still be alive
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"after":"skip"}"""u8.ToArray());
+        await publisher.PublishAsync(channel, doc.RootElement);
+
+        // Assert
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(wasReceived, "Valid message was not received after deser error + skip.");
+        Assert.AreEqual(JsonValueKind.Object, receivedKind);
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+
+        await subscriber.UnsubscribeAsync(channel);
+        await subscriber.DisposeAsync();
+        await publisher.DisposeAsync();
+        rawWs.Dispose();
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(

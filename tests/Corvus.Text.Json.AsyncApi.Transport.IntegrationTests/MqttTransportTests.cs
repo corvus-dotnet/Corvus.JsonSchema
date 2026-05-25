@@ -848,6 +848,132 @@ public class MqttTransportTests
         await transport.DisposeAsync();
     }
 
+    [TestMethod]
+    public async Task DoubleDisposeDoesNotThrow()
+    {
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-dd-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        await transport.DisposeAsync();
+        await transport.DisposeAsync(); // Should be safe — no exception
+    }
+
+    [TestMethod]
+    public async Task HandlerErrorWithSkipContinuesDelivery()
+    {
+        // Arrange — policy returns Skip for handler errors
+        ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Skip);
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-skip-cont-" + Guid.NewGuid().ToString("N")[..8],
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/skip-continues"u8.ToArray();
+        int handlerSuccessCount = 0;
+        using var secondReceived = new SemaphoreSlim(0, 1);
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                if (payload.GetProperty("fail"u8).ValueKind == JsonValueKind.True)
+                {
+                    throw new InvalidOperationException("Intentional handler failure");
+                }
+
+                Interlocked.Increment(ref handlerSuccessCount);
+                secondReceived.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+
+        // Act — publish a message that triggers handler error (will be skipped)
+        using ParsedJsonDocument<JsonElement> badDoc = ParsedJsonDocument<JsonElement>.Parse("""{"fail":true}"""u8.ToArray());
+        await transport.PublishAsync(channel, badDoc.RootElement);
+        await Task.Delay(500);
+
+        // Now publish a valid message — subscription should still be alive
+        using ParsedJsonDocument<JsonElement> goodDoc = ParsedJsonDocument<JsonElement>.Parse("""{"fail":false}"""u8.ToArray());
+        await transport.PublishAsync(channel, goodDoc.RootElement);
+
+        // Assert
+        bool received = await secondReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Second message was not received — subscription stopped after skip.");
+        Assert.AreEqual(1, handlerSuccessCount);
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Handler, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DeserializationErrorWithSkipContinuesDelivery()
+    {
+        // Arrange — policy returns Skip for deserialization errors
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.Skip);
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-dsc-" + Guid.NewGuid().ToString("N")[..8],
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/deser-skip-continues"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        JsonValueKind receivedKind = JsonValueKind.Undefined;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedKind = payload.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+
+        // Act — publish invalid data via raw MQTT client (triggers deser error → skip)
+        MqttFactory factory = new();
+        using IMqttClient rawClient = factory.CreateMqttClient();
+        MqttClientOptions rawOpts = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-dsc-raw-" + Guid.NewGuid().ToString("N")[..8])
+            .Build();
+        await rawClient.ConnectAsync(rawOpts);
+        MqttApplicationMessage badMsg = new MqttApplicationMessageBuilder()
+            .WithTopic("mqtt/test/deser-skip-continues")
+            .WithPayload("NOT JSON!!!"u8.ToArray())
+            .Build();
+        await rawClient.PublishAsync(badMsg);
+        await Task.Delay(500);
+
+        // Now publish a valid message — subscription should still be alive
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"after":"skip"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        // Assert
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(wasReceived, "Valid message was not received after deser error + skip.");
+        Assert.AreEqual(JsonValueKind.Object, receivedKind);
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+        await rawClient.DisconnectAsync();
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(
