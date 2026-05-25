@@ -389,10 +389,12 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
                     MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
                     if (action == MessageErrorAction.Abort)
                     {
+                        AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Transport);
                         break;
                     }
 
                     // Skip or DeadLetter → continue polling after brief delay
+                    AsyncApiTelemetry.RecordSkip(channel, "kafka", MessageErrorKind.Transport);
                     await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
@@ -413,13 +415,27 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
                     MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
                     if (action == MessageErrorAction.DeadLetter)
                     {
-                        await this.DeadLetterRawAsync(dlChannel, channelUtf8, result.Message.Value, ex, cancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            await this.DeadLetterRawAsync(dlChannel, channelUtf8, result.Message.Value, ex, cancellationToken).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "kafka");
+                        }
+                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "kafka", dlEx);
+                        }
                     }
 
                     consumer.Commit(result);
                     if (action == MessageErrorAction.Abort)
                     {
+                        AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
                         break;
+                    }
+
+                    if (action != MessageErrorAction.DeadLetter)
+                    {
+                        AsyncApiTelemetry.RecordSkip(channel, "kafka", MessageErrorKind.Deserialization);
                     }
 
                     continue;
@@ -429,40 +445,94 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
                 {
                     TPayload payload = payloadDoc.RootElement;
                     JsonElement payloadElement = JsonElement.From(in payload);
-                    using ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(result);
-                    JsonElement headers = headersDoc?.RootElement ?? default;
 
+                    ParsedJsonDocument<JsonElement>? headersDoc;
                     try
                     {
-                        if (this.middleware is not null)
-                        {
-                            await this.middleware((ct) => handler(payload, headers, ct), cancellationToken).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            await handler(payload, headers, cancellationToken).ConfigureAwait(false);
-                        }
+                        headersDoc = ExtractHeadersDocument(result);
                     }
-                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    catch (Exception ex) when (ex is not OperationCanceledException)
                     {
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, payloadElement, headers);
+                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
                         MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
                         if (action == MessageErrorAction.DeadLetter)
                         {
-                            await this.DeadLetterCoreAsync(dlChannel, channelUtf8, in payloadElement, in headers, ex, cancellationToken).ConfigureAwait(false);
+                            try
+                            {
+                                await this.DeadLetterRawAsync(dlChannel, channelUtf8, result.Message.Value, ex, cancellationToken).ConfigureAwait(false);
+                                AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "kafka");
+                            }
+                            catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                            {
+                                AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "kafka", dlEx);
+                            }
                         }
 
                         consumer.Commit(result);
                         if (action == MessageErrorAction.Abort)
                         {
+                            AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Deserialization);
                             break;
                         }
 
+                        if (action != MessageErrorAction.DeadLetter)
+                        {
+                            AsyncApiTelemetry.RecordSkip(channel, "kafka", MessageErrorKind.Deserialization);
+                        }
+
                         continue;
+                    }
+
+                    using (headersDoc)
+                    {
+                        JsonElement headers = headersDoc?.RootElement ?? default;
+
+                        try
+                        {
+                            if (this.middleware is not null)
+                            {
+                                await this.middleware((ct) => handler(payload, headers, ct), cancellationToken).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                await handler(payload, headers, cancellationToken).ConfigureAwait(false);
+                            }
+                        }
+                        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                        {
+                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, payloadElement, headers);
+                            MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                            if (action == MessageErrorAction.DeadLetter)
+                            {
+                                try
+                                {
+                                    await this.DeadLetterCoreAsync(dlChannel, channelUtf8, in payloadElement, in headers, ex, cancellationToken).ConfigureAwait(false);
+                                    AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "kafka");
+                                }
+                                catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                {
+                                    AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "kafka", dlEx);
+                                }
+                            }
+
+                            consumer.Commit(result);
+                            if (action == MessageErrorAction.Abort)
+                            {
+                                AsyncApiTelemetry.RecordAbort(channel, "kafka", MessageErrorKind.Handler);
+                                break;
+                            }
+
+                            if (action != MessageErrorAction.DeadLetter)
+                            {
+                                AsyncApiTelemetry.RecordSkip(channel, "kafka", MessageErrorKind.Handler);
+                            }
+
+                            continue;
+                        }
                     }
                 }
 
@@ -534,9 +604,11 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
                     MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
                     if (action == MessageErrorAction.Abort)
                     {
+                        AsyncApiTelemetry.RecordAbort("(reply-loop)", "kafka", MessageErrorKind.Transport);
                         break;
                     }
 
+                    AsyncApiTelemetry.RecordSkip("(reply-loop)", "kafka", MessageErrorKind.Transport);
                     await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                     continue;
                 }

@@ -100,6 +100,19 @@ public static class AsyncApiTelemetry
             "Messages moved to dead-letter channel");
 
     /// <summary>
+    /// Gets the counter for dead-letter operations that themselves failed.
+    /// </summary>
+    /// <remarks>
+    /// This indicates a message could not be processed AND could not be dead-lettered,
+    /// meaning it was effectively dropped. This is a critical operational alert.
+    /// </remarks>
+    public static Counter<long> DeadLetterFailures { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.dead_letter_failures",
+            "{message}",
+            "Dead-letter operations that failed (message dropped)");
+
+    /// <summary>
     /// Gets the counter for messages that failed schema validation.
     /// </summary>
     public static Counter<long> ValidationFailures { get; } =
@@ -118,6 +131,29 @@ public static class AsyncApiTelemetry
             "Message processing retry attempts (via middleware or error policy)");
 
     /// <summary>
+    /// Gets the counter for subscriber abort events.
+    /// </summary>
+    /// <remarks>
+    /// This indicates a subscriber has stopped consuming messages due to the error policy
+    /// returning <see cref="MessageErrorAction.Abort"/>. This is a critical operational alert
+    /// that means no further messages will be processed on this channel until re-subscription.
+    /// </remarks>
+    public static Counter<long> SubscriberAborts { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.subscriber_aborts",
+            "{event}",
+            "Subscriber stopped due to error policy abort decision");
+
+    /// <summary>
+    /// Gets the counter for messages that were skipped (not processed, not dead-lettered).
+    /// </summary>
+    public static Counter<long> MessagesSkipped { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.messages_skipped",
+            "{message}",
+            "Messages skipped due to error policy decision");
+
+    /// <summary>
     /// Gets the histogram measuring message payload size in bytes.
     /// </summary>
     /// <remarks>OTel semantic convention: <c>messaging.message.body.size</c>.</remarks>
@@ -126,4 +162,100 @@ public static class AsyncApiTelemetry
             "messaging.message.body.size",
             "By",
             "Size of message payload in bytes");
+
+    /// <summary>
+    /// Records a successful dead-letter operation from within a transport's internal error handling.
+    /// </summary>
+    /// <param name="destination">The dead-letter channel name.</param>
+    /// <param name="originalChannel">The original channel the message was received on.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    public static void RecordDeadLetter(string destination, string originalChannel, string messagingSystem)
+    {
+        DeadLetters.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", destination },
+                { "corvus.asyncapi.original_channel", originalChannel },
+            });
+    }
+
+    /// <summary>
+    /// Records a dead-letter operation that itself failed (message was dropped).
+    /// </summary>
+    /// <param name="destination">The dead-letter channel name.</param>
+    /// <param name="originalChannel">The original channel the message was received on.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="exception">The exception that caused the dead-letter operation to fail.</param>
+    public static void RecordDeadLetterFailure(
+        string destination,
+        string originalChannel,
+        string messagingSystem,
+        Exception exception)
+    {
+        DeadLetterFailures.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", destination },
+                { "corvus.asyncapi.original_channel", originalChannel },
+                { "error.type", exception.GetType().FullName },
+            });
+    }
+
+    /// <summary>
+    /// Records that a subscriber aborted (stopped consuming) due to the error policy.
+    /// </summary>
+    /// <param name="channel">The channel the subscriber was consuming from.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="errorKind">The kind of error that triggered the abort.</param>
+    public static void RecordAbort(string channel, string messagingSystem, MessageErrorKind errorKind)
+    {
+        SubscriberAborts.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", channel },
+                { "corvus.asyncapi.error_kind", errorKind.ToString() },
+            });
+    }
+
+    /// <summary>
+    /// Records that a message was skipped (not processed and not dead-lettered).
+    /// </summary>
+    /// <param name="channel">The channel the message was received on.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="errorKind">The kind of error that caused the skip.</param>
+    public static void RecordSkip(string channel, string messagingSystem, MessageErrorKind errorKind)
+    {
+        MessagesSkipped.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", channel },
+                { "corvus.asyncapi.error_kind", errorKind.ToString() },
+            });
+    }
+
+    /// <summary>
+    /// Records a retry attempt for message processing.
+    /// </summary>
+    /// <param name="channel">The channel the message was received on.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="attemptNumber">The retry attempt number (1 for first retry).</param>
+    public static void RecordRetry(string channel, string messagingSystem, int attemptNumber)
+    {
+        RetryAttempts.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", channel },
+                { "corvus.asyncapi.retry_attempt", attemptNumber },
+            });
+    }
 }

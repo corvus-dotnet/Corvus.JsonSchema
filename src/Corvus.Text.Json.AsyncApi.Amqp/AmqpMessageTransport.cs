@@ -417,11 +417,21 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                 MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
                 if (action == MessageErrorAction.DeadLetter)
                 {
-                    await this.DeadLetterRawAsync(dlChannel, channelUtf8, args.Body, ex, cts.Token).ConfigureAwait(false);
+                    try
+                    {
+                        await this.DeadLetterRawAsync(dlChannel, channelUtf8, args.Body, ex, cts.Token).ConfigureAwait(false);
+                        AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "amqp");
+                    }
+                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                    {
+                        AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "amqp", dlEx);
+                    }
+
                     await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
                 }
                 else if (action == MessageErrorAction.Abort)
                 {
+                    AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
                     if (actualTag is not null)
                     {
                         await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
@@ -431,6 +441,7 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                 }
                 else
                 {
+                    AsyncApiTelemetry.RecordSkip(channel, "amqp", MessageErrorKind.Deserialization);
                     await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
                 }
 
@@ -441,41 +452,33 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
             {
                 TPayload payload = payloadDoc.RootElement;
                 JsonElement payloadElement = JsonElement.From(in payload);
-                using ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(args);
-                JsonElement headers = headersDoc?.RootElement ?? default;
 
+                ParsedJsonDocument<JsonElement>? headersDoc;
                 try
                 {
-                    if (this.middleware is not null)
-                    {
-                        await this.middleware((ct) => handler(payload, headers, ct), cts.Token).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        await handler(payload, headers, cts.Token).ConfigureAwait(false);
-                    }
-
-                    await consumerChannel.BasicAckAsync(args.DeliveryTag, multiple: false, cts.Token).ConfigureAwait(false);
+                    headersDoc = ExtractHeadersDocument(args);
                 }
-                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    // Shutting down — don't ack
-                }
-                catch (Exception ex)
-                {
-                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, payloadElement, headers);
+                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
                     MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
                     if (action == MessageErrorAction.DeadLetter)
                     {
-                        (byte[] payloadRented, int payloadLen) = SerializeToRented(in payloadElement);
-                        byte[]? headerBytes = headers.ValueKind != JsonValueKind.Undefined
-                            ? SerializeToOwnedBytes(in headers)
-                            : null;
-                        await this.DeadLetterCoreAsync(dlChannel, channelUtf8, payloadRented, payloadLen, headerBytes, ex, cts.Token).ConfigureAwait(false);
+                        try
+                        {
+                            await this.DeadLetterRawAsync(dlChannel, channelUtf8, args.Body, ex, cts.Token).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "amqp");
+                        }
+                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "amqp", dlEx);
+                        }
+
                         await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
                     }
                     else if (action == MessageErrorAction.Abort)
                     {
+                        AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
                         if (actualTag is not null)
                         {
                             await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
@@ -485,7 +488,71 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
                     }
                     else
                     {
+                        AsyncApiTelemetry.RecordSkip(channel, "amqp", MessageErrorKind.Deserialization);
                         await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
+                    }
+
+                    return;
+                }
+
+                using (headersDoc)
+                {
+                    JsonElement headers = headersDoc?.RootElement ?? default;
+
+                    try
+                    {
+                        if (this.middleware is not null)
+                        {
+                            await this.middleware((ct) => handler(payload, headers, ct), cts.Token).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                        }
+
+                        await consumerChannel.BasicAckAsync(args.DeliveryTag, multiple: false, cts.Token).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                    {
+                        // Shutting down — don't ack
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, payloadElement, headers);
+                        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                        if (action == MessageErrorAction.DeadLetter)
+                        {
+                            try
+                            {
+                                (byte[] payloadRented, int payloadLen) = SerializeToRented(in payloadElement);
+                                byte[]? headerBytes = headers.ValueKind != JsonValueKind.Undefined
+                                    ? SerializeToOwnedBytes(in headers)
+                                    : null;
+                                await this.DeadLetterCoreAsync(dlChannel, channelUtf8, payloadRented, payloadLen, headerBytes, ex, cts.Token).ConfigureAwait(false);
+                                AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "amqp");
+                            }
+                            catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                            {
+                                AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "amqp", dlEx);
+                            }
+
+                            await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
+                        }
+                        else if (action == MessageErrorAction.Abort)
+                        {
+                            AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Handler);
+                            if (actualTag is not null)
+                            {
+                                await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                            }
+
+                            await cts.CancelAsync().ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            AsyncApiTelemetry.RecordSkip(channel, "amqp", MessageErrorKind.Handler);
+                            await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
+                        }
                     }
                 }
             }

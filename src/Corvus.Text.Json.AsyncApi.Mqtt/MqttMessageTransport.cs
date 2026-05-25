@@ -465,11 +465,24 @@ public sealed class MqttMessageTransport : IMessageTransport
             MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
             if (action == MessageErrorAction.DeadLetter)
             {
-                await this.DeadLetterRawAsync(deadLetterChannel, channel, message.PayloadSegment, ex, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    await this.DeadLetterRawAsync(deadLetterChannel, channel, message.PayloadSegment, ex, cancellationToken).ConfigureAwait(false);
+                    AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
+                }
+                catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                {
+                    AsyncApiTelemetry.RecordDeadLetterFailure(deadLetterChannel, channel, "mqtt", dlEx);
+                }
             }
             else if (action == MessageErrorAction.Abort)
             {
+                AsyncApiTelemetry.RecordAbort(channel, "mqtt", MessageErrorKind.Deserialization);
                 await this.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                AsyncApiTelemetry.RecordSkip(channel, "mqtt", MessageErrorKind.Deserialization);
             }
 
             return;
@@ -479,51 +492,101 @@ public sealed class MqttMessageTransport : IMessageTransport
         {
             TPayload payload = payloadDoc.RootElement;
             JsonElement payloadElement = JsonElement.From(in payload);
-            using ParsedJsonDocument<JsonElement>? headersDoc = this.DecodeHeadersDocument(message);
-            JsonElement headers = headersDoc?.RootElement ?? default;
 
+            ParsedJsonDocument<JsonElement>? headersDoc;
             try
             {
-                if (this.middleware is not null)
-                {
-                    await this.middleware((ct) => handler(payload, headers, ct), cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    await handler(payload, headers, cancellationToken).ConfigureAwait(false);
-                }
+                headersDoc = this.DecodeHeadersDocument(message);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                return;
-            }
-            catch (Exception ex)
-            {
-                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, payloadElement, headers);
+                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
                 MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
                 if (action == MessageErrorAction.DeadLetter)
                 {
-                    byte[] rented;
-                    int length;
-                    if (payloadElement.ValueKind != JsonValueKind.Undefined)
+                    try
                     {
-                        (rented, length) = SerializeToRented(in payloadElement);
+                        await this.DeadLetterRawAsync(deadLetterChannel, channel, message.PayloadSegment, ex, cancellationToken).ConfigureAwait(false);
+                        AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
                     }
-                    else
+                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
                     {
-                        rented = [];
-                        length = 0;
+                        AsyncApiTelemetry.RecordDeadLetterFailure(deadLetterChannel, channel, "mqtt", dlEx);
                     }
-
-                    string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
-                        ? SerializeToBase64String(in headers)
-                        : null;
-
-                    await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersBase64, ex, cancellationToken).ConfigureAwait(false);
                 }
                 else if (action == MessageErrorAction.Abort)
                 {
+                    AsyncApiTelemetry.RecordAbort(channel, "mqtt", MessageErrorKind.Deserialization);
                     await this.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    AsyncApiTelemetry.RecordSkip(channel, "mqtt", MessageErrorKind.Deserialization);
+                }
+
+                return;
+            }
+
+            using (headersDoc)
+            {
+                JsonElement headers = headersDoc?.RootElement ?? default;
+
+                try
+                {
+                    if (this.middleware is not null)
+                    {
+                        await this.middleware((ct) => handler(payload, headers, ct), cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await handler(payload, headers, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, payloadElement, headers);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+                    if (action == MessageErrorAction.DeadLetter)
+                    {
+                        try
+                        {
+                            byte[] rented;
+                            int length;
+                            if (payloadElement.ValueKind != JsonValueKind.Undefined)
+                            {
+                                (rented, length) = SerializeToRented(in payloadElement);
+                            }
+                            else
+                            {
+                                rented = [];
+                                length = 0;
+                            }
+
+                            string? headersBase64 = headers.ValueKind != JsonValueKind.Undefined
+                                ? SerializeToBase64String(in headers)
+                                : null;
+
+                            await this.DeadLetterCoreAsync(deadLetterChannel, channel, rented, length, headersBase64, ex, cancellationToken).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(deadLetterChannel, channel, "mqtt");
+                        }
+                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(deadLetterChannel, channel, "mqtt", dlEx);
+                        }
+                    }
+                    else if (action == MessageErrorAction.Abort)
+                    {
+                        AsyncApiTelemetry.RecordAbort(channel, "mqtt", MessageErrorKind.Handler);
+                        await this.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        AsyncApiTelemetry.RecordSkip(channel, "mqtt", MessageErrorKind.Handler);
+                    }
                 }
             }
         }
