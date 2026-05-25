@@ -124,15 +124,16 @@ public sealed class BenchmarkTransport : IMessageTransport
             using ParsedJsonDocument<TPayload> doc =
                 ParsedJsonDocument<TPayload>.Parse(payloadBytes);
 
-            JsonElement headers = default;
             if (headersBytes.Length > 0)
             {
                 using ParsedJsonDocument<JsonElement> headerDoc =
                     ParsedJsonDocument<JsonElement>.Parse(headersBytes);
-                headers = headerDoc.RootElement.Clone();
+                await handler(doc.RootElement, headerDoc.RootElement, ct).ConfigureAwait(false);
             }
-
-            await handler(doc.RootElement, headers, ct).ConfigureAwait(false);
+            else
+            {
+                await handler(doc.RootElement, default, ct).ConfigureAwait(false);
+            }
         };
 
         return ValueTask.CompletedTask;
