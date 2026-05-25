@@ -187,14 +187,21 @@ jobs:
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
+      - name: Install dotnet-coverage
+        run: dotnet tool install --global dotnet-coverage
+
       - name: Run Integration Tests
         run: |
-          dotnet test --project tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.csproj \
-            -f net10.0 \
-            -c Release \
-            --no-build \
-            --filter "TestCategory=integration&TestCategory!=failing" \
-            --logger "trx;LogFileName=integration-tests.trx"
+          dotnet-coverage collect \
+            --output integration-tests.cobertura.xml \
+            --output-format cobertura \
+            -s dotnet-coverage.settings.xml \
+            "dotnet test --project tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.csproj \
+              -f net10.0 \
+              -c Release \
+              --no-build \
+              --filter TestCategory=integration\&TestCategory!=failing \
+              --report-trx --report-trx-filename integration-tests.trx"
         timeout-minutes: 10
         env:
           NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
