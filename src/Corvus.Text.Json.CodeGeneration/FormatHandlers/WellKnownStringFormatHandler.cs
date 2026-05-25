@@ -609,6 +609,14 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                     .AppendLineIndent("public static implicit operator Source(NodaTime.OffsetDateTime value) => new (value);");
                 }
 
+                if (seenConversionOperators.Add("DateTimeOffset"))
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                        .AppendLineIndent("public static implicit operator Source(DateTimeOffset value) => new (value);");
+                }
+
                 return true;
 
             case "time":

@@ -102,5 +102,7 @@
     <PackageVersion Include="JsonCons.JsonPath" Version="1.1.0" />
     <PackageVersion Include="JsonPath.Net" Version="3.0.2" />
     <PackageVersion Include="JsonSchema.Net" Version="9.2.0" />
+    <!-- Azure Identity (example recipes only) -->
+    <PackageVersion Include="Azure.Identity" Version="1.13.2" />
   </ItemGroup>
 </Project>

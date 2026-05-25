@@ -55,20 +55,29 @@ corvusjson asyncapi-generate streetlights.json \
 Use it with just a few lines:
 
 ```csharp
+using System.Text;
 using Corvus.Text.Json.AsyncApi;
-using Corvus.Text.Json.AsyncApi.Nats;
+using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
 
-await using NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(
-    new NatsTransportOptions { Url = "nats://localhost:4222" });
+// InMemoryMessageTransport for testing; in production, use NatsMessageTransport,
+// KafkaMessageTransport, etc. — the API is identical.
+await using InMemoryMessageTransport transport = new();
 
 TurnOnProducer producer = new(transport);
 
 // Publish a validated message — schema validation runs before the message leaves your process
-TurnOnOffPayload payload = TurnOnOffPayload.ParseValue(
-    """{"command":"on","sentAt":"2024-01-15T10:30:00Z"}"""u8);
+await producer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    {
+        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-001");
 
-await producer.PublishTurnOnOffAsync(payload, streetlightId: "lamp-001");
+// Inspect what was published
+PublishedMessage msg = transport.PublishedMessages[0];
+Console.WriteLine($"Channel: {msg.Channel}");
+Console.WriteLine($"Payload: {Encoding.UTF8.GetString(msg.PayloadBytes)}");
 ```
 
 ## Quick Start — Consumer
@@ -86,18 +95,21 @@ Implement your message handler and start consuming:
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
-using Corvus.Text.Json.AsyncApi.Nats;
+using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
 
-await using NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(
-    new NatsTransportOptions { Url = "nats://localhost:4222" });
+await using InMemoryMessageTransport transport = new();
 
 LightMeasuredHandler handler = new();
-await using ReceiveLightMeasurementConsumer consumer = new(transport, handler);
+ReceiveLightMeasurementConsumer consumer = new(transport, handler);
 
 await consumer.StartAsync();
-// Consumer is now running — messages arrive at handler.HandleLightMeasuredAsync
-// Press Ctrl+C or dispose to stop
+
+// Simulate an incoming message (in production, the broker delivers these)
+await transport.DeliverAsync<LightMeasuredPayload>(
+    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
+    """{"lumens":250,"sentAt":"2024-01-15T10:30:00Z"}"""u8.ToArray());
+
 await consumer.StopAsync();
 ```
 
@@ -480,14 +492,24 @@ The `MessageAuthenticationContext.Credentials` dictionary is transport-agnostic 
 
 ### Microsoft Entra ID (Azure AD / MSAL)
 
-For Azure-hosted messaging (Event Hubs via Kafka protocol, Azure Service Bus via AMQP), use `Azure.Identity` with the `OAuth2AuthenticationProvider`'s token factory:
+For Azure-hosted messaging (Event Hubs via Kafka protocol, Azure Service Bus via AMQP), use `Azure.Identity` with the `OAuth2AuthenticationProvider`'s token factory.
+
+Requires: `dotnet add package Azure.Identity`
 
 ```csharp
-using Azure.Identity;
 using Azure.Core;
+using Azure.Identity;
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Testing;
+using Streetlights.Client;
+
+await using InMemoryMessageTransport transport = new();
 
 // Client credentials flow (service-to-service)
+string tenantId = "your-tenant-id";
+string clientId = "your-client-id";
+string clientSecret = "your-client-secret";
+
 TokenCredential credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
 
 IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
@@ -501,28 +523,37 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
     tokenType: "Bearer");
 
 TurnOnProducer producer = new(transport, authProvider: auth);
+
+await producer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    {
+        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-001");
 ```
 
 For different Azure Identity flows, substitute the credential type:
 
 ```csharp
+using Azure.Identity;
+
 // Managed identity (Azure-hosted services — no secrets needed)
-TokenCredential credential = new DefaultAzureCredential();
+TokenCredential managedIdentity = new DefaultAzureCredential();
 
 // Interactive browser login (desktop/native apps)
-TokenCredential credential = new InteractiveBrowserCredential(
+TokenCredential browser = new InteractiveBrowserCredential(
     new InteractiveBrowserCredentialOptions
     {
-        ClientId = clientId,
-        TenantId = tenantId,
+        ClientId = "your-client-id",
+        TenantId = "your-tenant-id",
     });
 
 // Device code flow (CLI tools, headless terminals)
-TokenCredential credential = new DeviceCodeCredential(
+TokenCredential deviceCode = new DeviceCodeCredential(
     new DeviceCodeCredentialOptions
     {
-        ClientId = clientId,
-        TenantId = tenantId,
+        ClientId = "your-client-id",
+        TenantId = "your-tenant-id",
         DeviceCodeCallback = (info, cancel) =>
         {
             Console.WriteLine(info.Message);
@@ -533,36 +564,30 @@ TokenCredential credential = new DeviceCodeCredential(
 
 All credential types work with the same `OAuth2AuthenticationProvider` factory pattern — the factory acquires tokens using whichever `TokenCredential` you supply.
 
-### OAuth 2.0 (Generic / Custom Identity Provider)
+### OAuth 2.0 (Static Token)
 
-For non-Azure OAuth2 providers (Auth0, Okta, Keycloak, custom):
+For short-lived scripts, testing, or pre-acquired tokens:
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Testing;
+using Streetlights.Client;
 
-// Static token (short-lived scripts, testing)
+await using InMemoryMessageTransport transport = new();
+
 IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
-    accessToken: "eyJhbGciOi...",
+    accessToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
     tokenType: "Bearer",
     scopes: "read:messages write:messages");
 
-// Dynamic token acquisition with refresh (production)
-IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
-    accessTokenFactory: async ct =>
-    {
-        // Your OAuth2 client credentials / token exchange implementation
-        TokenResponse response = await oidcClient.GetClientCredentialsTokenAsync(
-            "https://auth.example.com/token",
-            clientId,
-            clientSecret,
-            ["messaging.publish"],
-            ct);
-        return response.AccessToken;
-    },
-    tokenType: "Bearer",
-    scopes: "messaging.publish");
-
 TurnOnProducer producer = new(transport, authProvider: auth);
+
+await producer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    {
+        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-002");
 ```
 
 The `accessTokenFactory` is called on **every publish** (producers) and **once at subscribe time** (consumers). For caching and refresh logic, wrap your token client with `Microsoft.Extensions.Caching.Memory` or use your SDK's built-in token cache.
@@ -573,21 +598,46 @@ For brokers that accept a static JWT or pre-acquired bearer token:
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Testing;
+using Streetlights.Client;
+
+await using InMemoryMessageTransport transport = new();
 
 IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider("my-jwt-token");
 
 TurnOnProducer producer = new(transport, authProvider: auth);
+
+await producer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    {
+        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-003");
 ```
 
 With dynamic token refresh:
 
 ```csharp
+using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Testing;
+using Streetlights.Client;
+
+await using InMemoryMessageTransport transport = new();
+LightMeasuredHandler handler = new();
+
+// In production, this factory would call your token endpoint
 IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider(
-    tokenFactory: async ct =>
-    {
-        // Refresh the token before it expires
-        return await tokenService.GetOrRefreshTokenAsync(ct);
-    });
+    tokenFactory: ct => new ValueTask<string>("refreshed-token-value"));
+
+ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: auth);
+await consumer.StartAsync();
+await consumer.StopAsync();
+
+internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
+{
+    public ValueTask HandleLightMeasuredAsync(
+        LightMeasuredPayload payload, CancellationToken cancellationToken = default) => default;
+}
 ```
 
 ### API Key
@@ -596,19 +646,31 @@ For brokers or gateways that authenticate via API keys:
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Testing;
+using Streetlights.Client;
+
+await using InMemoryMessageTransport transport = new();
+LightMeasuredHandler handler = new();
 
 // Simple key — transport uses it as-is
-IMessageAuthenticationProvider auth = new ApiKeyAuthenticationProvider(
+IMessageAuthenticationProvider simpleAuth = new ApiKeyAuthenticationProvider(
     apiKey: "sk-live-abc123");
 
 // HTTP API key style — with name and location metadata
-IMessageAuthenticationProvider auth = new ApiKeyAuthenticationProvider(
+IMessageAuthenticationProvider namedAuth = new ApiKeyAuthenticationProvider(
     apiKey: "sk-live-abc123",
     name: "X-API-Key",
     location: "header");
 
-ReceiveLightMeasurementConsumer consumer = new(
-    transport, handler, authProvider: auth);
+ReceiveLightMeasurementConsumer consumer = new(transport, handler, authProvider: namedAuth);
+await consumer.StartAsync();
+await consumer.StopAsync();
+
+internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
+{
+    public ValueTask HandleLightMeasuredAsync(
+        LightMeasuredPayload payload, CancellationToken cancellationToken = default) => default;
+}
 ```
 
 ### Username/Password (SASL)
@@ -617,18 +679,23 @@ For Kafka SASL PLAIN, AMQP PLAIN, or MQTT username/password authentication:
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Testing;
+using Streetlights.Client;
+
+await using InMemoryMessageTransport transport = new();
 
 IMessageAuthenticationProvider auth = new UserPasswordAuthenticationProvider(
     username: "service-account",
     password: "secret-from-keyvault");
 
-// Kafka with SASL PLAIN
-await using KafkaMessageTransport transport = new(new KafkaTransportOptions
-{
-    BootstrapServers = "kafka.example.com:9092",
-});
-
 TurnOnProducer producer = new(transport, authProvider: auth);
+
+await producer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    {
+        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-005");
 ```
 
 ### Client Certificate (mTLS)
@@ -636,23 +703,26 @@ TurnOnProducer producer = new(transport, authProvider: auth);
 For brokers requiring mutual TLS (Kafka SSL, RabbitMQ peer verification):
 
 ```csharp
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Testing;
+using Streetlights.Client;
 
-// From PEM files
-X509Certificate2 cert = X509Certificate2.CreateFromPemFile(
-    "client-cert.pem", "client-key.pem");
+await using InMemoryMessageTransport transport = new();
 
-// From PFX/PKCS12
-X509Certificate2 cert = new("client.pfx", "pfx-password");
+// In production, load from PEM, PFX, or certificate store:
+//   X509Certificate2 cert = X509Certificate2.CreateFromPemFile("client-cert.pem", "client-key.pem");
+//   X509Certificate2 cert = new("client.pfx", "pfx-password");
 
-// From certificate store (Windows)
-using X509Store store = new(StoreName.My, StoreLocation.CurrentUser);
-store.Open(OpenFlags.ReadOnly);
-X509Certificate2 cert = store.Certificates.Find(
-    X509FindType.FindByThumbprint, thumbprint, validOnly: false)[0];
+// Self-signed cert for demonstration:
+using RSA rsa = RSA.Create(2048);
+CertificateRequest req = new("CN=example-client", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+using X509Certificate2 cert = req.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddHours(1));
 
 IMessageAuthenticationProvider auth = new CertificateAuthenticationProvider(cert);
+
+TurnOnProducer producer = new(transport, authProvider: auth);
 ```
 
 ### Composite (Multiple Security Schemes)
@@ -661,23 +731,29 @@ When your AsyncAPI spec declares multiple security schemes on a server (e.g., bo
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Testing;
+using Streetlights.Client;
+
+await using InMemoryMessageTransport transport = new();
 
 IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
     new KeyValuePair<SecuritySchemeType, IMessageAuthenticationProvider>[]
     {
         new(SecuritySchemeType.Plain, new UserPasswordAuthenticationProvider("user", "pass")),
-        new(SecuritySchemeType.OAuth2, new OAuth2AuthenticationProvider(
-            accessTokenFactory: async ct =>
-            {
-                AccessToken token = await credential.GetTokenAsync(
-                    new TokenRequestContext(["https://kafka.azure.net/.default"]), ct);
-                return token.Token;
-            })),
+        new(SecuritySchemeType.Http, new BearerTokenAuthenticationProvider("token-value")),
+        new(SecuritySchemeType.HttpApiKey, new ApiKeyAuthenticationProvider("api-key-123")),
     });
 
 // The generated code emits the correct SchemeType per operation/server —
 // the composite automatically selects the matching inner provider.
 TurnOnProducer producer = new(transport, authProvider: auth);
+
+await producer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    {
+        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-006");
 ```
 
 ### Custom Authentication Provider
@@ -686,33 +762,52 @@ For protocols with non-standard auth requirements, implement `IMessageAuthentica
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.Testing;
+using Streetlights.Client;
 
-/// <summary>
-/// Custom provider that acquires SASL SCRAM-SHA-256 credentials from HashiCorp Vault.
-/// </summary>
-internal sealed class VaultScramProvider : IMessageAuthenticationProvider
-{
-    private readonly IVaultClient vault;
-    private readonly string secretPath;
+await using InMemoryMessageTransport transport = new();
 
-    public VaultScramProvider(IVaultClient vault, string secretPath)
+// Custom provider that acquires credentials from a secret rotation service
+IMessageAuthenticationProvider auth = new RotatingSecretProvider(
+    secretFactory: ct => new ValueTask<(string User, string Pass)>(("svc-acct", "rotated-secret")));
+
+TurnOnProducer producer = new(transport, authProvider: auth);
+
+await producer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
     {
-        this.vault = vault;
-        this.secretPath = secretPath;
+        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-007");
+```
+
+The implementation:
+
+```csharp
+using Corvus.Text.Json.AsyncApi;
+
+internal sealed class RotatingSecretProvider : IMessageAuthenticationProvider
+{
+    private readonly Func<CancellationToken, ValueTask<(string User, string Pass)>> secretFactory;
+
+    public RotatingSecretProvider(
+        Func<CancellationToken, ValueTask<(string User, string Pass)>> secretFactory)
+    {
+        this.secretFactory = secretFactory;
     }
 
     public async ValueTask AuthenticateAsync(
         MessageAuthenticationContext context,
         CancellationToken cancellationToken = default)
     {
-        Secret<SecretData> secret = await this.vault.V1.Secrets.KeyValue.V2
-            .ReadSecretAsync(this.secretPath, cancellationToken: cancellationToken);
-
-        context.Credentials["username"] = secret.Data.Data["username"].ToString()!;
-        context.Credentials["password"] = secret.Data.Data["password"].ToString()!;
+        (string user, string pass) = await this.secretFactory(cancellationToken).ConfigureAwait(false);
+        context.Credentials["username"] = user;
+        context.Credentials["password"] = pass;
     }
 }
 ```
+
+> **See also:** [Example Recipe 039 — AsyncAPI Authentication](ExampleRecipes/039-AsyncApiAuthentication/) for a fully compilable project demonstrating all authentication patterns.
 
 ## Channel Parameters
 
@@ -1254,6 +1349,7 @@ All validation modes produce **zero additional allocation** — the schema evalu
 
 ## Example Recipes
 
-- [AsyncAPI Producer](../docs/ExampleRecipes/036-AsyncApiProducer/README.md) — Basic producer generation and publishing
-- [AsyncAPI Consumer](../docs/ExampleRecipes/037-AsyncApiConsumer/README.md) — Consumer with validation and error handling
-- [AsyncAPI End-to-End](../docs/ExampleRecipes/038-AsyncApiEndToEnd/README.md) — Producer + consumer with in-memory transport testing
+- [AsyncAPI Producer](ExampleRecipes/036-AsyncApiProducer/) — Basic producer generation and publishing
+- [AsyncAPI Consumer](ExampleRecipes/037-AsyncApiConsumer/) — Consumer with validation and error handling
+- [AsyncAPI End-to-End](ExampleRecipes/038-AsyncApiEndToEnd/) — Producer + consumer with in-memory transport testing
+- [AsyncAPI Authentication](ExampleRecipes/039-AsyncApiAuthentication/) — All auth patterns (Azure Identity, OAuth2, API Key, mTLS, composite)

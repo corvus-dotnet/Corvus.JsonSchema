@@ -516,6 +516,9 @@ public readonly partial struct JsonDateTime
         public static implicit operator Source(NodaTime.OffsetDateTime value) => new (value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(DateTimeOffset value) => new (value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)

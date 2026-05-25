@@ -101,4 +101,16 @@
   <Folder Name="/033-OpenApiEndToEnd/">
     <Project Path="033-OpenApiEndToEnd\OpenApiEndToEnd.csproj" />
   </Folder>
+  <Folder Name="/036-AsyncApiProducer/">
+    <Project Path="036-AsyncApiProducer\AsyncApiProducer.csproj" />
+  </Folder>
+  <Folder Name="/037-AsyncApiConsumer/">
+    <Project Path="037-AsyncApiConsumer\AsyncApiConsumer.csproj" />
+  </Folder>
+  <Folder Name="/038-AsyncApiEndToEnd/">
+    <Project Path="038-AsyncApiEndToEnd\AsyncApiEndToEnd.csproj" />
+  </Folder>
+  <Folder Name="/039-AsyncApiAuthentication/">
+    <Project Path="039-AsyncApiAuthentication\AsyncApiAuthentication.csproj" />
+  </Folder>
 </Solution>
