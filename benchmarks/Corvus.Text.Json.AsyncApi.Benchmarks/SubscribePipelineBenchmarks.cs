@@ -10,11 +10,18 @@ using Corvus.Text.Json;
 namespace AsyncApiBenchmark;
 
 /// <summary>
-/// End-to-end receive/subscribe benchmarks comparing Corvus transport
-/// subscribe (parse + validate + dispatch) against raw STJ deserialization.
+/// End-to-end receive/subscribe benchmarks comparing the Corvus transport
+/// subscribe pipeline against what a developer would write with raw STJ.
 /// </summary>
 /// <remarks>
-/// Measures the receive pipeline: incoming bytes → typed payload → handler dispatch.
+/// <para>
+/// The baseline represents a hand-written NATS subscriber: receive bytes,
+/// deserialize via STJ into a POCO, then call a handler with the result.
+/// This is the floor — what you'd write with no framework at all.
+/// </para>
+/// <para>
+/// Corvus benchmarks measure the full pipeline: bytes → parse → (optional validate) → dispatch.
+/// </para>
 /// </remarks>
 [MemoryDiagnoser]
 public class SubscribePipelineBenchmarks
@@ -44,11 +51,12 @@ public class SubscribePipelineBenchmarks
             });
     }
 
-    [Benchmark(Description = "Raw STJ: Deserialize only", Baseline = true)]
-    public int RawNats_NoValidation()
+    [Benchmark(Description = "Raw STJ: Deserialize + handle (no validation)", Baseline = true)]
+    public double RawNats_DeserializeAndHandle()
     {
+        // This is what a hand-written subscriber does: deserialize then use the result
         LightMeasuredPoco result = RawNatsBaseline.Subscribe<LightMeasuredPoco>(ValidPayloadBytes);
-        return result.Id;
+        return result.Id + result.Lumens;
     }
 
     [Benchmark(Description = "Corvus: Parse + access (no validation)")]
@@ -61,24 +69,26 @@ public class SubscribePipelineBenchmarks
         return (long)payload.Id + (double)payload.Lumens;
     }
 
-    [Benchmark(Description = "Corvus: Parse + basic validation")]
-    public bool Corvus_WithBasicValidation()
+    [Benchmark(Description = "Corvus: Parse + basic validation + access")]
+    public double Corvus_WithBasicValidation()
     {
         using ParsedJsonDocument<LightMeasuredPayload> doc =
             ParsedJsonDocument<LightMeasuredPayload>.Parse(ValidPayloadBytes);
 
-        return doc.RootElement.EvaluateSchema();
+        _ = doc.RootElement.EvaluateSchema();
+        return (long)doc.RootElement.Id + (double)doc.RootElement.Lumens;
     }
 
-    [Benchmark(Description = "Corvus: Parse + detailed validation")]
-    public bool Corvus_WithDetailedValidation()
+    [Benchmark(Description = "Corvus: Parse + detailed validation + access")]
+    public double Corvus_WithDetailedValidation()
     {
         using ParsedJsonDocument<LightMeasuredPayload> doc =
             ParsedJsonDocument<LightMeasuredPayload>.Parse(ValidPayloadBytes);
 
         using JsonSchemaResultsCollector collector =
             JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-        return doc.RootElement.EvaluateSchema(collector);
+        _ = doc.RootElement.EvaluateSchema(collector);
+        return (long)doc.RootElement.Id + (double)doc.RootElement.Lumens;
     }
 
     [Benchmark(Description = "Corvus: Full pipeline (parse + deliver + handler)")]

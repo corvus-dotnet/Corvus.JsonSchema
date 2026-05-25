@@ -44,7 +44,7 @@ internal static class BenchmarkSmokeTests
         SubscribePipelineBenchmarks bench = new();
         await bench.Setup().ConfigureAwait(false);
 
-        Verify("Subscribe.RawNats_NoValidation", () => bench.RawNats_NoValidation());
+        Verify("Subscribe.RawNats_DeserializeAndHandle", () => bench.RawNats_DeserializeAndHandle());
         Verify("Subscribe.Corvus_NoValidation", () => bench.Corvus_NoValidation());
         Verify("Subscribe.Corvus_WithBasicValidation", () => bench.Corvus_WithBasicValidation());
         Verify("Subscribe.Corvus_WithDetailedValidation", () => bench.Corvus_WithDetailedValidation());
