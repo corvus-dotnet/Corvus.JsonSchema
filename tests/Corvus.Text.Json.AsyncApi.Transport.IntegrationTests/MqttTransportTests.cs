@@ -7,6 +7,7 @@ using Corvus.Text.Json.AsyncApi.Mqtt;
 using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Packets;
 
 namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests;
 
@@ -843,6 +844,66 @@ public class MqttTransportTests
         bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.IsTrue(received, "Public DeadLetterAsync message was not received.");
         Assert.IsNotNull(dlqPayload);
+
+        await dlqClient.DisconnectAsync();
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task PublicDeadLetterAsyncWithHeadersIncludesHeaders()
+    {
+        // Arrange — verify that headers are included in the dead-letter message
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-dl-hdr-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        List<MqttUserProperty>? dlqUserProperties = null;
+
+        // Subscribe to the DLQ topic with a raw MQTT v5 client (user properties require v5)
+        MqttFactory factory = new();
+        using IMqttClient dlqClient = factory.CreateMqttClient();
+        MqttClientOptions dlqOpts = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-dl-hdr-reader-" + Guid.NewGuid().ToString("N")[..8])
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
+            .Build();
+        await dlqClient.ConnectAsync(dlqOpts);
+        dlqClient.ApplicationMessageReceivedAsync += args =>
+        {
+            dlqUserProperties = args.ApplicationMessage.UserProperties;
+            dlqReceived.Release();
+            return Task.CompletedTask;
+        };
+        await dlqClient.SubscribeAsync("mqtt/test/dl-with-headers");
+        await Task.Delay(200);
+
+        // Act — call DeadLetterAsync with headers
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"failed":"item"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"traceId":"abc-123"}"""u8.ToArray());
+        await transport.DeadLetterAsync(
+            "mqtt/test/dl-with-headers"u8.ToArray(),
+            "mqtt/test/original"u8.ToArray(),
+            payloadDoc.RootElement,
+            headersDoc.RootElement,
+            new InvalidOperationException("DL with headers"));
+
+        // Assert — MQTT transport encodes headers as a base64 user property
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter with headers was not received.");
+        Assert.IsNotNull(dlqUserProperties);
+
+        // The headers property key defaults to "corvus-headers"
+        MqttUserProperty? headersProp = dlqUserProperties.FirstOrDefault(p => p.Name == "corvus-headers");
+        Assert.IsNotNull(headersProp);
+
+        // Decode the base64 value and verify it contains the original headers
+        byte[] headersBytes = Convert.FromBase64String(headersProp!.Value);
+        string headersJson = Encoding.UTF8.GetString(headersBytes);
+        StringAssert.Contains(headersJson, "traceId");
 
         await dlqClient.DisconnectAsync();
         await transport.DisposeAsync();

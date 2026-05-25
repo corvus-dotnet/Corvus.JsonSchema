@@ -996,6 +996,107 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task PublicDeadLetterAsyncWithHeadersIncludesHeaders()
+    {
+        // Arrange — verify that headers passed to DeadLetterAsync are forwarded
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+        });
+
+        ReadOnlyMemory<byte> dlqChannel = "test.dl-with-headers"u8.ToArray();
+        ReadOnlyMemory<byte> originalChannel = "test.orig-headers"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        NatsHeaders? receivedHeaders = null;
+
+        NATS.Client.Core.NatsConnection rawConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await rawConn.ConnectAsync();
+        _ = Task.Run(async () =>
+        {
+            await foreach (NATS.Client.Core.NatsMsg<byte[]> msg in rawConn.SubscribeAsync<byte[]>("test.dl-with-headers"))
+            {
+                receivedHeaders = msg.Headers;
+                dlqReceived.Release();
+                break;
+            }
+        });
+
+        await Task.Delay(200);
+
+        // Act — pass headers to DeadLetterAsync
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"failed":"item"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"traceId":"abc-123"}"""u8.ToArray());
+        await transport.DeadLetterAsync(
+            dlqChannel,
+            originalChannel,
+            payloadDoc.RootElement,
+            headersDoc.RootElement,
+            new InvalidOperationException("DL with headers"));
+
+        // Assert
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter message with headers was not received.");
+        Assert.IsNotNull(receivedHeaders);
+
+        // The headers should include the Corvus-Headers base64-encoded header
+        Assert.IsTrue(receivedHeaders.ContainsKey("Corvus-Headers"), "Corvus-Headers header missing from DLQ message.");
+
+        await transport.DisposeAsync();
+        await rawConn.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RequestReplyRoundtripWithHeaders()
+    {
+        // Arrange — verify that headers are forwarded in request/reply
+        NatsMessageTransport requesterTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            RequestTimeout = TimeSpan.FromSeconds(10),
+        });
+
+        NATS.Client.Core.NatsConnection responderConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await responderConn.ConnectAsync();
+
+        NatsHeaders? receivedRequestHeaders = null;
+        _ = Task.Run(async () =>
+        {
+            await foreach (NATS.Client.Core.NatsMsg<byte[]> msg in responderConn.SubscribeAsync<byte[]>("test.request-with-headers"))
+            {
+                receivedRequestHeaders = msg.Headers;
+                if (msg.ReplyTo is not null)
+                {
+                    await responderConn.PublishAsync(msg.ReplyTo, """{"reply":"ok"}"""u8.ToArray());
+                }
+            }
+        });
+
+        await Task.Delay(500);
+
+        // Act — send a request with headers
+        ReadOnlyMemory<byte> requestChannel = "test.request-with-headers"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "test.reply-with-headers"u8.ToArray();
+        byte[] correlationId = "hdr-corr-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"q":"hello"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"authToken":"xyz"}"""u8.ToArray());
+
+        (JsonElement replyPayload, _) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            headersDoc.RootElement);
+
+        // Assert — reply received and request headers were forwarded
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.IsNotNull(receivedRequestHeaders);
+        Assert.IsTrue(receivedRequestHeaders.ContainsKey("Corvus-Headers"), "Request headers were not forwarded.");
+
+        await requesterTransport.DisposeAsync();
+        await responderConn.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DoubleDisposeDoesNotThrow()
     {
         NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions

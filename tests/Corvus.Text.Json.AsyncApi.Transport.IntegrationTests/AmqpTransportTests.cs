@@ -931,6 +931,67 @@ public class AmqpTransportTests
     }
 
     [TestMethod]
+    public async Task PublicDeadLetterAsyncWithHeadersIncludesHeaders()
+    {
+        // Arrange — verify that headers are included in the dead-letter message
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.dl-hdr",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-dl-hdr",
+        });
+
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        IReadOnlyBasicProperties? receivedProps = null;
+
+        // Set up raw consumer on the dead-letter exchange
+        RabbitMQ.Client.ConnectionFactory dlqFactory = new() { Uri = new Uri(AmqpFixture.ConnectionUri) };
+        using RabbitMQ.Client.IConnection dlqConn = await dlqFactory.CreateConnectionAsync();
+        using RabbitMQ.Client.IChannel dlqCh = await dlqConn.CreateChannelAsync();
+        await dlqCh.ExchangeDeclareAsync("corvus.dead-letter", "topic", durable: true, autoDelete: false);
+        RabbitMQ.Client.QueueDeclareOk dlqQueue = await dlqCh.QueueDeclareAsync(
+            queue: string.Empty, durable: false, exclusive: true, autoDelete: true);
+        await dlqCh.QueueBindAsync(dlqQueue.QueueName, "corvus.dead-letter", "amqp.test.dl-with-headers");
+
+        AsyncEventingBasicConsumer dlqConsumer = new(dlqCh);
+        dlqConsumer.ReceivedAsync += (sender, ea) =>
+        {
+            receivedProps = ea.BasicProperties;
+            dlqReceived.Release();
+            return Task.CompletedTask;
+        };
+
+        await dlqCh.BasicConsumeAsync(
+            queue: dlqQueue.QueueName, autoAck: true, consumerTag: string.Empty,
+            noLocal: false, exclusive: false, arguments: null,
+            consumer: dlqConsumer, cancellationToken: default);
+        await Task.Delay(300);
+
+        // Act — call DeadLetterAsync with headers
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"failed":"item"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"traceId":"abc-123"}"""u8.ToArray());
+        await transport.DeadLetterAsync(
+            "amqp.test.dl-with-headers"u8.ToArray(),
+            "amqp.test.original"u8.ToArray(),
+            payloadDoc.RootElement,
+            headersDoc.RootElement,
+            new InvalidOperationException("DL with headers"));
+
+        // Assert
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter with headers was not received.");
+        Assert.IsNotNull(receivedProps);
+
+        // AMQP transport encodes headers under the "corvus-headers" key in BasicProperties.Headers
+        Assert.IsNotNull(receivedProps.Headers);
+        Assert.IsTrue(receivedProps.Headers.ContainsKey("corvus-headers"), "corvus-headers missing from DLQ message.");
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DoubleDisposeDoesNotThrow()
     {
         AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions

@@ -821,6 +821,57 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task PublicDeadLetterAsyncWithHeadersIncludesHeaders()
+    {
+        // Arrange — verify that headers are included in the dead-letter envelope
+        WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        string? receivedPayloadJson = null;
+        string? receivedHeadersJson = null;
+
+        // Use a separate transport to subscribe to the DLQ channel
+        WebSocketMessageTransport dlqSubscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        await dlqSubscriber.SubscribeAsync<JsonElement>(
+            "ws/test/dl-with-headers"u8.ToArray(),
+            (payload, headers, ct) =>
+            {
+                receivedPayloadJson = payload.ToString();
+                receivedHeadersJson = headers.ValueKind != JsonValueKind.Undefined ? headers.ToString() : null;
+                dlqReceived.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        // Act — call DeadLetterAsync with headers
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"failed":"item"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"traceId":"abc-123"}"""u8.ToArray());
+        await transport.DeadLetterAsync(
+            "ws/test/dl-with-headers"u8.ToArray(),
+            "ws/test/original"u8.ToArray(),
+            payloadDoc.RootElement,
+            headersDoc.RootElement,
+            new InvalidOperationException("DL with headers"));
+
+        // Assert — the DLQ envelope should contain the headers field
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Dead-letter with headers was not received.");
+        Assert.IsNotNull(receivedPayloadJson);
+        StringAssert.Contains(receivedHeadersJson ?? string.Empty, "traceId");
+
+        await dlqSubscriber.DisposeAsync();
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DoubleDisposeDoesNotThrow()
     {
         WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
