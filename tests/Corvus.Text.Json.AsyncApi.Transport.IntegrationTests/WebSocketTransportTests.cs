@@ -340,6 +340,52 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task DeserializationErrorWithAbortAction()
+    {
+        // Arrange — policy returns Abort for deserialization errors
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.Abort);
+        WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "ws/test/deser-abort"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(300);
+
+        // Act — send malformed envelope (correlationId as number → causes deserialization error)
+        using ClientWebSocket rawWs = new();
+        await rawWs.ConnectAsync(new Uri(WebSocketFixture.ServerUri), CancellationToken.None);
+
+        byte[] badEnvelope = Encoding.UTF8.GetBytes("""{"channel":"ws/test/deser-abort","payload":{"ok":true},"correlationId":999}""");
+        await rawWs.SendAsync(badEnvelope, WebSocketMessageType.Text, true, CancellationToken.None);
+        await Task.Delay(1000);
+
+        // Publish a valid message via s_publisher — should NOT be received (subscription aborted)
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"after-abort"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(1000);
+
+        // Assert
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+        Assert.AreEqual(0, handlerCallCount, "Handler should never be called after deserialization abort.");
+
+        await rawWs.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DeadLetterActionSendsToDeadLetterChannel()
     {
         ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);

@@ -439,6 +439,63 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task DeserializationErrorWithAbortAction()
+    {
+        // Arrange — policy returns Abort for deserialization errors
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.Abort);
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-deser-abort-" + Guid.NewGuid().ToString("N")[..8],
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/deser-abort"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+
+        // Act — publish invalid JSON via raw client
+        MqttClientOptions rawOptions = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-raw-abort-" + Guid.NewGuid().ToString("N")[..8])
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
+            .Build();
+        IMqttClient rawClient = new MqttFactory().CreateMqttClient();
+        await rawClient.ConnectAsync(rawOptions);
+
+        MqttApplicationMessage rawMsg = new MqttApplicationMessageBuilder()
+            .WithTopic("mqtt/test/deser-abort")
+            .WithPayload("NOT VALID JSON"u8.ToArray())
+            .Build();
+        await rawClient.PublishAsync(rawMsg);
+        await Task.Delay(1000);
+
+        // Publish a valid message — should NOT be received (subscription aborted)
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"after-abort"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(1000);
+
+        // Assert
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+        Assert.AreEqual(0, handlerCallCount, "Handler should never be called after deserialization abort.");
+
+        await rawClient.DisconnectAsync();
+        rawClient.Dispose();
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DeadLetterActionSendsToDeadLetterChannel()
     {
         ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);

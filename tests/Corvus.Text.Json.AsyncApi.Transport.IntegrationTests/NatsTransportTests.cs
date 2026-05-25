@@ -557,6 +557,50 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task DeserializationErrorWithAbortAction()
+    {
+        // Arrange — policy returns Abort for deserialization errors
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.Abort);
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "test.deser-abort"u8.ToArray();
+        int handlerCallCount = 0;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref handlerCallCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+
+        // Act — publish invalid JSON via raw NATS (triggers deserialization error → abort)
+        NATS.Client.Core.NatsConnection rawConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await rawConn.ConnectAsync();
+        await rawConn.PublishAsync("test.deser-abort", "NOT VALID JSON"u8.ToArray());
+        await Task.Delay(1000);
+
+        // Now publish a valid message — should NOT be received (subscription aborted)
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"after-abort"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+        await Task.Delay(1000);
+
+        // Assert
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+        Assert.AreEqual(0, handlerCallCount, "Handler should never be called (first message failed deser, then subscription aborted).");
+
+        await transport.DisposeAsync();
+        await rawConn.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DeadLetterActionSendsToDeadLetterChannel()
     {
         // Arrange — policy returns DeadLetter for handler errors
