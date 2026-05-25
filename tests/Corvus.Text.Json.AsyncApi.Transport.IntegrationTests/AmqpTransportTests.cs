@@ -378,6 +378,87 @@ public class AmqpTransportTests
     }
 
     [TestMethod]
+    public async Task DeserializationErrorWithDeadLetterAction()
+    {
+        // Arrange — policy returns DeadLetter for deserialization errors
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.DeadLetter);
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.deser-dl",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-deser-dl",
+            ErrorPolicy = policy,
+        });
+
+        ReadOnlyMemory<byte> channel = "amqp.test.deser-deadletter"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        byte[]? dlqPayload = null;
+
+        // Set up a raw consumer on the dead-letter exchange (same pattern as existing DL test)
+        RabbitMQ.Client.ConnectionFactory dlqFactory = new() { Uri = new Uri(AmqpFixture.ConnectionUri) };
+        using RabbitMQ.Client.IConnection dlqConn = await dlqFactory.CreateConnectionAsync();
+        using RabbitMQ.Client.IChannel dlqCh = await dlqConn.CreateChannelAsync();
+
+        await dlqCh.ExchangeDeclareAsync("corvus.dead-letter", "topic", durable: true, autoDelete: false);
+        RabbitMQ.Client.QueueDeclareOk dlqQueue = await dlqCh.QueueDeclareAsync(
+            queue: string.Empty,
+            durable: false,
+            exclusive: true,
+            autoDelete: true);
+        await dlqCh.QueueBindAsync(dlqQueue.QueueName, "corvus.dead-letter", "amqp.test.deser-deadletter.dead-letter");
+
+        RabbitMQ.Client.Events.AsyncEventingBasicConsumer dlqConsumer = new(dlqCh);
+        dlqConsumer.ReceivedAsync += (sender, ea) =>
+        {
+            dlqPayload = ea.Body.ToArray();
+            dlqReceived.Release();
+            return Task.CompletedTask;
+        };
+
+        await dlqCh.BasicConsumeAsync(
+            queue: dlqQueue.QueueName,
+            autoAck: true,
+            consumerTag: string.Empty,
+            noLocal: false,
+            exclusive: false,
+            arguments: null,
+            consumer: dlqConsumer,
+            cancellationToken: default);
+
+        await Task.Delay(300);
+
+        // Subscribe with typed handler (will not be called due to deser failure)
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(500);
+
+        // Act — publish invalid JSON directly via raw AMQP
+        ConnectionFactory factory = new() { Uri = new Uri(AmqpFixture.ConnectionUri) };
+        using IConnection rawConn = await factory.CreateConnectionAsync();
+        using IChannel rawChannel = await rawConn.CreateChannelAsync();
+
+        await rawChannel.BasicPublishAsync(
+            exchange: "corvus.test.deser-dl",
+            routingKey: "amqp.test.deser-deadletter",
+            mandatory: false,
+            basicProperties: new BasicProperties { ContentType = "application/json" },
+            body: "THIS IS NOT JSON!!!"u8.ToArray());
+
+        // Assert — dead-lettered message should arrive on DLQ
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Deserialization error was not dead-lettered.");
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+        Assert.IsNotNull(dlqPayload);
+
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DeadLetterActionSendsToDeadLetterChannel()
     {
         ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);

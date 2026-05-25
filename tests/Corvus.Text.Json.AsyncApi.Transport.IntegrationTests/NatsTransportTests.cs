@@ -507,6 +507,56 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task DeserializationErrorWithDeadLetterAction()
+    {
+        // Arrange — policy returns DeadLetter for deserialization errors
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.DeadLetter);
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            ErrorPolicy = policy,
+            DeadLetterSuffix = ".deser-dlq",
+        });
+
+        ReadOnlyMemory<byte> channel = "test.deser-deadletter"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+
+        // Subscribe to the DLQ channel
+        NATS.Client.Core.NatsConnection rawConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await rawConn.ConnectAsync();
+        _ = Task.Run(async () =>
+        {
+            await foreach (NATS.Client.Core.NatsMsg<byte[]> msg in rawConn.SubscribeAsync<byte[]>("test.deser-deadletter.deser-dlq"))
+            {
+                dlqReceived.Release();
+                break;
+            }
+        });
+
+        await Task.Delay(200);
+
+        // Subscribe with typed handler (will never be called due to deser failure)
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(500);
+
+        // Act — publish invalid JSON via raw NATS
+        await rawConn.PublishAsync("test.deser-deadletter", "NOT VALID JSON!!!"u8.ToArray());
+
+        // Assert — dead-lettered message should arrive on DLQ
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Deserialization error was not dead-lettered.");
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+        await rawConn.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DeadLetterActionSendsToDeadLetterChannel()
     {
         // Arrange — policy returns DeadLetter for handler errors

@@ -15,6 +15,7 @@ namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests;
 [TestClass]
 [TestCategory("integration")]
 [TestCategory("docker")]
+[TestCategory("kafka")]
 public class KafkaTransportTests
 {
     private static KafkaMessageTransport s_transport = null!;

@@ -369,6 +369,76 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task DeserializationErrorWithDeadLetterAction()
+    {
+        // Arrange — policy returns DeadLetter for deserialization errors
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.DeadLetter);
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-deser-dl-" + Guid.NewGuid().ToString("N")[..8],
+            ErrorPolicy = policy,
+            DeadLetterSuffix = "/deser-dlq",
+        });
+
+        ReadOnlyMemory<byte> channel = "mqtt/test/deser-deadletter"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        byte[]? dlqPayload = null;
+
+        // Use a separate raw MQTT client to subscribe to the DLQ topic
+        MqttFactory factory = new();
+        using IMqttClient dlqClient = factory.CreateMqttClient();
+        MqttClientOptions dlqOpts = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-dlq-deser-reader-" + Guid.NewGuid().ToString("N")[..8])
+            .Build();
+        await dlqClient.ConnectAsync(dlqOpts);
+        dlqClient.ApplicationMessageReceivedAsync += args =>
+        {
+            dlqPayload = args.ApplicationMessage.PayloadSegment.ToArray();
+            dlqReceived.Release();
+            return Task.CompletedTask;
+        };
+        await dlqClient.SubscribeAsync("mqtt/test/deser-deadletter/deser-dlq");
+        await Task.Delay(200);
+
+        // Subscribe with typed handler (will not be called due to deser failure)
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(500);
+
+        // Act — publish invalid data via a raw MQTT client
+        MqttClientOptions rawOptions = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-raw-deser-" + Guid.NewGuid().ToString("N")[..8])
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
+            .Build();
+        IMqttClient rawClient = new MqttFactory().CreateMqttClient();
+        await rawClient.ConnectAsync(rawOptions);
+
+        MqttApplicationMessage rawMsg = new MqttApplicationMessageBuilder()
+            .WithTopic("mqtt/test/deser-deadletter")
+            .WithPayload("NOT VALID JSON!!!"u8.ToArray())
+            .Build();
+        await rawClient.PublishAsync(rawMsg);
+
+        // Assert — dead-lettered message should arrive on DLQ
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Deserialization error was not dead-lettered.");
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+        Assert.IsNotNull(dlqPayload);
+
+        await rawClient.DisconnectAsync();
+        rawClient.Dispose();
+        await dlqClient.DisconnectAsync();
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DeadLetterActionSendsToDeadLetterChannel()
     {
         ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);

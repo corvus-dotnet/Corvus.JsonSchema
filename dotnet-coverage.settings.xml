@@ -31,6 +31,13 @@
         <ModulePath>.*Corvus\.Text\.Json\.OpenApi32\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.Amqp\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.Kafka\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.Mqtt\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.Nats\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.Polly\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.WebSocket\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.AsyncApi\.Testing\.dll$</ModulePath>
       </Include>
     </ModulePaths>
     <Sources>

@@ -284,6 +284,62 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task DeserializationErrorWithDeadLetterAction()
+    {
+        // Arrange — policy returns DeadLetter for deserialization errors
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.DeadLetter);
+        WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+            ErrorPolicy = policy,
+            DeadLetterSuffix = "/deser-dlq",
+        });
+
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+
+        // Use a SEPARATE transport for DLQ subscription (relay won't forward back to sender)
+        WebSocketMessageTransport dlqSubscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        await dlqSubscriber.SubscribeAsync<JsonElement>(
+            "ws/test/deser-deadletter/deser-dlq"u8.ToArray(),
+            (payload, headers, ct) =>
+            {
+                dlqReceived.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        // Subscribe to the source channel
+        await transport.SubscribeAsync<JsonElement>(
+            "ws/test/deser-deadletter"u8.ToArray(),
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(300);
+
+        // Act — send malformed envelope via raw WebSocket (correlationId is wrong type → parse failure)
+        using ClientWebSocket rawWs = new();
+        await rawWs.ConnectAsync(new Uri(WebSocketFixture.ServerUri), CancellationToken.None);
+
+        // Send an envelope with invalid correlationId type (number instead of string → deserialization error)
+        byte[] badEnvelope = Encoding.UTF8.GetBytes("""{"channel":"ws/test/deser-deadletter","payload":{"ok":true},"correlationId":999}""");
+        await rawWs.SendAsync(badEnvelope, WebSocketMessageType.Text, true, CancellationToken.None);
+
+        // Assert — dead-lettered message should arrive on DLQ
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Deserialization error was not dead-lettered.");
+        Assert.AreEqual(1, policy.Invocations.Count);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+
+        await rawWs.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
+        await dlqSubscriber.DisposeAsync();
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task DeadLetterActionSendsToDeadLetterChannel()
     {
         ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.DeadLetter);
