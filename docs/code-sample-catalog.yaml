@@ -497,6 +497,55 @@ main-docs:
       - {index: 6, language: csharp, lines: [151, 159], category: compilable, verified: false}
       - {index: 7, language: csharp, lines: [163, 167], category: fragment, verified: false}
       - {index: 8, language: csharp, lines: [173, 187], category: compilable, verified: false}
+  - path: "docs/AsyncApi.md"
+    blocks:
+      - {index: 0, language: bash, lines: [13, 19]}
+      - {index: 1, language: bash, lines: [23, 25]}
+      - {index: 2, language: bash, lines: [29, 36]}
+      - {index: 3, language: bash, lines: [40, 42]}
+      - {index: 4, language: bash, lines: [48, 53]}
+      - {index: 5, language: csharp, lines: [57, 72], category: compilable, verified: false}
+      - {index: 6, language: bash, lines: [78, 83]}
+      - {index: 7, language: csharp, lines: [87, 102], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [106, 119], category: compilable, verified: false}
+      - {index: 9, language: , lines: [149, 157]}
+      - {index: 10, language: , lines: [161, 168]}
+      - {index: 11, language: csharp, lines: [186, 202], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [208, 214], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [240, 250], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [256, 285], category: compilable, verified: false}
+      - {index: 15, language: bash, lines: [299, 301]}
+      - {index: 16, language: csharp, lines: [305, 334], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [353, 364], category: compilable, verified: false}
+      - {index: 18, language: csharp, lines: [368, 379], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [383, 394], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [398, 410], category: compilable, verified: false}
+      - {index: 21, language: csharp, lines: [414, 423], category: compilable, verified: false}
+      - {index: 22, language: bash, lines: [429, 431]}
+      - {index: 23, language: csharp, lines: [433, 453], category: compilable, verified: false}
+      - {index: 24, language: csharp, lines: [463, 469], category: compilable, verified: false}
+      - {index: 25, language: csharp, lines: [473, 481], category: compilable, verified: false}
+      - {index: 26, language: csharp, lines: [487, 492], category: compilable, verified: false}
+      - {index: 27, language: csharp, lines: [496, 506], category: compilable, verified: false}
+      - {index: 28, language: csharp, lines: [510, 514], category: compilable, verified: false}
+      - {index: 29, language: csharp, lines: [518, 523], category: compilable, verified: false}
+      - {index: 30, language: csharp, lines: [529, 537], category: compilable, verified: false}
+      - {index: 31, language: csharp, lines: [543, 552], category: compilable, verified: false}
+      - {index: 32, language: json, lines: [560, 576]}
+      - {index: 33, language: csharp, lines: [584, 598], category: compilable, verified: false}
+      - {index: 34, language: json, lines: [612, 626]}
+      - {index: 35, language: csharp, lines: [630, 639], category: compilable, verified: false}
+      - {index: 36, language: csharp, lines: [649, 657], category: compilable, verified: false}
+      - {index: 37, language: csharp, lines: [670, 687], category: compilable, verified: false}
+      - {index: 38, language: bash, lines: [695, 697]}
+      - {index: 39, language: csharp, lines: [699, 710], category: compilable, verified: false}
+      - {index: 40, language: bash, lines: [721, 723]}
+      - {index: 41, language: bash, lines: [740, 758]}
+      - {index: 42, language: bash, lines: [762, 764]}
+      - {index: 43, language: , lines: [768, 778]}
+      - {index: 44, language: bash, lines: [791, 797]}
+      - {index: 45, language: csharp, lines: [832, 837], category: compilable, verified: false}
+      - {index: 46, language: , lines: [851, 856]}
   - path: "docs/BenchmarkGuide.md"
     blocks:
       - {index: 0, language: , lines: [11, 30]}
