@@ -34,6 +34,10 @@ internal sealed class AsyncApiGenerateSettings : AsyncApiSettings
     [CommandOption("--spec-url")]
     [Description("The original URL of the API description. When set, the spec is fetched from this URL and stored locally. The URL is recorded in the lock file for update-style re-fetch.")]
     public string? SpecUrl { get; init; }
+
+    [CommandOption("--yaml")]
+    [Description("Enable YAML support. When set, the spec file and any external references may be YAML, JSON, or a mixture. Auto-detected from .yaml/.yml extensions if not explicitly set.")]
+    public bool? SupportYaml { get; init; }
 }
 
 #endif

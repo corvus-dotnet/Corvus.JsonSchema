@@ -73,6 +73,19 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         byte[] specBytes = await File.ReadAllBytesAsync(settings.SpecFile, cancellationToken)
             .ConfigureAwait(false);
 
+        // Pre-process YAML if needed (auto-detect from extension, or explicit --yaml flag)
+        bool useYaml = settings.Yaml ?? IsYamlFile(settings.SpecFile);
+
+        if (useYaml)
+        {
+            YamlPreProcessor yamlPreProcessor = new();
+            using MemoryStream inputStream = new(specBytes);
+            using Stream processedStream = yamlPreProcessor.Process(inputStream);
+            using MemoryStream outputStream = new();
+            processedStream.CopyTo(outputStream);
+            specBytes = outputStream.ToArray();
+        }
+
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
         JsonElement specRoot = doc.RootElement;
 
@@ -116,7 +129,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 Dictionary<string, string>? schemaTypeMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -143,7 +156,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 Dictionary<string, string>? schemaTypeMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -170,7 +183,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 Dictionary<string, string>? schemaTypeMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -240,14 +253,23 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         string outputPath,
         SchemaReference[] schemaRefs,
         Dictionary<string, string> parameterNames,
+        bool useYaml,
         CancellationToken cancellationToken)
     {
         string specFilePath = Path.GetFullPath(specFile);
 
-        // Set up the document resolver — the FileSystemDocumentResolver reads the spec from disk
-        CompoundDocumentResolver documentResolver = new(
-            new FileSystemDocumentResolver(),
-            new HttpClientDocumentResolver(new HttpClient()));
+        // Set up the document resolver — with YAML support if the spec is YAML
+        CompoundDocumentResolver documentResolver;
+
+        if (useYaml)
+        {
+            YamlPreProcessor preProcessor = new();
+            documentResolver = new(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
+        }
+        else
+        {
+            documentResolver = new(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+        }
 
         documentResolver.AddMetaschema();
 
@@ -446,6 +468,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         }
 
         return outputFile;
+    }
+
+    private static bool IsYamlFile(string path)
+    {
+        string ext = Path.GetExtension(path);
+        return ext.Equals(".yaml", StringComparison.OrdinalIgnoreCase)
+            || ext.Equals(".yml", StringComparison.OrdinalIgnoreCase);
     }
 }
 

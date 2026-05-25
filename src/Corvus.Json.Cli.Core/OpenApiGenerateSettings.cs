@@ -37,6 +37,10 @@ internal sealed class OpenApiGenerateSettings : OpenApiSettings
     [CommandOption("--ignoreEmptyFormUrlEncodedBody")]
     [Description("Treat form-urlencoded request bodies whose schema defines no properties as if the body were absent. Useful for real-world APIs (e.g. Stripe) that emit empty body definitions.")]
     public bool IgnoreEmptyFormUrlEncodedBody { get; init; }
+
+    [CommandOption("--yaml")]
+    [Description("Treat the input specification as YAML. If not specified, YAML is auto-detected from .yaml/.yml file extension.")]
+    public bool? Yaml { get; init; }
 }
 
 #endif
