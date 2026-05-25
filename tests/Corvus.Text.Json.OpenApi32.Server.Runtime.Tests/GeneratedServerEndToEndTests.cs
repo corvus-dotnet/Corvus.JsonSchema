@@ -1128,7 +1128,10 @@ public class GeneratedServerEndToEndTests
     public async Task Batch_Resource_WithJsonBody_ReturnsOk()
     {
         MultipartContent multipart = new("mixed");
-        multipart.Add(new StringContent("{}", Encoding.UTF8, "application/json"));
+        multipart.Add(new StringContent("""{"action":"update","target":"res-1"}""", Encoding.UTF8, "application/json"));
+        ByteArrayContent binaryPart = new("binary payload"u8.ToArray());
+        binaryPart.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        multipart.Add(binaryPart);
         HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1") { Content = multipart };
         HttpResponseMessage response = await client!.SendAsync(request);
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
@@ -1326,7 +1329,10 @@ public class GeneratedServerEndToEndTests
         await AssertInvalidResponseBodyAsync(() =>
         {
             MultipartContent multipart = new("mixed");
-            multipart.Add(new StringContent("{}", Encoding.UTF8, "application/json"));
+            multipart.Add(new StringContent("""{"action":"update","target":"res-1"}""", Encoding.UTF8, "application/json"));
+            ByteArrayContent binaryPart = new("binary payload"u8.ToArray());
+            binaryPart.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            multipart.Add(binaryPart);
             HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1") { Content = multipart };
             return client!.SendAsync(request);
         });
