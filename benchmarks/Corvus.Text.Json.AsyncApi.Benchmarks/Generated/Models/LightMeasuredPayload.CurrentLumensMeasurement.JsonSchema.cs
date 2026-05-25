@@ -20,13 +20,8 @@ using global::Corvus.Text.Json.Internal;
 namespace AsyncApiBenchmark;
 
 /// <summary>
-/// LightMeasuredPayload
+/// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// A sensor reading from a streetlight.
-/// </para>
-/// </remarks>
 public readonly partial struct LightMeasuredPayload
 {
     /// <summary>
@@ -34,29 +29,29 @@ public readonly partial struct LightMeasuredPayload
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Sensor ID.
+    /// Current lumens measurement.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct SensorId
-        : IJsonElement<SensorId>
+    public readonly partial struct CurrentLumensMeasurement
+        : IJsonElement<CurrentLumensMeasurement>
     {
         public static partial class JsonSchema
         {
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/id"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/lightMeasuredPayload/properties/lumens"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/properties/id";
+            public const string SchemaLocation = "/components/schemas/lightMeasuredPayload/properties/lumens";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/id"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/lightMeasuredPayload/properties/lumens"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -77,19 +72,19 @@ public readonly partial struct LightMeasuredPayload
                     JsonTokenType.EndObject or
                     JsonTokenType.EndArray));
 
-                ReadOnlyMemory<byte> rawSimpleValue = tokenType is JsonTokenType.Number or JsonTokenType.String ? parentDocument.GetRawSimpleValue(parentIndex) : default;
-
-                JsonElementHelpers.TryParseNumber(rawSimpleValue.Span, out bool isNegative,out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
-                if (!JsonSchemaEvaluation.MatchTypeInteger(tokenType,"type"u8, exponent, ref context))
+                if (!JsonSchemaEvaluation.MatchTypeNumber(tokenType,"type"u8, ref context))
                 {
                     if (!context.HasCollector)
                     {
                         return;
                     }
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeInteger, "minimum"u8);
+                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeNumber, "minimum"u8);
                 }
                 else
                 {
+                    ReadOnlyMemory<byte> rawSimpleValue = parentDocument.GetRawSimpleValue(parentIndex);
+
+                    JsonElementHelpers.TryParseNumber(rawSimpleValue.Span, out bool isNegative,out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
                     JsonSchemaEvaluation.MatchGreaterThanOrEquals(isNegative, integral, fractional, exponent, false, ""u8, ""u8, 0, "0", "minimum"u8, ref context);
                 }
             }

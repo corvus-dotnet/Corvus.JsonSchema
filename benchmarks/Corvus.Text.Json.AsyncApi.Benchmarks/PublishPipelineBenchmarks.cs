@@ -11,12 +11,19 @@ using Corvus.Text.Json.AsyncApi;
 namespace AsyncApiBenchmark;
 
 /// <summary>
-/// End-to-end publish benchmarks comparing Corvus transport publish against
-/// raw NATS.Net + System.Text.Json serialization.
+/// End-to-end publish benchmarks comparing the generated Corvus producer
+/// against raw NATS.Net + System.Text.Json serialization.
 /// </summary>
 /// <remarks>
+/// <para>
+/// The Corvus benchmarks exercise the actual generated
+/// <see cref="PublishLightMeasurementProducer"/> code path: construct typed payload →
+/// validate → serialize → transport publish. This is the real generated code, not a simulation.
+/// </para>
+/// <para>
 /// Measures what the Corvus abstraction costs compared to hand-written broker code.
 /// All transport I/O is mocked — we measure only serialization + pipeline overhead.
+/// </para>
 /// </remarks>
 [MemoryDiagnoser]
 public class PublishPipelineBenchmarks
@@ -24,10 +31,10 @@ public class PublishPipelineBenchmarks
     private static readonly byte[] ValidPayloadBytes = Encoding.UTF8.GetBytes(
         """{"id":42,"lumens":512.7,"sentAt":"2026-05-25T10:30:00Z"}""");
 
-    private static readonly ReadOnlyMemory<byte> ChannelUtf8 =
-        "streetlights/1/0/event/lighting/measured"u8.ToArray();
-
     private BenchmarkTransport transport = null!;
+    private PublishLightMeasurementProducer producerNoValidation = null!;
+    private PublishLightMeasurementProducer producerBasicValidation = null!;
+    private PublishLightMeasurementProducer producerDetailedValidation = null!;
     private LightMeasuredPayload corvusPayload;
     private LightMeasuredPoco natsPayload = null!;
 
@@ -35,6 +42,14 @@ public class PublishPipelineBenchmarks
     public void Setup()
     {
         this.transport = new BenchmarkTransport();
+
+        // Create producers with different validation modes — all using the same transport.
+        this.producerNoValidation = new PublishLightMeasurementProducer(
+            this.transport, ValidationMode.None);
+        this.producerBasicValidation = new PublishLightMeasurementProducer(
+            this.transport, ValidationMode.Basic);
+        this.producerDetailedValidation = new PublishLightMeasurementProducer(
+            this.transport, ValidationMode.Detailed);
 
         // Parse the Corvus typed payload once (re-used across iterations)
         this.corvusPayload = LightMeasuredPayload.ParseValue(ValidPayloadBytes);
@@ -54,63 +69,21 @@ public class PublishPipelineBenchmarks
         return RawNatsBaseline.Publish(in this.natsPayload);
     }
 
-    [Benchmark(Description = "Corvus: Publish (no validation)")]
-    public async ValueTask<int> Corvus_NoValidation()
+    [Benchmark(Description = "Corvus: Generated producer (no validation)")]
+    public async ValueTask Corvus_NoValidation()
     {
-        await this.transport.PublishAsync(
-            ChannelUtf8,
-            in this.corvusPayload);
-
-        return this.transport.LastPublishBytesWritten;
+        await this.producerNoValidation.PublishLightMeasuredAsync(this.corvusPayload);
     }
 
-    [Benchmark(Description = "Corvus: Publish (basic validation)")]
-    public async ValueTask<int> Corvus_WithBasicValidation()
+    [Benchmark(Description = "Corvus: Generated producer (basic validation)")]
+    public async ValueTask Corvus_WithBasicValidation()
     {
-        // Validate before publishing
-        bool isValid = this.corvusPayload.EvaluateSchema();
-        if (!isValid)
-        {
-            return 0;
-        }
-
-        await this.transport.PublishAsync(
-            ChannelUtf8,
-            in this.corvusPayload);
-
-        return this.transport.LastPublishBytesWritten;
+        await this.producerBasicValidation.PublishLightMeasuredAsync(this.corvusPayload);
     }
 
-    [Benchmark(Description = "Corvus: Publish (detailed validation)")]
-    public async ValueTask<int> Corvus_WithDetailedValidation()
+    [Benchmark(Description = "Corvus: Generated producer (detailed validation)")]
+    public async ValueTask Corvus_WithDetailedValidation()
     {
-        using JsonSchemaResultsCollector collector =
-            JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-        bool isValid = this.corvusPayload.EvaluateSchema(collector);
-        if (!isValid)
-        {
-            return 0;
-        }
-
-        await this.transport.PublishAsync(
-            ChannelUtf8,
-            in this.corvusPayload);
-
-        return this.transport.LastPublishBytesWritten;
-    }
-
-    [Benchmark(Description = "Corvus: Publish with headers")]
-    public async ValueTask<int> Corvus_WithHeaders()
-    {
-        using ParsedJsonDocument<JsonElement> headerDoc =
-            ParsedJsonDocument<JsonElement>.Parse(
-                """{"x-correlation-id":"abc-123","x-source":"sensor-42"}"""u8.ToArray());
-
-        await this.transport.PublishAsync(
-            ChannelUtf8,
-            in this.corvusPayload,
-            headerDoc.RootElement);
-
-        return this.transport.LastPublishBytesWritten;
+        await this.producerDetailedValidation.PublishLightMeasuredAsync(this.corvusPayload);
     }
 }

@@ -6,21 +6,28 @@ using System.Text;
 using AsyncApiBenchmark.Infrastructure;
 using BenchmarkDotNet.Attributes;
 using Corvus.Text.Json;
+using Corvus.Text.Json.AsyncApi;
 
 namespace AsyncApiBenchmark;
 
 /// <summary>
-/// End-to-end receive/subscribe benchmarks comparing the Corvus transport
-/// subscribe pipeline against what a developer would write with raw STJ,
+/// End-to-end receive/subscribe benchmarks comparing the generated Corvus consumer
+/// pipeline against what a developer would write with raw STJ,
 /// and against Wolverine (a popular .NET message bus framework).
 /// </summary>
 /// <remarks>
+/// <para>
+/// The Corvus benchmarks exercise the actual generated
+/// <see cref="ReceiveLightMeasurementConsumer"/> code path: transport delivers bytes →
+/// consumer validates → consumer dispatches to handler. This is the real generated
+/// code, not a simulation.
+/// </para>
 /// <para>
 /// Three comparison tiers:
 /// <list type="bullet">
 /// <item><description>Raw STJ — the floor: deserialize + access properties (no framework)</description></item>
 /// <item><description>Wolverine — a real message bus: STJ deserialize + framework dispatch + handler</description></item>
-/// <item><description>Corvus — our pipeline: parse + optional validate + dispatch + handler</description></item>
+/// <item><description>Corvus — generated consumer: parse + validate + error policy + dispatch</description></item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -33,26 +40,39 @@ public class SubscribePipelineBenchmarks
     private static readonly byte[] HeadersBytes = Encoding.UTF8.GetBytes(
         """{"x-correlation-id":"abc-123","x-source":"sensor-42"}""");
 
-    private BenchmarkTransport transport = null!;
+    private BenchmarkTransport transportNoValidation = null!;
+    private BenchmarkTransport transportBasicValidation = null!;
+    private BenchmarkTransport transportDetailedValidation = null!;
     private WolverineBaseline wolverine = null!;
 
     [GlobalSetup]
     public async Task Setup()
     {
-        this.transport = new BenchmarkTransport();
         this.wolverine = new WolverineBaseline();
         await this.wolverine.StartAsync().ConfigureAwait(false);
 
-        // Register a typed subscriber
-        await this.transport.SubscribeAsync<LightMeasuredPayload>(
-            "streetlights/1/0/event/lighting/measured"u8.ToArray(),
-            (payload, headers, ct) =>
-            {
-                // Simulate accessing properties (forces parse)
-                _ = payload.Id;
-                _ = payload.Lumens;
-                return ValueTask.CompletedTask;
-            });
+        // Each consumer gets its own transport so they don't share handler state.
+        // This exercises the REAL generated consumer pipeline.
+        this.transportNoValidation = new BenchmarkTransport();
+        ReceiveLightMeasurementConsumer consumerNone = new(
+            this.transportNoValidation,
+            BenchmarkHandler.Instance,
+            ValidationMode.None);
+        await consumerNone.StartAsync().ConfigureAwait(false);
+
+        this.transportBasicValidation = new BenchmarkTransport();
+        ReceiveLightMeasurementConsumer consumerBasic = new(
+            this.transportBasicValidation,
+            BenchmarkHandler.Instance,
+            ValidationMode.Basic);
+        await consumerBasic.StartAsync().ConfigureAwait(false);
+
+        this.transportDetailedValidation = new BenchmarkTransport();
+        ReceiveLightMeasurementConsumer consumerDetailed = new(
+            this.transportDetailedValidation,
+            BenchmarkHandler.Instance,
+            ValidationMode.Detailed);
+        await consumerDetailed.StartAsync().ConfigureAwait(false);
     }
 
     [GlobalCleanup]
@@ -64,7 +84,6 @@ public class SubscribePipelineBenchmarks
     [Benchmark(Description = "Raw STJ: Deserialize + handle (no validation)", Baseline = true)]
     public double RawNats_DeserializeAndHandle()
     {
-        // This is what a hand-written subscriber does: deserialize then use the result
         LightMeasuredPoco result = RawNatsBaseline.Subscribe<LightMeasuredPoco>(ValidPayloadBytes);
         return result.Id + result.Lumens;
     }
@@ -72,52 +91,31 @@ public class SubscribePipelineBenchmarks
     [Benchmark(Description = "Wolverine: STJ deserialize + framework dispatch")]
     public async Task Wolverine_DeserializeAndDispatch()
     {
-        // Real message bus cost: STJ deserialize + Wolverine handler dispatch
         LightMeasuredPoco message = RawNatsBaseline.Subscribe<LightMeasuredPoco>(ValidPayloadBytes);
         await this.wolverine.InvokeAsync(message).ConfigureAwait(false);
     }
 
-    [Benchmark(Description = "Corvus: Parse + access (no validation)")]
-    public double Corvus_NoValidation()
+    [Benchmark(Description = "Corvus: Generated consumer (no validation)")]
+    public async ValueTask Corvus_NoValidation()
     {
-        using ParsedJsonDocument<LightMeasuredPayload> doc =
-            ParsedJsonDocument<LightMeasuredPayload>.Parse(ValidPayloadBytes);
-
-        LightMeasuredPayload payload = doc.RootElement;
-        return (long)payload.Id + (double)payload.Lumens;
+        await this.transportNoValidation.DeliverAsync(ValidPayloadBytes);
     }
 
-    [Benchmark(Description = "Corvus: Parse + basic validation + access")]
-    public double Corvus_WithBasicValidation()
+    [Benchmark(Description = "Corvus: Generated consumer (basic validation)")]
+    public async ValueTask Corvus_WithBasicValidation()
     {
-        using ParsedJsonDocument<LightMeasuredPayload> doc =
-            ParsedJsonDocument<LightMeasuredPayload>.Parse(ValidPayloadBytes);
-
-        _ = doc.RootElement.EvaluateSchema();
-        return (long)doc.RootElement.Id + (double)doc.RootElement.Lumens;
+        await this.transportBasicValidation.DeliverAsync(ValidPayloadBytes);
     }
 
-    [Benchmark(Description = "Corvus: Parse + detailed validation + access")]
-    public double Corvus_WithDetailedValidation()
+    [Benchmark(Description = "Corvus: Generated consumer (detailed validation)")]
+    public async ValueTask Corvus_WithDetailedValidation()
     {
-        using ParsedJsonDocument<LightMeasuredPayload> doc =
-            ParsedJsonDocument<LightMeasuredPayload>.Parse(ValidPayloadBytes);
-
-        using JsonSchemaResultsCollector collector =
-            JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-        _ = doc.RootElement.EvaluateSchema(collector);
-        return (long)doc.RootElement.Id + (double)doc.RootElement.Lumens;
+        await this.transportDetailedValidation.DeliverAsync(ValidPayloadBytes);
     }
 
-    [Benchmark(Description = "Corvus: Full pipeline (parse + deliver + handler)")]
-    public async ValueTask Corvus_FullPipeline()
-    {
-        await this.transport.DeliverAsync(ValidPayloadBytes);
-    }
-
-    [Benchmark(Description = "Corvus: Full pipeline with headers")]
+    [Benchmark(Description = "Corvus: Generated consumer with headers")]
     public async ValueTask Corvus_FullPipelineWithHeaders()
     {
-        await this.transport.DeliverAsync(ValidPayloadBytes, HeadersBytes);
+        await this.transportBasicValidation.DeliverAsync(ValidPayloadBytes, HeadersBytes);
     }
 }

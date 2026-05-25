@@ -1,0 +1,31 @@
+{
+  "excludeChannels": [],
+  "generatedAt": "2026-05-25T17:34:52.2921050\u002B00:00",
+  "generatedFiles": [
+    "PublishLightMeasurementProducer.cs",
+    "IReceiveLightMeasurementHandler.cs",
+    "ReceiveLightMeasurementConsumer.cs",
+    "PublishLightMeasurementLightMeasuredMessage.cs",
+    "ReceiveLightMeasurementLightMeasuredMessage.cs",
+    "Models\\JsonDateTime.cs",
+    "Models\\JsonDateTime.Mutable.cs",
+    "Models\\JsonDateTime.JsonSchema.cs",
+    "Models\\LightMeasuredPayload.cs",
+    "Models\\LightMeasuredPayload.Mutable.cs",
+    "Models\\LightMeasuredPayload.JsonSchema.cs",
+    "Models\\LightMeasuredPayload.SensorId.cs",
+    "Models\\LightMeasuredPayload.SensorId.Mutable.cs",
+    "Models\\LightMeasuredPayload.SensorId.JsonSchema.cs",
+    "Models\\LightMeasuredPayload.CurrentLumensMeasurement.cs",
+    "Models\\LightMeasuredPayload.CurrentLumensMeasurement.Mutable.cs",
+    "Models\\LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.cs",
+    "Models\\Corvus__GlobalDeclarations.cs"
+  ],
+  "generatorVersion": "1.0.0\u002B4347c15dbebe0673121aaa76bd6f599b4abad777",
+  "includeChannels": [],
+  "mode": "both",
+  "rootNamespace": "AsyncApiBenchmark",
+  "specFileHash": "6dd89ebf59f629882659991b0cc738106a143ad4cf5221598d0d9cea540491ff",
+  "specVersion": "3.0",
+  "tags": []
+}

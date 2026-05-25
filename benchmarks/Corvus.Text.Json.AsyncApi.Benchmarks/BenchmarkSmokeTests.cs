@@ -33,10 +33,9 @@ internal static class BenchmarkSmokeTests
         bench.Setup();
 
         Verify("Publish.RawNats_NoValidation", () => bench.RawNats_NoValidation());
-        await VerifyAsync("Publish.Corvus_NoValidation", bench.Corvus_NoValidation).ConfigureAwait(false);
-        await VerifyAsync("Publish.Corvus_WithBasicValidation", bench.Corvus_WithBasicValidation).ConfigureAwait(false);
-        await VerifyAsync("Publish.Corvus_WithDetailedValidation", bench.Corvus_WithDetailedValidation).ConfigureAwait(false);
-        await VerifyAsync("Publish.Corvus_WithHeaders", bench.Corvus_WithHeaders).ConfigureAwait(false);
+        await VerifyAsync("Publish.Corvus_NoValidation", () => bench.Corvus_NoValidation()).ConfigureAwait(false);
+        await VerifyAsync("Publish.Corvus_WithBasicValidation", () => bench.Corvus_WithBasicValidation()).ConfigureAwait(false);
+        await VerifyAsync("Publish.Corvus_WithDetailedValidation", () => bench.Corvus_WithDetailedValidation()).ConfigureAwait(false);
     }
 
     private static async Task VerifySubscribePipeline()
@@ -46,10 +45,9 @@ internal static class BenchmarkSmokeTests
 
         Verify("Subscribe.RawNats_DeserializeAndHandle", () => bench.RawNats_DeserializeAndHandle());
         await VerifyAsync("Subscribe.Wolverine_DeserializeAndDispatch", () => bench.Wolverine_DeserializeAndDispatch()).ConfigureAwait(false);
-        Verify("Subscribe.Corvus_NoValidation", () => bench.Corvus_NoValidation());
-        Verify("Subscribe.Corvus_WithBasicValidation", () => bench.Corvus_WithBasicValidation());
-        Verify("Subscribe.Corvus_WithDetailedValidation", () => bench.Corvus_WithDetailedValidation());
-        await VerifyAsync("Subscribe.Corvus_FullPipeline", () => bench.Corvus_FullPipeline()).ConfigureAwait(false);
+        await VerifyAsync("Subscribe.Corvus_NoValidation", () => bench.Corvus_NoValidation()).ConfigureAwait(false);
+        await VerifyAsync("Subscribe.Corvus_WithBasicValidation", () => bench.Corvus_WithBasicValidation()).ConfigureAwait(false);
+        await VerifyAsync("Subscribe.Corvus_WithDetailedValidation", () => bench.Corvus_WithDetailedValidation()).ConfigureAwait(false);
         await VerifyAsync("Subscribe.Corvus_FullPipelineWithHeaders", () => bench.Corvus_FullPipelineWithHeaders()).ConfigureAwait(false);
 
         await bench.Cleanup().ConfigureAwait(false);

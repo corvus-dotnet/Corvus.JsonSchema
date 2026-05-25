@@ -19,13 +19,8 @@ using global::Corvus.Text.Json.Internal;
 
 namespace AsyncApiBenchmark;
 /// <summary>
-/// LightMeasuredPayload
+/// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// A sensor reading from a streetlight.
-/// </para>
-/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct LightMeasuredPayload
     : IJsonElement<LightMeasuredPayload>
@@ -147,17 +142,17 @@ public readonly partial struct LightMeasuredPayload
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(""u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/lightMeasuredPayload"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "";
+        public const string SchemaLocation = "/components/schemas/lightMeasuredPayload";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/lightMeasuredPayload"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -185,8 +180,8 @@ public readonly partial struct LightMeasuredPayload
                     return;
                 }
                 context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "additionalProperties"u8);
-                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
                 context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
             }
             else
             {

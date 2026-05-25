@@ -1,0 +1,83 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Streetlights Benchmark API",
+    "version": "1.0.0",
+    "description": "A minimal AsyncAPI spec for benchmarking the generated consumer/producer pipeline."
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "lightingMeasured": {
+      "address": "smartylighting.streetlights.1.0.event.lighting.measured",
+      "messages": {
+        "lightMeasured": {
+          "$ref": "#/components/messages/lightMeasured"
+        }
+      },
+      "description": "The topic on which measured values may be produced and consumed."
+    }
+  },
+  "operations": {
+    "receiveLightMeasurement": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/lightingMeasured"
+      },
+      "summary": "Receive light measurement readings from sensors.",
+      "messages": [
+        {
+          "$ref": "#/channels/lightingMeasured/messages/lightMeasured"
+        }
+      ]
+    },
+    "publishLightMeasurement": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/lightingMeasured"
+      },
+      "summary": "Publish light measurement readings.",
+      "messages": [
+        {
+          "$ref": "#/channels/lightingMeasured/messages/lightMeasured"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "lightMeasured": {
+        "name": "lightMeasured",
+        "title": "Light measured",
+        "summary": "A sensor reading from a streetlight.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/lightMeasuredPayload"
+        }
+      }
+    },
+    "schemas": {
+      "lightMeasuredPayload": {
+        "type": "object",
+        "required": ["id", "lumens", "sentAt"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Sensor ID."
+          },
+          "lumens": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Current lumens measurement."
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the measurement."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

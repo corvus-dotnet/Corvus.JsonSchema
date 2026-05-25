@@ -20,13 +20,8 @@ using global::Corvus.Text.Json.Internal;
 namespace AsyncApiBenchmark;
 
 /// <summary>
-/// LightMeasuredPayload
+/// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// A sensor reading from a streetlight.
-/// </para>
-/// </remarks>
 public readonly partial struct LightMeasuredPayload
 {
     /// <summary>
