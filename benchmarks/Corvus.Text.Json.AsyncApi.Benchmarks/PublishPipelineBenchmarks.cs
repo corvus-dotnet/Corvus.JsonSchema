@@ -27,13 +27,9 @@ public class PublishPipelineBenchmarks
     private static readonly ReadOnlyMemory<byte> ChannelUtf8 =
         "streetlights/1/0/event/lighting/measured"u8.ToArray();
 
-    private static readonly string SchemaJson = File.ReadAllText(
-        Path.Combine(AppContext.BaseDirectory, "TestData", "light-measured-payload.json"));
-
     private BenchmarkTransport transport = null!;
     private LightMeasuredPayload corvusPayload;
     private LightMeasuredPoco natsPayload = null!;
-    private JsonSchemaNetBaseline jsonSchemaNet = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -50,23 +46,12 @@ public class PublishPipelineBenchmarks
             Lumens = 512.7,
             SentAt = "2026-05-25T10:30:00Z",
         };
-
-        this.jsonSchemaNet = new JsonSchemaNetBaseline(SchemaJson);
     }
 
     [Benchmark(Description = "Raw NATS + STJ (no validation)", Baseline = true)]
     public int RawNats_NoValidation()
     {
         return RawNatsBaseline.Publish(in this.natsPayload);
-    }
-
-    [Benchmark(Description = "Raw NATS + JsonSchema.Net validation")]
-    public int RawNats_WithJsonSchemaNet()
-    {
-        // Validate first (what Neuroglia/competitors do)
-        int bytes = RawNatsBaseline.Publish(in this.natsPayload);
-        _ = this.jsonSchemaNet.EvaluateFlag(ValidPayloadBytes);
-        return bytes;
     }
 
     [Benchmark(Description = "Corvus: Publish (no validation)")]

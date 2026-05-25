@@ -25,17 +25,12 @@ public class SubscribePipelineBenchmarks
     private static readonly byte[] HeadersBytes = Encoding.UTF8.GetBytes(
         """{"x-correlation-id":"abc-123","x-source":"sensor-42"}""");
 
-    private static readonly string SchemaJson = File.ReadAllText(
-        Path.Combine(AppContext.BaseDirectory, "TestData", "light-measured-payload.json"));
-
     private BenchmarkTransport transport = null!;
-    private JsonSchemaNetBaseline jsonSchemaNet = null!;
 
     [GlobalSetup]
     public async Task Setup()
     {
         this.transport = new BenchmarkTransport();
-        this.jsonSchemaNet = new JsonSchemaNetBaseline(SchemaJson);
 
         // Register a typed subscriber
         await this.transport.SubscribeAsync<LightMeasuredPayload>(
@@ -56,22 +51,14 @@ public class SubscribePipelineBenchmarks
         return result.Id;
     }
 
-    [Benchmark(Description = "Raw STJ + JsonSchema.Net validation")]
-    public int RawNats_WithJsonSchemaNet()
-    {
-        _ = this.jsonSchemaNet.EvaluateFlag(ValidPayloadBytes);
-        LightMeasuredPoco result = RawNatsBaseline.Subscribe<LightMeasuredPoco>(ValidPayloadBytes);
-        return result.Id;
-    }
-
     [Benchmark(Description = "Corvus: Parse + access (no validation)")]
-    public long Corvus_NoValidation()
+    public double Corvus_NoValidation()
     {
         using ParsedJsonDocument<LightMeasuredPayload> doc =
             ParsedJsonDocument<LightMeasuredPayload>.Parse(ValidPayloadBytes);
 
         LightMeasuredPayload payload = doc.RootElement;
-        return (long)payload.Id + (long)payload.Lumens;
+        return (long)payload.Id + (double)payload.Lumens;
     }
 
     [Benchmark(Description = "Corvus: Parse + basic validation")]

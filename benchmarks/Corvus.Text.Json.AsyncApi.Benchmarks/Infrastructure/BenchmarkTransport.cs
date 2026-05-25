@@ -75,6 +75,7 @@ public sealed class BenchmarkTransport : IMessageTransport
 
         if (headers.ValueKind != JsonValueKind.Undefined)
         {
+            writer.Reset(buffer);
             headers.WriteTo(writer);
             writer.Flush();
         }

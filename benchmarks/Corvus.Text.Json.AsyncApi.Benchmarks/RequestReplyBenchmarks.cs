@@ -61,7 +61,7 @@ public class RequestReplyBenchmarks
     }
 
     [Benchmark(Description = "Corvus: Request/Reply (no validation)")]
-    public async ValueTask<long> Corvus_RequestReply_NoValidation()
+    public async ValueTask<double> Corvus_RequestReply_NoValidation()
     {
         (LightMeasuredPayload reply, _) = await this.transport
             .RequestAsync<LightMeasuredPayload, LightMeasuredPayload>(
@@ -70,11 +70,11 @@ public class RequestReplyBenchmarks
                 in this.corvusRequest,
                 CorrelationIdUtf8);
 
-        return (long)reply.Id + (long)reply.Lumens;
+        return (long)reply.Id + (double)reply.Lumens;
     }
 
     [Benchmark(Description = "Corvus: Request/Reply (with basic validation)")]
-    public async ValueTask<long> Corvus_RequestReply_WithValidation()
+    public async ValueTask<double> Corvus_RequestReply_WithValidation()
     {
         // Validate request before sending
         _ = this.corvusRequest.EvaluateSchema();
@@ -88,6 +88,6 @@ public class RequestReplyBenchmarks
 
         // Validate reply
         _ = reply.EvaluateSchema();
-        return (long)reply.Id + (long)reply.Lumens;
+        return (long)reply.Id + (double)reply.Lumens;
     }
 }

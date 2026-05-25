@@ -13,6 +13,14 @@ using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
 using Perfolizer.Mathematics.OutlierDetection;
 
+// Always run smoke tests first to catch exceptions before a 20+ minute BDN run
+await BenchmarkSmokeTests.RunAll().ConfigureAwait(false);
+
+if (args.Contains("--smoke-only"))
+{
+    return;
+}
+
 ManualConfig config = ManualConfig.CreateEmpty()
     .AddColumnProvider(DefaultColumnProviders.Instance)
     .AddLogger(ConsoleLogger.Default)
@@ -27,7 +35,6 @@ config.AddJob(
 
 BenchmarkRunner.Run(
     [
-        typeof(ValidationPipelineBenchmarks),
         typeof(PublishPipelineBenchmarks),
         typeof(SubscribePipelineBenchmarks),
         typeof(HeaderEncodingBenchmarks),
