@@ -17,6 +17,12 @@ namespace AsyncApiBenchmark;
 [MemoryDiagnoser]
 public class HeaderEncodingBenchmarks
 {
+    [ThreadStatic]
+    private static ArrayBufferWriter<byte>? t_buffer;
+
+    [ThreadStatic]
+    private static Utf8JsonWriter? t_writer;
+
     private byte[] headersJson = null!;
     private byte[] headersBase64 = null!;
 
@@ -65,8 +71,12 @@ public class HeaderEncodingBenchmarks
         using ParsedJsonDocument<JsonElement> doc =
             ParsedJsonDocument<JsonElement>.Parse(this.headersJson);
 
-        ArrayBufferWriter<byte> buffer = new(256);
-        using Utf8JsonWriter writer = new(buffer);
+        ArrayBufferWriter<byte> buffer = t_buffer ??= new ArrayBufferWriter<byte>(256);
+        buffer.ResetWrittenCount();
+
+        Utf8JsonWriter writer = t_writer ??= new Utf8JsonWriter(buffer);
+        writer.Reset(buffer);
+
         doc.RootElement.WriteTo(writer);
         writer.Flush();
         return buffer.WrittenCount;
