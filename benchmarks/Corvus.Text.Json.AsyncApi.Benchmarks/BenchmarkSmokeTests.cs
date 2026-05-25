@@ -45,11 +45,14 @@ internal static class BenchmarkSmokeTests
         await bench.Setup().ConfigureAwait(false);
 
         Verify("Subscribe.RawNats_DeserializeAndHandle", () => bench.RawNats_DeserializeAndHandle());
+        await VerifyAsync("Subscribe.Wolverine_DeserializeAndDispatch", () => bench.Wolverine_DeserializeAndDispatch()).ConfigureAwait(false);
         Verify("Subscribe.Corvus_NoValidation", () => bench.Corvus_NoValidation());
         Verify("Subscribe.Corvus_WithBasicValidation", () => bench.Corvus_WithBasicValidation());
         Verify("Subscribe.Corvus_WithDetailedValidation", () => bench.Corvus_WithDetailedValidation());
         await VerifyAsync("Subscribe.Corvus_FullPipeline", () => bench.Corvus_FullPipeline()).ConfigureAwait(false);
         await VerifyAsync("Subscribe.Corvus_FullPipelineWithHeaders", () => bench.Corvus_FullPipelineWithHeaders()).ConfigureAwait(false);
+
+        await bench.Cleanup().ConfigureAwait(false);
     }
 
     private static void VerifyHeaderEncoding()
@@ -109,6 +112,34 @@ internal static class BenchmarkSmokeTests
         try
         {
             _ = await action().ConfigureAwait(false);
+            Console.WriteLine($"  PASS: {name}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  FAIL: {name} — {ex.GetType().Name}: {ex.Message}");
+            throw new InvalidOperationException($"Smoke test failed: {name}", ex);
+        }
+    }
+
+    private static async Task VerifyAsync(string name, Func<Task<double>> action)
+    {
+        try
+        {
+            _ = await action().ConfigureAwait(false);
+            Console.WriteLine($"  PASS: {name}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  FAIL: {name} — {ex.GetType().Name}: {ex.Message}");
+            throw new InvalidOperationException($"Smoke test failed: {name}", ex);
+        }
+    }
+
+    private static async Task VerifyAsync(string name, Func<Task> action)
+    {
+        try
+        {
+            await action().ConfigureAwait(false);
             Console.WriteLine($"  PASS: {name}");
         }
         catch (Exception ex)

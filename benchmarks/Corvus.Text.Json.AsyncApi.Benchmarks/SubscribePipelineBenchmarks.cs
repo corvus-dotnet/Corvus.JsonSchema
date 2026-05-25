@@ -11,16 +11,17 @@ namespace AsyncApiBenchmark;
 
 /// <summary>
 /// End-to-end receive/subscribe benchmarks comparing the Corvus transport
-/// subscribe pipeline against what a developer would write with raw STJ.
+/// subscribe pipeline against what a developer would write with raw STJ,
+/// and against Wolverine (a popular .NET message bus framework).
 /// </summary>
 /// <remarks>
 /// <para>
-/// The baseline represents a hand-written NATS subscriber: receive bytes,
-/// deserialize via STJ into a POCO, then call a handler with the result.
-/// This is the floor — what you'd write with no framework at all.
-/// </para>
-/// <para>
-/// Corvus benchmarks measure the full pipeline: bytes → parse → (optional validate) → dispatch.
+/// Three comparison tiers:
+/// <list type="bullet">
+/// <item><description>Raw STJ — the floor: deserialize + access properties (no framework)</description></item>
+/// <item><description>Wolverine — a real message bus: STJ deserialize + framework dispatch + handler</description></item>
+/// <item><description>Corvus — our pipeline: parse + optional validate + dispatch + handler</description></item>
+/// </list>
 /// </para>
 /// </remarks>
 [MemoryDiagnoser]
@@ -33,11 +34,14 @@ public class SubscribePipelineBenchmarks
         """{"x-correlation-id":"abc-123","x-source":"sensor-42"}""");
 
     private BenchmarkTransport transport = null!;
+    private WolverineBaseline wolverine = null!;
 
     [GlobalSetup]
     public async Task Setup()
     {
         this.transport = new BenchmarkTransport();
+        this.wolverine = new WolverineBaseline();
+        await this.wolverine.StartAsync().ConfigureAwait(false);
 
         // Register a typed subscriber
         await this.transport.SubscribeAsync<LightMeasuredPayload>(
@@ -51,12 +55,26 @@ public class SubscribePipelineBenchmarks
             });
     }
 
+    [GlobalCleanup]
+    public async Task Cleanup()
+    {
+        await this.wolverine.DisposeAsync().ConfigureAwait(false);
+    }
+
     [Benchmark(Description = "Raw STJ: Deserialize + handle (no validation)", Baseline = true)]
     public double RawNats_DeserializeAndHandle()
     {
         // This is what a hand-written subscriber does: deserialize then use the result
         LightMeasuredPoco result = RawNatsBaseline.Subscribe<LightMeasuredPoco>(ValidPayloadBytes);
         return result.Id + result.Lumens;
+    }
+
+    [Benchmark(Description = "Wolverine: STJ deserialize + framework dispatch")]
+    public async Task Wolverine_DeserializeAndDispatch()
+    {
+        // Real message bus cost: STJ deserialize + Wolverine handler dispatch
+        LightMeasuredPoco message = RawNatsBaseline.Subscribe<LightMeasuredPoco>(ValidPayloadBytes);
+        await this.wolverine.InvokeAsync(message).ConfigureAwait(false);
     }
 
     [Benchmark(Description = "Corvus: Parse + access (no validation)")]
