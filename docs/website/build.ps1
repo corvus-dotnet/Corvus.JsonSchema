@@ -135,7 +135,9 @@ $v5Projects = @(
     "Corvus.Text.Json.JMESPath",
     "Corvus.Text.Json.JsonLogic",
     "Corvus.Text.Json.JsonPath",
-    "Corvus.Text.Json.Patch"
+    "Corvus.Text.Json.Patch",
+    "Corvus.Text.Json.AsyncApi",
+    "Corvus.Text.Json.AsyncApi.Testing"
 )
 
 # V4 paths
@@ -256,10 +258,17 @@ if ($SkipDotNetBuild) {
         Write-Host "  [$projIndex/$($v5Projects.Count)] Building $proj..." -ForegroundColor Gray
         & dotnet build $projPath -c Release -f net10.0 /p:GenerateDocumentationFile=true --no-incremental -v q
         if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (net10.0)" }
-        & dotnet build $projPath -c Release -f netstandard2.0 /p:GenerateDocumentationFile=true --no-incremental -v q
-        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.0)" }
-        & dotnet build $projPath -c Release -f netstandard2.1 /p:GenerateDocumentationFile=true --no-incremental -v q
-        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.1)" }
+        # netstandard builds — skip if the project doesn't target them
+        $projXml = [xml](Get-Content $projPath)
+        $tfms = ($projXml.Project.PropertyGroup | ForEach-Object { $_.TargetFrameworks; $_.TargetFramework }) -join ';'
+        if ($tfms -match 'netstandard2\.0') {
+            & dotnet build $projPath -c Release -f netstandard2.0 /p:GenerateDocumentationFile=true --no-incremental -v q
+            if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.0)" }
+        }
+        if ($tfms -match 'netstandard2\.1') {
+            & dotnet build $projPath -c Release -f netstandard2.1 /p:GenerateDocumentationFile=true --no-incremental -v q
+            if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.1)" }
+        }
     }
     Write-StepDuration "V5 builds - $($v5Projects.Count) libraries" $sw
 

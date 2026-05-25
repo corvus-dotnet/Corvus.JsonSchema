@@ -181,15 +181,15 @@ Message arrives on transport
 
 ## Validation
 
-Every generated producer and consumer accepts a `ValidationMode` parameter that controls how strictly messages are validated against their JSON Schema.
+Every generated producer and consumer accepts a `ValidationMode` parameter that controls whether messages are validated against their JSON Schema, and the degree of diagnostic information provided on failure.
 
 ### Validation Modes
 
-| Mode | Behaviour | Overhead | Use for |
-|------|-----------|----------|---------|
-| `ValidationMode.None` | No validation | Zero | Trusted internal services, maximum throughput |
-| `ValidationMode.Basic` | Fast boolean `EvaluateSchema()` check; on failure throws with message name but no details | ~300ns | Production default — catches malformed messages |
-| `ValidationMode.Detailed` | Full evaluation with `JsonSchemaResultsCollector`; on failure includes JSON diagnostics with evaluation paths and error messages | ~600ns | Development, debugging, API gateways |
+| Mode | Behaviour | Use for |
+|------|-----------|---------|
+| `ValidationMode.None` | No validation | Trusted internal services, maximum throughput |
+| `ValidationMode.Basic` | Fast boolean `EvaluateSchema()` check; on failure throws with message name but no details | Production default — catches malformed messages |
+| `ValidationMode.Detailed` | Full evaluation with `JsonSchemaResultsCollector`; on failure includes JSON diagnostics with evaluation paths and error messages | Development, debugging, API gateways |
 
 ### Producer-Side Validation
 
