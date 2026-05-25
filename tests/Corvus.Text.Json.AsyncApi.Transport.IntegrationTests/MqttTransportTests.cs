@@ -799,6 +799,55 @@ public class MqttTransportTests
                 "corr"u8.ToArray()));
     }
 
+    [TestMethod]
+    public async Task PublicDeadLetterAsyncSendsToChannel()
+    {
+        // Arrange — test the public DeadLetterAsync method directly
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-pub-dl-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        byte[]? dlqPayload = null;
+
+        // Subscribe to the DLQ topic with a raw MQTT client
+        MqttFactory factory = new();
+        using IMqttClient dlqClient = factory.CreateMqttClient();
+        MqttClientOptions dlqOpts = new MqttClientOptionsBuilder()
+            .WithTcpServer(MqttFixture.Host, MqttFixture.Port)
+            .WithClientId("corvus-pub-dl-reader-" + Guid.NewGuid().ToString("N")[..8])
+            .Build();
+        await dlqClient.ConnectAsync(dlqOpts);
+        dlqClient.ApplicationMessageReceivedAsync += args =>
+        {
+            dlqPayload = args.ApplicationMessage.PayloadSegment.ToArray();
+            dlqReceived.Release();
+            return Task.CompletedTask;
+        };
+        await dlqClient.SubscribeAsync("mqtt/test/public-dlq");
+        await Task.Delay(200);
+
+        // Act — call the public DeadLetterAsync method directly
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"failed":"item"}"""u8.ToArray());
+        await transport.DeadLetterAsync(
+            "mqtt/test/public-dlq"u8.ToArray(),
+            "mqtt/test/original"u8.ToArray(),
+            payloadDoc.RootElement,
+            default,
+            new InvalidOperationException("Test dead-letter reason"));
+
+        // Assert
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Public DeadLetterAsync message was not received.");
+        Assert.IsNotNull(dlqPayload);
+
+        await dlqClient.DisconnectAsync();
+        await transport.DisposeAsync();
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(

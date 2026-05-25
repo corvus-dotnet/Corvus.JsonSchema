@@ -711,6 +711,50 @@ public class WebSocketTransportTests
                 "corr"u8.ToArray()));
     }
 
+    [TestMethod]
+    public async Task PublicDeadLetterAsyncSendsToChannel()
+    {
+        // Arrange — test the public DeadLetterAsync method directly
+        WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+
+        // Use a separate transport to subscribe to the DLQ channel (relay won't echo to sender)
+        WebSocketMessageTransport dlqSubscriber = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        await dlqSubscriber.SubscribeAsync<JsonElement>(
+            "ws/test/public-dlq"u8.ToArray(),
+            (payload, headers, ct) =>
+            {
+                dlqReceived.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        // Act — call the public DeadLetterAsync method directly
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"failed":"item"}"""u8.ToArray());
+        await transport.DeadLetterAsync(
+            "ws/test/public-dlq"u8.ToArray(),
+            "ws/test/original"u8.ToArray(),
+            payloadDoc.RootElement,
+            default,
+            new InvalidOperationException("Test dead-letter reason"));
+
+        // Assert
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Public DeadLetterAsync message was not received.");
+
+        await dlqSubscriber.DisposeAsync();
+        await transport.DisposeAsync();
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(

@@ -862,6 +862,74 @@ public class AmqpTransportTests
         await requesterTransport.DisposeAsync();
     }
 
+    [TestMethod]
+    public async Task PublicDeadLetterAsyncSendsToChannel()
+    {
+        // Arrange — test the public DeadLetterAsync method directly
+        AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.pub-dl",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-pub-dl",
+        });
+
+        ReadOnlyMemory<byte> dlqChannel = "amqp.test.public-dlq"u8.ToArray();
+        ReadOnlyMemory<byte> originalChannel = "amqp.test.original"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        byte[]? dlqPayload = null;
+
+        // Set up a raw consumer on the dead-letter exchange
+        RabbitMQ.Client.ConnectionFactory dlqFactory = new() { Uri = new Uri(AmqpFixture.ConnectionUri) };
+        using RabbitMQ.Client.IConnection dlqConn = await dlqFactory.CreateConnectionAsync();
+        using RabbitMQ.Client.IChannel dlqCh = await dlqConn.CreateChannelAsync();
+
+        await dlqCh.ExchangeDeclareAsync("corvus.dead-letter", "topic", durable: true, autoDelete: false);
+        RabbitMQ.Client.QueueDeclareOk dlqQueue = await dlqCh.QueueDeclareAsync(
+            queue: string.Empty,
+            durable: false,
+            exclusive: true,
+            autoDelete: true);
+        await dlqCh.QueueBindAsync(dlqQueue.QueueName, "corvus.dead-letter", "amqp.test.public-dlq");
+
+        AsyncEventingBasicConsumer dlqConsumer = new(dlqCh);
+        dlqConsumer.ReceivedAsync += (sender, ea) =>
+        {
+            dlqPayload = ea.Body.ToArray();
+            dlqReceived.Release();
+            return Task.CompletedTask;
+        };
+
+        await dlqCh.BasicConsumeAsync(
+            queue: dlqQueue.QueueName,
+            autoAck: true,
+            consumerTag: string.Empty,
+            noLocal: false,
+            exclusive: false,
+            arguments: null,
+            consumer: dlqConsumer,
+            cancellationToken: default);
+
+        await Task.Delay(300);
+
+        // Act — call the public DeadLetterAsync method directly
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"failed":"item"}"""u8.ToArray());
+        await transport.DeadLetterAsync(
+            dlqChannel,
+            originalChannel,
+            payloadDoc.RootElement,
+            default,
+            new InvalidOperationException("Test dead-letter reason"));
+
+        // Assert
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Public DeadLetterAsync message was not received.");
+        Assert.IsNotNull(dlqPayload);
+
+        await transport.DisposeAsync();
+    }
+
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
     {
         public ValueTask<MessageErrorAction> HandleErrorAsync(

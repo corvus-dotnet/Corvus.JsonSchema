@@ -947,4 +947,51 @@ public class NatsTransportTests
         await requesterTransport.DisposeAsync();
         await responderConn.DisposeAsync();
     }
+
+    [TestMethod]
+    public async Task PublicDeadLetterAsyncSendsToChannel()
+    {
+        // Arrange — test the public DeadLetterAsync method directly
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+        });
+
+        ReadOnlyMemory<byte> dlqChannel = "test.public-dlq"u8.ToArray();
+        ReadOnlyMemory<byte> originalChannel = "test.original"u8.ToArray();
+        using var dlqReceived = new SemaphoreSlim(0, 1);
+        byte[]? dlqPayload = null;
+
+        // Subscribe to the DLQ channel with a raw NATS connection
+        NATS.Client.Core.NatsConnection rawConn = new(new NATS.Client.Core.NatsOpts { Url = NatsFixture.ConnectionString });
+        await rawConn.ConnectAsync();
+        _ = Task.Run(async () =>
+        {
+            await foreach (NATS.Client.Core.NatsMsg<byte[]> msg in rawConn.SubscribeAsync<byte[]>("test.public-dlq"))
+            {
+                dlqPayload = msg.Data;
+                dlqReceived.Release();
+                break;
+            }
+        });
+
+        await Task.Delay(200);
+
+        // Act — call the public DeadLetterAsync method directly
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"failed":"item"}"""u8.ToArray());
+        await transport.DeadLetterAsync(
+            dlqChannel,
+            originalChannel,
+            payloadDoc.RootElement,
+            default,
+            new InvalidOperationException("Test dead-letter reason"));
+
+        // Assert
+        bool received = await dlqReceived.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(received, "Public DeadLetterAsync message was not received.");
+        Assert.IsNotNull(dlqPayload);
+
+        await transport.DisposeAsync();
+        await rawConn.DisposeAsync();
+    }
 }
