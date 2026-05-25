@@ -577,7 +577,6 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
-    [TestCategory("failing")] // Server doesn't yet support multipart/mixed body parsing
     public async Task Batch_Resource_ReturnsOk()
     {
         // multipart/mixed body for BATCH verb
@@ -1128,10 +1127,9 @@ public class GeneratedServerEndToEndTests
     [TestMethod]
     public async Task Batch_Resource_WithJsonBody_ReturnsOk()
     {
-        HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1")
-        {
-            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
-        };
+        MultipartContent multipart = new("mixed");
+        multipart.Add(new StringContent("{}", Encoding.UTF8, "application/json"));
+        HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1") { Content = multipart };
         HttpResponseMessage response = await client!.SendAsync(request);
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
@@ -1139,10 +1137,9 @@ public class GeneratedServerEndToEndTests
     [TestMethod]
     public async Task Batch_Resource_InvalidJsonBody_ReturnsBadRequest()
     {
-        HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1")
-        {
-            Content = new StringContent("{", Encoding.UTF8, "application/json"),
-        };
+        MultipartContent multipart = new("mixed");
+        multipart.Add(new StringContent("{", Encoding.UTF8, "application/json"));
+        HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1") { Content = multipart };
         HttpResponseMessage response = await client!.SendAsync(request);
         await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The request body could not be parsed.");
     }
@@ -1328,10 +1325,9 @@ public class GeneratedServerEndToEndTests
     {
         await AssertInvalidResponseBodyAsync(() =>
         {
-            HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1")
-            {
-                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
-            };
+            MultipartContent multipart = new("mixed");
+            multipart.Add(new StringContent("{}", Encoding.UTF8, "application/json"));
+            HttpRequestMessage request = new(new HttpMethod("BATCH"), "/resources/res-1") { Content = multipart };
             return client!.SendAsync(request);
         });
     }

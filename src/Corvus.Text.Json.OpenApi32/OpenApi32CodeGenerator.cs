@@ -7194,6 +7194,20 @@ public sealed class OpenApi32CodeGenerator
                         // binary file fields (format: binary) are serialized as JSON strings whose
                         // content cannot meaningfully be validated against the schema format annotation.
                     }
+                    else if (IsMultipartMixedRequestBody(op.RequestBody!.Value))
+                    {
+                        w.WriteLine("try");
+                        w.OpenBrace();
+                        w.WriteLine($"bodyDoc = await MultipartMixedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        w.CloseBrace();
+                        w.WriteLine("catch");
+                        w.OpenBrace();
+                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
+                        w.WriteLine("return;");
+                        w.CloseBrace();
+                        w.WriteLine();
+                        EmitRequestBodySchemaValidation(w, bodyTypeName);
+                    }
                     else
                     {
                         w.WriteLine("try");
