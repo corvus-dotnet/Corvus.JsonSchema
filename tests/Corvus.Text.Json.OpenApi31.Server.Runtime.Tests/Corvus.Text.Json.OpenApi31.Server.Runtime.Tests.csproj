@@ -37,7 +37,7 @@
        is already compiled. Generation itself takes <1s; no incremental skip needed. -->
   <Target Name="GenerateOpenApiTypes" BeforeTargets="BeforeCompile;CoreCompile">
     <RemoveDir Directories="$(GeneratedCodeOutputPath)" />
-    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 --no-build -- openapi-server &quot;$(MSBuildThisFileDirectory)$(OpenApiSpecFile)&quot; --rootNamespace CanonTests31.Server --outputPath &quot;$(GeneratedCodeOutputPath)&quot;" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- openapi-server &quot;$(MSBuildThisFileDirectory)$(OpenApiSpecFile)&quot; --rootNamespace CanonTests31.Server --outputPath &quot;$(GeneratedCodeOutputPath)&quot;" />
   </Target>
 
   <!-- Include the generated files after generation. Runs after GenerateOpenApiTypes, picking up
