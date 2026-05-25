@@ -161,6 +161,7 @@ jobs:
     name: Integration Tests (Docker)
     needs:
       - build
+      - setCachePathsConfig
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -175,20 +176,28 @@ jobs:
             10.0.x
             9.0.x
 
-      - name: Restore NuGet packages
-        run: dotnet restore Corvus.Text.Json.slnx
-
-      - name: Build
-        run: dotnet build Corvus.Text.Json.slnx --no-restore -c Debug
+      - name: Restore build cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            .nuget-packages
+            Solutions
+            solutions
+            ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
+          key: build-state-${{ github.run_id }}-compile
+          enableCrossOsArchive: true
 
       - name: Run Integration Tests
         run: |
           dotnet test --project tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.csproj \
             -f net10.0 \
+            -c Release \
             --no-build \
             --filter "TestCategory=integration&TestCategory!=failing" \
             --logger "trx;LogFileName=integration-tests.trx"
         timeout-minutes: 10
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
 
       - name: Publish Test Results
         uses: dorny/test-reporter@a3478a7bb6bd8473a21ad12eb9b5ea54e82ea0ab # v2.0.0
