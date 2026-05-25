@@ -13,6 +13,7 @@
 </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Corvus.Text.Json.OpenApi.Benchmarks/Corvus.Text.Json.OpenApi.Benchmarks.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.AsyncApi.Benchmarks/Corvus.Text.Json.AsyncApi.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/benchmarks/SourceMetaModels/">
     <Project Path="benchmarks/Corvus.Text.Json.AnsibleMetaBenchmarkModels/Corvus.Text.Json.AnsibleMetaBenchmarkModels.csproj" />
