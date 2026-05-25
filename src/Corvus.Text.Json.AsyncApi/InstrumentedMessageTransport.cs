@@ -20,7 +20,7 @@ namespace Corvus.Text.Json.AsyncApi;
 /// <list type="bullet">
 /// <item><description>Distributed trace spans (Activities) for publish, subscribe, request, and dead-letter operations.</description></item>
 /// <item><description>Metrics counters and histograms for message throughput, processing duration, and errors.</description></item>
-/// <item><description>W3C trace context propagation via message headers (future).</description></item>
+/// <item><description>W3C trace context propagation via message headers (traceparent/tracestate).</description></item>
 /// </list>
 /// <para>
 /// All instrumentation is zero-cost when no listener is attached.
@@ -192,6 +192,8 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
 
         SetCommonTags(activity, "send", destination);
 
+        headers = TraceContextPropagator.Inject(in headers, activity);
+
         long startTimestamp = Stopwatch.GetTimestamp();
         try
         {
@@ -233,6 +235,8 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
             ActivityKind.Producer);
 
         SetCommonTags(activity, "send", destination);
+
+        headers = TraceContextPropagator.Inject(in headers, activity);
 
         long startTimestamp = Stopwatch.GetTimestamp();
         try
@@ -279,6 +283,8 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
 
         SetCommonTags(activity, "request", destination);
         activity?.SetTag("messaging.message.conversation_id", correlationId);
+
+        headers = TraceContextPropagator.Inject(in headers, activity);
 
         long startTimestamp = Stopwatch.GetTimestamp();
         try
@@ -329,6 +335,8 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
 
         SetCommonTags(activity, "request", destination);
         activity?.SetTag("messaging.message.conversation_id", correlationId);
+
+        headers = TraceContextPropagator.Inject(in headers, activity);
 
         long startTimestamp = Stopwatch.GetTimestamp();
         try
@@ -399,9 +407,17 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
     {
         return async (payload, headers, ct) =>
         {
-            using Activity? activity = AsyncApiTelemetry.ActivitySource.StartActivity(
-                $"process {destination}",
-                ActivityKind.Consumer);
+            ActivityContext parentContext = default;
+            bool hasParent = TraceContextPropagator.TryExtractParentContext(in headers, out parentContext);
+
+            using Activity? activity = hasParent
+                ? AsyncApiTelemetry.ActivitySource.StartActivity(
+                    $"process {destination}",
+                    ActivityKind.Consumer,
+                    parentContext)
+                : AsyncApiTelemetry.ActivitySource.StartActivity(
+                    $"process {destination}",
+                    ActivityKind.Consumer);
 
             SetCommonTags(activity, "process", destination);
 
