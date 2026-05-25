@@ -51,17 +51,16 @@ $DotNetCoverageSettingsFile = (Resolve-Path (Join-Path $here "dotnet-coverage.se
 # When running GHA honour the TFM that the matrix build passes via an environment variable
 $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
 
-# Exclude 'outerloop' (memory stress tests) and 'failing' (known failures) categories
-# which are too resource-intensive for CI runners.
+# Exclude 'outerloop' (memory stress tests), 'failing' (known failures), and
+# 'integration' (Docker-dependent integration tests) categories.
 # NOTE: MSTest uses 'TestCategory' as the trait name (xUnit used 'category').
 # NOTE: '--ignore-exit-code 8' suppresses MTP exit code 8 ("zero tests ran") which
 # occurs for CodeGenerator.Tests on net481 (empty assembly — CLI tool is net10.0 only).
-# NOTE: The '&' character in 'TestCategory!=failing&TestCategory!=outerloop' can be
-# misinterpreted by process-spawning layers (e.g. dotnet-coverage launching dotnet test).
-# Using 'TestCategory!=outerloop' alone is sufficient since no tests currently have the
-# 'failing' category. If tests are later given 'failing', add a separate --filter arg.
+# NOTE: The '&' character in the filter expression can be misinterpreted by
+# process-spawning layers (e.g. dotnet-coverage launching dotnet test).
+# Integration tests run in a separate CI job with Docker available.
 $AdditionalTestArgs = @(
-    "--filter", 'TestCategory!=outerloop'
+    "--filter", 'TestCategory!=outerloop&TestCategory!=integration'
     "--ignore-exit-code", "8"
 )
 $StripOutputFromLargeTrxFiles = $true

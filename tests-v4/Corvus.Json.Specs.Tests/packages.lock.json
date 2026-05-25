@@ -235,15 +235,6 @@
           "System.Threading.Tasks.Extensions": "4.6.3"
         }
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.7",
-        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw==",
-        "dependencies": {
-          "Microsoft.Bcl.AsyncInterfaces": "10.0.7",
-          "System.Threading.Tasks.Extensions": "4.6.3"
-        }
-      },
       "Microsoft.Extensions.FileProviders.Abstractions": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -601,6 +592,16 @@
           "Microsoft.Extensions.Primitives": "10.0.7"
         }
       },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw==",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.7",
+          "System.Threading.Tasks.Extensions": "4.6.3"
+        }
+      },
       "Microsoft.Extensions.Http": {
         "type": "CentralTransitive",
         "requested": "[10.0.7, )",
@@ -919,11 +920,6 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7"
         }
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.7",
-        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
-      },
       "Microsoft.Extensions.Diagnostics": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -1174,6 +1170,12 @@
           "Microsoft.Extensions.Configuration": "10.0.7",
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.7"
         }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
       },
       "Microsoft.Extensions.Http": {
         "type": "CentralTransitive",

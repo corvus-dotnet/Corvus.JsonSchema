@@ -1,6 +1,6 @@
 {
   "excludeChannels": [],
-  "generatedAt": "2026-05-25T07:11:16.1810783\u002B00:00",
+  "generatedAt": "2026-05-25T08:05:16.4973044\u002B00:00",
   "generatedFiles": [
     "TurnOnProducer.cs",
     "IReceiveLightMeasurementHandler.cs",

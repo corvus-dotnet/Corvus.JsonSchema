@@ -618,6 +618,14 @@ foreach ($descriptorFile in $descriptorFiles) {
     # Point them at the GitHub source
     $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', "($canonicalRepoUrl/blob/$canonicalBranch/docs/copilot/`$1)"
 
+    # Rewrite links to ExampleRecipes from doc pages:
+    #   ../ExampleRecipes/029-OpenApiClient/  -> /examples/open-api-client.html
+    #   ../ExampleRecipes/029-OpenApiClient   -> /examples/open-api-client.html
+    foreach ($entry in $recipeSlugMap.GetEnumerator()) {
+        $docBody = $docBody -replace [regex]::Escape("../ExampleRecipes/$($entry.Key)/"), "/examples/$($entry.Value).html"
+        $docBody = $docBody -replace [regex]::Escape("../ExampleRecipes/$($entry.Key)"), "/examples/$($entry.Value).html"
+    }
+
     # Use descriptor nav title, or fall back to doc title
     $navTitle = if ($descriptor['navTitle']) { $descriptor['navTitle'] } else {
         $t = $docTitle

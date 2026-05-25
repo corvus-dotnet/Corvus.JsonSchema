@@ -45,6 +45,7 @@
   <Folder Name="/src/">
     <Project Path="src/Corvus.Text.Json.AsyncApi.Amqp/Corvus.Text.Json.AsyncApi.Amqp.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi.CodeGeneration/Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.AsyncApi.HealthChecks/Corvus.Text.Json.AsyncApi.HealthChecks.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi.Kafka/Corvus.Text.Json.AsyncApi.Kafka.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi.Mqtt/Corvus.Text.Json.AsyncApi.Mqtt.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi.Nats/Corvus.Text.Json.AsyncApi.Nats.csproj" />
@@ -62,6 +63,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Corvus.Text.Json.AsyncApi.CodeGeneration.Tests/Corvus.Text.Json.AsyncApi.CodeGeneration.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.AsyncApi.Runtime.Tests/Corvus.Text.Json.AsyncApi.Runtime.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.AsyncApi.Telemetry.Tests/Corvus.Text.Json.AsyncApi.Telemetry.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.csproj" />
     <Project Path="tests/Corvus.Text.Json.AsyncApi26.Tests/Corvus.Text.Json.AsyncApi26.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.AsyncApi30.Tests/Corvus.Text.Json.AsyncApi30.Tests.csproj" />
