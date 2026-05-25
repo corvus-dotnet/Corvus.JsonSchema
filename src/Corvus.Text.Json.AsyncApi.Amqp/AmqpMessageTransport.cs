@@ -26,7 +26,7 @@ namespace Corvus.Text.Json.AsyncApi.Amqp;
 /// <c>{consumerTagPrefix}.{channel}</c>.
 /// </para>
 /// </remarks>
-public sealed class AmqpMessageTransport : IMessageTransport
+public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTransport
 {
     private static readonly byte[] HeadersKey = "corvus-headers"u8.ToArray();
     private const string HeadersKeyString = "corvus-headers";
@@ -55,6 +55,34 @@ public sealed class AmqpMessageTransport : IMessageTransport
         this.publishChannel = publishChannel;
         this.errorPolicy = options.ErrorPolicy ?? new DefaultMessageErrorPolicy();
         this.middleware = options.HandlerMiddleware;
+    }
+
+    /// <inheritdoc/>
+    public bool IsConnected => !this.disposed && this.connection.IsOpen;
+
+    /// <inheritdoc/>
+    public string MessagingSystem => "amqp";
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> PingAsync(CancellationToken cancellationToken = default)
+    {
+        if (this.disposed)
+        {
+            return false;
+        }
+
+        try
+        {
+            // Creating and immediately closing a channel is the lightest AMQP operation
+            // that validates broker connectivity end-to-end.
+            IChannel testChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            await testChannel.CloseAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     /// <summary>

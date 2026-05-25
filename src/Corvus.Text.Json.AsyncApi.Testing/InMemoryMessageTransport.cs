@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.AsyncApi.Testing;
 /// on subscribe delivery — mirroring what a real transport would do.
 /// </para>
 /// </remarks>
-public sealed class InMemoryMessageTransport : IMessageTransport
+public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckableTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_serializeBuffer;
@@ -32,6 +32,12 @@ public sealed class InMemoryMessageTransport : IMessageTransport
     private readonly List<DeadLetteredMessage> deadLetteredMessages = [];
     private readonly Dictionary<string, Delegate> subscriptions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, TaskCompletionSource<(byte[] Payload, byte[] Headers)>> pendingRequests = new(StringComparer.Ordinal);
+
+    /// <inheritdoc/>
+    public bool IsConnected => true;
+
+    /// <inheritdoc/>
+    public string MessagingSystem => "in-memory";
 
     /// <summary>
     /// Gets the list of messages published via this transport.
@@ -159,6 +165,9 @@ public sealed class InMemoryMessageTransport : IMessageTransport
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    /// <inheritdoc/>
+    public ValueTask<bool> PingAsync(CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
 
     /// <summary>
     /// Delivers a raw JSON payload to the subscriber on the specified channel.

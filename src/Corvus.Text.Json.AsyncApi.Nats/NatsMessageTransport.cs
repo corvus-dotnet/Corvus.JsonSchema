@@ -31,7 +31,7 @@ namespace Corvus.Text.Json.AsyncApi.Nats;
 /// eliminating intermediate allocations entirely.
 /// </para>
 /// </remarks>
-public sealed class NatsMessageTransport : IMessageTransport
+public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTransport
 {
     private const string HeadersKey = "Corvus-Headers";
     private const string CorrelationIdKey = "Corvus-Correlation-Id";
@@ -55,6 +55,31 @@ public sealed class NatsMessageTransport : IMessageTransport
         this.connection = connection;
         this.errorPolicy = options.ErrorPolicy ?? new DefaultMessageErrorPolicy();
         this.middleware = options.HandlerMiddleware;
+    }
+
+    /// <inheritdoc/>
+    public bool IsConnected => !this.disposed && this.connection.ConnectionState == NatsConnectionState.Open;
+
+    /// <inheritdoc/>
+    public string MessagingSystem => "nats";
+
+    /// <inheritdoc/>
+    public async ValueTask<bool> PingAsync(CancellationToken cancellationToken = default)
+    {
+        if (this.disposed)
+        {
+            return false;
+        }
+
+        try
+        {
+            await this.connection.PingAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     /// <summary>

@@ -26,7 +26,7 @@ namespace Corvus.Text.Json.AsyncApi.Kafka;
 /// independent offset tracking and partition assignment.
 /// </para>
 /// </remarks>
-public sealed class KafkaMessageTransport : IMessageTransport
+public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_serializeBuffer;
@@ -62,6 +62,32 @@ public sealed class KafkaMessageTransport : IMessageTransport
         producerConfig.MessageTimeoutMs = options.MessageTimeoutMs;
 
         this.producer = new ProducerBuilder<Null, byte[]>(producerConfig).Build();
+    }
+
+    /// <inheritdoc/>
+    public bool IsConnected => !this.disposed;
+
+    /// <inheritdoc/>
+    public string MessagingSystem => "kafka";
+
+    /// <inheritdoc/>
+    public ValueTask<bool> PingAsync(CancellationToken cancellationToken = default)
+    {
+        if (this.disposed)
+        {
+            return ValueTask.FromResult(false);
+        }
+
+        try
+        {
+            // Flush with a short timeout validates broker connectivity.
+            this.producer.Flush(TimeSpan.FromSeconds(2));
+            return ValueTask.FromResult(true);
+        }
+        catch (Exception)
+        {
+            return ValueTask.FromResult(false);
+        }
     }
 
     /// <inheritdoc/>
