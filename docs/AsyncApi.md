@@ -454,11 +454,122 @@ await transport.DeliverAsync<LightMeasuredPayload>(
 
 ## Authentication
 
-Generated producers and consumers accept an optional `IMessageAuthenticationProvider`. The provider supplies credentials to the transport before messages are published or subscriptions are established.
+Generated producers and consumers accept an optional `IMessageAuthenticationProvider`. The provider supplies credentials to the transport **before** messages are published or subscriptions are established.
 
-The spec's `securitySchemes` determine which provider to use:
+The generated code determines which security scheme to use from the AsyncAPI spec's `securitySchemes`. It constructs a `MessageAuthenticationContext` with the scheme type and name, passes it to your provider, then the transport reads the populated credentials. This is called once per publish (producers) or once at subscription time (consumers).
 
-### Bearer Token
+### How It Works
+
+```
+Your code constructs a producer/consumer with an IMessageAuthenticationProvider
+  → Generated code creates MessageAuthenticationContext(schemeType, schemeName)
+  → Calls provider.AuthenticateAsync(context, ct)
+  → Provider populates context.Credentials dictionary
+  → Transport reads credentials to configure connection/message
+```
+
+The `MessageAuthenticationContext.Credentials` dictionary is transport-agnostic — each transport reads the keys it understands:
+
+| Credential key | Used by |
+|----------------|---------|
+| `token` | Bearer token transports (NATS auth token, Kafka OAUTHBEARER) |
+| `username` / `password` | SASL PLAIN, AMQP, MQTT username/password |
+| `key` | API key (transport-specific header or connection param) |
+| `access_token` / `token_type` / `scopes` | OAuth2 flows |
+| `certificate` | TLS client certificate (base64 PFX) |
+
+### Microsoft Entra ID (Azure AD / MSAL)
+
+For Azure-hosted messaging (Event Hubs via Kafka protocol, Azure Service Bus via AMQP), use `Azure.Identity` with the `OAuth2AuthenticationProvider`'s token factory:
+
+```csharp
+using Azure.Identity;
+using Azure.Core;
+using Corvus.Text.Json.AsyncApi;
+
+// Client credentials flow (service-to-service)
+TokenCredential credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+
+IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
+    accessTokenFactory: async ct =>
+    {
+        AccessToken token = await credential.GetTokenAsync(
+            new TokenRequestContext(["https://eventhubs.azure.net/.default"]),
+            ct);
+        return token.Token;
+    },
+    tokenType: "Bearer");
+
+TurnOnProducer producer = new(transport, authProvider: auth);
+```
+
+For different Azure Identity flows, substitute the credential type:
+
+```csharp
+// Managed identity (Azure-hosted services — no secrets needed)
+TokenCredential credential = new DefaultAzureCredential();
+
+// Interactive browser login (desktop/native apps)
+TokenCredential credential = new InteractiveBrowserCredential(
+    new InteractiveBrowserCredentialOptions
+    {
+        ClientId = clientId,
+        TenantId = tenantId,
+    });
+
+// Device code flow (CLI tools, headless terminals)
+TokenCredential credential = new DeviceCodeCredential(
+    new DeviceCodeCredentialOptions
+    {
+        ClientId = clientId,
+        TenantId = tenantId,
+        DeviceCodeCallback = (info, cancel) =>
+        {
+            Console.WriteLine(info.Message);
+            return Task.CompletedTask;
+        },
+    });
+```
+
+All credential types work with the same `OAuth2AuthenticationProvider` factory pattern — the factory acquires tokens using whichever `TokenCredential` you supply.
+
+### OAuth 2.0 (Generic / Custom Identity Provider)
+
+For non-Azure OAuth2 providers (Auth0, Okta, Keycloak, custom):
+
+```csharp
+using Corvus.Text.Json.AsyncApi;
+
+// Static token (short-lived scripts, testing)
+IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
+    accessToken: "eyJhbGciOi...",
+    tokenType: "Bearer",
+    scopes: "read:messages write:messages");
+
+// Dynamic token acquisition with refresh (production)
+IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
+    accessTokenFactory: async ct =>
+    {
+        // Your OAuth2 client credentials / token exchange implementation
+        TokenResponse response = await oidcClient.GetClientCredentialsTokenAsync(
+            "https://auth.example.com/token",
+            clientId,
+            clientSecret,
+            ["messaging.publish"],
+            ct);
+        return response.AccessToken;
+    },
+    tokenType: "Bearer",
+    scopes: "messaging.publish");
+
+TurnOnProducer producer = new(transport, authProvider: auth);
+```
+
+The `accessTokenFactory` is called on **every publish** (producers) and **once at subscribe time** (consumers). For caching and refresh logic, wrap your token client with `Microsoft.Extensions.Caching.Memory` or use your SDK's built-in token cache.
+
+### Bearer Token (Simple JWT)
+
+For brokers that accept a static JWT or pre-acquired bearer token:
 
 ```csharp
 using Corvus.Text.Json.AsyncApi;
@@ -468,11 +579,31 @@ IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider("my-
 TurnOnProducer producer = new(transport, authProvider: auth);
 ```
 
-### API Key
+With dynamic token refresh:
 
 ```csharp
+IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider(
+    tokenFactory: async ct =>
+    {
+        // Refresh the token before it expires
+        return await tokenService.GetOrRefreshTokenAsync(ct);
+    });
+```
+
+### API Key
+
+For brokers or gateways that authenticate via API keys:
+
+```csharp
+using Corvus.Text.Json.AsyncApi;
+
+// Simple key — transport uses it as-is
 IMessageAuthenticationProvider auth = new ApiKeyAuthenticationProvider(
-    key: "my-api-key",
+    apiKey: "sk-live-abc123");
+
+// HTTP API key style — with name and location metadata
+IMessageAuthenticationProvider auth = new ApiKeyAuthenticationProvider(
+    apiKey: "sk-live-abc123",
     name: "X-API-Key",
     location: "header");
 
@@ -480,60 +611,107 @@ ReceiveLightMeasurementConsumer consumer = new(
     transport, handler, authProvider: auth);
 ```
 
-### OAuth 2.0
-
-For static tokens:
-
-```csharp
-IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
-    accessToken: "eyJhbGciOi...",
-    tokenType: "Bearer",
-    scopes: "read:messages write:messages");
-```
-
-For dynamic token acquisition (client credentials flow, token refresh):
-
-```csharp
-IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
-    accessTokenFactory: async ct =>
-    {
-        // Acquire token from your identity provider
-        TokenResponse token = await identityClient.GetClientCredentialsTokenAsync(ct);
-        return token.AccessToken;
-    },
-    tokenType: "Bearer",
-    scopes: "read:messages");
-```
-
 ### Username/Password (SASL)
 
+For Kafka SASL PLAIN, AMQP PLAIN, or MQTT username/password authentication:
+
 ```csharp
+using Corvus.Text.Json.AsyncApi;
+
 IMessageAuthenticationProvider auth = new UserPasswordAuthenticationProvider(
     username: "service-account",
-    password: "secret");
+    password: "secret-from-keyvault");
+
+// Kafka with SASL PLAIN
+await using KafkaMessageTransport transport = new(new KafkaTransportOptions
+{
+    BootstrapServers = "kafka.example.com:9092",
+});
+
+TurnOnProducer producer = new(transport, authProvider: auth);
 ```
 
-### Client Certificate
+### Client Certificate (mTLS)
+
+For brokers requiring mutual TLS (Kafka SSL, RabbitMQ peer verification):
 
 ```csharp
 using System.Security.Cryptography.X509Certificates;
+using Corvus.Text.Json.AsyncApi;
 
-X509Certificate2 cert = X509Certificate2.CreateFromPemFile("client.pem", "client-key.pem");
+// From PEM files
+X509Certificate2 cert = X509Certificate2.CreateFromPemFile(
+    "client-cert.pem", "client-key.pem");
+
+// From PFX/PKCS12
+X509Certificate2 cert = new("client.pfx", "pfx-password");
+
+// From certificate store (Windows)
+using X509Store store = new(StoreName.My, StoreLocation.CurrentUser);
+store.Open(OpenFlags.ReadOnly);
+X509Certificate2 cert = store.Certificates.Find(
+    X509FindType.FindByThumbprint, thumbprint, validOnly: false)[0];
+
 IMessageAuthenticationProvider auth = new CertificateAuthenticationProvider(cert);
 ```
 
-### Composite (Multiple Schemes)
+### Composite (Multiple Security Schemes)
 
-When your spec declares multiple security schemes, use `CompositeAuthenticationProvider` to delegate to the correct provider based on the scheme type:
+When your AsyncAPI spec declares multiple security schemes on a server (e.g., both SASL and API key), the generated code calls `AuthenticateAsync` with different `SchemeType` values. Use `CompositeAuthenticationProvider` to route to the correct provider:
 
 ```csharp
-IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
-    new BearerTokenAuthenticationProvider("my-token"),
-    new ApiKeyAuthenticationProvider("key-123"));
+using Corvus.Text.Json.AsyncApi;
 
-// The generated code calls AuthenticateAsync with a context describing
-// which security scheme is required — the composite provider routes
-// to the correct inner provider automatically.
+IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
+    new KeyValuePair<SecuritySchemeType, IMessageAuthenticationProvider>[]
+    {
+        new(SecuritySchemeType.Plain, new UserPasswordAuthenticationProvider("user", "pass")),
+        new(SecuritySchemeType.OAuth2, new OAuth2AuthenticationProvider(
+            accessTokenFactory: async ct =>
+            {
+                AccessToken token = await credential.GetTokenAsync(
+                    new TokenRequestContext(["https://kafka.azure.net/.default"]), ct);
+                return token.Token;
+            })),
+    });
+
+// The generated code emits the correct SchemeType per operation/server —
+// the composite automatically selects the matching inner provider.
+TurnOnProducer producer = new(transport, authProvider: auth);
+```
+
+### Custom Authentication Provider
+
+For protocols with non-standard auth requirements, implement `IMessageAuthenticationProvider` directly:
+
+```csharp
+using Corvus.Text.Json.AsyncApi;
+
+/// <summary>
+/// Custom provider that acquires SASL SCRAM-SHA-256 credentials from HashiCorp Vault.
+/// </summary>
+internal sealed class VaultScramProvider : IMessageAuthenticationProvider
+{
+    private readonly IVaultClient vault;
+    private readonly string secretPath;
+
+    public VaultScramProvider(IVaultClient vault, string secretPath)
+    {
+        this.vault = vault;
+        this.secretPath = secretPath;
+    }
+
+    public async ValueTask AuthenticateAsync(
+        MessageAuthenticationContext context,
+        CancellationToken cancellationToken = default)
+    {
+        Secret<SecretData> secret = await this.vault.V1.Secrets.KeyValue.V2
+            .ReadSecretAsync(this.secretPath, cancellationToken: cancellationToken);
+
+        context.Credentials["username"] = secret.Data.Data["username"].ToString()!;
+        context.Credentials["password"] = secret.Data.Data["password"].ToString()!;
+    }
+}
 ```
 
 ## Channel Parameters
@@ -555,27 +733,170 @@ The generated code constructs the channel address from the template using zero-a
 
 ## Message Headers
 
-When an AsyncAPI message defines a `headers` schema, the generated code produces typed header structures:
+When an AsyncAPI message defines a `headers` schema (directly or via message traits), the generated code produces typed header structures. Headers provide metadata about the message — correlation IDs, trace context, content versioning — separate from the payload.
+
+### Defining Headers in the Spec
+
+Headers are typically defined via message traits (shared across multiple messages):
 
 ```json
 {
-  "messages": {
-    "lightMeasured": {
-      "headers": {
+  "components": {
+    "schemas": {
+      "CommonHeaders": {
         "type": "object",
         "properties": {
-          "correlationId": { "type": "string" },
-          "version": { "type": "integer" }
+          "correlationId": { "type": "string", "format": "uuid" },
+          "timestamp": { "type": "string", "format": "date-time" }
         },
         "required": ["correlationId"]
-      },
-      "payload": { "$ref": "#/components/schemas/LightMeasuredPayload" }
+      }
+    },
+    "messageTraits": {
+      "commonHeaders": {
+        "headers": { "$ref": "#/components/schemas/CommonHeaders" }
+      }
+    },
+    "messages": {
+      "userSignedUp": {
+        "payload": { "$ref": "#/components/schemas/UserSignedUpPayload" },
+        "traits": [{ "$ref": "#/components/messageTraits/commonHeaders" }]
+      }
     }
   }
 }
 ```
 
-Headers are validated alongside the payload when `ValidationMode` is `Basic` or `Detailed`. The transport encodes headers as a JSON object using a pooled `Utf8JsonWriter`, keeping allocation constant regardless of header count.
+### Producing Messages with Headers
+
+The generated producer accepts a typed `CommonHeaders.Source` parameter alongside the payload:
+
+```csharp
+using Corvus.Text.Json.AsyncApi;
+
+await producer.PublishUserSignedUpAsync(
+    payload: new UserSignedUpPayload.Source((ref UserSignedUpPayload.Builder b) =>
+    {
+        b.Create(email: "alice@example.com"u8, userId: "user-123"u8);
+    }),
+    headers: new CommonHeaders.Source((ref CommonHeaders.Builder b) =>
+    {
+        b.Create(
+            correlationId: Guid.NewGuid().ToString("D"),
+            timestamp: DateTimeOffset.UtcNow.ToString("O"));
+    }));
+```
+
+The transport serializes headers to a JSON object using a thread-static pooled `Utf8JsonWriter`, keeping allocation constant (152 bytes) regardless of header count. For transports that don't support native headers (MQTT, NATS), headers are base64-encoded into a protocol-level property.
+
+### Consuming Messages with Headers
+
+The generated consumer's handler interface includes the typed headers parameter:
+
+```csharp
+using Corvus.Text.Json.AsyncApi;
+
+// Generated handler interface includes typed headers
+public interface IConsumeUserSignedUpHandler
+{
+    ValueTask HandleUserSignedUpAsync(
+        UserSignedUpPayload payload,
+        CommonHeaders headers,
+        CancellationToken cancellationToken);
+}
+
+// Your handler implementation with typed header access
+public class UserSignedUpHandler : IConsumeUserSignedUpHandler
+{
+    public ValueTask HandleUserSignedUpAsync(
+        UserSignedUpPayload payload,
+        CommonHeaders headers,
+        CancellationToken cancellationToken)
+    {
+        // Typed access — no string parsing, no dictionary lookup
+        string correlationId = (string)headers.CorrelationId;
+        DateTimeOffset timestamp = DateTimeOffset.Parse((string)headers.Timestamp);
+
+        Console.WriteLine($"[{correlationId}] User {payload.UserId} signed up at {timestamp}");
+        return ValueTask.CompletedTask;
+    }
+}
+```
+
+### Messages without Headers
+
+When the spec does not define headers for a message, the generated handler interface omits the headers parameter entirely:
+
+```csharp
+// Generated handler — no headers parameter since the spec defines none
+public interface IReceiveLightMeasurementHandler
+{
+    ValueTask HandleLightMeasuredAsync(
+        LightMeasuredPayload payload,
+        CancellationToken cancellationToken = default);
+}
+```
+
+The transport still delivers headers internally (for error policy context and dead-lettering), but your handler code never sees them. If you later add a `headers` schema to the message in your spec and regenerate, the handler interface gains the typed headers parameter automatically.
+
+### Header Validation
+
+Headers are validated alongside the payload when `ValidationMode` is `Basic` or `Detailed`. Validation uses the same compiled-schema approach as payload validation:
+
+```csharp
+using Corvus.Text.Json.AsyncApi;
+
+// Validation mode applies to both payload AND headers
+ReceiveUserSignedUpConsumer consumer = new(
+    transport,
+    handler,
+    validationMode: ValidationMode.Detailed);
+
+// If a message arrives with an invalid correlationId (e.g., not a UUID),
+// the consumer catches the validation failure and routes through the error policy.
+// With Detailed mode, the ArgumentException includes full schema evaluation results:
+//   "Message headers validation failed: /correlationId: format 'uuid' validation failed"
+```
+
+The generated `ValidateHeaders<THeaders>` method mirrors `ValidatePayload<TPayload>`:
+
+```csharp
+// Generated validation (internal to the consumer)
+private static void ValidateHeaders<THeaders>(THeaders headers, ValidationMode mode)
+    where THeaders : struct, IJsonElement<THeaders>
+{
+    if (mode == ValidationMode.Basic)
+    {
+        if (!headers.EvaluateSchema())
+        {
+            ThrowHelper.ThrowMessageHeadersValidationFailed("headers");
+        }
+    }
+    else if (mode == ValidationMode.Detailed)
+    {
+        using var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+        if (!headers.EvaluateSchema(collector))
+        {
+            ThrowHelper.ThrowMessageHeadersValidationFailed(
+                "headers", SchemaValidationDetail.FormatResults(collector));
+        }
+    }
+}
+```
+
+### Transport-Level Header Encoding
+
+Different transports handle header serialization differently:
+
+| Transport | Header mechanism | Notes |
+|-----------|-----------------|-------|
+| Kafka | Native message headers (`Message.Headers`) | Key-value byte pairs |
+| AMQP | Application properties | Native key-value map |
+| NATS | Base64-encoded JSON in message headers | Protocol has limited header support |
+| MQTT | User properties (MQTT 5) or base64 in topic | MQTT 3.1 has no header concept |
+| WebSocket | JSON envelope field | Framed alongside payload |
+
+The transport layer handles encoding/decoding transparently — your handler always receives the typed struct regardless of the wire format.
 
 ## Request/Reply
 
@@ -863,21 +1184,73 @@ When you control both publisher and subscriber, generate both from the same Asyn
 - Header contracts are synchronized
 - Validation catches drift at development time, not in production
 
-## Performance Characteristics
+## Performance
 
-The generated code is designed for high-throughput messaging:
+All benchmarks use a zero-overhead stub transport (no real I/O) to isolate the pipeline cost — what you pay for serialization, validation, and dispatch logic above the transport layer. Since all approaches use the same underlying transport (NATS, Kafka, etc.), the transport cost is identical and cancels out; what differs is the per-message framework overhead.
 
-| Metric | Value | Notes |
-|--------|-------|-------|
-| Subscribe (no validation) | ~263ns | 2.4× faster than Wolverine STJ POCO dispatch |
-| Subscribe (basic validation) | ~530ns | Includes full JSON Schema check |
-| Publish (no validation) | ~298ns | Includes workspace + channel construction |
-| Publish (basic validation) | ~621ns | Schema validates before send |
-| Header encode/decode | 152B constant | Regardless of header count |
-| Memory per message (subscribe) | 152B | ParsedJsonDocument pooled envelope |
-| Memory per message (publish) | 200B | Workspace + builder (pooled) |
+**Three comparison tiers:**
 
-All memory is returned to pools after processing — no GC pressure under steady-state load.
+- **Raw STJ** — the absolute floor: `System.Text.Json` `JsonSerializer.Serialize` / `JsonSerializer.Deserialize` to plain C# POCOs with `[JsonPropertyName]` attributes. This is what you would write by hand with zero framework help — no validation, no typed access beyond deserialization, no error handling, no schema conformance.
+- **Wolverine** — a popular .NET message bus framework (Mediator mode). Measures its full pipeline: STJ POCO deserialization + handler chain resolution + compiled invoker dispatch + context pooling + handler property access. Wolverine represents the "real framework" comparison point.
+- **Corvus** — the generated AsyncAPI consumer/producer. Measures: pooled-memory parse → optional schema validation → typed dispatch through generated handler interface → error policy.
+
+### Subscribe (Consumer) Pipeline
+
+| Method | Mean | Allocated | Notes |
+|--------|-----:|----------:|-------|
+| Raw STJ deserialize (baseline) | 232 ns | 104 B | `JsonSerializer.Deserialize<T>` to POCO + access properties |
+| Corvus consumer (no validation) | 263 ns | 152 B | Pooled parse → typed dispatch → handler |
+| Corvus consumer (basic validation) | 530 ns | 152 B | + compiled schema check (boolean pass/fail) |
+| Corvus consumer (detailed validation) | 809 ns | 152 B | + full diagnostics with error locations |
+| Corvus consumer with headers | 767 ns | 304 B | + header parse & validate |
+| Wolverine STJ framework dispatch | 642 ns | 104 B | STJ deserialize + handler chain + invoker |
+
+The "Raw STJ" baseline is the minimum cost any application must pay: deserializing bytes into a usable object. Corvus adds only **31 ns** (13%) over this floor for its full generated pipeline — typed dispatch, error policy, pooled memory management — **without** any validation. With basic validation enabled (compiled JSON Schema check), Corvus is still **17% faster** than Wolverine, which provides no validation at all.
+
+### Publish (Producer) Pipeline
+
+| Method | Mean | Allocated | Notes |
+|--------|-----:|----------:|-------|
+| Raw STJ serialize (baseline) | 176 ns | 136 B | `JsonSerializer.Serialize<T>` POCO to bytes |
+| Corvus producer (no validation) | 298 ns | 200 B | Workspace + channel build + serialize |
+| Corvus producer (basic validation) | 621 ns | 200 B | + compiled schema check |
+| Corvus producer (detailed validation) | 936 ns | 200 B | + full diagnostics collector |
+
+The Raw STJ baseline here is just `JsonSerializer.Serialize` writing a POCO to a pooled buffer — what you'd do manually before publishing. The Corvus pipeline adds workspace management, zero-allocation channel address construction (pooled byte buffer from template + parameters), authentication callout, and serialization. The 200B allocation is the pooled `JsonWorkspace` envelope and channel rental — both returned to pools after the call, producing zero GC pressure under steady-state load.
+
+### Header Encoding
+
+Headers are encoded as a single JSON object using a thread-static pooled `Utf8JsonWriter`. Allocation is **constant regardless of header count**:
+
+| Header count | Base64 encode | Corvus encode | Base64 decode | Corvus decode |
+|:------------:|--------------:|--------------:|--------------:|--------------:|
+| 1 | 88 B | **152 B** | 136 B | **152 B** |
+| 5 | 336 B | **152 B** | 480 B | **152 B** |
+| 10 | 640 B | **152 B** | 896 B | **152 B** |
+
+Base64-encoded headers (the approach used by most messaging frameworks) grow linearly with header count. The Corvus JSON-object approach pays a fixed 152B (the `ParsedJsonDocument` envelope) regardless of how many headers are present.
+
+### Request/Reply
+
+| Method | Mean | Allocated | Notes |
+|--------|-----:|----------:|-------|
+| Raw STJ (baseline) | 287 ns | 280 B | Serialize request POCO + deserialize reply POCO |
+| Corvus req/reply (no validation) | 293 ns | 352 B | Typed request + correlation + typed reply |
+| Corvus req/reply (basic validation) | 578 ns | 352 B | + schema validation both directions |
+
+The Raw STJ baseline simulates the manual implementation: `JsonSerializer.Serialize` the request POCO to bytes (publish side), then `JsonSerializer.Deserialize` the reply bytes to a POCO (subscribe side). The Corvus pipeline adds request/reply correlation (matching correlation IDs), typed channel construction, and optionally validates both request and reply against their schemas. The overhead of the full strongly-typed request/reply pipeline is just **6 ns** (2%) over raw serialization — negligible.
+
+### Validation Cost Summary
+
+| Mode | Overhead | Additional allocation |
+|------|:--------:|:---------------------:|
+| None | — | 0 B |
+| Basic (boolean pass/fail) | ~270 ns | 0 B |
+| Detailed (error locations) | ~550 ns | 0 B |
+
+All validation modes produce **zero additional allocation** — the schema evaluator operates entirely on the already-parsed document. This means you can enable validation in production without increasing GC pressure.
+
+> *BenchmarkDotNet v0.15.8, .NET 10.0.8, 13th Gen Intel Core i7-13800H, Windows 11. OutlierMode=RemoveAll, RunStrategy=Throughput.*
 
 ## Example Recipes
 
