@@ -193,6 +193,71 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task UnsubscribeStopsDelivery()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/unsubscribe"u8.ToArray();
+        int receiveCount = 0;
+
+        await s_subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                Interlocked.Increment(ref receiveCount);
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        // Publish first — should be received
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"before"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc1.RootElement);
+        await Task.Delay(500);
+        Assert.AreEqual(1, receiveCount);
+
+        // Unsubscribe
+        await s_subscriber.UnsubscribeAsync(channel);
+        await Task.Delay(200);
+
+        // Publish again — should NOT be received
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"msg":"after"}"""u8.ToArray());
+        await s_publisher.PublishAsync(channel, doc2.RootElement);
+        await Task.Delay(500);
+        Assert.AreEqual(1, receiveCount, "Messages should not be delivered after unsubscribe.");
+    }
+
+    [TestMethod]
+    public async Task LargePayloadTransmitsCorrectly()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/large"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        int receivedLength = 0;
+
+        await s_subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                // The payload is an object with a "data" field containing a large string
+                receivedLength = payload.GetProperty("data"u8).GetString()!.Length;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(200);
+
+        // Build a large payload (~2KB string)
+        string largeStr = new('x', 2000);
+        byte[] json = Encoding.UTF8.GetBytes($$"""{"data":"{{largeStr}}"}""");
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        await s_publisher.PublishAsync(channel, doc.RootElement);
+
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.IsTrue(wasReceived, "Large payload was not received.");
+        Assert.AreEqual(2000, receivedLength);
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task HandlerExceptionInvokesErrorPolicy()
     {
         var actions = new List<MessageErrorKind>();
