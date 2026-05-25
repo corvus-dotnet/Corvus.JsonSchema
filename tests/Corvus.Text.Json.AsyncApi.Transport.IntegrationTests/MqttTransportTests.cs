@@ -924,6 +924,28 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task CreateWithCredentialsConnectsSuccessfully()
+    {
+        // Arrange — MQTT transport with username/password specified (Mosquitto allows anonymous,
+        // but the code path through WithCredentials is exercised regardless)
+        MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-cred-" + Guid.NewGuid().ToString("N")[..8],
+            Username = "testuser",
+            Password = "testpass",
+        });
+
+        // Act — publish a message to verify connectivity
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"auth":"test"}"""u8.ToArray());
+        await transport.PublishAsync("mqtt/test/creds"u8.ToArray(), doc.RootElement);
+
+        // Assert — no exception means success
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task HandlerErrorWithSkipContinuesDelivery()
     {
         // Arrange — policy returns Skip for handler errors

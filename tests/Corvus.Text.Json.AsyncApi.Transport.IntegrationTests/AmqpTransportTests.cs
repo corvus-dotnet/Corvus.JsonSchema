@@ -863,6 +863,100 @@ public class AmqpTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyRoundtripWithHeadersForwardsHeaders()
+    {
+        // Arrange — verify that headers are included in request messages
+        AmqpMessageTransport requesterTransport = await AmqpMessageTransport.CreateAsync(new AmqpTransportOptions
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.reqreply-hdr",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-reqreply-hdr",
+        });
+
+        // Set up a raw AMQP consumer that checks for headers and replies
+        ConnectionFactory factory = new() { Uri = new Uri(AmqpFixture.ConnectionUri) };
+        using IConnection responderConn = await factory.CreateConnectionAsync();
+        using IChannel responderChannel = await responderConn.CreateChannelAsync();
+
+        await responderChannel.ExchangeDeclareAsync(
+            exchange: "corvus.test.reqreply-hdr",
+            type: "topic",
+            durable: false);
+
+        string responderQueue = (await responderChannel.QueueDeclareAsync(
+            queue: string.Empty,
+            durable: false,
+            exclusive: true,
+            autoDelete: true)).QueueName;
+
+        await responderChannel.QueueBindAsync(
+            queue: responderQueue,
+            exchange: "corvus.test.reqreply-hdr",
+            routingKey: "amqp.test.reqreply-hdr.request");
+
+        bool headersReceived = false;
+        AsyncEventingBasicConsumer responder = new(responderChannel);
+        responder.ReceivedAsync += async (_, args) =>
+        {
+            string? corrId = args.BasicProperties?.CorrelationId;
+            string? replyTo = args.BasicProperties?.ReplyTo;
+
+            // Check if headers were forwarded
+            if (args.BasicProperties?.Headers?.ContainsKey("corvus-headers") == true)
+            {
+                headersReceived = true;
+            }
+
+            if (corrId is not null && replyTo is not null)
+            {
+                BasicProperties replyProps = new()
+                {
+                    ContentType = "application/json",
+                    CorrelationId = corrId,
+                };
+
+                await responderChannel.BasicPublishAsync(
+                    exchange: "corvus.test.reqreply-hdr",
+                    routingKey: replyTo,
+                    mandatory: false,
+                    basicProperties: replyProps,
+                    body: Encoding.UTF8.GetBytes("""{"ack":"ok"}"""));
+            }
+
+            await responderChannel.BasicAckAsync(args.DeliveryTag, multiple: false);
+        };
+
+        await responderChannel.BasicConsumeAsync(
+            queue: responderQueue,
+            autoAck: false,
+            consumer: responder);
+
+        await Task.Delay(500);
+
+        // Act — send a request with headers
+        ReadOnlyMemory<byte> requestChannel = "amqp.test.reqreply-hdr.request"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "amqp.test.reqreply-hdr.reply"u8.ToArray();
+        byte[] correlationId = "amqp-hdr-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"action":"check-headers"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"authToken":"secret-xyz"}"""u8.ToArray());
+
+        (JsonElement replyPayload, _) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            headersDoc.RootElement);
+
+        // Assert — reply received and headers were in the request
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.IsTrue(headersReceived, "Headers were not forwarded in the AMQP request message.");
+
+        await requesterTransport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task PublicDeadLetterAsyncSendsToChannel()
     {
         // Arrange — test the public DeadLetterAsync method directly
