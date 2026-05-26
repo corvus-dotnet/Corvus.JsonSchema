@@ -358,11 +358,13 @@ public class NatsTransportTests
 Azure Service Bus is Microsoft's enterprise messaging service with:
 - ✅ Guaranteed message delivery
 - ✅ At-least-once and at-most-once delivery
-- ✅ Dead-letter queues
+- ✅ **Native dead-letter queues** (built into every queue/topic subscription)
 - ✅ Message sessions (ordering)
 - ✅ Scheduled messages
 - ✅ Duplicate detection
 - ✅ Integrated with Azure ecosystem (Key Vault, Managed Identity)
+
+**Key Advantage:** Unlike NATS (which requires manual dead-letter channel setup), Azure Service Bus provides a **built-in dead-letter queue** for every queue and topic subscription. When a message is dead-lettered via `DeadLetterMessageAsync()`, it's automatically moved to the queue/subscription's `/$DeadLetterQueue` subqueue where it can be inspected, reprocessed, or purged. No manual channel configuration needed.
 
 ### Package Dependencies
 
@@ -434,11 +436,6 @@ public sealed class AzureServiceBusTransportOptions : ITransportOptions
     /// Gets or sets a value indicating whether to use sessions.
     /// </summary>
     public bool EnableSessions { get; set; }
-    
-    /// <summary>
-    /// Gets or sets the dead-letter queue suffix.
-    /// </summary>
-    public string DeadLetterSuffix { get; set; } = "/$DeadLetterQueue";
     
     /// <inheritdoc/>
     public IMessageErrorPolicy? ErrorPolicy { get; set; }
@@ -539,20 +536,96 @@ private async Task ProcessMessagesAsync<TPayload>(
     {
         await foreach (ServiceBusReceivedMessage msg in receiver.ReceiveMessagesAsync(cancellationToken))
         {
+            // Parse payload
+            ParsedJsonDocument<TPayload> payloadDoc;
             try
             {
-                using ParsedJsonDocument<TPayload> doc = ParsedJsonDocument<TPayload>.Parse(msg.Body.ToArray());
-                await handler(doc.RootElement, default, cancellationToken);
-                
-                // Complete message (remove from queue/subscription)
-                await receiver.CompleteMessageAsync(msg, cancellationToken);
+                payloadDoc = ParsedJsonDocument<TPayload>.Parse(msg.Body.ToMemory());
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // Error policy determines action
-                // Skip: await receiver.CompleteMessageAsync(msg)
-                // DeadLetter: await receiver.DeadLetterMessageAsync(msg)
-                // Retry: await receiver.AbandonMessageAsync(msg)
+                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken);
+                
+                if (action == MessageErrorAction.Abort)
+                {
+                    break;
+                }
+                
+                if (action == MessageErrorAction.DeadLetter)
+                {
+                    // Use Service Bus's native dead-letter queue
+                    await receiver.DeadLetterMessageAsync(
+                        msg, 
+                        deadLetterReason: "DeserializationFailure",
+                        deadLetterErrorDescription: ex.Message,
+                        cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    // Skip: complete message to remove from queue
+                    await receiver.CompleteMessageAsync(msg, cancellationToken);
+                }
+                
+                continue;
+            }
+            
+            // Handle message
+            using (payloadDoc)
+            {
+                try
+                {
+                    TPayload payload = payloadDoc.RootElement;
+                    JsonElement headers = ParseHeaders(msg.ApplicationProperties);
+                    
+                    if (this.middleware is not null)
+                    {
+                        await this.middleware(
+                            (ct) => handler(payload, headers, ct),
+                            cancellationToken);
+                    }
+                    else
+                    {
+                        await handler(payload, headers, cancellationToken);
+                    }
+                    
+                    // Success: complete message (remove from queue/subscription)
+                    await receiver.CompleteMessageAsync(msg, cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken);
+                    
+                    switch (action)
+                    {
+                        case MessageErrorAction.Abort:
+                            return; // Exit processing loop
+                            
+                        case MessageErrorAction.DeadLetter:
+                            // Use Service Bus's native dead-letter queue
+                            await receiver.DeadLetterMessageAsync(
+                                msg,
+                                deadLetterReason: "HandlerException",
+                                deadLetterErrorDescription: ex.Message,
+                                cancellationToken: cancellationToken);
+                            break;
+                            
+                        case MessageErrorAction.Retry:
+                            // Abandon message for redelivery (increments DeliveryCount)
+                            await receiver.AbandonMessageAsync(msg, cancellationToken: cancellationToken);
+                            break;
+                            
+                        case MessageErrorAction.Skip:
+                            // Complete message to remove from queue
+                            await receiver.CompleteMessageAsync(msg, cancellationToken);
+                            break;
+                    }
+                }
             }
         }
     }, cancellationToken);
@@ -612,6 +685,39 @@ public async ValueTask PublishAsync<TPayload>(
 **Topic Mode:**
 Same implementation, but `channelUtf8` is interpreted as topic name instead of queue name. The sender creation is identical — `CreateSender()` works for both queues and topics.
 
+#### Dead-Letter Queue Access
+
+Azure Service Bus automatically creates a dead-letter subqueue for every queue and topic subscription. Access it using the built-in subqueue path:
+
+```csharp
+// For queues: "myqueue/$DeadLetterQueue"
+ServiceBusReceiver dlqReceiver = client.CreateReceiver("myqueue/$DeadLetterQueue");
+
+// For topic subscriptions: "mytopic/subscriptions/mysub/$DeadLetterQueue"
+ServiceBusReceiver dlqReceiver = client.CreateReceiver(
+    "mytopic", 
+    "mysub",
+    new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter });
+
+// Inspect dead-lettered messages
+await foreach (ServiceBusReceivedMessage msg in dlqReceiver.ReceiveMessagesAsync())
+{
+    // Check DeadLetterReason and DeadLetterErrorDescription properties
+    Console.WriteLine($"Reason: {msg.DeadLetterReason}");
+    Console.WriteLine($"Description: {msg.DeadLetterErrorDescription}");
+    Console.WriteLine($"Delivery attempts: {msg.DeliveryCount}");
+    
+    // Optionally reprocess or complete to purge
+    await dlqReceiver.CompleteMessageAsync(msg);
+}
+```
+
+**Key Properties Set by DeadLetterMessageAsync:**
+- `DeadLetterReason` — e.g., "DeserializationFailure", "HandlerException"
+- `DeadLetterErrorDescription` — exception message or details
+- `DeliveryCount` — preserved from original message
+- All original application properties and body — intact for inspection/replay
+
 ### Testing Strategy
 
 **Integration Tests** (`tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/`):
@@ -649,7 +755,19 @@ public class AzureServiceBusTransportTests
     [TestMethod]
     public async Task HandlerException_MessageDeadLettered()
     {
-        // Test dead-letter queue behavior
+        // Publish message
+        // Subscribe with handler that throws
+        // Verify message moved to DLQ
+        
+        // Access DLQ and verify message properties
+        ServiceBusReceiver dlqReceiver = client.CreateReceiver(
+            "testqueue",
+            new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter });
+        
+        ServiceBusReceivedMessage dlqMessage = await dlqReceiver.ReceiveMessageAsync();
+        Assert.IsNotNull(dlqMessage);
+        Assert.AreEqual("HandlerException", dlqMessage.DeadLetterReason);
+        Assert.IsTrue(dlqMessage.DeadLetterErrorDescription.Contains("exception"));
     }
     
     [TestMethod]
