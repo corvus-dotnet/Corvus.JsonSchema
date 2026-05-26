@@ -104,5 +104,6 @@
     <PackageVersion Include="JsonSchema.Net" Version="9.2.0" />
     <!-- Azure Identity (example recipes only) -->
     <PackageVersion Include="Azure.Identity" Version="1.13.2" />
+    <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
   </ItemGroup>
 </Project>

@@ -44,6 +44,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Corvus.Text.Json.AsyncApi.Amqp/Corvus.Text.Json.AsyncApi.Amqp.csproj" />
+    <Project Path="src/Corvus.Text.Json.AsyncApi.AzureServiceBus/Corvus.Text.Json.AsyncApi.AzureServiceBus.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi.CodeGeneration/Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi.HealthChecks/Corvus.Text.Json.AsyncApi.HealthChecks.csproj" />
     <Project Path="src/Corvus.Text.Json.AsyncApi.Kafka/Corvus.Text.Json.AsyncApi.Kafka.csproj" />
