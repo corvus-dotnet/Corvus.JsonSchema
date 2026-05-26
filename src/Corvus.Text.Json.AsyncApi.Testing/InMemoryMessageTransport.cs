@@ -68,7 +68,48 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
             this.publishedMessages.Add(new PublishedMessage(channel, payloadBytes, headerBytes));
         }
 
+        // Automatically deliver to any matching subscriber (like a real broker would)
+        Delegate? handler = null;
+        lock (this.syncRoot)
+        {
+            this.subscriptions.TryGetValue(channel, out handler);
+        }
+
+        if (handler is not null)
+        {
+            return DeliverToSubscriberAsync<TPayload>(handler, payloadBytes, headerBytes, cancellationToken);
+        }
+
         return ValueTask.CompletedTask;
+    }
+
+    private async ValueTask DeliverToSubscriberAsync<TPayload>(
+        Delegate handler,
+        byte[] payloadBytes,
+        byte[] headerBytes,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        using ParsedJsonDocument<TPayload> payloadDoc = ParsedJsonDocument<TPayload>.Parse(payloadBytes);
+        TPayload parsedPayload = payloadDoc.RootElement;
+
+        JsonElement parsedHeaders = default;
+        ParsedJsonDocument<JsonElement>? headersDoc = null;
+        if (headerBytes.Length > 0)
+        {
+            headersDoc = ParsedJsonDocument<JsonElement>.Parse(headerBytes);
+            parsedHeaders = headersDoc.RootElement;
+        }
+
+        try
+        {
+            await ((Func<TPayload, JsonElement, CancellationToken, ValueTask>)handler)(
+                parsedPayload, parsedHeaders, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            headersDoc?.Dispose();
+        }
     }
 
     /// <inheritdoc/>

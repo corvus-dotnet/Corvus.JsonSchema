@@ -9,13 +9,14 @@ using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
 
 // ── End-to-end: Producer + Consumer with InMemoryMessageTransport ────────────
-// This example demonstrates the full publish → transport → consume pipeline
-// using InMemoryMessageTransport for testing without a real broker.
+// This example demonstrates a complete AsyncAPI workflow using InMemoryMessageTransport.
+// The transport automatically delivers published messages to matching subscribers,
+// simulating a real broker's behavior.
 
 await using InMemoryMessageTransport transport = new();
 
-// ── Set up the consumer side ─────────────────────────────────────────────────
-LightCommandHandler handler = new();
+// ── Set up the consumer (receives measurements from streetlights) ────────────
+LightMeasurementHandler handler = new();
 ReceiveLightMeasurementConsumer consumer = new(
     transport,
     handler,
@@ -23,49 +24,59 @@ ReceiveLightMeasurementConsumer consumer = new(
 
 await consumer.StartAsync();
 
-// ── Set up the producer side ─────────────────────────────────────────────────
-TurnOnProducer producer = new(transport, ValidationMode.Basic);
+// ── Set up the producer (sends commands to streetlights) ─────────────────────
+TurnOnProducer commandProducer = new(transport, ValidationMode.Basic);
 
-// ── Publish a message ────────────────────────────────────────────────────────
-// The producer serializes and publishes to the channel.
-// The transport captures it AND delivers it to any active subscriber.
-await producer.PublishTurnOnOffAsync(
+// ── Example 1: Publish a command ─────────────────────────────────────────────
+// In a real system, this would tell a streetlight to turn on.
+await commandProducer.PublishTurnOnOffAsync(
     payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
     {
         b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
     }),
     streetlightId: "lamp-42");
 
-Console.WriteLine($"Published to channel, consumer received: {handler.ReceivedCount}");
+Console.WriteLine($"Command published. Transport captured: {transport.PublishedMessages.Count} messages");
 
-// ── Deliver directly to the consumer (simulating broker delivery) ────────────
-// For the lightMeasured channel (receive operation), we simulate what the
-// broker would do — deliver raw bytes to the subscribed consumer.
-ReadOnlyMemory<byte> sensorReading = """{"lumens":1024,"sentAt":"2026-05-25T12:00:00Z"}"""u8.ToArray();
-await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
-    sensorReading);
+// ── Example 2: Simulate a streetlight publishing measurements ────────────────
+// In a real system, sensor hardware would do this. Here we manually publish
+// to the consumer's channel to demonstrate the complete flow.
+using ParsedJsonDocument<LightMeasuredPayload> measurementDoc = ParsedJsonDocument<LightMeasuredPayload>.Parse(
+    """{"lumens":1024,"sentAt":"2026-05-25T12:00:00Z"}"""u8.ToArray());
 
-Console.WriteLine($"Delivered sensor reading, consumer received: {handler.ReceivedCount}");
+await transport.PublishAsync(
+    channelUtf8: Encoding.UTF8.GetBytes("smartylighting.streetlights.1.0.action.lamp-42.lighting.measured"),
+    payload: measurementDoc.RootElement);
+
+Console.WriteLine($"Measurement published and delivered, handler received: {handler.ReceivedCount}");
 Console.WriteLine($"Last measurement: {handler.LastLumens} lumens");
 
-// ── Validation protects the consumer ─────────────────────────────────────────
-// Bad data from the broker is caught before reaching your handler.
-ReadOnlyMemory<byte> badData = """{"lumens":-5}"""u8.ToArray();
-await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
-    badData);
+// ── Example 3: Schema validation protects consumers ──────────────────────────
+// Invalid data is caught before reaching your handler (lumens must be >= 0).
+try
+{
+    using ParsedJsonDocument<LightMeasuredPayload> badDoc = ParsedJsonDocument<LightMeasuredPayload>.Parse(
+        """{"lumens":-5,"sentAt":"2026-05-25T12:00:00Z"}"""u8.ToArray());
 
-Console.WriteLine($"After bad data: handler still has {handler.ReceivedCount} (invalid message skipped)");
+    await transport.PublishAsync(
+        channelUtf8: Encoding.UTF8.GetBytes("smartylighting.streetlights.1.0.action.lamp-42.lighting.measured"),
+        payload: badDoc.RootElement);
+}
+catch (InvalidOperationException ex)
+{
+    Console.WriteLine($"Validation prevented invalid publish: {ex.Message.Split('\n')[0]}");
+}
+
+Console.WriteLine($"After invalid attempt: handler still has {handler.ReceivedCount} valid messages");
 
 // ── Inspect transport state ──────────────────────────────────────────────────
 Console.WriteLine($"\nTransport state:");
 Console.WriteLine($"  Published messages: {transport.PublishedMessages.Count}");
-Console.WriteLine($"  Dead-lettered: {transport.DeadLetteredMessages.Count}");
 
 foreach (PublishedMessage msg in transport.PublishedMessages)
 {
-    Console.WriteLine($"  → {msg.Channel}: {Encoding.UTF8.GetString(msg.PayloadBytes)}");
+    string preview = Encoding.UTF8.GetString(msg.PayloadBytes[..Math.Min(60, msg.PayloadBytes.Length)]);
+    Console.WriteLine($"  → {msg.Channel[..Math.Min(60, msg.Channel.Length)]}: {preview}...");
 }
 
 // ── Clean shutdown ───────────────────────────────────────────────────────────
@@ -73,7 +84,7 @@ await consumer.StopAsync();
 Console.WriteLine("\nConsumer stopped. End-to-end demo complete.");
 
 // ── Handler implementation ───────────────────────────────────────────────────
-internal sealed class LightCommandHandler : IReceiveLightMeasurementHandler
+internal sealed class LightMeasurementHandler : IReceiveLightMeasurementHandler
 {
     public int ReceivedCount { get; private set; }
 
@@ -85,7 +96,7 @@ internal sealed class LightCommandHandler : IReceiveLightMeasurementHandler
     {
         this.ReceivedCount++;
         this.LastLumens = (int)payload.Lumens;
-        Console.WriteLine($"  [Handler] lumens={payload.Lumens}, sentAt={payload.SentAt}");
+        Console.WriteLine($"  [Handler] Received: lumens={payload.Lumens}, sentAt={payload.SentAt}");
         return ValueTask.CompletedTask;
     }
 }

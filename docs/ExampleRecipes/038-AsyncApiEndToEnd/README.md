@@ -1,66 +1,76 @@
-# 038 — AsyncAPI End-to-End: Full Producer → Consumer Pipeline
+# 038-AsyncApiEndToEnd — Producer + Consumer Integration
 
-Demonstrates the **complete publish → transport → consume lifecycle** using both the generated producer and consumer on a shared `InMemoryMessageTransport`. This is the integration test pattern for AsyncAPI-based messaging without a real broker.
+Demonstrates a complete AsyncAPI workflow with producer and consumer components using `InMemoryMessageTransport` for testing.
 
-## What This Demonstrates
+## What You'll Learn
 
-| Feature | Where | Why It Matters |
-|---------|-------|---------------|
-| Producer publishes typed messages | `TurnOnProducer.PublishTurnOnOffAsync` | No manual JSON serialization |
-| Consumer receives via handler | `ReceiveLightMeasurementConsumer` + handler | Typed payload access, no parsing |
-| Shared in-memory transport | `InMemoryMessageTransport` | Test without broker infrastructure |
-| Schema validation rejects bad data | Invalid payload skipped before handler | Handler only sees valid data |
-| Transport state inspection | `PublishedMessages`, `DeadLetteredMessages` | Verify message flow in tests |
-| Simulated broker delivery | `transport.DeliverAsync<T>()` | Control timing and content |
+| Pattern | Generated Code | Benefit |
+|---------|---------------|---------|
+| Publishing messages | `TurnOnProducer` | Schema-validated, type-safe publishing |
+| Consuming messages | `ReceiveLightMeasurementConsumer` + handler | Automatic deserialization and validation |
+| Testing without a broker | `InMemoryMessageTransport` | Fast, reliable tests with automatic message routing |
+| Schema validation | Built into producers/consumers | Invalid data caught before reaching handlers |
 
-## The Pattern: Testing Without a Broker
+## The Pattern
 
-Real broker integration tests are expensive — they require Docker containers, network IO, and sometimes minutes of setup. The `InMemoryMessageTransport` pattern lets you verify your messaging logic in milliseconds:
+`InMemoryMessageTransport` simulates a real message broker:
 
-1. **Producer sends** — message is captured in `PublishedMessages`
-2. **You control delivery** — call `DeliverAsync` to simulate broker delivery at the exact moment you want
-3. **Consumer reacts** — your handler runs with typed, validated payloads
-4. **Assert state** — inspect counts, dead-letters, and handler side effects
+1. **Subscribe** — consumer registers a handler for a channel
+2. **Publish** — producer sends a message to a channel
+3. **Auto-deliver** — transport automatically delivers to matching subscribers
+4. **Validate** — schema validation happens before delivery
 
-This is **not** a mock — it's a real transport implementation. Your producer and consumer code runs identically to production; only the network layer is replaced.
+This matches how real brokers (Kafka, NATS, MQTT) work: publish to a channel, and all subscribers receive it.
 
-## Prerequisites
+## Quick Start
 
 ```bash
-dotnet tool install --global Corvus.Json.Cli
+cd docs/ExampleRecipes/038-AsyncApiEndToEnd
+dotnet run
 ```
 
-## Generating the Code
+**Output:**
+```
+Command published. Transport captured: 1 messages
+  [Handler] Received: lumens=1024, sentAt=2026-05-25T12:00:00+00:00
+Measurement published and delivered, handler received: 1
+Last measurement: 1024 lumens
+Validation prevented invalid publish: ...
+After invalid attempt: handler still has 1 valid messages
 
-```bash
-corvusjson asyncapi-generate streetlights.json \
-    --rootNamespace Streetlights.Client \
-    --outputPath Generated
+Transport state:
+  Published messages: 2
+Consumer stopped. End-to-end demo complete.
 ```
 
-This produces both producer and consumer classes from the same spec, plus:
-- **16 model types** in `Models/` — strongly-typed schema-validated payloads
-- **Message wrappers** — `TurnOnTurnOnOffMessage`, `ReceiveLightMeasurementLightMeasuredMessage`
-- **Handler interface** — `IReceiveLightMeasurementHandler` with `HandleLightMeasuredAsync`
+## Step-by-Step Walkthrough
 
-## Full Walkthrough
-
-[Example code](./Program.cs)
-
-### Step 1: Create the in-memory transport
-
-The transport acts as both publisher and subscriber:
+### 1. Create the transport
 
 ```csharp
 await using InMemoryMessageTransport transport = new();
 ```
 
-### Step 2: Set up the consumer
+The in-memory transport captures all published messages and automatically delivers them to active subscribers on matching channels.
 
-Create a handler that implements the generated interface:
+### 2. Set up the consumer
 
 ```csharp
-internal sealed class LightCommandHandler : IReceiveLightMeasurementHandler
+LightMeasurementHandler handler = new();
+ReceiveLightMeasurementConsumer consumer = new(
+    transport,
+    handler,
+    validationMode: ValidationMode.Basic);
+
+await consumer.StartAsync();
+```
+
+The consumer subscribes to the `lightingMeasured` channel. When messages arrive, they're validated against the schema, then passed to your handler.
+
+**Your handler implementation:**
+
+```csharp
+internal sealed class LightMeasurementHandler : IReceiveLightMeasurementHandler
 {
     public int ReceivedCount { get; private set; }
     public int LastLumens { get; private set; }
@@ -71,297 +81,171 @@ internal sealed class LightCommandHandler : IReceiveLightMeasurementHandler
     {
         this.ReceivedCount++;
         this.LastLumens = (int)payload.Lumens;
-        Console.WriteLine($"  [Handler] lumens={payload.Lumens}, sentAt={payload.SentAt}");
+        Console.WriteLine($"Received: lumens={payload.Lumens}");
         return ValueTask.CompletedTask;
     }
 }
 ```
 
-Wire it to the transport:
+### 3. Publish messages
 
 ```csharp
-LightCommandHandler handler = new();
-ReceiveLightMeasurementConsumer consumer = new(
-    transport,
-    handler,
-    validationMode: ValidationMode.Basic);  // Validates before calling handler
-
-await consumer.StartAsync();  // Subscribes to the channel
-```
-
-### Step 3: Set up the producer
-
-```csharp
-TurnOnProducer producer = new(transport, ValidationMode.Basic);
-```
-
-### Step 4: Publish a message
-
-The producer validates, serializes, and sends the message. The transport captures it **and** immediately delivers it to the subscribed consumer:
-
-```csharp
-await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+// Publish to the subscribed channel
+await transport.PublishAsync(
+    channelUtf8: Encoding.UTF8.GetBytes("smartylighting.streetlights.1.0.action.lamp-42.lighting.measured"),
+    payload: new LightMeasuredPayload.Source((ref LightMeasuredPayload.Builder b) =>
     {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
-    streetlightId: "lamp-42");
-
-Console.WriteLine($"Published to channel, consumer received: {handler.ReceivedCount}");
-// Output: Published to channel, consumer received: 0
-```
-
-**Why zero?** The producer's `Publish` call is asynchronous in the API sense, but `InMemoryMessageTransport` only *queues* the message — it doesn't deliver to subscribers until you explicitly call `DeliverAsync` (shown next). This gives you full control over timing in tests.
-
-### Step 5: Simulate broker delivery
-
-For operations where the consumer **receives** (not the producer's outbound channel), use `DeliverAsync` to simulate what the broker would do:
-
-```csharp
-ReadOnlyMemory<byte> sensorReading = """{"lumens":1024,"sentAt":"2026-05-25T12:00:00Z"}"""u8.ToArray();
-
-await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
-    sensorReading);
-
-Console.WriteLine($"Delivered sensor reading, consumer received: {handler.ReceivedCount}");
-// Output: Delivered sensor reading, consumer received: 1
-Console.WriteLine($"Last measurement: {handler.LastLumens} lumens");
-// Output: Last measurement: 1024 lumens
+        b.Create(lumens: 1024, sentAt: DateTimeOffset.UtcNow);
+    }));
 ```
 
 The transport:
-1. Deserializes the byte array into a `LightMeasuredPayload`
-2. Validates it against the schema
-3. Calls `handler.HandleLightMeasuredAsync(payload, ...)`
+1. Serializes the payload to JSON
+2. Adds it to `PublishedMessages` (for test assertions)
+3. **Automatically delivers** to the consumer's subscription
+4. Consumer validates the schema
+5. Handler receives the typed payload
 
-### Step 6: Validation protects the consumer
-
-Send invalid data to verify schema validation works:
+### 4. Schema validation protects you
 
 ```csharp
-ReadOnlyMemory<byte> badData = """{"lumens":-5}"""u8.ToArray();
-await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
-    badData);
-
-Console.WriteLine($"After bad data: handler still has {handler.ReceivedCount}");
-// Output: After bad data: handler still has 1 (invalid message skipped)
+// This throws InvalidOperationException before publishing
+await transport.PublishAsync(
+    channelUtf8: Encoding.UTF8.GetBytes("smartylighting.streetlights.1.0.action.lamp-42.lighting.measured"),
+    payload: new LightMeasuredPayload.Source((ref LightMeasuredPayload.Builder b) =>
+    {
+        b.Create(lumens: -5, sentAt: DateTimeOffset.UtcNow); // ❌ lumens must be >= 0
+    }));
 ```
 
-The schema defines `lumens` as a non-negative number. The generated code catches the violation and dead-letters the message — your handler never sees it.
+Invalid data never reaches the transport or your handler — it's caught at build time.
 
-### Step 7: Inspect transport state
+## Testing Patterns
 
-The transport exposes collections for test assertions:
+### Pattern 1: Verify message delivery
 
 ```csharp
-Console.WriteLine($"Transport state:");
-Console.WriteLine($"  Published messages: {transport.PublishedMessages.Count}");
-// Output:   Published messages: 1
+int beforeCount = handler.ReceivedCount;
 
-Console.WriteLine($"  Dead-lettered: {transport.DeadLetteredMessages.Count}");
-// Output:   Dead-lettered: 1
+await transport.PublishAsync(...);
 
-foreach (PublishedMessage msg in transport.PublishedMessages)
-{
-    Console.WriteLine($"  → {msg.Channel}: {Encoding.UTF8.GetString(msg.PayloadBytes)}");
-}
-// Output:   → smartylighting.streetlights.1.0.action.lamp-42.turn.on: {"command":"on","sentAt":"2026-05-26T..."}
+Assert.AreEqual(beforeCount + 1, handler.ReceivedCount);
+Assert.AreEqual(1024, handler.LastLumens);
 ```
 
-### Step 8: Clean shutdown
+### Pattern 2: Verify published message capture
 
 ```csharp
-await consumer.StopAsync();
-Console.WriteLine("\nConsumer stopped. End-to-end demo complete.");
+int beforeCount = transport.PublishedMessages.Count;
+
+await producer.PublishTurnOnOffAsync(...);
+
+Assert.AreEqual(beforeCount + 1, transport.PublishedMessages.Count);
+PublishedMessage msg = transport.PublishedMessages[^1];
+Assert.AreEqual("smartylighting.streetlights.1.0.action.lamp-42.turn.on", msg.Channel);
 ```
 
-## Integration Testing Patterns
-
-### Pattern 1: Arrange-Act-Assert with controlled delivery
+### Pattern 3: Test without consumers
 
 ```csharp
-// Arrange
-var handler = new TestHandler();
-await using var transport = new InMemoryMessageTransport();
-var consumer = new MyConsumer(transport, handler);
-await consumer.StartAsync();
-
-// Act
-await transport.DeliverAsync<MyPayload>(
-    "my.channel",
-    """{"value": 42}"""u8.ToArray());
-
-// Assert
-Assert.AreEqual(1, handler.ReceivedCount);
-Assert.AreEqual(42, handler.LastValue);
-```
-
-### Pattern 2: Verify producer output without consumer
-
-```csharp
-await using var transport = new InMemoryMessageTransport();
-var producer = new MyProducer(transport);
-
-await producer.PublishAsync(new MyPayload.Source(...));
+// No consumer started — message is captured but not delivered
+await transport.PublishAsync(...);
 
 Assert.AreEqual(1, transport.PublishedMessages.Count);
-PublishedMessage msg = transport.PublishedMessages[0];
-Assert.AreEqual("expected.channel.name", msg.Channel);
-
-// Deserialize and verify payload structure
-using var doc = ParsedJsonDocument<JsonElement>.Parse(msg.PayloadBytes.Span);
-Assert.AreEqual("expected-value", (string)doc.RootElement.GetProperty("field"u8));
+// No handler invoked, no errors
 ```
 
-### Pattern 3: Test error policy behavior
+## Switching to Real Brokers
+
+Replace `InMemoryMessageTransport` with a real transport:
 
 ```csharp
-var errorPolicy = new TestErrorPolicy();
-var consumer = new MyConsumer(transport, handler, errorPolicy: errorPolicy);
-await consumer.StartAsync();
+// Development/Testing
+await using InMemoryMessageTransport transport = new();
 
-// Send invalid data
-await transport.DeliverAsync<MyPayload>("channel", """{"invalid": true}"""u8.ToArray());
+// Production with Kafka
+await using KafkaMessageTransport transport = new(new KafkaTransportOptions
+{
+    BootstrapServers = "localhost:9092",
+    GroupId = "my-consumer-group"
+});
 
-// Verify error policy was invoked
-Assert.AreEqual(1, errorPolicy.ErrorCount);
-Assert.AreEqual(MessageErrorAction.DeadLetter, errorPolicy.LastAction);
+// Production with NATS
+await using NatsMessageTransport transport = new(new NatsTransportOptions
+{
+    Servers = ["nats://localhost:4222"]
+});
 ```
+
+**No other code changes needed.** Producers and consumers work with any `IMessageTransport`.
 
 ## Common Pitfalls
 
-### Pitfall 1: Expecting immediate delivery after `PublishAsync`
-
-**Problem:**
+### 1. **Messages not delivered** — Consumer not started before publishing
 
 ```csharp
-await producer.PublishAsync(...);
-Assert.AreEqual(1, handler.ReceivedCount);  // FAILS: handler.ReceivedCount is still 0
+// ❌ Wrong: publish before consumer starts
+await transport.PublishAsync(...);
+await consumer.StartAsync(); // Too late!
+
+// ✅ Correct: start consumer first
+await consumer.StopAsync();
+await transport.PublishAsync(...); // Now delivered
 ```
 
-**Why:** `InMemoryMessageTransport` queues published messages but doesn't auto-deliver to consumers. Use `DeliverAsync` explicitly.
-
-**Fix:** Use the correct delivery API:
+### 2. **Wrong channel name**
 
 ```csharp
-await transport.DeliverAsync<MyPayload>("channel", messageBytes);
+// ❌ Channel name doesn't match consumer subscription
+await transport.PublishAsync(
+    channelUtf8: Encoding.UTF8.GetBytes("wrong.channel.name"),
+    ...);
+
+// ✅ Use the exact channel from the AsyncAPI spec
+await transport.PublishAsync(
+    channelUtf8: Encoding.UTF8.GetBytes("smartylighting.streetlights.1.0.action.lamp-42.lighting.measured"),
+    ...);
 ```
 
-### Pitfall 2: Not disposing ParsedJsonDocument in assertions
-
-**Problem:**
+### 3. **Assuming validation happens after publish**
 
 ```csharp
-foreach (var msg in transport.PublishedMessages)
+// Schema validation happens BEFORE PublishAsync returns
+try
 {
-    var doc = ParsedJsonDocument<JsonElement>.Parse(msg.PayloadBytes.Span);
-    // Forgot 'using' — memory leak!
+    await transport.PublishAsync(...); // ← Throws here if invalid
 }
-```
-
-**Fix:**
-
-```csharp
-foreach (var msg in transport.PublishedMessages)
+catch (InvalidOperationException)
 {
-    using var doc = ParsedJsonDocument<JsonElement>.Parse(msg.PayloadBytes.Span);
-    // Memory returned after using block
+    // Message never entered the transport
 }
-```
-
-### Pitfall 3: Checking consumer state before StartAsync completes
-
-**Problem:**
-
-```csharp
-var consumer = new MyConsumer(transport, handler);
-consumer.StartAsync();  // Missing await!
-await transport.DeliverAsync(...);  // Delivery happens before subscription completes
-```
-
-**Fix:**
-
-```csharp
-await consumer.StartAsync();  // Wait for subscription
-await transport.DeliverAsync(...);  // Now delivery works
-```
-
-## Troubleshooting
-
-### "Consumer received 0 messages even though I called DeliverAsync"
-
-**Check:**
-1. Did you `await consumer.StartAsync()` before delivery?
-2. Does the channel name in `DeliverAsync` match the consumer's subscribed channel?
-3. Is the payload valid against the schema? Check `transport.DeadLetteredMessages`.
-
-### "Handler never called despite valid payload"
-
-**Check:**
-1. Did you pass `validationMode: ValidationMode.None` when you meant `Basic`?
-2. Is your handler method `async` but you forgot to `await` internally? This can cause silent swallowing of exceptions.
-3. Check `transport.DeadLetteredMessages` — if count > 0, validation is failing.
-
-### "Memory usage grows during test"
-
-**Cause:** Not disposing `ParsedJsonDocument` instances from transport inspection.
-
-**Fix:** Always use `using` when parsing `msg.PayloadBytes`:
-
-```csharp
-using var doc = ParsedJsonDocument<MyPayload>.Parse(msg.PayloadBytes.Span);
 ```
 
 ## Performance Tips
 
-1. **Reuse workspaces** — when building many payloads in a loop, create one `JsonWorkspace` and reuse it:
+- **Reuse transport instances** — creating one per message is expensive
+- **Use `ValidationMode.None` in hot paths** — after initial testing
+- **Batch assertions** — check `PublishedMessages.Count` once, not per message
+- **Avoid `ToString()` in loops** — use `Span<byte>` comparisons for channel names
 
-```csharp
-using JsonWorkspace workspace = JsonWorkspace.Create();
-for (int i = 0; i < 1000; i++)
-{
-    await producer.PublishAsync(
-        new MyPayload.Source((ref MyPayload.Builder b) => { b.Create(...); }),
-        workspace: workspace);  // Reuse pooled memory
-}
-```
+## Related Patterns
 
-2. **Use UTF-8 literals** — `"value"u8` avoids string → UTF-8 conversion overhead.
+- **036-AsyncApiProducer** — Producer-only patterns
+- **037-AsyncApiConsumer** — Consumer-only patterns
+- **039-AsyncApiAuthentication** — Adding auth to transports
 
-3. **ValidationMode.None in hot paths** — once your data model is stable, disable validation for maximum throughput:
-
-```csharp
-var producer = new MyProducer(transport, ValidationMode.None);
-```
-
-## Running the Example
+## What Gets Generated
 
 ```bash
-cd docs/ExampleRecipes/038-AsyncApiEndToEnd
-dotnet run
+corvusjson asyncapi --input streetlights.json --output Generated
 ```
 
-Expected output:
+**Files created:**
 
-```text
-Published to channel, consumer received: 0
-  [Handler] lumens=1024, sentAt=2026-05-25T12:00:00Z
-Delivered sensor reading, consumer received: 1
-Last measurement: 1024 lumens
-After bad data: handler still has 1 (invalid message skipped)
+- `TurnOnProducer.cs` — Producer for the `turnOn` operation
+- `ReceiveLightMeasurementConsumer.cs` — Consumer for the `receiveLightMeasurement` operation
+- `IReceiveLightMeasurementHandler.cs` — Handler interface you implement
+- `Models/TurnOnOffPayload.cs` — Message payload types
+- `Models/LightMeasuredPayload.cs` — Message payload types
 
-Transport state:
-  Published messages: 1
-  Dead-lettered: 1
-  → smartylighting.streetlights.1.0.action.lamp-42.turn.on: {"command":"on","sentAt":"2026-05-26T..."}
-
-Consumer stopped. End-to-end demo complete.
-```
-
-## Related Recipes
-
-- [036 — AsyncAPI Producer](../036-AsyncApiProducer/) — producer details and Source pattern
-- [037 — AsyncAPI Consumer](../037-AsyncApiConsumer/) — consumer details and error policy
-- [039 — AsyncAPI Authentication](../039-AsyncApiAuthentication/) — all supported auth patterns
+The producer and consumer are **transport-agnostic** — they work with any `IMessageTransport` implementation.
