@@ -133,15 +133,20 @@ AMQP uses **explicit acknowledgement**. When a message is delivered to a consume
 
 **Key point**: If your app crashes before sending `BasicAck`, RabbitMQ assumes the message wasn't processed and redelivers it to another consumer (or the same consumer after restart).
 
-**Example scenario:**
+**Timeline of message processing (left to right):**
 ```
-1. Consumer receives [msg-1], [msg-2], [msg-3]
-2. Handler successfully processes [msg-1] → BasicAck sent → removed from queue
-3. Handler starts processing [msg-2]...
-4. ⚡ CRASH! ⚡ (no BasicAck sent for msg-2 or msg-3)
-5. Consumer restarts
-6. RabbitMQ redelivers [msg-2] and [msg-3] (they were never acknowledged)
+Queue: sensor-readings
+┌─────────────────────────────────────────┐
+│ [msg-1] [msg-2] [msg-3] [msg-4] ...     │
+│    ✓       ✗                            │
+│   Acked  Unacked (will be redelivered)  │
+└─────────────────────────────────────────┘
 ```
+- **msg-1**: Processed successfully, `BasicAck` sent → removed from queue
+- **msg-2**: Currently being processed, not yet acknowledged
+- **msg-3, msg-4**: Waiting to be delivered
+
+If the consumer crashes now, msg-2 through msg-4 will be redelivered (msg-1 is gone forever).
 
 This is **at-least-once delivery** — messages may be processed more than once if your app crashes between processing and acknowledgement.
 
