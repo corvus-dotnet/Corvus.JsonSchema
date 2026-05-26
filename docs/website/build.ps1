@@ -815,6 +815,15 @@ if (Test-Path $v4SidebarSrc) {
 # -- Step 8: Build search index ----------------------------------------------
 Write-Host "`n[8/10] Building search index..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Install Node dependencies (js-yaml) for the search index builder
+Push-Location $here
+try {
+    & npm ci --ignore-scripts --no-audit --no-fund 2>&1 | Out-Null
+} finally {
+    Pop-Location
+}
+
 $searchIndexOutput = Join-Path $outputDir "search-index.json"
 & node (Join-Path $here "tools\build-search-index.js") --output $searchIndexOutput
 if ($LASTEXITCODE -ne 0) {
