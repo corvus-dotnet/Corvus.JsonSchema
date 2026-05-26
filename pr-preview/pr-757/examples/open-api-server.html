@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
     <meta name="description" content="This recipe demonstrates how to generate and implement an ASP.NET Core minimal API server from an [OpenAPI 3.2](https://spec.openapis.org/oas/v3.2.0) specification using `corvusjson openapi-server`." />
-    <meta name="keywords" content="recipe, JSON Schema, C#, open, api, server" />
+    <meta name="keywords" content="recipe, JSON Schema, C#, open, api, server, ToString" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:description" content="This recipe demonstrates how to generate and implement an ASP.NET Core minimal API server from an [OpenAPI 3.2](https://spec.openapis.org/oas/v3.2.0) specification using `corvusjson openapi-server`." />
@@ -17,6 +17,7 @@
     <meta property="article:tag" content="open" />
     <meta property="article:tag" content="api" />
     <meta property="article:tag" content="server" />
+    <meta property="article:tag" content="ToString" />
     <meta property="og:description" content="This recipe demonstrates how to generate and implement an ASP.NET Core minimal API server from an [OpenAPI 3.2](https://spec.openapis.org/oas/v3.2.0) specification using `corvusjson openapi-server`." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-757/assets/images/og-corvus.png" />
     <meta property="og:title" content="Open Api Server - Corvus.Text.Json Examples" />
@@ -299,6 +300,7 @@
                         <span class="card__tag">open</span>
                         <span class="card__tag">api</span>
                         <span class="card__tag">server</span>
+                        <span class="card__tag">ToString</span>
                 </div>
 <p>This recipe demonstrates how to generate and implement an ASP.NET Core minimal API server from an <a href="https://spec.openapis.org/oas/v3.2.0">OpenAPI 3.2</a> specification using <code>corvusjson openapi-server</code>. The example uses the same <a href="https://github.com/OAI/OpenAPI-Specification">Petstore API</a> spec as the client recipe.</p>
 <blockquote>
@@ -358,6 +360,7 @@
 <li><code>Generated/Models/</code> — strongly-typed JSON Schema models</li>
 </ul>
 <h2 id="implementing-the-server">Implementing the Server</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/docs/ExampleRecipes/030-OpenApiServer/Program.cs">Example code</a></p>
 <h3 id="registering-endpoints">Registering endpoints</h3>
 <p>A single extension method wires all routes:</p>
 <pre><code class="language-csharp">using Petstore.Server;
@@ -370,10 +373,18 @@ app.MapApiEndpoints(handler);
 
 app.Run();
 </code></pre>
+<p><strong>For production:</strong> Register your handler with dependency injection:</p>
+<pre><code class="language-csharp">builder.Services.AddSingleton&lt;IApiPetsHandler, PetsHandler&gt;();
+
+app.MapApiEndpoints(app.Services.GetRequiredService&lt;IApiPetsHandler&gt;());
+</code></pre>
 <h3 id="implementing-the-handler">Implementing the handler</h3>
 <p>Each handler method receives parsed, validated parameters and a <code>JsonWorkspace</code> for building responses:</p>
 <pre><code class="language-csharp">internal sealed class PetsHandler : IApiPetsHandler
 {
+    private readonly List&lt;(long Id, string Name, string? Tag)&gt; pets = [(1, &quot;Luna&quot;, &quot;cat&quot;), (2, &quot;Max&quot;, &quot;dog&quot;)];
+    private long nextId = 3;
+
     public ValueTask&lt;ListPetsResult&gt; HandleListPetsAsync(
         ListPetsParams parameters,
         JsonWorkspace workspace,
@@ -384,70 +395,393 @@ app.Run();
             ? (int)parameters.Limit
             : 20;
 
+        var petsToReturn = this.pets.Take(limit).ToList();
+
         // Build response using typed Result factory + array builder
         ListPetsResult result = ListPetsResult.Ok(
             body: new Pets.Source((ref Pets.Builder b) =&gt;
             {
-                b.AddItem(new Pet.Source((ref Pet.Builder pb) =&gt;
+                foreach ((long id, string name, string? tag) in petsToReturn)
                 {
-                    pb.Create(id: 1, name: &quot;Luna&quot;u8, tag: &quot;cat&quot;u8);
-                }));
+                    b.AddItem(new Pet.Source((ref Pet.Builder pb) =&gt;
+                    {
+                        if (tag is string t)
+                            pb.Create(id: id, name: name, tag: t);
+                        else
+                            pb.Create(id: id, name: name);
+                    }));
+                }
             }),
-            workspace: workspace);
+            workspace: workspace,
+            xNext: limit &lt; this.pets.Count
+                ? JsonString.ParseValue(&quot;\&quot;/pets?offset=1\&quot;&quot;u8)
+                : default);
 
         return ValueTask.FromResult(result);
     }
 }
 </code></pre>
-<h3 id="returning-typed-responses">Returning typed responses</h3>
+<h2 id="handler-pattern-deep-dive">Handler Pattern Deep Dive</h2>
+<h3 id="pattern-1-reading-validated-parameters">Pattern 1: Reading validated parameters</h3>
+<p>All parameters are fully parsed and type-checked before your handler runs:</p>
+<pre><code class="language-csharp">public ValueTask&lt;ListPetsResult&gt; HandleListPetsAsync(
+    ListPetsParams parameters,
+    JsonWorkspace workspace,
+    CancellationToken cancellationToken = default)
+{
+    // Query parameter (optional integer with maximum: 100)
+    if (parameters.Limit.IsNotUndefined())
+    {
+        int limit = (int)parameters.Limit;  // Safe: already validated &lt;= 100
+    }
+    
+    // If client sends ?limit=200, the generated middleware returns this BEFORE your handler runs:
+    // HTTP 400 Problem Details with: &quot;Value 200 exceeds maximum 100&quot;
+    
+    // Your handler only sees valid inputs!
+}
+</code></pre>
+<h3 id="pattern-2-path-parameters">Pattern 2: Path parameters</h3>
+<p>Path params are URI-decoded strings:</p>
+<pre><code class="language-csharp">public ValueTask&lt;ShowPetByIdResult&gt; HandleShowPetByIdAsync(
+    ShowPetByIdParams parameters,
+    JsonWorkspace workspace,
+    CancellationToken cancellationToken = default)
+{
+    string petId = (string)parameters.PetId;  // URI-decoded (e.g., &quot;pet%2042&quot; → &quot;pet 42&quot;)
+    
+    // Lookup logic here...
+}
+</code></pre>
+<h3 id="pattern-3-request-bodies">Pattern 3: Request bodies</h3>
+<p>Bodies are fully deserialized and validated against their JSON Schema:</p>
+<pre><code class="language-csharp">public ValueTask&lt;CreatePetResult&gt; HandleCreatePetAsync(
+    CreatePetParams parameters,
+    JsonWorkspace workspace,
+    CancellationToken cancellationToken = default)
+{
+    NewPet body = parameters.Body;
+    
+    // Access strongly-typed properties
+    string name = (string)body.Name;              // Required — always present
+    string? tag = body.Tag.IsNotUndefined()       // Optional — check first
+        ? (string)body.Tag
+        : null;
+    
+    // If the client sends {&quot;name&quot;: 123} (wrong type) or {} (missing required field),
+    // the middleware returns 400 Problem Details — your handler never runs.
+}
+</code></pre>
+<h3 id="pattern-4-returning-typed-responses">Pattern 4: Returning typed responses</h3>
 <p>Each Result struct has factory methods matching the spec's response definitions:</p>
 <pre><code class="language-csharp">// 201 Created with a typed body
-CreatePetResult.Created(body: new Pet.Source(...), workspace: workspace)
+return ValueTask.FromResult(CreatePetResult.Created(
+    body: new Pet.Source((ref Pet.Builder b) =&gt; { b.Create(id: 1, name: &quot;Fido&quot;u8); }),
+    workspace: workspace));
 
-// Default error with custom status code
-ShowPetByIdResult.Default(statusCode: 404, body: new Error.Source(...), workspace: workspace)
+// 404 Not Found with custom error
+return ValueTask.FromResult(ShowPetByIdResult.Default(
+    statusCode: 404,
+    body: new Error.Source((ref Error.Builder b) =&gt; { b.Create(code: 404, message: &quot;Not found&quot;u8); }),
+    workspace: workspace));
 
-// 200 Ok with response headers
-ListPetsResult.Ok(body: ..., workspace: workspace, xNext: paginationLink)
+// 200 OK with response headers (e.g., pagination link)
+return ValueTask.FromResult(ListPetsResult.Ok(
+    body: ...,
+    workspace: workspace,
+    xNext: JsonString.ParseValue(&quot;\&quot;/pets?offset=10\&quot;&quot;u8)));
 </code></pre>
-<h3 id="automatic-validation-and-error-handling">Automatic validation and error handling</h3>
+<h2 id="automatic-validation-and-error-handling">Automatic Validation and Error Handling</h2>
 <p>The generated middleware validates all inputs before your handler runs:</p>
 <table>
 <thead>
 <tr>
 <th>Invalid input</th>
 <th>Generated behaviour</th>
+<th>Handler called?</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Query param fails schema (e.g., <code>limit=200</code> exceeds <code>maximum: 100</code>)</td>
-<td>400 Problem Details — handler never called</td>
+<td>400 Problem Details</td>
+<td>❌ No</td>
 </tr>
 <tr>
 <td>Required path param missing</td>
 <td>400 Problem Details</td>
+<td>❌ No</td>
 </tr>
 <tr>
 <td>Request body fails JSON parse</td>
 <td>400 Problem Details</td>
+<td>❌ No</td>
 </tr>
 <tr>
 <td>Request body fails schema validation</td>
 <td>400 Problem Details</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td>Valid inputs</td>
+<td>Handler executes</td>
+<td>✅ Yes</td>
 </tr>
 </tbody>
 </table>
-<p>You never write validation code — the generated middleware handles it. Your handler only runs with valid, typed data.</p>
+<p>You <strong>never</strong> write validation code. Your handler logic assumes valid, typed data.</p>
+<h2 id="advanced-patterns">Advanced Patterns</h2>
+<h3 id="pattern-5-async-operations-database-external-api">Pattern 5: Async operations (database, external API)</h3>
+<p>Handlers return <code>ValueTask&lt;TResult&gt;</code> — use <code>async</code>/<code>await</code> for IO-bound work:</p>
+<pre><code class="language-csharp">public async ValueTask&lt;ListPetsResult&gt; HandleListPetsAsync(
+    ListPetsParams parameters,
+    JsonWorkspace workspace,
+    CancellationToken cancellationToken = default)
+{
+    int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 20;
+    
+    // Async database query
+    List&lt;PetEntity&gt; pets = await this.dbContext.Pets
+        .Take(limit)
+        .ToListAsync(cancellationToken);
+    
+    return ListPetsResult.Ok(
+        body: new Pets.Source((ref Pets.Builder b) =&gt;
+        {
+            foreach (PetEntity pet in pets)
+            {
+                b.AddItem(new Pet.Source((ref Pet.Builder pb) =&gt;
+                {
+                    pb.Create(id: pet.Id, name: pet.Name);
+                }));
+            }
+        }),
+        workspace: workspace);
+}
+</code></pre>
+<h3 id="pattern-6-error-responses-with-rich-detail">Pattern 6: Error responses with rich detail</h3>
+<p>Return structured error payloads matching your schema:</p>
+<pre><code class="language-csharp">if (!IsValidPetName(name))
+{
+    return ValueTask.FromResult(CreatePetResult.Default(
+        statusCode: 422,  // Unprocessable Entity
+        body: new Error.Source((ref Error.Builder b) =&gt;
+        {
+            b.Create(
+                code: 422,
+                message: $&quot;Invalid pet name: '{name}'. Must be 3-50 characters, alphanumeric only.&quot;u8);
+        }),
+        workspace: workspace));
+}
+</code></pre>
+<h3 id="pattern-7-dependency-injection-in-handlers">Pattern 7: Dependency injection in handlers</h3>
+<p>Production handlers should accept dependencies via constructor injection:</p>
+<pre><code class="language-csharp">internal sealed class PetsHandler : IApiPetsHandler
+{
+    private readonly IPetRepository repository;
+    private readonly ILogger&lt;PetsHandler&gt; logger;
+    
+    public PetsHandler(IPetRepository repository, ILogger&lt;PetsHandler&gt; logger)
+    {
+        this.repository = repository;
+        this.logger = logger;
+    }
+    
+    public async ValueTask&lt;ListPetsResult&gt; HandleListPetsAsync(
+        ListPetsParams parameters,
+        JsonWorkspace workspace,
+        CancellationToken cancellationToken = default)
+    {
+        this.logger.LogInformation(&quot;Listing pets with limit {Limit}&quot;, parameters.Limit);
+        
+        var pets = await this.repository.GetPetsAsync(
+            limit: parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 20,
+            cancellationToken);
+        
+        return ListPetsResult.Ok(/*...*/);
+    }
+}
+
+// In Program.cs:
+builder.Services.AddSingleton&lt;IPetRepository, InMemoryPetRepository&gt;();
+builder.Services.AddSingleton&lt;IApiPetsHandler, PetsHandler&gt;();
+
+app.MapApiEndpoints(app.Services.GetRequiredService&lt;IApiPetsHandler&gt;());
+</code></pre>
+<h2 id="testing-your-server">Testing Your Server</h2>
+<h3 id="pattern-8-testing-with-webapplicationfactory">Pattern 8: Testing with WebApplicationFactory</h3>
+<p>Use ASP.NET's <code>TestServer</code> for integration tests without real HTTP:</p>
+<pre><code class="language-csharp">public class PetsHandlerTests
+{
+    [TestMethod]
+    public async Task CreatePet_ValidBody_Returns201()
+    {
+        // Arrange
+        await using var factory = new WebApplicationFactory&lt;Program&gt;();
+        using var client = factory.CreateClient();
+        
+        var body = new StringContent(
+            &quot;&quot;&quot;{&quot;name&quot;:&quot;Fido&quot;,&quot;tag&quot;:&quot;dog&quot;}&quot;&quot;&quot;,
+            Encoding.UTF8,
+            &quot;application/json&quot;);
+        
+        // Act
+        HttpResponseMessage response = await client.PostAsync(&quot;/pets&quot;, body);
+        
+        // Assert
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+        
+        string json = await response.Content.ReadAsStringAsync();
+        using var doc = ParsedJsonDocument&lt;Pet&gt;.Parse(json);
+        Assert.AreEqual(&quot;Fido&quot;, (string)doc.RootElement.Name);
+    }
+    
+    [TestMethod]
+    public async Task CreatePet_MissingName_Returns400()
+    {
+        await using var factory = new WebApplicationFactory&lt;Program&gt;();
+        using var client = factory.CreateClient();
+        
+        var body = new StringContent(&quot;&quot;&quot;{&quot;tag&quot;:&quot;dog&quot;}&quot;&quot;&quot;, Encoding.UTF8, &quot;application/json&quot;);
+        
+        HttpResponseMessage response = await client.PostAsync(&quot;/pets&quot;, body);
+        
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        
+        string problemDetails = await response.Content.ReadAsStringAsync();
+        StringAssert.Contains(problemDetails, &quot;name&quot;);  // Missing required property
+    }
+}
+</code></pre>
+<h3 id="pattern-9-mocking-dependencies-for-unit-tests">Pattern 9: Mocking dependencies for unit tests</h3>
+<p>Test handler logic in isolation:</p>
+<pre><code class="language-csharp">[TestMethod]
+public async Task HandleListPetsAsync_LimitParam_ReturnsCorrectCount()
+{
+    // Arrange
+    var mockRepo = new Mock&lt;IPetRepository&gt;();
+    mockRepo.Setup(r =&gt; r.GetPetsAsync(5, default))
+        .ReturnsAsync(new List&lt;PetEntity&gt; { /*...*/ });
+    
+    var handler = new PetsHandler(mockRepo.Object, Mock.Of&lt;ILogger&lt;PetsHandler&gt;&gt;());
+    var parameters = new ListPetsParams { Limit = JsonInteger.ParseValue(5) };
+    using JsonWorkspace workspace = JsonWorkspace.Create();
+    
+    // Act
+    ListPetsResult result = await handler.HandleListPetsAsync(parameters, workspace, default);
+    
+    // Assert
+    Assert.IsTrue(result.IsOk);
+    Pets pets = result.GetOk();
+    Assert.AreEqual(5, pets.GetArrayLength());
+}
+</code></pre>
+<h2 id="common-pitfalls">Common Pitfalls</h2>
+<h3 id="pitfall-1-not-disposing-jsonworkspace-in-synchronous-handlers">Pitfall 1: Not disposing JsonWorkspace in synchronous handlers</h3>
+<p><strong>Problem:</strong></p>
+<pre><code class="language-csharp">public ValueTask&lt;ListPetsResult&gt; HandleListPetsAsync(...)
+{
+    JsonWorkspace workspace = JsonWorkspace.Create();  // ❌ Never disposed!
+    
+    return ValueTask.FromResult(ListPetsResult.Ok(body: ..., workspace: workspace));
+}
+</code></pre>
+<p><strong>Why:</strong> The workspace you create is <strong>different</strong> from the parameter <code>workspace</code> passed to your handler. The generated middleware manages the parameter workspace's lifetime. If you create your own, you must dispose it.</p>
+<p><strong>Fix:</strong> Use the parameter workspace, not a new one:</p>
+<pre><code class="language-csharp">public ValueTask&lt;ListPetsResult&gt; HandleListPetsAsync(
+    ListPetsParams parameters,
+    JsonWorkspace workspace,  // ← Use this one!
+    CancellationToken cancellationToken = default)
+{
+    return ValueTask.FromResult(ListPetsResult.Ok(body: ..., workspace: workspace));
+}
+</code></pre>
+<h3 id="pitfall-2-forgetting-to-check-isnotundefined-for-optional-properties">Pitfall 2: Forgetting to check IsNotUndefined() for optional properties</h3>
+<p><strong>Problem:</strong></p>
+<pre><code class="language-csharp">string tag = (string)body.Tag;  // ❌ Throws if Tag is undefined!
+</code></pre>
+<p><strong>Fix:</strong></p>
+<pre><code class="language-csharp">string? tag = body.Tag.IsNotUndefined() ? (string)body.Tag : null;
+</code></pre>
+<h3 id="pitfall-3-returning-the-wrong-result-type">Pitfall 3: Returning the wrong Result type</h3>
+<p><strong>Problem:</strong></p>
+<pre><code class="language-csharp">public ValueTask&lt;CreatePetResult&gt; HandleCreatePetAsync(...)
+{
+    return ValueTask.FromResult(ListPetsResult.Ok(...));  // ❌ Wrong Result type!
+}
+</code></pre>
+<p><strong>Fix:</strong> Each handler method has its own Result type. Use the one that matches the method name:</p>
+<pre><code class="language-csharp">return ValueTask.FromResult(CreatePetResult.Created(...));
+</code></pre>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="client-gets-400-even-though-my-handler-validates-the-input">&quot;Client gets 400 even though my handler validates the input&quot;</h3>
+<p><strong>Cause:</strong> The generated middleware validates <strong>before</strong> calling your handler. Your handler validation is redundant and never executes.</p>
+<p><strong>Solution:</strong> Remove duplicate validation. Trust the generated middleware.</p>
+<h3 id="response-serialization-fails-with-workspace-disposed-error">&quot;Response serialization fails with 'workspace disposed' error&quot;</h3>
+<p><strong>Cause:</strong> You're creating and disposing a workspace inside the handler, then passing it to the Result factory.</p>
+<p><strong>Solution:</strong> Use the <code>workspace</code> parameter provided to your handler — the generated middleware manages its lifetime.</p>
+<h3 id="testserver-returns-500-instead-of-expected-error">&quot;TestServer returns 500 instead of expected error&quot;</h3>
+<p><strong>Cause:</strong> Your handler threw an unhandled exception.</p>
+<p><strong>Solution:</strong> Check the test output logs. ASP.NET logs exceptions. Common causes:</p>
+<ul>
+<li>Accessing optional properties without checking <code>IsNotUndefined()</code></li>
+<li>Null reference in business logic</li>
+<li>Database connection issues (use mocks for unit tests)</li>
+</ul>
+<h2 id="performance-tips">Performance Tips</h2>
+<ol>
+<li><strong>Use UTF-8 literals</strong> — <code>&quot;value&quot;u8</code> avoids UTF-16 → UTF-8 conversion:</li>
+</ol>
+<pre><code class="language-csharp">b.Create(name: &quot;Fido&quot;u8, tag: &quot;dog&quot;u8);  // Zero-allocation
+</code></pre>
+<ol start="2">
+<li><strong>Reuse JsonWorkspace for batch operations</strong> — if your handler builds multiple responses (e.g., pagination), reuse the workspace:</li>
+</ol>
+<pre><code class="language-csharp">for (int page = 0; page &lt; pageCount; page++)
+{
+    results[page] = ListPetsResult.Ok(body: ..., workspace: workspace);
+    // Same workspace reused across iterations
+}
+</code></pre>
+<ol start="3">
+<li><strong>Avoid <code>ToString()</code> on response bodies in hot paths</strong> — it allocates a string. Write directly to <code>Utf8JsonWriter</code> instead if you need custom serialization.</li>
+</ol>
 <h2 id="best-practices">Best Practices</h2>
 <ol>
-<li><strong>Use <code>u8</code> literals in builders</strong> — <code>name: &quot;Fido&quot;u8</code> avoids UTF-16→UTF-8 transcoding.</li>
-<li><strong>Use <code>Builder.Create()</code> for response bodies</strong> — mirrors schema properties with typed parameters.</li>
+<li><strong>Use <code>u8</code> literals for scalar parameters</strong> — <code>name: &quot;Fido&quot;u8</code> avoids transcoding overhead.</li>
+<li><strong>Use <code>Builder.Create()</code> for response bodies</strong> — it mirrors schema properties and provides compile-time safety.</li>
+<li><strong>Always accept <code>CancellationToken</code> and pass it through</strong> — enables graceful shutdown.</li>
 <li><strong>Return appropriate Result factory</strong> — <code>Ok</code>, <code>Created</code>, <code>Default</code> match your spec's response definitions.</li>
-<li><strong>Pass through the <code>workspace</code></strong> — the generated code uses it for efficient pooled-memory JSON building.</li>
-<li><strong>Let the middleware validate</strong> — don't re-validate inputs that the generated code already checked.</li>
-<li><strong>Use <code>ValueTask.FromResult</code></strong> — for synchronous handlers, wrap the result efficiently.</li>
+<li><strong>Pass through the <code>workspace</code> parameter</strong> — never create your own in synchronous handlers.</li>
+<li><strong>Use dependency injection</strong> — register handlers, repositories, and services in <code>Program.cs</code>.</li>
+<li><strong>Write integration tests with <code>WebApplicationFactory</code></strong> — test the full request/response pipeline.</li>
 </ol>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/030-OpenApiServer
+dotnet run
+</code></pre>
+<p>The server starts on <code>http://localhost:5000</code> (or a random port if 5000 is in use).</p>
+<h3 id="testing-with-curl">Testing with curl:</h3>
+<pre><code class="language-bash"># List pets
+curl http://localhost:5000/pets
+
+# Create a pet
+curl -X POST http://localhost:5000/pets \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;name&quot;:&quot;Fido&quot;,&quot;tag&quot;:&quot;dog&quot;}'
+
+# Get a pet by ID
+curl http://localhost:5000/pets/1
+
+# Invalid limit (should return 400)
+curl &quot;http://localhost:5000/pets?limit=200&quot;
+</code></pre>
+<h2 id="related-recipes">Related Recipes</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-757/examples/open-api-client.html">029 — OpenAPI Client</a> — calling the server from a generated client</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-757/examples/open-api-end-to-end.html">033 — OpenAPI End-to-End</a> — full client + server round-trip</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-757/examples/open-api-advanced-server.html">032 — OpenAPI Advanced Server</a> — streaming, file uploads, forms</li>
+</ul>
         </div>
     </main>
 </div>
