@@ -136,11 +136,10 @@ AMQP uses **explicit acknowledgement**. When a message is delivered to a consume
 **Timeline of message processing (left to right):**
 ```
 Queue: sensor-readings
-┌─────────────────────────────────────────┐
-│ [msg-1] [msg-2] [msg-3] [msg-4] ...     │
-│    ✓       ✗                            │
-│   Acked  Unacked (will be redelivered)  │
-└─────────────────────────────────────────┘
+
+[msg-1] [msg-2] [msg-3] [msg-4] ...
+   ✓       ✗
+  Acked  Unacked (will be redelivered)
 ```
 - **msg-1**: Processed successfully, `BasicAck` sent → removed from queue
 - **msg-2**: Currently being processed, not yet acknowledged
