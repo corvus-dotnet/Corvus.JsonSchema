@@ -134,11 +134,11 @@ If your app crashes with unacknowledged messages, RabbitMQ redelivers them to an
 
 ```
 Queue: sensor-readings
-+------------------------------------------+
-| [msg-1] [msg-2] [msg-3] [msg-4] ...     |
-|   ACK      ?                             |
-|  (done)  (unacked - will be redelivered) |
-+------------------------------------------+
++----------------------------------------------+
+| [msg-1] [msg-2] [msg-3] [msg-4] ...         |
+|   ACK      ?                                 |
+|  (done)  (unacked, will be redelivered)     |
++----------------------------------------------+
 ```
 
 ### Configuration
