@@ -125,21 +125,25 @@ kafka-consumer-groups --bootstrap-server localhost:9092 \
 ### How It Works
 
 AMQP uses **explicit acknowledgement**. When a message is delivered to a consumer:
-1. Message remains in the queue (unacknowledged)
-2. Transport calls your handler
-3. On success → `BasicAck` (message removed from queue)
-4. On failure → `BasicNack` with requeue=false (message dead-lettered)
 
-If your app crashes with unacknowledged messages, RabbitMQ redelivers them to another consumer (or the same consumer after restart).
+1. **Message delivered** → Message stays in queue (unacknowledged)
+2. **Handler processes** → Transport calls your handler code
+3. **Success** → `BasicAck` sent → Message removed from queue permanently
+4. **Failure** → `BasicNack` sent → Message requeued or dead-lettered
 
+**Key point**: If your app crashes before sending `BasicAck`, RabbitMQ assumes the message wasn't processed and redelivers it to another consumer (or the same consumer after restart).
+
+**Example scenario:**
 ```
-Queue: sensor-readings
-┌─────────────────────────────────────────┐
-│ [msg-1] [msg-2] [msg-3] [msg-4] ...     │
-│    ✓       ✗                            │
-│   Acked  Unacked (will be redelivered)  │
-└─────────────────────────────────────────┘
+1. Consumer receives [msg-1], [msg-2], [msg-3]
+2. Handler successfully processes [msg-1] → BasicAck sent → removed from queue
+3. Handler starts processing [msg-2]...
+4. ⚡ CRASH! ⚡ (no BasicAck sent for msg-2 or msg-3)
+5. Consumer restarts
+6. RabbitMQ redelivers [msg-2] and [msg-3] (they were never acknowledged)
 ```
+
+This is **at-least-once delivery** — messages may be processed more than once if your app crashes between processing and acknowledgement.
 
 ### Configuration
 
