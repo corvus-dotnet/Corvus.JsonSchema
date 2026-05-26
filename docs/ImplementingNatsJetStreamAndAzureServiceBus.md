@@ -779,6 +779,55 @@ public interface IHealthCheckableTransport
 }
 ```
 
+### 5. Polly Resilience Integration
+
+Both transports support resilience strategies via the existing `Corvus.Text.Json.AsyncApi.Polly` package:
+
+```csharp
+using Corvus.Text.Json.AsyncApi.Polly;
+using Polly;
+
+// Configure retry + circuit breaker + timeout
+var pipeline = new ResiliencePipelineBuilder()
+    .AddRetry(new RetryStrategyOptions
+    {
+        MaxRetryAttempts = 3,
+        BackoffType = DelayBackoffType.Exponential,
+        Delay = TimeSpan.FromSeconds(1),
+    })
+    .AddCircuitBreaker(new CircuitBreakerStrategyOptions
+    {
+        FailureRatio = 0.5,
+        MinimumThroughput = 10,
+        BreakDuration = TimeSpan.FromSeconds(30),
+    })
+    .AddTimeout(TimeSpan.FromSeconds(10))
+    .Build();
+
+// Apply to NATS JetStream
+var natsOptions = new NatsTransportOptions
+{
+    UseJetStream = true,
+    HandlerMiddleware = PollyResilienceMiddleware.Create(pipeline),
+};
+
+// Apply to Azure Service Bus
+var asbOptions = new AzureServiceBusTransportOptions
+{
+    UseTopic = true,
+    HandlerMiddleware = PollyResilienceMiddleware.Create(pipeline),
+};
+```
+
+**Key resilience patterns:**
+- **Retry** — Transient failures (network glitches, temporary unavailability)
+- **Circuit Breaker** — Prevent cascading failures when downstream services fail
+- **Timeout** — Prevent indefinite hangs on slow operations
+- **Rate Limiter** — Control message processing throughput
+- **Hedging** — Send duplicate requests after a delay to reduce tail latency
+
+The `HandlerMiddleware` wraps the user's message handler, applying resilience strategies before the transport's acknowledgement logic.
+
 ## Success Criteria
 
 ### NATS JetStream

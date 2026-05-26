@@ -787,6 +787,7 @@ main-docs:
       - {index: 16, language: csharp, lines: [728, 737], category: compilable, verified: false}
       - {index: 17, language: csharp, lines: [743, 767], category: compilable, verified: false}
       - {index: 18, language: csharp, lines: [773, 780], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [786, 820], category: compilable, verified: false}
   - path: "docs/JMESPath.md"
     blocks:
       - {index: 0, language: bash, lines: [66, 69]}
