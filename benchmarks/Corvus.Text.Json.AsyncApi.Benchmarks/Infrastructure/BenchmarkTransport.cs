@@ -23,7 +23,8 @@ public sealed class BenchmarkTransport : IMessageTransport
     private static Utf8JsonWriter? t_writer;
 
     private Func<ReadOnlyMemory<byte>, ReadOnlyMemory<byte>, CancellationToken, ValueTask>? subscribeHandler;
-    private byte[]? prebuiltReplyPayload;
+    private IDisposable? replyDocument;
+    private object? replyRootElement;
 
     /// <summary>
     /// Gets the number of bytes written by the last publish operation.
@@ -31,12 +32,18 @@ public sealed class BenchmarkTransport : IMessageTransport
     public int LastPublishBytesWritten { get; private set; }
 
     /// <summary>
-    /// Sets the pre-built reply payload for request/reply benchmarks.
+    /// Pre-parses the reply payload into a pooled document kept alive for the benchmark duration.
+    /// Call this once in <c>[GlobalSetup]</c>.
     /// </summary>
+    /// <typeparam name="TReply">The reply type.</typeparam>
     /// <param name="replyPayloadJson">The reply payload JSON bytes.</param>
-    public void SetReplyPayload(byte[] replyPayloadJson)
+    public void SetReplyPayload<TReply>(byte[] replyPayloadJson)
+        where TReply : struct, IJsonElement<TReply>
     {
-        this.prebuiltReplyPayload = replyPayloadJson;
+        this.replyDocument?.Dispose();
+        ParsedJsonDocument<TReply> doc = ParsedJsonDocument<TReply>.Parse(replyPayloadJson);
+        this.replyDocument = doc;
+        this.replyRootElement = doc.RootElement; // boxed once at setup
     }
 
     /// <summary>
@@ -106,9 +113,8 @@ public sealed class BenchmarkTransport : IMessageTransport
         writer.Flush();
         this.LastPublishBytesWritten = (int)writer.BytesCommitted;
 
-        // Subscribe-side: parse the pre-built reply.
-        // For benchmarks, use ParseValue (non-disposable copy) to avoid lifetime issues.
-        TReply reply = JsonElementHelpers.ParseValue<TReply>(this.prebuiltReplyPayload);
+        // Subscribe-side: return the pre-parsed reply (parsed once at setup, zero per-call allocation).
+        TReply reply = (TReply)this.replyRootElement!;
         return ValueTask.FromResult((reply, default(JsonElement)));
     }
 
@@ -158,5 +164,11 @@ public sealed class BenchmarkTransport : IMessageTransport
         CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 
     /// <inheritdoc/>
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync()
+    {
+        this.replyDocument?.Dispose();
+        this.replyDocument = null;
+        this.replyRootElement = null;
+        return ValueTask.CompletedTask;
+    }
 }

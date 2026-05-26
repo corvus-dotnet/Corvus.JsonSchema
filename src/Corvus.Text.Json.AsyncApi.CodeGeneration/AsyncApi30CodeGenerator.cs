@@ -1355,6 +1355,14 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine($"private const string ChannelAddressTemplate = \"{EscapeString(op.ChannelAddress)}\";");
         }
 
+        // Hoist the reply channel address to a static field when it's a constant literal
+        if (op.Reply is { } replyForField
+            && !string.IsNullOrEmpty(replyForField.ChannelAddress)
+            && replyForField.AddressLocationExpression is null)
+        {
+            w.WriteLine($"private static readonly byte[] ReplyChannelAddressUtf8 = \"{EscapeString(replyForField.ChannelAddress)}\"u8.ToArray();");
+        }
+
         if (op.AllowedServers is { Count: > 0 })
         {
             w.WriteLine();
@@ -1660,7 +1668,7 @@ public sealed class AsyncApi30CodeGenerator
                         {
                             if (!string.IsNullOrEmpty(reply.ChannelAddress))
                             {
-                                replyAddr = $"\"{EscapeString(reply.ChannelAddress)}\"u8.ToArray()";
+                                replyAddr = "ReplyChannelAddressUtf8";
                             }
                             else
                             {
@@ -1672,7 +1680,7 @@ public sealed class AsyncApi30CodeGenerator
                     {
                         if (!string.IsNullOrEmpty(reply.ChannelAddress))
                         {
-                            replyAddr = $"\"{EscapeString(reply.ChannelAddress)}\"u8.ToArray()";
+                            replyAddr = "ReplyChannelAddressUtf8";
                         }
                         else
                         {
@@ -1736,15 +1744,16 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("    where TPayload : struct, Corvus.Text.Json.Internal.IJsonElement<TPayload>");
             w.WriteLine("    where TReply : struct, Corvus.Text.Json.Internal.IJsonElement<TReply>");
             w.OpenBrace();
-            w.WriteLine("byte[] correlationIdUtf8 = new byte[36];");
+            w.WriteLine("byte[] correlationIdUtf8 = ArrayPool<byte>.Shared.Rent(36);");
             w.WriteLine("System.Guid.NewGuid().TryFormat(correlationIdUtf8, out _, \"D\");");
             w.WriteLine("try");
             w.OpenBrace();
-            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, in payload, correlationIdUtf8, headers, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, in payload, correlationIdUtf8.AsMemory(0, 36), headers, cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return replyPayload;");
             w.CloseBrace();
             w.WriteLine("finally");
             w.OpenBrace();
+            w.WriteLine("ArrayPool<byte>.Shared.Return(correlationIdUtf8);");
             w.WriteLine("if (channelRental is not null) { ArrayPool<byte>.Shared.Return(channelRental); }");
             w.WriteLine("workspace.Dispose();");
             w.CloseBrace();

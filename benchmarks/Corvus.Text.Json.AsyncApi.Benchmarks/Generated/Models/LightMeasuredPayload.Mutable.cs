@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark;
+namespace AsyncApiBenchmark.Generated;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -172,11 +172,11 @@ public readonly partial struct LightMeasuredPayload
         /// Sensor ID.
         /// </para>
         /// </remarks>
-        public AsyncApiBenchmark.LightMeasuredPayload.SensorId.Mutable Id
+        public AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.Mutable Id
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out AsyncApiBenchmark.LightMeasuredPayload.SensorId.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.Mutable value))
                 {
                     return value;
                 }
@@ -196,11 +196,11 @@ public readonly partial struct LightMeasuredPayload
         /// Current lumens measurement.
         /// </para>
         /// </remarks>
-        public AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement.Mutable Lumens
+        public AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.Mutable Lumens
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.Mutable value))
                 {
                     return value;
                 }
@@ -220,11 +220,11 @@ public readonly partial struct LightMeasuredPayload
         /// ISO 8601 timestamp of the measurement.
         /// </para>
         /// </remarks>
-        public AsyncApiBenchmark.JsonDateTime.Mutable SentAt
+        public AsyncApiBenchmark.Generated.JsonDateTime.Mutable SentAt
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.JsonDateTime.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.Generated.JsonDateTime.Mutable value))
                 {
                     return value;
                 }
@@ -266,7 +266,7 @@ public readonly partial struct LightMeasuredPayload
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in AsyncApiBenchmark.LightMeasuredPayload.SensorId.Source value)
+        public void SetId(in AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.Source value)
         {
             CheckValidInstance();
 
@@ -297,7 +297,7 @@ public readonly partial struct LightMeasuredPayload
         /// Set the <c>lumens</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLumens(in AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement.Source value)
+        public void SetLumens(in AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.Source value)
         {
             CheckValidInstance();
 
@@ -328,7 +328,7 @@ public readonly partial struct LightMeasuredPayload
         /// Set the <c>sentAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSentAt(in AsyncApiBenchmark.JsonDateTime.Source value)
+        public void SetSentAt(in AsyncApiBenchmark.Generated.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -520,7 +520,7 @@ public readonly partial struct LightMeasuredPayload
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(AsyncApiBenchmark.LightMeasuredPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(AsyncApiBenchmark.Generated.LightMeasuredPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(LightMeasuredPayload instance) => new(JsonElement.From(instance));
 
@@ -641,7 +641,7 @@ public readonly partial struct LightMeasuredPayload
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, AsyncApiBenchmark.LightMeasuredPayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, AsyncApiBenchmark.Generated.LightMeasuredPayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -757,9 +757,9 @@ public readonly partial struct LightMeasuredPayload
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in AsyncApiBenchmark.LightMeasuredPayload.SensorId.Source id,
-            in AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement.Source lumens,
-            in AsyncApiBenchmark.JsonDateTime.Source sentAt)
+            in AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.Source id,
+            in AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.Source lumens,
+            in AsyncApiBenchmark.Generated.JsonDateTime.Source sentAt)
         {
             id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
             lumens.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lumens, ref builder);
@@ -770,9 +770,9 @@ public readonly partial struct LightMeasuredPayload
         /// Creates an instance of a <see cref="LightMeasuredPayload"/>.
         /// </summary>
         public void Create(
-            in AsyncApiBenchmark.LightMeasuredPayload.SensorId.Source id,
-            in AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement.Source lumens,
-            in AsyncApiBenchmark.JsonDateTime.Source sentAt)
+            in AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.Source id,
+            in AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.Source lumens,
+            in AsyncApiBenchmark.Generated.JsonDateTime.Source sentAt)
         {
             Create(ref _builder, id, lumens, sentAt);
         }
@@ -905,7 +905,7 @@ public readonly partial struct LightMeasuredPayload
     /// <param name="sentAt">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in AsyncApiBenchmark.LightMeasuredPayload.SensorId.Source id, in AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement.Source lumens, in AsyncApiBenchmark.JsonDateTime.Source sentAt, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.Source id, in AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.Source lumens, in AsyncApiBenchmark.Generated.JsonDateTime.Source sentAt, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

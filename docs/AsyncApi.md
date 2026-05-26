@@ -1283,65 +1283,53 @@ When you control both publisher and subscriber, generate both from the same Asyn
 
 All benchmarks use a zero-overhead stub transport (no real I/O) to isolate the pipeline cost — what you pay for serialization, validation, and dispatch logic above the transport layer. Since all approaches use the same underlying transport (NATS, Kafka, etc.), the transport cost is identical and cancels out; what differs is the per-message framework overhead.
 
-**Three comparison tiers:**
+**Comparison:**
 
-- **Raw STJ** — the absolute floor: `System.Text.Json` `JsonSerializer.Serialize` / `JsonSerializer.Deserialize` to plain C# POCOs with `[JsonPropertyName]` attributes. This is what you would write by hand with zero framework help — no validation, no typed access beyond deserialization, no error handling, no schema conformance.
-- **Wolverine** — a popular .NET message bus framework (Mediator mode). Measures its full pipeline: STJ POCO deserialization + handler chain resolution + compiled invoker dispatch + context pooling + handler property access. Wolverine represents the "real framework" comparison point.
-- **Corvus** — the generated AsyncAPI consumer/producer. Measures: pooled-memory parse → optional schema validation → typed dispatch through generated handler interface → error policy.
+- **Wolverine (baseline)** — a popular .NET message bus framework (Mediator mode). Measures its full pipeline: STJ serialization/deserialization + handler chain resolution + compiled invoker dispatch + context pooling + handler property access. This represents what a real framework costs today.
+- **Corvus (generated)** — the generated AsyncAPI consumer/producer. Measures: pooled-memory parse → optional schema validation → typed dispatch through generated handler interface → error policy.
+
+Both baselines include the serialization cost that a real transport would incur — Wolverine uses `System.Text.Json` POCO serialization, Corvus uses its generated workspace-based serialization.
 
 ### Subscribe (Consumer) Pipeline
 
 | Method | Mean | Allocated | Notes |
 |--------|-----:|----------:|-------|
-| Raw STJ deserialize (baseline) | 232 ns | 104 B | `JsonSerializer.Deserialize<T>` to POCO + access properties |
-| Corvus consumer (no validation) | 263 ns | 152 B | Pooled parse → typed dispatch → handler |
-| Corvus consumer (basic validation) | 530 ns | 152 B | + compiled schema check (boolean pass/fail) |
-| Corvus consumer (detailed validation) | 809 ns | 152 B | + full diagnostics with error locations |
-| Corvus consumer with headers | 767 ns | 304 B | + header parse & validate |
-| Wolverine STJ framework dispatch | 642 ns | 104 B | STJ deserialize + handler chain + invoker |
+| Wolverine (baseline) | 535 ns | 104 B | STJ deserialize + handler chain + invoker |
+| Corvus consumer (no validation) | 160 ns | 152 B | Pooled parse → typed dispatch → handler |
+| Corvus consumer (basic validation) | 320 ns | 152 B | + compiled schema check (boolean pass/fail) |
+| Corvus consumer (detailed validation) | 485 ns | 152 B | + full diagnostics with error locations |
+| Corvus consumer with headers | 464 ns | 304 B | + header parse & validate |
 
-The "Raw STJ" baseline is the minimum cost any application must pay: deserializing bytes into a usable object. Corvus adds only **31 ns** (13%) over this floor for its full generated pipeline — typed dispatch, error policy, pooled memory management — **without** any validation. With basic validation enabled (compiled JSON Schema check), Corvus is still **17% faster** than Wolverine, which provides no validation at all.
+Corvus without validation is **3.3× faster** than Wolverine. Even with basic schema validation enabled, Corvus is **40% faster** than Wolverine — which provides no validation at all.
 
 ### Publish (Producer) Pipeline
 
 | Method | Mean | Allocated | Notes |
 |--------|-----:|----------:|-------|
-| Raw STJ serialize (baseline) | 176 ns | 136 B | `JsonSerializer.Serialize<T>` POCO to bytes |
-| Corvus producer (no validation) | 298 ns | 200 B | Workspace + channel build + serialize |
-| Corvus producer (basic validation) | 621 ns | 200 B | + compiled schema check |
-| Corvus producer (detailed validation) | 936 ns | 200 B | + full diagnostics collector |
+| Wolverine (baseline) | 557 ns | 80 B | STJ serialize + handler chain + compiled invoker + context pooling |
+| Corvus producer (no validation) | 293 ns | 200 B | Workspace + channel build + serialize |
+| Corvus producer (basic validation) | 610 ns | 200 B | + compiled schema check |
+| Corvus producer (detailed validation) | 834 ns | 200 B | + full diagnostics collector |
 
-The Raw STJ baseline here is just `JsonSerializer.Serialize` writing a POCO to a pooled buffer — what you'd do manually before publishing. The Corvus pipeline adds workspace management, zero-allocation channel address construction (pooled byte buffer from template + parameters), authentication callout, and serialization. The 200B allocation is the pooled `JsonWorkspace` envelope and channel rental — both returned to pools after the call, producing zero GC pressure under steady-state load.
-
-### Header Encoding
-
-Headers are encoded as a single JSON object using a thread-static pooled `Utf8JsonWriter`. Allocation is **constant regardless of header count**:
-
-| Header count | Base64 encode | Corvus encode | Base64 decode | Corvus decode |
-|:------------:|--------------:|--------------:|--------------:|--------------:|
-| 1 | 88 B | **152 B** | 136 B | **152 B** |
-| 5 | 336 B | **152 B** | 480 B | **152 B** |
-| 10 | 640 B | **152 B** | 896 B | **152 B** |
-
-Base64-encoded headers (the approach used by most messaging frameworks) grow linearly with header count. The Corvus JSON-object approach pays a fixed 152B (the `ParsedJsonDocument` envelope) regardless of how many headers are present.
+Corvus without validation is **1.9× faster** than Wolverine. With basic validation enabled, Corvus is at parity with Wolverine's no-validation baseline. The 200B allocation is the pooled `JsonWorkspace` envelope — returned to pools after the call, producing zero GC pressure under steady-state load.
 
 ### Request/Reply
 
 | Method | Mean | Allocated | Notes |
 |--------|-----:|----------:|-------|
-| Raw STJ (baseline) | 287 ns | 280 B | Serialize request POCO + deserialize reply POCO |
-| Corvus req/reply (no validation) | 293 ns | 352 B | Typed request + correlation + typed reply |
-| Corvus req/reply (basic validation) | 578 ns | 352 B | + schema validation both directions |
+| Wolverine + correlation header (baseline) | 521 ns | 968 B | STJ serialize + dispatch request with correlation, handler returns typed reply |
+| Corvus req/reply (no validation) | 377 ns | 336 B | Generated producer: workspace + correlate + reply parse |
+| Corvus req/reply (basic validation) | 651 ns | 336 B | + schema validation both directions |
 
-The Raw STJ baseline simulates the manual implementation: `JsonSerializer.Serialize` the request POCO to bytes (publish side), then `JsonSerializer.Deserialize` the reply bytes to a POCO (subscribe side). The Corvus pipeline adds request/reply correlation (matching correlation IDs), typed channel construction, and optionally validates both request and reply against their schemas. The overhead of the full strongly-typed request/reply pipeline is just **6 ns** (2%) over raw serialization — negligible.
+Corvus without validation is **28% faster** and allocates **65% less** than the Wolverine baseline (336B vs 968B). The Corvus pipeline includes typed channel construction, schema-aware serialization, correlation ID matching (via pooled buffers), and reply parsing — all with aggressive allocation avoidance: the reply channel address is hoisted to a static field, the correlation ID is rented from `ArrayPool<byte>`, and the reply is parsed into pooled memory. With basic validation enabled, Corvus is 1.25× the baseline in time but still allocates 65% less — you get full schema conformance checking on both request and reply payloads for that cost.
 
 ### Validation Cost Summary
 
 | Mode | Overhead | Additional allocation |
 |------|:--------:|:---------------------:|
 | None | — | 0 B |
-| Basic (boolean pass/fail) | ~270 ns | 0 B |
-| Detailed (error locations) | ~550 ns | 0 B |
+| Basic (boolean pass/fail) | ~300 ns | 0 B |
+| Detailed (error locations) | ~540 ns | 0 B |
 
 All validation modes produce **zero additional allocation** — the schema evaluator operates entirely on the already-parsed document. This means you can enable validation in production without increasing GC pressure.
 

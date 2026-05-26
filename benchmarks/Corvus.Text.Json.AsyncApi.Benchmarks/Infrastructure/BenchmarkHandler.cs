@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using AsyncApiBenchmark.Generated;
+
 namespace AsyncApiBenchmark.Infrastructure;
 
 /// <summary>

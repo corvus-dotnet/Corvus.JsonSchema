@@ -15,6 +15,27 @@
         }
       },
       "description": "The topic on which measured values may be produced and consumed."
+    },
+    "dimRequest": {
+      "address": "smartylighting.streetlights.1.0.action.dim",
+      "messages": {
+        "dimCommand": {
+          "$ref": "#/components/messages/dimCommand"
+        },
+        "dimResponse": {
+          "$ref": "#/components/messages/dimResponse"
+        }
+      },
+      "description": "Request/reply channel for dimming commands."
+    },
+    "dimReply": {
+      "address": "smartylighting.streetlights.1.0.action.dim.reply",
+      "messages": {
+        "dimResponse": {
+          "$ref": "#/components/messages/dimResponse"
+        }
+      },
+      "description": "Reply channel for dimming acknowledgements."
     }
   },
   "operations": {
@@ -41,6 +62,28 @@
           "$ref": "#/channels/lightingMeasured/messages/lightMeasured"
         }
       ]
+    },
+    "requestDim": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/dimRequest"
+      },
+      "summary": "Send a dimming command and wait for acknowledgement.",
+      "messages": [
+        {
+          "$ref": "#/channels/dimRequest/messages/dimCommand"
+        }
+      ],
+      "reply": {
+        "channel": {
+          "$ref": "#/channels/dimReply"
+        },
+        "messages": [
+          {
+            "$ref": "#/channels/dimReply/messages/dimResponse"
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -52,6 +95,36 @@
         "contentType": "application/json",
         "payload": {
           "$ref": "#/components/schemas/lightMeasuredPayload"
+        }
+      },
+      "dimCommand": {
+        "name": "dimCommand",
+        "title": "Dim command",
+        "summary": "A command to set a streetlight's dimming level.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/dimCommandPayload"
+        },
+        "headers": {
+          "$ref": "#/components/schemas/correlatedHeaders"
+        },
+        "correlationId": {
+          "location": "$message.header#/correlationId"
+        }
+      },
+      "dimResponse": {
+        "name": "dimResponse",
+        "title": "Dim response",
+        "summary": "Acknowledgement of a dimming command.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/dimResponsePayload"
+        },
+        "headers": {
+          "$ref": "#/components/schemas/correlatedHeaders"
+        },
+        "correlationId": {
+          "location": "$message.header#/correlationId"
         }
       }
     },
@@ -77,6 +150,62 @@
           }
         },
         "additionalProperties": false
+      },
+      "dimCommandPayload": {
+        "type": "object",
+        "required": ["streetlightId", "percentage"],
+        "properties": {
+          "streetlightId": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The streetlight to dim."
+          },
+          "percentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Target brightness percentage."
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the command."
+          }
+        },
+        "additionalProperties": false
+      },
+      "dimResponsePayload": {
+        "type": "object",
+        "required": ["streetlightId", "status"],
+        "properties": {
+          "streetlightId": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The streetlight that was dimmed."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ok", "error"],
+            "description": "Whether the dimming succeeded."
+          },
+          "appliedPercentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "The actual brightness applied."
+          }
+        },
+        "additionalProperties": false
+      },
+      "correlatedHeaders": {
+        "type": "object",
+        "required": ["correlationId"],
+        "properties": {
+          "correlationId": {
+            "type": "string",
+            "description": "Unique correlation identifier for request/reply matching."
+          }
+        }
       }
     }
   }

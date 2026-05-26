@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark;
+namespace AsyncApiBenchmark.Generated;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -55,14 +55,14 @@ public readonly partial struct LightMeasuredPayload
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                AsyncApiBenchmark.LightMeasuredPayload.SensorId.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.IdUtf8,
                     evaluationPath: IdSchemaEvaluationPath);
 
-            AsyncApiBenchmark.LightMeasuredPayload.SensorId.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -77,14 +77,14 @@ public readonly partial struct LightMeasuredPayload
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.LumensUtf8,
                     evaluationPath: LumensSchemaEvaluationPath);
 
-            AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -99,14 +99,14 @@ public readonly partial struct LightMeasuredPayload
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                AsyncApiBenchmark.JsonDateTime.JsonSchema.PushChildContextUnescaped(
+                AsyncApiBenchmark.Generated.JsonDateTime.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.SentAtUtf8,
                     evaluationPath: SentAtSchemaEvaluationPath);
 
-            AsyncApiBenchmark.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            AsyncApiBenchmark.Generated.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -117,22 +117,22 @@ public readonly partial struct LightMeasuredPayload
             requiredBitBuffer[RequiredOffsetForSentAt] |= RequiredBitForSentAt;
         }
 
-        private static PropertySchemaMatchers<AsyncApiBenchmark.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<AsyncApiBenchmark.PropertiesValidationHandler_NamedPropertyValidator>([
+            return new PropertySchemaMatchers<AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.IdUtf8, MatchId),
                 (static () => JsonPropertyNames.LumensUtf8, MatchLumens),
                 (static () => JsonPropertyNames.SentAtUtf8, MatchSentAt),
             ]);
         }
 
-        private static PropertySchemaMatchers<AsyncApiBenchmark.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out AsyncApiBenchmark.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -194,7 +194,7 @@ public readonly partial struct LightMeasuredPayload
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out AsyncApiBenchmark.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out AsyncApiBenchmark.Generated.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
                         validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 

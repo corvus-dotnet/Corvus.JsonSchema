@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi;
 
-namespace AsyncApiBenchmark;
+namespace AsyncApiBenchmark.Generated;
 
 /// <summary>
 /// Consumer for the <c>receiveLightMeasurement</c> operation on channel <c>smartylighting.streetlights.1.0.event.lighting.measured</c>.
@@ -48,7 +48,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
     /// <param name="cancellationToken">A cancellation token.</param>
     public ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
-        return this.transport.SubscribeAsync<AsyncApiBenchmark.LightMeasuredPayload>(ChannelAddressUtf8, this.HandleMessageAsync, cancellationToken);
+        return this.transport.SubscribeAsync<AsyncApiBenchmark.Generated.LightMeasuredPayload>(ChannelAddressUtf8, this.HandleMessageAsync, cancellationToken);
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
         return this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken);
     }
 
-    private async ValueTask HandleMessageAsync(AsyncApiBenchmark.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
+    private async ValueTask HandleMessageAsync(AsyncApiBenchmark.Generated.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
     {
         try
         {

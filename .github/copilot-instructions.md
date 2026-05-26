@@ -45,17 +45,17 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 # Build the full solution
 dotnet build Corvus.Text.Json.slnx
 
-# Run the standard test suite — exclude the 'failing' and 'outerloop' categories
-dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
+# Run the standard test suite — exclude the 'failing', 'outerloop', and 'integration' categories
+dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 
 # Run a single test class
-dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 
 # Run a single test method
-dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 ```
 
-Always exclude `failing` and `outerloop` categories when running tests. Never run all tests without these filters.
+Always exclude `failing`, `outerloop`, and `integration` categories when running tests. Never run all tests without these filters. The `integration` category marks tests that require Docker (Testcontainers) for real broker containers (Kafka, NATS, MQTT, AMQP) — they run only in CI on ubuntu runners with Docker available.
 
 Always use `FullyQualifiedName~` (substring match) for test filters — not `ClassName=`. The `ClassName` filter does not work reliably in this repo.
 

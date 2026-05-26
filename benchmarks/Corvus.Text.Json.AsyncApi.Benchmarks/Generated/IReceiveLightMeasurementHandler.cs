@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi;
 
-namespace AsyncApiBenchmark;
+namespace AsyncApiBenchmark.Generated;
 
 /// <summary>
 /// Handler interface for the <c>receiveLightMeasurement</c> receive operation on channel <c>smartylighting.streetlights.1.0.event.lighting.measured</c>.
@@ -17,5 +17,5 @@ public interface IReceiveLightMeasurementHandler
     /// </summary>
     /// <param name="payload">The deserialized message payload.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask HandleLightMeasuredAsync(AsyncApiBenchmark.LightMeasuredPayload payload, CancellationToken cancellationToken = default);
+    ValueTask HandleLightMeasuredAsync(AsyncApiBenchmark.Generated.LightMeasuredPayload payload, CancellationToken cancellationToken = default);
 }

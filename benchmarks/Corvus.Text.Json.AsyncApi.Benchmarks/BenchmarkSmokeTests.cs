@@ -20,7 +20,6 @@ internal static class BenchmarkSmokeTests
 
         await VerifyPublishPipeline().ConfigureAwait(false);
         await VerifySubscribePipeline().ConfigureAwait(false);
-        VerifyHeaderEncoding();
         await VerifyRequestReply().ConfigureAwait(false);
 
         Console.WriteLine("All smoke tests passed.");
@@ -30,12 +29,14 @@ internal static class BenchmarkSmokeTests
     private static async Task VerifyPublishPipeline()
     {
         PublishPipelineBenchmarks bench = new();
-        bench.Setup();
+        await bench.Setup().ConfigureAwait(false);
 
-        Verify("Publish.RawNats_NoValidation", () => bench.RawNats_NoValidation());
+        await VerifyAsync("Publish.Wolverine_Publish", () => bench.Wolverine_Publish()).ConfigureAwait(false);
         await VerifyAsync("Publish.Corvus_NoValidation", () => bench.Corvus_NoValidation()).ConfigureAwait(false);
         await VerifyAsync("Publish.Corvus_WithBasicValidation", () => bench.Corvus_WithBasicValidation()).ConfigureAwait(false);
         await VerifyAsync("Publish.Corvus_WithDetailedValidation", () => bench.Corvus_WithDetailedValidation()).ConfigureAwait(false);
+
+        await bench.Cleanup().ConfigureAwait(false);
     }
 
     private static async Task VerifySubscribePipeline()
@@ -43,7 +44,6 @@ internal static class BenchmarkSmokeTests
         SubscribePipelineBenchmarks bench = new();
         await bench.Setup().ConfigureAwait(false);
 
-        Verify("Subscribe.RawNats_DeserializeAndHandle", () => bench.RawNats_DeserializeAndHandle());
         await VerifyAsync("Subscribe.Wolverine_DeserializeAndDispatch", () => bench.Wolverine_DeserializeAndDispatch()).ConfigureAwait(false);
         await VerifyAsync("Subscribe.Corvus_NoValidation", () => bench.Corvus_NoValidation()).ConfigureAwait(false);
         await VerifyAsync("Subscribe.Corvus_WithBasicValidation", () => bench.Corvus_WithBasicValidation()).ConfigureAwait(false);
@@ -53,84 +53,16 @@ internal static class BenchmarkSmokeTests
         await bench.Cleanup().ConfigureAwait(false);
     }
 
-    private static void VerifyHeaderEncoding()
-    {
-        foreach (int count in new[] { 1, 5, 10 })
-        {
-            HeaderEncodingBenchmarks bench = new() { HeaderCount = count };
-            bench.Setup();
-
-            Verify($"Headers[{count}].EncodeHeaders_Base64", () => bench.EncodeHeaders_Base64());
-            Verify($"Headers[{count}].DecodeHeaders_Base64", () => bench.DecodeHeaders_Base64());
-            Verify($"Headers[{count}].EncodeHeaders_Corvus", () => bench.EncodeHeaders_Corvus());
-            Verify($"Headers[{count}].DecodeHeaders_Corvus", () => bench.DecodeHeaders_Corvus());
-        }
-    }
-
     private static async Task VerifyRequestReply()
     {
         RequestReplyBenchmarks bench = new();
-        bench.Setup();
+        await bench.Setup().ConfigureAwait(false);
 
-        Verify("RequestReply.RawNats_RequestReply", () => bench.RawNats_RequestReply());
+        await VerifyAsync("RequestReply.Wolverine_RequestReply", () => bench.Wolverine_RequestReply()).ConfigureAwait(false);
         await VerifyAsync("RequestReply.Corvus_NoValidation", () => bench.Corvus_RequestReply_NoValidation()).ConfigureAwait(false);
         await VerifyAsync("RequestReply.Corvus_WithValidation", () => bench.Corvus_RequestReply_WithValidation()).ConfigureAwait(false);
-    }
 
-    private static void Verify<T>(string name, Func<T> action)
-    {
-        try
-        {
-            _ = action();
-            Console.WriteLine($"  PASS: {name}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"  FAIL: {name} — {ex.GetType().Name}: {ex.Message}");
-            throw new InvalidOperationException($"Smoke test failed: {name}", ex);
-        }
-    }
-
-    private static async Task VerifyAsync(string name, Func<ValueTask<int>> action)
-    {
-        try
-        {
-            _ = await action().ConfigureAwait(false);
-            Console.WriteLine($"  PASS: {name}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"  FAIL: {name} — {ex.GetType().Name}: {ex.Message}");
-            throw new InvalidOperationException($"Smoke test failed: {name}", ex);
-        }
-    }
-
-    private static async Task VerifyAsync(string name, Func<ValueTask<double>> action)
-    {
-        try
-        {
-            _ = await action().ConfigureAwait(false);
-            Console.WriteLine($"  PASS: {name}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"  FAIL: {name} — {ex.GetType().Name}: {ex.Message}");
-            throw new InvalidOperationException($"Smoke test failed: {name}", ex);
-        }
-    }
-
-    private static async Task VerifyAsync(string name, Func<Task<double>> action)
-    {
-        try
-        {
-            _ = await action().ConfigureAwait(false);
-            Console.WriteLine($"  PASS: {name}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"  FAIL: {name} — {ex.GetType().Name}: {ex.Message}");
-            throw new InvalidOperationException($"Smoke test failed: {name}", ex);
-        }
+        await bench.Cleanup().ConfigureAwait(false);
     }
 
     private static async Task VerifyAsync(string name, Func<Task> action)
@@ -147,11 +79,39 @@ internal static class BenchmarkSmokeTests
         }
     }
 
+    private static async Task VerifyAsync<T>(string name, Func<Task<T>> action)
+    {
+        try
+        {
+            _ = await action().ConfigureAwait(false);
+            Console.WriteLine($"  PASS: {name}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  FAIL: {name} — {ex.GetType().Name}: {ex.Message}");
+            throw new InvalidOperationException($"Smoke test failed: {name}", ex);
+        }
+    }
+
     private static async Task VerifyAsync(string name, Func<ValueTask> action)
     {
         try
         {
             await action().ConfigureAwait(false);
+            Console.WriteLine($"  PASS: {name}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  FAIL: {name} — {ex.GetType().Name}: {ex.Message}");
+            throw new InvalidOperationException($"Smoke test failed: {name}", ex);
+        }
+    }
+
+    private static async Task VerifyAsync<T>(string name, Func<ValueTask<T>> action)
+    {
+        try
+        {
+            _ = await action().ConfigureAwait(false);
             Console.WriteLine($"  PASS: {name}");
         }
         catch (Exception ex)

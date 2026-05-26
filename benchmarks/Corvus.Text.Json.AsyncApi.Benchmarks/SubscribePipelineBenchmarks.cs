@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text;
+using AsyncApiBenchmark.Generated;
 using AsyncApiBenchmark.Infrastructure;
 using BenchmarkDotNet.Attributes;
 using Corvus.Text.Json;
@@ -12,8 +13,7 @@ namespace AsyncApiBenchmark;
 
 /// <summary>
 /// End-to-end receive/subscribe benchmarks comparing the generated Corvus consumer
-/// pipeline against what a developer would write with raw STJ,
-/// and against Wolverine (a popular .NET message bus framework).
+/// pipeline against Wolverine (a popular .NET message bus framework).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -23,10 +23,9 @@ namespace AsyncApiBenchmark;
 /// code, not a simulation.
 /// </para>
 /// <para>
-/// Three comparison tiers:
+/// Two comparison tiers:
 /// <list type="bullet">
-/// <item><description>Raw STJ — the floor: deserialize + access properties (no framework)</description></item>
-/// <item><description>Wolverine — a real message bus: STJ deserialize + framework dispatch + handler</description></item>
+/// <item><description>Wolverine (baseline) — a real message bus: STJ deserialize + framework dispatch + handler</description></item>
 /// <item><description>Corvus — generated consumer: parse + validate + error policy + dispatch</description></item>
 /// </list>
 /// </para>
@@ -81,17 +80,10 @@ public class SubscribePipelineBenchmarks
         await this.wolverine.DisposeAsync().ConfigureAwait(false);
     }
 
-    [Benchmark(Description = "Raw STJ: Deserialize + handle (no validation)", Baseline = true)]
-    public double RawNats_DeserializeAndHandle()
-    {
-        LightMeasuredPoco result = RawNatsBaseline.Subscribe<LightMeasuredPoco>(ValidPayloadBytes);
-        return result.Id + result.Lumens;
-    }
-
-    [Benchmark(Description = "Wolverine: STJ deserialize + framework dispatch")]
+    [Benchmark(Description = "Wolverine: STJ deserialize + framework dispatch", Baseline = true)]
     public async Task Wolverine_DeserializeAndDispatch()
     {
-        LightMeasuredPoco message = RawNatsBaseline.Subscribe<LightMeasuredPoco>(ValidPayloadBytes);
+        LightMeasuredPoco message = WolverineBaseline.Deserialize<LightMeasuredPoco>(ValidPayloadBytes);
         await this.wolverine.InvokeAsync(message).ConfigureAwait(false);
     }
 

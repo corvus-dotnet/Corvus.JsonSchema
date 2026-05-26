@@ -37,7 +37,6 @@ BenchmarkRunner.Run(
     [
         typeof(PublishPipelineBenchmarks),
         typeof(SubscribePipelineBenchmarks),
-        typeof(HeaderEncodingBenchmarks),
         typeof(RequestReplyBenchmarks),
     ],
     config);

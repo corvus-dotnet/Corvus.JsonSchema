@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi;
 
-namespace AsyncApiBenchmark;
+namespace AsyncApiBenchmark.Generated;
 
 /// <summary>
 /// Producer for the <c>publishLightMeasurement</c> operation on channel <c>smartylighting.streetlights.1.0.event.lighting.measured</c>.
@@ -39,10 +39,10 @@ public sealed class PublishLightMeasurementProducer
     /// </summary>
     /// <param name="payload">The message payload.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask PublishLightMeasuredAsync(AsyncApiBenchmark.LightMeasuredPayload.Source payload, CancellationToken cancellationToken = default)
+    public ValueTask PublishLightMeasuredAsync(AsyncApiBenchmark.Generated.LightMeasuredPayload.Source payload, CancellationToken cancellationToken = default)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        AsyncApiBenchmark.LightMeasuredPayload payloadValue = AsyncApiBenchmark.LightMeasuredPayload.CreateBuilder(workspace, payload, 30).RootElement;
+        AsyncApiBenchmark.Generated.LightMeasuredPayload payloadValue = AsyncApiBenchmark.Generated.LightMeasuredPayload.CreateBuilder(workspace, payload, 30).RootElement;
 
         if (this.validationMode != ValidationMode.None)
         {

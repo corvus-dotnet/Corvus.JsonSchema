@@ -3,7 +3,7 @@ using System;
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi;
 
-namespace AsyncApiBenchmark;
+namespace AsyncApiBenchmark.Generated;
 
 /// <summary>
 /// Typed message wrapper for <c>lightMeasured</c> in operation <c>receiveLightMeasurement</c>.
@@ -14,7 +14,7 @@ public readonly struct ReceiveLightMeasurementLightMeasuredMessage
     public const string MessageContentType = "application/json";
 
     /// <summary>Gets the message payload.</summary>
-    public AsyncApiBenchmark.LightMeasuredPayload Payload { get; init; }
+    public AsyncApiBenchmark.Generated.LightMeasuredPayload Payload { get; init; }
 
     /// <summary>
     /// Validates the message payload and headers against their schemas.

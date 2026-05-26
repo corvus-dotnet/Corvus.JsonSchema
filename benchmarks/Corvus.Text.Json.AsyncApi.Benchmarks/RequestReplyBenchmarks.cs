@@ -3,91 +3,102 @@
 // </copyright>
 
 using System.Text;
+using System.Text.Json;
+using AsyncApiBenchmark.Generated;
 using AsyncApiBenchmark.Infrastructure;
 using BenchmarkDotNet.Attributes;
 using Corvus.Text.Json;
+using Corvus.Text.Json.AsyncApi;
+using Wolverine;
 
 namespace AsyncApiBenchmark;
 
 /// <summary>
-/// Request/reply correlation overhead benchmarks.
-/// Measures the cost of serializing a request, parsing a pre-built reply,
-/// and correlating the two.
+/// Request/reply benchmarks comparing the generated Corvus producer
+/// against Wolverine framework dispatch.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Request/reply adds correlation cost on top of simple publish: the generated producer
+/// creates a correlation ID, sends a request, and waits for a correlated reply.
+/// The <see cref="BenchmarkTransport"/> returns a pre-built reply immediately (no I/O),
+/// isolating pipeline overhead.
+/// </para>
+/// <para>
+/// Two comparison tiers:
+/// <list type="bullet">
+/// <item><description>Wolverine — a real message bus (baseline): dispatch request with correlation header, handler returns reply</description></item>
+/// <item><description>Corvus — generated <see cref="RequestDimProducer"/>: full request/reply pipeline with validation and correlation</description></item>
+/// </list>
+/// </para>
+/// </remarks>
 [MemoryDiagnoser]
 public class RequestReplyBenchmarks
 {
-    private static readonly byte[] RequestPayloadBytes = Encoding.UTF8.GetBytes(
-        """{"id":42,"lumens":512.7,"sentAt":"2026-05-25T10:30:00Z"}""");
-
     private static readonly byte[] ReplyPayloadBytes = Encoding.UTF8.GetBytes(
-        """{"id":42,"lumens":512.7,"sentAt":"2026-05-25T10:30:00Z"}""");
-
-    private static readonly ReadOnlyMemory<byte> RequestChannelUtf8 =
-        "streetlights/1/0/action/dim"u8.ToArray();
-
-    private static readonly ReadOnlyMemory<byte> ReplyChannelUtf8 =
-        "streetlights/1/0/action/dim/reply"u8.ToArray();
-
-    private static readonly ReadOnlyMemory<byte> CorrelationIdUtf8 =
-        "corr-12345678-abcd-ef01"u8.ToArray();
+        """{"streetlightId":42,"status":"ok","appliedPercentage":75}""");
 
     private BenchmarkTransport transport = null!;
-    private LightMeasuredPayload corvusRequest;
+    private RequestDimProducer producerNoValidation = null!;
+    private RequestDimProducer producerBasicValidation = null!;
+    private DimCommandPayload corvusPayload;
+    private CorrelatedHeaders corvusHeaders;
+    private LightMeasuredRequestPoco wolverineRequestPoco = null!;
+    private WolverineBaseline wolverine = null!;
 
     [GlobalSetup]
-    public void Setup()
+    public async Task Setup()
     {
         this.transport = new BenchmarkTransport();
-        this.transport.SetReplyPayload(ReplyPayloadBytes);
+        this.transport.SetReplyPayload<DimResponsePayload>(ReplyPayloadBytes);
 
-        this.corvusRequest = LightMeasuredPayload.ParseValue(RequestPayloadBytes);
-    }
+        this.producerNoValidation = new RequestDimProducer(
+            this.transport, ValidationMode.None);
+        this.producerBasicValidation = new RequestDimProducer(
+            this.transport, ValidationMode.Basic);
 
-    [Benchmark(Description = "Raw STJ: Serialize request + Deserialize reply", Baseline = true)]
-    public int RawNats_RequestReply()
-    {
-        // Publish-side: serialize request
-        int published = RawNatsBaseline.Publish(new LightMeasuredPoco
+        this.corvusPayload = DimCommandPayload.ParseValue(
+            """{"streetlightId":42,"percentage":75,"sentAt":"2026-05-25T10:30:00Z"}"""u8);
+        this.corvusHeaders = CorrelatedHeaders.ParseValue(
+            """{"correlationId":"corr-12345678-abcd-ef01"}"""u8);
+
+        this.wolverineRequestPoco = new LightMeasuredRequestPoco
         {
             Id = 42,
             Lumens = 512.7,
             SentAt = "2026-05-25T10:30:00Z",
-        });
+        };
 
-        // Subscribe-side: deserialize reply
-        LightMeasuredPoco reply = RawNatsBaseline.Subscribe<LightMeasuredPoco>(ReplyPayloadBytes);
-        return published + reply.Id;
+        this.wolverine = new WolverineBaseline();
+        await this.wolverine.StartAsync().ConfigureAwait(false);
     }
 
-    [Benchmark(Description = "Corvus: Request/Reply (no validation)")]
-    public async ValueTask<double> Corvus_RequestReply_NoValidation()
+    [GlobalCleanup]
+    public async Task Cleanup()
     {
-        (LightMeasuredPayload reply, _) = await this.transport
-            .RequestAsync<LightMeasuredPayload, LightMeasuredPayload>(
-                RequestChannelUtf8,
-                ReplyChannelUtf8,
-                in this.corvusRequest,
-                CorrelationIdUtf8);
-
-        return (long)reply.Id + (double)reply.Lumens;
+        await this.wolverine.DisposeAsync().ConfigureAwait(false);
     }
 
-    [Benchmark(Description = "Corvus: Request/Reply (with basic validation)")]
-    public async ValueTask<double> Corvus_RequestReply_WithValidation()
+    [Benchmark(Description = "Wolverine: serialize + dispatch request/reply with correlation", Baseline = true)]
+    public async Task<LightMeasuredPoco> Wolverine_RequestReply()
     {
-        // Validate request before sending
-        _ = this.corvusRequest.EvaluateSchema();
+        _ = JsonSerializer.SerializeToUtf8Bytes(this.wolverineRequestPoco, WolverineBaseline.SerializerOptions);
+        return await this.wolverine.InvokeAsync<LightMeasuredPoco>(
+            this.wolverineRequestPoco,
+            new DeliveryOptions().WithHeader("correlationId", "corr-12345678-abcd-ef01")).ConfigureAwait(false);
+    }
 
-        (LightMeasuredPayload reply, _) = await this.transport
-            .RequestAsync<LightMeasuredPayload, LightMeasuredPayload>(
-                RequestChannelUtf8,
-                ReplyChannelUtf8,
-                in this.corvusRequest,
-                CorrelationIdUtf8);
+    [Benchmark(Description = "Corvus: Generated producer request/reply (no validation)")]
+    public async ValueTask<DimResponsePayload> Corvus_RequestReply_NoValidation()
+    {
+        return await this.producerNoValidation.SendAndReceiveDimCommandAsync(
+            this.corvusPayload, this.corvusHeaders);
+    }
 
-        // Validate reply
-        _ = reply.EvaluateSchema();
-        return (long)reply.Id + (double)reply.Lumens;
+    [Benchmark(Description = "Corvus: Generated producer request/reply (basic validation)")]
+    public async ValueTask<DimResponsePayload> Corvus_RequestReply_WithValidation()
+    {
+        return await this.producerBasicValidation.SendAndReceiveDimCommandAsync(
+            this.corvusPayload, this.corvusHeaders);
     }
 }

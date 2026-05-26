@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace AsyncApiBenchmark;
+namespace AsyncApiBenchmark.Generated;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -65,11 +65,11 @@ public readonly partial struct LightMeasuredPayload
     /// Sensor ID.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.LightMeasuredPayload.SensorId Id
+    public AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId Id
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out AsyncApiBenchmark.LightMeasuredPayload.SensorId value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out AsyncApiBenchmark.Generated.LightMeasuredPayload.SensorId value))
             {
                 return value;
             }
@@ -89,11 +89,11 @@ public readonly partial struct LightMeasuredPayload
     /// Current lumens measurement.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement Lumens
+    public AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement Lumens
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out AsyncApiBenchmark.LightMeasuredPayload.CurrentLumensMeasurement value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out AsyncApiBenchmark.Generated.LightMeasuredPayload.CurrentLumensMeasurement value))
             {
                 return value;
             }
@@ -113,11 +113,11 @@ public readonly partial struct LightMeasuredPayload
     /// ISO 8601 timestamp of the measurement.
     /// </para>
     /// </remarks>
-    public AsyncApiBenchmark.JsonDateTime SentAt
+    public AsyncApiBenchmark.Generated.JsonDateTime SentAt
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.JsonDateTime value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out AsyncApiBenchmark.Generated.JsonDateTime value))
             {
                 return value;
             }

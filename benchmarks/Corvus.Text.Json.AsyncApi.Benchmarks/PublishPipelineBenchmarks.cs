@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Text;
+using System.Text.Json;
+using AsyncApiBenchmark.Generated;
 using AsyncApiBenchmark.Infrastructure;
 using BenchmarkDotNet.Attributes;
 using Corvus.Text.Json;
@@ -12,7 +14,7 @@ namespace AsyncApiBenchmark;
 
 /// <summary>
 /// End-to-end publish benchmarks comparing the generated Corvus producer
-/// against raw NATS.Net + System.Text.Json serialization.
+/// against Wolverine framework dispatch.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -21,8 +23,11 @@ namespace AsyncApiBenchmark;
 /// validate → serialize → transport publish. This is the real generated code, not a simulation.
 /// </para>
 /// <para>
-/// Measures what the Corvus abstraction costs compared to hand-written broker code.
-/// All transport I/O is mocked — we measure only serialization + pipeline overhead.
+/// Two comparison tiers:
+/// <list type="bullet">
+/// <item><description>Wolverine — a real message bus (baseline): framework dispatch + handler chain + context pooling</description></item>
+/// <item><description>Corvus — generated producer: workspace + channel build + validate + serialize</description></item>
+/// </list>
 /// </para>
 /// </remarks>
 [MemoryDiagnoser]
@@ -36,10 +41,11 @@ public class PublishPipelineBenchmarks
     private PublishLightMeasurementProducer producerBasicValidation = null!;
     private PublishLightMeasurementProducer producerDetailedValidation = null!;
     private LightMeasuredPayload corvusPayload;
-    private LightMeasuredPoco natsPayload = null!;
+    private LightMeasuredPoco wolverinePayload = null!;
+    private WolverineBaseline wolverine = null!;
 
     [GlobalSetup]
-    public void Setup()
+    public async Task Setup()
     {
         this.transport = new BenchmarkTransport();
 
@@ -54,19 +60,30 @@ public class PublishPipelineBenchmarks
         // Parse the Corvus typed payload once (re-used across iterations)
         this.corvusPayload = LightMeasuredPayload.ParseValue(ValidPayloadBytes);
 
-        // POCO equivalent for raw baseline
-        this.natsPayload = new LightMeasuredPoco
+        // POCO equivalent for Wolverine baseline
+        this.wolverinePayload = new LightMeasuredPoco
         {
             Id = 42,
             Lumens = 512.7,
             SentAt = "2026-05-25T10:30:00Z",
         };
+
+        // Wolverine baseline
+        this.wolverine = new WolverineBaseline();
+        await this.wolverine.StartAsync().ConfigureAwait(false);
     }
 
-    [Benchmark(Description = "Raw NATS + STJ (no validation)", Baseline = true)]
-    public int RawNats_NoValidation()
+    [GlobalCleanup]
+    public async Task Cleanup()
     {
-        return RawNatsBaseline.Publish(in this.natsPayload);
+        await this.wolverine.DisposeAsync().ConfigureAwait(false);
+    }
+
+    [Benchmark(Description = "Wolverine: serialize + framework dispatch (baseline)", Baseline = true)]
+    public async Task Wolverine_Publish()
+    {
+        _ = JsonSerializer.SerializeToUtf8Bytes(this.wolverinePayload, WolverineBaseline.SerializerOptions);
+        await this.wolverine.InvokeAsync(this.wolverinePayload).ConfigureAwait(false);
     }
 
     [Benchmark(Description = "Corvus: Generated producer (no validation)")]

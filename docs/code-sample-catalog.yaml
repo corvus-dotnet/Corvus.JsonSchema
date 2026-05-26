@@ -464,6 +464,40 @@ example-recipes:
       - {index: 0, language: bash, lines: [18, 22]}
       - {index: 1, language: csharp, lines: [36, 57], category: compilable, verified: false}
       - {index: 2, language: csharp, lines: [63, 72], category: compilable, verified: false}
+  - path: "docs/ExampleRecipes/036-AsyncApiProducer/README.md"
+    companion_project: "docs/ExampleRecipes/036-AsyncApiProducer/"
+    blocks:
+      - {index: 0, language: bash, lines: [17, 19]}
+      - {index: 1, language: bash, lines: [23, 27]}
+      - {index: 2, language: csharp, lines: [42, 49], category: compilable, verified: false}
+      - {index: 3, language: bash, lines: [67, 69]}
+      - {index: 4, language: text, lines: [73, 79]}
+  - path: "docs/ExampleRecipes/037-AsyncApiConsumer/README.md"
+    companion_project: "docs/ExampleRecipes/037-AsyncApiConsumer/"
+    blocks:
+      - {index: 0, language: bash, lines: [17, 19]}
+      - {index: 1, language: bash, lines: [23, 27]}
+      - {index: 2, language: csharp, lines: [37, 44], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [52, 59], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [70, 74], category: compilable, verified: false}
+      - {index: 5, language: bash, lines: [78, 80]}
+      - {index: 6, language: text, lines: [84, 93]}
+  - path: "docs/ExampleRecipes/038-AsyncApiEndToEnd/README.md"
+    companion_project: "docs/ExampleRecipes/038-AsyncApiEndToEnd/"
+    blocks:
+      - {index: 0, language: bash, lines: [17, 19]}
+      - {index: 1, language: bash, lines: [23, 27]}
+      - {index: 2, language: bash, lines: [43, 45]}
+      - {index: 3, language: text, lines: [49, 62]}
+  - path: "docs/ExampleRecipes/039-AsyncApiAuthentication/README.md"
+    companion_project: "docs/ExampleRecipes/039-AsyncApiAuthentication/"
+    blocks:
+      - {index: 0, language: bash, lines: [26, 28]}
+      - {index: 1, language: bash, lines: [32, 34]}
+      - {index: 2, language: bash, lines: [38, 42]}
+      - {index: 3, language: csharp, lines: [48, 50], category: compilable, verified: false}
+      - {index: 4, language: bash, lines: [71, 73]}
+      - {index: 5, language: text, lines: [79, 95]}
 
 main-docs:
   - path: "docs/AddingKeywords.md"
