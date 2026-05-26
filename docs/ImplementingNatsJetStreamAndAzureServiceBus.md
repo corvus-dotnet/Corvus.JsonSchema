@@ -4,9 +4,12 @@ This document outlines the implementation plan for two new AsyncAPI message tran
 1. **NATS JetStream** — durable message streaming for NATS
 2. **Azure Service Bus** — Microsoft Azure's enterprise messaging service
 
-## Architecture Overview
+## 📦 Packages
 
-Both transports follow the same pattern as existing implementations (Kafka, AMQP, MQTT):
+**No new packages.** Both implementations extend existing packages:
+
+1. **NATS JetStream** → Extends `Corvus.Text.Json.AsyncApi.Nats` (add `UseJetStream` option)
+2. **Azure Service Bus** → New package: `Corvus.Text.Json.AsyncApi.AzureServiceBus`
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -29,7 +32,7 @@ Both transports follow the same pattern as existing implementations (Kafka, AMQP
 └─────────────────────────────────────────────┘
 ```
 
-## 1. NATS JetStream Transport
+## 1. NATS JetStream Extension
 
 ### Why JetStream?
 
@@ -46,6 +49,10 @@ The current `NatsMessageTransport` uses **core NATS**, which has:
 - ✅ At-least-once and exactly-once delivery
 - ✅ Horizontal scaling with consumer groups
 
+### Architecture Decision: Unified Transport
+
+**Extend the existing `NatsMessageTransport`** rather than creating a separate package. JetStream is a feature of the same NATS server, uses the same connection, and can be toggled via options.
+
 ### Package Dependencies
 
 ```xml
@@ -56,24 +63,35 @@ The `NATS.Net` client already supports JetStream. No additional packages needed.
 
 ### Project Structure
 
-Create: `src/Corvus.Text.Json.AsyncApi.NatsJetStream/`
+Extend: `src/Corvus.Text.Json.AsyncApi.Nats/`
 
-**Files:**
-- `NatsJetStreamMessageTransport.cs` — Main transport implementation
-- `NatsJetStreamTransportOptions.cs` — Configuration options
-- `Corvus.Text.Json.AsyncApi.NatsJetStream.csproj` — Project file
+**Modified Files:**
+- `NatsMessageTransport.cs` — Add JetStream code paths
+- `NatsTransportOptions.cs` — Add JetStream configuration options
 
 ### Key Implementation Details
 
 #### Options Design
 
+Add JetStream-specific properties to existing `NatsTransportOptions`:
+
 ```csharp
-public sealed class NatsJetStreamTransportOptions : ITransportOptions
+public sealed class NatsTransportOptions : ITransportOptions
 {
-    /// <summary>
-    /// Gets or sets the NATS server URL.
-    /// </summary>
+    // Existing properties
     public string Url { get; set; } = "nats://localhost:4222";
+    public string? Name { get; set; }
+    public string DeadLetterSuffix { get; set; } = ".dead-letter";
+    public string InboxPrefix { get; set; } = "_INBOX";
+    public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(30);
+    
+    // NEW: JetStream properties
+    
+    /// <summary>
+    /// Gets or sets a value indicating whether to use JetStream for persistence.
+    /// When false, uses core NATS (no persistence).
+    /// </summary>
+    public bool UseJetStream { get; set; }
     
     /// <summary>
     /// Gets or sets the JetStream stream name. If empty, uses channel name.
@@ -106,13 +124,9 @@ public sealed class NatsJetStreamTransportOptions : ITransportOptions
     /// </summary>
     public StorageType StorageType { get; set; } = StorageType.File;
     
-    /// <inheritdoc/>
+    // Existing ITransportOptions
     public IMessageErrorPolicy? ErrorPolicy { get; set; }
-    
-    /// <inheritdoc/>
     public MessageHandlerMiddleware? HandlerMiddleware { get; set; }
-    
-    /// <inheritdoc/>
     public ProcessingLoopHeartbeat? Heartbeat { get; set; }
 }
 
@@ -134,12 +148,9 @@ public enum StorageType
 
 #### Subscription Pattern
 
-JetStream subscriptions need:
-1. **Create/verify stream exists** (or auto-create)
-2. **Create/verify consumer exists** (durable consumer with resume capability)
-3. **Subscribe to consumer** (fetch messages)
-4. **Acknowledge messages** after successful processing
+The implementation branches based on `UseJetStream`:
 
+**Core NATS** (UseJetStream = false, current behavior):
 ```csharp
 public async ValueTask SubscribeAsync<TPayload>(
     ReadOnlyMemory<byte> channelUtf8,
@@ -147,64 +158,88 @@ public async ValueTask SubscribeAsync<TPayload>(
     CancellationToken cancellationToken)
     where TPayload : struct, IJsonElement<TPayload>
 {
-    string subject = Encoding.UTF8.GetString(channelUtf8.Span);
-    
-    // Get JetStream context
-    INatsJSContext js = await this.connection.CreateJetStreamContext(cancellationToken);
-    
-    // Ensure stream exists
-    await js.CreateStreamAsync(new StreamConfig
+    if (!this.options.UseJetStream)
     {
-        Name = this.options.StreamName ?? subject,
-        Subjects = [subject],
-        Storage = this.options.StorageType,
-    }, cancellationToken);
+        // Existing core NATS subscription (no changes)
+        string subject = Encoding.UTF8.GetString(channelUtf8.Span);
+        await this.connection.SubscribeAsync(subject, handler, cancellationToken);
+        return;
+    }
     
-    // Create durable consumer
-    await js.CreateOrUpdateConsumerAsync(
-        this.options.StreamName ?? subject,
-        new ConsumerConfig
-        {
-            Name = this.options.DurableConsumerName,
-            DurableConsumer = true,
-            DeliverPolicy = this.options.DeliverPolicy,
-            AckWait = this.options.AckWait,
-            MaxDeliver = this.options.MaxDeliver,
-        },
-        cancellationToken);
-    
-    // Subscribe with consumer
-    var consumer = await js.GetConsumerAsync(
-        this.options.StreamName ?? subject,
-        this.options.DurableConsumerName,
-        cancellationToken);
-    
-    // Background task processes messages
-    _ = Task.Run(async () =>
+    // JetStream path below...
+}
+```
+
+**JetStream** (UseJetStream = true, new code):
+```csharp
+public async ValueTask SubscribeAsync<TPayload>(
+    ReadOnlyMemory<byte> channelUtf8,
+    Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+    CancellationToken cancellationToken)
+    where TPayload : struct, IJsonElement<TPayload>
+{
+    if (this.options.UseJetStream)
     {
-        await foreach (var msg in consumer.ConsumeAsync<byte[]>(cancellationToken))
+        string subject = Encoding.UTF8.GetString(channelUtf8.Span);
+        
+        // Get JetStream context
+        INatsJSContext js = await this.connection.CreateJetStreamContext(cancellationToken);
+        
+        // Ensure stream exists
+        await js.CreateStreamAsync(new StreamConfig
         {
-            try
+            Name = this.options.StreamName ?? subject,
+            Subjects = [subject],
+            Storage = this.options.StorageType,
+        }, cancellationToken);
+        
+        // Create durable consumer
+        await js.CreateOrUpdateConsumerAsync(
+            this.options.StreamName ?? subject,
+            new ConsumerConfig
             {
-                using ParsedJsonDocument<TPayload> doc = ParsedJsonDocument<TPayload>.Parse(msg.Data);
-                await handler(doc.RootElement, default, cancellationToken);
-                await msg.AckAsync(cancellationToken); // Commit offset
-            }
-            catch (Exception ex)
+                Name = this.options.DurableConsumerName,
+                DurableConsumer = true,
+                DeliverPolicy = this.options.DeliverPolicy,
+                AckWait = this.options.AckWait,
+                MaxDeliver = this.options.MaxDeliver,
+            },
+            cancellationToken);
+        
+        // Subscribe with consumer
+        var consumer = await js.GetConsumerAsync(
+            this.options.StreamName ?? subject,
+            this.options.DurableConsumerName,
+            cancellationToken);
+        
+        // Background task processes messages
+        _ = Task.Run(async () =>
+        {
+            await foreach (var msg in consumer.ConsumeAsync<byte[]>(cancellationToken))
             {
-                // Error policy determines: retry, skip, dead-letter
-                // If skip: await msg.AckAsync()
-                // If retry: await msg.NakAsync(delay)
+                try
+                {
+                    using ParsedJsonDocument<TPayload> doc = ParsedJsonDocument<TPayload>.Parse(msg.Data);
+                    await handler(doc.RootElement, default, cancellationToken);
+                    await msg.AckAsync(cancellationToken); // Commit offset
+                }
+                catch (Exception ex)
+                {
+                    // Error policy determines: retry, skip, dead-letter
+                    // If skip: await msg.AckAsync()
+                    // If retry: await msg.NakAsync(delay)
+                }
             }
-        }
-    }, cancellationToken);
+        }, cancellationToken);
+    }
 }
 ```
 
 #### Publish Pattern
 
-Publishing is simpler — just write to the stream:
+Publishing also branches based on `UseJetStream`:
 
+**Core NATS** (existing behavior, unchanged):
 ```csharp
 public async ValueTask PublishAsync<TPayload>(
     ReadOnlyMemory<byte> channelUtf8,
@@ -213,17 +248,41 @@ public async ValueTask PublishAsync<TPayload>(
     CancellationToken cancellationToken)
     where TPayload : struct, IJsonElement<TPayload>
 {
-    string subject = Encoding.UTF8.GetString(channelUtf8.Span);
-    byte[] payloadBytes = SerializeToOwnedBytes(in payload);
+    if (!this.options.UseJetStream)
+    {
+        // Existing core NATS publish (no changes)
+        string subject = Encoding.UTF8.GetString(channelUtf8.Span);
+        await this.connection.PublishAsync(subject, payload, cancellationToken);
+        return;
+    }
     
-    INatsJSContext js = await this.connection.CreateJetStreamContext(cancellationToken);
-    
-    PubAckResponse ack = await js.PublishAsync(
-        subject,
-        payloadBytes,
-        cancellationToken: cancellationToken);
-    
-    // ack.Sequence tells you the stream sequence number assigned
+    // JetStream path below...
+}
+```
+
+**JetStream** (new code):
+```csharp
+public async ValueTask PublishAsync<TPayload>(
+    ReadOnlyMemory<byte> channelUtf8,
+    in TPayload payload,
+    in JsonElement headers,
+    CancellationToken cancellationToken)
+    where TPayload : struct, IJsonElement<TPayload>
+{
+    if (this.options.UseJetStream)
+    {
+        string subject = Encoding.UTF8.GetString(channelUtf8.Span);
+        byte[] payloadBytes = SerializeToOwnedBytes(in payload);
+        
+        INatsJSContext js = await this.connection.CreateJetStreamContext(cancellationToken);
+        
+        PubAckResponse ack = await js.PublishAsync(
+            subject,
+            payloadBytes,
+            cancellationToken: cancellationToken);
+        
+        // ack.Sequence tells you the stream sequence number assigned
+    }
 }
 ```
 
@@ -231,45 +290,33 @@ public async ValueTask PublishAsync<TPayload>(
 
 **Integration Tests** (`tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/`):
 
-Create `NatsJetStreamTransportTests.cs` following the pattern in `KafkaTransportTests.cs`:
+Add JetStream tests to existing `NatsTransportTests.cs`:
 
 ```csharp
 [TestClass]
 [TestCategory("integration")]
 [TestCategory("docker")]
-public class NatsJetStreamTransportTests
+public class NatsTransportTests
 {
-    private static NatsContainer? container;
-    private static NatsJetStreamMessageTransport? transport;
+    // Existing core NATS tests remain unchanged
     
-    [ClassInitialize]
-    public static async Task SetupAsync(TestContext context)
+    // NEW: JetStream-specific tests
+    
+    [TestMethod]
+    public async Task JetStream_PublishAndConsume_MessageDelivered()
     {
-        // Use Testcontainers to spin up NATS with JetStream
-        container = new NatsBuilder()
-            .WithImage("nats:latest")
-            .WithCommand("--js") // Enable JetStream
-            .Build();
-        
-        await container.StartAsync();
-        
-        var options = new NatsJetStreamTransportOptions
+        var options = new NatsTransportOptions
         {
             Url = container.GetConnectionString(),
+            UseJetStream = true,
             DurableConsumerName = "test-consumer",
         };
         
-        transport = new NatsJetStreamMessageTransport(options);
+        // Test basic pub/sub with persistence
     }
     
     [TestMethod]
-    public async Task PublishAndConsume_MessageDelivered()
-    {
-        // Test basic pub/sub
-    }
-    
-    [TestMethod]
-    public async Task ConsumerRestart_ResumesFromOffset()
+    public async Task JetStream_ConsumerRestart_ResumesFromOffset()
     {
         // Publish 100 messages
         // Consume 50 messages
@@ -279,9 +326,21 @@ public class NatsJetStreamTransportTests
     }
     
     [TestMethod]
-    public async Task HandlerException_MessageRedelivered()
+    public async Task JetStream_HandlerException_MessageRedelivered()
     {
         // Test at-least-once delivery
+    }
+    
+    [TestMethod]
+    public async Task CoreNats_NoJetStream_BehaviorUnchanged()
+    {
+        var options = new NatsTransportOptions
+        {
+            Url = container.GetConnectionString(),
+            UseJetStream = false, // Core NATS
+        };
+        
+        // Verify existing behavior still works
     }
 }
 ```
@@ -585,27 +644,28 @@ public class AzureServiceBusTransportTests
 
 ### Phase 1: NATS JetStream (Week 1-2)
 
-**Day 1-2: Project Setup**
-- [ ] Create `Corvus.Text.Json.AsyncApi.NatsJetStream` project
-- [ ] Add `NatsJetStreamTransportOptions` with all configuration
-- [ ] Set up basic project structure matching Kafka pattern
+**Day 1-2: Options & Design**
+- [ ] Add JetStream properties to existing `NatsTransportOptions`
+- [ ] Add `DeliverPolicy` and `StorageType` enums
+- [ ] Design branching logic (if UseJetStream else core NATS)
 
 **Day 3-5: Core Implementation**
-- [ ] Implement `PublishAsync` with stream creation
-- [ ] Implement `SubscribeAsync` with durable consumer
+- [ ] Implement JetStream path in `PublishAsync` (stream creation + publish)
+- [ ] Implement JetStream path in `SubscribeAsync` (durable consumer + fetch)
 - [ ] Implement acknowledgement handling (Ack/Nak)
-- [ ] Implement error policy integration
+- [ ] Ensure core NATS behavior unchanged when `UseJetStream = false`
 
 **Day 6-7: Testing**
-- [ ] Add Testcontainers-based integration tests
+- [ ] Add JetStream tests to existing `NatsTransportTests.cs`
 - [ ] Test resumption behavior
 - [ ] Test at-least-once delivery
 - [ ] Test dead-lettering
+- [ ] Regression test: core NATS still works
 
 **Day 8-10: Documentation & Polish**
-- [ ] Add to `AsyncApiMessageResumption.md`
+- [ ] Update `AsyncApiMessageResumption.md` with JetStream section
 - [ ] Add example recipe (040-AsyncApiNatsJetStream)
-- [ ] Update main AsyncAPI docs
+- [ ] Update main AsyncAPI docs with UseJetStream option
 
 ### Phase 2: Azure Service Bus (Week 3-4)
 
@@ -745,20 +805,24 @@ public interface IHealthCheckableTransport
 ## Questions to Resolve
 
 1. **NATS stream naming**: Should we auto-create streams per channel, or require explicit stream configuration?
-   - **Recommendation**: Auto-create by default, with option to specify explicit stream name
+   - **Recommendation**: Auto-create by default, with option to specify explicit stream name via `StreamName` property
    
-2. **Azure Service Bus queues and topics**: Both are required. How to determine which to use?
+2. **NATS JetStream as separate package or unified?**
+   - **Decision**: Unified transport with `UseJetStream` flag (same server, same connection, just a feature toggle)
+   
+3. **Azure Service Bus queues and topics**: Both are required. How to determine which to use?
    - **Recommendation**: Add `UseTopic` boolean option. When true, use topics with subscription name; when false, use queues
    
-3. **Azure Service Bus namespace**: Connection string or managed identity as default?
+4. **Azure Service Bus namespace**: Connection string or managed identity as default?
    - **Recommendation**: Support both, recommend managed identity in docs
    
-4. **Testing in CI**: Use Testcontainers for NATS, but what about Azure Service Bus?
+5. **Testing in CI**: Use Testcontainers for NATS, but what about Azure Service Bus?
    - **Recommendation**: Use Azurite emulator if possible, or provision real namespace in CI
 
 ## Related Files
 
 - `src/Corvus.Text.Json.AsyncApi/IMessageTransport.cs` — Interface to implement
-- `src/Corvus.Text.Json.AsyncApi.Kafka/` — Reference implementation
+- `src/Corvus.Text.Json.AsyncApi.Nats/` — Existing NATS implementation to extend
+- `src/Corvus.Text.Json.AsyncApi.Kafka/` — Reference implementation for Azure Service Bus
 - `tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/` — Test pattern
 - `docs/AsyncApiMessageResumption.md` — Documentation to update

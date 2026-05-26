@@ -768,23 +768,25 @@ main-docs:
       - {index: 2, language: csharp, lines: [85, 103], category: compilable, verified: false}
   - path: "docs/ImplementingNatsJetStreamAndAzureServiceBus.md"
     blocks:
-      - {index: 0, language: , lines: [11, 30]}
-      - {index: 1, language: xml, lines: [51, 53]}
-      - {index: 2, language: csharp, lines: [70, 133], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [143, 202], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [208, 228], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [236, 287], category: compilable, verified: false}
-      - {index: 6, language: xml, lines: [304, 307]}
-      - {index: 7, language: csharp, lines: [322, 387], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [393, 413], category: compilable, verified: false}
-      - {index: 9, language: csharp, lines: [420, 440], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [443, 495], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [502, 531], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [542, 582], category: compilable, verified: false}
-      - {index: 13, language: csharp, lines: [649, 662], category: compilable, verified: false}
-      - {index: 14, language: csharp, lines: [668, 677], category: compilable, verified: false}
-      - {index: 15, language: csharp, lines: [683, 707], category: compilable, verified: false}
-      - {index: 16, language: csharp, lines: [713, 720], category: compilable, verified: false}
+      - {index: 0, language: , lines: [14, 33]}
+      - {index: 1, language: xml, lines: [58, 60]}
+      - {index: 2, language: csharp, lines: [78, 147], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [154, 171], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [174, 236], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [243, 261], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [264, 287], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [295, 346], category: compilable, verified: false}
+      - {index: 8, language: xml, lines: [363, 366]}
+      - {index: 9, language: csharp, lines: [381, 446], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [452, 472], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [479, 499], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [502, 554], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [561, 590], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [601, 641], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [709, 722], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [728, 737], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [743, 767], category: compilable, verified: false}
+      - {index: 18, language: csharp, lines: [773, 780], category: compilable, verified: false}
   - path: "docs/JMESPath.md"
     blocks:
       - {index: 0, language: bash, lines: [66, 69]}
