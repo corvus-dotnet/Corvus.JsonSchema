@@ -6,10 +6,10 @@ This document outlines the implementation plan for two new AsyncAPI message tran
 
 ## 📦 Packages
 
-**No new packages.** Both implementations extend existing packages:
+**One new package:**
 
-1. **NATS JetStream** → Extends `Corvus.Text.Json.AsyncApi.Nats` (add `UseJetStream` option)
-2. **Azure Service Bus** → New package: `Corvus.Text.Json.AsyncApi.AzureServiceBus`
+1. **NATS JetStream** — Extends existing `Corvus.Text.Json.AsyncApi.Nats` package (adds `UseJetStream` option)
+2. **Azure Service Bus** — New package: `Corvus.Text.Json.AsyncApi.AzureServiceBus`
 
 ```
 ┌─────────────────────────────────────────────┐
