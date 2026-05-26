@@ -807,7 +807,7 @@ internal sealed class RotatingSecretProvider : IMessageAuthenticationProvider
 }
 ```
 
-> **See also:** [Example Recipe 039 — AsyncAPI Authentication](ExampleRecipes/039-AsyncApiAuthentication/) for a fully compilable project demonstrating all authentication patterns.
+> **See also:** [Example Recipe 039 — AsyncAPI Authentication](../ExampleRecipes/039-AsyncApiAuthentication/) for a fully compilable project demonstrating all authentication patterns.
 
 ## Channel Parameters
 
@@ -1349,7 +1349,7 @@ All validation modes produce **zero additional allocation** — the schema evalu
 
 ## Example Recipes
 
-- [AsyncAPI Producer](ExampleRecipes/036-AsyncApiProducer/) — Basic producer generation and publishing
-- [AsyncAPI Consumer](ExampleRecipes/037-AsyncApiConsumer/) — Consumer with validation and error handling
-- [AsyncAPI End-to-End](ExampleRecipes/038-AsyncApiEndToEnd/) — Producer + consumer with in-memory transport testing
-- [AsyncAPI Authentication](ExampleRecipes/039-AsyncApiAuthentication/) — All auth patterns (Azure Identity, OAuth2, API Key, mTLS, composite)
+- [AsyncAPI Producer](../ExampleRecipes/036-AsyncApiProducer/) — Basic producer generation and publishing
+- [AsyncAPI Consumer](../ExampleRecipes/037-AsyncApiConsumer/) — Consumer with validation and error handling
+- [AsyncAPI End-to-End](../ExampleRecipes/038-AsyncApiEndToEnd/) — Producer + consumer with in-memory transport testing
+- [AsyncAPI Authentication](../ExampleRecipes/039-AsyncApiAuthentication/) — All auth patterns (Azure Identity, OAuth2, API Key, mTLS, composite)
