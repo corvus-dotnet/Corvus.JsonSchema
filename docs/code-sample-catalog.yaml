@@ -413,9 +413,28 @@ example-recipes:
     companion_project: "docs/ExampleRecipes/030-OpenApiServer/"
     blocks:
       - {index: 0, language: bash, lines: [28, 32]}
-      - {index: 1, language: csharp, lines: [47, 57], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [63, 90], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [96, 105], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [49, 59], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [63, 67], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [73, 114], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [122, 139], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [145, 155], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [161, 178], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [184, 201], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [223, 249], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [255, 268], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [274, 306], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [314, 356], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [362, 383], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [391, 398], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [404, 412], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [418, 420], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [424, 426], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [432, 437], category: compilable, verified: false}
+      - {index: 18, language: csharp, lines: [441, 443], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [472, 474], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [478, 484], category: compilable, verified: false}
+      - {index: 21, language: bash, lines: [500, 503]}
+      - {index: 22, language: bash, lines: [509, 523]}
   - path: "docs/ExampleRecipes/031-OpenApiAdvancedClient/README.md"
     companion_project: "docs/ExampleRecipes/031-OpenApiAdvancedClient/"
     blocks:
@@ -485,10 +504,31 @@ example-recipes:
   - path: "docs/ExampleRecipes/038-AsyncApiEndToEnd/README.md"
     companion_project: "docs/ExampleRecipes/038-AsyncApiEndToEnd/"
     blocks:
-      - {index: 0, language: bash, lines: [17, 19]}
-      - {index: 1, language: bash, lines: [23, 27]}
-      - {index: 2, language: bash, lines: [43, 45]}
-      - {index: 3, language: text, lines: [49, 62]}
+      - {index: 0, language: bash, lines: [29, 31]}
+      - {index: 1, language: bash, lines: [35, 39]}
+      - {index: 2, language: csharp, lines: [54, 56], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [62, 78], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [82, 90], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [94, 96], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [102, 112], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [120, 131], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [142, 150], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [158, 171], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [175, 178], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [184, 199], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [203, 216], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [220, 231], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [239, 242], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [248, 250], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [256, 262], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [266, 272], category: compilable, verified: false}
+      - {index: 18, language: csharp, lines: [278, 282], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [286, 289], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [313, 315], category: compilable, verified: false}
+      - {index: 21, language: csharp, lines: [321, 329], category: compilable, verified: false}
+      - {index: 22, language: csharp, lines: [335, 337], category: compilable, verified: false}
+      - {index: 23, language: bash, lines: [341, 344]}
+      - {index: 24, language: text, lines: [348, 361]}
   - path: "docs/ExampleRecipes/039-AsyncApiAuthentication/README.md"
     companion_project: "docs/ExampleRecipes/039-AsyncApiAuthentication/"
     blocks:
