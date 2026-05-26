@@ -142,6 +142,49 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task ConcurrentPublishesDoNotThrowAndDeliverAllMessages()
+    {
+        ReadOnlyMemory<byte> channel = "ws/test/concurrent-publish"u8.ToArray();
+        const int messageCount = 40;
+        int receivedCount = 0;
+        using var allReceived = new SemaphoreSlim(0, 1);
+
+        await s_subscriber.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                if (Interlocked.Increment(ref receivedCount) == messageCount)
+                {
+                    allReceived.Release();
+                }
+
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(300);
+
+        Task[] publishTasks = new Task[messageCount];
+        for (int i = 0; i < messageCount; i++)
+        {
+            int messageIndex = i;
+            publishTasks[i] = Task.Run(async () =>
+            {
+                byte[] json = Encoding.UTF8.GetBytes($$"""{"idx":{{messageIndex}}}""");
+                using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+                await s_publisher.PublishAsync(channel, doc.RootElement);
+            });
+        }
+
+        await Task.WhenAll(publishTasks);
+
+        bool allArrived = await allReceived.WaitAsync(TimeSpan.FromSeconds(15));
+        Assert.IsTrue(allArrived, $"Only received {receivedCount}/{messageCount} concurrent messages.");
+        Assert.AreEqual(messageCount, receivedCount);
+
+        await s_subscriber.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task MultipleChannelsRouteCorrectly()
     {
         ReadOnlyMemory<byte> channel1 = "ws/test/multi/a"u8.ToArray();

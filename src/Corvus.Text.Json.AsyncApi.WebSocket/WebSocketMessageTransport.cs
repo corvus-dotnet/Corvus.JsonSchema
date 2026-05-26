@@ -41,6 +41,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> pendingReplies = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim sendSemaphore = new(1, 1);
     private CancellationTokenSource? receiveCts;
     private Task? receiveTask;
     private bool disposed;
@@ -395,11 +396,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     {
         try
         {
-            await this.webSocket.SendAsync(
-                new ReadOnlyMemory<byte>(rented, 0, length),
-                WebSocketMessageType.Text,
-                endOfMessage: true,
-                cancellationToken).ConfigureAwait(false);
+            await this.SendEnvelopeCoreAsync(rented, length, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -421,11 +418,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
 
         try
         {
-            await this.webSocket.SendAsync(
-                new ReadOnlyMemory<byte>(envelopeRented, 0, envelopeLength),
-                WebSocketMessageType.Text,
-                endOfMessage: true,
-                cancellationToken).ConfigureAwait(false);
+            await this.SendEnvelopeCoreAsync(envelopeRented, envelopeLength, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -452,6 +445,23 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         finally
         {
             this.pendingReplies.TryRemove(correlationId, out _);
+        }
+    }
+
+    private async ValueTask SendEnvelopeCoreAsync(byte[] envelopeRented, int envelopeLength, CancellationToken cancellationToken)
+    {
+        await this.sendSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await this.webSocket.SendAsync(
+                new ReadOnlyMemory<byte>(envelopeRented, 0, envelopeLength),
+                WebSocketMessageType.Text,
+                endOfMessage: true,
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            this.sendSemaphore.Release();
         }
     }
 
