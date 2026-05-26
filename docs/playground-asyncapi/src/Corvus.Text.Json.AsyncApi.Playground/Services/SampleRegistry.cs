@@ -8,8 +8,8 @@ public static class SampleRegistry
     {
         return
         [
-            new("streetlights", "Streetlights (Basic)"),
-            new("iot-sensors", "IoT Sensors (Request/Reply)"),
+            new("streetlights", "Streetlights (Producer)"),
+            new("iot-sensors", "Streetlights (End-to-End)"),
         ];
     }
 

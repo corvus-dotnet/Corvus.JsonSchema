@@ -387,6 +387,50 @@ public class FormatAwareStringFormatTests
 #endif
 
     // ====================================================================
+    // date-time — Source(DateTimeOffset) roundtrip: construct → serialize → validate
+    // Regression test: the generated Source(DateTimeOffset) constructor must emit
+    // ISO 8601 ('O' format), not RFC 1123 ('G' format, Utf8Formatter default).
+    // ====================================================================
+
+#if NET
+    [TestMethod]
+    [DataRow(2024, 3, 15, 10, 20, 30, 0, "2024-03-15T10:20:30.0000000+00:00")]
+    [DataRow(2024, 3, 15, 10, 20, 30, 5 * 60, "2024-03-15T10:20:30.0000000+05:00")]
+    [DataRow(2024, 12, 31, 23, 59, 59, -8 * 60, "2024-12-31T23:59:59.0000000-08:00")]
+    public void DateTimeEntity_SourceFromDateTimeOffset_SerializesAsIso8601(
+        int year, int month, int day, int hour, int minute, int second,
+        int offsetMinutes, string expectedSerialized)
+    {
+        DateTimeOffset dto = new(year, month, day, hour, minute, second, TimeSpan.FromMinutes(offsetMinutes));
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonDateTime.Mutable> builder =
+            JsonDateTime.CreateBuilder(workspace, dto);
+
+        string json = builder.RootElement.ToString();
+
+        // The serialized value must be ISO 8601, never RFC 1123
+        Assert.AreEqual(expectedSerialized, json);
+        Assert.IsTrue(json.Contains("T"), "ISO 8601 requires 'T' separator between date and time.");
+        Assert.IsFalse(json.Contains("GMT"), "RFC 1123 'G' format produces 'GMT' — must not appear.");
+    }
+
+    [TestMethod]
+    public void DateTimeEntity_SourceFromDateTimeOffset_PassesSchemaValidation()
+    {
+        DateTimeOffset dto = new(2024, 3, 15, 10, 20, 30, TimeSpan.Zero);
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonDateTime.Mutable> builder =
+            JsonDateTime.CreateBuilder(workspace, dto);
+
+        // Re-parse the serialized output as quoted JSON string and validate
+        string value = builder.RootElement.ToString();
+        string quotedJson = $"\"{value}\"";
+        using var doc = ParsedJsonDocument<JsonDateTime>.Parse(quotedJson);
+        Assert.IsTrue(doc.RootElement.EvaluateSchema());
+    }
+#endif
+
+    // ====================================================================
     // time — TimeOnly for all overloads on .NET; NodaTime.OffsetTime on net481
     // ====================================================================
 

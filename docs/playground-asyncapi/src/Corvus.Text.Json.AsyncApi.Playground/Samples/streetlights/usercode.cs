@@ -1,44 +1,65 @@
-// Streetlights — Publish/Subscribe with InMemoryMessageTransport
-using Corvus.Text.Json;
+// Streetlights — Producer with InMemoryMessageTransport
+using System.Text;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Playground;
 
-// ── Set up the in-memory transport ──────────────────────────────────────────
-InMemoryMessageTransport transport = new();
+// ── Setting up the transport ─────────────────────────────────────────────────
+// In production, you would use a real transport (NATS, Kafka, AMQP, etc.).
+// Here we use InMemoryMessageTransport for demonstration — it captures
+// published messages so we can inspect them.
+await using InMemoryMessageTransport transport = new();
 
-// ── 1. Create a producer and send a "turn on" command ────────────────────────
-Console.WriteLine("1. Sending 'turn on' command...");
-TurnOnProducer producer = new(transport);
-await producer.PublishAsync(
-    streetlightId: "lamp-001"u8,
-    payload: new TurnOnOffPayload.Source(static (ref TurnOnOffPayload.Builder b) =>
+// ── Creating the producer ────────────────────────────────────────────────────
+// The generated TurnOnProducer wraps the transport and provides a typed publish
+// method. The second parameter controls schema validation:
+//   • ValidationMode.None — no validation (fastest, production hot path)
+//   • ValidationMode.Basic — boolean pass/fail schema check
+//   • ValidationMode.Detailed — full error diagnostics with JSON Pointer locations
+TurnOnProducer producer = new(transport, ValidationMode.Basic);
+
+// ── Publishing a message ─────────────────────────────────────────────────────
+// The publish method accepts a strongly-typed payload via the Source pattern.
+// The Source delegate builds the payload using a ref-struct builder — this
+// avoids allocating intermediate objects.
+await producer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
     {
-        b.Create(command: "on"u8);
-    }));
+        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-42");
 
-Console.WriteLine($"   Published {transport.PublishedMessages.Count} message(s)");
-Console.WriteLine($"   Channel: {transport.PublishedMessages[0].Channel}");
-Console.WriteLine();
+Console.WriteLine("Published turnOnOff to lamp-42");
 
-// ── 2. Deliver a light measurement event to the handler ──────────────────────
-Console.WriteLine("2. Delivering light measurement event...");
-await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting/streetlights/1/0/event/lamp-001/lighting/measured"u8,
-    new LightMeasuredPayload.Source(static (ref LightMeasuredPayload.Builder b) =>
+// ── Inspecting what was published ────────────────────────────────────────────
+// The InMemoryMessageTransport captures all published messages for verification.
+PublishedMessage msg = transport.PublishedMessages[0];
+Console.WriteLine($"Channel: {msg.Channel}");
+Console.WriteLine($"Payload: {Encoding.UTF8.GetString(msg.PayloadBytes)}");
+
+// ── Publishing with authentication ──────────────────────────────────────────
+// When your spec defines security schemes, pass an auth provider to the producer.
+// The generated code calls AuthenticateAsync before each publish.
+IMessageAuthenticationProvider auth = new UserPasswordAuthenticationProvider(
+    username: "service-account",
+    password: "kafka-secret");
+
+TurnOnProducer authenticatedProducer = new(transport, ValidationMode.Basic, authProvider: auth);
+
+await authenticatedProducer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
     {
-        b.Create(lumens: 350);
-    }));
+        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-99");
 
-Console.WriteLine("   Measurement delivered to handler.");
-Console.WriteLine();
+Console.WriteLine("Published authenticated turnOnOff to lamp-99");
 
-// ── 3. Inspect published messages ────────────────────────────────────────────
-Console.WriteLine("3. All published messages:");
-foreach (PublishedMessage msg in transport.PublishedMessages)
-{
-    Console.WriteLine($"   [{msg.Channel}] {System.Text.Encoding.UTF8.GetString(msg.PayloadBytes)}");
-}
-
-Console.WriteLine();
-Console.WriteLine("Done!");
+// ── Channel parameters ───────────────────────────────────────────────────────
+// The streetlightId parameter is part of the channel address template:
+//   smartylighting.streetlights.1.0.action.{streetlightId}.turn.on
+// The generated code constructs the full channel address using zero-allocation
+// UTF-8 byte manipulation with pooled buffers — no string concatenation.
+PublishedMessage msg2 = transport.PublishedMessages[1];
+Console.WriteLine($"Channel with param: {msg2.Channel}");
+// Output: smartylighting.streetlights.1.0.action.lamp-99.turn.on

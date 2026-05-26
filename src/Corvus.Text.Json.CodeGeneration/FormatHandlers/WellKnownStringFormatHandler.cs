@@ -488,7 +488,7 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                 {
                     generator
                     .AppendSeparatorLine()
-                    .AppendLineIndent("private Source(DateTimeOffset value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written)); _kind = Kind.StringSimpleType; }");
+                    .AppendLineIndent("private Source(DateTimeOffset value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written, 'O')); _kind = Kind.StringSimpleType; }");
                 }
 
                 return true;

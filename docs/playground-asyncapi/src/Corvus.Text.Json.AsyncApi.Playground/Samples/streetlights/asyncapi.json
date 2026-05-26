@@ -1,66 +1,78 @@
 {
   "asyncapi": "3.0.0",
   "info": {
-    "title": "Streetlights API",
+    "title": "Streetlights Kafka API",
     "version": "1.0.0",
     "description": "The Smartylighting Streetlights API allows you to remotely manage the city lights."
   },
+  "defaultContentType": "application/json",
   "servers": {
-    "production": {
-      "host": "mqtt://test.mosquitto.org",
-      "protocol": "mqtt"
+    "scram-connections": {
+      "host": "test.mykafkacluster.org:18092",
+      "protocol": "kafka-secure",
+      "description": "Test broker secured with scramSha256",
+      "security": [
+        {
+          "$ref": "#/components/securitySchemes/saslScram"
+        }
+      ],
+      "tags": [
+        { "name": "env:test-scram", "description": "This environment is meant for running internal tests through scramSha256" }
+      ]
     }
   },
   "channels": {
-    "lightMeasured": {
-      "address": "smartylighting/streetlights/1/0/event/{streetlightId}/lighting/measured",
+    "lightingMeasured": {
+      "address": "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
       "messages": {
-        "lightMeasured": { "$ref": "#/components/messages/lightMeasured" }
+        "lightMeasured": {
+          "$ref": "#/components/messages/lightMeasured"
+        }
       },
+      "description": "The topic on which measured values may be produced and consumed.",
       "parameters": {
-        "streetlightId": { "description": "The ID of the streetlight." }
+        "streetlightId": {
+          "description": "The ID of the streetlight."
+        }
       }
     },
-    "turnOn": {
-      "address": "smartylighting/streetlights/1/0/action/{streetlightId}/turn/on",
+    "lightTurnOn": {
+      "address": "smartylighting.streetlights.1.0.action.{streetlightId}.turn.on",
       "messages": {
-        "turnOn": { "$ref": "#/components/messages/turnOn" }
+        "turnOn": {
+          "$ref": "#/components/messages/turnOnOff"
+        }
       },
       "parameters": {
-        "streetlightId": { "description": "The ID of the streetlight." }
-      }
-    },
-    "turnOff": {
-      "address": "smartylighting/streetlights/1/0/action/{streetlightId}/turn/off",
-      "messages": {
-        "turnOff": { "$ref": "#/components/messages/turnOff" }
-      },
-      "parameters": {
-        "streetlightId": { "description": "The ID of the streetlight." }
+        "streetlightId": {
+          "description": "The ID of the streetlight."
+        }
       }
     }
   },
   "operations": {
-    "onLightMeasured": {
+    "receiveLightMeasurement": {
       "action": "receive",
-      "channel": { "$ref": "#/channels/lightMeasured" },
-      "summary": "Receive light measurement events from streetlights.",
-      "tags": [{ "name": "events" }],
-      "messages": [{ "$ref": "#/channels/lightMeasured/messages/lightMeasured" }]
+      "channel": {
+        "$ref": "#/channels/lightingMeasured"
+      },
+      "summary": "Inform about environmental lighting conditions of a particular streetlight.",
+      "messages": [
+        {
+          "$ref": "#/channels/lightingMeasured/messages/lightMeasured"
+        }
+      ]
     },
     "turnOn": {
       "action": "send",
-      "channel": { "$ref": "#/channels/turnOn" },
-      "summary": "Send a command to turn on a streetlight.",
-      "tags": [{ "name": "commands" }],
-      "messages": [{ "$ref": "#/channels/turnOn/messages/turnOn" }]
-    },
-    "turnOff": {
-      "action": "send",
-      "channel": { "$ref": "#/channels/turnOff" },
-      "summary": "Send a command to turn off a streetlight.",
-      "tags": [{ "name": "commands" }],
-      "messages": [{ "$ref": "#/channels/turnOff/messages/turnOff" }]
+      "channel": {
+        "$ref": "#/channels/lightTurnOn"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/lightTurnOn/messages/turnOn"
+        }
+      ]
     }
   },
   "components": {
@@ -68,26 +80,24 @@
       "lightMeasured": {
         "name": "lightMeasured",
         "title": "Light measured",
-        "summary": "A light measurement event from a streetlight.",
-        "payload": { "$ref": "#/components/schemas/lightMeasuredPayload" }
+        "summary": "Inform about environmental lighting conditions of a particular streetlight.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/lightMeasuredPayload"
+        }
       },
-      "turnOn": {
-        "name": "turnOn",
-        "title": "Turn on",
-        "summary": "Command to turn on a streetlight.",
-        "payload": { "$ref": "#/components/schemas/turnOnOffPayload" }
-      },
-      "turnOff": {
-        "name": "turnOff",
-        "title": "Turn off",
-        "summary": "Command to turn off a streetlight.",
-        "payload": { "$ref": "#/components/schemas/turnOnOffPayload" }
+      "turnOnOff": {
+        "name": "turnOnOff",
+        "title": "Turn on/off",
+        "summary": "Command a particular streetlight to turn the lights on or off.",
+        "payload": {
+          "$ref": "#/components/schemas/turnOnOffPayload"
+        }
       }
     },
     "schemas": {
       "lightMeasuredPayload": {
         "type": "object",
-        "required": ["lumens", "sentAt"],
         "properties": {
           "lumens": {
             "type": "integer",
@@ -97,13 +107,12 @@
           "sentAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Date and time when the measurement was sent."
+            "description": "Date and time when the message was sent."
           }
         }
       },
       "turnOnOffPayload": {
         "type": "object",
-        "required": ["command"],
         "properties": {
           "command": {
             "type": "string",
@@ -113,9 +122,15 @@
           "sentAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Date and time when the command was sent."
+            "description": "Date and time when the message was sent."
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "saslScram": {
+        "type": "scramSha256",
+        "description": "Provide your username and password for SASL/SCRAM authentication"
       }
     }
   }
