@@ -251,8 +251,13 @@ public async ValueTask PublishAsync<TPayload>(
     if (!this.options.UseJetStream)
     {
         // Existing core NATS publish (no changes)
+        // Uses JsonElementSerializer<TPayload>.Instance for zero-allocation serialization
         string subject = Encoding.UTF8.GetString(channelUtf8.Span);
-        await this.connection.PublishAsync(subject, payload, cancellationToken);
+        await this.connection.PublishAsync(
+            subject: subject,
+            data: payload,
+            serializer: JsonElementSerializer<TPayload>.Instance,
+            cancellationToken: cancellationToken);
         return;
     }
     
@@ -272,13 +277,14 @@ public async ValueTask PublishAsync<TPayload>(
     if (this.options.UseJetStream)
     {
         string subject = Encoding.UTF8.GetString(channelUtf8.Span);
-        byte[] payloadBytes = SerializeToOwnedBytes(in payload);
         
         INatsJSContext js = await this.connection.CreateJetStreamContext(cancellationToken);
         
+        // JetStream also supports IBufferWriter-based serialization
         PubAckResponse ack = await js.PublishAsync(
             subject,
-            payloadBytes,
+            payload,
+            serializer: JsonElementSerializer<TPayload>.Instance,  // Zero-allocation
             cancellationToken: cancellationToken);
         
         // ack.Sequence tells you the stream sequence number assigned
@@ -704,22 +710,35 @@ public class AzureServiceBusTransportTests
 
 ### 1. Serialization
 
-Use the same pattern as other transports:
+**NATS** (use existing custom serializer, writes directly to buffer):
+```csharp
+// No serialization needed — NATS uses JsonElementSerializer<TPayload>.Instance
+// which writes directly to IBufferWriter<byte> (zero allocation)
 
+await jsContext.PublishAsync(
+    subject,
+    payload,  // Pass the payload directly, let serializer handle it
+    serializer: JsonElementSerializer<TPayload>.Instance,
+    cancellationToken: cancellationToken);
+```
+
+**Azure Service Bus** (requires owned byte array):
 ```csharp
 private static byte[] SerializeToOwnedBytes<T>(in T value)
     where T : struct, IJsonElement<T>
 {
-    ArrayBufferWriter<byte> buffer = GetOrCreateBuffer();
-    Utf8JsonWriter writer = GetOrCreateWriter(buffer);
+    ArrayBufferWriter<byte> buffer = GetOrCreateThreadStaticBuffer();
+    Utf8JsonWriter writer = GetOrCreateThreadStaticWriter(buffer);
     
     writer.Reset();
     value.WriteTo(writer);
     writer.Flush();
     
-    return buffer.WrittenSpan.ToArray(); // Copy to owned array
+    return buffer.WrittenSpan.ToArray(); // Azure SDK requires owned array
 }
 ```
+
+**Note:** Azure Service Bus's `ServiceBusMessage` constructor requires an owned `byte[]` or `BinaryData`. Unlike NATS which provides `IBufferWriter<byte>`, we must allocate. The `ToArray()` copy is unavoidable with the current Azure SDK API.
 
 ### 2. Background Processing Loop
 
