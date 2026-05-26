@@ -38,8 +38,9 @@ public class KafkaTransportTests
         });
 
         // Allow Kafka broker to be fully ready (consumer group coordination
-        // and topic metadata discovery requires extra time with KRaft mode)
-        await Task.Delay(5000);
+        // and topic metadata discovery requires extra time with KRaft mode).
+        // Increased to 10s for CI runner reliability under load.
+        await Task.Delay(10000);
     }
 
     [ClassCleanup]
@@ -71,8 +72,9 @@ public class KafkaTransportTests
                 return ValueTask.CompletedTask;
             });
 
-        // Give consumer time for group coordinator handshake + partition assignment
-        await Task.Delay(3000);
+        // Give consumer time for group coordinator handshake + partition assignment.
+        // Increased to 5s for CI runner reliability under load.
+        await Task.Delay(5000);
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"event":"order.created","id":"k001"}"""u8.ToArray());
         await s_transport.PublishAsync(channel, doc.RootElement);
@@ -101,7 +103,7 @@ public class KafkaTransportTests
                 return ValueTask.CompletedTask;
             });
 
-        await Task.Delay(1000);
+        await Task.Delay(3000);
 
         using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"data":1}"""u8.ToArray());
         using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x-request-id":"req-42"}"""u8.ToArray());
@@ -137,7 +139,7 @@ public class KafkaTransportTests
                 return ValueTask.CompletedTask;
             });
 
-        await Task.Delay(1000);
+        await Task.Delay(3000);
 
         for (int i = 0; i < messageCount; i++)
         {
@@ -170,7 +172,7 @@ public class KafkaTransportTests
                 return ValueTask.CompletedTask;
             });
 
-        await Task.Delay(1000);
+        await Task.Delay(3000);
 
         using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"n":1}"""u8.ToArray());
         await s_transport.PublishAsync(channel, doc1.RootElement);
@@ -244,7 +246,7 @@ public class KafkaTransportTests
                 return ValueTask.CompletedTask;
             });
 
-        await Task.Delay(1000);
+        await Task.Delay(3000);
 
         StringBuilder sb = new("[");
         for (int i = 0; i < 1000; i++)
@@ -291,7 +293,7 @@ public class KafkaTransportTests
                 return ValueTask.CompletedTask;
             });
 
-        await Task.Delay(1000);
+        await Task.Delay(3000);
         await transport.DisposeAsync();
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"after":"dispose"}"""u8.ToArray());
