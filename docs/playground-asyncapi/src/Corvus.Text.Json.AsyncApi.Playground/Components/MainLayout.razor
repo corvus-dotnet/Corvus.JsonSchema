@@ -1,0 +1,1014 @@
+@using Microsoft.CodeAnalysis
+@inherits LayoutComponentBase
+@implements IAsyncDisposable
+@page "/"
+@inject CodeGenerationService CodeGenService
+@inject CompilationService CompilationSvc
+@inject ExecutionService ExecutionSvc
+@inject IntelliSenseService IntelliSenseSvc
+@inject IJSRuntime JSRuntime
+
+<div class="playground-toolbar">
+    <h1>AsyncAPI Playground</h1>
+    <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
+        @if (activeSampleId is null)
+        {
+            <option value="" disabled>— Custom spec —</option>
+        }
+        @foreach (PlaygroundSample sample in availableSamples)
+        {
+            <option value="@sample.Id">@sample.DisplayName</option>
+        }
+    </select>
+    <div class="spacer"></div>
+    <button class="theme-toggle-btn" @onclick="CycleTheme" title="@ThemeTooltip">@ThemeIcon</button>
+    <button class="toolbar-btn primary" @onclick="ListChannelsAsync" disabled="@(isGenerating || isListing || isRunning)">
+        @(isListing ? "Listing…" : "List Channels")
+    </button>
+    <button class="toolbar-btn primary" @onclick="GenerateAsync" disabled="@(!hasChannels || isGenerating || isListing || isRunning || checkedOperationCount == 0)">
+        @(isGenerating ? "Generating…" : "Generate")
+    </button>
+    <button class="toolbar-btn primary" @onclick="RunAsync" disabled="@(generationResult is null || generationResult.Files.Count == 0 || isGenerating || isListing || isRunning)" title="Run (F5)">
+        @(isRunning ? "Running…" : "▶ Run")
+    </button>
+</div>
+
+<div class="playground-grid @(maximizedPanel.HasValue ? "has-maximized" : "")">
+    <div class="playground-panel @(maximizedPanel == 0 ? "maximized" : "") @(maximizedPanel.HasValue && maximizedPanel != 0 ? "hidden" : "")">
+        <div class="panel-header">
+            AsyncAPI Spec
+            <div class="spacer"></div>
+            <button class="panel-maximize-btn" @onclick="() => ToggleMaximize(0)" title="@(maximizedPanel == 0 ? "Restore" : "Maximize")">
+                @(maximizedPanel == 0 ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="schema-tabs-wrapper">
+            <button class="schema-tabs-scroll-btn scroll-left" @onclick="ScrollTabsLeft" title="Scroll left">‹</button>
+            <div class="schema-tabs-scroll">
+                @for (int i = 0; i < specFiles.Count; i++)
+                {
+                    int index = i;
+                    SpecFile file = specFiles[index];
+                    <div class="schema-tab @(index == activeSpecIndex ? "active" : "") @(file.IsRoot ? "root-type" : "")"
+                         @onclick="() => SelectSpecTab(index)">
+                        @if (renamingTabIndex == index)
+                        {
+                            <input @ref="renameInputRef"
+                                   class="schema-tab-rename-input"
+                                   @bind="renameValue"
+                                   @bind:event="oninput"
+                                   @onclick:stopPropagation="true"
+                                   @onkeydown="OnRenameKeyDown"
+                                   @onblur="CommitRename" />
+                        }
+                        else
+                        {
+                            <span class="schema-tab-name">@file.Name</span>
+                            <button class="schema-tab-rename-btn"
+                                    @onclick:stopPropagation="true"
+                                    @onclick="() => StartRename(index)"
+                                    title="Rename">✎</button>
+                        }
+                        <button class="schema-tab-root-badge @(file.IsRoot ? "is-root" : "")"
+                                @onclick:stopPropagation="true"
+                                @onclick="() => ToggleRoot(index)"
+                                title="@(file.IsRoot ? "Root spec (click to mark another file as root)" : "Reference document (click to mark as root)")">
+                            @(file.IsRoot ? "ROOT" : "REF")
+                        </button>
+                        @if (specFiles.Count > 1)
+                        {
+                            <button class="schema-tab-close"
+                                    @onclick:stopPropagation="true"
+                                    @onclick="() => RemoveSpecTab(index)"
+                                    title="Remove">×</button>
+                        }
+                    </div>
+                }
+                <button class="schema-tab-add" @onclick="AddSpecTab" title="Add reference document">+</button>
+            </div>
+            <button class="schema-tabs-scroll-btn scroll-right" @onclick="ScrollTabsRight" title="Scroll right">›</button>
+        </div>
+        <div class="panel-content">
+            <StandaloneCodeEditor @ref="specEditor"
+                                  Id="spec-editor"
+                                  ConstructionOptions="SpecEditorOptions"
+                                  OnDidInit="OnSpecEditorInit"
+                                  OnDidChangeModelContent="OnSpecContentChanged" />
+        </div>
+    </div>
+
+    <div class="playground-panel @(maximizedPanel == 1 ? "maximized" : "") @(maximizedPanel.HasValue && maximizedPanel != 1 ? "hidden" : "")">
+        <div class="panel-header">
+            <button class="tab-btn @(rightPanelTab == RightTab.Channels ? "active" : "")"
+                    @onclick="() => rightPanelTab = RightTab.Channels">
+                Channels
+                @if (hasChannels)
+                {
+                    <span class="badge">@totalOperationCount</span>
+                }
+            </button>
+            <button class="tab-btn @(rightPanelTab == RightTab.GeneratedFiles ? "active" : "")"
+                    @onclick="() => rightPanelTab = RightTab.GeneratedFiles">
+                Generated
+                @if (generationResult?.Files.Count > 0)
+                {
+                    <span class="badge">@generationResult.Files.Count</span>
+                }
+            </button>
+            <div class="spacer"></div>
+            <button class="panel-maximize-btn" @onclick="() => ToggleMaximize(1)" title="@(maximizedPanel == 1 ? "Restore" : "Maximize")">
+                @(maximizedPanel == 1 ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-content">
+            @if (rightPanelTab == RightTab.Channels)
+            {
+                <ChannelTreePanel Channels="@channels"
+                                  OnSelectionChanged="OnChannelSelectionChanged" />
+            }
+            else
+            {
+                <GeneratedFilesPanel Files="@(generationResult?.Files ?? [])"
+                                     SelectedFile="@selectedGeneratedFile"
+                                     OnFileSelected="OnGeneratedFileSelected"
+                                     Theme="@MonacoTheme" />
+            }
+        </div>
+    </div>
+
+    <div class="playground-panel @(maximizedPanel == 2 ? "maximized" : "") @(maximizedPanel.HasValue && maximizedPanel != 2 ? "hidden" : "")">
+        <div class="panel-header">
+            User Code (C#)
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyUserCode" title="Copy code">📋</button>
+            <button class="panel-maximize-btn" @onclick="() => ToggleMaximize(2)" title="@(maximizedPanel == 2 ? "Restore" : "Maximize")">
+                @(maximizedPanel == 2 ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-content">
+            <StandaloneCodeEditor @ref="userCodeEditor"
+                                  Id="user-code-editor"
+                                  ConstructionOptions="UserCodeEditorOptions"
+                                  OnDidInit="OnUserCodeEditorInit" />
+        </div>
+    </div>
+
+    <div class="playground-panel @(maximizedPanel == 3 ? "maximized" : "") @(maximizedPanel.HasValue && maximizedPanel != 3 ? "hidden" : "")">
+        <div class="panel-header">
+            Console Output
+            <div class="spacer"></div>
+            <button class="panel-clear-btn" @onclick="ClearConsole" title="Clear">🗑️</button>
+            <button class="panel-copy-btn" @onclick="CopyConsoleOutput" title="Copy output">📋</button>
+            <button class="panel-maximize-btn" @onclick="() => ToggleMaximize(3)" title="@(maximizedPanel == 3 ? "Restore" : "Maximize")">
+                @(maximizedPanel == 3 ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-content">
+            <div class="console-output">
+                @foreach (ConsoleLine line in consoleLines)
+                {
+                    <div class="console-line @line.CssClass">@line.Text</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="status-bar @(statusError ? "error" : "")">
+    @if (isGenerating || isListing || isRunning)
+    {
+        <span class="status-spinner"></span>
+    }
+    <span class="status-item">@statusText</span>
+</div>
+
+@code {
+    private const string DefaultUserCode =
+        """
+        // 1. Paste your AsyncAPI spec in the top-left editor
+        // 2. Click "List Channels" to see available channels/operations
+        // 3. Select the operations you want, then click "Generate"
+        // 4. Write code here that uses the generated types
+        // 5. Click "▶ Run" to compile and execute
+        Console.WriteLine("Hello from AsyncAPI Playground!");
+        """;
+
+    private StandaloneCodeEditor? specEditor;
+    private StandaloneCodeEditor? userCodeEditor;
+    private DotNetObjectReference<MainLayout>? dotNetRef;
+    private ElementReference renameInputRef;
+    private bool focusRenameInput;
+    private int? maximizedPanel;
+
+    private GenerationResult? generationResult;
+    private List<ChannelNode> channels = [];
+    private bool hasChannels;
+    private int totalOperationCount;
+    private int checkedOperationCount;
+    private bool isListing;
+    private bool isGenerating;
+    private bool isRunning;
+    private bool statusError;
+    private string statusText = "Ready";
+    private List<ConsoleLine> consoleLines = [];
+    private CancellationTokenSource? runCts;
+    private RightTab rightPanelTab = RightTab.Channels;
+    private GeneratedFile? selectedGeneratedFile;
+
+    private List<SpecFile> specFiles = [new SpecFile()];
+    private int activeSpecIndex;
+    private int renamingTabIndex = -1;
+    private string renameValue = string.Empty;
+
+    private IReadOnlyList<PlaygroundSample> availableSamples = [];
+    private string? activeSampleId;
+    private bool suppressContentChange;
+
+    private string themePreference = "system";
+    private string resolvedTheme = "dark";
+
+    private string MonacoTheme => this.resolvedTheme == "light" ? "vs" : "vs-dark";
+    private string ThemeIcon => this.themePreference switch
+    {
+        "dark" => "🌙",
+        "light" => "☀️",
+        _ => "🖥️",
+    };
+
+    private string ThemeTooltip => this.themePreference switch
+    {
+        "dark" => "Dark theme (click to switch)",
+        "light" => "Light theme (click to switch)",
+        _ => "System theme (click to switch)",
+    };
+
+    private enum RightTab
+    {
+        Channels,
+        GeneratedFiles,
+    }
+
+    private sealed record ConsoleLine(string Text, string CssClass = "");
+
+    private StandaloneEditorConstructionOptions SpecEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "json",
+        Theme = MonacoTheme,
+        AutomaticLayout = true,
+        Value = specFiles[activeSpecIndex].Content,
+        FontSize = 13,
+        ScrollBeyondLastLine = false,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+    };
+
+    private StandaloneEditorConstructionOptions UserCodeEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "csharp",
+        Theme = MonacoTheme,
+        AutomaticLayout = true,
+        Value = DefaultUserCode,
+        FontSize = 13,
+        ScrollBeyondLastLine = false,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+    };
+
+    protected override void OnInitialized()
+    {
+        availableSamples = SampleRegistry.GetSamples();
+        activeSampleId = availableSamples.Count > 0 ? availableSamples[0].Id : null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerCSharpProviders", dotNetRef);
+            await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", dotNetRef);
+            await InitializeThemeAsync();
+            await JSRuntime.InvokeVoidAsync("onSystemThemeChange", dotNetRef);
+        }
+
+        if (focusRenameInput)
+        {
+            focusRenameInput = false;
+            try
+            {
+                await renameInputRef.FocusAsync();
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    private async Task InitializeThemeAsync()
+    {
+        resolvedTheme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
+
+        string? storedPreference = null;
+        try
+        {
+            storedPreference = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "playground-theme");
+        }
+        catch
+        {
+        }
+
+        themePreference = storedPreference switch
+        {
+            "dark" => "dark",
+            "light" => "light",
+            _ => "system",
+        };
+
+        await ApplyCurrentThemeAsync();
+        StateHasChanged();
+    }
+
+    private async Task ApplyCurrentThemeAsync()
+    {
+        resolvedTheme = themePreference == "system"
+            ? await JSRuntime.InvokeAsync<string>("getSystemTheme")
+            : themePreference;
+
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync(
+                "localStorage.setItem",
+                "playground-theme",
+                themePreference == "system" ? "auto" : themePreference);
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task OnSpecEditorInit()
+    {
+        if (activeSampleId is not null)
+        {
+            await LoadSampleAsync(activeSampleId);
+        }
+    }
+
+    private Task OnUserCodeEditorInit() => Task.CompletedTask;
+
+    private async Task OnSampleChanged(ChangeEventArgs e)
+    {
+        string? selectedId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(selectedId))
+        {
+            await LoadSampleAsync(selectedId);
+        }
+    }
+
+    private async Task LoadSampleAsync(string sampleId)
+    {
+        PlaygroundSample? sample = availableSamples.FirstOrDefault(s => s.Id == sampleId);
+        if (sample is null)
+        {
+            return;
+        }
+
+        activeSampleId = sampleId;
+
+        IReadOnlyList<(string Name, string Content, bool IsRoot)> sampleFiles = SampleRegistry.LoadSampleFiles(sampleId);
+        specFiles.Clear();
+        foreach ((string Name, string Content, bool IsRoot) sampleFile in sampleFiles)
+        {
+            specFiles.Add(new SpecFile
+            {
+                Name = sampleFile.Name,
+                Content = sampleFile.Content,
+                IsRoot = sampleFile.IsRoot,
+            });
+        }
+
+        if (specFiles.Count == 0)
+        {
+            specFiles.Add(new SpecFile());
+        }
+
+        foreach (SpecFile file in specFiles)
+        {
+            file.MarkClean();
+            file.IsNew = false;
+        }
+
+        activeSpecIndex = GetRootSpecIndex();
+        renamingTabIndex = -1;
+        ResetSpecDerivedState();
+        statusText = $"Ready — loaded {sample.DisplayName}";
+        statusError = false;
+
+        if (specEditor is not null)
+        {
+            suppressContentChange = true;
+            await specEditor.SetValue(specFiles[activeSpecIndex].Content);
+            suppressContentChange = false;
+        }
+
+        if (userCodeEditor is not null)
+        {
+            string? sampleUserCode = SampleRegistry.LoadSampleUserCode(sampleId);
+            await userCodeEditor.SetValue(sampleUserCode ?? DefaultUserCode);
+        }
+
+        StateHasChanged();
+    }
+
+    private int GetRootSpecIndex()
+    {
+        int index = specFiles.FindIndex(f => f.IsRoot);
+        return index >= 0 ? index : 0;
+    }
+
+    private void ResetSpecDerivedState()
+    {
+        channels = [];
+        hasChannels = false;
+        totalOperationCount = 0;
+        checkedOperationCount = 0;
+        generationResult = null;
+        selectedGeneratedFile = null;
+        rightPanelTab = RightTab.Channels;
+    }
+
+    private async Task SaveActiveSpecAsync()
+    {
+        if (specEditor is not null && activeSpecIndex >= 0 && activeSpecIndex < specFiles.Count)
+        {
+            specFiles[activeSpecIndex].Content = await specEditor.GetValue();
+        }
+    }
+
+    private async Task SelectSpecTab(int index)
+    {
+        if (index == activeSpecIndex || index < 0 || index >= specFiles.Count)
+        {
+            return;
+        }
+
+        await SaveActiveSpecAsync();
+        activeSpecIndex = index;
+
+        if (specEditor is not null)
+        {
+            await specEditor.SetValue(specFiles[activeSpecIndex].Content);
+        }
+    }
+
+    private async Task AddSpecTab()
+    {
+        await SaveActiveSpecAsync();
+
+        int n = 1;
+        while (specFiles.Any(f => string.Equals(f.Name, $"ref-{n}.json", StringComparison.OrdinalIgnoreCase)))
+        {
+            n++;
+        }
+
+        specFiles.Add(new SpecFile
+        {
+            Name = $"ref-{n}.json",
+            IsRoot = false,
+            Content = "{}",
+            IsNew = true,
+        });
+
+        activeSpecIndex = specFiles.Count - 1;
+        activeSampleId = null;
+        ResetSpecDerivedState();
+        statusText = "Ready — added reference document";
+        statusError = false;
+
+        if (specEditor is not null)
+        {
+            await specEditor.SetValue(specFiles[activeSpecIndex].Content);
+        }
+    }
+
+    private async Task RemoveSpecTab(int index)
+    {
+        if (specFiles.Count <= 1 || index < 0 || index >= specFiles.Count)
+        {
+            return;
+        }
+
+        bool removingActive = index == activeSpecIndex;
+        if (removingActive)
+        {
+            await SaveActiveSpecAsync();
+        }
+
+        specFiles.RemoveAt(index);
+
+        if (!specFiles.Any(f => f.IsRoot))
+        {
+            specFiles[0].IsRoot = true;
+        }
+
+        if (removingActive)
+        {
+            activeSpecIndex = Math.Min(index, specFiles.Count - 1);
+        }
+        else if (index < activeSpecIndex)
+        {
+            activeSpecIndex--;
+        }
+
+        activeSampleId = null;
+        ResetSpecDerivedState();
+        statusText = "Ready — removed reference document";
+        statusError = false;
+
+        if (removingActive && specEditor is not null)
+        {
+            await specEditor.SetValue(specFiles[activeSpecIndex].Content);
+        }
+    }
+
+    private void ToggleRoot(int index)
+    {
+        if (index < 0 || index >= specFiles.Count)
+        {
+            return;
+        }
+
+        int rootIndex = index;
+        if (specFiles[index].IsRoot)
+        {
+            if (specFiles.Count == 1)
+            {
+                return;
+            }
+
+            rootIndex = index == 0 ? 1 : 0;
+        }
+
+        for (int i = 0; i < specFiles.Count; i++)
+        {
+            specFiles[i].IsRoot = i == rootIndex;
+        }
+
+        activeSampleId = null;
+        ResetSpecDerivedState();
+        statusText = "Ready — root document updated";
+        statusError = false;
+    }
+
+    private void StartRename(int index)
+    {
+        renamingTabIndex = index;
+        renameValue = specFiles[index].Name;
+        focusRenameInput = true;
+    }
+
+    private void CommitRename()
+    {
+        if (renamingTabIndex >= 0
+            && renamingTabIndex < specFiles.Count
+            && !string.IsNullOrWhiteSpace(renameValue))
+        {
+            specFiles[renamingTabIndex].Name = renameValue.Trim();
+            activeSampleId = null;
+            ResetSpecDerivedState();
+            statusText = "Ready — document renamed";
+            statusError = false;
+        }
+
+        renamingTabIndex = -1;
+    }
+
+    private void OnRenameKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            CommitRename();
+        }
+        else if (e.Key == "Escape")
+        {
+            renamingTabIndex = -1;
+        }
+    }
+
+    private async Task ScrollTabsLeft()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "document.querySelector('.schema-tabs-scroll')?.scrollBy({left: -150, behavior: 'smooth'})");
+    }
+
+    private async Task ScrollTabsRight()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "document.querySelector('.schema-tabs-scroll')?.scrollBy({left: 150, behavior: 'smooth'})");
+    }
+
+    private void OnSpecContentChanged(ModelContentChangedEvent e)
+    {
+        if (suppressContentChange)
+        {
+            return;
+        }
+
+        activeSampleId = null;
+        if (hasChannels || generationResult is not null || selectedGeneratedFile is not null)
+        {
+            ResetSpecDerivedState();
+            statusText = "Spec changed — list channels again";
+            statusError = false;
+        }
+    }
+
+    private async Task ListChannelsAsync()
+    {
+        isListing = true;
+        statusError = false;
+        statusText = "Listing channels…";
+        ResetSpecDerivedState();
+        StateHasChanged();
+
+        try
+        {
+            await SaveActiveSpecAsync();
+            await Task.Yield();
+
+            ListChannelsResult listResult = await CodeGenService.ListChannelsAsync(specFiles);
+
+            if (listResult.Errors.Count > 0)
+            {
+                foreach (string error in listResult.Errors)
+                {
+                    WriteConsole($"⚠ {error}", "error");
+                }
+
+                statusText = "Failed to list channels";
+                statusError = true;
+            }
+            else
+            {
+                channels = listResult.Channels;
+                hasChannels = channels.Count > 0;
+                totalOperationCount = channels.Sum(c => c.Children.Count);
+                checkedOperationCount = channels.Sum(c => c.Children.Count(op => op.IsChecked));
+
+                if (hasChannels)
+                {
+                    string version = string.IsNullOrWhiteSpace(listResult.SpecVersion)
+                        ? "unknown version"
+                        : $"AsyncAPI {listResult.SpecVersion}";
+                    statusText = $"Found {totalOperationCount} operations in {channels.Count} channels ({version})";
+                    WriteConsole($"✓ {totalOperationCount} operations listed", "success");
+                }
+                else
+                {
+                    statusText = "No channels found in spec";
+                    WriteConsole("No channels found in the spec", "info");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            WriteConsole($"❌ {ex.Message}", "error");
+            statusText = "Error listing channels";
+            statusError = true;
+        }
+        finally
+        {
+            isListing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenerateAsync()
+    {
+        isGenerating = true;
+        statusError = false;
+        statusText = "Generating…";
+        generationResult = null;
+        selectedGeneratedFile = null;
+        StateHasChanged();
+
+        try
+        {
+            await SaveActiveSpecAsync();
+            await Task.Yield();
+
+            HashSet<string> includeChannels = new(StringComparer.Ordinal);
+            foreach (ChannelNode group in channels)
+            {
+                foreach (ChannelNode op in group.Children)
+                {
+                    if (op.IsChecked)
+                    {
+                        includeChannels.Add(op.Channel);
+                    }
+                }
+            }
+
+            generationResult = await CodeGenService.GenerateAsync(specFiles, GenerationMode.Both, includeChannels);
+
+            if (generationResult.Errors.Count > 0)
+            {
+                foreach (string error in generationResult.Errors)
+                {
+                    WriteConsole($"⚠ {error}", "error");
+                }
+
+                string issueWord = generationResult.Errors.Count == 1 ? "issue" : "issues";
+                statusText = $"Generation completed with {generationResult.Errors.Count} {issueWord}";
+                statusError = true;
+            }
+            else if (generationResult.Files.Count == 0)
+            {
+                statusText = "No files generated";
+                WriteConsole("No files generated", "info");
+            }
+            else
+            {
+                int handlerCount = generationResult.Files.Count(f => f.IsHandler);
+                int producerCount = generationResult.Files.Count(f => f.IsProducer);
+                int modelCount = generationResult.Files.Count(f => f.IsModel);
+                statusText = $"Generated {generationResult.Files.Count} files ({handlerCount} handler, {producerCount} producer, {modelCount} model)";
+                WriteConsole($"✓ Generated {generationResult.Files.Count} files", "success");
+            }
+
+            if (generationResult.Files.Count > 0)
+            {
+                IntelliSenseSvc.UpdateGeneratedCode(generationResult.Files);
+                rightPanelTab = RightTab.GeneratedFiles;
+            }
+        }
+        catch (Exception ex)
+        {
+            WriteConsole($"❌ {ex.Message}", "error");
+            statusText = "Generation failed";
+            statusError = true;
+        }
+        finally
+        {
+            isGenerating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RunAsync()
+    {
+        if (generationResult is null || generationResult.Files.Count == 0 || userCodeEditor is null)
+        {
+            return;
+        }
+
+        isRunning = true;
+        statusError = false;
+        statusText = "Building…";
+        StateHasChanged();
+
+        runCts?.Cancel();
+        runCts?.Dispose();
+        runCts = new CancellationTokenSource();
+        CancellationToken ct = runCts.Token;
+
+        try
+        {
+            string userCode = await userCodeEditor.GetValue();
+            WriteConsole("▶ Compiling…", "console-progress");
+            StateHasChanged();
+            await Task.Yield();
+
+            CompilationResult compilationResult = await CompilationSvc.CompileAsync(generationResult.Files, userCode);
+
+            if (!compilationResult.Success)
+            {
+                statusText = $"Build failed — {compilationResult.Diagnostics.Count} error(s)";
+                statusError = true;
+                WriteConsole($"✗ Build failed — {compilationResult.Diagnostics.Count} error(s)", "error");
+                foreach (Diagnostic diagnostic in compilationResult.Diagnostics)
+                {
+                    WriteConsole(FormatDiagnostic(diagnostic), "error");
+                }
+
+                return;
+            }
+
+            if (compilationResult.Assembly is null)
+            {
+                statusText = "Build produced no output";
+                statusError = true;
+                WriteConsole("✗ Build produced no output", "error");
+                return;
+            }
+
+            WriteConsole("✓ Build succeeded", "success");
+            statusText = "Running…";
+            WriteConsole("▶ Running…", "console-progress");
+            StateHasChanged();
+            await Task.Yield();
+
+            ExecutionResult executionResult = await ExecutionSvc.ExecuteAsync(compilationResult.Assembly, ct);
+
+            if (!string.IsNullOrEmpty(executionResult.Output))
+            {
+                foreach (string line in executionResult.Output.Split('\n'))
+                {
+                    string trimmed = line.TrimEnd('\r');
+                    if (!string.IsNullOrEmpty(trimmed))
+                    {
+                        WriteConsole(trimmed);
+                    }
+                }
+            }
+
+            if (executionResult.Success)
+            {
+                statusText = "Execution complete";
+                WriteConsole("✓ Done", "success");
+            }
+            else
+            {
+                statusText = "Execution failed";
+                statusError = true;
+                if (!string.IsNullOrWhiteSpace(executionResult.ErrorMessage))
+                {
+                    WriteConsole($"✗ {executionResult.ErrorMessage}", "error");
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            statusText = "Cancelled";
+            WriteConsole("⚠ Cancelled", "info");
+        }
+        catch (Exception ex)
+        {
+            statusText = "Error";
+            statusError = true;
+            WriteConsole($"❌ {ex.Message}", "error");
+        }
+        finally
+        {
+            isRunning = false;
+            runCts?.Dispose();
+            runCts = null;
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public async Task<List<object>> GetCompletionsForJs(string code, int line, int column)
+    {
+        IReadOnlyList<CompletionItemInfo> items = await IntelliSenseSvc.GetCompletionsAsync(code, line, column);
+        return items.Select(item => (object)new
+        {
+            label = item.Label,
+            kind = MapMonacoKind(item.Kind),
+            detail = item.Detail,
+            insertText = item.Label,
+            sortText = item.SortText,
+            filterText = item.FilterText,
+        }).ToList();
+    }
+
+    [JSInvokable]
+    public async Task<object?> GetSignatureHelpForJs(string code, int line, int column)
+    {
+        SignatureHelpResult? result = await IntelliSenseSvc.GetSignatureHelpAsync(code, line, column);
+        if (result is null)
+        {
+            return null;
+        }
+
+        return new
+        {
+            signatures = result.Signatures.Select(sig => new
+            {
+                label = sig.Label,
+                documentation = sig.Documentation,
+                parameters = sig.Parameters.Select(p => new { label = p.Label, documentation = p.Documentation }).ToArray(),
+            }).ToArray(),
+            activeSignature = result.ActiveSignature,
+            activeParameter = result.ActiveParameter,
+        };
+    }
+
+    [JSInvokable]
+    public async Task OnF5Pressed()
+    {
+        if (generationResult is not null
+            && generationResult.Files.Count > 0
+            && !isRunning
+            && !isGenerating
+            && !isListing)
+        {
+            await RunAsync();
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnSystemThemeChanged(string newTheme)
+    {
+        if (themePreference == "system")
+        {
+            resolvedTheme = newTheme;
+            await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task CycleTheme()
+    {
+        themePreference = themePreference switch
+        {
+            "dark" => "light",
+            "light" => "system",
+            _ => "dark",
+        };
+
+        await ApplyCurrentThemeAsync();
+        StateHasChanged();
+    }
+
+    private static int MapMonacoKind(string kind) => kind switch
+    {
+        "Method" => 0,
+        "Function" => 1,
+        "Field" => 3,
+        "Variable" => 4,
+        "Class" => 5,
+        "Struct" => 6,
+        "Interface" => 7,
+        "Module" => 8,
+        "Property" => 9,
+        "Event" => 10,
+        "Constant" => 14,
+        "Enum" => 15,
+        "EnumMember" => 16,
+        "Keyword" => 17,
+        "Snippet" => 27,
+        "TypeParameter" => 24,
+        _ => 18,
+    };
+
+    private void OnChannelSelectionChanged()
+    {
+        checkedOperationCount = channels.Sum(c => c.Children.Count(op => op.IsChecked));
+        StateHasChanged();
+    }
+
+    private void OnGeneratedFileSelected(GeneratedFile? file)
+    {
+        selectedGeneratedFile = file;
+    }
+
+    private void WriteConsole(string text, string cssClass = "")
+    {
+        consoleLines.Add(new ConsoleLine(text, cssClass));
+    }
+
+    private void ClearConsole()
+    {
+        consoleLines.Clear();
+    }
+
+    private async Task CopyUserCode()
+    {
+        if (userCodeEditor is not null)
+        {
+            string code = await userCodeEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", code);
+        }
+    }
+
+    private async Task CopyConsoleOutput()
+    {
+        string text = string.Join("\n", consoleLines.Select(l => l.Text));
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private static string FormatDiagnostic(Diagnostic diagnostic)
+    {
+        string msg = $"  {diagnostic.Id}: {diagnostic.GetMessage()}";
+        if (!diagnostic.Location.IsInSource)
+        {
+            return msg;
+        }
+
+        FileLinePositionSpan span = diagnostic.Location.GetLineSpan();
+        string file = string.IsNullOrEmpty(span.Path) ? "source" : System.IO.Path.GetFileName(span.Path);
+        return $"{msg} ({file}:{span.StartLinePosition.Line + 1},{span.StartLinePosition.Character + 1})";
+    }
+
+    private void ToggleMaximize(int panelIndex)
+    {
+        maximizedPanel = maximizedPanel == panelIndex ? null : panelIndex;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        runCts?.Cancel();
+        runCts?.Dispose();
+        dotNetRef?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

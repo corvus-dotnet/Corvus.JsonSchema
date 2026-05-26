@@ -1,0 +1,11 @@
+@namespace Corvus.Text.Json.AsyncApi.Playground
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Components.MainLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(Components.MainLayout)">
+            <p>Page not found.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

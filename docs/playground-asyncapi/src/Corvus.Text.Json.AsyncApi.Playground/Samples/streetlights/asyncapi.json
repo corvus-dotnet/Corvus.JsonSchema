@@ -1,0 +1,122 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Streetlights API",
+    "version": "1.0.0",
+    "description": "The Smartylighting Streetlights API allows you to remotely manage the city lights."
+  },
+  "servers": {
+    "production": {
+      "host": "mqtt://test.mosquitto.org",
+      "protocol": "mqtt"
+    }
+  },
+  "channels": {
+    "lightMeasured": {
+      "address": "smartylighting/streetlights/1/0/event/{streetlightId}/lighting/measured",
+      "messages": {
+        "lightMeasured": { "$ref": "#/components/messages/lightMeasured" }
+      },
+      "parameters": {
+        "streetlightId": { "description": "The ID of the streetlight." }
+      }
+    },
+    "turnOn": {
+      "address": "smartylighting/streetlights/1/0/action/{streetlightId}/turn/on",
+      "messages": {
+        "turnOn": { "$ref": "#/components/messages/turnOn" }
+      },
+      "parameters": {
+        "streetlightId": { "description": "The ID of the streetlight." }
+      }
+    },
+    "turnOff": {
+      "address": "smartylighting/streetlights/1/0/action/{streetlightId}/turn/off",
+      "messages": {
+        "turnOff": { "$ref": "#/components/messages/turnOff" }
+      },
+      "parameters": {
+        "streetlightId": { "description": "The ID of the streetlight." }
+      }
+    }
+  },
+  "operations": {
+    "onLightMeasured": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/lightMeasured" },
+      "summary": "Receive light measurement events from streetlights.",
+      "tags": [{ "name": "events" }],
+      "messages": [{ "$ref": "#/channels/lightMeasured/messages/lightMeasured" }]
+    },
+    "turnOn": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/turnOn" },
+      "summary": "Send a command to turn on a streetlight.",
+      "tags": [{ "name": "commands" }],
+      "messages": [{ "$ref": "#/channels/turnOn/messages/turnOn" }]
+    },
+    "turnOff": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/turnOff" },
+      "summary": "Send a command to turn off a streetlight.",
+      "tags": [{ "name": "commands" }],
+      "messages": [{ "$ref": "#/channels/turnOff/messages/turnOff" }]
+    }
+  },
+  "components": {
+    "messages": {
+      "lightMeasured": {
+        "name": "lightMeasured",
+        "title": "Light measured",
+        "summary": "A light measurement event from a streetlight.",
+        "payload": { "$ref": "#/components/schemas/lightMeasuredPayload" }
+      },
+      "turnOn": {
+        "name": "turnOn",
+        "title": "Turn on",
+        "summary": "Command to turn on a streetlight.",
+        "payload": { "$ref": "#/components/schemas/turnOnOffPayload" }
+      },
+      "turnOff": {
+        "name": "turnOff",
+        "title": "Turn off",
+        "summary": "Command to turn off a streetlight.",
+        "payload": { "$ref": "#/components/schemas/turnOnOffPayload" }
+      }
+    },
+    "schemas": {
+      "lightMeasuredPayload": {
+        "type": "object",
+        "required": ["lumens", "sentAt"],
+        "properties": {
+          "lumens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Light intensity measured in lumens."
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time when the measurement was sent."
+          }
+        }
+      },
+      "turnOnOffPayload": {
+        "type": "object",
+        "required": ["command"],
+        "properties": {
+          "command": {
+            "type": "string",
+            "enum": ["on", "off"],
+            "description": "Whether to turn on or off the light."
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time when the command was sent."
+          }
+        }
+      }
+    }
+  }
+}
