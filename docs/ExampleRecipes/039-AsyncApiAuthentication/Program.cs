@@ -17,6 +17,8 @@ LightMeasuredHandler handler = new();
 
 // ── OAuth 2.0 with Azure Identity (Client Credentials) ─────────────────────
 // Requires: dotnet add package Azure.Identity
+// ⚠ Replace the placeholder values below with real Azure AD credentials.
+try
 {
     string tenantId = "your-tenant-id";
     string clientId = "your-client-id";
@@ -44,9 +46,16 @@ LightMeasuredHandler handler = new();
 
     Console.WriteLine($"OAuth2 (client credentials): published to {transport.PublishedMessages[^1].Channel}");
 }
+catch (Exception ex)
+{
+    Console.WriteLine($"OAuth2 (client credentials): \u26a0 Requires real Azure AD credentials. " +
+        $"Set tenantId, clientId, and clientSecret to valid values. ({ex.GetType().Name})");
+}
 
 // ── OAuth 2.0 with Managed Identity ────────────────────────────────────────
 // No secrets needed — works automatically on Azure-hosted services.
+// ⚠ This will fail outside of an Azure environment (VM, App Service, AKS, etc.).
+try
 {
     TokenCredential credential = new DefaultAzureCredential();
 
@@ -63,9 +72,16 @@ LightMeasuredHandler handler = new();
     TurnOnProducer producer = new(transport, authProvider: auth);
     Console.WriteLine("OAuth2 (managed identity): provider configured");
 }
+catch (Exception ex)
+{
+    Console.WriteLine($"OAuth2 (managed identity): \u26a0 Requires an Azure-hosted environment " +
+        $"(VM, App Service, AKS) with managed identity enabled. ({ex.GetType().Name})");
+}
 
 // ── OAuth 2.0 with Interactive Browser Login ───────────────────────────────
 // Desktop/native apps — opens a browser for user authentication.
+// ⚠ Replace the placeholder values below with real Azure AD app registration.
+try
 {
     string clientId = "your-client-id";
     string tenantId = "your-tenant-id";
@@ -90,9 +106,16 @@ LightMeasuredHandler handler = new();
     TurnOnProducer producer = new(transport, authProvider: auth);
     Console.WriteLine("OAuth2 (interactive browser): provider configured");
 }
+catch (Exception ex)
+{
+    Console.WriteLine($"OAuth2 (interactive browser): \u26a0 Requires real Azure AD credentials. " +
+        $"Set clientId and tenantId to valid values. ({ex.GetType().Name})");
+}
 
 // ── OAuth 2.0 with Device Code Flow ───────────────────────────────────────
 // CLI tools and headless terminals.
+// ⚠ Replace the placeholder values below with real Azure AD app registration.
+try
 {
     string clientId = "your-client-id";
     string tenantId = "your-tenant-id";
@@ -121,6 +144,11 @@ LightMeasuredHandler handler = new();
 
     TurnOnProducer producer = new(transport, authProvider: auth);
     Console.WriteLine("OAuth2 (device code): provider configured");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"OAuth2 (device code): \u26a0 Requires real Azure AD credentials. " +
+        $"Set clientId and tenantId to valid values. ({ex.GetType().Name})");
 }
 
 // ── OAuth 2.0 with Static Token ────────────────────────────────────────────
