@@ -573,25 +573,39 @@ public async ValueTask PublishAsync<TPayload>(
     where TPayload : struct, IJsonElement<TPayload>
 {
     string queueName = Encoding.UTF8.GetString(channelUtf8.Span);
-    byte[] payloadBytes = SerializeToOwnedBytes(in payload);
     
-    ServiceBusSender sender = this.client.CreateSender(queueName);
-    
-    var message = new ServiceBusMessage(payloadBytes)
+    byte[]? rentedBuffer = null;
+    try
     {
-        ContentType = "application/json",
-    };
-    
-    // Add headers as application properties
-    if (headers.ValueKind != JsonValueKind.Undefined)
-    {
-        foreach (JsonProperty prop in headers.EnumerateObject())
+        // Rent buffer and serialize
+        int length = SerializeToRentedBuffer(in payload, ref rentedBuffer, out int bytesWritten);
+        ReadOnlyMemory<byte> payloadBytes = rentedBuffer.AsMemory(0, bytesWritten);
+        
+        ServiceBusSender sender = this.client.CreateSender(queueName);
+        
+        var message = new ServiceBusMessage(payloadBytes)
         {
-            message.ApplicationProperties[prop.Name] = prop.Value.ToString();
+            ContentType = "application/json",
+        };
+        
+        // Add headers as application properties
+        if (headers.ValueKind != JsonValueKind.Undefined)
+        {
+            foreach (JsonProperty prop in headers.EnumerateObject())
+            {
+                message.ApplicationProperties[prop.Name] = prop.Value.ToString();
+            }
+        }
+        
+        await sender.SendMessageAsync(message, cancellationToken);
+    }
+    finally
+    {
+        if (rentedBuffer != null)
+        {
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
         }
     }
-    
-    await sender.SendMessageAsync(message, cancellationToken);
 }
 ```
 
@@ -722,9 +736,12 @@ await jsContext.PublishAsync(
     cancellationToken: cancellationToken);
 ```
 
-**Azure Service Bus** (requires owned byte array):
+**Azure Service Bus** (rent from ArrayPool, wrap in ReadOnlyMemory):
 ```csharp
-private static byte[] SerializeToOwnedBytes<T>(in T value)
+private static int SerializeToRentedBuffer<T>(
+    in T value,
+    ref byte[]? rentedBuffer,
+    out int bytesWritten)
     where T : struct, IJsonElement<T>
 {
     ArrayBufferWriter<byte> buffer = GetOrCreateThreadStaticBuffer();
@@ -734,11 +751,15 @@ private static byte[] SerializeToOwnedBytes<T>(in T value)
     value.WriteTo(writer);
     writer.Flush();
     
-    return buffer.WrittenSpan.ToArray(); // Azure SDK requires owned array
+    bytesWritten = (int)buffer.WrittenCount;
+    rentedBuffer = ArrayPool<byte>.Shared.Rent(bytesWritten);
+    buffer.WrittenSpan.CopyTo(rentedBuffer);
+    
+    return bytesWritten;
 }
 ```
 
-**Note:** Azure Service Bus's `ServiceBusMessage` constructor requires an owned `byte[]` or `BinaryData`. Unlike NATS which provides `IBufferWriter<byte>`, we must allocate. The `ToArray()` copy is unavoidable with the current Azure SDK API.
+**Note:** Azure Service Bus's `ServiceBusMessage` constructor accepts `ReadOnlyMemory<byte>`, so we can rent from `ArrayPool<byte>`, serialize into it, pass the memory to the message, then return the buffer after `SendMessageAsync` completes. This matches the pattern used in NATS — zero heap allocation for serialized payload.
 
 ### 2. Background Processing Loop
 
