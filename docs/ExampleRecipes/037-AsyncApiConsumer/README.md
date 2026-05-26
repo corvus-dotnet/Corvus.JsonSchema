@@ -10,7 +10,7 @@ Demonstrates how to **receive and handle messages** using a generated AsyncAPI 3
 | Incoming payload schema validation | `ValidationMode.Basic` rejects invalid messages |
 | Custom error policy | `IMessageErrorPolicy` — skip, retry, or dead-letter |
 | Strongly-typed payload access | `payload.Lumens`, `payload.SentAt` |
-| Simulated broker delivery | `InMemoryMessageTransport.DeliverAsync` |
+| Auto-delivery from in-memory transport | `InMemoryMessageTransport` acts like a real broker |
 
 ## Prerequisites
 
@@ -69,9 +69,13 @@ If validation fails, the message is routed to your `IMessageErrorPolicy` — it 
 
 ```csharp
 await consumer.StartAsync();    // Subscribe to the channel
-// ... messages are delivered and handled ...
+// ... messages are published and auto-delivered ...
 await consumer.StopAsync();     // Unsubscribe and clean up
 ```
+
+### How InMemoryMessageTransport Works
+
+Unlike manual `DeliverAsync()` calls, `InMemoryMessageTransport.PublishAsync()` **automatically delivers** to active subscribers — just like a real broker (Kafka/NATS/MQTT). When you publish to a channel, any consumer subscribed to that channel immediately receives it.
 
 ## Running
 

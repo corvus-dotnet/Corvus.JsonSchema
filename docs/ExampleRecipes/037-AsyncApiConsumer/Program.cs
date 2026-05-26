@@ -32,27 +32,29 @@ ReceiveLightMeasurementConsumer consumer = new(
 await consumer.StartAsync();
 Console.WriteLine("Consumer started, waiting for messages...");
 
-// ── Simulating message delivery ──────────────────────────────────────────────
-// In production, the transport delivers messages from the broker.
-// For testing, we use DeliverAsync to simulate incoming messages.
-ReadOnlyMemory<byte> validPayload = """{"lumens":512,"sentAt":"2026-05-25T10:30:00Z"}"""u8.ToArray();
-await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
-    validPayload);
+// ── Publishing a message ─────────────────────────────────────────────────────
+// InMemoryMessageTransport automatically delivers published messages to active
+// subscribers — just like a real broker (Kafka/NATS/MQTT). No manual delivery needed.
+using ParsedJsonDocument<LightMeasuredPayload> measurement = ParsedJsonDocument<LightMeasuredPayload>.Parse(
+    """{"lumens":512,"sentAt":"2026-05-25T10:30:00Z"}"""u8.ToArray());
+
+await transport.PublishAsync(
+    System.Text.Encoding.UTF8.GetBytes("smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured"),
+    measurement.RootElement);
 
 Console.WriteLine($"Handler received {handler.ReceivedCount} message(s)");
 Console.WriteLine($"Last lumens: {handler.LastLumens}");
 
-// ── Validation failure handling ──────────────────────────────────────────────
-// Invalid messages are caught by the validation layer and routed through
-// the error policy — they never reach your handler.
-ReadOnlyMemory<byte> invalidPayload = """{"lumens":"not-a-number"}"""u8.ToArray();
-await transport.DeliverAsync<LightMeasuredPayload>(
-    "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
-    invalidPayload);
+// ── Publishing another measurement ───────────────────────────────────────────
+using ParsedJsonDocument<LightMeasuredPayload> measurement2 = ParsedJsonDocument<LightMeasuredPayload>.Parse(
+    """{"lumens":2048,"sentAt":"2026-05-25T10:31:00Z"}"""u8.ToArray());
 
-Console.WriteLine($"After invalid: handler still has {handler.ReceivedCount} message(s)");
-Console.WriteLine($"Errors logged: {errorPolicy.ErrorCount}");
+await transport.PublishAsync(
+    System.Text.Encoding.UTF8.GetBytes("smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured"),
+    measurement2.RootElement);
+
+Console.WriteLine($"Handler received {handler.ReceivedCount} total message(s)");
+Console.WriteLine($"Last lumens: {handler.LastLumens}");
 
 // ── Stopping the consumer ────────────────────────────────────────────────────
 await consumer.StopAsync();
