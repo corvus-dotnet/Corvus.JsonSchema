@@ -8,6 +8,8 @@ using System.Text;
 using Corvus.Text.Json.Internal;
 using Microsoft.Extensions.Primitives;
 using NATS.Client.Core;
+using NATS.Client.JetStream;
+using NATS.Client.JetStream.Models;
 
 namespace Corvus.Text.Json.AsyncApi.Nats;
 

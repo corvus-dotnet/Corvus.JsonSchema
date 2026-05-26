@@ -183,15 +183,11 @@ public class TraceContextPropagationTests
             },
             default);
 
-        // Publish — this will inject traceparent
+        // Publish — this will inject traceparent and auto-deliver to subscriber
         JsonElement payload = JsonElement.ParseValue(TestPayloadJson);
         await transport.PublishAsync(TestChannel, in payload, default, default);
 
-        // Get the headers that were published (with traceparent injected)
-        byte[] publishedHeaders = inner.PublishedMessages[0].HeaderBytes;
-
-        // Deliver to subscriber with the same headers
-        await inner.DeliverAsync<JsonElement>("events/temperature", TestPayloadJson, publishedHeaders);
+        // Wait for the handler to be called via auto-delivery
         await handlerCalled.Task;
 
         Activity? sendActivity = activities.FirstOrDefault(a => a.OperationName == "send events/temperature");
