@@ -775,15 +775,16 @@ main-docs:
       - {index: 4, language: csharp, lines: [208, 228], category: compilable, verified: false}
       - {index: 5, language: csharp, lines: [236, 287], category: compilable, verified: false}
       - {index: 6, language: xml, lines: [304, 307]}
-      - {index: 7, language: csharp, lines: [322, 375], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [381, 401], category: compilable, verified: false}
-      - {index: 9, language: csharp, lines: [405, 446], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [450, 479], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [487, 513], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [576, 589], category: compilable, verified: false}
-      - {index: 13, language: csharp, lines: [595, 604], category: compilable, verified: false}
-      - {index: 14, language: csharp, lines: [610, 634], category: compilable, verified: false}
-      - {index: 15, language: csharp, lines: [640, 647], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [322, 387], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [393, 413], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [420, 440], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [443, 495], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [502, 531], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [542, 582], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [649, 662], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [668, 677], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [683, 707], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [713, 720], category: compilable, verified: false}
   - path: "docs/JMESPath.md"
     blocks:
       - {index: 0, language: bash, lines: [66, 69]}

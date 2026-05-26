@@ -339,6 +339,18 @@ public sealed class AzureServiceBusTransportOptions : ITransportOptions
     public TokenCredential? Credential { get; set; }
     
     /// <summary>
+    /// Gets or sets a value indicating whether to use topics (true) or queues (false).
+    /// Topics enable pub/sub with multiple subscriptions per channel.
+    /// </summary>
+    public bool UseTopic { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the subscription name when using topics.
+    /// Multiple consumers with the same subscription name share messages (competing consumers).
+    /// </summary>
+    public string? SubscriptionName { get; set; }
+    
+    /// <summary>
     /// Gets or sets the default receive mode.
     /// </summary>
     public ServiceBusReceiveMode ReceiveMode { get; set; } = ServiceBusReceiveMode.PeekLock;
@@ -402,6 +414,9 @@ var options = new AzureServiceBusTransportOptions
 
 #### Subscription Pattern
 
+Queue mode and topic mode differ in how they create receivers:
+
+**Queue Mode** (UseTopic = false):
 ```csharp
 public async ValueTask SubscribeAsync<TPayload>(
     ReadOnlyMemory<byte> channelUtf8,
@@ -411,7 +426,7 @@ public async ValueTask SubscribeAsync<TPayload>(
 {
     string queueName = Encoding.UTF8.GetString(channelUtf8.Span);
     
-    // Create receiver
+    // Create receiver for queue
     ServiceBusReceiver receiver = this.options.EnableSessions
         ? await this.client.AcceptNextSessionAsync(queueName, cancellationToken: cancellationToken)
         : this.client.CreateReceiver(queueName, new ServiceBusReceiverOptions
@@ -420,6 +435,40 @@ public async ValueTask SubscribeAsync<TPayload>(
             PrefetchCount = this.options.PrefetchCount,
         });
     
+    await ProcessMessagesAsync(receiver, handler, cancellationToken);
+}
+```
+
+**Topic Mode** (UseTopic = true):
+```csharp
+public async ValueTask SubscribeAsync<TPayload>(
+    ReadOnlyMemory<byte> channelUtf8,
+    Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+    CancellationToken cancellationToken)
+    where TPayload : struct, IJsonElement<TPayload>
+{
+    string topicName = Encoding.UTF8.GetString(channelUtf8.Span);
+    string subscriptionName = this.options.SubscriptionName ?? "corvus-default";
+    
+    // Create receiver for topic subscription
+    ServiceBusReceiver receiver = this.options.EnableSessions
+        ? await this.client.AcceptNextSessionAsync(topicName, subscriptionName, cancellationToken: cancellationToken)
+        : this.client.CreateReceiver(topicName, subscriptionName, new ServiceBusReceiverOptions
+        {
+            ReceiveMode = this.options.ReceiveMode,
+            PrefetchCount = this.options.PrefetchCount,
+        });
+    
+    await ProcessMessagesAsync(receiver, handler, cancellationToken);
+}
+
+// Shared processing logic
+private async Task ProcessMessagesAsync<TPayload>(
+    ServiceBusReceiver receiver,
+    Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+    CancellationToken cancellationToken)
+    where TPayload : struct, IJsonElement<TPayload>
+{
     // Background task processes messages
     _ = Task.Run(async () =>
     {
@@ -430,7 +479,7 @@ public async ValueTask SubscribeAsync<TPayload>(
                 using ParsedJsonDocument<TPayload> doc = ParsedJsonDocument<TPayload>.Parse(msg.Body.ToArray());
                 await handler(doc.RootElement, default, cancellationToken);
                 
-                // Complete message (remove from queue)
+                // Complete message (remove from queue/subscription)
                 await receiver.CompleteMessageAsync(msg, cancellationToken);
             }
             catch (Exception ex)
@@ -447,6 +496,9 @@ public async ValueTask SubscribeAsync<TPayload>(
 
 #### Publish Pattern
 
+Publishing differs slightly between queue and topic mode:
+
+**Queue Mode:**
 ```csharp
 public async ValueTask PublishAsync<TPayload>(
     ReadOnlyMemory<byte> channelUtf8,
@@ -478,6 +530,9 @@ public async ValueTask PublishAsync<TPayload>(
 }
 ```
 
+**Topic Mode:**
+Same implementation, but `channelUtf8` is interpreted as topic name instead of queue name. The sender creation is identical — `CreateSender()` works for both queues and topics.
+
 ### Testing Strategy
 
 **Integration Tests** (`tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/`):
@@ -493,9 +548,23 @@ public class AzureServiceBusTransportTests
     // Use Azurite for local testing, or real Service Bus namespace in CI
     
     [TestMethod]
-    public async Task PublishAndConsume_MessageDelivered()
+    public async Task QueueMode_PublishAndConsume_MessageDelivered()
     {
-        // Test basic pub/sub
+        // Test basic queue pub/sub
+    }
+    
+    [TestMethod]
+    public async Task TopicMode_PublishAndConsume_AllSubscriptionsReceive()
+    {
+        // Test topic with multiple subscriptions
+        // Verify each subscription receives the message
+    }
+    
+    [TestMethod]
+    public async Task TopicMode_CompetingConsumers_MessageReceivedOnce()
+    {
+        // Two consumers with same subscription name
+        // Verify only one receives each message
     }
     
     [TestMethod]
@@ -546,8 +615,9 @@ public class AzureServiceBusTransportTests
 - [ ] Set up basic project structure
 
 **Day 3-5: Core Implementation**
-- [ ] Implement `PublishAsync` with multiple auth modes
-- [ ] Implement `SubscribeAsync` with PeekLock mode
+- [ ] Implement `PublishAsync` (works for both queues and topics)
+- [ ] Implement `SubscribeAsync` with queue mode (PeekLock)
+- [ ] Implement `SubscribeAsync` with topic mode (topic + subscription)
 - [ ] Implement Complete/Abandon/DeadLetter patterns
 - [ ] Implement error policy integration
 
@@ -558,7 +628,10 @@ public class AzureServiceBusTransportTests
 
 **Day 8-9: Testing**
 - [ ] Add integration tests (Azurite or real namespace)
-- [ ] Test all auth modes
+- [ ] Test all auth modes (connection string, managed identity, service principal)
+- [ ] Test queue mode (point-to-point)
+- [ ] Test topic mode (pub/sub with multiple subscriptions)
+- [ ] Test competing consumers (same subscription name)
 - [ ] Test dead-letter queue behavior
 - [ ] Test session ordering
 
@@ -659,20 +732,23 @@ public interface IHealthCheckableTransport
 
 ### Azure Service Bus
 - ✅ Publish to queue succeeds
-- ✅ PeekLock mode receives and completes messages
+- ✅ Publish to topic succeeds
+- ✅ Queue mode: PeekLock receives and completes messages
+- ✅ Topic mode: Multiple subscriptions each receive published messages
+- ✅ Topic mode: Competing consumers (same subscription) receive each message once
 - ✅ Handler exception triggers dead-lettering
 - ✅ Managed Identity authentication works
 - ✅ Session ordering works correctly
 - ✅ Integration tests pass in CI (Azurite or real namespace)
-- ✅ Documentation complete with auth examples
+- ✅ Documentation complete with auth examples and queue/topic patterns
 
 ## Questions to Resolve
 
 1. **NATS stream naming**: Should we auto-create streams per channel, or require explicit stream configuration?
    - **Recommendation**: Auto-create by default, with option to specify explicit stream name
    
-2. **Azure Service Bus queue vs topic**: Should we support both, or just queues?
-   - **Recommendation**: Start with queues (simpler), add topics in v2 if needed
+2. **Azure Service Bus queues and topics**: Both are required. How to determine which to use?
+   - **Recommendation**: Add `UseTopic` boolean option. When true, use topics with subscription name; when false, use queues
    
 3. **Azure Service Bus namespace**: Connection string or managed identity as default?
    - **Recommendation**: Support both, recommend managed identity in docs
