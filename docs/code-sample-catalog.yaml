@@ -634,13 +634,12 @@ main-docs:
       - {index: 9, language: csharp, lines: [262, 276], category: compilable, verified: false}
       - {index: 10, language: csharp, lines: [280, 292], category: compilable, verified: false}
       - {index: 11, language: csharp, lines: [304, 317], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [328, 341], category: compilable, verified: false}
-      - {index: 13, language: csharp, lines: [361, 366], category: compilable, verified: false}
-      - {index: 14, language: csharp, lines: [377, 402], category: compilable, verified: false}
-      - {index: 15, language: csharp, lines: [420, 427], category: compilable, verified: false}
-      - {index: 16, language: csharp, lines: [445, 460], category: compilable, verified: false}
-      - {index: 17, language: csharp, lines: [474, 495], category: compilable, verified: false}
-      - {index: 18, language: csharp, lines: [501, 525], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [337, 342], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [353, 378], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [396, 403], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [421, 436], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [450, 471], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [477, 501], category: compilable, verified: false}
   - path: "docs/BenchmarkGuide.md"
     blocks:
       - {index: 0, language: , lines: [11, 30]}

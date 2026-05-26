@@ -169,7 +169,7 @@ AmqpTransportOptions options = new()
     DeadLetterExchange = "sensor-errors",
 };
 
-await using AmqpMessageTransport transport = new(options);
+await using AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(options);
 ```
 
 ### Acknowledgement Behavior
@@ -192,7 +192,7 @@ AmqpTransportOptions options = new()
     DeadLetterExchange = "orders.dead-letter",
 };
 
-await using AmqpMessageTransport transport = new(options);
+await using AmqpMessageTransport transport = await AmqpMessageTransport.CreateAsync(options);
 
 // If handler fails, message is sent to dead-letter exchange
 // If app crashes, unacknowledged message is redelivered
@@ -246,7 +246,7 @@ MqttTransportOptions options = new()
     QualityOfServiceLevel = MqttQualityOfServiceLevel.AtLeastOnce,
 };
 
-await using MqttMessageTransport transport = new(options);
+await using MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(options);
 ```
 
 ### Resumption Behavior
@@ -268,7 +268,7 @@ MqttTransportOptions options = new()
     QualityOfServiceLevel = MqttQualityOfServiceLevel.AtLeastOnce,
 };
 
-await using MqttMessageTransport transport = new(options);
+await using MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(options);
 
 // Messages published while offline are delivered after restart
 ReceiveOrderConsumer consumer = new(transport, handler);
@@ -284,7 +284,7 @@ MqttTransportOptions options = new()
     QualityOfServiceLevel = MqttQualityOfServiceLevel.AtMostOnce,
 };
 
-await using MqttMessageTransport transport = new(options);
+await using MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(options);
 
 // Messages during downtime are lost — use for telemetry, logging
 ReceiveTelemetryConsumer consumer = new(transport, handler);
@@ -310,34 +310,10 @@ NatsTransportOptions options = new()
     Name = "sensor-processor",
 };
 
-await using NatsMessageTransport transport = new(options);
+await using NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(options);
 
 // Core NATS: messages are delivered to active subscribers only
 // No resumption support — offline = messages lost
-```
-
-### Future: JetStream Durable Consumers
-
-When JetStream support is added, it will provide:
-- **Stream storage** — messages persisted to disk
-- **Consumer offsets** — resume from last acknowledged message
-- **Replay** — reprocess historical messages
-
-Expected configuration:
-
-```csharp
-// NOT YET IMPLEMENTED
-NatsTransportOptions options = new()
-{
-    Url = "nats://localhost:4222",
-    UseJetStream = true,
-    
-    // Durable consumer name — stable across restarts
-    ConsumerName = "order-processor",
-    
-    // Where to start if no offset exists
-    DeliverPolicy = DeliverPolicy.All, // or .New, .Last, .ByStartSequence
-};
 ```
 
 ## InMemoryMessageTransport: Testing Only
