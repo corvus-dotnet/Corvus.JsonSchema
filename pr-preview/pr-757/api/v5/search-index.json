@@ -5964,6 +5964,1938 @@
     "Body": "Disposes the underlying resources used to store the UTF-8 string backing the URI value."
   },
   {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-apikeyauthenticationprovider.html",
+    "Title": "ApiKeyAuthenticationProvider",
+    "Description": "Authentication provider for API key security schemes.",
+    "Keywords": "ApiKeyAuthenticationProvider class Corvus.Text.Json.AsyncApi",
+    "Body": "Authentication provider for API key security schemes.\nPopulates the [`Credentials`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.credentials.html) dictionary with a `key` entry (and optionally `name` and `in` for HTTP API keys). The transport reads this to attach the API key to outgoing messages or connections."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-apikeyauthenticationprovider.ctor.html",
+    "Title": "ApiKeyAuthenticationProvider Constructor",
+    "Description": "Initializes a new instance of the [`ApiKeyAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-apikeyauthenticationprovider.html) class.",
+    "Keywords": "ApiKeyAuthenticationProvider constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`ApiKeyAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-apikeyauthenticationprovider.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-apikeyauthenticationprovider.authenticateasync.html",
+    "Title": "ApiKeyAuthenticationProvider.AuthenticateAsync",
+    "Description": "",
+    "Keywords": "ApiKeyAuthenticationProvider AuthenticateAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.html",
+    "Title": "AsyncApiTelemetry",
+    "Description": "Provides OpenTelemetry-compliant instrumentation for AsyncAPI transports.",
+    "Keywords": "AsyncApiTelemetry class Corvus.Text.Json.AsyncApi",
+    "Body": "Provides OpenTelemetry-compliant instrumentation for AsyncAPI transports.\nRegister with the OpenTelemetry pipeline using: ```csharp services.AddOpenTelemetry() .WithTracing(b => b.AddSource(AsyncApiTelemetry.ActivitySourceName)) .WithMetrics(b => b.AddMeter(AsyncApiTelemetry.MeterName)); ``` All instruments are zero-cost when no listener is attached: [`StartActivity`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.startactivity) returns `null` without a listener, and [`Add`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1.add) is a no-op without a [`MeterListener`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meterlistener).\nActivitySource: Gets the [`ActivitySource`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html) for distributed tracing of messaging operations.\nMeter: Gets the [`Meter`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.meter.html) for messaging metrics.\nMessagesSent: Gets the counter for messages sent to the broker.\nMessagesConsumed: Gets the counter for messages delivered to the application handler.\nOperationDuration: Gets the histogram measuring the duration of messaging client operations (publish, request).\nProcessDuration: Gets the histogram measuring consumer handler processing time.\nDeadLetters: Gets the counter for messages moved to a dead-letter channel.\nDeadLetterFailures: Gets the counter for dead-letter operations that themselves failed.\nValidationFailures: Gets the counter for messages that failed schema validation.\nRetryAttempts: Gets the counter for message processing retry attempts.\nSubscriberAborts: Gets the counter for subscriber abort events.\nMessagesSkipped: Gets the counter for messages that were skipped (not processed, not dead-lettered).\nMessageBodySize: Gets the histogram measuring message payload size in bytes.\nHeartbeats: Gets the counter for heartbeat ping attempts (success and failure).\nTransportStateTransitions: Gets the counter for transport state transitions (connected↔disconnected).\nRecordDeadLetter: Records a successful dead-letter operation from within a transport's internal error handling.\nRecordDeadLetterFailure: Records a dead-letter operation that itself failed (message was dropped).\nRecordAbort: Records that a subscriber aborted (stopped consuming) due to the error policy.\nRecordSkip: Records that a message was skipped (not processed and not dead-lettered).\nRecordRetry: Records a retry attempt for message processing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html",
+    "Title": "AsyncApiTelemetry.ActivitySource",
+    "Description": "Gets the [`ActivitySource`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html) for distributed tracing of messaging operations.",
+    "Keywords": "AsyncApiTelemetry ActivitySource property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the [`ActivitySource`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html) for distributed tracing of messaging operations."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.meter.html",
+    "Title": "AsyncApiTelemetry.Meter",
+    "Description": "Gets the [`Meter`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.meter.html) for messaging metrics.",
+    "Keywords": "AsyncApiTelemetry Meter property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the [`Meter`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.meter.html) for messaging metrics."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.messagessent.html",
+    "Title": "AsyncApiTelemetry.MessagesSent",
+    "Description": "Gets the counter for messages sent to the broker.",
+    "Keywords": "AsyncApiTelemetry MessagesSent property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for messages sent to the broker."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.messagesconsumed.html",
+    "Title": "AsyncApiTelemetry.MessagesConsumed",
+    "Description": "Gets the counter for messages delivered to the application handler.",
+    "Keywords": "AsyncApiTelemetry MessagesConsumed property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for messages delivered to the application handler."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.operationduration.html",
+    "Title": "AsyncApiTelemetry.OperationDuration",
+    "Description": "Gets the histogram measuring the duration of messaging client operations (publish, request).",
+    "Keywords": "AsyncApiTelemetry OperationDuration property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the histogram measuring the duration of messaging client operations (publish, request)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.processduration.html",
+    "Title": "AsyncApiTelemetry.ProcessDuration",
+    "Description": "Gets the histogram measuring consumer handler processing time.",
+    "Keywords": "AsyncApiTelemetry ProcessDuration property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the histogram measuring consumer handler processing time."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.deadletters.html",
+    "Title": "AsyncApiTelemetry.DeadLetters",
+    "Description": "Gets the counter for messages moved to a dead-letter channel.",
+    "Keywords": "AsyncApiTelemetry DeadLetters property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for messages moved to a dead-letter channel."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.deadletterfailures.html",
+    "Title": "AsyncApiTelemetry.DeadLetterFailures",
+    "Description": "Gets the counter for dead-letter operations that themselves failed.",
+    "Keywords": "AsyncApiTelemetry DeadLetterFailures property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for dead-letter operations that themselves failed."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.validationfailures.html",
+    "Title": "AsyncApiTelemetry.ValidationFailures",
+    "Description": "Gets the counter for messages that failed schema validation.",
+    "Keywords": "AsyncApiTelemetry ValidationFailures property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for messages that failed schema validation."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.retryattempts.html",
+    "Title": "AsyncApiTelemetry.RetryAttempts",
+    "Description": "Gets the counter for message processing retry attempts.",
+    "Keywords": "AsyncApiTelemetry RetryAttempts property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for message processing retry attempts."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.subscriberaborts.html",
+    "Title": "AsyncApiTelemetry.SubscriberAborts",
+    "Description": "Gets the counter for subscriber abort events.",
+    "Keywords": "AsyncApiTelemetry SubscriberAborts property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for subscriber abort events."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.messagesskipped.html",
+    "Title": "AsyncApiTelemetry.MessagesSkipped",
+    "Description": "Gets the counter for messages that were skipped (not processed, not dead-lettered).",
+    "Keywords": "AsyncApiTelemetry MessagesSkipped property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for messages that were skipped (not processed, not dead-lettered)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.messagebodysize.html",
+    "Title": "AsyncApiTelemetry.MessageBodySize",
+    "Description": "Gets the histogram measuring message payload size in bytes.",
+    "Keywords": "AsyncApiTelemetry MessageBodySize property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the histogram measuring message payload size in bytes."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.heartbeats.html",
+    "Title": "AsyncApiTelemetry.Heartbeats",
+    "Description": "Gets the counter for heartbeat ping attempts (success and failure).",
+    "Keywords": "AsyncApiTelemetry Heartbeats property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for heartbeat ping attempts (success and failure)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.transportstatetransitions.html",
+    "Title": "AsyncApiTelemetry.TransportStateTransitions",
+    "Description": "Gets the counter for transport state transitions (connected↔disconnected).",
+    "Keywords": "AsyncApiTelemetry TransportStateTransitions property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for transport state transitions (connected↔disconnected)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recorddeadletter.html",
+    "Title": "AsyncApiTelemetry.RecordDeadLetter",
+    "Description": "Records a successful dead-letter operation from within a transport's internal error handling.",
+    "Keywords": "AsyncApiTelemetry RecordDeadLetter method Corvus.Text.Json.AsyncApi",
+    "Body": "Records a successful dead-letter operation from within a transport's internal error handling."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recorddeadletterfailure.html",
+    "Title": "AsyncApiTelemetry.RecordDeadLetterFailure",
+    "Description": "Records a dead-letter operation that itself failed (message was dropped).",
+    "Keywords": "AsyncApiTelemetry RecordDeadLetterFailure method Corvus.Text.Json.AsyncApi",
+    "Body": "Records a dead-letter operation that itself failed (message was dropped)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordabort.html",
+    "Title": "AsyncApiTelemetry.RecordAbort",
+    "Description": "Records that a subscriber aborted (stopped consuming) due to the error policy.",
+    "Keywords": "AsyncApiTelemetry RecordAbort method Corvus.Text.Json.AsyncApi",
+    "Body": "Records that a subscriber aborted (stopped consuming) due to the error policy."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordskip.html",
+    "Title": "AsyncApiTelemetry.RecordSkip",
+    "Description": "Records that a message was skipped (not processed and not dead-lettered).",
+    "Keywords": "AsyncApiTelemetry RecordSkip method Corvus.Text.Json.AsyncApi",
+    "Body": "Records that a message was skipped (not processed and not dead-lettered)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordretry.html",
+    "Title": "AsyncApiTelemetry.RecordRetry",
+    "Description": "Records a retry attempt for message processing.",
+    "Keywords": "AsyncApiTelemetry RecordRetry method Corvus.Text.Json.AsyncApi",
+    "Body": "Records a retry attempt for message processing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-bearertokenauthenticationprovider.html",
+    "Title": "BearerTokenAuthenticationProvider",
+    "Description": "Authentication provider for HTTP bearer token security schemes.",
+    "Keywords": "BearerTokenAuthenticationProvider class Corvus.Text.Json.AsyncApi",
+    "Body": "Authentication provider for HTTP bearer token security schemes.\nPopulates the [`Credentials`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.credentials.html) dictionary with a `token` entry. Supports both static tokens and dynamic token factories for scenarios where tokens expire and need refreshing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-bearertokenauthenticationprovider.ctor.html",
+    "Title": "BearerTokenAuthenticationProvider Constructor",
+    "Description": "Initializes a new instance of the [`BearerTokenAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-bearertokenauthenticationprovider.html) class with a static bearer token.",
+    "Keywords": "BearerTokenAuthenticationProvider constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`BearerTokenAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-bearertokenauthenticationprovider.html) class with a static bearer token. Initializes a new instance of the [`BearerTokenAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-bearertokenauthenticationprovider.html) class with a dynamic token factory for token refresh scenarios."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-bearertokenauthenticationprovider.authenticateasync.html",
+    "Title": "BearerTokenAuthenticationProvider.AuthenticateAsync",
+    "Description": "",
+    "Keywords": "BearerTokenAuthenticationProvider AuthenticateAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-certificateauthenticationprovider.html",
+    "Title": "CertificateAuthenticationProvider",
+    "Description": "Authentication provider for X.509 client certificate security schemes.",
+    "Keywords": "CertificateAuthenticationProvider class Corvus.Text.Json.AsyncApi",
+    "Body": "Authentication provider for X.509 client certificate security schemes.\nPopulates the [`Credentials`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.credentials.html) dictionary with `certificate` (base64-encoded PFX) and optionally `password` entries. The transport reads these to configure TLS client authentication."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-certificateauthenticationprovider.ctor.html",
+    "Title": "CertificateAuthenticationProvider Constructor",
+    "Description": "Initializes a new instance of the [`CertificateAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-certificateauthenticationprovider.html) class.",
+    "Keywords": "CertificateAuthenticationProvider constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`CertificateAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-certificateauthenticationprovider.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-certificateauthenticationprovider.authenticateasync.html",
+    "Title": "CertificateAuthenticationProvider.AuthenticateAsync",
+    "Description": "",
+    "Keywords": "CertificateAuthenticationProvider AuthenticateAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-compositeauthenticationprovider.html",
+    "Title": "CompositeAuthenticationProvider",
+    "Description": "Authentication provider that delegates to multiple providers based on the security scheme type.",
+    "Keywords": "CompositeAuthenticationProvider class Corvus.Text.Json.AsyncApi",
+    "Body": "Authentication provider that delegates to multiple providers based on the security scheme type.\nAsyncAPI servers may require multiple security schemes. This composite provider selects the appropriate delegate based on the [`SchemeType`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.schemetype.html) of the incoming context."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-compositeauthenticationprovider.ctor.html",
+    "Title": "CompositeAuthenticationProvider Constructor",
+    "Description": "Initializes a new instance of the [`CompositeAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-compositeauthenticationprovider.html) class.",
+    "Keywords": "CompositeAuthenticationProvider constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`CompositeAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-compositeauthenticationprovider.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-compositeauthenticationprovider.authenticateasync.html",
+    "Title": "CompositeAuthenticationProvider.AuthenticateAsync",
+    "Description": "",
+    "Keywords": "CompositeAuthenticationProvider AuthenticateAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.html",
+    "Title": "DefaultMessageErrorPolicy",
+    "Description": "A default implementation of [`IMessageErrorPolicy`](/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html) that returns a configurable action for terminal failures.",
+    "Keywords": "DefaultMessageErrorPolicy class Corvus.Text.Json.AsyncApi",
+    "Body": "A default implementation of [`IMessageErrorPolicy`](/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html) that returns a configurable action for terminal failures.\nRetry logic is handled by the [`MessageHandlerMiddleware`](/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.html) (e.g., Polly). This policy only decides what to do with messages that have permanently failed (after all middleware retries are exhausted). Different actions can be configured per [`MessageErrorKind`](/api/v5/corvus-text-json-asyncapi-messageerrorkind.html). By default, deserialization errors are dead-lettered, handler errors are dead-lettered, and transport errors abort the subscription.\nDeserializationAction: Gets the action taken on deserialization errors.\nHandlerAction: Gets the action taken on handler errors (after middleware retries exhausted).\nTransportAction: Gets the action taken on transport connectivity errors."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.ctor.html",
+    "Title": "DefaultMessageErrorPolicy Constructor",
+    "Description": "Initializes a new instance of the [`DefaultMessageErrorPolicy`](/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.html) class with default settings: dead-letter handler/deserialization failures, abort on transport errors.",
+    "Keywords": "DefaultMessageErrorPolicy constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`DefaultMessageErrorPolicy`](/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.html) class with default settings: dead-letter handler/deserialization failures, abort on transport errors. Initializes a new instance of the [`DefaultMessageErrorPolicy`](/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.deserializationaction.html",
+    "Title": "DefaultMessageErrorPolicy.DeserializationAction",
+    "Description": "Gets the action taken on deserialization errors.",
+    "Keywords": "DefaultMessageErrorPolicy DeserializationAction property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the action taken on deserialization errors."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.handleraction.html",
+    "Title": "DefaultMessageErrorPolicy.HandlerAction",
+    "Description": "Gets the action taken on handler errors (after middleware retries exhausted).",
+    "Keywords": "DefaultMessageErrorPolicy HandlerAction property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the action taken on handler errors (after middleware retries exhausted)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.transportaction.html",
+    "Title": "DefaultMessageErrorPolicy.TransportAction",
+    "Description": "Gets the action taken on transport connectivity errors.",
+    "Keywords": "DefaultMessageErrorPolicy TransportAction property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the action taken on transport connectivity errors."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.handleerrorasync.html",
+    "Title": "DefaultMessageErrorPolicy.HandleErrorAsync",
+    "Description": "",
+    "Keywords": "DefaultMessageErrorPolicy HandleErrorAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.html",
+    "Title": "IHealthCheckableTransport",
+    "Description": "Provides health status information for a message transport.",
+    "Keywords": "IHealthCheckableTransport interface Corvus.Text.Json.AsyncApi",
+    "Body": "Provides health status information for a message transport.\nTransport implementations that support health monitoring should implement this interface in addition to [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html). The `MessageTransportHealthCheck` in the HealthChecks package uses this to report transport connectivity and operational status. Implementations should return quickly (sub-second). For transports that require a broker round-trip (ping/heartbeat), the health check configures a timeout.\nIsConnected: Gets a value indicating whether the transport is currently connected to the broker.\nMessagingSystem: Gets the messaging system name (e.g., `\"nats\"`, `\"kafka\"`, `\"amqp\"`).\nPingAsync: Performs a lightweight connectivity check against the broker."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.isconnected.html",
+    "Title": "IHealthCheckableTransport.IsConnected",
+    "Description": "Gets a value indicating whether the transport is currently connected to the broker.",
+    "Keywords": "IHealthCheckableTransport IsConnected property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets a value indicating whether the transport is currently connected to the broker."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.messagingsystem.html",
+    "Title": "IHealthCheckableTransport.MessagingSystem",
+    "Description": "Gets the messaging system name (e.g., `\"nats\"`, `\"kafka\"`, `\"amqp\"`).",
+    "Keywords": "IHealthCheckableTransport MessagingSystem property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the messaging system name (e.g., `\"nats\"`, `\"kafka\"`, `\"amqp\"`)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-ihealthcheckabletransport.pingasync.html",
+    "Title": "IHealthCheckableTransport.PingAsync",
+    "Description": "Performs a lightweight connectivity check against the broker.",
+    "Keywords": "IHealthCheckableTransport PingAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Performs a lightweight connectivity check against the broker."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessageauthenticationprovider.html",
+    "Title": "IMessageAuthenticationProvider",
+    "Description": "Provides authentication credentials for message transport connections.",
+    "Keywords": "IMessageAuthenticationProvider interface Corvus.Text.Json.AsyncApi",
+    "Body": "Provides authentication credentials for message transport connections.\nImplementations supply credentials to the [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) before messages are published or subscriptions are established — for example, providing username/password for SASL authentication, an API key, a bearer token, or a client certificate. The provider is called by the transport during connection establishment or when credentials need to be refreshed. The [`MessageAuthenticationContext`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.html) contains information about the security scheme requirements.\nAuthenticateAsync: Applies authentication credentials to the transport connection context."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessageauthenticationprovider.authenticateasync.html",
+    "Title": "IMessageAuthenticationProvider.AuthenticateAsync",
+    "Description": "Applies authentication credentials to the transport connection context.",
+    "Keywords": "IMessageAuthenticationProvider AuthenticateAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Applies authentication credentials to the transport connection context."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html",
+    "Title": "IMessageErrorPolicy",
+    "Description": "Defines the error-handling policy for message consumers.",
+    "Keywords": "IMessageErrorPolicy interface Corvus.Text.Json.AsyncApi",
+    "Body": "Defines the error-handling policy for message consumers.\nImplementations decide what happens when an exception is thrown during message processing after the [`MessageHandlerMiddleware`](/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.html) has exhausted all retry attempts. The transport invokes this policy and acts on the returned [`MessageErrorAction`](/api/v5/corvus-text-json-asyncapi-messageerroraction.html). This interface is injected per-transport at construction time. Implementations can differentiate behaviour by inspecting the [`Channel`](/api/v5/corvus-text-json-asyncapi-messageerrorcontext.channel.html) and [`ErrorKind`](/api/v5/corvus-text-json-asyncapi-messageerrorcontext.errorkind.html).\nHandleErrorAsync: Determines what action to take in response to a terminal error during message processing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.handleerrorasync.html",
+    "Title": "IMessageErrorPolicy.HandleErrorAsync",
+    "Description": "Determines what action to take in response to a terminal error during message processing.",
+    "Keywords": "IMessageErrorPolicy HandleErrorAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Determines what action to take in response to a terminal error during message processing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessagetransport.html",
+    "Title": "IMessageTransport",
+    "Description": "Abstraction for message transport (publish/subscribe).",
+    "Keywords": "IMessageTransport interface Corvus.Text.Json.AsyncApi",
+    "Body": "Abstraction for message transport (publish/subscribe).\nImplementations include in-memory (for testing), Kafka, AMQP, etc. Generated producers and consumers depend on this interface. The transport is a low-level messaging pipe. All AsyncAPI semantics (channel addressing, message naming, payload serialization) are handled by the generated producer/consumer types. The transport only needs to: - Serialize the typed payload via `WriteTo(Utf8JsonWriter)` into its output buffer. - Deliver bytes to the broker or in-memory channel. - Parse incoming bytes into typed payloads via `ParsedJsonDocument<T>.Parse()` for consumers. Channel addresses are passed as [`ReadOnlyMemory`](https://learn.microsoft.com/dotnet/api/system.readonlymemory-1) of UTF-8 bytes. Transport implementations that need a `string` for their broker API should convert at the outermost boundary via `Encoding.UTF8.GetString()`. This keeps the entire hot path in the UTF-8 domain with zero intermediate string allocations.\nPublishAsync: Publishes a typed message payload to the specified channel.\nPublishAsync: Publishes a typed message payload to the specified channel with protocol-specific metadata.\nRequestAsync: Sends a request message and waits for a correlated reply.\nRequestAsync: Sends a request message and waits for a correlated reply, with protocol-specific metadata.\nSubscribeAsync: Subscribes to messages on the specified channel, delivering typed payloads.\nSubscribeAsync: Subscribes to messages on the specified channel with protocol-specific metadata.\nUnsubscribeAsync: Unsubscribes from messages on the specified channel.\nDeadLetterAsync: Sends a failed message to a dead-letter channel for later inspection or reprocessing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessagetransport.publishasync.html",
+    "Title": "IMessageTransport.PublishAsync",
+    "Description": "Publishes a typed message payload to the specified channel.",
+    "Keywords": "IMessageTransport PublishAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Publishes a typed message payload to the specified channel. Publishes a typed message payload to the specified channel with protocol-specific metadata."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessagetransport.requestasync.html",
+    "Title": "IMessageTransport.RequestAsync",
+    "Description": "Sends a request message and waits for a correlated reply.",
+    "Keywords": "IMessageTransport RequestAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Sends a request message and waits for a correlated reply. Sends a request message and waits for a correlated reply, with protocol-specific metadata."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessagetransport.subscribeasync.html",
+    "Title": "IMessageTransport.SubscribeAsync",
+    "Description": "Subscribes to messages on the specified channel, delivering typed payloads.",
+    "Keywords": "IMessageTransport SubscribeAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Subscribes to messages on the specified channel, delivering typed payloads. Subscribes to messages on the specified channel with protocol-specific metadata."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessagetransport.unsubscribeasync.html",
+    "Title": "IMessageTransport.UnsubscribeAsync",
+    "Description": "Unsubscribes from messages on the specified channel.",
+    "Keywords": "IMessageTransport UnsubscribeAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Unsubscribes from messages on the specified channel."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessagetransport.deadletterasync.html",
+    "Title": "IMessageTransport.DeadLetterAsync",
+    "Description": "Sends a failed message to a dead-letter channel for later inspection or reprocessing.",
+    "Keywords": "IMessageTransport DeadLetterAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Sends a failed message to a dead-letter channel for later inspection or reprocessing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-itransportoptions.html",
+    "Title": "ITransportOptions",
+    "Description": "Common configuration for all message transport implementations.",
+    "Keywords": "ITransportOptions interface Corvus.Text.Json.AsyncApi",
+    "Body": "Common configuration for all message transport implementations.\nTransport-specific options types implement this interface to carry the shared resilience settings ([`ErrorPolicy`](/api/v5/corvus-text-json-asyncapi-itransportoptions.errorpolicy.html) and [`HandlerMiddleware`](/api/v5/corvus-text-json-asyncapi-itransportoptions.handlermiddleware.html)) alongside their transport-specific configuration.\nErrorPolicy: Gets or sets the error policy that determines what action to take when a message permanently fails processing.\nHandlerMiddleware: Gets or sets the middleware that wraps handler invocations with resilience patterns (retry, circuit-breaker, timeout, etc.).\nHeartbeat: Gets or sets the processing loop heartbeat tracker."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-itransportoptions.errorpolicy.html",
+    "Title": "ITransportOptions.ErrorPolicy",
+    "Description": "Gets or sets the error policy that determines what action to take when a message permanently fails processing.",
+    "Keywords": "ITransportOptions ErrorPolicy property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets or sets the error policy that determines what action to take when a message permanently fails processing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-itransportoptions.handlermiddleware.html",
+    "Title": "ITransportOptions.HandlerMiddleware",
+    "Description": "Gets or sets the middleware that wraps handler invocations with resilience patterns (retry, circuit-breaker, timeout, etc.).",
+    "Keywords": "ITransportOptions HandlerMiddleware property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets or sets the middleware that wraps handler invocations with resilience patterns (retry, circuit-breaker, timeout, etc.)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-itransportoptions.heartbeat.html",
+    "Title": "ITransportOptions.Heartbeat",
+    "Description": "Gets or sets the processing loop heartbeat tracker.",
+    "Keywords": "ITransportOptions Heartbeat property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets or sets the processing loop heartbeat tracker."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.html",
+    "Title": "InstrumentedMessageTransport",
+    "Description": "A decorator that adds OpenTelemetry-compliant distributed tracing and metrics to any [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) implementation.",
+    "Keywords": "InstrumentedMessageTransport class Corvus.Text.Json.AsyncApi",
+    "Body": "A decorator that adds OpenTelemetry-compliant distributed tracing and metrics to any [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) implementation.\nWrap any transport with this decorator to gain automatic: - Distributed trace spans (Activities) for publish, subscribe, request, and dead-letter operations. - Metrics counters and histograms for message throughput, processing duration, and errors. - W3C trace context propagation via message headers (traceparent/tracestate). All instrumentation is zero-cost when no listener is attached. Example usage: ```csharp IMessageTransport raw = await NatsMessageTransport.CreateAsync(options); IMessageTransport transport = new InstrumentedMessageTransport(raw, \"nats\"); ```"
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.ctor.html",
+    "Title": "InstrumentedMessageTransport Constructor",
+    "Description": "Initializes a new instance of the [`InstrumentedMessageTransport`](/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.html) class.",
+    "Keywords": "InstrumentedMessageTransport constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`InstrumentedMessageTransport`](/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.publishasync.html",
+    "Title": "InstrumentedMessageTransport.PublishAsync",
+    "Description": "",
+    "Keywords": "InstrumentedMessageTransport PublishAsync method Corvus.Text.Json.AsyncApi",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.requestasync.html",
+    "Title": "InstrumentedMessageTransport.RequestAsync",
+    "Description": "",
+    "Keywords": "InstrumentedMessageTransport RequestAsync method Corvus.Text.Json.AsyncApi",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.subscribeasync.html",
+    "Title": "InstrumentedMessageTransport.SubscribeAsync",
+    "Description": "",
+    "Keywords": "InstrumentedMessageTransport SubscribeAsync method Corvus.Text.Json.AsyncApi",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.unsubscribeasync.html",
+    "Title": "InstrumentedMessageTransport.UnsubscribeAsync",
+    "Description": "",
+    "Keywords": "InstrumentedMessageTransport UnsubscribeAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.deadletterasync.html",
+    "Title": "InstrumentedMessageTransport.DeadLetterAsync",
+    "Description": "",
+    "Keywords": "InstrumentedMessageTransport DeadLetterAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-instrumentedmessagetransport.disposeasync.html",
+    "Title": "InstrumentedMessageTransport.DisposeAsync",
+    "Description": "",
+    "Keywords": "InstrumentedMessageTransport DisposeAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.html",
+    "Title": "MessageAuthenticationContext",
+    "Description": "Provides context for message transport authentication.",
+    "Keywords": "MessageAuthenticationContext class Corvus.Text.Json.AsyncApi",
+    "Body": "Provides context for message transport authentication.\nThis context is passed to [`AuthenticateAsync`](/api/v5/corvus-text-json-asyncapi-imessageauthenticationprovider.authenticateasync.html) and contains the security scheme type, name, and a dictionary for credentials. The transport reads credentials from [`Credentials`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.credentials.html) after the provider has been called.\nSchemeType: Gets the security scheme type required by the server or operation.\nSchemeName: Gets the name of the security scheme from the AsyncAPI specification.\nCredentials: Gets the credentials dictionary. Providers populate this with the key/value pairs needed by the transport (e.g., \"username\"/\"password\", \"token\", \"apiKey\")."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.ctor.html",
+    "Title": "MessageAuthenticationContext Constructor",
+    "Description": "Initializes a new instance of the [`MessageAuthenticationContext`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.html) class.",
+    "Keywords": "MessageAuthenticationContext constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`MessageAuthenticationContext`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.schemetype.html",
+    "Title": "MessageAuthenticationContext.SchemeType",
+    "Description": "Gets the security scheme type required by the server or operation.",
+    "Keywords": "MessageAuthenticationContext SchemeType property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the security scheme type required by the server or operation."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.schemename.html",
+    "Title": "MessageAuthenticationContext.SchemeName",
+    "Description": "Gets the name of the security scheme from the AsyncAPI specification.",
+    "Keywords": "MessageAuthenticationContext SchemeName property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the name of the security scheme from the AsyncAPI specification."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.credentials.html",
+    "Title": "MessageAuthenticationContext.Credentials",
+    "Description": "Gets the credentials dictionary. Providers populate this with the key/value pairs needed by the transport (e.g., \"username\"/\"password\", \"token\", \"apiKey\").",
+    "Keywords": "MessageAuthenticationContext Credentials property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the credentials dictionary. Providers populate this with the key/value pairs needed by the transport (e.g., \"username\"/\"password\", \"token\", \"apiKey\")."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.html",
+    "Title": "MessageContext",
+    "Description": "Carries protocol-specific metadata from a generated producer/consumer to the transport.",
+    "Keywords": "MessageContext struct Corvus.Text.Json.AsyncApi",
+    "Body": "Carries protocol-specific metadata from a generated producer/consumer to the transport.\nThis struct bundles channel, operation, and message bindings as raw JSON bytes. Transport implementations (e.g., Kafka, AMQP) inspect the relevant bindings to configure delivery semantics such as partition keys, exchanges, QoS levels, etc. Generated producers construct a [`MessageContext`](/api/v5/corvus-text-json-asyncapi-messagecontext.html) from static constants and pass it to the transport on every publish or subscribe call.\nContentType: Gets the content type for the message (e.g., `application/json`).\nChannelBindingsJson: Gets the channel-level bindings as raw UTF-8 JSON bytes, or empty if no channel bindings are present.\nOperationBindingsJson: Gets the operation-level bindings as raw UTF-8 JSON bytes, or empty if no operation bindings are present.\nMessageBindingsJson: Gets the message-level bindings as raw UTF-8 JSON bytes, or empty if no message bindings are present.\nHasBindings: Gets a value indicating whether any bindings are present at any level."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.contenttype.html",
+    "Title": "MessageContext.ContentType",
+    "Description": "Gets the content type for the message (e.g., `application/json`).",
+    "Keywords": "MessageContext ContentType property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the content type for the message (e.g., `application/json`)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.channelbindingsjson.html",
+    "Title": "MessageContext.ChannelBindingsJson",
+    "Description": "Gets the channel-level bindings as raw UTF-8 JSON bytes, or empty if no channel bindings are present.",
+    "Keywords": "MessageContext ChannelBindingsJson property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the channel-level bindings as raw UTF-8 JSON bytes, or empty if no channel bindings are present."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.operationbindingsjson.html",
+    "Title": "MessageContext.OperationBindingsJson",
+    "Description": "Gets the operation-level bindings as raw UTF-8 JSON bytes, or empty if no operation bindings are present.",
+    "Keywords": "MessageContext OperationBindingsJson property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the operation-level bindings as raw UTF-8 JSON bytes, or empty if no operation bindings are present."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.messagebindingsjson.html",
+    "Title": "MessageContext.MessageBindingsJson",
+    "Description": "Gets the message-level bindings as raw UTF-8 JSON bytes, or empty if no message bindings are present.",
+    "Keywords": "MessageContext MessageBindingsJson property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the message-level bindings as raw UTF-8 JSON bytes, or empty if no message bindings are present."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.hasbindings.html",
+    "Title": "MessageContext.HasBindings",
+    "Description": "Gets a value indicating whether any bindings are present at any level.",
+    "Keywords": "MessageContext HasBindings property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets a value indicating whether any bindings are present at any level."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageerroraction.html",
+    "Title": "MessageErrorAction",
+    "Description": "Specifies the action to take when an error occurs during message processing after the resilience middleware has exhausted all retry attempts.",
+    "Keywords": "MessageErrorAction enum Corvus.Text.Json.AsyncApi",
+    "Body": "Specifies the action to take when an error occurs during message processing after the resilience middleware has exhausted all retry attempts."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageerrorcontext.html",
+    "Title": "MessageErrorContext",
+    "Description": "Provides context about an error that occurred during message processing.",
+    "Keywords": "MessageErrorContext struct Corvus.Text.Json.AsyncApi",
+    "Body": "Provides context about an error that occurred during message processing.\nThis is passed to [`HandleErrorAsync`](/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.handleerrorasync.html) so that the policy can make decisions based on the channel, error kind, and any payload/header data available at the time of the error.\nChannel: Gets the channel address (UTF-8) on which the error occurred.\nErrorKind: Gets the kind of error that occurred.\nPayload: Gets the raw payload element, if available.\nHeaders: Gets the raw headers element, if available."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageerrorcontext.ctor.html",
+    "Title": "MessageErrorContext Constructor",
+    "Description": "Initializes a new instance of the [`MessageErrorContext`](/api/v5/corvus-text-json-asyncapi-messageerrorcontext.html) struct.",
+    "Keywords": "MessageErrorContext constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`MessageErrorContext`](/api/v5/corvus-text-json-asyncapi-messageerrorcontext.html) struct."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageerrorcontext.channel.html",
+    "Title": "MessageErrorContext.Channel",
+    "Description": "Gets the channel address (UTF-8) on which the error occurred.",
+    "Keywords": "MessageErrorContext Channel property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the channel address (UTF-8) on which the error occurred."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageerrorcontext.errorkind.html",
+    "Title": "MessageErrorContext.ErrorKind",
+    "Description": "Gets the kind of error that occurred.",
+    "Keywords": "MessageErrorContext ErrorKind property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the kind of error that occurred."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageerrorcontext.payload.html",
+    "Title": "MessageErrorContext.Payload",
+    "Description": "Gets the raw payload element, if available.",
+    "Keywords": "MessageErrorContext Payload property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the raw payload element, if available."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageerrorcontext.headers.html",
+    "Title": "MessageErrorContext.Headers",
+    "Description": "Gets the raw headers element, if available.",
+    "Keywords": "MessageErrorContext Headers property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the raw headers element, if available."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messageerrorkind.html",
+    "Title": "MessageErrorKind",
+    "Description": "Identifies the phase of message processing at which an error occurred.",
+    "Keywords": "MessageErrorKind enum Corvus.Text.Json.AsyncApi",
+    "Body": "Identifies the phase of message processing at which an error occurred."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.html",
+    "Title": "MessageHandlerMiddleware",
+    "Description": "A delegate that wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.",
+    "Keywords": "MessageHandlerMiddleware delegate Corvus.Text.Json.AsyncApi",
+    "Body": "A delegate that wraps message handler execution, enabling retry, circuit-breaker, timeout, and other resilience patterns.\nThe transport calls through this delegate for every message handler invocation. Implementations may retry the operation, add backoff delays, apply circuit-breaker logic, or add observability instrumentation. If the middleware exhausts all retries and the operation still fails, it should let the exception propagate. The transport will then invoke the [`IMessageErrorPolicy`](/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html) to determine the terminal action (skip, dead-letter, or abort). The `Corvus.Text.Json.AsyncApi.Polly` package provides a ready-made implementation backed by `Polly.ResiliencePipeline`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.ctor.html",
+    "Title": "MessageHandlerMiddleware Constructor",
+    "Description": "",
+    "Keywords": "MessageHandlerMiddleware constructor new Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.invoke.html",
+    "Title": "MessageHandlerMiddleware.Invoke",
+    "Description": "",
+    "Keywords": "MessageHandlerMiddleware Invoke method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.begininvoke.html",
+    "Title": "MessageHandlerMiddleware.BeginInvoke",
+    "Description": "",
+    "Keywords": "MessageHandlerMiddleware BeginInvoke method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.endinvoke.html",
+    "Title": "MessageHandlerMiddleware.EndInvoke",
+    "Description": "",
+    "Keywords": "MessageHandlerMiddleware EndInvoke method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tcontext-tresult.html",
+    "Title": "MessageMatcher<TPayload, TContext, TResult>",
+    "Description": "A callback for a message match method with context.",
+    "Keywords": "MessageMatcher<TPayload, TContext, TResult> delegate Corvus.Text.Json.AsyncApi TPayload TContext TResult",
+    "Body": "A callback for a message match method with context."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tcontext-tresult.ctor.html",
+    "Title": "MessageMatcher<TPayload, TContext, TResult> Constructor",
+    "Description": "",
+    "Keywords": "MessageMatcher<TPayload, TContext, TResult> constructor new Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tcontext-tresult.invoke.html",
+    "Title": "MessageMatcher<TPayload, TContext, TResult>.Invoke",
+    "Description": "",
+    "Keywords": "MessageMatcher<TPayload, TContext, TResult> Invoke method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tcontext-tresult.begininvoke.html",
+    "Title": "MessageMatcher<TPayload, TContext, TResult>.BeginInvoke",
+    "Description": "",
+    "Keywords": "MessageMatcher<TPayload, TContext, TResult> BeginInvoke method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tcontext-tresult.endinvoke.html",
+    "Title": "MessageMatcher<TPayload, TContext, TResult>.EndInvoke",
+    "Description": "",
+    "Keywords": "MessageMatcher<TPayload, TContext, TResult> EndInvoke method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tresult.html",
+    "Title": "MessageMatcher<TPayload, TResult>",
+    "Description": "A callback for a message match method.",
+    "Keywords": "MessageMatcher<TPayload, TResult> delegate Corvus.Text.Json.AsyncApi TPayload TResult",
+    "Body": "A callback for a message match method."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tresult.ctor.html",
+    "Title": "MessageMatcher<TPayload, TResult> Constructor",
+    "Description": "",
+    "Keywords": "MessageMatcher<TPayload, TResult> constructor new Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tresult.invoke.html",
+    "Title": "MessageMatcher<TPayload, TResult>.Invoke",
+    "Description": "",
+    "Keywords": "MessageMatcher<TPayload, TResult> Invoke method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tresult.begininvoke.html",
+    "Title": "MessageMatcher<TPayload, TResult>.BeginInvoke",
+    "Description": "",
+    "Keywords": "MessageMatcher<TPayload, TResult> BeginInvoke method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagematcher-tpayload-tresult.endinvoke.html",
+    "Title": "MessageMatcher<TPayload, TResult>.EndInvoke",
+    "Description": "",
+    "Keywords": "MessageMatcher<TPayload, TResult> EndInvoke method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.html",
+    "Title": "OAuth2AuthenticationProvider",
+    "Description": "Authentication provider for OAuth 2.0 security schemes.",
+    "Keywords": "OAuth2AuthenticationProvider class Corvus.Text.Json.AsyncApi",
+    "Body": "Authentication provider for OAuth 2.0 security schemes.\nPopulates the [`Credentials`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.credentials.html) dictionary with `access_token`, and optionally `token_type` and `scopes` entries. Supports dynamic token acquisition via a factory for scenarios where tokens need to be refreshed (client_credentials, authorization_code flows)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.ctor.html",
+    "Title": "OAuth2AuthenticationProvider Constructor",
+    "Description": "Initializes a new instance of the [`OAuth2AuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.html) class with a static access token.",
+    "Keywords": "OAuth2AuthenticationProvider constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`OAuth2AuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.html) class with a static access token. Initializes a new instance of the [`OAuth2AuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.html) class with a dynamic token factory."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.authenticateasync.html",
+    "Title": "OAuth2AuthenticationProvider.AuthenticateAsync",
+    "Description": "",
+    "Keywords": "OAuth2AuthenticationProvider AuthenticateAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.html",
+    "Title": "ProcessingLoopHeartbeat",
+    "Description": "Tracks the liveness of transport processing loops by recording heartbeat ticks.",
+    "Keywords": "ProcessingLoopHeartbeat class Corvus.Text.Json.AsyncApi",
+    "Body": "Tracks the liveness of transport processing loops by recording heartbeat ticks.\nEach transport's subscribe/consume loop calls [`Tick`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.tick.html) on every iteration to signal that the loop is alive and processing. The heartbeat monitor tracks these ticks and exposes: - [`IsAlive`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.isalive.html) — whether a specific subscription's loop has ticked within the staleness threshold. - [`GetSubscriptionStatuses`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.getsubscriptionstatuses.html) — all tracked subscriptions with their liveness state. - A `corvus.asyncapi.processing_loop_alive` counter emitted on each tick, useful for rate-based alerting (rate drops to zero = loop died). - A `corvus.asyncapi.processing_loop_started` / `corvus.asyncapi.processing_loop_stopped` counter pair for lifecycle tracking. Staleness detection: if a loop has not ticked for longer than [`StalenessThreshold`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stalenessthreshold.html), it is considered dead. This catches loops that exit silently (unhandled exception, unexpected cancellation, GC of the Task). Usage in transports: ```csharp // At the top of each loop iteration: this.heartbeat.Tick(channel, \"nats\"); // On subscribe start: this.heartbeat.Start(channel, \"nats\"); // On normal unsubscribe: this.heartbeat.Stop(channel, \"nats\"); ```\nStalenessThreshold: Gets or sets the duration after which a loop is considered dead if no tick has been received.\nStart: Records that the processing loop for the specified channel has started.\nStop: Records that the processing loop for the specified channel has stopped normally (e.g., due to an explicit unsubscribe).\nTick: Records a heartbeat tick from the processing loop, indicating it is alive.\nIsAlive: Gets a value indicating whether the processing loop for the specified channel is considered alive (has ticked within [`StalenessThreshold`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stalenessthreshold.html)).\nGetSubscriptionStatuses: Gets the status of all tracked subscriptions.\nRemove: Removes a subscription from tracking (e.g., after it has been stopped and cleaned up)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.ctor.html",
+    "Title": "ProcessingLoopHeartbeat Constructor",
+    "Description": "",
+    "Keywords": "ProcessingLoopHeartbeat constructor new Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stalenessthreshold.html",
+    "Title": "ProcessingLoopHeartbeat.StalenessThreshold",
+    "Description": "Gets or sets the duration after which a loop is considered dead if no tick has been received.",
+    "Keywords": "ProcessingLoopHeartbeat StalenessThreshold property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets or sets the duration after which a loop is considered dead if no tick has been received."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.start.html",
+    "Title": "ProcessingLoopHeartbeat.Start",
+    "Description": "Records that the processing loop for the specified channel has started.",
+    "Keywords": "ProcessingLoopHeartbeat Start method Corvus.Text.Json.AsyncApi",
+    "Body": "Records that the processing loop for the specified channel has started."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stop.html",
+    "Title": "ProcessingLoopHeartbeat.Stop",
+    "Description": "Records that the processing loop for the specified channel has stopped normally (e.g., due to an explicit unsubscribe).",
+    "Keywords": "ProcessingLoopHeartbeat Stop method Corvus.Text.Json.AsyncApi",
+    "Body": "Records that the processing loop for the specified channel has stopped normally (e.g., due to an explicit unsubscribe)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.tick.html",
+    "Title": "ProcessingLoopHeartbeat.Tick",
+    "Description": "Records a heartbeat tick from the processing loop, indicating it is alive.",
+    "Keywords": "ProcessingLoopHeartbeat Tick method Corvus.Text.Json.AsyncApi",
+    "Body": "Records a heartbeat tick from the processing loop, indicating it is alive."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.isalive.html",
+    "Title": "ProcessingLoopHeartbeat.IsAlive",
+    "Description": "Gets a value indicating whether the processing loop for the specified channel is considered alive (has ticked within [`StalenessThreshold`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stalenessthreshold.html)).",
+    "Keywords": "ProcessingLoopHeartbeat IsAlive method Corvus.Text.Json.AsyncApi",
+    "Body": "Gets a value indicating whether the processing loop for the specified channel is considered alive (has ticked within [`StalenessThreshold`](/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.stalenessthreshold.html))."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.getsubscriptionstatuses.html",
+    "Title": "ProcessingLoopHeartbeat.GetSubscriptionStatuses",
+    "Description": "Gets the status of all tracked subscriptions.",
+    "Keywords": "ProcessingLoopHeartbeat GetSubscriptionStatuses method Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the status of all tracked subscriptions."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-processingloopheartbeat.remove.html",
+    "Title": "ProcessingLoopHeartbeat.Remove",
+    "Description": "Removes a subscription from tracking (e.g., after it has been stopped and cleaned up).",
+    "Keywords": "ProcessingLoopHeartbeat Remove method Corvus.Text.Json.AsyncApi",
+    "Body": "Removes a subscription from tracking (e.g., after it has been stopped and cleaned up)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-readonlymemorybytecomparer.html",
+    "Title": "ReadOnlyMemoryByteComparer",
+    "Description": "Content-based equality comparer for [`ReadOnlyMemory`](https://learn.microsoft.com/dotnet/api/system.readonlymemory-1) of `byte`. Used as a dictionary key comparer so that correlation IDs stored as UTF-8 bytes can be matched without allocating intermediate strings.",
+    "Keywords": "ReadOnlyMemoryByteComparer class Corvus.Text.Json.AsyncApi",
+    "Body": "Content-based equality comparer for [`ReadOnlyMemory`](https://learn.microsoft.com/dotnet/api/system.readonlymemory-1) of `byte`. Used as a dictionary key comparer so that correlation IDs stored as UTF-8 bytes can be matched without allocating intermediate strings."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-readonlymemorybytecomparer.ctor.html",
+    "Title": "ReadOnlyMemoryByteComparer Constructor",
+    "Description": "",
+    "Keywords": "ReadOnlyMemoryByteComparer constructor new Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-readonlymemorybytecomparer.equals.html",
+    "Title": "ReadOnlyMemoryByteComparer.Equals",
+    "Description": "",
+    "Keywords": "ReadOnlyMemoryByteComparer Equals method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-readonlymemorybytecomparer.gethashcode.html",
+    "Title": "ReadOnlyMemoryByteComparer.GetHashCode",
+    "Description": "",
+    "Keywords": "ReadOnlyMemoryByteComparer GetHashCode method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-schemavalidationdetail.html",
+    "Title": "SchemaValidationDetail",
+    "Description": "Formats [`JsonSchemaResultsCollector`](/api/v5/corvus-text-json-jsonschemaresultscollector.html) results as a JSON string suitable for inclusion in exception messages.",
+    "Keywords": "SchemaValidationDetail class Corvus.Text.Json.AsyncApi",
+    "Body": "Formats [`JsonSchemaResultsCollector`](/api/v5/corvus-text-json-jsonschemaresultscollector.html) results as a JSON string suitable for inclusion in exception messages.\nFormatResults: Formats the validation results from a [`JsonSchemaResultsCollector`](/api/v5/corvus-text-json-jsonschemaresultscollector.html) as a JSON array string."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-schemavalidationdetail.formatresults.html",
+    "Title": "SchemaValidationDetail.FormatResults",
+    "Description": "Formats the validation results from a [`JsonSchemaResultsCollector`](/api/v5/corvus-text-json-jsonschemaresultscollector.html) as a JSON array string.",
+    "Keywords": "SchemaValidationDetail FormatResults method Corvus.Text.Json.AsyncApi",
+    "Body": "Formats the validation results from a [`JsonSchemaResultsCollector`](/api/v5/corvus-text-json-jsonschemaresultscollector.html) as a JSON array string."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-securityschemetype.html",
+    "Title": "SecuritySchemeType",
+    "Description": "The type of security scheme defined in the AsyncAPI specification.",
+    "Keywords": "SecuritySchemeType enum Corvus.Text.Json.AsyncApi",
+    "Body": "The type of security scheme defined in the AsyncAPI specification.\nSee ."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.html",
+    "Title": "SubscriptionLoopStatus",
+    "Description": "Represents the current status of a subscription's processing loop.",
+    "Keywords": "SubscriptionLoopStatus struct Corvus.Text.Json.AsyncApi",
+    "Body": "Represents the current status of a subscription's processing loop.\nChannel: The channel/topic/subject.\nMessagingSystem: The transport type.\nIsAlive: Whether the loop has ticked within the staleness threshold.\nIsRunning: Whether the loop has been marked as running (not explicitly stopped).\nTimeSinceLastTick: Time elapsed since the last tick."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.ctor.html",
+    "Title": "SubscriptionLoopStatus Constructor",
+    "Description": "Represents the current status of a subscription's processing loop.",
+    "Keywords": "SubscriptionLoopStatus constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Represents the current status of a subscription's processing loop."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.channel.html",
+    "Title": "SubscriptionLoopStatus.Channel",
+    "Description": "The channel/topic/subject.",
+    "Keywords": "SubscriptionLoopStatus Channel property Corvus.Text.Json.AsyncApi",
+    "Body": "The channel/topic/subject."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.messagingsystem.html",
+    "Title": "SubscriptionLoopStatus.MessagingSystem",
+    "Description": "The transport type.",
+    "Keywords": "SubscriptionLoopStatus MessagingSystem property Corvus.Text.Json.AsyncApi",
+    "Body": "The transport type."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.isalive.html",
+    "Title": "SubscriptionLoopStatus.IsAlive",
+    "Description": "Whether the loop has ticked within the staleness threshold.",
+    "Keywords": "SubscriptionLoopStatus IsAlive property Corvus.Text.Json.AsyncApi",
+    "Body": "Whether the loop has ticked within the staleness threshold."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.isrunning.html",
+    "Title": "SubscriptionLoopStatus.IsRunning",
+    "Description": "Whether the loop has been marked as running (not explicitly stopped).",
+    "Keywords": "SubscriptionLoopStatus IsRunning property Corvus.Text.Json.AsyncApi",
+    "Body": "Whether the loop has been marked as running (not explicitly stopped)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.timesincelasttick.html",
+    "Title": "SubscriptionLoopStatus.TimeSinceLastTick",
+    "Description": "Time elapsed since the last tick.",
+    "Keywords": "SubscriptionLoopStatus TimeSinceLastTick property Corvus.Text.Json.AsyncApi",
+    "Body": "Time elapsed since the last tick."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.tostring.html",
+    "Title": "SubscriptionLoopStatus.ToString",
+    "Description": "",
+    "Keywords": "SubscriptionLoopStatus ToString method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.gethashcode.html",
+    "Title": "SubscriptionLoopStatus.GetHashCode",
+    "Description": "",
+    "Keywords": "SubscriptionLoopStatus GetHashCode method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.equals.html",
+    "Title": "SubscriptionLoopStatus.Equals",
+    "Description": "",
+    "Keywords": "SubscriptionLoopStatus Equals method Corvus.Text.Json.AsyncApi",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.deconstruct.html",
+    "Title": "SubscriptionLoopStatus.Deconstruct",
+    "Description": "",
+    "Keywords": "SubscriptionLoopStatus Deconstruct method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.op-inequality.html",
+    "Title": "SubscriptionLoopStatus Inequality Operator",
+    "Description": "",
+    "Keywords": "SubscriptionLoopStatus Inequality operator Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-subscriptionloopstatus.op-equality.html",
+    "Title": "SubscriptionLoopStatus Equality Operator",
+    "Description": "",
+    "Keywords": "SubscriptionLoopStatus Equality operator Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-throwhelper.html",
+    "Title": "ThrowHelper",
+    "Description": "Centralized exception-throwing helpers for the AsyncAPI support library and for use by generated producer/consumer code.",
+    "Keywords": "ThrowHelper class Corvus.Text.Json.AsyncApi",
+    "Body": "Centralized exception-throwing helpers for the AsyncAPI support library and for use by generated producer/consumer code.\nMethods are marked [`DoesNotReturnAttribute`](https://learn.microsoft.com/dotnet/api/system.diagnostics.codeanalysis.doesnotreturnattribute) so the JIT can optimize call-site code that follows a throw path. All exception messages come from the embedded `Resources/Strings.resx` resource file via `SR`.\nThrowMessagePayloadValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message payload failed schema validation.\nThrowMessagePayloadValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message payload failed schema validation, with detailed diagnostic information.\nThrowMessageHeadersValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation.\nThrowMessageHeadersValidationFailed: Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation, with detailed diagnostic information.\nThrowUnsupportedContentType: Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message has an unsupported content type.\nThrowUnsupportedSchemaFormat: Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message uses an unsupported schema format.\nThrowConsumerNotStarted: Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has not been started.\nThrowUnsupportedBindingsFormat: Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the channel has bindings in an unrecognized format.\nThrowArgumentOutOfRange: Throws an [`ArgumentOutOfRangeException`](https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception) for the specified parameter."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessagepayloadvalidationfailed.html",
+    "Title": "ThrowHelper.ThrowMessagePayloadValidationFailed",
+    "Description": "Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message payload failed schema validation.",
+    "Keywords": "ThrowHelper ThrowMessagePayloadValidationFailed method Corvus.Text.Json.AsyncApi",
+    "Body": "Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message payload failed schema validation. Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message payload failed schema validation, with detailed diagnostic information."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-throwhelper.throwmessageheadersvalidationfailed.html",
+    "Title": "ThrowHelper.ThrowMessageHeadersValidationFailed",
+    "Description": "Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation.",
+    "Keywords": "ThrowHelper ThrowMessageHeadersValidationFailed method Corvus.Text.Json.AsyncApi",
+    "Body": "Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation. Throws an [`ArgumentException`](https://learn.microsoft.com/dotnet/api/system.argumentexception) indicating that the message headers failed schema validation, with detailed diagnostic information."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-throwhelper.throwunsupportedcontenttype.html",
+    "Title": "ThrowHelper.ThrowUnsupportedContentType",
+    "Description": "Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message has an unsupported content type.",
+    "Keywords": "ThrowHelper ThrowUnsupportedContentType method Corvus.Text.Json.AsyncApi",
+    "Body": "Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message has an unsupported content type."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-throwhelper.throwunsupportedschemaformat.html",
+    "Title": "ThrowHelper.ThrowUnsupportedSchemaFormat",
+    "Description": "Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message uses an unsupported schema format.",
+    "Keywords": "ThrowHelper ThrowUnsupportedSchemaFormat method Corvus.Text.Json.AsyncApi",
+    "Body": "Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the message uses an unsupported schema format."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-throwhelper.throwconsumernotstarted.html",
+    "Title": "ThrowHelper.ThrowConsumerNotStarted",
+    "Description": "Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has not been started.",
+    "Keywords": "ThrowHelper ThrowConsumerNotStarted method Corvus.Text.Json.AsyncApi",
+    "Body": "Throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) indicating that the consumer has not been started."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-throwhelper.throwunsupportedbindingsformat.html",
+    "Title": "ThrowHelper.ThrowUnsupportedBindingsFormat",
+    "Description": "Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the channel has bindings in an unrecognized format.",
+    "Keywords": "ThrowHelper ThrowUnsupportedBindingsFormat method Corvus.Text.Json.AsyncApi",
+    "Body": "Throws a [`NotSupportedException`](https://learn.microsoft.com/dotnet/api/system.notsupportedexception) indicating that the channel has bindings in an unrecognized format."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-throwhelper.throwargumentoutofrange.html",
+    "Title": "ThrowHelper.ThrowArgumentOutOfRange",
+    "Description": "Throws an [`ArgumentOutOfRangeException`](https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception) for the specified parameter.",
+    "Keywords": "ThrowHelper ThrowArgumentOutOfRange method Corvus.Text.Json.AsyncApi",
+    "Body": "Throws an [`ArgumentOutOfRangeException`](https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception) for the specified parameter."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-userpasswordauthenticationprovider.html",
+    "Title": "UserPasswordAuthenticationProvider",
+    "Description": "Authentication provider for username/password (SASL PLAIN) security schemes.",
+    "Keywords": "UserPasswordAuthenticationProvider class Corvus.Text.Json.AsyncApi",
+    "Body": "Authentication provider for username/password (SASL PLAIN) security schemes.\nPopulates the [`Credentials`](/api/v5/corvus-text-json-asyncapi-messageauthenticationcontext.credentials.html) dictionary with `username` and `password` entries. The transport reads these to configure its connection (e.g., Kafka SASL, AMQP PLAIN, MQTT credentials)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-userpasswordauthenticationprovider.ctor.html",
+    "Title": "UserPasswordAuthenticationProvider Constructor",
+    "Description": "Initializes a new instance of the [`UserPasswordAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-userpasswordauthenticationprovider.html) class.",
+    "Keywords": "UserPasswordAuthenticationProvider constructor new Corvus.Text.Json.AsyncApi",
+    "Body": "Initializes a new instance of the [`UserPasswordAuthenticationProvider`](/api/v5/corvus-text-json-asyncapi-userpasswordauthenticationprovider.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-userpasswordauthenticationprovider.authenticateasync.html",
+    "Title": "UserPasswordAuthenticationProvider.AuthenticateAsync",
+    "Description": "",
+    "Keywords": "UserPasswordAuthenticationProvider AuthenticateAsync method Corvus.Text.Json.AsyncApi",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-validationmode.html",
+    "Title": "ValidationMode",
+    "Description": "Controls the level of JSON Schema validation applied to message payloads and headers in producers and consumers.",
+    "Keywords": "ValidationMode enum Corvus.Text.Json.AsyncApi",
+    "Body": "Controls the level of JSON Schema validation applied to message payloads and headers in producers and consumers."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.html",
+    "Title": "JsonBoolean",
+    "Description": "Generated from JSON Schema.",
+    "Keywords": "JsonBoolean struct Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Generated from JSON Schema.\nWhether the validation passed at this evaluation point.\nDefaultInstance: Gets the default instance.\nTryGetValue: Tries to get the value as a boolean\nFrom: Gets an instance of the JSON value from another element.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nEquals: Equality comparison.\nEvaluateSchema: Evaluate this instance against the JSON Schema for this type.\nClone: Gets a [`JsonBoolean`](/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.html) which can be safely stored beyond the lifetime of the original document.\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\nCreateBuilder: Creates and initializes a mutable document from this instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.defaultinstance.html",
+    "Title": "JsonBoolean.DefaultInstance",
+    "Description": "Gets the default instance.",
+    "Keywords": "JsonBoolean DefaultInstance property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Gets the default instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.valuekind.html",
+    "Title": "JsonBoolean.ValueKind",
+    "Description": "",
+    "Keywords": "JsonBoolean ValueKind property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.trygetvalue.html",
+    "Title": "JsonBoolean.TryGetValue",
+    "Description": "Tries to get the value as a boolean",
+    "Keywords": "JsonBoolean TryGetValue method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Tries to get the value as a boolean"
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.from.html",
+    "Title": "JsonBoolean.From",
+    "Description": "Gets an instance of the JSON value from another element.",
+    "Keywords": "JsonBoolean From method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Gets an instance of the JSON value from another element."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.parsevalue.html",
+    "Title": "JsonBoolean.ParseValue",
+    "Description": "Parses one JSON value (including objects or arrays) from the provided span.",
+    "Keywords": "JsonBoolean ParseValue method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided text. Parses one JSON value (including objects or arrays) from the provided reader."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.tryparsevalue.html",
+    "Title": "JsonBoolean.TryParseValue",
+    "Description": "Attempts to parse one JSON value (including objects or arrays) from the provided reader.",
+    "Keywords": "JsonBoolean TryParseValue method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Attempts to parse one JSON value (including objects or arrays) from the provided reader."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.equals.html",
+    "Title": "JsonBoolean.Equals",
+    "Description": "",
+    "Keywords": "JsonBoolean Equals method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " Equality comparison."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.writeto.html",
+    "Title": "JsonBoolean.WriteTo",
+    "Description": "",
+    "Keywords": "JsonBoolean WriteTo method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.gethashcode.html",
+    "Title": "JsonBoolean.GetHashCode",
+    "Description": "",
+    "Keywords": "JsonBoolean GetHashCode method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.tostring.html",
+    "Title": "JsonBoolean.ToString",
+    "Description": "",
+    "Keywords": "JsonBoolean ToString method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.tryformat.html",
+    "Title": "JsonBoolean.TryFormat",
+    "Description": "",
+    "Keywords": "JsonBoolean TryFormat method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.evaluateschema.html",
+    "Title": "JsonBoolean.EvaluateSchema",
+    "Description": "Evaluate this instance against the JSON Schema for this type.",
+    "Keywords": "JsonBoolean EvaluateSchema method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Evaluate this instance against the JSON Schema for this type."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.clone.html",
+    "Title": "JsonBoolean.Clone",
+    "Description": "Gets a [`JsonBoolean`](/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.html) which can be safely stored beyond the lifetime of the original document.",
+    "Keywords": "JsonBoolean Clone method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Gets a [`JsonBoolean`](/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.html) which can be safely stored beyond the lifetime of the original document."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.freeze.html",
+    "Title": "JsonBoolean.Freeze",
+    "Description": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.",
+    "Keywords": "JsonBoolean Freeze method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.createbuilder.html",
+    "Title": "JsonBoolean.CreateBuilder",
+    "Description": "",
+    "Keywords": "JsonBoolean CreateBuilder method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " Creates and initializes a mutable document from this instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.op-implicit.html",
+    "Title": "JsonBoolean Implicit Operator",
+    "Description": "",
+    "Keywords": "JsonBoolean Implicit operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " Converts the instance to a JsonElement. Converts the instance from a JsonElement."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.op-equality.html",
+    "Title": "JsonBoolean Equality Operator",
+    "Description": "Operator ==.",
+    "Keywords": "JsonBoolean Equality operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Operator ==. Operator ==."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.op-inequality.html",
+    "Title": "JsonBoolean Inequality Operator",
+    "Description": "Operator !=.",
+    "Keywords": "JsonBoolean Inequality operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Operator !=. Operator !=."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-jsonschema.html",
+    "Title": "JsonBoolean.JsonSchema",
+    "Description": "",
+    "Keywords": "JsonBoolean.JsonSchema class Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-jsonschema.schemalocationutf8.html",
+    "Title": "JsonBoolean.JsonSchema.SchemaLocationUtf8",
+    "Description": "",
+    "Keywords": "JsonBoolean.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.html",
+    "Title": "JsonBoolean.Mutable",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable struct Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.valuekind.html",
+    "Title": "JsonBoolean.Mutable.ValueKind",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable ValueKind property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.from.html",
+    "Title": "JsonBoolean.Mutable.From",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable From method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.trygetvalue.html",
+    "Title": "JsonBoolean.Mutable.TryGetValue",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable TryGetValue method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.equals.html",
+    "Title": "JsonBoolean.Mutable.Equals",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable Equals method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.writeto.html",
+    "Title": "JsonBoolean.Mutable.WriteTo",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable WriteTo method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.gethashcode.html",
+    "Title": "JsonBoolean.Mutable.GetHashCode",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable GetHashCode method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.tostring.html",
+    "Title": "JsonBoolean.Mutable.ToString",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable ToString method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.tryformat.html",
+    "Title": "JsonBoolean.Mutable.TryFormat",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable TryFormat method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.evaluateschema.html",
+    "Title": "JsonBoolean.Mutable.EvaluateSchema",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable EvaluateSchema method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.clone.html",
+    "Title": "JsonBoolean.Mutable.Clone",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable Clone method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.freeze.html",
+    "Title": "JsonBoolean.Mutable.Freeze",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable Freeze method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.op-implicit.html",
+    "Title": "JsonBoolean.Mutable Implicit Operator",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable Implicit operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "  "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.op-equality.html",
+    "Title": "JsonBoolean.Mutable Equality Operator",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable Equality operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.op-inequality.html",
+    "Title": "JsonBoolean.Mutable Inequality Operator",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable Inequality operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.op-explicit.html",
+    "Title": "JsonBoolean.Mutable Explicit Operator",
+    "Description": "",
+    "Keywords": "JsonBoolean.Mutable Explicit operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-source.html",
+    "Title": "JsonBoolean.Source",
+    "Description": "",
+    "Keywords": "JsonBoolean.Source struct Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-source.isundefined.html",
+    "Title": "JsonBoolean.Source.IsUndefined",
+    "Description": "",
+    "Keywords": "JsonBoolean.Source IsUndefined property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-source.op-implicit.html",
+    "Title": "JsonBoolean.Source Implicit Operator",
+    "Description": "",
+    "Keywords": "JsonBoolean.Source Implicit operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.html",
+    "Title": "JsonString",
+    "Description": "Generated from JSON Schema.",
+    "Keywords": "JsonString struct Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Generated from JSON Schema.\nThe evaluation path within the schema.\nDefaultInstance: Gets the default instance.\nFrom: Gets an instance of the JSON value from another element.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nEquals: Equality comparison.\nValueEquals: Compare with a UTF-8 string.\nValueEquals: Compare with a string.\nValueEquals: Compare with a string.\nEvaluateSchema: Evaluate this instance against the JSON Schema for this type.\nClone: Gets a [`JsonString`](/api/v5/corvus-text-json-asyncapi-internal-jsonstring.html) which can be safely stored beyond the lifetime of the original document.\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\nCreateBuilder: Creates and initializes a mutable document from this instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.defaultinstance.html",
+    "Title": "JsonString.DefaultInstance",
+    "Description": "Gets the default instance.",
+    "Keywords": "JsonString DefaultInstance property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Gets the default instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.valuekind.html",
+    "Title": "JsonString.ValueKind",
+    "Description": "",
+    "Keywords": "JsonString ValueKind property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.trygetvalue.html",
+    "Title": "JsonString.TryGetValue",
+    "Description": "",
+    "Keywords": "JsonString TryGetValue method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.getutf8string.html",
+    "Title": "JsonString.GetUtf8String",
+    "Description": "",
+    "Keywords": "JsonString GetUtf8String method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.getutf16string.html",
+    "Title": "JsonString.GetUtf16String",
+    "Description": "",
+    "Keywords": "JsonString GetUtf16String method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.getstring.html",
+    "Title": "JsonString.GetString",
+    "Description": "",
+    "Keywords": "JsonString GetString method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.from.html",
+    "Title": "JsonString.From",
+    "Description": "Gets an instance of the JSON value from another element.",
+    "Keywords": "JsonString From method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Gets an instance of the JSON value from another element."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.parsevalue.html",
+    "Title": "JsonString.ParseValue",
+    "Description": "Parses one JSON value (including objects or arrays) from the provided span.",
+    "Keywords": "JsonString ParseValue method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided text. Parses one JSON value (including objects or arrays) from the provided reader."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.tryparsevalue.html",
+    "Title": "JsonString.TryParseValue",
+    "Description": "Attempts to parse one JSON value (including objects or arrays) from the provided reader.",
+    "Keywords": "JsonString TryParseValue method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Attempts to parse one JSON value (including objects or arrays) from the provided reader."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.equals.html",
+    "Title": "JsonString.Equals",
+    "Description": "",
+    "Keywords": "JsonString Equals method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " Equality comparison."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.valueequals.html",
+    "Title": "JsonString.ValueEquals",
+    "Description": "Compare with a UTF-8 string.",
+    "Keywords": "JsonString ValueEquals method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Compare with a UTF-8 string. Compare with a string. Compare with a string."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.writeto.html",
+    "Title": "JsonString.WriteTo",
+    "Description": "",
+    "Keywords": "JsonString WriteTo method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.gethashcode.html",
+    "Title": "JsonString.GetHashCode",
+    "Description": "",
+    "Keywords": "JsonString GetHashCode method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.tostring.html",
+    "Title": "JsonString.ToString",
+    "Description": "",
+    "Keywords": "JsonString ToString method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.tryformat.html",
+    "Title": "JsonString.TryFormat",
+    "Description": "",
+    "Keywords": "JsonString TryFormat method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.evaluateschema.html",
+    "Title": "JsonString.EvaluateSchema",
+    "Description": "Evaluate this instance against the JSON Schema for this type.",
+    "Keywords": "JsonString EvaluateSchema method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Evaluate this instance against the JSON Schema for this type."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.clone.html",
+    "Title": "JsonString.Clone",
+    "Description": "Gets a [`JsonString`](/api/v5/corvus-text-json-asyncapi-internal-jsonstring.html) which can be safely stored beyond the lifetime of the original document.",
+    "Keywords": "JsonString Clone method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Gets a [`JsonString`](/api/v5/corvus-text-json-asyncapi-internal-jsonstring.html) which can be safely stored beyond the lifetime of the original document."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.freeze.html",
+    "Title": "JsonString.Freeze",
+    "Description": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.",
+    "Keywords": "JsonString Freeze method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.createbuilder.html",
+    "Title": "JsonString.CreateBuilder",
+    "Description": "",
+    "Keywords": "JsonString CreateBuilder method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " Creates and initializes a mutable document from this instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.op-explicit.html",
+    "Title": "JsonString Explicit Operator",
+    "Description": "",
+    "Keywords": "JsonString Explicit operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.op-equality.html",
+    "Title": "JsonString Equality Operator",
+    "Description": "Operator ==.",
+    "Keywords": "JsonString Equality operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Operator ==. Operator ==."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.op-inequality.html",
+    "Title": "JsonString Inequality Operator",
+    "Description": "Operator !=.",
+    "Keywords": "JsonString Inequality operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Operator !=. Operator !=."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring.op-implicit.html",
+    "Title": "JsonString Implicit Operator",
+    "Description": "Converts the instance to a JsonElement.",
+    "Keywords": "JsonString Implicit operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Converts the instance to a JsonElement. Converts the instance from a JsonElement."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-jsonschema.html",
+    "Title": "JsonString.JsonSchema",
+    "Description": "",
+    "Keywords": "JsonString.JsonSchema class Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-jsonschema.schemalocationutf8.html",
+    "Title": "JsonString.JsonSchema.SchemaLocationUtf8",
+    "Description": "",
+    "Keywords": "JsonString.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.html",
+    "Title": "JsonString.Mutable",
+    "Description": "",
+    "Keywords": "JsonString.Mutable struct Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.valuekind.html",
+    "Title": "JsonString.Mutable.ValueKind",
+    "Description": "",
+    "Keywords": "JsonString.Mutable ValueKind property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.from.html",
+    "Title": "JsonString.Mutable.From",
+    "Description": "",
+    "Keywords": "JsonString.Mutable From method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.trygetvalue.html",
+    "Title": "JsonString.Mutable.TryGetValue",
+    "Description": "",
+    "Keywords": "JsonString.Mutable TryGetValue method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.getutf8string.html",
+    "Title": "JsonString.Mutable.GetUtf8String",
+    "Description": "",
+    "Keywords": "JsonString.Mutable GetUtf8String method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.getutf16string.html",
+    "Title": "JsonString.Mutable.GetUtf16String",
+    "Description": "",
+    "Keywords": "JsonString.Mutable GetUtf16String method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.getstring.html",
+    "Title": "JsonString.Mutable.GetString",
+    "Description": "",
+    "Keywords": "JsonString.Mutable GetString method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.equals.html",
+    "Title": "JsonString.Mutable.Equals",
+    "Description": "",
+    "Keywords": "JsonString.Mutable Equals method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.valueequals.html",
+    "Title": "JsonString.Mutable.ValueEquals",
+    "Description": "",
+    "Keywords": "JsonString.Mutable ValueEquals method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "  "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.writeto.html",
+    "Title": "JsonString.Mutable.WriteTo",
+    "Description": "",
+    "Keywords": "JsonString.Mutable WriteTo method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.gethashcode.html",
+    "Title": "JsonString.Mutable.GetHashCode",
+    "Description": "",
+    "Keywords": "JsonString.Mutable GetHashCode method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.tostring.html",
+    "Title": "JsonString.Mutable.ToString",
+    "Description": "",
+    "Keywords": "JsonString.Mutable ToString method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.tryformat.html",
+    "Title": "JsonString.Mutable.TryFormat",
+    "Description": "",
+    "Keywords": "JsonString.Mutable TryFormat method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.evaluateschema.html",
+    "Title": "JsonString.Mutable.EvaluateSchema",
+    "Description": "",
+    "Keywords": "JsonString.Mutable EvaluateSchema method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.clone.html",
+    "Title": "JsonString.Mutable.Clone",
+    "Description": "",
+    "Keywords": "JsonString.Mutable Clone method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.freeze.html",
+    "Title": "JsonString.Mutable.Freeze",
+    "Description": "",
+    "Keywords": "JsonString.Mutable Freeze method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.op-explicit.html",
+    "Title": "JsonString.Mutable Explicit Operator",
+    "Description": "",
+    "Keywords": "JsonString.Mutable Explicit operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.op-equality.html",
+    "Title": "JsonString.Mutable Equality Operator",
+    "Description": "",
+    "Keywords": "JsonString.Mutable Equality operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.op-inequality.html",
+    "Title": "JsonString.Mutable Inequality Operator",
+    "Description": "",
+    "Keywords": "JsonString.Mutable Inequality operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-mutable.op-implicit.html",
+    "Title": "JsonString.Mutable Implicit Operator",
+    "Description": "",
+    "Keywords": "JsonString.Mutable Implicit operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-source.html",
+    "Title": "JsonString.Source",
+    "Description": "",
+    "Keywords": "JsonString.Source struct Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-source.isundefined.html",
+    "Title": "JsonString.Source.IsUndefined",
+    "Description": "",
+    "Keywords": "JsonString.Source IsUndefined property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-source.rawstring.html",
+    "Title": "JsonString.Source.RawString",
+    "Description": "",
+    "Keywords": "JsonString.Source RawString method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-internal-jsonstring-source.op-implicit.html",
+    "Title": "JsonString.Source Implicit Operator",
+    "Description": "",
+    "Keywords": "JsonString.Source Implicit operator Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "   "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.html",
+    "Title": "DeadLetteredMessage",
+    "Description": "Represents a message that was sent to a dead-letter channel via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html).",
+    "Keywords": "DeadLetteredMessage class Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Represents a message that was sent to a dead-letter channel via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html).\nDeadLetterChannel: The dead-letter channel it was sent to.\nOriginalChannel: The original channel the message arrived on.\nPayloadBytes: The serialized payload bytes.\nHeaderBytes: The serialized header bytes (empty if none).\nException: The exception that caused dead-lettering."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.ctor.html",
+    "Title": "DeadLetteredMessage Constructor",
+    "Description": "Represents a message that was sent to a dead-letter channel via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html).",
+    "Keywords": "DeadLetteredMessage constructor new Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Represents a message that was sent to a dead-letter channel via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.deadletterchannel.html",
+    "Title": "DeadLetteredMessage.DeadLetterChannel",
+    "Description": "The dead-letter channel it was sent to.",
+    "Keywords": "DeadLetteredMessage DeadLetterChannel property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The dead-letter channel it was sent to."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.originalchannel.html",
+    "Title": "DeadLetteredMessage.OriginalChannel",
+    "Description": "The original channel the message arrived on.",
+    "Keywords": "DeadLetteredMessage OriginalChannel property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The original channel the message arrived on."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.payloadbytes.html",
+    "Title": "DeadLetteredMessage.PayloadBytes",
+    "Description": "The serialized payload bytes.",
+    "Keywords": "DeadLetteredMessage PayloadBytes property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The serialized payload bytes."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.headerbytes.html",
+    "Title": "DeadLetteredMessage.HeaderBytes",
+    "Description": "The serialized header bytes (empty if none).",
+    "Keywords": "DeadLetteredMessage HeaderBytes property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The serialized header bytes (empty if none)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.exception.html",
+    "Title": "DeadLetteredMessage.Exception",
+    "Description": "The exception that caused dead-lettering.",
+    "Keywords": "DeadLetteredMessage Exception property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The exception that caused dead-lettering."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.tostring.html",
+    "Title": "DeadLetteredMessage.ToString",
+    "Description": "",
+    "Keywords": "DeadLetteredMessage ToString method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.gethashcode.html",
+    "Title": "DeadLetteredMessage.GetHashCode",
+    "Description": "",
+    "Keywords": "DeadLetteredMessage GetHashCode method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.equals.html",
+    "Title": "DeadLetteredMessage.Equals",
+    "Description": "",
+    "Keywords": "DeadLetteredMessage Equals method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.-clone$.html",
+    "Title": "DeadLetteredMessage.<Clone>$",
+    "Description": "",
+    "Keywords": "DeadLetteredMessage <Clone>$ method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.deconstruct.html",
+    "Title": "DeadLetteredMessage.Deconstruct",
+    "Description": "",
+    "Keywords": "DeadLetteredMessage Deconstruct method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.op-inequality.html",
+    "Title": "DeadLetteredMessage Inequality Operator",
+    "Description": "",
+    "Keywords": "DeadLetteredMessage Inequality operator Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.op-equality.html",
+    "Title": "DeadLetteredMessage Equality Operator",
+    "Description": "",
+    "Keywords": "DeadLetteredMessage Equality operator Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html",
+    "Title": "InMemoryMessageTransport",
+    "Description": "An in-memory implementation of [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) for testing.",
+    "Keywords": "InMemoryMessageTransport class Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "An in-memory implementation of [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) for testing.\nThis transport captures published messages and allows tests to deliver messages to subscribers. It serializes payloads via `WriteTo(Utf8JsonWriter)` on publish, and parses incoming bytes via `ParsedJsonDocument<T>.Parse()` on subscribe delivery — mirroring what a real transport would do.\nPublishedMessages: Gets the list of messages published via this transport.\nDeadLetteredMessages: Gets the list of dead-lettered messages.\nDeliverAsync: Delivers a raw JSON payload to the subscriber on the specified channel.\nCompleteRequest: Completes a pending request/reply by correlationId.\nDeliverRawAsync: Delivers raw bytes to the subscriber on the specified channel, simulating how a real transport handles deserialization: attempts to parse, and if parsing fails, invokes the provided error policy to determine the action.\nReset: Clears all recorded published messages and dead-lettered messages."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.ctor.html",
+    "Title": "InMemoryMessageTransport Constructor",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport constructor new Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.isconnected.html",
+    "Title": "InMemoryMessageTransport.IsConnected",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport IsConnected property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.messagingsystem.html",
+    "Title": "InMemoryMessageTransport.MessagingSystem",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport MessagingSystem property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.publishedmessages.html",
+    "Title": "InMemoryMessageTransport.PublishedMessages",
+    "Description": "Gets the list of messages published via this transport.",
+    "Keywords": "InMemoryMessageTransport PublishedMessages property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Gets the list of messages published via this transport."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deadletteredmessages.html",
+    "Title": "InMemoryMessageTransport.DeadLetteredMessages",
+    "Description": "Gets the list of dead-lettered messages.",
+    "Keywords": "InMemoryMessageTransport DeadLetteredMessages property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Gets the list of dead-lettered messages."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.publishasync.html",
+    "Title": "InMemoryMessageTransport.PublishAsync",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport PublishAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.requestasync.html",
+    "Title": "InMemoryMessageTransport.RequestAsync",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport RequestAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.subscribeasync.html",
+    "Title": "InMemoryMessageTransport.SubscribeAsync",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport SubscribeAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.unsubscribeasync.html",
+    "Title": "InMemoryMessageTransport.UnsubscribeAsync",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport UnsubscribeAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deadletterasync.html",
+    "Title": "InMemoryMessageTransport.DeadLetterAsync",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport DeadLetterAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.disposeasync.html",
+    "Title": "InMemoryMessageTransport.DisposeAsync",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport DisposeAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.pingasync.html",
+    "Title": "InMemoryMessageTransport.PingAsync",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport PingAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliverasync.html",
+    "Title": "InMemoryMessageTransport.DeliverAsync",
+    "Description": "Delivers a raw JSON payload to the subscriber on the specified channel.",
+    "Keywords": "InMemoryMessageTransport DeliverAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Delivers a raw JSON payload to the subscriber on the specified channel."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.completerequest.html",
+    "Title": "InMemoryMessageTransport.CompleteRequest",
+    "Description": "Completes a pending request/reply by correlationId.",
+    "Keywords": "InMemoryMessageTransport CompleteRequest method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Completes a pending request/reply by correlationId."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.deliverrawasync.html",
+    "Title": "InMemoryMessageTransport.DeliverRawAsync",
+    "Description": "Delivers raw bytes to the subscriber on the specified channel, simulating how a real transport handles deserialization: attempts to parse, and if parsing fails, invokes the provided error policy to determine the action.",
+    "Keywords": "InMemoryMessageTransport DeliverRawAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Delivers raw bytes to the subscriber on the specified channel, simulating how a real transport handles deserialization: attempts to parse, and if parsing fails, invokes the provided error policy to determine the action."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.reset.html",
+    "Title": "InMemoryMessageTransport.Reset",
+    "Description": "Clears all recorded published messages and dead-lettered messages.",
+    "Keywords": "InMemoryMessageTransport Reset method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Clears all recorded published messages and dead-lettered messages."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.html",
+    "Title": "PublishedMessage",
+    "Description": "Represents a message that was published via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html).",
+    "Keywords": "PublishedMessage class Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Represents a message that was published via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html).\nChannel: The channel the message was published to.\nPayloadBytes: The serialized payload bytes.\nHeaderBytes: The serialized header bytes (empty if none)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.ctor.html",
+    "Title": "PublishedMessage Constructor",
+    "Description": "Represents a message that was published via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html).",
+    "Keywords": "PublishedMessage constructor new Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "Represents a message that was published via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.channel.html",
+    "Title": "PublishedMessage.Channel",
+    "Description": "The channel the message was published to.",
+    "Keywords": "PublishedMessage Channel property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The channel the message was published to."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.payloadbytes.html",
+    "Title": "PublishedMessage.PayloadBytes",
+    "Description": "The serialized payload bytes.",
+    "Keywords": "PublishedMessage PayloadBytes property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The serialized payload bytes."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.headerbytes.html",
+    "Title": "PublishedMessage.HeaderBytes",
+    "Description": "The serialized header bytes (empty if none).",
+    "Keywords": "PublishedMessage HeaderBytes property Corvus.Text.Json.AsyncApi.Testing",
+    "Body": "The serialized header bytes (empty if none)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.tostring.html",
+    "Title": "PublishedMessage.ToString",
+    "Description": "",
+    "Keywords": "PublishedMessage ToString method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.gethashcode.html",
+    "Title": "PublishedMessage.GetHashCode",
+    "Description": "",
+    "Keywords": "PublishedMessage GetHashCode method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.equals.html",
+    "Title": "PublishedMessage.Equals",
+    "Description": "",
+    "Keywords": "PublishedMessage Equals method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.-clone$.html",
+    "Title": "PublishedMessage.<Clone>$",
+    "Description": "",
+    "Keywords": "PublishedMessage <Clone>$ method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.deconstruct.html",
+    "Title": "PublishedMessage.Deconstruct",
+    "Description": "",
+    "Keywords": "PublishedMessage Deconstruct method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.op-inequality.html",
+    "Title": "PublishedMessage Inequality Operator",
+    "Description": "",
+    "Keywords": "PublishedMessage Inequality operator Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-testing-publishedmessage.op-equality.html",
+    "Title": "PublishedMessage Equality Operator",
+    "Description": "",
+    "Keywords": "PublishedMessage Equality operator Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-canonicalization-jsoncanonicalizer.html",
     "Title": "JsonCanonicalizer",
     "Description": "Produces canonical JSON output per RFC 8785 (JSON Canonicalization Scheme — JCS).",
