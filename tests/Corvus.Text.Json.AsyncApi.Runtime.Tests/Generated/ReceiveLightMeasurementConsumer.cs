@@ -91,8 +91,8 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
                     await this.StopAsync(cancellationToken).ConfigureAwait(false);
                     return;
                 case MessageErrorAction.DeadLetter:
-                    // DeadLetter action specified but not supported — re-throw the exception
-                    throw;
+                    await this.transport.DeadLetterAsync(DeadLetterChannelUtf8, ChannelAddressUtf8, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);
+                    return;
                 default:
                     return;
             }

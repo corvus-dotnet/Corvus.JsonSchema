@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-05-27T12:34:42.1968485\u002B00:00",
+  "generatedAt": "2026-05-27T14:30:09.0891907\u002B00:00",
   "generatedFiles": [
     "GetItemRequest.cs",
     "GetItemResponse.cs",
@@ -340,7 +340,7 @@
     "Models\\PostTextToJsonOk.JsonSchema.cs",
     "Models\\Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002Be1deba3efe77eb0309b02767fb748213de1ac381",
+  "generatorVersion": "1.0.0\u002B07f7f74ec1ac68382c5c9ff5bb71b2d21e0ba7a8",
   "includePaths": [],
   "rootNamespace": "CanonTests30.Client",
   "specFileHash": "2e39cbfe097e73fe6f546fa7c1f65364210d0283efb477c8b9341678c178da0a",

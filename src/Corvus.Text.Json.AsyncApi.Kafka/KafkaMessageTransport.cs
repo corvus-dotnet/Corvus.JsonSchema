@@ -349,10 +349,12 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
             // Parse reply with error handling
             try
             {
-                using ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Message.Value);
+                // Cold path — documents not disposed; returned values reference their memory.
+                // The caller owns the lifetime of the returned elements.
+                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Message.Value);
                 TReply replyPayload = replyDoc.RootElement;
 
-                using ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
+                ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
                 JsonElement replyHeaders = headersDoc?.RootElement ?? default;
 
                 return (replyPayload, replyHeaders);

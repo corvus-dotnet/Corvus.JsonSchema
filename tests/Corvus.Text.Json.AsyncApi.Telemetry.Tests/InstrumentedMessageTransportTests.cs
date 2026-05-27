@@ -326,6 +326,17 @@ public class InstrumentedMessageTransportTests
             return ValueTask.CompletedTask;
         }
 
+        public ValueTask DeadLetterAsync(
+            ReadOnlyMemory<byte> deadLetterChannelUtf8,
+            ReadOnlyMemory<byte> originalChannelUtf8,
+            in JsonElement payload,
+            in JsonElement headers,
+            Exception exception,
+            CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
         public ValueTask DisposeAsync()
         {
             return ValueTask.CompletedTask;
@@ -370,6 +381,17 @@ public class InstrumentedMessageTransportTests
 
         public ValueTask UnsubscribeAsync(
             ReadOnlyMemory<byte> channelUtf8,
+            CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask DeadLetterAsync(
+            ReadOnlyMemory<byte> deadLetterChannelUtf8,
+            ReadOnlyMemory<byte> originalChannelUtf8,
+            in JsonElement payload,
+            in JsonElement headers,
+            Exception exception,
             CancellationToken cancellationToken)
         {
             return ValueTask.CompletedTask;

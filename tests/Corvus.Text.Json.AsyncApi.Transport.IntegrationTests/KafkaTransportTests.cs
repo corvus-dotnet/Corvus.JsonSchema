@@ -604,6 +604,337 @@ public class KafkaTransportTests
                 channel, channel, doc.RootElement, "corr"u8.ToArray()));
     }
 
+    [TestMethod]
+    public async Task HealthCheckReportsConnectedAndMessagingSystem()
+    {
+        // IsConnected and MessagingSystem are properties of IHealthCheckableTransport
+        IHealthCheckableTransport healthCheck = s_transport;
+
+        Assert.IsTrue(healthCheck.IsConnected);
+        Assert.AreEqual("kafka", healthCheck.MessagingSystem);
+
+        bool pingResult = await healthCheck.PingAsync();
+        Assert.IsTrue(pingResult);
+    }
+
+    [TestMethod]
+    public async Task PingReturnsFalseAfterDispose()
+    {
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        KafkaMessageTransport transport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-ping-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+        });
+
+        await transport.DisposeAsync();
+
+        Assert.IsFalse(transport.IsConnected);
+        bool pingResult = await ((IHealthCheckableTransport)transport).PingAsync();
+        Assert.IsFalse(pingResult);
+    }
+
+    [TestMethod]
+    public async Task DoubleDisposeIsIdempotent()
+    {
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        KafkaMessageTransport transport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-double-dispose-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+        });
+
+        await transport.DisposeAsync();
+        await transport.DisposeAsync(); // Should not throw
+    }
+
+    [TestMethod]
+    public async Task RequestReplyRoundtrip()
+    {
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string requestTopic = $"kafka-reqrep-req-{topicSuffix}";
+        string replyTopic = $"kafka-reqrep-rep-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(requestTopic);
+        await KafkaFixture.CreateTopicAsync(replyTopic);
+
+        ReadOnlyMemory<byte> requestChannel = Encoding.UTF8.GetBytes(requestTopic);
+        ReadOnlyMemory<byte> replyChannel = Encoding.UTF8.GetBytes(replyTopic);
+
+        // Set up a responder: subscribe to request topic, publish reply with correlation ID
+        KafkaMessageTransport responderTransport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-responder-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        await responderTransport.SubscribeAsync<JsonElement>(
+            requestChannel,
+            async (payload, headers, ct) =>
+            {
+                // Echo back the request with a "reply" field added, preserving correlation
+                // We need to read the correlation ID from the original message and attach it to the reply.
+                // The transport attaches correlation-id header automatically on request, but
+                // the responder needs a raw consumer to access it. For this test, we'll use
+                // a dedicated raw consumer/producer to relay properly.
+            });
+
+        // The responder approach above won't work easily because the SubscribeAsync handler
+        // doesn't expose raw headers with correlation IDs to the user handler. Instead, use
+        // a raw Kafka consumer/producer to act as the responder.
+        await responderTransport.UnsubscribeAsync(requestChannel);
+        await responderTransport.DisposeAsync();
+
+        // Use raw Confluent.Kafka consumer/producer as the responder
+        using IConsumer<Null, byte[]> rawConsumer = new ConsumerBuilder<Null, byte[]>(
+            new ConsumerConfig
+            {
+                BootstrapServers = KafkaFixture.BootstrapServers,
+                GroupId = "corvus-raw-responder-" + topicSuffix,
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                TopicMetadataRefreshIntervalMs = 1000,
+            }).Build();
+        rawConsumer.Subscribe(requestTopic);
+
+        using IProducer<Null, byte[]> rawProducer = new ProducerBuilder<Null, byte[]>(
+            new ProducerConfig { BootstrapServers = KafkaFixture.BootstrapServers }).Build();
+
+        // Start a background task that consumes requests and produces replies
+        using CancellationTokenSource responderCts = new();
+        Task responderTask = Task.Run(async () =>
+        {
+            try
+            {
+                while (!responderCts.Token.IsCancellationRequested)
+                {
+                    ConsumeResult<Null, byte[]>? result = rawConsumer.Consume(TimeSpan.FromMilliseconds(200));
+                    if (result?.IsPartitionEOF != false)
+                    {
+                        continue;
+                    }
+
+                    // Extract correlation ID
+                    byte[]? corrId = null;
+                    if (result.Message.Headers?.TryGetLastBytes("corvus-correlation-id", out byte[]? corrBytes) == true)
+                    {
+                        corrId = corrBytes;
+                    }
+
+                    // Send reply with same correlation ID
+                    byte[] replyPayload = """{"answer":42}"""u8.ToArray();
+                    Message<Null, byte[]> replyMsg = new()
+                    {
+                        Value = replyPayload,
+                        Headers = [],
+                    };
+
+                    if (corrId is not null)
+                    {
+                        replyMsg.Headers.Add("corvus-correlation-id", corrId);
+                    }
+
+                    await rawProducer.ProduceAsync(replyTopic, replyMsg);
+                    rawConsumer.Commit(result);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        });
+
+        // Give the responder time to start
+        await Task.Delay(3000);
+
+        // Create client transport for request-reply
+        KafkaMessageTransport clientTransport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-reqrep-client-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"question":"meaning of life"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> requestHeaders = ParsedJsonDocument<JsonElement>.Parse("""{"x-trace-id":"trace-123"}"""u8.ToArray());
+        byte[] correlationId = Guid.NewGuid().ToString("D").Substring(0, 36).Select(c => (byte)c).ToArray();
+
+        using CancellationTokenSource requestCts = new(TimeSpan.FromSeconds(30));
+        (JsonElement replyPayloadElement, JsonElement replyHeaders) = await clientTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            requestHeaders.RootElement,
+            requestCts.Token);
+
+        Assert.AreEqual(JsonValueKind.Object, replyPayloadElement.ValueKind);
+        Assert.AreEqual(42, replyPayloadElement.GetProperty("answer"u8).GetInt32());
+
+        await responderCts.CancelAsync();
+        try { await responderTask; }
+        catch (OperationCanceledException) { }
+
+        await clientTransport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task ExplicitDeadLetterPublishesMessage()
+    {
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string dlqTopic = $"kafka-explicit-dlq-{topicSuffix}";
+        string originalTopic = $"kafka-explicit-orig-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(dlqTopic);
+        await KafkaFixture.CreateTopicAsync(originalTopic);
+
+        ReadOnlyMemory<byte> dlqChannel = Encoding.UTF8.GetBytes(dlqTopic);
+        ReadOnlyMemory<byte> originalChannel = Encoding.UTF8.GetBytes(originalTopic);
+
+        // Publish to dead-letter explicitly
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{"failed":"msg"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x-trace":"abc"}"""u8.ToArray());
+
+        await s_transport.DeadLetterAsync(
+            dlqChannel,
+            originalChannel,
+            payloadDoc.RootElement,
+            headersDoc.RootElement,
+            new InvalidOperationException("Test dead-letter reason"));
+
+        // Verify message arrives on the DLQ topic
+        using IConsumer<Null, byte[]> dlqConsumer = new ConsumerBuilder<Null, byte[]>(
+            new ConsumerConfig
+            {
+                BootstrapServers = KafkaFixture.BootstrapServers,
+                GroupId = "corvus-explicit-dlq-reader-" + topicSuffix,
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                TopicMetadataRefreshIntervalMs = 1000,
+            }).Build();
+        dlqConsumer.Subscribe(dlqTopic);
+
+        ConsumeResult<Null, byte[]>? result = null;
+        for (int i = 0; i < 50; i++)
+        {
+            result = dlqConsumer.Consume(TimeSpan.FromMilliseconds(200));
+            if (result?.Message?.Value is not null)
+            {
+                break;
+            }
+        }
+
+        Assert.IsNotNull(result?.Message?.Value, "Dead-letter message was not received.");
+
+        // Verify headers contain error metadata
+        Assert.IsNotNull(result.Message.Headers);
+        Assert.IsTrue(result.Message.Headers.TryGetLastBytes("corvus-original-channel", out byte[]? origCh));
+        Assert.AreEqual(originalTopic, Encoding.UTF8.GetString(origCh!));
+        Assert.IsTrue(result.Message.Headers.TryGetLastBytes("corvus-error", out byte[]? errMsg));
+        Assert.AreEqual("Test dead-letter reason", Encoding.UTF8.GetString(errMsg!));
+        Assert.IsTrue(result.Message.Headers.TryGetLastBytes("corvus-error-type", out byte[]? errType));
+        Assert.AreEqual("System.InvalidOperationException", Encoding.UTF8.GetString(errType!));
+
+        // Verify the corvus-headers header is also present (since we passed headers)
+        Assert.IsTrue(result.Message.Headers.TryGetLastBytes("corvus-headers", out _));
+    }
+
+    [TestMethod]
+    public async Task DeserializationErrorWithDeadLetterActionSendsRawToDeadLetterChannel()
+    {
+        ConfigurableErrorPolicy policy = new(deserializationAction: MessageErrorAction.DeadLetter);
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string topic = $"kafka-deser-dl-{topicSuffix}";
+        string dlqTopic = topic + ".dead-letter";
+        await KafkaFixture.CreateTopicAsync(topic);
+        await KafkaFixture.CreateTopicAsync(dlqTopic);
+        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
+
+        KafkaMessageTransport transport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-deser-dl-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            ErrorPolicy = policy,
+            ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
+        });
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) => ValueTask.CompletedTask);
+
+        await Task.Delay(2000);
+
+        // Send invalid JSON that will fail deserialization
+        byte[] invalidJson = "NOT VALID JSON {{{"u8.ToArray();
+        using IProducer<Null, byte[]> rawProducer = new ProducerBuilder<Null, byte[]>(
+            new ProducerConfig { BootstrapServers = KafkaFixture.BootstrapServers }).Build();
+        await rawProducer.ProduceAsync(topic, new Message<Null, byte[]> { Value = invalidJson });
+
+        // Check the DLQ receives the raw bytes
+        using IConsumer<Null, byte[]> dlqConsumer = new ConsumerBuilder<Null, byte[]>(
+            new ConsumerConfig
+            {
+                BootstrapServers = KafkaFixture.BootstrapServers,
+                GroupId = "corvus-deser-dl-reader-" + topicSuffix,
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                TopicMetadataRefreshIntervalMs = 1000,
+            }).Build();
+        dlqConsumer.Subscribe(dlqTopic);
+
+        ConsumeResult<Null, byte[]>? result = null;
+        for (int i = 0; i < 50; i++)
+        {
+            result = dlqConsumer.Consume(TimeSpan.FromMilliseconds(200));
+            if (result?.Message?.Value is not null)
+            {
+                break;
+            }
+        }
+
+        Assert.IsNotNull(result?.Message?.Value, "Dead-letter message was not received on DLQ.");
+
+        // The raw bytes should be preserved
+        CollectionAssert.AreEqual(invalidJson, result.Message.Value);
+
+        // Should have error metadata headers
+        Assert.IsNotNull(result.Message.Headers);
+        Assert.IsTrue(result.Message.Headers.TryGetLastBytes("corvus-original-channel", out byte[]? origCh));
+        Assert.AreEqual(topic, Encoding.UTF8.GetString(origCh!));
+        Assert.IsTrue(result.Message.Headers.TryGetLastBytes("corvus-error-type", out _));
+
+        Assert.IsTrue(policy.Invocations.Count > 0);
+        Assert.AreEqual(MessageErrorKind.Deserialization, policy.Invocations[0].Kind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DeadLetterAsyncAfterDisposeThrowsObjectDisposedException()
+    {
+        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        KafkaMessageTransport transport = new(new KafkaTransportOptions
+        {
+            BootstrapServers = KafkaFixture.BootstrapServers,
+            GroupId = "corvus-dl-disposed-group-" + topicSuffix,
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+        });
+
+        await transport.DisposeAsync();
+
+        ReadOnlyMemory<byte> dlqChannel = Encoding.UTF8.GetBytes($"kafka-dl-disposed-{topicSuffix}");
+        ReadOnlyMemory<byte> origChannel = Encoding.UTF8.GetBytes("original");
+
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
+            await transport.DeadLetterAsync(
+                dlqChannel,
+                origChannel,
+                default,
+                default,
+                new Exception("test")));
+    }
+
     private static string CreateTopicName(string prefix)
     {
         return $"{prefix}-{Guid.NewGuid().ToString("N")[..8]}";

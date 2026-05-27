@@ -176,6 +176,35 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
     }
 
     /// <inheritdoc/>
+    public ValueTask DeadLetterAsync(
+        ReadOnlyMemory<byte> deadLetterChannelUtf8,
+        ReadOnlyMemory<byte> originalChannelUtf8,
+        in JsonElement payload,
+        in JsonElement headers,
+        Exception exception,
+        CancellationToken cancellationToken = default)
+    {
+        string deadLetterChannel = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
+        string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
+
+        byte[] payloadBytes = payload.ValueKind != JsonValueKind.Undefined
+            ? SerializeToOwnedBytes(in payload)
+            : [];
+
+        byte[] headerBytes = headers.ValueKind != JsonValueKind.Undefined
+            ? SerializeToOwnedBytes(in headers)
+            : [];
+
+        lock (this.syncRoot)
+        {
+            this.deadLetteredMessages.Add(new DeadLetteredMessage(
+                deadLetterChannel, originalChannel, payloadBytes, headerBytes, exception));
+        }
+
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     /// <inheritdoc/>

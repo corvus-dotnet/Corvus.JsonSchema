@@ -153,6 +153,21 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
     }
 
     /// <inheritdoc/>
+    public ValueTask DeadLetterAsync(
+        ReadOnlyMemory<byte> deadLetterChannelUtf8,
+        ReadOnlyMemory<byte> originalChannelUtf8,
+        in JsonElement payload,
+        in JsonElement headers,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        JsonElement payloadCopy = payload;
+        JsonElement headersCopy = headers;
+        return DeadLetterCoreAsync(
+            deadLetterChannelUtf8, originalChannelUtf8, payloadCopy, headersCopy, exception, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         return this.inner.DisposeAsync();
@@ -346,6 +361,39 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         {
             RecordDuration(AsyncApiTelemetry.OperationDuration, startTimestamp, "request", destination);
         }
+    }
+
+    private async ValueTask DeadLetterCoreAsync(
+        ReadOnlyMemory<byte> deadLetterChannelUtf8,
+        ReadOnlyMemory<byte> originalChannelUtf8,
+        JsonElement payload,
+        JsonElement headers,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        string destination = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
+        string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
+
+        using Activity? activity = AsyncApiTelemetry.ActivitySource.StartActivity(
+            $"dead-letter {destination}",
+            ActivityKind.Producer);
+
+        SetCommonTags(activity, "dead-letter", destination);
+        activity?.SetTag("corvus.asyncapi.original_channel", originalChannel);
+        activity?.SetTag("error.type", exception.GetType().FullName);
+
+        await this.inner.DeadLetterAsync(
+            deadLetterChannelUtf8, originalChannelUtf8, in payload, in headers, exception, cancellationToken)
+            .ConfigureAwait(false);
+
+        AsyncApiTelemetry.DeadLetters.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", this.messagingSystem },
+                { "messaging.destination.name", destination },
+                { "corvus.asyncapi.original_channel", originalChannel },
+            });
     }
 
     private Func<TPayload, JsonElement, CancellationToken, ValueTask> CreateInstrumentedHandler<TPayload>(

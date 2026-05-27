@@ -313,6 +313,43 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
     }
 
     /// <inheritdoc/>
+    public ValueTask DeadLetterAsync(
+        ReadOnlyMemory<byte> deadLetterChannelUtf8,
+        ReadOnlyMemory<byte> originalChannelUtf8,
+        in JsonElement payload,
+        in JsonElement headers,
+        Exception exception,
+        CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        string deadLetterChannel = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
+        string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
+
+        NatsHeaders natsHeaders = new()
+        {
+            ["Corvus-Original-Channel"] = originalChannel,
+            ["Corvus-Error"] = exception.Message,
+            ["Corvus-Error-Type"] = exception.GetType().FullName ?? exception.GetType().Name,
+        };
+
+        if (headers.ValueKind != JsonValueKind.Undefined)
+        {
+            natsHeaders[HeadersKey] = SerializeToBase64String(in headers);
+        }
+
+        // Serializer handles ValueKind.Undefined as no-op (empty payload)
+        return this.connection.PublishAsync(
+            subject: deadLetterChannel,
+            data: payload,
+            headers: natsHeaders,
+            replyTo: null,
+            serializer: JsonElementSerializer<JsonElement>.Instance,
+            opts: default,
+            cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (this.disposed)

@@ -472,6 +472,22 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     }
 
     /// <inheritdoc/>
+    public ValueTask DeadLetterAsync(
+        ReadOnlyMemory<byte> deadLetterChannelUtf8,
+        ReadOnlyMemory<byte> originalChannelUtf8,
+        in JsonElement payload,
+        in JsonElement headers,
+        Exception exception,
+        CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        JsonElement payloadCopy = payload;
+        JsonElement headersCopy = headers;
+        return DeadLetterCoreAsync(deadLetterChannelUtf8, originalChannelUtf8, payloadCopy, headersCopy, exception, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (this.disposed)
@@ -489,6 +505,55 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
         await this.sender.DisposeAsync().ConfigureAwait(false);
         await this.client.DisposeAsync().ConfigureAwait(false);
+    }
+
+    private async ValueTask DeadLetterCoreAsync(
+        ReadOnlyMemory<byte> deadLetterChannelUtf8,
+        ReadOnlyMemory<byte> originalChannelUtf8,
+        JsonElement payload,
+        JsonElement headers,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        string deadLetterChannel = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
+        string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
+
+        byte[]? rentedArray = null;
+
+        try
+        {
+            int estimatedSize = payload.ValueKind != JsonValueKind.Undefined
+                ? Math.Max(1024, payload.ToString()!.Length * 4)
+                : 256;
+
+            rentedArray = ArrayPool<byte>.Shared.Rent(estimatedSize);
+            int bytesWritten = payload.ValueKind != JsonValueKind.Undefined
+                ? SerializeToBuffer(payload, rentedArray)
+                : 0;
+
+            ServiceBusMessage message = new(new ReadOnlyMemory<byte>(rentedArray, 0, bytesWritten));
+            message.ApplicationProperties["Corvus-Original-Channel"] = originalChannel;
+            message.ApplicationProperties["Corvus-Error"] = exception.Message;
+            message.ApplicationProperties["Corvus-Error-Type"] = exception.GetType().FullName ?? exception.GetType().Name;
+
+            if (headers.ValueKind != JsonValueKind.Undefined)
+            {
+                foreach (JsonProperty<JsonElement> property in headers.EnumerateObject())
+                {
+                    message.ApplicationProperties[property.Name] = property.Value.ToString();
+                }
+            }
+
+            await using ServiceBusSender dlSender = this.client.CreateSender(deadLetterChannel);
+            await dlSender.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
+        }
     }
 
     private static int EstimateSerializedSize<TPayload>(TPayload payload)
