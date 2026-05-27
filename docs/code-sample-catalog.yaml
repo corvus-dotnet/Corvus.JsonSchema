@@ -1272,32 +1272,34 @@ main-docs:
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}
-      - {index: 1, language: powershell, lines: [59, 61]}
-      - {index: 2, language: powershell, lines: [69, 71]}
-      - {index: 3, language: powershell, lines: [75, 77]}
-      - {index: 4, language: powershell, lines: [85, 95]}
-      - {index: 5, language: powershell, lines: [99, 101]}
-      - {index: 6, language: powershell, lines: [105, 107]}
-      - {index: 7, language: powershell, lines: [111, 113]}
-      - {index: 8, language: powershell, lines: [123, 130]}
-      - {index: 9, language: powershell, lines: [138, 141]}
-      - {index: 10, language: powershell, lines: [145, 151]}
-      - {index: 11, language: powershell, lines: [155, 157]}
-      - {index: 12, language: powershell, lines: [169, 171]}
-      - {index: 13, language: powershell, lines: [175, 177]}
-      - {index: 14, language: powershell, lines: [183, 185]}
-      - {index: 15, language: powershell, lines: [197, 199]}
-      - {index: 16, language: powershell, lines: [203, 205]}
-      - {index: 17, language: powershell, lines: [211, 213]}
-      - {index: 18, language: powershell, lines: [219, 225]}
-      - {index: 19, language: powershell, lines: [231, 233]}
-      - {index: 20, language: powershell, lines: [270, 273]}
-      - {index: 21, language: powershell, lines: [281, 311]}
-      - {index: 22, language: powershell, lines: [315, 318]}
-      - {index: 23, language: powershell, lines: [328, 330]}
-      - {index: 24, language: powershell, lines: [340, 342]}
-      - {index: 25, language: powershell, lines: [346, 349]}
-      - {index: 26, language: powershell, lines: [367, 373]}
+      - {index: 1, language: powershell, lines: [26, 28]}
+      - {index: 2, language: powershell, lines: [32, 42]}
+      - {index: 3, language: powershell, lines: [91, 93]}
+      - {index: 4, language: powershell, lines: [101, 103]}
+      - {index: 5, language: powershell, lines: [107, 109]}
+      - {index: 6, language: powershell, lines: [117, 127]}
+      - {index: 7, language: powershell, lines: [131, 133]}
+      - {index: 8, language: powershell, lines: [137, 139]}
+      - {index: 9, language: powershell, lines: [143, 145]}
+      - {index: 10, language: powershell, lines: [155, 162]}
+      - {index: 11, language: powershell, lines: [170, 173]}
+      - {index: 12, language: powershell, lines: [177, 183]}
+      - {index: 13, language: powershell, lines: [187, 189]}
+      - {index: 14, language: powershell, lines: [201, 203]}
+      - {index: 15, language: powershell, lines: [207, 209]}
+      - {index: 16, language: powershell, lines: [215, 217]}
+      - {index: 17, language: powershell, lines: [229, 231]}
+      - {index: 18, language: powershell, lines: [235, 237]}
+      - {index: 19, language: powershell, lines: [243, 245]}
+      - {index: 20, language: powershell, lines: [251, 257]}
+      - {index: 21, language: powershell, lines: [263, 265]}
+      - {index: 22, language: powershell, lines: [302, 305]}
+      - {index: 23, language: powershell, lines: [313, 343]}
+      - {index: 24, language: powershell, lines: [347, 350]}
+      - {index: 25, language: powershell, lines: [360, 362]}
+      - {index: 26, language: powershell, lines: [372, 374]}
+      - {index: 27, language: powershell, lines: [378, 381]}
+      - {index: 28, language: powershell, lines: [399, 405]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 25]}
