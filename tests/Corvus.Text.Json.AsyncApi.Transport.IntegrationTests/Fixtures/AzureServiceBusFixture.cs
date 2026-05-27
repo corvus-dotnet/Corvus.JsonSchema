@@ -75,6 +75,12 @@ internal static class AzureServiceBusFixture
         // Write config to temp file
         s_configFilePath = Path.GetTempFileName();
         File.WriteAllText(s_configFilePath, emulatorConfig);
+        if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS() || OperatingSystem.IsFreeBSD())
+        {
+            File.SetUnixFileMode(
+                s_configFilePath,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+        }
 
         // Build and start container (auto-provisions MSSQL 2022 dependency)
         // Accepting EULA: https://github.com/Azure/azure-service-bus-emulator-installer/blob/main/EMULATOR_EULA.txt
