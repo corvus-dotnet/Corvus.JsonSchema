@@ -2100,8 +2100,8 @@ public sealed class AsyncApi30CodeGenerator
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
             w.PushIndent();
-            w.WriteLine($"await this.transport.DeadLetterAsync(DeadLetterChannelUtf8, {channelUtf8Expr}, JsonElement.From(payload), headers, ex, cancellationToken).ConfigureAwait(false);");
-            w.WriteLine("return;");
+            w.WriteLine("// DeadLetter action specified but not supported — re-throw the exception");
+            w.WriteLine("throw;");
             w.PopIndent();
             w.WriteLine("default:");
             w.PushIndent();
@@ -2141,8 +2141,8 @@ public sealed class AsyncApi30CodeGenerator
             w.PopIndent();
             w.WriteLine("case MessageErrorAction.DeadLetter:");
             w.PushIndent();
-            w.WriteLine($"await this.transport.DeadLetterAsync(DeadLetterChannelUtf8, {channelUtf8Expr}, payload, headers, ex, cancellationToken).ConfigureAwait(false);");
-            w.WriteLine("return;");
+            w.WriteLine("// DeadLetter action specified but not supported — re-throw the exception");
+            w.WriteLine("throw;");
             w.PopIndent();
             w.WriteLine("default:");
             w.PushIndent();

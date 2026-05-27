@@ -34,7 +34,7 @@ public class CancellationAndConcurrencyTests
             transport.RequestAsync<JsonElement, JsonElement>(
                 "request/channel"u8.ToArray(),
                 "reply/channel"u8.ToArray(),
-                in request,
+                request,
                 "corr-cancel-test"u8.ToArray(),
                 cancellationToken: cts.Token).AsTask();
 

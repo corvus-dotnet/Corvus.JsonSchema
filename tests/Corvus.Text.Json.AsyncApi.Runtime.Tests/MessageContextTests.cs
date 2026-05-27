@@ -112,7 +112,7 @@ public class MessageContextTests
         // Use the default interface method overload that accepts MessageContext
         Task<(JsonElement Payload, JsonElement Headers)> requestTask =
             ((IMessageTransport)transport).RequestAsync<JsonElement, JsonElement>(
-                "req"u8.ToArray(), "rep"u8.ToArray(), in request, "c-1"u8.ToArray(), in context).AsTask();
+                "req"u8.ToArray(), "rep"u8.ToArray(), request, "c-1"u8.ToArray(), in context).AsTask();
 
         byte[] replyBytes = Encoding.UTF8.GetBytes("""{"a":2}""");
         transport.CompleteRequest("c-1", replyBytes);

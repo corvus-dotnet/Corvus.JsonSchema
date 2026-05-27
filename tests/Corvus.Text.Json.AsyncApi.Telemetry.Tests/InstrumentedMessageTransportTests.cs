@@ -150,50 +150,6 @@ public class InstrumentedMessageTransportTests
     }
 
     [TestMethod]
-    public async Task DeadLetterAsync_IncrementsDeadLetterCounter()
-    {
-        List<(string Name, long Value, KeyValuePair<string, object?>[] Tags)> measurements = [];
-        using MeterListener meterListener = CreateMeterListener(measurements);
-
-        await using InMemoryMessageTransport inner = new();
-        InstrumentedMessageTransport transport = new(inner, "kafka");
-
-        byte[] dlqChannel = "test/dlq"u8.ToArray();
-        JsonElement payload = JsonElement.ParseValue("""{"bad": true}"""u8.ToArray());
-        JsonElement noHeaders = default;
-        Exception exception = new InvalidOperationException("processing failed");
-
-        await transport.DeadLetterAsync(dlqChannel, TestChannel, in payload, in noHeaders, exception, default);
-
-        var deadLetters = measurements.Where(m => m.Name == "corvus.asyncapi.dead_letters").ToList();
-        Assert.AreEqual(1, deadLetters.Count);
-        AssertTag(deadLetters[0].Tags, "messaging.destination.name", "test/dlq");
-        AssertTag(deadLetters[0].Tags, "corvus.asyncapi.original_channel", "test/channel");
-    }
-
-    [TestMethod]
-    public async Task DeadLetterAsync_CreatesActivityWithOriginalChannel()
-    {
-        List<Activity> activities = [];
-        using ActivityListener listener = CreateActivityListener(activities);
-
-        await using InMemoryMessageTransport inner = new();
-        InstrumentedMessageTransport transport = new(inner, "nats");
-
-        byte[] dlqChannel = "dead-letters/sensor"u8.ToArray();
-        JsonElement payload = JsonElement.ParseValue("""{"x": 1}"""u8.ToArray());
-        JsonElement noHeaders = default;
-        Exception exception = new FormatException("bad data");
-
-        await transport.DeadLetterAsync(dlqChannel, TestChannel, in payload, in noHeaders, exception, default);
-
-        Assert.AreEqual(1, activities.Count);
-        Assert.AreEqual("dead-letter dead-letters/sensor", activities[0].OperationName);
-        Assert.AreEqual("test/channel", activities[0].GetTagItem("corvus.asyncapi.original_channel"));
-        Assert.AreEqual("System.FormatException", activities[0].GetTagItem("error.type"));
-    }
-
-    [TestMethod]
     public async Task RequestAsync_CreatesActivityWithConversationId()
     {
         List<Activity> activities = [];
@@ -211,7 +167,7 @@ public class InstrumentedMessageTransportTests
         try
         {
             await transport.RequestAsync<JsonElement, JsonElement>(
-                TestChannel, replyChannel, in request, correlationId, in noHeaders, cts.Token);
+                TestChannel, replyChannel, request, correlationId, noHeaders, cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -344,10 +300,10 @@ public class InstrumentedMessageTransportTests
         public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
             ReadOnlyMemory<byte> requestChannelUtf8,
             ReadOnlyMemory<byte> replyChannelUtf8,
-            in TRequest request,
+            TRequest request,
             ReadOnlyMemory<byte> correlationIdUtf8,
-            in JsonElement headers,
-            CancellationToken cancellationToken)
+            JsonElement headers = default,
+            CancellationToken cancellationToken = default)
             where TRequest : struct, IJsonElement<TRequest>
             where TReply : struct, IJsonElement<TReply>
         {
@@ -365,17 +321,6 @@ public class InstrumentedMessageTransportTests
 
         public ValueTask UnsubscribeAsync(
             ReadOnlyMemory<byte> channelUtf8,
-            CancellationToken cancellationToken)
-        {
-            return ValueTask.CompletedTask;
-        }
-
-        public ValueTask DeadLetterAsync(
-            ReadOnlyMemory<byte> deadLetterChannelUtf8,
-            ReadOnlyMemory<byte> originalChannelUtf8,
-            in JsonElement payload,
-            in JsonElement headers,
-            Exception exception,
             CancellationToken cancellationToken)
         {
             return ValueTask.CompletedTask;
@@ -404,10 +349,10 @@ public class InstrumentedMessageTransportTests
         public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
             ReadOnlyMemory<byte> requestChannelUtf8,
             ReadOnlyMemory<byte> replyChannelUtf8,
-            in TRequest request,
+            TRequest request,
             ReadOnlyMemory<byte> correlationIdUtf8,
-            in JsonElement headers,
-            CancellationToken cancellationToken)
+            JsonElement headers = default,
+            CancellationToken cancellationToken = default)
             where TRequest : struct, IJsonElement<TRequest>
             where TReply : struct, IJsonElement<TReply>
         {
@@ -425,17 +370,6 @@ public class InstrumentedMessageTransportTests
 
         public ValueTask UnsubscribeAsync(
             ReadOnlyMemory<byte> channelUtf8,
-            CancellationToken cancellationToken)
-        {
-            return ValueTask.CompletedTask;
-        }
-
-        public ValueTask DeadLetterAsync(
-            ReadOnlyMemory<byte> deadLetterChannelUtf8,
-            ReadOnlyMemory<byte> originalChannelUtf8,
-            in JsonElement payload,
-            in JsonElement headers,
-            Exception exception,
             CancellationToken cancellationToken)
         {
             return ValueTask.CompletedTask;

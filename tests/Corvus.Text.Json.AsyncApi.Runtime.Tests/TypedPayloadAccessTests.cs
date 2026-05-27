@@ -165,7 +165,7 @@ public class TypedPayloadAccessTests
             transport.RequestAsync<LightMeasuredPayload, LightMeasuredPayload>(
                 "request/ch"u8.ToArray(),
                 "reply/ch"u8.ToArray(),
-                in request,
+                request,
                 "corr-typed-access"u8.ToArray()).AsTask();
 
         transport.CompleteRequest(
@@ -190,7 +190,7 @@ public class TypedPayloadAccessTests
             transport.RequestAsync<LightMeasuredPayload, LightMeasuredPayload>(
                 "req/ch"u8.ToArray(),
                 "rep/ch"u8.ToArray(),
-                in request,
+                request,
                 "corr-with-headers"u8.ToArray()).AsTask();
 
         transport.CompleteRequest(

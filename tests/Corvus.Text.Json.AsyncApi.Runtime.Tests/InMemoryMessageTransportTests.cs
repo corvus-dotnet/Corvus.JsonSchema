@@ -95,26 +95,6 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
-    public async Task DeadLetterAsync_CapturesDeadLetteredMessage()
-    {
-        await using Testing.InMemoryMessageTransport transport = new();
-
-        JsonElement payload = JsonElement.ParseValue("""{"bad":"data"}"""u8);
-        JsonElement headers = JsonElement.ParseValue("""{"retry":"3"}"""u8);
-        InvalidOperationException ex = new("Processing failed");
-
-        await transport.DeadLetterAsync("dlq/errors"u8.ToArray(), "original/channel"u8.ToArray(), in payload, in headers, ex);
-
-        Assert.AreEqual(1, transport.DeadLetteredMessages.Count);
-        DeadLetteredMessage dlm = transport.DeadLetteredMessages[0];
-        Assert.AreEqual("dlq/errors", dlm.DeadLetterChannel);
-        Assert.AreEqual("original/channel", dlm.OriginalChannel);
-        Assert.IsTrue(dlm.PayloadBytes.Length > 0);
-        Assert.IsTrue(dlm.HeaderBytes.Length > 0);
-        Assert.AreEqual(ex, dlm.Exception);
-    }
-
-    [TestMethod]
     public async Task RequestAsync_CompletesWhenReplyDelivered()
     {
         await using Testing.InMemoryMessageTransport transport = new();
@@ -126,7 +106,7 @@ public class InMemoryMessageTransportTests
             transport.RequestAsync<JsonElement, JsonElement>(
                 "request/channel"u8.ToArray(),
                 "reply/channel"u8.ToArray(),
-                in request,
+                request,
                 "corr-123"u8.ToArray()).AsTask();
 
         // Deliver a reply as byte[]
@@ -213,7 +193,7 @@ public class InMemoryMessageTransportTests
             transport.RequestAsync<JsonElement, JsonElement>(
                 "req/ch"u8.ToArray(),
                 "rep/ch"u8.ToArray(),
-                in request,
+                request,
                 "corr-headers"u8.ToArray()).AsTask();
 
         byte[] replyBytes = Encoding.UTF8.GetBytes("""{"ok":true}""");
