@@ -5989,7 +5989,7 @@
     "Title": "AsyncApiTelemetry",
     "Description": "Provides OpenTelemetry-compliant instrumentation for AsyncAPI transports.",
     "Keywords": "AsyncApiTelemetry class Corvus.Text.Json.AsyncApi",
-    "Body": "Provides OpenTelemetry-compliant instrumentation for AsyncAPI transports.\nRegister with the OpenTelemetry pipeline using: ```csharp services.AddOpenTelemetry() .WithTracing(b => b.AddSource(AsyncApiTelemetry.ActivitySourceName)) .WithMetrics(b => b.AddMeter(AsyncApiTelemetry.MeterName)); ``` All instruments are zero-cost when no listener is attached: [`StartActivity`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.startactivity) returns `null` without a listener, and [`Add`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1.add) is a no-op without a [`MeterListener`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meterlistener).\nActivitySource: Gets the [`ActivitySource`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html) for distributed tracing of messaging operations.\nMeter: Gets the [`Meter`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.meter.html) for messaging metrics.\nMessagesSent: Gets the counter for messages sent to the broker.\nMessagesConsumed: Gets the counter for messages delivered to the application handler.\nOperationDuration: Gets the histogram measuring the duration of messaging client operations (publish, request).\nProcessDuration: Gets the histogram measuring consumer handler processing time.\nDeadLetters: Gets the counter for messages moved to a dead-letter channel.\nDeadLetterFailures: Gets the counter for dead-letter operations that themselves failed.\nValidationFailures: Gets the counter for messages that failed schema validation.\nRetryAttempts: Gets the counter for message processing retry attempts.\nSubscriberAborts: Gets the counter for subscriber abort events.\nMessagesSkipped: Gets the counter for messages that were skipped (not processed, not dead-lettered).\nMessageBodySize: Gets the histogram measuring message payload size in bytes.\nHeartbeats: Gets the counter for heartbeat ping attempts (success and failure).\nTransportStateTransitions: Gets the counter for transport state transitions (connected↔disconnected).\nRecordDeadLetter: Records a successful dead-letter operation from within a transport's internal error handling.\nRecordDeadLetterFailure: Records a dead-letter operation that itself failed (message was dropped).\nRecordAbort: Records that a subscriber aborted (stopped consuming) due to the error policy.\nRecordSkip: Records that a message was skipped (not processed and not dead-lettered).\nRecordRetry: Records a retry attempt for message processing."
+    "Body": "Provides OpenTelemetry-compliant instrumentation for AsyncAPI transports.\nRegister with the OpenTelemetry pipeline using: ```csharp services.AddOpenTelemetry() .WithTracing(b => b.AddSource(AsyncApiTelemetry.ActivitySourceName)) .WithMetrics(b => b.AddMeter(AsyncApiTelemetry.MeterName)); ``` All instruments are zero-cost when no listener is attached: [`StartActivity`](https://learn.microsoft.com/dotnet/api/system.diagnostics.activitysource.startactivity) returns `null` without a listener, and [`Add`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1.add) is a no-op without a [`MeterListener`](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meterlistener).\nActivitySource: Gets the [`ActivitySource`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html) for distributed tracing of messaging operations.\nMeter: Gets the [`Meter`](/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.meter.html) for messaging metrics.\nMessagesSent: Gets the counter for messages sent to the broker.\nMessagesConsumed: Gets the counter for messages delivered to the application handler.\nOperationDuration: Gets the histogram measuring the duration of messaging client operations (publish, request).\nProcessDuration: Gets the histogram measuring consumer handler processing time.\nDeadLetters: Gets the counter for messages moved to a dead-letter channel.\nDeadLetterFailures: Gets the counter for dead-letter operations that themselves failed.\nValidationFailures: Gets the counter for messages that failed schema validation.\nRetryAttempts: Gets the counter for message processing retry attempts.\nSubscriberAborts: Gets the counter for subscriber abort events.\nMessagesSkipped: Gets the counter for messages that were skipped (not processed, not dead-lettered).\nCorrelationIdMismatches: Gets the counter for request-reply correlation ID mismatches.\nMessageBodySize: Gets the histogram measuring message payload size in bytes.\nHeartbeats: Gets the counter for heartbeat ping attempts (success and failure).\nTransportStateTransitions: Gets the counter for transport state transitions (connected↔disconnected).\nRecordDeadLetter: Records a successful dead-letter operation from within a transport's internal error handling.\nRecordDeadLetterFailure: Records a dead-letter operation that itself failed (message was dropped).\nRecordAbort: Records that a subscriber aborted (stopped consuming) due to the error policy.\nRecordSkip: Records that a message was skipped (not processed and not dead-lettered).\nRecordRetry: Records a retry attempt for message processing.\nRecordCorrelationIdMismatch: Records a correlation ID mismatch during request-reply."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html",
@@ -6076,6 +6076,13 @@
     "Body": "Gets the counter for messages that were skipped (not processed, not dead-lettered)."
   },
   {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.correlationidmismatches.html",
+    "Title": "AsyncApiTelemetry.CorrelationIdMismatches",
+    "Description": "Gets the counter for request-reply correlation ID mismatches.",
+    "Keywords": "AsyncApiTelemetry CorrelationIdMismatches property Corvus.Text.Json.AsyncApi",
+    "Body": "Gets the counter for request-reply correlation ID mismatches."
+  },
+  {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.messagebodysize.html",
     "Title": "AsyncApiTelemetry.MessageBodySize",
     "Description": "Gets the histogram measuring message payload size in bytes.",
@@ -6130,6 +6137,13 @@
     "Description": "Records a retry attempt for message processing.",
     "Keywords": "AsyncApiTelemetry RecordRetry method Corvus.Text.Json.AsyncApi",
     "Body": "Records a retry attempt for message processing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordcorrelationidmismatch.html",
+    "Title": "AsyncApiTelemetry.RecordCorrelationIdMismatch",
+    "Description": "Records a correlation ID mismatch during request-reply.",
+    "Keywords": "AsyncApiTelemetry RecordCorrelationIdMismatch method Corvus.Text.Json.AsyncApi",
+    "Body": "Records a correlation ID mismatch during request-reply."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-bearertokenauthenticationprovider.html",

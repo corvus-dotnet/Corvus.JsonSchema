@@ -109,18 +109,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-ref-trequest-readonlymemory-byte-ref-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, ref TRequest, ReadOnlyMemory&lt;byte&gt;, ref JsonElement, CancellationToken)</a></td>
+<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, JsonElement, CancellationToken)</a></td>
 <td>Sends a request message and waits for a correlated reply.</td>
 </tr>
 <tr>
-<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-ref-trequest-readonlymemory-byte-ref-messagecontext-ref-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, ref TRequest, ReadOnlyMemory&lt;byte&gt;, ref MessageContext, ref JsonElement, CancellationToken)</a></td>
+<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-ref-messagecontext-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, ref MessageContext, JsonElement, CancellationToken)</a></td>
 <td>Sends a request message and waits for a correlated reply, with protocol-specific metadata.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-ref-trequest-readonlymemory-byte-ref-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, ref TRequest, ReadOnlyMemory&lt;byte&gt;, ref JsonElement, CancellationToken)</h2>
+<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, JsonElement, CancellationToken)</h2>
 <p>Sends a request message and waits for a correlated reply.</p>
-<pre><code class="language-csharp">public abstract ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, ref TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, ref JsonElement headers, CancellationToken cancellationToken)
+<pre><code class="language-csharp">public abstract ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, JsonElement headers, CancellationToken cancellationToken)
     where TRequest : struct, IJsonElement&lt;TRequest&gt;
     where TReply : struct, IJsonElement&lt;TReply&gt;
 </code></pre>
@@ -165,7 +165,7 @@
 </tr>
 <tr>
 <td><code>request</code></td>
-<td><code>ref TRequest</code></td>
+<td><code>TRequest</code></td>
 <td>The request payload.</td>
 </tr>
 <tr>
@@ -175,7 +175,7 @@
 </tr>
 <tr>
 <td><code>headers</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Optional message headers. <em>(optional)</em></td>
 </tr>
 <tr>
@@ -204,9 +204,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-ref-trequest-readonlymemory-byte-ref-messagecontext-ref-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, ref TRequest, ReadOnlyMemory&lt;byte&gt;, ref MessageContext, ref JsonElement, CancellationToken)</h2>
+<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-ref-messagecontext-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, ref MessageContext, JsonElement, CancellationToken)</h2>
 <p>Sends a request message and waits for a correlated reply, with protocol-specific metadata.</p>
-<pre><code class="language-csharp">public virtual ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, ref TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, ref MessageContext context, ref JsonElement headers, CancellationToken cancellationToken)
+<pre><code class="language-csharp">public virtual ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, ref MessageContext context, JsonElement headers, CancellationToken cancellationToken)
     where TRequest : struct, IJsonElement&lt;TRequest&gt;
     where TReply : struct, IJsonElement&lt;TReply&gt;
 </code></pre>
@@ -251,7 +251,7 @@
 </tr>
 <tr>
 <td><code>request</code></td>
-<td><code>ref TRequest</code></td>
+<td><code>TRequest</code></td>
 <td>The request payload.</td>
 </tr>
 <tr>
@@ -266,7 +266,7 @@
 </tr>
 <tr>
 <td><code>headers</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Optional message headers. <em>(optional)</em></td>
 </tr>
 <tr>

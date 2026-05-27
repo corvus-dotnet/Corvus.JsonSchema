@@ -122,6 +122,11 @@
 <td>Gets the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.activitysource.html"><code>ActivitySource</code></a> for distributed tracing of messaging operations.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.correlationidmismatches.html">CorrelationIdMismatches</a> <code>static</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1"><code>Counter&lt;long&gt;</code></a></td>
+<td>Gets the counter for request-reply correlation ID mismatches.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.deadletterfailures.html">DeadLetterFailures</a> <code>static</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.counter-1"><code>Counter&lt;long&gt;</code></a></td>
 <td>Gets the counter for dead-letter operations that themselves failed.</td>
@@ -205,6 +210,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordabort.html#recordabort-string-string-messageerrorkind">RecordAbort(string, string, MessageErrorKind)</a> <code>static</code></td>
 <td>Records that a subscriber aborted (stopped consuming) due to the error policy.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recordcorrelationidmismatch.html#recordcorrelationidmismatch-string-string-string-string">RecordCorrelationIdMismatch(string, string, string, string)</a> <code>static</code></td>
+<td>Records a correlation ID mismatch during request-reply.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-asyncapitelemetry.recorddeadletter.html#recorddeadletter-string-string-string">RecordDeadLetter(string, string, string)</a> <code>static</code></td>
