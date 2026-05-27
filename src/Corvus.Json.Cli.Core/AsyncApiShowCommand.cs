@@ -44,7 +44,20 @@ internal sealed class AsyncApiShowCommand : AsyncCommand<AsyncApiSettings>
         AnsiConsole.WriteLine();
 
         // List operations
-        AsyncApiOperationSummary[] operations = AsyncApi30CodeGenerator.ListOperations(specRoot, filter);
+        AsyncApiOperationSummary[] operations;
+        if (IsAsyncApi26Version(specVersion))
+        {
+            operations = AsyncApi26CodeGenerator.ListOperations(specRoot, filter);
+        }
+        else if (IsAsyncApi30Version(specVersion))
+        {
+            operations = AsyncApi30CodeGenerator.ListOperations(specRoot, filter);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[red]Error:[/] Unsupported AsyncAPI version: {specVersion}");
+            return Task.FromResult(1);
+        }
 
         if (operations.Length == 0)
         {
@@ -138,15 +151,17 @@ internal sealed class AsyncApiShowCommand : AsyncCommand<AsyncApiSettings>
             versionEl.ValueKind == JsonValueKind.String)
         {
             string ver = versionEl.GetString()!;
-            if (ver.StartsWith("3.", StringComparison.Ordinal))
+            if (ver.StartsWith("3.0", StringComparison.Ordinal))
             {
                 return "3.0";
             }
 
-            if (ver.StartsWith("2.", StringComparison.Ordinal))
+            if (ver.StartsWith("2.6", StringComparison.Ordinal))
             {
                 return "2.6";
             }
+
+            return ver;
         }
 
         return "3.0";
@@ -164,6 +179,18 @@ internal sealed class AsyncApiShowCommand : AsyncCommand<AsyncApiSettings>
         }
 
         return new OperationFilter(includes, excludes, tags);
+    }
+
+    internal static bool IsAsyncApi26Version(string specVersion)
+    {
+        return specVersion.StartsWith("2.6", StringComparison.Ordinal) ||
+            string.Equals(specVersion, "2.6", StringComparison.Ordinal);
+    }
+
+    internal static bool IsAsyncApi30Version(string specVersion)
+    {
+        return specVersion.StartsWith("3.0", StringComparison.Ordinal) ||
+            string.Equals(specVersion, "3.0", StringComparison.Ordinal);
     }
 
     private static string? GetTitle(JsonElement specRoot)

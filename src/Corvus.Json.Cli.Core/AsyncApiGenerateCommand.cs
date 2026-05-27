@@ -107,7 +107,20 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         try
         {
             // Collect schema pointers from the spec
-            string[] pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver);
+            string[] pointers;
+            if (AsyncApiShowCommand.IsAsyncApi26Version(specVersion))
+            {
+                pointers = AsyncApi26CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver);
+            }
+            else if (AsyncApiShowCommand.IsAsyncApi30Version(specVersion))
+            {
+                pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver);
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[red]Error:[/] Unsupported AsyncAPI version: {specVersion}");
+                return 1;
+            }
 
             string? title = GetTitle(specRoot);
             string? version = GetVersion(specRoot);
@@ -132,10 +145,21 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
             }
 
             // Generate producer/consumer code
-            AsyncApi30CodeGenerator generator = new(
-                rootNamespace,
-                schemaTypeMap ?? new Dictionary<string, string>());
-            IReadOnlyList<GeneratedFile> files = generator.Generate(specRoot, filter, referenceResolver);
+            IReadOnlyList<GeneratedFile> files;
+            if (AsyncApiShowCommand.IsAsyncApi26Version(specVersion))
+            {
+                AsyncApi26CodeGenerator generator = new(
+                    rootNamespace,
+                    schemaTypeMap ?? new Dictionary<string, string>());
+                files = generator.Generate(specRoot, filter, referenceResolver);
+            }
+            else
+            {
+                AsyncApi30CodeGenerator generator = new(
+                    rootNamespace,
+                    schemaTypeMap ?? new Dictionary<string, string>());
+                files = generator.Generate(specRoot, filter, referenceResolver);
+            }
 
             // Filter by mode
             IReadOnlyList<GeneratedFile> filteredFiles = FilterByMode(files, settings.Mode);

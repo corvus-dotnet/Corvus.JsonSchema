@@ -1,0 +1,104 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "Calculator API",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "rpc/calculate": {
+      "subscribe": {
+        "operationId": "calculate",
+        "message": {
+          "$ref": "#/components/messages/CalculateRequest"
+        },
+        "x-corvus-reply": {
+          "channel": {
+            "$ref": "#/channels/rpc~1calculate~1replies"
+          },
+          "address": {
+            "location": "$message.header#/replyTo"
+          },
+          "message": {
+            "$ref": "#/components/messages/CalculateResponse"
+          }
+        }
+      }
+    },
+    "rpc/calculate/replies": {
+      "publish": {
+        "operationId": "receiveCalculationReply",
+        "message": {
+          "$ref": "#/components/messages/CalculateResponse"
+        }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "CalculateRequest": {
+        "name": "CalculateRequest",
+        "headers": {
+          "$ref": "#/components/schemas/CalculateRequestHeaders"
+        },
+        "payload": {
+          "$ref": "#/components/schemas/CalculateRequest"
+        },
+        "correlationId": {
+          "location": "$message.header#/correlationId"
+        }
+      },
+      "CalculateResponse": {
+        "name": "CalculateResponse",
+        "headers": {
+          "$ref": "#/components/schemas/CalculateResponseHeaders"
+        },
+        "payload": {
+          "$ref": "#/components/schemas/CalculateResponse"
+        },
+        "correlationId": {
+          "location": "$message.header#/correlationId"
+        }
+      }
+    },
+    "schemas": {
+      "CalculateRequest": {
+        "type": "object",
+        "properties": {
+          "left": {
+            "type": "number"
+          },
+          "right": {
+            "type": "number"
+          }
+        }
+      },
+      "CalculateRequestHeaders": {
+        "type": "object",
+        "properties": {
+          "replyTo": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          }
+        }
+      },
+      "CalculateResponse": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "number"
+          }
+        }
+      },
+      "CalculateResponseHeaders": {
+        "type": "object",
+        "properties": {
+          "correlationId": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

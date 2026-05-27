@@ -564,6 +564,18 @@ public sealed class AsyncApi30CodeGenerator
             }
         }
 
+        files.AddRange(this.GenerateOperations(sendOps, receiveOps, ListServers(doc)));
+
+        return files;
+    }
+
+    internal IReadOnlyList<GeneratedFile> GenerateOperations(
+        IReadOnlyList<OperationInfo> sendOps,
+        IReadOnlyList<OperationInfo> receiveOps,
+        ServerInfo[] servers)
+    {
+        List<GeneratedFile> files = [];
+
         // Emit producer types for send operations
         foreach (OperationInfo op in sendOps)
         {
@@ -596,7 +608,6 @@ public sealed class AsyncApi30CodeGenerator
         }
 
         // Emit server URL builder if servers have variables
-        ServerInfo[] servers = ListServers(doc);
         if (servers.Any(s => s.Variables.Count > 0))
         {
             files.Add(EmitServerUrlBuilder(servers));
@@ -608,7 +619,7 @@ public sealed class AsyncApi30CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     // Internal record types
     // ═══════════════════════════════════════════════════════════════════
-    private readonly record struct OperationInfo(
+    internal readonly record struct OperationInfo(
         string Name,
         OperationAction Action,
         string ChannelAddress,
@@ -622,13 +633,13 @@ public sealed class AsyncApi30CodeGenerator
         string? OperationBindingsJson,
         IReadOnlyList<SecuritySchemeInfo> SecuritySchemes);
 
-    private readonly record struct ReplyInfo(
+    internal readonly record struct ReplyInfo(
         string ChannelAddress,
         string? AddressLocationExpression,
         List<MessageInfo> Messages,
         string? CorrelationIdLocation);
 
-    private readonly record struct MessageInfo(
+    internal readonly record struct MessageInfo(
         string Name,
         string? PayloadPointer,
         string? PayloadTypeName,
@@ -637,7 +648,7 @@ public sealed class AsyncApi30CodeGenerator
         string? ContentType,
         string? MessageBindingsJson);
 
-    private readonly record struct ChannelParameter(
+    internal readonly record struct ChannelParameter(
         string Name,
         string? Description,
         string[]? EnumValues,

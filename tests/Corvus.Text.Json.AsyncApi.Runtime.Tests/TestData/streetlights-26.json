@@ -1,0 +1,78 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "Streetlights API",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "smartylighting/streetlights/1/0/action/{streetlightId}/lighting/measured": {
+      "parameters": {
+        "streetlightId": {
+          "description": "The streetlight identifier.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      },
+      "publish": {
+        "operationId": "receiveLightMeasurement",
+        "summary": "Inform about environmental lighting conditions of a particular streetlight.",
+        "message": {
+          "$ref": "#/components/messages/lightMeasured"
+        }
+      }
+    },
+    "smartylighting/streetlights/1/0/action/{streetlightId}/turn/on": {
+      "parameters": {
+        "streetlightId": {
+          "description": "The streetlight identifier.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      },
+      "subscribe": {
+        "operationId": "turnOn",
+        "message": {
+          "$ref": "#/components/messages/turnOnOff"
+        }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "lightMeasured": {
+        "name": "LightMeasured",
+        "payload": {
+          "$ref": "#/components/schemas/lightMeasuredPayload"
+        }
+      },
+      "turnOnOff": {
+        "name": "TurnOnOff",
+        "payload": {
+          "$ref": "#/components/schemas/turnOnOffPayload"
+        }
+      }
+    },
+    "schemas": {
+      "lightMeasuredPayload": {
+        "type": "object",
+        "properties": {
+          "lumens": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "turnOnOffPayload": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "enum": [ "on", "off" ]
+          }
+        }
+      }
+    }
+  }
+}

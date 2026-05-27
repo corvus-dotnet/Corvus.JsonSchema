@@ -610,19 +610,20 @@ main-docs:
       - {index: 44, language: csharp, lines: [1002, 1015], category: compilable, verified: false}
       - {index: 45, language: csharp, lines: [1019, 1041], category: compilable, verified: false}
       - {index: 46, language: csharp, lines: [1061, 1075], category: compilable, verified: false}
-      - {index: 47, language: json, lines: [1089, 1103]}
-      - {index: 48, language: csharp, lines: [1107, 1116], category: compilable, verified: false}
-      - {index: 49, language: csharp, lines: [1126, 1134], category: compilable, verified: false}
-      - {index: 50, language: csharp, lines: [1147, 1164], category: compilable, verified: false}
-      - {index: 51, language: bash, lines: [1172, 1174]}
-      - {index: 52, language: csharp, lines: [1176, 1187], category: compilable, verified: false}
-      - {index: 53, language: bash, lines: [1197, 1199]}
-      - {index: 54, language: bash, lines: [1217, 1235]}
-      - {index: 55, language: bash, lines: [1239, 1241]}
-      - {index: 56, language: , lines: [1245, 1255]}
-      - {index: 57, language: bash, lines: [1268, 1274]}
-      - {index: 58, language: csharp, lines: [1309, 1314], category: compilable, verified: false}
-      - {index: 59, language: , lines: [1328, 1333]}
+      - {index: 47, language: json, lines: [1081, 1101]}
+      - {index: 48, language: json, lines: [1115, 1129]}
+      - {index: 49, language: csharp, lines: [1133, 1142], category: compilable, verified: false}
+      - {index: 50, language: csharp, lines: [1152, 1160], category: compilable, verified: false}
+      - {index: 51, language: csharp, lines: [1173, 1190], category: compilable, verified: false}
+      - {index: 52, language: bash, lines: [1198, 1200]}
+      - {index: 53, language: csharp, lines: [1202, 1213], category: compilable, verified: false}
+      - {index: 54, language: bash, lines: [1223, 1225]}
+      - {index: 55, language: bash, lines: [1243, 1261]}
+      - {index: 56, language: bash, lines: [1265, 1267]}
+      - {index: 57, language: , lines: [1271, 1281]}
+      - {index: 58, language: bash, lines: [1294, 1300]}
+      - {index: 59, language: csharp, lines: [1336, 1341], category: compilable, verified: false}
+      - {index: 60, language: , lines: [1355, 1360]}
   - path: "docs/AsyncApiMessageResumption.md"
     blocks:
       - {index: 0, language: , lines: [26, 32]}

@@ -4,7 +4,7 @@
 
 ## Overview
 
-`Corvus.Text.Json` includes a code generator that produces strongly-typed **producers** and **consumers** from [AsyncAPI](https://www.asyncapi.com/) specifications (versions 2.6 and 3.0).
+`Corvus.Text.Json` includes a code generator that produces strongly-typed **producers** and **consumers** from [AsyncAPI](https://www.asyncapi.com/) specifications (versions 2.6 and 3.0). AsyncAPI 2.6 channel-level `publish` operations generate receive-side consumers; `subscribe` operations generate send-side producers.
 
 Both sides are generated from the same spec. The generated code handles all the messaging plumbing — payload serialization, JSON Schema validation, header encoding, channel address construction, error handling, and dead-letter routing — so you focus purely on business logic.
 
@@ -1076,6 +1076,32 @@ foreach (var item in reply.Results.EnumerateArray())
 
 The generated code handles correlation ID generation (GUID formatted directly to a `byte[36]` — no string allocation), request/reply channel pairing, and timeout management.
 
+AsyncAPI 3.0 uses the standard operation `reply` object. AsyncAPI 2.6 has `correlationId` but no standard `reply` object, so Corvus supports an explicit `x-corvus-reply` extension on a 2.6 operation. The extension mirrors the 3.0 shape closely enough for the generated request/reply method to use the same runtime path:
+
+```json
+{
+  "subscribe": {
+    "operationId": "calculate",
+    "message": {
+      "$ref": "#/components/messages/CalculateRequest"
+    },
+    "x-corvus-reply": {
+      "channel": {
+        "$ref": "#/channels/rpc~1calculate~1replies"
+      },
+      "address": {
+        "location": "$message.header#/replyTo"
+      },
+      "message": {
+        "$ref": "#/components/messages/CalculateResponse"
+      }
+    }
+  }
+}
+```
+
+The extension is intentionally explicit. The generator does not infer request/reply pairs from matching `correlationId` values because that is ambiguous in real-world 2.6 documents.
+
 ## Bindings
 
 AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and makes them available to the transport via `MessageContext`:
@@ -1293,6 +1319,7 @@ The generator auto-detects the spec version from the `asyncapi` field. Use `--sp
 | Channel parameters | On channel object | On channel object |
 | Security | On server | On server |
 | Traits | Supported | Supported |
+| Request/reply | `x-corvus-reply` extension | Standard operation `reply` object |
 
 The generator normalizes both formats into the same generated code structure — your producers and consumers look identical regardless of spec version.
 

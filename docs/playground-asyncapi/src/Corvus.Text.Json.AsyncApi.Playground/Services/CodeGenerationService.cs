@@ -5,7 +5,6 @@ using Corvus.Json.CodeGeneration;
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
 using Corvus.Text.Json.AsyncApi.Playground.Models;
-using Corvus.Text.Json.AsyncApi30;
 using Corvus.Text.Json.CodeGeneration;
 using CorvusJsonElement = Corvus.Text.Json.JsonElement;
 using AsyncApiGeneratedFile = Corvus.Text.Json.AsyncApi.CodeGeneration.GeneratedFile;
@@ -132,9 +131,13 @@ public class CodeGenerationService
             using ParsedJsonDocument<CorvusJsonElement> corvusDoc = ParsedJsonDocument<CorvusJsonElement>.Parse(specBytes);
             CorvusJsonElement specRoot = corvusDoc.RootElement;
 
-            AsyncApiDocument asyncApiDoc = AsyncApiDocument.From(specRoot);
-
             PopulateChannelTree(rootFile.Content, result.Channels);
+
+            if (!IsAsyncApi26Version(result.SpecVersion) && !IsAsyncApi30Version(result.SpecVersion))
+            {
+                result.Errors.Add($"Unsupported AsyncAPI version: {result.SpecVersion}");
+                return result;
+            }
 
             using AsyncApiExternalReferenceResolver referenceResolver = new(specRoot, specFilePath);
             RegisterExternalDocuments(referenceResolver, specFilePath, specFiles);
@@ -143,7 +146,9 @@ public class CodeGenerationService
                 ? new OperationFilter([.. includeChannels], null)
                 : null;
 
-            string[] schemaPointers = AsyncApi30CodeGenerator.CollectSchemaPointers(asyncApiDoc, filter, referenceResolver);
+            string[] schemaPointers = IsAsyncApi26Version(result.SpecVersion)
+                ? AsyncApi26CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver)
+                : AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, filter, referenceResolver);
 
             Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
             List<PlaygroundGeneratedFile> modelFiles = [];
@@ -159,8 +164,17 @@ public class CodeGenerationService
                     cancellationToken);
             }
 
-            AsyncApi30CodeGenerator generator = new("Playground", schemaTypeMap);
-            IReadOnlyList<AsyncApiGeneratedFile> asyncApiFiles = generator.Generate(asyncApiDoc, filter, referenceResolver);
+            IReadOnlyList<AsyncApiGeneratedFile> asyncApiFiles;
+            if (IsAsyncApi26Version(result.SpecVersion))
+            {
+                AsyncApi26CodeGenerator generator = new("Playground", schemaTypeMap);
+                asyncApiFiles = generator.Generate(specRoot, filter, referenceResolver);
+            }
+            else
+            {
+                AsyncApi30CodeGenerator generator = new("Playground", schemaTypeMap);
+                asyncApiFiles = generator.Generate(specRoot, filter, referenceResolver);
+            }
 
             foreach (PlaygroundGeneratedFile modelFile in modelFiles)
             {
@@ -299,6 +313,16 @@ public class CodeGenerationService
         return (schemaTypeMap, modelFiles);
     }
 
+    private static bool IsAsyncApi26Version(string? specVersion)
+    {
+        return specVersion is not null && specVersion.StartsWith("2.6", StringComparison.Ordinal);
+    }
+
+    private static bool IsAsyncApi30Version(string? specVersion)
+    {
+        return specVersion is not null && specVersion.StartsWith("3.0", StringComparison.Ordinal);
+    }
+
     private static void RegisterExternalDocuments(
         AsyncApiExternalReferenceResolver referenceResolver,
         string specFilePath,
@@ -402,69 +426,100 @@ public class CodeGenerationService
     {
         using System.Text.Json.JsonDocument sysDoc = System.Text.Json.JsonDocument.Parse(rootFileContent);
 
-        // In AsyncAPI 3.0, operations reference channels. Build the tree from operations.
-        if (!sysDoc.RootElement.TryGetProperty("operations", out System.Text.Json.JsonElement operations))
-        {
-            return;
-        }
-
         // Build channel→operations grouping
         Dictionary<string, ChannelNode> channelGroups = new(StringComparer.OrdinalIgnoreCase);
 
-        foreach (System.Text.Json.JsonProperty operation in operations.EnumerateObject())
+        if (sysDoc.RootElement.TryGetProperty("operations", out System.Text.Json.JsonElement operations))
         {
-            string operationId = operation.Name;
-
-            string? action = operation.Value.TryGetProperty("action", out System.Text.Json.JsonElement actionEl)
-                ? actionEl.GetString()
-                : null;
-
-            if (action is null)
+            foreach (System.Text.Json.JsonProperty operation in operations.EnumerateObject())
             {
-                continue;
-            }
+                string operationId = operation.Name;
 
-            // Resolve channel address from channel.$ref
-            string channelAddress = ResolveChannelAddress(operation.Value, sysDoc.RootElement);
+                string? action = operation.Value.TryGetProperty("action", out System.Text.Json.JsonElement actionEl)
+                    ? actionEl.GetString()
+                    : null;
 
-            string? summary = operation.Value.TryGetProperty("summary", out System.Text.Json.JsonElement sum)
-                ? sum.GetString()
-                : null;
-
-            List<string> tags = [];
-            if (operation.Value.TryGetProperty("tags", out System.Text.Json.JsonElement tagsEl)
-                && tagsEl.ValueKind == System.Text.Json.JsonValueKind.Array)
-            {
-                foreach (System.Text.Json.JsonElement tagEl in tagsEl.EnumerateArray())
+                if (action is null)
                 {
-                    if (tagEl.TryGetProperty("name", out System.Text.Json.JsonElement nameEl)
-                        && nameEl.GetString() is string tagName)
-                    {
-                        tags.Add(tagName);
-                    }
+                    continue;
+                }
+
+                string channelAddress = ResolveChannelAddress(operation.Value, sysDoc.RootElement);
+                AddOperationNode(channelGroups, channelAddress, action, operationId, operation.Value);
+            }
+        }
+        else if (sysDoc.RootElement.TryGetProperty("channels", out System.Text.Json.JsonElement asyncApi26Channels) &&
+            asyncApi26Channels.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            foreach (System.Text.Json.JsonProperty channel in asyncApi26Channels.EnumerateObject())
+            {
+                if (channel.Value.TryGetProperty("publish", out System.Text.Json.JsonElement publish) &&
+                    publish.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    AddOperationNode(channelGroups, channel.Name, "receive", GetOperationId(publish, "publish"), publish);
+                }
+
+                if (channel.Value.TryGetProperty("subscribe", out System.Text.Json.JsonElement subscribe) &&
+                    subscribe.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    AddOperationNode(channelGroups, channel.Name, "send", GetOperationId(subscribe, "subscribe"), subscribe);
                 }
             }
-
-            if (!channelGroups.TryGetValue(channelAddress, out ChannelNode? group))
-            {
-                group = new ChannelNode { GroupName = channelAddress, Channel = channelAddress };
-                channelGroups[channelAddress] = group;
-            }
-
-            group.Children.Add(new ChannelNode
-            {
-                Channel = channelAddress,
-                Action = action,
-                OperationId = operationId,
-                Summary = summary,
-                Tags = tags,
-            });
         }
 
         foreach (ChannelNode group in channelGroups.Values.OrderBy(g => g.GroupName, StringComparer.OrdinalIgnoreCase))
         {
             channels.Add(group);
         }
+    }
+
+    private static void AddOperationNode(
+        Dictionary<string, ChannelNode> channelGroups,
+        string channelAddress,
+        string action,
+        string operationId,
+        System.Text.Json.JsonElement operation)
+    {
+        string? summary = operation.TryGetProperty("summary", out System.Text.Json.JsonElement sum)
+            ? sum.GetString()
+            : null;
+
+        List<string> tags = [];
+        if (operation.TryGetProperty("tags", out System.Text.Json.JsonElement tagsEl)
+            && tagsEl.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (System.Text.Json.JsonElement tagEl in tagsEl.EnumerateArray())
+            {
+                if (tagEl.TryGetProperty("name", out System.Text.Json.JsonElement nameEl)
+                    && nameEl.GetString() is string tagName)
+                {
+                    tags.Add(tagName);
+                }
+            }
+        }
+
+        if (!channelGroups.TryGetValue(channelAddress, out ChannelNode? group))
+        {
+            group = new ChannelNode { GroupName = channelAddress, Channel = channelAddress };
+            channelGroups[channelAddress] = group;
+        }
+
+        group.Children.Add(new ChannelNode
+        {
+            Channel = channelAddress,
+            Action = action,
+            OperationId = operationId,
+            Summary = summary,
+            Tags = tags,
+        });
+    }
+
+    private static string GetOperationId(System.Text.Json.JsonElement operation, string fallback)
+    {
+        return operation.TryGetProperty("operationId", out System.Text.Json.JsonElement operationId) &&
+            operationId.ValueKind == System.Text.Json.JsonValueKind.String
+                ? operationId.GetString()!
+                : fallback;
     }
 
     private static string ResolveChannelAddress(

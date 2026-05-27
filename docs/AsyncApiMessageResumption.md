@@ -588,6 +588,6 @@ public async Task Consumer_ResumesAfterCrash()
 
 ## Related Documentation
 
-- [Example 037 — AsyncAPI Consumer](ExampleRecipes/037-AsyncApiConsumer/README.md) — Basic consumer setup
-- [Example 038 — AsyncAPI End-to-End](ExampleRecipes/038-AsyncApiEndToEnd/README.md) — Producer + consumer integration
-- [Example 039 — AsyncAPI Authentication](ExampleRecipes/039-AsyncApiAuthentication/README.md) — Auth for all transports
+- [Example 037 — AsyncAPI Consumer](../ExampleRecipes/037-AsyncApiConsumer/) — Basic consumer setup
+- [Example 038 — AsyncAPI End-to-End](../ExampleRecipes/038-AsyncApiEndToEnd/) — Producer + consumer integration
+- [Example 039 — AsyncAPI Authentication](../ExampleRecipes/039-AsyncApiAuthentication/) — Auth for all transports
