@@ -1109,4 +1109,176 @@ public class NatsTransportTests
         await transport.DisposeAsync();
         await rawConn.DisposeAsync();
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // JetStream Integration Tests
+    // ═══════════════════════════════════════════════════════════════════════════════
+    [TestMethod]
+    public async Task JetStream_PublishAndSubscribeRoundtrip()
+    {
+        // Arrange — transport with JetStream enabled
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            UseJetStream = true,
+            StreamName = "TEST_STREAM",
+        });
+
+        ReadOnlyMemory<byte> channel = "test.jetstream.basic"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        JsonValueKind receivedPayloadKind = JsonValueKind.Undefined;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedPayloadKind = payload.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(500);
+
+        // Act — publish via JetStream
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"type":"jetstream","value":100}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        // Assert
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "[JetStream] Message was not received within timeout.");
+        Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task JetStream_MessagesPersistAcrossConsumerRestart()
+    {
+        // Arrange — publish messages to JetStream
+        NatsMessageTransport publishTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            UseJetStream = true,
+            StreamName = "PERSISTENCE_STREAM",
+        });
+
+        ReadOnlyMemory<byte> channel = "test.jetstream.persistence"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"seq":1}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"seq":2}"""u8.ToArray());
+
+        await publishTransport.PublishAsync(channel, doc1.RootElement);
+        await publishTransport.PublishAsync(channel, doc2.RootElement);
+        await publishTransport.DisposeAsync();
+
+        // Act — create a new consumer to read the persisted messages
+        NatsMessageTransport subscribeTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            UseJetStream = true,
+            StreamName = "PERSISTENCE_STREAM",
+            ConsumerName = "persistence-consumer",
+        });
+
+        List<int> receivedSeqs = [];
+        using var allReceived = new SemaphoreSlim(0, 1);
+
+        await subscribeTransport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedSeqs.Add(payload.GetProperty("seq"u8).GetInt32());
+                if (receivedSeqs.Count == 2)
+                {
+                    allReceived.Release();
+                }
+
+                return ValueTask.CompletedTask;
+            });
+
+        // Assert — messages are delivered from the stream
+        bool receivedAll = await allReceived.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(receivedAll, "[JetStream] Persisted messages were not delivered within timeout.");
+        CollectionAssert.AreEqual(new[] { 1, 2 }, receivedSeqs, "Messages were not delivered in order.");
+
+        await subscribeTransport.UnsubscribeAsync(channel);
+        await subscribeTransport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task CoreNats_StillWorksWhenJetStreamDisabled()
+    {
+        // Arrange — transport with UseJetStream = false (default)
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            UseJetStream = false, // Explicit core NATS
+        });
+
+        ReadOnlyMemory<byte> channel = "test.corenats.regression"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        JsonValueKind receivedPayloadKind = JsonValueKind.Undefined;
+
+        await transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedPayloadKind = payload.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        await Task.Delay(100);
+
+        // Act — publish via core NATS
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"mode":"core"}"""u8.ToArray());
+        await transport.PublishAsync(channel, doc.RootElement);
+
+        // Assert — core NATS still works
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "[Core NATS] Message was not received — regression from JetStream changes.");
+        Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
+
+        await transport.UnsubscribeAsync(channel);
+        await transport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task JetStream_MessagingSystemPropertyReflectsMode()
+    {
+        // Arrange — two transports: one core NATS, one JetStream
+        NatsMessageTransport coreTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            UseJetStream = false,
+        });
+
+        NatsMessageTransport jsTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            UseJetStream = true,
+            StreamName = "SYSTEM_PROPERTY_STREAM",
+        });
+
+        // Act & Assert
+        Assert.AreEqual("nats", coreTransport.MessagingSystem, "Core NATS MessagingSystem should be 'nats'.");
+        Assert.AreEqual("nats", jsTransport.MessagingSystem, "JetStream MessagingSystem should still report 'nats'.");
+
+        await coreTransport.DisposeAsync();
+        await jsTransport.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task DoubleDisposeJetStreamTransportDoesNotThrow()
+    {
+        NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+            UseJetStream = true,
+            StreamName = "DISPOSE_STREAM",
+        });
+
+        await transport.DisposeAsync();
+        await transport.DisposeAsync(); // Should be safe — no exception
+    }
 }
