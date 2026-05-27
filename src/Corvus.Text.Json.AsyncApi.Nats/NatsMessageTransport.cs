@@ -46,15 +46,19 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
 
     private readonly NatsTransportOptions options;
     private readonly NatsConnection connection;
+    private readonly INatsJSContext? jsContext;
+    private readonly string? derivedStreamName;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
     private bool disposed;
 
-    private NatsMessageTransport(NatsTransportOptions options, NatsConnection connection)
+    private NatsMessageTransport(NatsTransportOptions options, NatsConnection connection, INatsJSContext? jsContext, string? derivedStreamName)
     {
         this.options = options;
         this.connection = connection;
+        this.jsContext = jsContext;
+        this.derivedStreamName = derivedStreamName;
         this.errorPolicy = options.ErrorPolicy ?? new DefaultMessageErrorPolicy();
         this.middleware = options.HandlerMiddleware;
     }
@@ -104,7 +108,18 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         NatsConnection connection = new(natsOpts);
         await connection.ConnectAsync().ConfigureAwait(false);
 
-        return new NatsMessageTransport(options, connection);
+        INatsJSContext? jsContext = null;
+        string? derivedStreamName = null;
+
+        if (options.UseJetStream)
+        {
+            jsContext = new NatsJSContext(connection);
+
+            // Cache the stream name if explicitly provided
+            derivedStreamName = options.StreamName;
+        }
+
+        return new NatsMessageTransport(options, connection, jsContext, derivedStreamName);
     }
 
     /// <inheritdoc/>
@@ -118,6 +133,32 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+
+        if (this.options.UseJetStream && this.jsContext is not null)
+        {
+            // JetStream path: publish to stream
+            // Copy values before async call (async can't have in parameters)
+            TPayload payloadCopy = payload;
+            JsonElement headersCopy = headers;
+
+            // Use cached stream name or derive on-demand (first publish determines it)
+            string streamName = this.derivedStreamName ?? DeriveStreamName(channel);
+            return this.PublishToJetStreamAsync(channel, streamName, payloadCopy, headersCopy, cancellationToken);
+        }
+        else
+        {
+            // Core NATS path: existing behavior
+            return this.PublishToCoreNatsAsync(channel, in payload, in headers, cancellationToken);
+        }
+    }
+
+    private ValueTask PublishToCoreNatsAsync<TPayload>(
+        string channel,
+        in TPayload payload,
+        in JsonElement headers,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
         NatsHeaders? natsHeaders = null;
 
         if (headers.ValueKind != JsonValueKind.Undefined)
@@ -136,6 +177,62 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
             serializer: JsonElementSerializer<TPayload>.Instance,
             opts: default,
             cancellationToken: cancellationToken);
+    }
+
+    private async ValueTask PublishToJetStreamAsync<TPayload>(
+        string channel,
+        string streamName,
+        TPayload payload,
+        JsonElement headers,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        // Ensure stream exists
+        await this.EnsureStreamExistsAsync(streamName, channel, cancellationToken).ConfigureAwait(false);
+
+        // Publish to stream
+        NatsHeaders? natsHeaders = null;
+        if (headers.ValueKind != JsonValueKind.Undefined)
+        {
+            natsHeaders = new NatsHeaders
+            {
+                [HeadersKey] = SerializeToBase64String(in headers),
+            };
+        }
+
+        await this.jsContext!.PublishAsync(
+            subject: channel,
+            data: payload,
+            headers: natsHeaders,
+            serializer: JsonElementSerializer<TPayload>.Instance,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    private static string DeriveStreamName(string subject)
+    {
+        // Convert subject like "events.temperature" to stream name "EVENTS"
+        string firstSegment = subject.Split('.', '/')[0];
+        return firstSegment.ToUpperInvariant();
+    }
+
+    private async ValueTask EnsureStreamExistsAsync(string streamName, string subject, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await this.jsContext!.GetStreamAsync(streamName, request: default, cancellationToken).ConfigureAwait(false);
+        }
+        catch (NatsJSApiException ex) when (ex.Error.Code == 404)
+        {
+            // Stream doesn't exist, create it
+            StreamConfig config = new(streamName, [subject])
+            {
+                Storage = this.options.StorageType == StorageType.File
+                    ? NATS.Client.JetStream.Models.StreamConfigStorage.File
+                    : NATS.Client.JetStream.Models.StreamConfigStorage.Memory,
+            };
+
+            _ = await this.jsContext!.CreateStreamAsync(config, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -177,7 +274,19 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return SubscribeCoreAsync(channel, channelUtf8, handler, cancellationToken);
+
+        if (this.options.UseJetStream && this.jsContext is not null)
+        {
+            // JetStream path: durable consumer
+            // Use cached stream name or derive on-demand
+            string streamName = this.derivedStreamName ?? DeriveStreamName(channel);
+            return this.SubscribeToJetStreamAsync(channel, streamName, channelUtf8, handler, cancellationToken);
+        }
+        else
+        {
+            // Core NATS path: existing behavior
+            return this.SubscribeToCoreNatsAsync(channel, channelUtf8, handler, cancellationToken);
+        }
     }
 
     /// <inheritdoc/>
@@ -307,7 +416,219 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         return (replyPayload, replyHeaders);
     }
 
-    private async ValueTask SubscribeCoreAsync<TPayload>(
+    private async ValueTask SubscribeToJetStreamAsync<TPayload>(
+        string channel,
+        string streamName,
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
+        CancellationToken cancellationToken)
+        where TPayload : struct, IJsonElement<TPayload>
+    {
+        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        string dlChannel = channel + this.options.DeadLetterSuffix;
+
+        this.options.Heartbeat?.Start(channel, "nats-jetstream");
+
+        // Ensure stream exists
+        await this.EnsureStreamExistsAsync(streamName, channel, cts.Token).ConfigureAwait(false);
+
+        // Create or get consumer
+        string consumerName = this.options.ConsumerName ?? $"{streamName}_{channel}_consumer";
+        ConsumerConfig consumerConfig = new(consumerName)
+        {
+            DurableName = consumerName,
+            FilterSubject = channel,
+            AckPolicy = NATS.Client.JetStream.Models.ConsumerConfigAckPolicy.Explicit,
+            AckWait = this.options.AckWait,
+            MaxDeliver = this.options.MaxDeliver,
+            DeliverPolicy = this.options.DeliverPolicy switch
+            {
+                DeliverPolicy.All => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.All,
+                DeliverPolicy.New => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.New,
+                DeliverPolicy.ByStartSequence => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.ByStartSequence,
+                DeliverPolicy.ByStartTime => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.ByStartTime,
+                DeliverPolicy.Last => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.Last,
+                DeliverPolicy.LastPerSubject => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.LastPerSubject,
+                _ => NATS.Client.JetStream.Models.ConsumerConfigDeliverPolicy.All,
+            },
+        };
+
+        INatsJSConsumer consumer = await this.jsContext!.CreateOrUpdateConsumerAsync(streamName, consumerConfig, cts.Token).ConfigureAwait(false);
+
+        Task consumeTask = Task.Run(
+            async () =>
+            {
+                try
+                {
+                    await foreach (NatsJSMsg<byte[]> msg in consumer.ConsumeAsync<byte[]>(cancellationToken: cts.Token).ConfigureAwait(false))
+                    {
+                        this.options.Heartbeat?.Tick(channel, "nats-jetstream");
+
+                        if (msg.Data is null)
+                        {
+                            await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                            continue;
+                        }
+
+                        // Parse
+                        ParsedJsonDocument<TPayload> payloadDoc;
+                        try
+                        {
+                            payloadDoc = ParsedJsonDocument<TPayload>.Parse(msg.Data);
+                        }
+                        catch (Exception ex) when (ex is not OperationCanceledException)
+                        {
+                            MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                            MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                            if (action == MessageErrorAction.Abort)
+                            {
+                                AsyncApiTelemetry.RecordAbort(channel, "nats-jetstream", MessageErrorKind.Deserialization);
+                                await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                break;
+                            }
+
+                            if (action == MessageErrorAction.DeadLetter)
+                            {
+                                try
+                                {
+                                    await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                    AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
+                                    await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                }
+                                catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                {
+                                    AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats-jetstream", dlEx);
+                                    await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                }
+                            }
+                            else
+                            {
+                                AsyncApiTelemetry.RecordSkip(channel, "nats-jetstream", MessageErrorKind.Deserialization);
+                                await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                            }
+
+                            continue;
+                        }
+
+                        // Handle (through middleware if configured)
+                        using (payloadDoc)
+                        {
+                            TPayload payload = payloadDoc.RootElement;
+
+                            ParsedJsonDocument<JsonElement>? headersDoc;
+                            try
+                            {
+                                headersDoc = DecodeHeadersDocument(msg.Headers);
+                            }
+                            catch (Exception ex) when (ex is not OperationCanceledException)
+                            {
+                                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                if (action == MessageErrorAction.Abort)
+                                {
+                                    AsyncApiTelemetry.RecordAbort(channel, "nats-jetstream", MessageErrorKind.Deserialization);
+                                    await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    break;
+                                }
+
+                                if (action == MessageErrorAction.DeadLetter)
+                                {
+                                    try
+                                    {
+                                        await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                        AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
+                                        await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    }
+                                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                    {
+                                        AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats-jetstream", dlEx);
+                                        await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    }
+                                }
+                                else
+                                {
+                                    AsyncApiTelemetry.RecordSkip(channel, "nats-jetstream", MessageErrorKind.Deserialization);
+                                    await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                }
+
+                                continue;
+                            }
+
+                            try
+                            {
+                                using (headersDoc)
+                                {
+                                    JsonElement headers = headersDoc?.RootElement ?? default;
+
+                                    if (this.middleware is not null)
+                                    {
+                                        await this.middleware(
+                                            (ct) => handler(payload, headers, ct),
+                                            cts.Token).ConfigureAwait(false);
+                                    }
+                                    else
+                                    {
+                                        await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                                    }
+
+                                    await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                }
+                            }
+                            catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                            {
+                                await msg.NakAsync(cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
+                                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                if (action == MessageErrorAction.Abort)
+                                {
+                                    AsyncApiTelemetry.RecordAbort(channel, "nats-jetstream", MessageErrorKind.Handler);
+                                    await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    break;
+                                }
+
+                                if (action == MessageErrorAction.DeadLetter)
+                                {
+                                    try
+                                    {
+                                        await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                        AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats-jetstream");
+                                        await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    }
+                                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                    {
+                                        AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats-jetstream", dlEx);
+                                        await msg.NakAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                    }
+                                }
+                                else
+                                {
+                                    AsyncApiTelemetry.RecordSkip(channel, "nats-jetstream", MessageErrorKind.Handler);
+                                    await msg.AckAsync(cancellationToken: cts.Token).ConfigureAwait(false);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                {
+                    // Normal shutdown via UnsubscribeAsync or parent cancellation
+                }
+                finally
+                {
+                    this.options.Heartbeat?.Stop(channel, "nats-jetstream");
+                }
+            },
+            CancellationToken.None);
+
+        SubscriptionState state = new(cts, consumeTask);
+        this.subscriptions[channel] = state;
+    }
+
+    private async ValueTask SubscribeToCoreNatsAsync<TPayload>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, JsonElement, CancellationToken, ValueTask> handler,
