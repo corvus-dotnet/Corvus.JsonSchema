@@ -46,16 +46,10 @@ internal static class KafkaFixture
     /// <returns>A task that completes when the container is ready.</returns>
     public static async Task StartAsync()
     {
-        s_container = new KafkaBuilder()
-            .WithImage("confluentinc/cp-kafka:7.8.0")
+        s_container = new KafkaBuilder("confluentinc/cp-kafka:7.8.0")
             .Build();
 
-        // After Build() is called, we can set environment variables before Start()
-        // to override the advertised listeners for Podman compatibility
         await s_container.StartAsync().ConfigureAwait(false);
-        
-        // Note: Setting env vars after Build() doesn't work - they need to be set before Build()
-        // For now, using localhost in BootstrapServers should work for most tests
     }
 
     /// <summary>
