@@ -77,7 +77,7 @@ public sealed class TurnOnProducer
                 await this.authProvider.AuthenticateAsync(SaslScramAuthContext, cancellationToken).ConfigureAwait(false);
             }
 
-            await this.transport.PublishAsync(channelUtf8, in payload, in context, in headers, cancellationToken).ConfigureAwait(false);
+            await this.transport.PublishAsync(channelUtf8, payload, context, headers, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
