@@ -1727,7 +1727,7 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine();
         }
 
-        w.WriteLine("await this.transport.PublishAsync(channelUtf8, in payload, in context, in headers, cancellationToken).ConfigureAwait(false);");
+        w.WriteLine("await this.transport.PublishAsync(channelUtf8, payload, context, headers, cancellationToken).ConfigureAwait(false);");
         w.CloseBrace();
         w.WriteLine("finally");
         w.OpenBrace();
