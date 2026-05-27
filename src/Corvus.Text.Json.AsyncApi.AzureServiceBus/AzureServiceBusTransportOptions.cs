@@ -29,6 +29,16 @@ public sealed class AzureServiceBusTransportOptions : ITransportOptions
     public TokenCredential? Credential { get; set; }
 
     /// <summary>
+    /// Gets or sets the queue name (required when UseTopic = false).
+    /// </summary>
+    public string? QueueName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the topic name (required when UseTopic = true).
+    /// </summary>
+    public string? TopicName { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to use topics (true) or queues (false).
     /// Topics enable pub/sub with multiple subscriptions per channel.
     /// </summary>
@@ -39,6 +49,11 @@ public sealed class AzureServiceBusTransportOptions : ITransportOptions
     /// Multiple consumers with the same subscription name share messages (competing consumers).
     /// </summary>
     public string? SubscriptionName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the suffix appended to channel names to form dead-letter channel addresses.
+    /// </summary>
+    public string DeadLetterSuffix { get; set; } = ".dead";
 
     /// <summary>
     /// Gets or sets the default receive mode.
