@@ -240,7 +240,13 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
                 // Check correlation ID
                 if (replyMessage.CorrelationId != correlationId)
                 {
-                    // Wrong correlation ID - abandon and continue waiting
+                    // Wrong correlation ID - record telemetry and abandon
+                    AsyncApiTelemetry.RecordCorrelationIdMismatch(
+                        replyChannel,
+                        "azureservicebus",
+                        correlationId,
+                        replyMessage.CorrelationId ?? "(null)");
+
                     await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
                     continue;
                 }
@@ -256,10 +262,57 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
                     return (replyPayload, replyHeaders);
                 }
-                catch
+                catch (Exception parseEx)
                 {
-                    await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
-                    throw;
+                    // Parse error - apply error policy
+                    MessageErrorAction action = MessageErrorAction.Abort;
+
+                    if (this.options.ErrorPolicy is not null)
+                    {
+                        action = await this.options.ErrorPolicy.HandleErrorAsync(
+                            parseEx,
+                            new MessageErrorContext(
+                                replyChannelUtf8,
+                                MessageErrorKind.Deserialization,
+                                default,
+                                default),
+                            cancellationToken).ConfigureAwait(false);
+                    }
+
+                    switch (action)
+                    {
+                        case MessageErrorAction.Abort:
+                            AsyncApiTelemetry.RecordAbort(replyChannel, "azureservicebus", MessageErrorKind.Deserialization);
+                            await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+                            throw;
+
+                        case MessageErrorAction.DeadLetter:
+                            try
+                            {
+                                // Send bad reply to native Service Bus DLQ
+                                await replyReceiver.DeadLetterMessageAsync(
+                                    replyMessage,
+                                    deadLetterReason: "Reply deserialization failed",
+                                    deadLetterErrorDescription: parseEx.Message,
+                                    cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                                AsyncApiTelemetry.RecordDeadLetter(replyChannel + "/$DeadLetterQueue", replyChannel, "azureservicebus");
+                            }
+                            catch (Exception dlEx)
+                            {
+                                AsyncApiTelemetry.RecordDeadLetterFailure(replyChannel + "/$DeadLetterQueue", replyChannel, "azureservicebus", dlEx);
+                            }
+
+                            // Request failed even though we DLQ'd the bad reply
+                            throw;
+
+                        case MessageErrorAction.Skip:
+                        default:
+                            // Skip means abandon and fail for request-reply (can't skip a reply)
+                            AsyncApiTelemetry.RecordSkip(replyChannel, "azureservicebus", MessageErrorKind.Deserialization);
+                            await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+                            throw;
+                    }
                 }
             }
         }

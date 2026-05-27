@@ -154,6 +154,20 @@ public static class AsyncApiTelemetry
             "Messages skipped due to error policy decision");
 
     /// <summary>
+    /// Gets the counter for request-reply correlation ID mismatches.
+    /// </summary>
+    /// <remarks>
+    /// This indicates a reply message was received with a correlation ID that does not match
+    /// the expected value. Common causes: clock skew, multiple clients sharing a reply channel,
+    /// or stale messages. The message is abandoned and the client continues waiting.
+    /// </remarks>
+    public static Counter<long> CorrelationIdMismatches { get; } =
+        Meter.CreateCounter<long>(
+            "corvus.asyncapi.correlation_id_mismatches",
+            "{message}",
+            "Reply messages with wrong correlation ID (abandoned and ignored)");
+
+    /// <summary>
     /// Gets the histogram measuring message payload size in bytes.
     /// </summary>
     /// <remarks>OTel semantic convention: <c>messaging.message.body.size</c>.</remarks>
@@ -274,6 +288,30 @@ public static class AsyncApiTelemetry
                 { "messaging.system", messagingSystem },
                 { "messaging.destination.name", channel },
                 { "corvus.asyncapi.retry_attempt", attemptNumber },
+            });
+    }
+
+    /// <summary>
+    /// Records a correlation ID mismatch during request-reply.
+    /// </summary>
+    /// <param name="replyChannel">The reply channel where the mismatch occurred.</param>
+    /// <param name="messagingSystem">The messaging system identifier.</param>
+    /// <param name="expectedCorrelationId">The expected correlation ID.</param>
+    /// <param name="actualCorrelationId">The actual correlation ID received.</param>
+    public static void RecordCorrelationIdMismatch(
+        string replyChannel,
+        string messagingSystem,
+        string expectedCorrelationId,
+        string actualCorrelationId)
+    {
+        CorrelationIdMismatches.Add(
+            1,
+            new TagList
+            {
+                { "messaging.system", messagingSystem },
+                { "messaging.destination.name", replyChannel },
+                { "corvus.asyncapi.expected_correlation_id", expectedCorrelationId },
+                { "corvus.asyncapi.actual_correlation_id", actualCorrelationId },
             });
     }
 }

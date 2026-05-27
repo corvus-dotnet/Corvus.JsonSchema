@@ -366,9 +366,59 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         TReply replyPayload;
         if (reply.Data is not null)
         {
-            // Cold path — document not disposed; returned values reference its memory
-            ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Data);
-            replyPayload = replyDoc.RootElement;
+            try
+            {
+                // Cold path — document not disposed; returned values reference its memory
+                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Data);
+                replyPayload = replyDoc.RootElement;
+            }
+            catch (Exception parseEx)
+            {
+                // Parse error - apply error policy
+                string messagingSystem = this.options.UseJetStream ? "nats-jetstream" : "nats";
+                MessageErrorAction action = MessageErrorAction.Abort;
+
+                if (this.options.ErrorPolicy is not null)
+                {
+                    ReadOnlyMemory<byte> subjectUtf8 = Encoding.UTF8.GetBytes(subject);
+                    action = await this.options.ErrorPolicy.HandleErrorAsync(
+                        parseEx,
+                        new MessageErrorContext(
+                            subjectUtf8,
+                            MessageErrorKind.Deserialization,
+                            default,
+                            default),
+                        cancellationToken).ConfigureAwait(false);
+                }
+
+                switch (action)
+                {
+                    case MessageErrorAction.Abort:
+                        AsyncApiTelemetry.RecordAbort(subject, messagingSystem, MessageErrorKind.Deserialization);
+                        throw;
+
+                    case MessageErrorAction.DeadLetter:
+                        string dlSubject = subject + this.options.DeadLetterSuffix;
+                        try
+                        {
+                            await DeadLetterRawAsync(dlSubject, subject, reply.Data, parseEx, cancellationToken).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(dlSubject, subject, messagingSystem);
+                        }
+                        catch (Exception dlEx)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(dlSubject, subject, messagingSystem, dlEx);
+                        }
+
+                        // Request failed even though we DLQ'd the bad reply
+                        throw;
+
+                    case MessageErrorAction.Skip:
+                    default:
+                        // Skip means fail for request-reply (can't skip a reply)
+                        AsyncApiTelemetry.RecordSkip(subject, messagingSystem, MessageErrorKind.Deserialization);
+                        throw;
+                }
+            }
         }
         else
         {
