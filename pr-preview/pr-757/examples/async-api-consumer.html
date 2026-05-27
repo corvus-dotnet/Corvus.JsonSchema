@@ -327,8 +327,8 @@
 <td><code>payload.Lumens</code>, <code>payload.SentAt</code></td>
 </tr>
 <tr>
-<td>Simulated broker delivery</td>
-<td><code>InMemoryMessageTransport.DeliverAsync</code></td>
+<td>Auto-delivery from in-memory transport</td>
+<td><code>InMemoryMessageTransport</code> acts like a real broker</td>
 </tr>
 </tbody>
 </table>
@@ -382,9 +382,11 @@ ReceiveLightMeasurementConsumer consumer = new(
 </table>
 <h3 id="consumer-lifecycle">Consumer Lifecycle</h3>
 <pre><code class="language-csharp">await consumer.StartAsync();    // Subscribe to the channel
-// ... messages are delivered and handled ...
+// ... messages are published and auto-delivered ...
 await consumer.StopAsync();     // Unsubscribe and clean up
 </code></pre>
+<h3 id="how-inmemorymessagetransport-works">How InMemoryMessageTransport Works</h3>
+<p>Unlike manual <code>DeliverAsync()</code> calls, <code>InMemoryMessageTransport.PublishAsync()</code> <strong>automatically delivers</strong> to active subscribers — just like a real broker (Kafka/NATS/MQTT). When you publish to a channel, any consumer subscribed to that channel immediately receives it.</p>
 <h2 id="running">Running</h2>
 <pre><code class="language-bash">dotnet run -f net10.0
 </code></pre>
