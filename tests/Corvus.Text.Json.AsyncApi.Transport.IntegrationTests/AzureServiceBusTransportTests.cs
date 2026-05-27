@@ -2,71 +2,82 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using Corvus.Text.Json.AsyncApi.AzureServiceBus;
+using Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 
 namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests;
 
 /// <summary>
-/// Integration tests for <see cref="AzureServiceBusMessageTransport"/>.
+/// Integration tests for <see cref="AzureServiceBusMessageTransport"/> against the Azure Service Bus emulator.
 /// </summary>
-/// <remarks>
-/// These tests are currently disabled because Azure Service Bus does not have a local emulator
-/// that can run in Docker/Testcontainers. To run these tests, you need:
-/// 1. A real Azure Service Bus namespace (connection string or managed identity)
-/// 2. Session-enabled reply queues (required for request-reply pattern)
-/// 3. Update the connection string in the test methods
-/// For CI, consider using Azure-hosted test infrastructure or skip these tests.
-/// </remarks>
 [TestClass]
+[TestCategory("integration")]
+[TestCategory("docker")]
 public class AzureServiceBusTransportTests
 {
-    // TODO: Add Testcontainers support when Azure Service Bus emulator becomes available
-    // See: https://github.com/Azure/azure-service-bus-emulator (not yet GA)
+    private static AzureServiceBusMessageTransport s_transport = null!;
 
-    /// <summary>
-    /// Verifies that session-based request-reply uses the correlation ID as session ID.
-    /// </summary>
-    [TestMethod]
-    [Ignore("Requires real Azure Service Bus namespace - no local emulator available")]
-    public async Task SessionBasedRequestReply_UsesCorrelationIdAsSessionId()
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        // Arrange
-        const string connectionString = "Endpoint=sb://your-namespace.servicebus.windows.net/;...";
-        AzureServiceBusTransportOptions options = new()
+        await AzureServiceBusFixture.StartAsync();
+        s_transport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
         {
-            ConnectionString = connectionString,
+            ConnectionString = AzureServiceBusFixture.ConnectionString,
             QueueName = "test-queue",
-        };
-
-        await using AzureServiceBusMessageTransport transport = await AzureServiceBusMessageTransport.CreateAsync(options);
-
-        // Act - Request with unique correlation ID
-        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"query":"status"}"""u8.ToArray());
-        string correlationId = Guid.NewGuid().ToString();
-
-        // This should set SessionId = correlationId on the request message
-        // and use ServiceBusSessionReceiver.AcceptSessionAsync(correlationId) for the reply
-        (JsonElement replyPayload, JsonElement replyHeaders) = await transport.RequestAsync<JsonElement, JsonElement>(
-            "test-requests"u8.ToArray(),
-            "test-replies"u8.ToArray(),
-            requestDoc.RootElement,
-            System.Text.Encoding.UTF8.GetBytes(correlationId),
-            default);
-
-        // Assert
-        Assert.AreNotEqual(JsonValueKind.Undefined, replyPayload.ValueKind);
+        });
     }
 
-    /// <summary>
-    /// Verifies DoubleDisposeDoesNotThrow pattern.
-    /// </summary>
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_transport is not null)
+        {
+            await s_transport.DisposeAsync();
+        }
+
+        await AzureServiceBusFixture.StopAsync();
+    }
+
     [TestMethod]
-    [Ignore("Requires real Azure Service Bus namespace - no local emulator available")]
+    public async Task PublishAndSubscribeRoundtrip()
+    {
+        // Arrange
+        ReadOnlyMemory<byte> channel = "test-queue"u8.ToArray();
+        using var received = new SemaphoreSlim(0, 1);
+        JsonValueKind receivedPayloadKind = JsonValueKind.Undefined;
+
+        await s_transport.SubscribeAsync<JsonElement>(
+            channel,
+            (payload, headers, ct) =>
+            {
+                receivedPayloadKind = payload.ValueKind;
+                received.Release();
+                return ValueTask.CompletedTask;
+            });
+
+        // Allow subscription loop to start
+        await Task.Delay(500);
+
+        // Act
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"sensor":"temp","value":22.5}"""u8.ToArray());
+        await s_transport.PublishAsync(channel, doc.RootElement);
+
+        // Assert
+        bool wasReceived = await received.WaitAsync(TimeSpan.FromSeconds(30));
+        Assert.IsTrue(wasReceived, "[Azure Service Bus] Message was not received within timeout.");
+        Assert.AreEqual(JsonValueKind.Object, receivedPayloadKind);
+
+        await s_transport.UnsubscribeAsync(channel);
+    }
+
+    [TestMethod]
     public async Task DoubleDisposeDoesNotThrow()
     {
         AzureServiceBusTransportOptions options = new()
         {
-            ConnectionString = "Endpoint=sb://your-namespace.servicebus.windows.net/;...",
+            ConnectionString = AzureServiceBusFixture.ConnectionString,
             QueueName = "test-queue",
         };
 

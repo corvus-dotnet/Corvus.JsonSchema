@@ -36,11 +36,10 @@ internal static class MqttFixture
         // Mosquitto 2.x requires explicit config for anonymous access
         byte[] config = "listener 1883\nallow_anonymous true\n"u8.ToArray();
 
-        s_container = new ContainerBuilder()
-            .WithImage("eclipse-mosquitto:2")
+        s_container = new ContainerBuilder("eclipse-mosquitto:2")
             .WithPortBinding(MqttPort, true)
             .WithResourceMapping(config, "/mosquitto/config/mosquitto.conf")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(MqttPort))
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(MqttPort))
             .Build();
 
         await s_container.StartAsync().ConfigureAwait(false);

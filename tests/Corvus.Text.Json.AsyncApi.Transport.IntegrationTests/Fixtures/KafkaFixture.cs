@@ -50,8 +50,7 @@ internal static class KafkaFixture
     /// <returns>A task that completes when the container is ready.</returns>
     public static async Task StartAsync()
     {
-        s_container = new ContainerBuilder()
-            .WithImage("apache/kafka:3.8.1")
+        s_container = new ContainerBuilder("apache/kafka:3.8.1")
             .WithPortBinding(ExternalPort, true)
             .WithEnvironment("KAFKA_NODE_ID", "1")
             .WithEnvironment("KAFKA_PROCESS_ROLES", "broker,controller")
@@ -95,9 +94,11 @@ internal static class KafkaFixture
         await container.CopyAsync(
             Encoding.UTF8.GetBytes(script),
             StartupScript,
-            UnixFileModes.OtherExecute | UnixFileModes.GroupExecute | UnixFileModes.UserExecute
+            uid: 0,
+            gid: 0,
+            fileMode: UnixFileModes.OtherExecute | UnixFileModes.GroupExecute | UnixFileModes.UserExecute
                 | UnixFileModes.OtherRead | UnixFileModes.GroupRead | UnixFileModes.UserRead
                 | UnixFileModes.UserWrite,
-            ct).ConfigureAwait(false);
+            ct: ct).ConfigureAwait(false);
     }
 }

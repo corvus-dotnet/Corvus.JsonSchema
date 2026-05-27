@@ -25,7 +25,7 @@ internal static class NatsFixture
     /// <returns>A task that completes when the container is ready.</returns>
     public static async Task StartAsync()
     {
-        s_container = new NatsBuilder().Build();
+        s_container = new NatsBuilder("nats:2.11").Build();
         await s_container.StartAsync().ConfigureAwait(false);
     }
 

@@ -25,7 +25,7 @@ internal static class AmqpFixture
     /// <returns>A task that completes when the container is ready.</returns>
     public static async Task StartAsync()
     {
-        s_container = new RabbitMqBuilder().Build();
+        s_container = new RabbitMqBuilder("rabbitmq:4.0").Build();
         await s_container.StartAsync().ConfigureAwait(false);
     }
 

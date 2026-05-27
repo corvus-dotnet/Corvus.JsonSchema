@@ -33,5 +33,6 @@
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Testcontainers.ServiceBus" />
   </ItemGroup>
 </Project>
