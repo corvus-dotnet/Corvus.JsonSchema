@@ -1,5 +1,7 @@
 # OpenAPI Code Generation
 
+> **[Try the OpenAPI Playground](/playground-openapi/)** — generate strongly-typed OpenAPI client code, inspect request/response types, and run samples in your browser.
+
 ## Overview
 
 `Corvus.Text.Json` includes a code generator that produces strongly-typed HTTP **clients** and ASP.NET Core **server stubs** from [OpenAPI](https://spec.openapis.org/oas/latest.html) specifications (versions 3.0, 3.1, and 3.2).

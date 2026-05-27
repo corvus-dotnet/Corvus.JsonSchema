@@ -1,5 +1,7 @@
 # AsyncAPI Code Generation
 
+> **[Try the AsyncAPI Playground](/playground-asyncapi/)** — generate strongly-typed producers, consumers, handlers, and request/response (request/reply) code in your browser.
+
 ## Overview
 
 `Corvus.Text.Json` includes a code generator that produces strongly-typed **producers** and **consumers** from [AsyncAPI](https://www.asyncapi.com/) specifications (versions 2.6 and 3.0).
@@ -33,6 +35,7 @@ dotnet add package Corvus.Text.Json.AsyncApi.Kafka
 dotnet add package Corvus.Text.Json.AsyncApi.Amqp
 dotnet add package Corvus.Text.Json.AsyncApi.Mqtt
 dotnet add package Corvus.Text.Json.AsyncApi.WebSocket
+dotnet add package Corvus.Text.Json.AsyncApi.AzureServiceBus
 ```
 
 Both also need the core library:
@@ -68,7 +71,7 @@ TurnOnProducer producer = new(transport);
 
 // Publish a validated message — schema validation runs before the message leaves your process
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
     {
         b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -201,10 +204,12 @@ TurnOnProducer producer = new(transport, validationMode: ValidationMode.Basic);
 
 try
 {
-    TurnOnOffPayload payload = TurnOnOffPayload.ParseValue(
-        """{"command":"invalid-command","sentAt":"2024-01-15T10:30:00Z"}"""u8);
-
-    await producer.PublishTurnOnOffAsync(payload, streetlightId: "lamp-001");
+    await producer.PublishTurnOnOffAsync(
+        payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
+        {
+            b.Create(command: "invalid-command"u8, sentAt: DateTimeOffset.UtcNow);
+        }),
+        streetlightId: "lamp-001");
 }
 catch (ArgumentException ex)
 {
@@ -298,11 +303,15 @@ internal sealed class RetryThenDeadLetterPolicy : IMessageErrorPolicy
 
 ### Dead-Letter Channels
 
-Dead-lettered messages are published to a derived channel address (e.g., `dead-letter.smartylighting.streetlights.1.0.action.{id}.lighting.measured`). The dead-letter message includes:
+Dead-lettered messages are published to a derived channel address (e.g., `dead-letter.smartylighting.streetlights.1.0.action.{id}.lighting.measured`). The generated consumer calls `IMessageTransport.DeadLetterAsync` when the error policy returns `MessageErrorAction.DeadLetter`, so validation failures and handler exceptions are handled consistently across transports.
+
+The dead-letter message includes:
 - The original payload bytes
 - The original headers
 - The exception that caused the failure
 - The original channel address
+
+Each transport maps this to the most natural broker mechanism: Kafka, NATS, MQTT, AMQP, and WebSocket publish a new message to a configured dead-letter topic/subject/channel; Azure Service Bus also uses the broker's native dead-letter settlement path for messages already being processed by its receiver loop.
 
 ## Resilience (Polly Integration)
 
@@ -358,7 +367,10 @@ All transports implement `IMessageTransport` and can be swapped without changing
 | `Corvus.Text.Json.AsyncApi.Amqp` | RabbitMQ | AMQP 0-9-1 |
 | `Corvus.Text.Json.AsyncApi.Mqtt` | Mosquitto, HiveMQ, etc. | MQTT 3.1.1 / 5.0 |
 | `Corvus.Text.Json.AsyncApi.WebSocket` | Any WebSocket server | WebSocket |
+| `Corvus.Text.Json.AsyncApi.AzureServiceBus` | Azure Service Bus | Queues and topics |
 | `Corvus.Text.Json.AsyncApi.Testing` | In-memory (tests only) | None |
+
+For durable consumption, acknowledgement, redelivery, and restart behavior, see [AsyncAPI message resumption](AsyncApiMessageResumption.md).
 
 ### NATS
 
@@ -434,6 +446,36 @@ WebSocketTransportOptions options = new()
 await using WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(options);
 ```
 
+### Azure Service Bus
+
+```csharp
+using Corvus.Text.Json.AsyncApi.AzureServiceBus;
+
+AzureServiceBusTransportOptions options = new()
+{
+    ConnectionString = "<service-bus-connection-string>",
+    QueueName = "streetlights",
+    RequestTimeout = TimeSpan.FromSeconds(30),
+};
+
+await using AzureServiceBusMessageTransport transport =
+    await AzureServiceBusMessageTransport.CreateAsync(options);
+```
+
+Use `UseTopic = true` with `TopicName` and `SubscriptionName` for pub/sub:
+
+```csharp
+AzureServiceBusTransportOptions options = new()
+{
+    ConnectionString = "<service-bus-connection-string>",
+    UseTopic = true,
+    TopicName = "streetlights",
+    SubscriptionName = "processors",
+};
+```
+
+For Microsoft Entra ID authentication, set `FullyQualifiedNamespace` and `Credential` instead of `ConnectionString`.
+
 ### In-Memory (Testing)
 
 The `Corvus.Text.Json.AsyncApi.Testing` package provides an in-memory transport for unit and integration tests:
@@ -450,10 +492,12 @@ InMemoryMessageTransport transport = new();
 // Use with producers — messages are captured for assertions
 TurnOnProducer producer = new(transport, ValidationMode.None);
 
-TurnOnOffPayload payload = TurnOnOffPayload.ParseValue(
-    """{"command":"on","sentAt":"2024-01-15T10:30:00Z"}"""u8);
-
-await producer.PublishTurnOnOffAsync(payload, streetlightId: "lamp-001");
+await producer.PublishTurnOnOffAsync(
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
+    {
+        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: "lamp-001");
 
 // Assert published messages
 Assert.AreEqual(1, transport.PublishedMessages.Count);
@@ -463,6 +507,23 @@ await transport.DeliverAsync<LightMeasuredPayload>(
     "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
     """{"lumens":250,"sentAt":"2024-01-15T10:30:00Z"}"""u8.ToArray());
 ```
+
+## Local Integration Test Troubleshooting
+
+The transport integration tests use Testcontainers and need either Docker or Podman running locally. When running targeted transport tests, include the `integration` category intentionally; for normal test runs, continue to exclude it.
+
+```powershell
+dotnet test --project tests\Corvus.Text.Json.AsyncApi.Transport.IntegrationTests\Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.csproj -c Debug -f net10.0 --filter "FullyQualifiedName~KafkaTransportTests&TestCategory=integration&TestCategory!=failing&TestCategory!=outerloop"
+```
+
+Common issues:
+
+| Symptom | Check |
+|---------|-------|
+| Testcontainers cannot connect | Start Docker Desktop or Podman and ensure the `DOCKER_HOST` environment variable points at the active socket when Podman is not the default. |
+| Kafka consumers time out | Use the Testcontainers-provided bootstrap address and create topics before subscribing; do not hard-code `localhost:9092`. |
+| Azure Service Bus emulator exits during startup | The bind-mounted emulator config file must be readable inside the Linux container. On Docker, this requires owner read/write and group/world read permissions. |
+| RabbitMQ/MQTT/NATS tests fail after a previous interrupted run | Remove stale containers and volumes with the container engine's cleanup command, then rerun the targeted test class. |
 
 ## Authentication
 
@@ -525,7 +586,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
     {
         b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -583,7 +644,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
     {
         b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -608,7 +669,7 @@ IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider("my-
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
     {
         b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -691,7 +752,7 @@ IMessageAuthenticationProvider auth = new UserPasswordAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
     {
         b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -749,7 +810,7 @@ IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
     {
         b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -774,7 +835,7 @@ IMessageAuthenticationProvider auth = new RotatingSecretProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
     {
         b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -816,7 +877,7 @@ AsyncAPI channels can contain parameters (e.g., `smartylighting.streetlights.1.0
 ```csharp
 // The streetlightId parameter is part of the publish method signature
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
     {
         b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -1017,7 +1078,7 @@ The generated code handles correlation ID generation (GUID formatted directly to
 
 ## Bindings
 
-AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and passes them to the transport via `MessageContext`:
+AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and makes them available to the transport via `MessageContext`:
 
 | Level | Example | What it configures |
 |-------|---------|-------------------|
@@ -1054,7 +1115,7 @@ MessageContext context = new()
 };
 ```
 
-Transport implementations inspect the relevant bindings to configure delivery semantics (partition keys, exchanges, QoS levels, delivery modes, etc.).
+Current transports primarily use their strongly-typed transport options for delivery semantics. `MessageContext` is the extension point for transports that need to inspect binding JSON directly; if you rely on a specific binding, verify that the selected transport implements it rather than assuming every binding affects runtime behavior automatically.
 
 ## Telemetry and Observability
 
@@ -1125,10 +1186,9 @@ app.MapHealthChecks("/health");
 app.Run();
 ```
 
-The health check monitors:
-- Transport connectivity
-- Processing loop heartbeat (staleness detection)
-- Dead-letter accumulation
+The health check extension works with transports that implement `IHealthCheckableTransport` (`KafkaMessageTransport`, `NatsMessageTransport`, `AmqpMessageTransport`, and `InMemoryMessageTransport`). It monitors transport connectivity by checking `IsConnected` and calling `PingAsync`.
+
+Use `ProcessingLoopHeartbeat` separately when you need per-subscription liveness/staleness detection.
 
 ## CLI Reference
 
@@ -1141,11 +1201,12 @@ corvusjson asyncapi-generate <specFile> [options]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `<specFile>` | Path to the AsyncAPI specification (JSON or YAML) | Required |
-| `--rootNamespace` | Root namespace for generated types | Required |
-| `--outputPath` | Directory to write generated code | Required |
+| `--rootNamespace` | Root namespace for generated types | `GeneratedAsyncApi` |
+| `--outputPath` | Directory to write generated code | `./Generated` |
 | `--mode` | Generation mode: `producer`, `consumer`, or `both` | `both` |
 | `--force` | Regenerate even if lock file indicates no changes | `false` |
 | `--spec-url` | URL to fetch the spec from (recorded in lock file) | — |
+| `--yaml` | Enable YAML support explicitly; otherwise `.yaml`/`.yml` is auto-detected | Auto |
 | `--include-channel` | Glob patterns for channels to include | All |
 | `--exclude-channel` | Glob patterns for channels to exclude | None |
 | `--tag` | Filter by operation tags | All |

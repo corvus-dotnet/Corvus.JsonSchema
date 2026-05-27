@@ -189,9 +189,10 @@ node tools/build-search-index.js --output .output/search-index.json
 
 Builds a site-wide Lunr search index. Per-version API search indices are generated in Step 2a/2b.
 
-### Step 9: Build and publish Playground (Blazor WASM)
+### Step 9: Build and publish playgrounds (Blazor WASM)
 
-Compiles the Blazor WASM playground application and publishes it to `.output/playground/`.
+Compiles the Blazor WASM playground applications and publishes them under `.output/`:
+`playground/`, `playground-jsonata/`, `playground-jmespath/`, `playground-yaml/`, `playground-jsonlogic/`, `playground-jsonpath/`, `playground-asyncapi/`, and `playground-openapi/`.
 
 ### Step 10: Rewrite root-relative paths
 

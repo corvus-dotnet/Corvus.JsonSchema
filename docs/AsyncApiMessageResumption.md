@@ -13,7 +13,8 @@ Message resumption is **transport-specific** — each broker has its own model:
 | **Kafka** | Consumer groups + committed offsets | `GroupId` + `AutoOffsetReset` |
 | **AMQP/RabbitMQ** | Durable queues + message acknowledgement | `QueueDurable` + explicit ack/nack |
 | **MQTT** | Clean session flag + QoS levels | `CleanSession` + `QualityOfServiceLevel` |
-| **NATS** | Core NATS has no persistence; JetStream provides durable consumers | Not yet implemented |
+| **NATS** | Core NATS has no persistence; JetStream provides durable consumers | `UseJetStream` + `ConsumerName` |
+| **Azure Service Bus** | PeekLock settlement + queues/topic subscriptions | `ReceiveMode` + queue/topic options |
 | **InMemoryMessageTransport** | No persistence (testing only) | N/A |
 
 ## Kafka: Consumer Groups and Offsets
@@ -51,12 +52,8 @@ KafkaTransportOptions options = new()
     // Fine-grained control via ConsumerConfig:
     ConsumerConfig = new ConsumerConfig
     {
-        // Automatically commit offsets after successful processing
-        EnableAutoCommit = true,
-        AutoCommitIntervalMs = 5000,
-        
-        // Or disable auto-commit for manual control:
-        // EnableAutoCommit = false,
+        // The transport disables auto-commit and commits after processing.
+        // Additional consumer options can be supplied here.
     },
 };
 
@@ -71,7 +68,7 @@ The transport **automatically commits** after:
 3. Error policy dead-letters the message
 
 Offsets are **not committed** if:
-- Handler throws and error policy returns `MessageErrorAction.Retry` (message will be redelivered)
+- Handler throws and the error policy returns `MessageErrorAction.Abort` (message will be redelivered)
 - Transport crashes before commit (message will be redelivered on restart)
 
 ### Example: Guaranteed Processing
@@ -178,7 +175,7 @@ await using AmqpMessageTransport transport = await AmqpMessageTransport.CreateAs
 |---------------|--------|--------------|
 | Success | `BasicAck` | Removed from queue |
 | Error policy: Skip | `BasicNack` (requeue=false) | Dead-lettered |
-| Error policy: Retry | `BasicNack` (requeue=true) | Redelivered |
+| Error policy: Abort | Consumer stops before successful acknowledgement | Redelivered |
 | Error policy: DeadLetter | `BasicNack` + publish to DLX | Moved to dead-letter exchange |
 | Crash (no ack) | — | Redelivered on restart |
 
@@ -291,15 +288,16 @@ ReceiveTelemetryConsumer consumer = new(transport, handler);
 await consumer.StartAsync();
 ```
 
-## NATS: No Built-In Persistence (Core NATS)
+## NATS: Core NATS and JetStream
 
-### Current Status
+### How It Works
 
-The `NatsMessageTransport` currently uses **core NATS**, which has **no message persistence**. If a consumer is offline, messages are lost.
+`NatsMessageTransport` supports two modes:
 
-For durable consumers with resumption, you need **NATS JetStream** (not yet implemented in this library).
+- **Core NATS** (`UseJetStream = false`, the default) — no persistence. Messages are delivered only to active subscribers.
+- **JetStream** (`UseJetStream = true`) — persistent streams and durable consumers. Messages can be resumed after restart.
 
-### Configuration
+### Core NATS Configuration
 
 ```csharp
 using Corvus.Text.Json.AsyncApi.Nats;
@@ -315,6 +313,92 @@ await using NatsMessageTransport transport = await NatsMessageTransport.CreateAs
 // Core NATS: messages are delivered to active subscribers only
 // No resumption support — offline = messages lost
 ```
+
+### JetStream Configuration
+
+```csharp
+using Corvus.Text.Json.AsyncApi.Nats;
+
+NatsTransportOptions options = new()
+{
+    Url = "nats://localhost:4222",
+    Name = "sensor-processor",
+
+    // Enable durable messaging
+    UseJetStream = true,
+    StreamName = "sensor-readings",
+    ConsumerName = "sensor-processor-v1",
+
+    // Redeliver if not acknowledged within this window
+    AckWait = TimeSpan.FromSeconds(30),
+    MaxDeliver = 5,
+
+    // File storage survives broker restarts
+    StorageType = StorageType.File,
+    DeliverPolicy = DeliverPolicy.All,
+};
+
+await using NatsMessageTransport transport = await NatsMessageTransport.CreateAsync(options);
+```
+
+### JetStream Acknowledgement Behavior
+
+| Handler Result | Action | Message Fate |
+|---------------|--------|--------------|
+| Success | `Ack` | Marked processed for the durable consumer |
+| Error policy: Skip | `Ack` | Skipped and not redelivered |
+| Error policy: DeadLetter | Publish to dead-letter subject, then `Ack` | Available in DLQ subject |
+| Error policy: Abort | Consumer stops without acknowledgement | Redelivered after `AckWait` |
+| Crash (no ack) | — | Redelivered after `AckWait` |
+
+Use a stable `ConsumerName` for durable resumption. Changing the consumer name creates a new durable consumer position.
+
+## Azure Service Bus: PeekLock Settlement
+
+### How It Works
+
+Azure Service Bus supports durable queues and topic subscriptions. In the default `PeekLock` receive mode, the broker locks a message for a consumer. The transport completes the message after successful handling, dead-letters it when the error policy returns `DeadLetter`, dead-letters the current failed message and stops when the policy returns `Abort`, and leaves unsettled messages for redelivery if the process crashes before settlement.
+
+### Configuration
+
+```csharp
+using Corvus.Text.Json.AsyncApi.AzureServiceBus;
+
+AzureServiceBusTransportOptions queueOptions = new()
+{
+    ConnectionString = "<service-bus-connection-string>",
+    QueueName = "sensor-readings",
+    ReceiveMode = Azure.Messaging.ServiceBus.ServiceBusReceiveMode.PeekLock,
+    MaxAutoLockRenewalDuration = TimeSpan.FromMinutes(5),
+};
+
+await using AzureServiceBusMessageTransport transport =
+    await AzureServiceBusMessageTransport.CreateAsync(queueOptions);
+```
+
+For topic subscriptions:
+
+```csharp
+AzureServiceBusTransportOptions topicOptions = new()
+{
+    ConnectionString = "<service-bus-connection-string>",
+    UseTopic = true,
+    TopicName = "sensor-readings",
+    SubscriptionName = "sensor-processor-v1",
+};
+```
+
+### Settlement Behavior
+
+| Handler Result | Action | Message Fate |
+|---------------|--------|--------------|
+| Success | Complete | Removed from queue/subscription |
+| Error policy: Skip | Complete | Skipped and not redelivered |
+| Error policy: DeadLetter | DeadLetter | Moved to the broker's dead-letter subqueue |
+| Error policy: Abort | DeadLetter for current failure, then consumer stops | Available in dead-letter subqueue |
+| Crash before settlement | — | Lock expires and message is redelivered |
+
+Use stable queue names or topic subscription names for resumption. Enable sessions (`EnableSessions = true`) only when you need ordered session-aware processing and your Service Bus entity is configured for sessions.
 
 ## InMemoryMessageTransport: Testing Only
 
@@ -345,6 +429,8 @@ Resumption is configured **implicitly** via transport options:
 - Kafka: `GroupId` + `ConsumerConfig`
 - AMQP: `QueueDurable` + acknowledgement
 - MQTT: `ClientId` + `CleanSession`
+- NATS JetStream: `UseJetStream` + `ConsumerName`
+- Azure Service Bus: queue or topic subscription settlement
 
 ### Alternative: Explicit Resumption Parameter
 

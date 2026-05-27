@@ -1085,6 +1085,37 @@ $asyncapiSize = (Get-ChildItem $asyncapiOutputDir -Recurse -File | Measure-Objec
 Write-Host "  AsyncAPI Playground: $([math]::Round($asyncapiSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "AsyncAPI Playground build" $sw
 
+# -- Step 9h: Build OpenAPI Playground (Blazor WASM) ----------------------------
+Write-Host "`n[9h/10] Building OpenAPI Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$openapiProject = Join-Path $repoRoot "docs\playground-openapi\src\Corvus.Text.Json.OpenApi.Playground\Corvus.Text.Json.OpenApi.Playground.csproj"
+$openapiPublishDir = Join-Path $here ".playground-openapi-publish"
+$openapiOutputDir = Join-Path $outputDir "playground-openapi"
+
+& dotnet publish $openapiProject -c Release -o $openapiPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "OpenAPI Playground publish failed" }
+
+$openapiWwwroot = Join-Path $openapiPublishDir "wwwroot"
+if (!(Test-Path $openapiWwwroot)) {
+    throw "OpenAPI Playground wwwroot not found at $openapiWwwroot"
+}
+Copy-Item -Path $openapiWwwroot -Destination $openapiOutputDir -Recurse -Force
+
+$openapiIndex = Join-Path $openapiOutputDir "index.html"
+if (Test-Path $openapiIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($openapiIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-openapi/`" />"
+    [System.IO.File]::WriteAllText($openapiIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-openapi/" -ForegroundColor Gray
+}
+
+Remove-Item $openapiPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$openapiSize = (Get-ChildItem $openapiOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  OpenAPI Playground: $([math]::Round($openapiSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "OpenAPI Playground build" $sw
+
 # Disable Jekyll processing so that _-prefixed directories (_framework, _content)
 # are served correctly at any nesting depth (e.g. pr-preview/pr-NNN/playground/_framework/).
 # The previous _config.yml include approach only worked for root-level directories.
@@ -1143,6 +1174,7 @@ $lycheeArgs = @(
     "--exclude-path", "playground-jsonpath"
     "--exclude-path", "playground-yaml"
     "--exclude-path", "playground-asyncapi"
+    "--exclude-path", "playground-openapi"
     "."
 )
 
@@ -1167,7 +1199,7 @@ if ($BasePathPrefix) {
     # Rewrite HTML files (excluding playgrounds which use <base href>)
     # Use -notmatch with [/\\] separators for cross-platform compatibility (Linux uses /, Windows uses \)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' }
+        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
@@ -1191,7 +1223,7 @@ if ($BasePathPrefix) {
         $original = $content
 
         # Rewrite string literals containing root-relative paths: '/api/', '/search-index.json', etc.
-        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath|playground-jsonlogic|playground-jsonpath|playground-yaml|playground-asyncapi))", "`$1$BasePathPrefix`$2"
+        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath|playground-jsonlogic|playground-jsonpath|playground-yaml|playground-asyncapi|playground-openapi))", "`$1$BasePathPrefix`$2"
 
         if ($content -ne $original) {
             [System.IO.File]::WriteAllText($jsFile.FullName, $content)
@@ -1233,7 +1265,7 @@ $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' }
+        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' }
     $ghRewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)

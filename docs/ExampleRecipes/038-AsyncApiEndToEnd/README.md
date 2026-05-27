@@ -237,7 +237,7 @@ catch (InvalidOperationException)
 ## What Gets Generated
 
 ```bash
-corvusjson asyncapi --input streetlights.json --output Generated
+corvusjson asyncapi-generate streetlights.json --rootNamespace GeneratedAsyncApi --outputPath Generated
 ```
 
 **Files created:**
