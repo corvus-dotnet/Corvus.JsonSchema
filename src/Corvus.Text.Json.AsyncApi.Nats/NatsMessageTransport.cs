@@ -48,6 +48,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
     private readonly NatsConnection connection;
     private readonly INatsJSContext? jsContext;
     private readonly string? derivedStreamName;
+    private readonly byte[] deadLetterSuffixUtf8;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, SubscriptionState> subscriptions = new(StringComparer.Ordinal);
@@ -61,6 +62,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         this.derivedStreamName = derivedStreamName;
         this.errorPolicy = options.ErrorPolicy ?? new DefaultMessageErrorPolicy();
         this.middleware = options.HandlerMiddleware;
+        this.deadLetterSuffixUtf8 = Encoding.UTF8.GetBytes(options.DeadLetterSuffix);
     }
 
     /// <inheritdoc/>
@@ -425,7 +427,12 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         where TPayload : struct, IJsonElement<TPayload>
     {
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        string dlChannel = channel + this.options.DeadLetterSuffix;
+
+        // Build dead-letter channel UTF-8 bytes
+        Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
+        channelUtf8.Span.CopyTo(dlChannelUtf8);
+        this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
+        string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
         this.options.Heartbeat?.Start(channel, "nats-jetstream");
 
@@ -636,7 +643,12 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
         where TPayload : struct, IJsonElement<TPayload>
     {
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        string dlChannel = channel + this.options.DeadLetterSuffix;
+
+        // Build dead-letter channel UTF-8 bytes
+        Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
+        channelUtf8.Span.CopyTo(dlChannelUtf8);
+        this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
+        string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
         this.options.Heartbeat?.Start(channel, "nats");
 

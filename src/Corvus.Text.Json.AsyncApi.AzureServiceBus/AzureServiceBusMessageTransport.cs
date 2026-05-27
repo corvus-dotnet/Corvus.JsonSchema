@@ -22,6 +22,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     private readonly ServiceBusProcessor? processor;
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
+    private readonly byte[] deadLetterSuffixUtf8;
     private readonly ConcurrentDictionary<string, TaskCompletionSource> subscriptions = new(StringComparer.Ordinal);
     private bool disposed;
 
@@ -37,6 +38,7 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         this.processor = processor;
         this.errorPolicy = options.ErrorPolicy ?? new DefaultMessageErrorPolicy();
         this.middleware = options.HandlerMiddleware;
+        this.deadLetterSuffixUtf8 = Encoding.UTF8.GetBytes(options.DeadLetterSuffix);
     }
 
     /// <inheritdoc/>
@@ -170,7 +172,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        string dlChannel = channel + this.options.DeadLetterSuffix;
+
+        // Build dead-letter channel UTF-8 bytes
+        Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
+        channelUtf8.Span.CopyTo(dlChannelUtf8);
+        this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
+        string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
 
         this.options.Heartbeat?.Start(channel, "azureservicebus");
 
