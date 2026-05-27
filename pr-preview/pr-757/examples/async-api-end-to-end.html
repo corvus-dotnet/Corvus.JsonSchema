@@ -157,6 +157,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-757/docs/async-api.html">AsyncAPI Code Generation</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-757/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -509,7 +512,7 @@ catch (InvalidOperationException)
 <li><strong>039-AsyncApiAuthentication</strong> — Adding auth to transports</li>
 </ul>
 <h2 id="what-gets-generated">What Gets Generated</h2>
-<pre><code class="language-bash">corvusjson asyncapi --input streetlights.json --output Generated
+<pre><code class="language-bash">corvusjson asyncapi-generate streetlights.json --rootNamespace GeneratedAsyncApi --outputPath Generated
 </code></pre>
 <p><strong>Files created:</strong></p>
 <ul>

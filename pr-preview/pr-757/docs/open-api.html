@@ -152,6 +152,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-757/docs/async-api.html">AsyncAPI Code Generation</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-757/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -288,6 +291,9 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>OpenAPI Code Generation</h1>
+<blockquote>
+<p><strong><a href="/Corvus.JsonSchema/pr-preview/pr-757/playground-openapi/">Try the OpenAPI Playground</a></strong> — generate strongly-typed OpenAPI client code, inspect request/response types, and run samples in your browser.</p>
+</blockquote>
 <h2 id="overview">Overview</h2>
 <p><code>Corvus.Text.Json</code> includes a code generator that produces strongly-typed HTTP <strong>clients</strong> and ASP.NET Core <strong>server stubs</strong> from <a href="https://spec.openapis.org/oas/latest.html">OpenAPI</a> specifications (versions 3.0, 3.1, and 3.2).</p>
 <p>Both sides are generated from the same spec. The generated code handles all the HTTP plumbing — parameter serialization, schema validation, request/response parsing, streaming, and error handling — so you focus purely on business logic.</p>

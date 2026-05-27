@@ -152,6 +152,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-757/docs/async-api.html">AsyncAPI Code Generation</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-757/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -288,8 +291,11 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>AsyncAPI Code Generation</h1>
+<blockquote>
+<p><strong><a href="/Corvus.JsonSchema/pr-preview/pr-757/playground-asyncapi/">Try the AsyncAPI Playground</a></strong> — generate strongly-typed producers, consumers, handlers, and request/response (request/reply) code in your browser.</p>
+</blockquote>
 <h2 id="overview">Overview</h2>
-<p><code>Corvus.Text.Json</code> includes a code generator that produces strongly-typed <strong>producers</strong> and <strong>consumers</strong> from <a href="https://www.asyncapi.com/">AsyncAPI</a> specifications (versions 2.6 and 3.0).</p>
+<p><code>Corvus.Text.Json</code> includes a code generator that produces strongly-typed <strong>producers</strong> and <strong>consumers</strong> from <a href="https://www.asyncapi.com/">AsyncAPI</a> specifications (versions 2.6 and 3.0). AsyncAPI 2.6 channel-level <code>publish</code> operations generate receive-side consumers; <code>subscribe</code> operations generate send-side producers.</p>
 <p>Both sides are generated from the same spec. The generated code handles all the messaging plumbing — payload serialization, JSON Schema validation, header encoding, channel address construction, error handling, and dead-letter routing — so you focus purely on business logic.</p>
 <p>The generator leverages the Corvus.JsonSchema V5 engine for model generation, producing zero-allocation, pooled-memory types with full JSON Schema validation built in.</p>
 <h2 id="installation">Installation</h2>
@@ -309,6 +315,7 @@ dotnet add package Corvus.Text.Json.AsyncApi.Kafka
 dotnet add package Corvus.Text.Json.AsyncApi.Amqp
 dotnet add package Corvus.Text.Json.AsyncApi.Mqtt
 dotnet add package Corvus.Text.Json.AsyncApi.WebSocket
+dotnet add package Corvus.Text.Json.AsyncApi.AzureServiceBus
 </code></pre>
 <p>Both also need the core library:</p>
 <pre><code class="language-bash">dotnet add package Corvus.Text.Json
@@ -334,7 +341,7 @@ TurnOnProducer producer = new(transport);
 
 // Publish a validated message — schema validation runs before the message leaves your process
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
     {
         b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -496,10 +503,12 @@ TurnOnProducer producer = new(transport, validationMode: ValidationMode.Basic);
 
 try
 {
-    TurnOnOffPayload payload = TurnOnOffPayload.ParseValue(
-        &quot;&quot;&quot;{&quot;command&quot;:&quot;invalid-command&quot;,&quot;sentAt&quot;:&quot;2024-01-15T10:30:00Z&quot;}&quot;&quot;&quot;u8);
-
-    await producer.PublishTurnOnOffAsync(payload, streetlightId: &quot;lamp-001&quot;);
+    await producer.PublishTurnOnOffAsync(
+        payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
+        {
+            b.Create(command: &quot;invalid-command&quot;u8, sentAt: DateTimeOffset.UtcNow);
+        }),
+        streetlightId: &quot;lamp-001&quot;);
 }
 catch (ArgumentException ex)
 {
@@ -607,13 +616,15 @@ ReceiveLightMeasurementConsumer consumer = new(
 }
 </code></pre>
 <h3 id="dead-letter-channels">Dead-Letter Channels</h3>
-<p>Dead-lettered messages are published to a derived channel address (e.g., <code>dead-letter.smartylighting.streetlights.1.0.action.{id}.lighting.measured</code>). The dead-letter message includes:</p>
+<p>Dead-lettered messages are published to a derived channel address (e.g., <code>dead-letter.smartylighting.streetlights.1.0.action.{id}.lighting.measured</code>). The generated consumer calls <code>IMessageTransport.DeadLetterAsync</code> when the error policy returns <code>MessageErrorAction.DeadLetter</code>, so validation failures and handler exceptions are handled consistently across transports.</p>
+<p>The dead-letter message includes:</p>
 <ul>
 <li>The original payload bytes</li>
 <li>The original headers</li>
 <li>The exception that caused the failure</li>
 <li>The original channel address</li>
 </ul>
+<p>Each transport maps this to the most natural broker mechanism: Kafka, NATS, MQTT, AMQP, and WebSocket publish a new message to a configured dead-letter topic/subject/channel; Azure Service Bus also uses the broker's native dead-letter settlement path for messages already being processed by its receiver loop.</p>
 <h2 id="resilience-polly-integration">Resilience (Polly Integration)</h2>
 <p>The <code>Corvus.Text.Json.AsyncApi.Polly</code> package provides handler middleware backed by <a href="https://github.com/App-vNext/Polly">Polly</a> resilience pipelines.</p>
 <pre><code class="language-bash">dotnet add package Corvus.Text.Json.AsyncApi.Polly
@@ -686,12 +697,18 @@ await using NatsMessageTransport transport = await NatsMessageTransport.CreateAs
 <td>WebSocket</td>
 </tr>
 <tr>
+<td><code>Corvus.Text.Json.AsyncApi.AzureServiceBus</code></td>
+<td>Azure Service Bus</td>
+<td>Queues and topics</td>
+</tr>
+<tr>
 <td><code>Corvus.Text.Json.AsyncApi.Testing</code></td>
 <td>In-memory (tests only)</td>
 <td>None</td>
 </tr>
 </tbody>
 </table>
+<p>For durable consumption, acknowledgement, redelivery, and restart behavior, see <a href="/Corvus.JsonSchema/pr-preview/pr-757/docs/async-api-message-resumption.html">AsyncAPI message resumption</a>.</p>
 <h3 id="nats">NATS</h3>
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi.Nats;
 
@@ -751,6 +768,29 @@ WebSocketTransportOptions options = new()
 
 await using WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(options);
 </code></pre>
+<h3 id="azure-service-bus">Azure Service Bus</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi.AzureServiceBus;
+
+AzureServiceBusTransportOptions options = new()
+{
+    ConnectionString = &quot;&lt;service-bus-connection-string&gt;&quot;,
+    QueueName = &quot;streetlights&quot;,
+    RequestTimeout = TimeSpan.FromSeconds(30),
+};
+
+await using AzureServiceBusMessageTransport transport =
+    await AzureServiceBusMessageTransport.CreateAsync(options);
+</code></pre>
+<p>Use <code>UseTopic = true</code> with <code>TopicName</code> and <code>SubscriptionName</code> for pub/sub:</p>
+<pre><code class="language-csharp">AzureServiceBusTransportOptions options = new()
+{
+    ConnectionString = &quot;&lt;service-bus-connection-string&gt;&quot;,
+    UseTopic = true,
+    TopicName = &quot;streetlights&quot;,
+    SubscriptionName = &quot;processors&quot;,
+};
+</code></pre>
+<p>For Microsoft Entra ID authentication, set <code>FullyQualifiedNamespace</code> and <code>Credential</code> instead of <code>ConnectionString</code>.</p>
 <h3 id="in-memory-testing">In-Memory (Testing)</h3>
 <p>The <code>Corvus.Text.Json.AsyncApi.Testing</code> package provides an in-memory transport for unit and integration tests:</p>
 <pre><code class="language-bash">dotnet add package Corvus.Text.Json.AsyncApi.Testing
@@ -762,10 +802,12 @@ InMemoryMessageTransport transport = new();
 // Use with producers — messages are captured for assertions
 TurnOnProducer producer = new(transport, ValidationMode.None);
 
-TurnOnOffPayload payload = TurnOnOffPayload.ParseValue(
-    &quot;&quot;&quot;{&quot;command&quot;:&quot;on&quot;,&quot;sentAt&quot;:&quot;2024-01-15T10:30:00Z&quot;}&quot;&quot;&quot;u8);
-
-await producer.PublishTurnOnOffAsync(payload, streetlightId: &quot;lamp-001&quot;);
+await producer.PublishTurnOnOffAsync(
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
+    {
+        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: &quot;lamp-001&quot;);
 
 // Assert published messages
 Assert.AreEqual(1, transport.PublishedMessages.Count);
@@ -775,6 +817,37 @@ await transport.DeliverAsync&lt;LightMeasuredPayload&gt;(
     &quot;smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured&quot;,
     &quot;&quot;&quot;{&quot;lumens&quot;:250,&quot;sentAt&quot;:&quot;2024-01-15T10:30:00Z&quot;}&quot;&quot;&quot;u8.ToArray());
 </code></pre>
+<h2 id="local-integration-test-troubleshooting">Local Integration Test Troubleshooting</h2>
+<p>The transport integration tests use Testcontainers and need either Docker or Podman running locally. When running targeted transport tests, include the <code>integration</code> category intentionally; for normal test runs, continue to exclude it.</p>
+<pre><code class="language-powershell">dotnet test --project tests\Corvus.Text.Json.AsyncApi.Transport.IntegrationTests\Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.csproj -c Debug -f net10.0 --filter &quot;FullyQualifiedName~KafkaTransportTests&amp;TestCategory=integration&amp;TestCategory!=failing&amp;TestCategory!=outerloop&quot;
+</code></pre>
+<p>Common issues:</p>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Testcontainers cannot connect</td>
+<td>Start Docker Desktop or Podman and ensure the <code>DOCKER_HOST</code> environment variable points at the active socket when Podman is not the default.</td>
+</tr>
+<tr>
+<td>Kafka consumers time out</td>
+<td>Use the Testcontainers-provided bootstrap address and create topics before subscribing; do not hard-code <code>localhost:9092</code>.</td>
+</tr>
+<tr>
+<td>Azure Service Bus emulator exits during startup</td>
+<td>The bind-mounted emulator config file must be readable inside the Linux container. On Docker, this requires owner read/write and group/world read permissions.</td>
+</tr>
+<tr>
+<td>RabbitMQ/MQTT/NATS tests fail after a previous interrupted run</td>
+<td>Remove stale containers and volumes with the container engine's cleanup command, then rerun the targeted test class.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="authentication">Authentication</h2>
 <p>Generated producers and consumers accept an optional <code>IMessageAuthenticationProvider</code>. The provider supplies credentials to the transport <strong>before</strong> messages are published or subscriptions are established.</p>
 <p>The generated code determines which security scheme to use from the AsyncAPI spec's <code>securitySchemes</code>. It constructs a <code>MessageAuthenticationContext</code> with the scheme type and name, passes it to your provider, then the transport reads the populated credentials. This is called once per publish (producers) or once at subscription time (consumers).</p>
@@ -847,7 +920,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
     {
         b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -897,7 +970,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
     {
         b.Create(command: &quot;off&quot;u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -917,7 +990,7 @@ IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider(&quo
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
     {
         b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -989,7 +1062,7 @@ IMessageAuthenticationProvider auth = new UserPasswordAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
     {
         b.Create(command: &quot;off&quot;u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -1039,7 +1112,7 @@ IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
     {
         b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -1060,7 +1133,7 @@ IMessageAuthenticationProvider auth = new RotatingSecretProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
     {
         b.Create(command: &quot;off&quot;u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -1096,7 +1169,7 @@ internal sealed class RotatingSecretProvider : IMessageAuthenticationProvider
 <p>AsyncAPI channels can contain parameters (e.g., <code>smartylighting.streetlights.1.0.action.{streetlightId}.turn.on</code>). The generated producer exposes these as method parameters:</p>
 <pre><code class="language-csharp">// The streetlightId parameter is part of the publish method signature
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
+    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
     {
         b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
     }),
@@ -1286,8 +1359,30 @@ foreach (var item in reply.Results.EnumerateArray())
 }
 </code></pre>
 <p>The generated code handles correlation ID generation (GUID formatted directly to a <code>byte[36]</code> — no string allocation), request/reply channel pairing, and timeout management.</p>
+<p>AsyncAPI 3.0 uses the standard operation <code>reply</code> object. AsyncAPI 2.6 has <code>correlationId</code> but no standard <code>reply</code> object, so Corvus supports an explicit <code>x-corvus-reply</code> extension on a 2.6 operation. The extension mirrors the 3.0 shape closely enough for the generated request/reply method to use the same runtime path:</p>
+<pre><code class="language-json">{
+  &quot;subscribe&quot;: {
+    &quot;operationId&quot;: &quot;calculate&quot;,
+    &quot;message&quot;: {
+      &quot;$ref&quot;: &quot;#/components/messages/CalculateRequest&quot;
+    },
+    &quot;x-corvus-reply&quot;: {
+      &quot;channel&quot;: {
+        &quot;$ref&quot;: &quot;#/channels/rpc~1calculate~1replies&quot;
+      },
+      &quot;address&quot;: {
+        &quot;location&quot;: &quot;$message.header#/replyTo&quot;
+      },
+      &quot;message&quot;: {
+        &quot;$ref&quot;: &quot;#/components/messages/CalculateResponse&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>The extension is intentionally explicit. The generator does not infer request/reply pairs from matching <code>correlationId</code> values because that is ambiguous in real-world 2.6 documents.</p>
 <h2 id="bindings">Bindings</h2>
-<p>AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and passes them to the transport via <code>MessageContext</code>:</p>
+<p>AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and makes them available to the transport via <code>MessageContext</code>:</p>
 <table>
 <thead>
 <tr>
@@ -1338,7 +1433,7 @@ MessageContext context = new()
     MessageBindingsJson = /* ... */,
 };
 </code></pre>
-<p>Transport implementations inspect the relevant bindings to configure delivery semantics (partition keys, exchanges, QoS levels, delivery modes, etc.).</p>
+<p>Current transports primarily use their strongly-typed transport options for delivery semantics. <code>MessageContext</code> is the extension point for transports that need to inspect binding JSON directly; if you rely on a specific binding, verify that the selected transport implements it rather than assuming every binding affects runtime behavior automatically.</p>
 <h2 id="telemetry-and-observability">Telemetry and Observability</h2>
 <h3 id="opentelemetry-distributed-tracing">OpenTelemetry Distributed Tracing</h3>
 <p>Wrap any transport with <code>InstrumentedMessageTransport</code> to gain automatic OpenTelemetry instrumentation:</p>
@@ -1392,12 +1487,8 @@ var app = builder.Build();
 app.MapHealthChecks(&quot;/health&quot;);
 app.Run();
 </code></pre>
-<p>The health check monitors:</p>
-<ul>
-<li>Transport connectivity</li>
-<li>Processing loop heartbeat (staleness detection)</li>
-<li>Dead-letter accumulation</li>
-</ul>
+<p>The health check extension works with transports that implement <code>IHealthCheckableTransport</code> (<code>KafkaMessageTransport</code>, <code>NatsMessageTransport</code>, <code>AmqpMessageTransport</code>, and <code>InMemoryMessageTransport</code>). It monitors transport connectivity by checking <code>IsConnected</code> and calling <code>PingAsync</code>.</p>
+<p>Use <code>ProcessingLoopHeartbeat</code> separately when you need per-subscription liveness/staleness detection.</p>
 <h2 id="cli-reference">CLI Reference</h2>
 <h3 id="generate-code-asyncapi-generate">Generate Code (<code>asyncapi-generate</code>)</h3>
 <pre><code class="language-bash">corvusjson asyncapi-generate &lt;specFile&gt; [options]
@@ -1419,12 +1510,12 @@ app.Run();
 <tr>
 <td><code>--rootNamespace</code></td>
 <td>Root namespace for generated types</td>
-<td>Required</td>
+<td><code>GeneratedAsyncApi</code></td>
 </tr>
 <tr>
 <td><code>--outputPath</code></td>
 <td>Directory to write generated code</td>
-<td>Required</td>
+<td><code>./Generated</code></td>
 </tr>
 <tr>
 <td><code>--mode</code></td>
@@ -1440,6 +1531,11 @@ app.Run();
 <td><code>--spec-url</code></td>
 <td>URL to fetch the spec from (recorded in lock file)</td>
 <td>—</td>
+</tr>
+<tr>
+<td><code>--yaml</code></td>
+<td>Enable YAML support explicitly; otherwise <code>.yaml</code>/<code>.yml</code> is auto-detected</td>
+<td>Auto</td>
 </tr>
 <tr>
 <td><code>--include-channel</code></td>
@@ -1565,6 +1661,11 @@ corvusjson asyncapi-generate streetlights.json --rootNamespace Streetlights --ou
 <td>Traits</td>
 <td>Supported</td>
 <td>Supported</td>
+</tr>
+<tr>
+<td>Request/reply</td>
+<td><code>x-corvus-reply</code> extension</td>
+<td>Standard operation <code>reply</code> object</td>
 </tr>
 </tbody>
 </table>
