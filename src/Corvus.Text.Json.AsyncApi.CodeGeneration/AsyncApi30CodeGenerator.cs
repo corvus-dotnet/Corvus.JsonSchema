@@ -1748,7 +1748,7 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine("System.Guid.NewGuid().TryFormat(correlationIdUtf8, out _, \"D\");");
             w.WriteLine("try");
             w.OpenBrace();
-            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, in payload, correlationIdUtf8.AsMemory(0, 36), headers, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine("var (replyPayload, _) = await this.transport.RequestAsync<TPayload, TReply>(channelUtf8, replyChannelUtf8, payload, correlationIdUtf8.AsMemory(0, 36), headers, cancellationToken).ConfigureAwait(false);");
             w.WriteLine("return replyPayload;");
             w.CloseBrace();
             w.WriteLine("finally");
