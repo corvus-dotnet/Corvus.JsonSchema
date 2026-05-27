@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Confluent.Kafka;
+using Confluent.Kafka.Admin;
 using Testcontainers.Kafka;
 
 namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
@@ -11,13 +13,14 @@ namespace Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.Fixtures;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Uses the default KafkaBuilder configuration which works on Docker in CI.
-/// On Podman, the container.Hostname advertised by default may not be resolvable
-/// from the host, but the mapped port via localhost should work.
+/// Uses the Testcontainers bootstrap address so Docker, Podman, and any
+/// TESTCONTAINERS_HOST_OVERRIDE configuration all use the same host address that
+/// Kafka advertises to clients.
 /// </para>
 /// </remarks>
 internal static class KafkaFixture
 {
+    private static readonly TimeSpan TopicReadyTimeout = TimeSpan.FromSeconds(30);
     private static KafkaContainer? s_container;
 
     /// <summary>
@@ -32,11 +35,7 @@ internal static class KafkaFixture
                 throw new InvalidOperationException("Kafka container not started.");
             }
 
-            // For Podman compatibility: use localhost instead of container.Hostname
-            // which isn't resolvable from Windows host under Podman.
-            // Docker in CI works with either approach.
-            int mappedPort = s_container.GetMappedPublicPort(9092);
-            return $"localhost:{mappedPort}";
+            return s_container.GetBootstrapAddress();
         }
     }
 
@@ -53,6 +52,36 @@ internal static class KafkaFixture
     }
 
     /// <summary>
+    /// Creates a single-partition topic and waits until broker metadata reports it as ready.
+    /// </summary>
+    /// <param name="topic">The topic name.</param>
+    /// <returns>A task that completes when the topic is ready.</returns>
+    public static async Task CreateTopicAsync(string topic)
+    {
+        if (s_container is null)
+        {
+            throw new InvalidOperationException("Kafka container not started.");
+        }
+
+        using IAdminClient adminClient = new AdminClientBuilder(new AdminClientConfig
+        {
+            BootstrapServers = BootstrapServers,
+        }).Build();
+
+        try
+        {
+            await adminClient.CreateTopicsAsync(
+                [new TopicSpecification { Name = topic, NumPartitions = 1, ReplicationFactor = 1 }]).ConfigureAwait(false);
+        }
+        catch (CreateTopicsException ex) when (ex.Results.Count == 1 && ex.Results[0].Error.Code == ErrorCode.TopicAlreadyExists)
+        {
+            // A retry may observe a topic that was created by the previous attempt.
+        }
+
+        await WaitForTopicReadyAsync(adminClient, topic).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Stops and disposes the Kafka container.
     /// </summary>
     /// <returns>A task that completes when the container is disposed.</returns>
@@ -63,5 +92,40 @@ internal static class KafkaFixture
             await s_container.DisposeAsync().ConfigureAwait(false);
             s_container = null;
         }
+    }
+
+    private static async Task WaitForTopicReadyAsync(IAdminClient adminClient, string topic)
+    {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + TopicReadyTimeout;
+        string lastError = "No metadata returned.";
+
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            try
+            {
+                Metadata metadata = adminClient.GetMetadata(topic, TimeSpan.FromSeconds(5));
+                TopicMetadata? topicMetadata = metadata.Topics.FirstOrDefault(t => string.Equals(t.Topic, topic, StringComparison.Ordinal));
+
+                if (topicMetadata is not null)
+                {
+                    lastError = topicMetadata.Error.Reason;
+
+                    if (!topicMetadata.Error.IsError &&
+                        topicMetadata.Partitions.Count > 0 &&
+                        topicMetadata.Partitions.All(p => !p.Error.IsError))
+                    {
+                        return;
+                    }
+                }
+            }
+            catch (KafkaException ex)
+            {
+                lastError = ex.Error.Reason;
+            }
+
+            await Task.Delay(250).ConfigureAwait(false);
+        }
+
+        throw new InvalidOperationException($"Kafka topic '{topic}' was not ready after {TopicReadyTimeout}. Last metadata error: {lastError}");
     }
 }

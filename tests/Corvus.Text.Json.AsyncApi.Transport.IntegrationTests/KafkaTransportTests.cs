@@ -31,14 +31,14 @@ public class KafkaTransportTests
             AutoOffsetReset = AutoOffsetReset.Earliest,
             ConsumerConfig = new ConsumerConfig
             {
-                // Fast metadata refresh for tests — topics are auto-created
-                // by the producer and the consumer must discover them quickly.
+                // Fast metadata refresh for tests — each test creates topics
+                // immediately before subscribing and Kafka must discover them quickly.
                 TopicMetadataRefreshIntervalMs = 1000,
             },
         });
 
         // Allow Kafka broker to be fully ready (consumer group coordination
-        // and topic metadata discovery requires extra time with KRaft mode).
+        // and topic metadata discovery requires extra time on loaded CI runners).
         // Increased to 10s for CI runner reliability under load.
         await Task.Delay(10000);
     }
@@ -57,9 +57,8 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task PublishAndSubscribeRoundtrip()
     {
-        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
-        string topic = $"kafka-roundtrip-{topicSuffix}";
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
+        string topic = CreateTopicName("kafka-roundtrip");
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
         using var received = new SemaphoreSlim(0, 1);
         JsonValueKind receivedPayloadKind = JsonValueKind.Undefined;
 
@@ -89,8 +88,7 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task HeadersRoundtripCorrectly()
     {
-        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes($"kafka-headers-{topicSuffix}");
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(CreateTopicName("kafka-headers"));
         using var received = new SemaphoreSlim(0, 1);
         JsonValueKind receivedHeadersKind = JsonValueKind.Undefined;
 
@@ -119,8 +117,7 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task MultipleMessagesDelivered()
     {
-        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes($"kafka-multi-{topicSuffix}");
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(CreateTopicName("kafka-multi"));
         List<int> receivedOrder = [];
         using var allReceived = new SemaphoreSlim(0, 1);
         const int messageCount = 5;
@@ -160,8 +157,7 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task UnsubscribeStopsDelivery()
     {
-        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes($"kafka-unsub-{topicSuffix}");
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(CreateTopicName("kafka-unsub"));
         int receiveCount = 0;
 
         await s_transport.SubscribeAsync<JsonElement>(
@@ -195,6 +191,8 @@ public class KafkaTransportTests
     {
         var actions = new List<MessageErrorKind>();
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string topic = $"kafka-error-{topicSuffix}";
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
             BootstrapServers = KafkaFixture.BootstrapServers,
@@ -202,8 +200,6 @@ public class KafkaTransportTests
             AutoOffsetReset = AutoOffsetReset.Earliest,
             ErrorPolicy = new TrackingErrorPolicy(actions),
         });
-
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes($"kafka-error-{topicSuffix}");
 
         await transport.SubscribeAsync<JsonElement>(
             channel,
@@ -225,8 +221,7 @@ public class KafkaTransportTests
     [TestMethod]
     public async Task LargePayloadTransmitsCorrectly()
     {
-        string topicSuffix = Guid.NewGuid().ToString("N")[..8];
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes($"kafka-large-{topicSuffix}");
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(CreateTopicName("kafka-large"));
         using var received = new SemaphoreSlim(0, 1);
         int receivedLength = 0;
 
@@ -275,6 +270,8 @@ public class KafkaTransportTests
     public async Task DisposeStopsAllSubscriptions()
     {
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string topic = $"kafka-dispose-{topicSuffix}";
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
             BootstrapServers = KafkaFixture.BootstrapServers,
@@ -282,7 +279,6 @@ public class KafkaTransportTests
             AutoOffsetReset = AutoOffsetReset.Earliest,
         });
 
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes($"kafka-dispose-{topicSuffix}");
         int receiveCount = 0;
 
         await transport.SubscribeAsync<JsonElement>(
@@ -318,7 +314,7 @@ public class KafkaTransportTests
         });
 
         string topic = $"kafka-deser-{topicSuffix}";
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
 
         await transport.SubscribeAsync<JsonElement>(
             channel,
@@ -349,6 +345,8 @@ public class KafkaTransportTests
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
         string topic = $"kafka-dl-{topicSuffix}";
         string dlqTopic = topic + ".dead-letter";
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
+        await KafkaFixture.CreateTopicAsync(dlqTopic);
 
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
@@ -358,8 +356,6 @@ public class KafkaTransportTests
             ErrorPolicy = policy,
             ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
         });
-
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
 
         using var dlqReceived = new SemaphoreSlim(0, 1);
         byte[]? dlqPayload = null;
@@ -414,6 +410,8 @@ public class KafkaTransportTests
     {
         ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Abort);
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string topic = $"kafka-abort-{topicSuffix}";
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
             BootstrapServers = KafkaFixture.BootstrapServers,
@@ -423,8 +421,6 @@ public class KafkaTransportTests
             ConsumerConfig = new ConsumerConfig { TopicMetadataRefreshIntervalMs = 1000 },
         });
 
-        string topic = $"kafka-abort-{topicSuffix}";
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
         int handlerCallCount = 0;
 
         await transport.SubscribeAsync<JsonElement>(
@@ -457,6 +453,8 @@ public class KafkaTransportTests
     {
         int middlewareCallCount = 0;
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string topic = $"kafka-mw-{topicSuffix}";
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
             BootstrapServers = KafkaFixture.BootstrapServers,
@@ -470,8 +468,6 @@ public class KafkaTransportTests
             },
         });
 
-        string topic = $"kafka-mw-{topicSuffix}";
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
         using var received = new SemaphoreSlim(0, 1);
 
         await transport.SubscribeAsync<JsonElement>(
@@ -501,6 +497,8 @@ public class KafkaTransportTests
         ConfigurableErrorPolicy policy = new(handlerAction: MessageErrorAction.Skip);
         int retryCount = 0;
         string topicSuffix = Guid.NewGuid().ToString("N")[..8];
+        string topic = $"kafka-mw-exhaust-{topicSuffix}";
+        ReadOnlyMemory<byte> channel = await CreateChannelAsync(topic);
         KafkaMessageTransport transport = new(new KafkaTransportOptions
         {
             BootstrapServers = KafkaFixture.BootstrapServers,
@@ -526,9 +524,6 @@ public class KafkaTransportTests
                 await operation(ct).ConfigureAwait(false);
             },
         });
-
-        string topic = $"kafka-mw-exhaust-{topicSuffix}";
-        ReadOnlyMemory<byte> channel = Encoding.UTF8.GetBytes(topic);
 
         await transport.SubscribeAsync<JsonElement>(
             channel,
@@ -562,6 +557,8 @@ public class KafkaTransportTests
 
         string requestTopic = $"kafka-req-{topicSuffix}";
         string replyTopic = $"kafka-reply-{topicSuffix}";
+        await KafkaFixture.CreateTopicAsync(requestTopic);
+        await KafkaFixture.CreateTopicAsync(replyTopic);
         ReadOnlyMemory<byte> requestChannel = Encoding.UTF8.GetBytes(requestTopic);
         ReadOnlyMemory<byte> replyChannel = Encoding.UTF8.GetBytes(replyTopic);
         byte[] correlationId = "timeout-corr-k01"u8.ToArray();
@@ -605,6 +602,17 @@ public class KafkaTransportTests
         await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
             await transport.RequestAsync<JsonElement, JsonElement>(
                 channel, channel, doc.RootElement, "corr"u8.ToArray()));
+    }
+
+    private static string CreateTopicName(string prefix)
+    {
+        return $"{prefix}-{Guid.NewGuid().ToString("N")[..8]}";
+    }
+
+    private static async Task<ReadOnlyMemory<byte>> CreateChannelAsync(string topic)
+    {
+        await KafkaFixture.CreateTopicAsync(topic).ConfigureAwait(false);
+        return Encoding.UTF8.GetBytes(topic);
     }
 
     private sealed class TrackingErrorPolicy(List<MessageErrorKind> actions) : IMessageErrorPolicy
