@@ -229,12 +229,12 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
             while (true)
             {
                 ServiceBusReceivedMessage replyMessage = await replyReceiver.ReceiveMessageAsync(
-                    maxWaitTime: TimeSpan.FromSeconds(30),
+                    maxWaitTime: this.options.RequestTimeout,
                     cancellationToken: cancellationToken).ConfigureAwait(false);
 
                 if (replyMessage is null)
                 {
-                    throw new TimeoutException($"No reply received on channel '{replyChannel}' within 30 seconds.");
+                    throw new TimeoutException($"No reply received on channel '{replyChannel}' within {this.options.RequestTimeout.TotalSeconds} seconds.");
                 }
 
                 // Check correlation ID

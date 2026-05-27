@@ -56,6 +56,11 @@ public sealed class AzureServiceBusTransportOptions : ITransportOptions
     public string DeadLetterSuffix { get; set; } = ".dead";
 
     /// <summary>
+    /// Gets or sets the request timeout for request-reply operations.
+    /// </summary>
+    public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
     /// Gets or sets the default receive mode.
     /// </summary>
     public ServiceBusReceiveMode ReceiveMode { get; set; } = ServiceBusReceiveMode.PeekLock;
