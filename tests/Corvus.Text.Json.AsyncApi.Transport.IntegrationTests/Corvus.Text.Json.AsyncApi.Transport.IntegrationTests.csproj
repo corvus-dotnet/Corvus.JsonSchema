@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Amqp\Corvus.Text.Json.AsyncApi.Amqp.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Kafka\Corvus.Text.Json.AsyncApi.Kafka.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.WebSocket\Corvus.Text.Json.AsyncApi.WebSocket.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.AzureServiceBus\Corvus.Text.Json.AsyncApi.AzureServiceBus.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
   <ItemGroup>
