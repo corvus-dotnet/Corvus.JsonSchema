@@ -151,9 +151,9 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        in JsonElement headers = default,
+        JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -351,14 +351,62 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
             // Wait for reply
             BasicDeliverEventArgs reply = await replyTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-            // Cold path — document not disposed; returned values reference its memory
-            ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Body.ToArray());
-            TReply replyPayload = replyDoc.RootElement;
+            // Parse reply with error handling
+            try
+            {
+                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Body.ToArray());
+                TReply replyPayload = replyDoc.RootElement;
 
-            ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
-            JsonElement replyHeaders = headersDoc?.RootElement ?? default;
+                ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
+                JsonElement replyHeaders = headersDoc?.RootElement ?? default;
 
-            return (replyPayload, replyHeaders);
+                return (replyPayload, replyHeaders);
+            }
+            catch (Exception parseEx)
+            {
+                // Parse error - apply error policy
+                MessageErrorAction action = MessageErrorAction.Abort;
+
+                if (this.errorPolicy is not null)
+                {
+                    action = await this.errorPolicy.HandleErrorAsync(
+                        parseEx,
+                        new MessageErrorContext(
+                            correlationIdUtf8,
+                            MessageErrorKind.Deserialization,
+                            default,
+                            default),
+                        cancellationToken).ConfigureAwait(false);
+                }
+
+                switch (action)
+                {
+                    case MessageErrorAction.Abort:
+                        AsyncApiTelemetry.RecordAbort(replyChannel, "amqp", MessageErrorKind.Deserialization);
+                        throw;
+
+                    case MessageErrorAction.DeadLetter:
+                        string dlChannel = replyChannel + this.options.DeadLetterRoutingKeySuffix;
+                        try
+                        {
+                            await DeadLetterRawAsync(dlChannel, correlationIdUtf8, reply.Body.ToArray(), parseEx, cancellationToken).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, replyChannel, "amqp");
+                        }
+                        catch (Exception dlEx)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, replyChannel, "amqp", dlEx);
+                        }
+
+                        // Request failed even though we DLQ'd the bad reply
+                        throw;
+
+                    case MessageErrorAction.Skip:
+                    default:
+                        // Skip means fail for request-reply (can't skip a reply)
+                        AsyncApiTelemetry.RecordSkip(replyChannel, "amqp", MessageErrorKind.Deserialization);
+                        throw;
+                }
+            }
         }
         finally
         {

@@ -123,9 +123,9 @@ public sealed class MqttMessageTransport : IMessageTransport
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        in JsonElement headers = default,
+        JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -274,22 +274,72 @@ public sealed class MqttMessageTransport : IMessageTransport
             // Wait for correlated reply
             MqttApplicationMessage reply = await replyTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-            TReply replyPayload;
-            if (reply.PayloadSegment is { Count: > 0 })
+            // Parse reply with error handling
+            try
             {
-                // Cold path — document not disposed; returned values reference its memory
-                ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(
-                    reply.PayloadSegment.Array!.AsMemory(reply.PayloadSegment.Offset, reply.PayloadSegment.Count));
-                replyPayload = replyDoc.RootElement;
-            }
-            else
-            {
-                replyPayload = default;
-            }
+                TReply replyPayload;
+                if (reply.PayloadSegment is { Count: > 0 })
+                {
+                    // Cold path — document not disposed; returned values reference its memory
+                    ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(
+                        reply.PayloadSegment.Array!.AsMemory(reply.PayloadSegment.Offset, reply.PayloadSegment.Count));
+                    replyPayload = replyDoc.RootElement;
+                }
+                else
+                {
+                    replyPayload = default;
+                }
 
-            ParsedJsonDocument<JsonElement>? headersDoc = DecodeHeadersDocument(reply);
-            JsonElement replyHeaders = headersDoc?.RootElement ?? default;
-            return (replyPayload, replyHeaders);
+                ParsedJsonDocument<JsonElement>? headersDoc = DecodeHeadersDocument(reply);
+                JsonElement replyHeaders = headersDoc?.RootElement ?? default;
+                return (replyPayload, replyHeaders);
+            }
+            catch (Exception parseEx)
+            {
+                // Parse error - apply error policy
+                ReadOnlyMemory<byte> replyChannelUtf8 = Encoding.UTF8.GetBytes(replyChannel);
+                MessageErrorAction action = MessageErrorAction.Abort;
+
+                if (this.errorPolicy is not null)
+                {
+                    action = await this.errorPolicy.HandleErrorAsync(
+                        parseEx,
+                        new MessageErrorContext(
+                            replyChannelUtf8,
+                            MessageErrorKind.Deserialization,
+                            default,
+                            default),
+                        cancellationToken).ConfigureAwait(false);
+                }
+
+                switch (action)
+                {
+                    case MessageErrorAction.Abort:
+                        AsyncApiTelemetry.RecordAbort(replyChannel, "mqtt", MessageErrorKind.Deserialization);
+                        throw;
+
+                    case MessageErrorAction.DeadLetter:
+                        string dlChannel = replyChannel + this.options.DeadLetterSuffix;
+                        try
+                        {
+                            await DeadLetterRawAsync(dlChannel, replyChannel, reply.PayloadSegment, parseEx, cancellationToken).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, replyChannel, "mqtt");
+                        }
+                        catch (Exception dlEx)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, replyChannel, "mqtt", dlEx);
+                        }
+
+                        // Request failed even though we DLQ'd the bad reply
+                        throw;
+
+                    case MessageErrorAction.Skip:
+                    default:
+                        // Skip means fail for request-reply (can't skip a reply)
+                        AsyncApiTelemetry.RecordSkip(replyChannel, "mqtt", MessageErrorKind.Deserialization);
+                        throw;
+                }
+            }
         }
         finally
         {

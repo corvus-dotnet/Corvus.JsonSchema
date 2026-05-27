@@ -94,9 +94,9 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        in JsonElement headers = default,
+        JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -429,18 +429,65 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         {
             byte[] replyEnvelopeBytes = await replyTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-            // Parse the reply envelope. The backing memory will be collected by
-            // the GC when caller releases the returned values. This is acceptable
-            // for request/reply (not a streaming hot path).
-            ParsedJsonDocument<WebSocketEnvelope> replyDoc = ParsedJsonDocument<WebSocketEnvelope>.Parse(replyEnvelopeBytes);
-            WebSocketEnvelope replyEnvelope = replyDoc.RootElement;
+            // Parse the reply envelope with error handling
+            try
+            {
+                ParsedJsonDocument<WebSocketEnvelope> replyDoc = ParsedJsonDocument<WebSocketEnvelope>.Parse(replyEnvelopeBytes);
+                WebSocketEnvelope replyEnvelope = replyDoc.RootElement;
 
-            JsonElement payloadEl = replyEnvelope.Payload;
-            JsonElement headersEl = replyEnvelope.Headers;
+                JsonElement payloadEl = replyEnvelope.Payload;
+                JsonElement headersEl = replyEnvelope.Headers;
 
-            TReply replyPayload = JsonElementHelpers.Reinterpret<JsonElement, TReply>(in payloadEl);
+                TReply replyPayload = JsonElementHelpers.Reinterpret<JsonElement, TReply>(in payloadEl);
 
-            return (replyPayload, headersEl);
+                return (replyPayload, headersEl);
+            }
+            catch (Exception parseEx)
+            {
+                // Parse error - apply error policy
+                ReadOnlyMemory<byte> replyChannelUtf8 = Encoding.UTF8.GetBytes(replyChannel);
+                MessageErrorAction action = MessageErrorAction.Abort;
+
+                if (this.errorPolicy is not null)
+                {
+                    action = await this.errorPolicy.HandleErrorAsync(
+                        parseEx,
+                        new MessageErrorContext(
+                            replyChannelUtf8,
+                            MessageErrorKind.Deserialization,
+                            default,
+                            default),
+                        cancellationToken).ConfigureAwait(false);
+                }
+
+                switch (action)
+                {
+                    case MessageErrorAction.Abort:
+                        AsyncApiTelemetry.RecordAbort(replyChannel, "websocket", MessageErrorKind.Deserialization);
+                        throw;
+
+                    case MessageErrorAction.DeadLetter:
+                        string dlChannel = replyChannel + this.options.DeadLetterSuffix;
+                        try
+                        {
+                            await DeadLetterRawAsync(dlChannel, replyChannel, replyEnvelopeBytes, parseEx, cancellationToken).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, replyChannel, "websocket");
+                        }
+                        catch (Exception dlEx)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, replyChannel, "websocket", dlEx);
+                        }
+
+                        // Request failed even though we DLQ'd the bad reply
+                        throw;
+
+                    case MessageErrorAction.Skip:
+                    default:
+                        // Skip means fail for request-reply (can't skip a reply)
+                        AsyncApiTelemetry.RecordSkip(replyChannel, "websocket", MessageErrorKind.Deserialization);
+                        throw;
+                }
+            }
         }
         finally
         {

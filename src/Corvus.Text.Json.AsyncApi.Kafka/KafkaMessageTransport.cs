@@ -118,9 +118,9 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        in JsonElement headers = default,
+        JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -346,15 +346,63 @@ public sealed class KafkaMessageTransport : IMessageTransport, IHealthCheckableT
             // Wait for the reply
             ConsumeResult<Null, byte[]> reply = await replyTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-            // Parse reply using pooled document — caller gets copies of the typed values
-            // before the document is disposed.
-            using ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Message.Value);
-            TReply replyPayload = replyDoc.RootElement;
+            // Parse reply with error handling
+            try
+            {
+                using ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(reply.Message.Value);
+                TReply replyPayload = replyDoc.RootElement;
 
-            using ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
-            JsonElement replyHeaders = headersDoc?.RootElement ?? default;
+                using ParsedJsonDocument<JsonElement>? headersDoc = ExtractHeadersDocument(reply);
+                JsonElement replyHeaders = headersDoc?.RootElement ?? default;
 
-            return (replyPayload, replyHeaders);
+                return (replyPayload, replyHeaders);
+            }
+            catch (Exception parseEx)
+            {
+                // Parse error - apply error policy
+                ReadOnlyMemory<byte> replyChannelUtf8 = Encoding.UTF8.GetBytes(replyChannel);
+                MessageErrorAction action = MessageErrorAction.Abort;
+
+                if (this.errorPolicy is not null)
+                {
+                    action = await this.errorPolicy.HandleErrorAsync(
+                        parseEx,
+                        new MessageErrorContext(
+                            replyChannelUtf8,
+                            MessageErrorKind.Deserialization,
+                            default,
+                            default),
+                        cancellationToken).ConfigureAwait(false);
+                }
+
+                switch (action)
+                {
+                    case MessageErrorAction.Abort:
+                        AsyncApiTelemetry.RecordAbort(replyChannel, "kafka", MessageErrorKind.Deserialization);
+                        throw;
+
+                    case MessageErrorAction.DeadLetter:
+                        string dlChannel = replyChannel + this.options.DeadLetterSuffix;
+                        try
+                        {
+                            await DeadLetterRawAsync(dlChannel, replyChannelUtf8, reply.Message.Value, parseEx, cancellationToken).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, replyChannel, "kafka");
+                        }
+                        catch (Exception dlEx)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, replyChannel, "kafka", dlEx);
+                        }
+
+                        // Request failed even though we DLQ'd the bad reply
+                        throw;
+
+                    case MessageErrorAction.Skip:
+                    default:
+                        // Skip means fail for request-reply (can't skip a reply)
+                        AsyncApiTelemetry.RecordSkip(replyChannel, "kafka", MessageErrorKind.Deserialization);
+                        throw;
+                }
+            }
         }
         finally
         {
