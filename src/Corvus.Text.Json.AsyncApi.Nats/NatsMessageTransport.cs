@@ -241,9 +241,9 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        in JsonElement headers = default,
+        JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -252,7 +252,6 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
 
         _ = replyChannelUtf8;
         string requestChannel = Encoding.UTF8.GetString(requestChannelUtf8.Span);
-        TRequest requestCopy = request;
         NatsHeaders natsHeaders = new()
         {
             [CorrelationIdKey] = Encoding.UTF8.GetString(correlationIdUtf8.Span),
@@ -263,7 +262,7 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
             natsHeaders[HeadersKey] = SerializeToBase64String(in headers);
         }
 
-        return RequestCoreAsync<TRequest, TReply>(requestChannel, requestCopy, natsHeaders, cancellationToken);
+        return RequestCoreAsync<TRequest, TReply>(requestChannel, request, natsHeaders, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -311,43 +310,6 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
 
             state.CancellationSource.Dispose();
         }
-    }
-
-    /// <inheritdoc/>
-    public ValueTask DeadLetterAsync(
-        ReadOnlyMemory<byte> deadLetterChannelUtf8,
-        ReadOnlyMemory<byte> originalChannelUtf8,
-        in JsonElement payload,
-        in JsonElement headers,
-        Exception exception,
-        CancellationToken cancellationToken = default)
-    {
-        ObjectDisposedException.ThrowIf(this.disposed, this);
-
-        string deadLetterChannel = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
-        string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
-
-        NatsHeaders natsHeaders = new()
-        {
-            ["Corvus-Original-Channel"] = originalChannel,
-            ["Corvus-Error"] = exception.Message,
-            ["Corvus-Error-Type"] = exception.GetType().FullName ?? exception.GetType().Name,
-        };
-
-        if (headers.ValueKind != JsonValueKind.Undefined)
-        {
-            natsHeaders[HeadersKey] = SerializeToBase64String(in headers);
-        }
-
-        // Serializer handles ValueKind.Undefined as no-op (empty payload)
-        return this.connection.PublishAsync(
-            subject: deadLetterChannel,
-            data: payload,
-            headers: natsHeaders,
-            replyTo: null,
-            serializer: JsonElementSerializer<JsonElement>.Instance,
-            opts: default,
-            cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>

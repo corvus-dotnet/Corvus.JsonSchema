@@ -68,9 +68,9 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        in JsonElement headers = default,
+        JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -122,35 +122,6 @@ internal sealed class InMemoryMessageTransport : IMessageTransport
         lock (this.syncRoot)
         {
             this.subscriptions.Remove(channel);
-        }
-
-        return ValueTask.CompletedTask;
-    }
-
-    /// <inheritdoc/>
-    public ValueTask DeadLetterAsync(
-        ReadOnlyMemory<byte> deadLetterChannelUtf8,
-        ReadOnlyMemory<byte> originalChannelUtf8,
-        in JsonElement payload,
-        in JsonElement headers,
-        Exception exception,
-        CancellationToken cancellationToken = default)
-    {
-        string deadLetterChannel = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
-        string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
-
-        byte[] payloadBytes = payload.ValueKind != JsonValueKind.Undefined
-            ? SerializeToOwnedBytes(in payload)
-            : [];
-
-        byte[] headerBytes = headers.ValueKind != JsonValueKind.Undefined
-            ? SerializeToOwnedBytes(in headers)
-            : [];
-
-        lock (this.syncRoot)
-        {
-            this.deadLetteredMessages.Add(new DeadLetteredMessage(
-                deadLetterChannel, originalChannel, payloadBytes, headerBytes, exception));
         }
 
         return ValueTask.CompletedTask;

@@ -149,17 +149,125 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
     }
 
     /// <inheritdoc/>
-    public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
+    public async ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        in JsonElement headers = default,
+        JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        throw new NotSupportedException("Request-reply pattern is not supported by Azure Service Bus transport.");
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        string requestChannel = Encoding.UTF8.GetString(requestChannelUtf8.Span);
+        string replyChannel = Encoding.UTF8.GetString(replyChannelUtf8.Span);
+        string correlationId = Encoding.UTF8.GetString(correlationIdUtf8.Span);
+
+        // Create sender for request queue/topic
+        ServiceBusSender requestSender = this.options.UseTopic
+            ? this.client.CreateSender(this.options.TopicName!)
+            : this.client.CreateSender(requestChannel);
+
+        // Create receiver for reply queue
+        ServiceBusReceiver replyReceiver = this.client.CreateReceiver(replyChannel);
+
+        try
+        {
+            // Serialize request
+            byte[]? rentedArray = null;
+            try
+            {
+                ArrayBufferWriter<byte> buffer = new();
+                Utf8JsonWriter writer = new(buffer);
+                request.WriteTo(writer);
+                writer.Flush();
+
+                int length = buffer.WrittenCount;
+                rentedArray = length <= 256  // StackallocByteThreshold
+                    ? null
+                    : ArrayPool<byte>.Shared.Rent(length);
+
+                ReadOnlyMemory<byte> payload = rentedArray is null
+                    ? buffer.WrittenMemory
+                    : new ReadOnlyMemory<byte>(rentedArray, 0, length);
+
+                if (rentedArray is not null)
+                {
+                    buffer.WrittenSpan.CopyTo(rentedArray);
+                }
+
+                // Build Service Bus message with ReplyTo and CorrelationId
+                ServiceBusMessage message = new(payload)
+                {
+                    ReplyTo = replyChannel,
+                    CorrelationId = correlationId,
+                };
+
+                // Add headers as application properties
+                if (headers.ValueKind != JsonValueKind.Undefined)
+                {
+                    foreach (JsonProperty<JsonElement> property in headers.EnumerateObject())
+                    {
+                        message.ApplicationProperties[property.Name] = property.Value.ToString();
+                    }
+                }
+
+                // Send request
+                await requestSender.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (rentedArray is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedArray);
+                }
+            }
+
+            // Wait for correlated reply
+            while (true)
+            {
+                ServiceBusReceivedMessage replyMessage = await replyReceiver.ReceiveMessageAsync(
+                    maxWaitTime: TimeSpan.FromSeconds(30),
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                if (replyMessage is null)
+                {
+                    throw new TimeoutException($"No reply received on channel '{replyChannel}' within 30 seconds.");
+                }
+
+                // Check correlation ID
+                if (replyMessage.CorrelationId != correlationId)
+                {
+                    // Wrong correlation ID - abandon and continue waiting
+                    await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                // Parse reply
+                try
+                {
+                    using ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyMessage.Body);
+                    TReply replyPayload = replyDoc.RootElement;
+                    JsonElement replyHeaders = BuildHeadersElement(replyMessage.ApplicationProperties);
+
+                    await replyReceiver.CompleteMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                    return (replyPayload, replyHeaders);
+                }
+                catch
+                {
+                    await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    throw;
+                }
+            }
+        }
+        finally
+        {
+            await requestSender.DisposeAsync().ConfigureAwait(false);
+            await replyReceiver.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -318,20 +426,6 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
 
             this.options.Heartbeat?.Stop(channel, "azureservicebus");
         }
-    }
-
-    /// <inheritdoc/>
-    public ValueTask DeadLetterAsync(
-        ReadOnlyMemory<byte> deadLetterChannelUtf8,
-        ReadOnlyMemory<byte> originalChannelUtf8,
-        in JsonElement payload,
-        in JsonElement headers,
-        Exception? exception = null,
-        CancellationToken cancellationToken = default)
-    {
-        // Service Bus handles dead-lettering via the processor callback
-        // This method is not needed in the Service Bus transport
-        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc/>

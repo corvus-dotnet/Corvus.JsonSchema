@@ -97,9 +97,9 @@ public interface IMessageTransport : IAsyncDisposable
     ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        in JsonElement headers = default,
+        JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>;
@@ -120,15 +120,15 @@ public interface IMessageTransport : IAsyncDisposable
     ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
         in MessageContext context,
-        in JsonElement headers = default,
+        JsonElement headers = default,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        return RequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, in request, correlationIdUtf8, in headers, cancellationToken);
+        return RequestAsync<TRequest, TReply>(requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, headers, cancellationToken);
     }
 
     /// <summary>
@@ -174,23 +174,5 @@ public interface IMessageTransport : IAsyncDisposable
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
     ValueTask UnsubscribeAsync(
         ReadOnlyMemory<byte> channelUtf8,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Sends a failed message to a dead-letter channel for later inspection or reprocessing.
-    /// </summary>
-    /// <param name="deadLetterChannelUtf8">The dead-letter channel address as UTF-8 bytes.</param>
-    /// <param name="originalChannelUtf8">The original channel the message was received on, as UTF-8 bytes.</param>
-    /// <param name="payload">The raw payload that could not be processed.</param>
-    /// <param name="headers">The raw headers associated with the failed message.</param>
-    /// <param name="exception">The exception that caused the message to be dead-lettered.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
-    ValueTask DeadLetterAsync(
-        ReadOnlyMemory<byte> deadLetterChannelUtf8,
-        ReadOnlyMemory<byte> originalChannelUtf8,
-        in JsonElement payload,
-        in JsonElement headers,
-        Exception exception,
         CancellationToken cancellationToken = default);
 }

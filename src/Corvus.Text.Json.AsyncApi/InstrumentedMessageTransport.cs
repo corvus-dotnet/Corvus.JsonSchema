@@ -83,36 +83,32 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
-        in JsonElement headers,
+        JsonElement headers,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        TRequest requestCopy = request;
-        JsonElement headersCopy = headers;
         return RequestCoreAsync<TRequest, TReply>(
-            requestChannelUtf8, replyChannelUtf8, requestCopy, correlationIdUtf8, headersCopy, cancellationToken);
+            requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, headers, cancellationToken);
     }
 
     /// <inheritdoc/>
     public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> requestChannelUtf8,
         ReadOnlyMemory<byte> replyChannelUtf8,
-        in TRequest request,
+        TRequest request,
         ReadOnlyMemory<byte> correlationIdUtf8,
         in MessageContext context,
-        in JsonElement headers,
+        JsonElement headers,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
-        TRequest requestCopy = request;
         MessageContext contextCopy = context;
-        JsonElement headersCopy = headers;
         return RequestWithContextCoreAsync<TRequest, TReply>(
-            requestChannelUtf8, replyChannelUtf8, requestCopy, correlationIdUtf8, contextCopy, headersCopy, cancellationToken);
+            requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, contextCopy, headers, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -154,21 +150,6 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         CancellationToken cancellationToken)
     {
         return this.inner.UnsubscribeAsync(channelUtf8, cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public ValueTask DeadLetterAsync(
-        ReadOnlyMemory<byte> deadLetterChannelUtf8,
-        ReadOnlyMemory<byte> originalChannelUtf8,
-        in JsonElement payload,
-        in JsonElement headers,
-        Exception exception,
-        CancellationToken cancellationToken)
-    {
-        JsonElement payloadCopy = payload;
-        JsonElement headersCopy = headers;
-        return DeadLetterCoreAsync(
-            deadLetterChannelUtf8, originalChannelUtf8, payloadCopy, headersCopy, exception, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -290,7 +271,7 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         try
         {
             var result = await this.inner.RequestAsync<TRequest, TReply>(
-                requestChannelUtf8, replyChannelUtf8, in request, correlationIdUtf8, in headers, cancellationToken)
+                requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, headers, cancellationToken)
                 .ConfigureAwait(false);
 
             AsyncApiTelemetry.MessagesSent.Add(
@@ -342,7 +323,7 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         try
         {
             var result = await this.inner.RequestAsync<TRequest, TReply>(
-                requestChannelUtf8, replyChannelUtf8, in request, correlationIdUtf8, in context, in headers, cancellationToken)
+                requestChannelUtf8, replyChannelUtf8, request, correlationIdUtf8, in context, headers, cancellationToken)
                 .ConfigureAwait(false);
 
             AsyncApiTelemetry.MessagesSent.Add(
@@ -365,39 +346,6 @@ public sealed class InstrumentedMessageTransport : IMessageTransport
         {
             RecordDuration(AsyncApiTelemetry.OperationDuration, startTimestamp, "request", destination);
         }
-    }
-
-    private async ValueTask DeadLetterCoreAsync(
-        ReadOnlyMemory<byte> deadLetterChannelUtf8,
-        ReadOnlyMemory<byte> originalChannelUtf8,
-        JsonElement payload,
-        JsonElement headers,
-        Exception exception,
-        CancellationToken cancellationToken)
-    {
-        string destination = Encoding.UTF8.GetString(deadLetterChannelUtf8.Span);
-        string originalChannel = Encoding.UTF8.GetString(originalChannelUtf8.Span);
-
-        using Activity? activity = AsyncApiTelemetry.ActivitySource.StartActivity(
-            $"dead-letter {destination}",
-            ActivityKind.Producer);
-
-        SetCommonTags(activity, "dead-letter", destination);
-        activity?.SetTag("corvus.asyncapi.original_channel", originalChannel);
-        activity?.SetTag("error.type", exception.GetType().FullName);
-
-        await this.inner.DeadLetterAsync(
-            deadLetterChannelUtf8, originalChannelUtf8, in payload, in headers, exception, cancellationToken)
-            .ConfigureAwait(false);
-
-        AsyncApiTelemetry.DeadLetters.Add(
-            1,
-            new TagList
-            {
-                { "messaging.system", this.messagingSystem },
-                { "messaging.destination.name", destination },
-                { "corvus.asyncapi.original_channel", originalChannel },
-            });
     }
 
     private Func<TPayload, JsonElement, CancellationToken, ValueTask> CreateInstrumentedHandler<TPayload>(
