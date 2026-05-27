@@ -165,13 +165,19 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
         string replyChannel = Encoding.UTF8.GetString(replyChannelUtf8.Span);
         string correlationId = Encoding.UTF8.GetString(correlationIdUtf8.Span);
 
+        // Use correlation ID as session ID for exclusive reply handling
+        string sessionId = correlationId;
+
         // Create sender for request queue/topic
         ServiceBusSender requestSender = this.options.UseTopic
             ? this.client.CreateSender(this.options.TopicName!)
             : this.client.CreateSender(requestChannel);
 
-        // Create receiver for reply queue
-        ServiceBusReceiver replyReceiver = this.client.CreateReceiver(replyChannel);
+        // Create session receiver for reply queue - accepts only messages with this session ID
+        ServiceBusSessionReceiver replyReceiver = await this.client.AcceptSessionAsync(
+            replyChannel,
+            sessionId,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
 
         try
         {
@@ -198,9 +204,10 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
                     buffer.WrittenSpan.CopyTo(rentedArray);
                 }
 
-                // Build Service Bus message with ReplyTo and CorrelationId
+                // Build Service Bus message with SessionId, ReplyTo, and CorrelationId
                 ServiceBusMessage message = new(payload)
                 {
+                    SessionId = sessionId,
                     ReplyTo = replyChannel,
                     CorrelationId = correlationId,
                 };
@@ -225,94 +232,77 @@ public sealed class AzureServiceBusMessageTransport : IMessageTransport
                 }
             }
 
-            // Wait for correlated reply
-            while (true)
+            // Wait for reply - session receiver guarantees only messages with our session ID
+            ServiceBusReceivedMessage replyMessage = await replyReceiver.ReceiveMessageAsync(
+                maxWaitTime: this.options.RequestTimeout,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (replyMessage is null)
             {
-                ServiceBusReceivedMessage replyMessage = await replyReceiver.ReceiveMessageAsync(
-                    maxWaitTime: this.options.RequestTimeout,
-                    cancellationToken: cancellationToken).ConfigureAwait(false);
+                throw new TimeoutException($"No reply received on channel '{replyChannel}' for session '{sessionId}' within {this.options.RequestTimeout.TotalSeconds} seconds.");
+            }
 
-                if (replyMessage is null)
+            // Parse reply with error handling
+            try
+            {
+                using ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyMessage.Body);
+                TReply replyPayload = replyDoc.RootElement;
+                JsonElement replyHeaders = BuildHeadersElement(replyMessage.ApplicationProperties);
+
+                await replyReceiver.CompleteMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                return (replyPayload, replyHeaders);
+            }
+            catch (Exception parseEx)
+            {
+                // Parse error - apply error policy
+                MessageErrorAction action = MessageErrorAction.Abort;
+
+                if (this.options.ErrorPolicy is not null)
                 {
-                    throw new TimeoutException($"No reply received on channel '{replyChannel}' within {this.options.RequestTimeout.TotalSeconds} seconds.");
+                    action = await this.options.ErrorPolicy.HandleErrorAsync(
+                        parseEx,
+                        new MessageErrorContext(
+                            replyChannelUtf8,
+                            MessageErrorKind.Deserialization,
+                            default,
+                            default),
+                        cancellationToken).ConfigureAwait(false);
                 }
 
-                // Check correlation ID
-                if (replyMessage.CorrelationId != correlationId)
+                switch (action)
                 {
-                    // Wrong correlation ID - record telemetry and abandon
-                    AsyncApiTelemetry.RecordCorrelationIdMismatch(
-                        replyChannel,
-                        "azureservicebus",
-                        correlationId,
-                        replyMessage.CorrelationId ?? "(null)");
+                    case MessageErrorAction.Abort:
+                        AsyncApiTelemetry.RecordAbort(replyChannel, "azureservicebus", MessageErrorKind.Deserialization);
+                        await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+                        throw;
 
-                    await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
-                    continue;
-                }
+                    case MessageErrorAction.DeadLetter:
+                        try
+                        {
+                            // Send bad reply to native Service Bus DLQ
+                            await replyReceiver.DeadLetterMessageAsync(
+                                replyMessage,
+                                deadLetterReason: "Reply deserialization failed",
+                                deadLetterErrorDescription: parseEx.Message,
+                                cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                // Parse reply
-                try
-                {
-                    using ParsedJsonDocument<TReply> replyDoc = ParsedJsonDocument<TReply>.Parse(replyMessage.Body);
-                    TReply replyPayload = replyDoc.RootElement;
-                    JsonElement replyHeaders = BuildHeadersElement(replyMessage.ApplicationProperties);
+                            AsyncApiTelemetry.RecordDeadLetter(replyChannel + "/$DeadLetterQueue", replyChannel, "azureservicebus");
+                        }
+                        catch (Exception dlEx)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(replyChannel + "/$DeadLetterQueue", replyChannel, "azureservicebus", dlEx);
+                        }
 
-                    await replyReceiver.CompleteMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+                        // Request failed even though we DLQ'd the bad reply
+                        throw;
 
-                    return (replyPayload, replyHeaders);
-                }
-                catch (Exception parseEx)
-                {
-                    // Parse error - apply error policy
-                    MessageErrorAction action = MessageErrorAction.Abort;
-
-                    if (this.options.ErrorPolicy is not null)
-                    {
-                        action = await this.options.ErrorPolicy.HandleErrorAsync(
-                            parseEx,
-                            new MessageErrorContext(
-                                replyChannelUtf8,
-                                MessageErrorKind.Deserialization,
-                                default,
-                                default),
-                            cancellationToken).ConfigureAwait(false);
-                    }
-
-                    switch (action)
-                    {
-                        case MessageErrorAction.Abort:
-                            AsyncApiTelemetry.RecordAbort(replyChannel, "azureservicebus", MessageErrorKind.Deserialization);
-                            await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
-                            throw;
-
-                        case MessageErrorAction.DeadLetter:
-                            try
-                            {
-                                // Send bad reply to native Service Bus DLQ
-                                await replyReceiver.DeadLetterMessageAsync(
-                                    replyMessage,
-                                    deadLetterReason: "Reply deserialization failed",
-                                    deadLetterErrorDescription: parseEx.Message,
-                                    cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                                AsyncApiTelemetry.RecordDeadLetter(replyChannel + "/$DeadLetterQueue", replyChannel, "azureservicebus");
-                            }
-                            catch (Exception dlEx)
-                            {
-                                AsyncApiTelemetry.RecordDeadLetterFailure(replyChannel + "/$DeadLetterQueue", replyChannel, "azureservicebus", dlEx);
-                            }
-
-                            // Request failed even though we DLQ'd the bad reply
-                            throw;
-
-                        case MessageErrorAction.Skip:
-                        default:
-                            // Skip means abandon and fail for request-reply (can't skip a reply)
-                            AsyncApiTelemetry.RecordSkip(replyChannel, "azureservicebus", MessageErrorKind.Deserialization);
-                            await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
-                            throw;
-                    }
+                    case MessageErrorAction.Skip:
+                    default:
+                        // Skip means abandon and fail for request-reply (can't skip a reply)
+                        AsyncApiTelemetry.RecordSkip(replyChannel, "azureservicebus", MessageErrorKind.Deserialization);
+                        await replyReceiver.AbandonMessageAsync(replyMessage, cancellationToken: cancellationToken).ConfigureAwait(false);
+                        throw;
                 }
             }
         }
