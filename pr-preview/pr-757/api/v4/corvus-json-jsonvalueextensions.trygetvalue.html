@@ -109,23 +109,23 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetvalue-t-parser-tstate-tresult-ref-tstate-ref-tresult">TryGetValue(T, Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</a></td>
+<td><a href="#trygetvalue-t-parser-tstate-tresult-tstate-tresult">TryGetValue(T, Parser&lt;TState, TResult&gt;, TState, TResult)</a></td>
 <td>Parses a value from a JsonString type.</td>
 </tr>
 <tr>
-<td><a href="#trygetvalue-t-utf8parser-tstate-tresult-ref-tstate-ref-tresult">TryGetValue(T, Utf8Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</a></td>
+<td><a href="#trygetvalue-t-utf8parser-tstate-tresult-tstate-tresult">TryGetValue(T, Utf8Parser&lt;TState, TResult&gt;, TState, TResult)</a></td>
 <td>Parses a value from a JsonString type.</td>
 </tr>
 <tr>
-<td><a href="#trygetvalue-t-utf8parser-tstate-tresult-ref-tstate-bool-ref-tresult">TryGetValue(T, Utf8Parser&lt;TState, TResult&gt;, ref TState, bool, ref TResult)</a></td>
+<td><a href="#trygetvalue-t-utf8parser-tstate-tresult-tstate-bool-tresult">TryGetValue(T, Utf8Parser&lt;TState, TResult&gt;, TState, bool, TResult)</a></td>
 <td>Parses a value from a JsonString type.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetvalue-t-parser-tstate-tresult-ref-tstate-ref-tresult">TryGetValue(T, Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</h2>
+<h2 id="trygetvalue-t-parser-tstate-tresult-tstate-tresult">TryGetValue(T, Parser&lt;TState, TResult&gt;, TState, TResult)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonValueExtensions.cs#L1">JsonValueExtensions.cs</a></p>
 <p>Parses a value from a JsonString type.</p>
-<pre><code class="language-csharp">public static bool TryGetValue&lt;T, TState, TResult&gt;(T jsonValue, Parser&lt;TState, TResult&gt; parser, ref TState state, ref TResult result)
+<pre><code class="language-csharp">public static bool TryGetValue&lt;T, TState, TResult&gt;(T jsonValue, Parser&lt;TState, TResult&gt; parser, in TState state, out TResult result)
     where T : struct, IJsonString&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -173,12 +173,12 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state to be passed to the parser.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>The result of the parsing.</td>
 </tr>
 </tbody>
@@ -206,10 +206,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetvalue-t-utf8parser-tstate-tresult-ref-tstate-ref-tresult">TryGetValue(T, Utf8Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</h2>
+<h2 id="trygetvalue-t-utf8parser-tstate-tresult-tstate-tresult">TryGetValue(T, Utf8Parser&lt;TState, TResult&gt;, TState, TResult)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonValueExtensions.cs#L1">JsonValueExtensions.cs</a></p>
 <p>Parses a value from a JsonString type.</p>
-<pre><code class="language-csharp">public static bool TryGetValue&lt;T, TState, TResult&gt;(T jsonValue, Utf8Parser&lt;TState, TResult&gt; parser, ref TState state, ref TResult result)
+<pre><code class="language-csharp">public static bool TryGetValue&lt;T, TState, TResult&gt;(T jsonValue, Utf8Parser&lt;TState, TResult&gt; parser, in TState state, out TResult result)
     where T : struct, IJsonString&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -257,12 +257,12 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state to be passed to the parser.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>The result of the parsing.</td>
 </tr>
 </tbody>
@@ -290,10 +290,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetvalue-t-utf8parser-tstate-tresult-ref-tstate-bool-ref-tresult">TryGetValue(T, Utf8Parser&lt;TState, TResult&gt;, ref TState, bool, ref TResult)</h2>
+<h2 id="trygetvalue-t-utf8parser-tstate-tresult-tstate-bool-tresult">TryGetValue(T, Utf8Parser&lt;TState, TResult&gt;, TState, bool, TResult)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonValueExtensions.cs#L1">JsonValueExtensions.cs</a></p>
 <p>Parses a value from a JsonString type.</p>
-<pre><code class="language-csharp">public static bool TryGetValue&lt;T, TState, TResult&gt;(T jsonValue, Utf8Parser&lt;TState, TResult&gt; parser, ref TState state, bool decode, ref TResult result)
+<pre><code class="language-csharp">public static bool TryGetValue&lt;T, TState, TResult&gt;(T jsonValue, Utf8Parser&lt;TState, TResult&gt; parser, in TState state, bool decode, out TResult result)
     where T : struct, IJsonString&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-2">Type Parameters</h3>
@@ -341,7 +341,7 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state to be passed to the parser.</td>
 </tr>
 <tr>
@@ -351,7 +351,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>The result of the parsing.</td>
 </tr>
 </tbody>

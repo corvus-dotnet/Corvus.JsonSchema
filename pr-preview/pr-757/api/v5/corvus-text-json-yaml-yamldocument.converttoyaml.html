@@ -109,11 +109,11 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#converttoyaml-ref-telement-ibufferwriter-byte-yamlwriteroptions">ConvertToYaml(ref TElement, IBufferWriter&lt;byte&gt;, YamlWriterOptions)</a></td>
+<td><a href="#converttoyaml-telement-ibufferwriter-byte-yamlwriteroptions">ConvertToYaml(TElement, IBufferWriter&lt;byte&gt;, YamlWriterOptions)</a></td>
 <td>Converts a JSON element to YAML, writing the output to the specified <a href="https://learn.microsoft.com/dotnet/api/system.buffers.ibufferwriter-1"><code>IBufferWriter</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#converttoyaml-ref-telement-stream-yamlwriteroptions">ConvertToYaml(ref TElement, Stream, YamlWriterOptions)</a></td>
+<td><a href="#converttoyaml-telement-stream-yamlwriteroptions">ConvertToYaml(TElement, Stream, YamlWriterOptions)</a></td>
 <td>Converts a JSON element to YAML, writing the output to the specified <a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a>.</td>
 </tr>
 <tr>
@@ -134,9 +134,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="converttoyaml-ref-telement-ibufferwriter-byte-yamlwriteroptions">ConvertToYaml(ref TElement, IBufferWriter&lt;byte&gt;, YamlWriterOptions)</h2>
+<h2 id="converttoyaml-telement-ibufferwriter-byte-yamlwriteroptions">ConvertToYaml(TElement, IBufferWriter&lt;byte&gt;, YamlWriterOptions)</h2>
 <p>Converts a JSON element to YAML, writing the output to the specified <a href="https://learn.microsoft.com/dotnet/api/system.buffers.ibufferwriter-1"><code>IBufferWriter</code></a>.</p>
-<pre><code class="language-csharp">public static void ConvertToYaml&lt;TElement&gt;(ref TElement element, IBufferWriter&lt;byte&gt; writer, YamlWriterOptions options)
+<pre><code class="language-csharp">public static void ConvertToYaml&lt;TElement&gt;(in TElement element, IBufferWriter&lt;byte&gt; writer, YamlWriterOptions options)
     where TElement : struct, IJsonElement&lt;TElement&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -166,7 +166,7 @@
 <tbody>
 <tr>
 <td><code>element</code></td>
-<td><code>ref TElement</code></td>
+<td><code>TElement</code></td>
 <td>The JSON element to convert.</td>
 </tr>
 <tr>
@@ -201,9 +201,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="converttoyaml-ref-telement-stream-yamlwriteroptions">ConvertToYaml(ref TElement, Stream, YamlWriterOptions)</h2>
+<h2 id="converttoyaml-telement-stream-yamlwriteroptions">ConvertToYaml(TElement, Stream, YamlWriterOptions)</h2>
 <p>Converts a JSON element to YAML, writing the output to the specified <a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a>.</p>
-<pre><code class="language-csharp">public static void ConvertToYaml&lt;TElement&gt;(ref TElement element, Stream utf8Stream, YamlWriterOptions options)
+<pre><code class="language-csharp">public static void ConvertToYaml&lt;TElement&gt;(in TElement element, Stream utf8Stream, YamlWriterOptions options)
     where TElement : struct, IJsonElement&lt;TElement&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -233,7 +233,7 @@
 <tbody>
 <tr>
 <td><code>element</code></td>
-<td><code>ref TElement</code></td>
+<td><code>TElement</code></td>
 <td>The JSON element to convert.</td>
 </tr>
 <tr>

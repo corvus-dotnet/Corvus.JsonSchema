@@ -165,7 +165,7 @@
 <td>Writes the property name and pre-encoded value (as a JSON string) as part of a name/value pair of a JSON object.</td>
 </tr>
 <tr>
-<td><a href="#writestring-string-string">WriteString(string, string)</a></td>
+<td><a href="#writestring-string-string">WriteString(string, string?)</a></td>
 <td>Writes the property name and string text value (as a JSON string) as part of a name/value pair of a JSON object.</td>
 </tr>
 <tr>
@@ -177,7 +177,7 @@
 <td>Writes the UTF-8 property name and UTF-8 text value (as a JSON string) as part of a name/value pair of a JSON object.</td>
 </tr>
 <tr>
-<td><a href="#writestring-jsonencodedtext-string">WriteString(JsonEncodedText, string)</a></td>
+<td><a href="#writestring-jsonencodedtext-string">WriteString(JsonEncodedText, string?)</a></td>
 <td>Writes the pre-encoded property name and string text value (as a JSON string) as part of a name/value pair of a JSON object.</td>
 </tr>
 <tr>
@@ -209,7 +209,7 @@
 <td>Writes the property name and pre-encoded value (as a JSON string) as part of a name/value pair of a JSON object.</td>
 </tr>
 <tr>
-<td><a href="#writestring-readonlyspan-char-string">WriteString(ReadOnlySpan&lt;char&gt;, string)</a></td>
+<td><a href="#writestring-readonlyspan-char-string">WriteString(ReadOnlySpan&lt;char&gt;, string?)</a></td>
 <td>Writes the property name and string text value (as a JSON string) as part of a name/value pair of a JSON object.</td>
 </tr>
 <tr>
@@ -217,7 +217,7 @@
 <td>Writes the UTF-8 property name and pre-encoded value (as a JSON string) as part of a name/value pair of a JSON object.</td>
 </tr>
 <tr>
-<td><a href="#writestring-readonlyspan-byte-string">WriteString(ReadOnlySpan&lt;byte&gt;, string)</a></td>
+<td><a href="#writestring-readonlyspan-byte-string">WriteString(ReadOnlySpan&lt;byte&gt;, string?)</a></td>
 <td>Writes the UTF-8 property name and string text value (as a JSON string) as part of a name/value pair of a JSON object.</td>
 </tr>
 </tbody>
@@ -1172,10 +1172,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="writestring-string-string">WriteString(string, string)</h2>
+<h2 id="writestring-string-string">WriteString(string, string?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Writer/Utf8JsonWriter.WriteProperties.String.cs#L253">Utf8JsonWriter.WriteProperties.String.cs</a></p>
 <p>Writes the property name and string text value (as a JSON string) as part of a name/value pair of a JSON object.</p>
-<pre><code class="language-csharp">public void WriteString(string propertyName, string value)
+<pre><code class="language-csharp">public void WriteString(string propertyName, string? value)
 </code></pre>
 <h3 id="parameters-14">Parameters</h3>
 <table>
@@ -1194,7 +1194,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The value to write.</td>
 </tr>
 </tbody>
@@ -1380,10 +1380,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="writestring-jsonencodedtext-string">WriteString(JsonEncodedText, string)</h2>
+<h2 id="writestring-jsonencodedtext-string">WriteString(JsonEncodedText, string?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Writer/Utf8JsonWriter.WriteProperties.String.cs#L335">Utf8JsonWriter.WriteProperties.String.cs</a></p>
 <p>Writes the pre-encoded property name and string text value (as a JSON string) as part of a name/value pair of a JSON object.</p>
-<pre><code class="language-csharp">public void WriteString(JsonEncodedText propertyName, string value)
+<pre><code class="language-csharp">public void WriteString(JsonEncodedText propertyName, string? value)
 </code></pre>
 <h3 id="parameters-17">Parameters</h3>
 <table>
@@ -1402,7 +1402,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The value to write.</td>
 </tr>
 </tbody>
@@ -1932,10 +1932,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="writestring-readonlyspan-char-string">WriteString(ReadOnlySpan&lt;char&gt;, string)</h2>
+<h2 id="writestring-readonlyspan-char-string">WriteString(ReadOnlySpan&lt;char&gt;, string?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Writer/Utf8JsonWriter.WriteProperties.String.cs#L512">Utf8JsonWriter.WriteProperties.String.cs</a></p>
 <p>Writes the property name and string text value (as a JSON string) as part of a name/value pair of a JSON object.</p>
-<pre><code class="language-csharp">public void WriteString(ReadOnlySpan&lt;char&gt; propertyName, string value)
+<pre><code class="language-csharp">public void WriteString(ReadOnlySpan&lt;char&gt; propertyName, string? value)
 </code></pre>
 <h3 id="parameters-25">Parameters</h3>
 <table>
@@ -1954,7 +1954,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The value to write.</td>
 </tr>
 </tbody>
@@ -2068,10 +2068,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="writestring-readonlyspan-byte-string">WriteString(ReadOnlySpan&lt;byte&gt;, string)</h2>
+<h2 id="writestring-readonlyspan-byte-string">WriteString(ReadOnlySpan&lt;byte&gt;, string?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Writer/Utf8JsonWriter.WriteProperties.String.cs#L561">Utf8JsonWriter.WriteProperties.String.cs</a></p>
 <p>Writes the UTF-8 property name and string text value (as a JSON string) as part of a name/value pair of a JSON object.</p>
-<pre><code class="language-csharp">public void WriteString(ReadOnlySpan&lt;byte&gt; utf8PropertyName, string value)
+<pre><code class="language-csharp">public void WriteString(ReadOnlySpan&lt;byte&gt; utf8PropertyName, string? value)
 </code></pre>
 <h3 id="parameters-27">Parameters</h3>
 <table>
@@ -2090,7 +2090,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The value to write.</td>
 </tr>
 </tbody>

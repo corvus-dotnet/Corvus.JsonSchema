@@ -109,35 +109,35 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#mergeresults-bool-validationlevel-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext)</a></td>
+<td><a href="#mergeresults-bool-validationlevel-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext)</a></td>
 <td>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</td>
 </tr>
 <tr>
-<td><a href="#mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext)</a></td>
+<td><a href="#mergeresults-bool-validationlevel-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext)</a></td>
 <td>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</td>
 </tr>
 <tr>
-<td><a href="#mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext)</a></td>
+<td><a href="#mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext)</a></td>
 <td>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</td>
 </tr>
 <tr>
-<td><a href="#mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</a></td>
+<td><a href="#mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</a></td>
 <td>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</td>
 </tr>
 <tr>
-<td><a href="#mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</a></td>
+<td><a href="#mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</a></td>
 <td>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</td>
 </tr>
 <tr>
-<td><a href="#mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</a></td>
+<td><a href="#mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</a></td>
 <td>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</td>
 </tr>
 <tr>
-<td><a href="#mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</a></td>
+<td><a href="#mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</a></td>
 <td>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</td>
 </tr>
 <tr>
-<td><a href="#mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</a></td>
+<td><a href="#mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</a></td>
 <td>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</td>
 </tr>
 <tr>
@@ -146,10 +146,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="mergeresults-bool-validationlevel-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext)</h2>
+<h2 id="mergeresults-bool-validationlevel-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L548">ValidationContext.cs</a></p>
 <p>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</p>
-<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, ref ValidationContext result1)
+<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, in ValidationContext result1)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -173,7 +173,7 @@
 </tr>
 <tr>
 <td><code>result1</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The first result.</td>
 </tr>
 </tbody>
@@ -203,10 +203,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext)</h2>
+<h2 id="mergeresults-bool-validationlevel-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L609">ValidationContext.cs</a></p>
 <p>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</p>
-<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, ref ValidationContext result1, ref ValidationContext result2)
+<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, in ValidationContext result1, in ValidationContext result2)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -230,12 +230,12 @@
 </tr>
 <tr>
 <td><code>result1</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The first result.</td>
 </tr>
 <tr>
 <td><code>result2</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The second result.</td>
 </tr>
 </tbody>
@@ -265,10 +265,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext)</h2>
+<h2 id="mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L664">ValidationContext.cs</a></p>
 <p>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</p>
-<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, ref ValidationContext result1, ref ValidationContext result2, ref ValidationContext result3)
+<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, in ValidationContext result1, in ValidationContext result2, in ValidationContext result3)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -292,17 +292,17 @@
 </tr>
 <tr>
 <td><code>result1</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The first result.</td>
 </tr>
 <tr>
 <td><code>result2</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The second result.</td>
 </tr>
 <tr>
 <td><code>result3</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The third result.</td>
 </tr>
 </tbody>
@@ -332,10 +332,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</h2>
+<h2 id="mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L722">ValidationContext.cs</a></p>
 <p>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</p>
-<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, ref ValidationContext result1, ref ValidationContext result2, ref ValidationContext result3, ref ValidationContext result4)
+<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, in ValidationContext result1, in ValidationContext result2, in ValidationContext result3, in ValidationContext result4)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -359,22 +359,22 @@
 </tr>
 <tr>
 <td><code>result1</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The first result.</td>
 </tr>
 <tr>
 <td><code>result2</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The second result.</td>
 </tr>
 <tr>
 <td><code>result3</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The third result.</td>
 </tr>
 <tr>
 <td><code>result4</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The fourth result.</td>
 </tr>
 </tbody>
@@ -404,10 +404,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</h2>
+<h2 id="mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L783">ValidationContext.cs</a></p>
 <p>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</p>
-<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, ref ValidationContext result1, ref ValidationContext result2, ref ValidationContext result3, ref ValidationContext result4, ref ValidationContext result5)
+<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, in ValidationContext result1, in ValidationContext result2, in ValidationContext result3, in ValidationContext result4, in ValidationContext result5)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -431,27 +431,27 @@
 </tr>
 <tr>
 <td><code>result1</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The first result.</td>
 </tr>
 <tr>
 <td><code>result2</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The second result.</td>
 </tr>
 <tr>
 <td><code>result3</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The third result.</td>
 </tr>
 <tr>
 <td><code>result4</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The fourth result.</td>
 </tr>
 <tr>
 <td><code>result5</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The fifth result.</td>
 </tr>
 </tbody>
@@ -481,10 +481,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</h2>
+<h2 id="mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L843">ValidationContext.cs</a></p>
 <p>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</p>
-<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, ref ValidationContext result1, ref ValidationContext result2, ref ValidationContext result3, ref ValidationContext result4, ref ValidationContext result5, ref ValidationContext result6)
+<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, in ValidationContext result1, in ValidationContext result2, in ValidationContext result3, in ValidationContext result4, in ValidationContext result5, in ValidationContext result6)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -508,32 +508,32 @@
 </tr>
 <tr>
 <td><code>result1</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The first result.</td>
 </tr>
 <tr>
 <td><code>result2</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The second result.</td>
 </tr>
 <tr>
 <td><code>result3</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The third result.</td>
 </tr>
 <tr>
 <td><code>result4</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The fourth result.</td>
 </tr>
 <tr>
 <td><code>result5</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The fifth result.</td>
 </tr>
 <tr>
 <td><code>result6</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The sixth result.</td>
 </tr>
 </tbody>
@@ -563,10 +563,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</h2>
+<h2 id="mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L905">ValidationContext.cs</a></p>
 <p>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</p>
-<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, ref ValidationContext result1, ref ValidationContext result2, ref ValidationContext result3, ref ValidationContext result4, ref ValidationContext result5, ref ValidationContext result6, ref ValidationContext result7)
+<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, in ValidationContext result1, in ValidationContext result2, in ValidationContext result3, in ValidationContext result4, in ValidationContext result5, in ValidationContext result6, in ValidationContext result7)
 </code></pre>
 <h3 id="parameters-6">Parameters</h3>
 <table>
@@ -590,37 +590,37 @@
 </tr>
 <tr>
 <td><code>result1</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The first result.</td>
 </tr>
 <tr>
 <td><code>result2</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The second result.</td>
 </tr>
 <tr>
 <td><code>result3</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The third result.</td>
 </tr>
 <tr>
 <td><code>result4</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The fourth result.</td>
 </tr>
 <tr>
 <td><code>result5</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The fifth result.</td>
 </tr>
 <tr>
 <td><code>result6</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The sixth result.</td>
 </tr>
 <tr>
 <td><code>result7</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The seventh result.</td>
 </tr>
 </tbody>
@@ -650,10 +650,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="mergeresults-bool-validationlevel-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext-ref-validationcontext">MergeResults(bool, ValidationLevel, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext, ref ValidationContext)</h2>
+<h2 id="mergeresults-bool-validationlevel-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext-validationcontext">MergeResults(bool, ValidationLevel, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext, ValidationContext)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L969">ValidationContext.cs</a></p>
 <p>Merge the messages for a given set of results into this result, applying the given validity at the end, regardless of the individual validity of the results in the set.</p>
-<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, ref ValidationContext result1, ref ValidationContext result2, ref ValidationContext result3, ref ValidationContext result4, ref ValidationContext result5, ref ValidationContext result6, ref ValidationContext result7, ref ValidationContext result8)
+<pre><code class="language-csharp">public ValidationContext MergeResults(bool isValid, ValidationLevel level, in ValidationContext result1, in ValidationContext result2, in ValidationContext result3, in ValidationContext result4, in ValidationContext result5, in ValidationContext result6, in ValidationContext result7, in ValidationContext result8)
 </code></pre>
 <h3 id="parameters-7">Parameters</h3>
 <table>
@@ -677,42 +677,42 @@
 </tr>
 <tr>
 <td><code>result1</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The first result.</td>
 </tr>
 <tr>
 <td><code>result2</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The second result.</td>
 </tr>
 <tr>
 <td><code>result3</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The third result.</td>
 </tr>
 <tr>
 <td><code>result4</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The fourth result.</td>
 </tr>
 <tr>
 <td><code>result5</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The fifth result.</td>
 </tr>
 <tr>
 <td><code>result6</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The sixth result.</td>
 </tr>
 <tr>
 <td><code>result7</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The seventh result.</td>
 </tr>
 <tr>
 <td><code>result8</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The eighth result.</td>
 </tr>
 </tbody>

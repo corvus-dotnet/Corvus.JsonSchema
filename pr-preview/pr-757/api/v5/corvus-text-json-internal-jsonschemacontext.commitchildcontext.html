@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#commitchildcontext-bool-ref-jsonschemacontext-tprovidercontext-jsonschemamessageprovider-tprovidercontext">CommitChildContext(bool, ref JsonSchemaContext, TProviderContext, JsonSchemaMessageProvider&lt;TProviderContext&gt;)</a></td>
+<td><a href="#commitchildcontext-bool-jsonschemacontext-tprovidercontext-jsonschemamessageprovider-tprovidercontext">CommitChildContext(bool, JsonSchemaContext, TProviderContext, JsonSchemaMessageProvider&lt;TProviderContext&gt;)</a></td>
 <td>Commits a child context back to its parent, merging validation results and cleaning up resources.</td>
 </tr>
 <tr>
-<td><a href="#commitchildcontext-bool-ref-jsonschemacontext-jsonschemamessageprovider">CommitChildContext(bool, ref JsonSchemaContext, JsonSchemaMessageProvider)</a></td>
+<td><a href="#commitchildcontext-bool-jsonschemacontext-jsonschemamessageprovider">CommitChildContext(bool, JsonSchemaContext, JsonSchemaMessageProvider?)</a></td>
 <td>Commits a child context back to its parent, merging validation results and cleaning up resources.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="commitchildcontext-bool-ref-jsonschemacontext-tprovidercontext-jsonschemamessageprovider-tprovidercontext">CommitChildContext(bool, ref JsonSchemaContext, TProviderContext, JsonSchemaMessageProvider&lt;TProviderContext&gt;)</h2>
+<h2 id="commitchildcontext-bool-jsonschemacontext-tprovidercontext-jsonschemamessageprovider-tprovidercontext">CommitChildContext(bool, JsonSchemaContext, TProviderContext, JsonSchemaMessageProvider&lt;TProviderContext&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L34">JsonSchemaContext.cs</a></p>
 <p>Commits a child context back to its parent, merging validation results and cleaning up resources.</p>
-<pre><code class="language-csharp">public void CommitChildContext&lt;TProviderContext&gt;(bool isMatch, ref JsonSchemaContext childContext, TProviderContext providerContext, JsonSchemaMessageProvider&lt;TProviderContext&gt; messageProvider)
+<pre><code class="language-csharp">public void CommitChildContext&lt;TProviderContext&gt;(bool isMatch, in JsonSchemaContext childContext, TProviderContext providerContext, JsonSchemaMessageProvider&lt;TProviderContext&gt; messageProvider)
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
 <table>
@@ -155,7 +155,7 @@
 </tr>
 <tr>
 <td><code>childContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td>The child context to commit (passed by readonly reference for performance).</td>
 </tr>
 <tr>
@@ -192,10 +192,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="commitchildcontext-bool-ref-jsonschemacontext-jsonschemamessageprovider">CommitChildContext(bool, ref JsonSchemaContext, JsonSchemaMessageProvider)</h2>
+<h2 id="commitchildcontext-bool-jsonschemacontext-jsonschemamessageprovider">CommitChildContext(bool, JsonSchemaContext, JsonSchemaMessageProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L613">JsonSchemaContext.cs</a></p>
 <p>Commits a child context back to its parent, merging validation results and cleaning up resources.</p>
-<pre><code class="language-csharp">public void CommitChildContext(bool isMatch, ref JsonSchemaContext childContext, JsonSchemaMessageProvider messageProvider)
+<pre><code class="language-csharp">public void CommitChildContext(bool isMatch, in JsonSchemaContext childContext, JsonSchemaMessageProvider? messageProvider)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -214,12 +214,12 @@
 </tr>
 <tr>
 <td><code>childContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td>The child context to commit (passed by readonly reference for performance).</td>
 </tr>
 <tr>
 <td><code>messageProvider</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider?</code></a></td>
 <td>Optional provider for generating validation messages. <em>(optional)</em></td>
 </tr>
 </tbody>

@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch.Model<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="fromarray-ref-tvalue">FromArray(ref TValue)</h2>
+<h2 id="fromarray-tvalue">FromArray(TValue)</h2>
 <p>Gets an instance of the JSON value from the provided value.</p>
-<pre><code class="language-csharp">public static JsonPatchDocument FromArray&lt;TValue&gt;(ref TValue value)
+<pre><code class="language-csharp">public static JsonPatchDocument FromArray&lt;TValue&gt;(in TValue value)
     where TValue : struct, IJsonArray&lt;TValue&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -131,7 +131,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td>The value from which to instantiate the instance.</td>
 </tr>
 </tbody>

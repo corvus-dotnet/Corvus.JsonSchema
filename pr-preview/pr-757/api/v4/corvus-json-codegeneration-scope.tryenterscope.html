@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="tryenterscope-typebuildercontext-typedeclaration-cancellationtoken-ref-typedeclaration">TryEnterScope(TypeBuilderContext, TypeDeclaration, CancellationToken, ref TypeDeclaration)</h2>
+<h2 id="tryenterscope-typebuildercontext-typedeclaration-cancellationtoken-typedeclaration">TryEnterScope(TypeBuilderContext, TypeDeclaration, CancellationToken, TypeDeclaration?)</h2>
 <p>Try to enter the scope for the type declaration.</p>
-<pre><code class="language-csharp">public static bool TryEnterScope(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, CancellationToken cancellationToken, ref TypeDeclaration existingTypeDeclaration)
+<pre><code class="language-csharp">public static bool TryEnterScope(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, CancellationToken cancellationToken, out TypeDeclaration? existingTypeDeclaration)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -130,7 +130,7 @@
 </tr>
 <tr>
 <td><code>existingTypeDeclaration</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>ref TypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
 <td>The existing type declaration for the scope, if a scope was entered and a type declaration was built for the scope.</td>
 </tr>
 </tbody>

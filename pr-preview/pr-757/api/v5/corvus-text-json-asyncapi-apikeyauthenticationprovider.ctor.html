@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="apikeyauthenticationprovider-string-string-string">ApiKeyAuthenticationProvider(string, string, string)</h2>
+<h2 id="apikeyauthenticationprovider-string-string-string">ApiKeyAuthenticationProvider(string, string?, string?)</h2>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-apikeyauthenticationprovider.html"><code>ApiKeyAuthenticationProvider</code></a> class.</p>
-<pre><code class="language-csharp">public ApiKeyAuthenticationProvider(string apiKey, string name, string location)
+<pre><code class="language-csharp">public ApiKeyAuthenticationProvider(string apiKey, string? name, string? location)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,12 +120,12 @@
 </tr>
 <tr>
 <td><code>name</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The header or query parameter name (for httpApiKey schemes). <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>location</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The location: &quot;header&quot;, &quot;query&quot;, or &quot;cookie&quot; (for httpApiKey schemes). <em>(optional)</em></td>
 </tr>
 </tbody>

@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Uri.EscapeDataString.cs#L30">Utf8Uri.EscapeDataString.cs</a></p>
-<h2 id="tryescapedatastring-readonlyspan-byte-span-byte-ref-int">TryEscapeDataString(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="tryescapedatastring-readonlyspan-byte-span-byte-int">TryEscapeDataString(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</h2>
 <p>Escapes a UTF-8 string per RFC 3986 <code>EscapeDataString</code> semantics. Unreserved characters (A-Z, a-z, 0-9, '-', '_', '.', '~') pass through; all other bytes are percent-encoded as <code>%XX</code> with uppercase hex digits.</p>
-<pre><code class="language-csharp">public static bool TryEscapeDataString(ReadOnlySpan&lt;byte&gt; utf8String, Span&lt;byte&gt; destination, ref int bytesWritten)
+<pre><code class="language-csharp">public static bool TryEscapeDataString(ReadOnlySpan&lt;byte&gt; utf8String, Span&lt;byte&gt; destination, out int bytesWritten)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -126,7 +126,7 @@
 </tr>
 <tr>
 <td><code>bytesWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written to <code>destination</code>.</td>
 </tr>
 </tbody>

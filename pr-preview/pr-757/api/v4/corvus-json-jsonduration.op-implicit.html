@@ -121,7 +121,7 @@
 <td>Conversion to <a href="https://www.nodatime.org/3.3.x/api/NodaTime.Period.html"><code>Period</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#implicit-operator-jsonduration-ref-period">implicit operator JsonDuration(ref Period)</a></td>
+<td><a href="#implicit-operator-jsonduration-period">implicit operator JsonDuration(Period)</a></td>
 <td>Conversion from <a href="https://www.nodatime.org/3.3.x/api/NodaTime.Period.html"><code>Period</code></a>.</td>
 </tr>
 <tr>
@@ -129,7 +129,7 @@
 <td>Conversion to <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-period.html"><code>Period</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#implicit-operator-jsonduration-ref-period">implicit operator JsonDuration(ref Period)</a></td>
+<td><a href="#implicit-operator-jsonduration-period">implicit operator JsonDuration(Period)</a></td>
 <td>Conversion from <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-period.html"><code>Period</code></a>.</td>
 </tr>
 <tr>
@@ -278,10 +278,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="implicit-operator-jsonduration-ref-period">implicit operator JsonDuration(ref Period)</h2>
+<h2 id="implicit-operator-jsonduration-period">implicit operator JsonDuration(Period)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonDuration.cs#L247">JsonDuration.cs</a></p>
 <p>Conversion from <a href="https://www.nodatime.org/3.3.x/api/NodaTime.Period.html"><code>Period</code></a>.</p>
-<pre><code class="language-csharp">public static implicit operator JsonDuration(ref Period value)
+<pre><code class="language-csharp">public static implicit operator JsonDuration(in Period value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -295,7 +295,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.Period.html"><code>ref Period</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.Period.html"><code>Period</code></a></td>
 <td>The value from which to convert.</td>
 </tr>
 </tbody>
@@ -366,10 +366,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="implicit-operator-jsonduration-ref-period">implicit operator JsonDuration(ref Period)</h2>
+<h2 id="implicit-operator-jsonduration-period">implicit operator JsonDuration(Period)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonDuration.cs#L247">JsonDuration.cs</a></p>
 <p>Conversion from <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-period.html"><code>Period</code></a>.</p>
-<pre><code class="language-csharp">public static implicit operator JsonDuration(ref Period value)
+<pre><code class="language-csharp">public static implicit operator JsonDuration(in Period value)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -383,7 +383,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-period.html"><code>ref Period</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-period.html"><code>Period</code></a></td>
 <td>The value from which to convert.</td>
 </tr>
 </tbody>

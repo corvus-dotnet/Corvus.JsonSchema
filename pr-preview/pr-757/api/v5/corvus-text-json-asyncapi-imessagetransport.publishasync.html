@@ -109,18 +109,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#publishasync-readonlymemory-byte-ref-tpayload-ref-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, ref TPayload, ref JsonElement, CancellationToken)</a></td>
+<td><a href="#publishasync-readonlymemory-byte-tpayload-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, TPayload, JsonElement, CancellationToken)</a></td>
 <td>Publishes a typed message payload to the specified channel.</td>
 </tr>
 <tr>
-<td><a href="#publishasync-readonlymemory-byte-ref-tpayload-ref-messagecontext-ref-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, ref TPayload, ref MessageContext, ref JsonElement, CancellationToken)</a></td>
+<td><a href="#publishasync-readonlymemory-byte-tpayload-messagecontext-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, TPayload, MessageContext, JsonElement, CancellationToken)</a></td>
 <td>Publishes a typed message payload to the specified channel with protocol-specific metadata.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="publishasync-readonlymemory-byte-ref-tpayload-ref-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, ref TPayload, ref JsonElement, CancellationToken)</h2>
+<h2 id="publishasync-readonlymemory-byte-tpayload-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, TPayload, JsonElement, CancellationToken)</h2>
 <p>Publishes a typed message payload to the specified channel.</p>
-<pre><code class="language-csharp">public abstract ValueTask PublishAsync&lt;TPayload&gt;(ReadOnlyMemory&lt;byte&gt; channelUtf8, ref TPayload payload, ref JsonElement headers, CancellationToken cancellationToken)
+<pre><code class="language-csharp">public abstract ValueTask PublishAsync&lt;TPayload&gt;(ReadOnlyMemory&lt;byte&gt; channelUtf8, in TPayload payload, in JsonElement headers, CancellationToken cancellationToken)
     where TPayload : struct, IJsonElement&lt;TPayload&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -155,12 +155,12 @@
 </tr>
 <tr>
 <td><code>payload</code></td>
-<td><code>ref TPayload</code></td>
+<td><code>TPayload</code></td>
 <td>The message payload, passed by <code>in</code> reference. The transport must consume the payload synchronously before any async I/O.</td>
 </tr>
 <tr>
 <td><code>headers</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Optional message headers. When not <code>default</code>, the transport should deliver these alongside the payload. <em>(optional)</em></td>
 </tr>
 <tr>
@@ -189,9 +189,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="publishasync-readonlymemory-byte-ref-tpayload-ref-messagecontext-ref-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, ref TPayload, ref MessageContext, ref JsonElement, CancellationToken)</h2>
+<h2 id="publishasync-readonlymemory-byte-tpayload-messagecontext-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, TPayload, MessageContext, JsonElement, CancellationToken)</h2>
 <p>Publishes a typed message payload to the specified channel with protocol-specific metadata.</p>
-<pre><code class="language-csharp">public virtual ValueTask PublishAsync&lt;TPayload&gt;(ReadOnlyMemory&lt;byte&gt; channelUtf8, ref TPayload payload, ref MessageContext context, ref JsonElement headers, CancellationToken cancellationToken)
+<pre><code class="language-csharp">public virtual ValueTask PublishAsync&lt;TPayload&gt;(ReadOnlyMemory&lt;byte&gt; channelUtf8, in TPayload payload, in MessageContext context, in JsonElement headers, CancellationToken cancellationToken)
     where TPayload : struct, IJsonElement&lt;TPayload&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -226,17 +226,17 @@
 </tr>
 <tr>
 <td><code>payload</code></td>
-<td><code>ref TPayload</code></td>
+<td><code>TPayload</code></td>
 <td>The message payload.</td>
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.html"><code>ref MessageContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.html"><code>MessageContext</code></a></td>
 <td>The message context containing bindings and content type.</td>
 </tr>
 <tr>
 <td><code>headers</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Optional message headers. <em>(optional)</em></td>
 </tr>
 <tr>

@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.Numeric.Core.cs#L53">JsonElementHelpers.Numeric.Core.cs</a></p>
-<h2 id="parsenumber-readonlyspan-byte-ref-bool-ref-readonlyspan-byte-ref-readonlyspan-byte-ref-int">ParseNumber(ReadOnlySpan&lt;byte&gt;, ref bool, ref ReadOnlySpan&lt;byte&gt;, ref ReadOnlySpan&lt;byte&gt;, ref int)</h2>
+<h2 id="parsenumber-readonlyspan-byte-bool-readonlyspan-byte-readonlyspan-byte-int">ParseNumber(ReadOnlySpan&lt;byte&gt;, bool, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, int)</h2>
 <p>Parses a JSON number into its component parts using normal-form decimal representation.</p>
-<pre><code class="language-csharp">public static void ParseNumber(ReadOnlySpan&lt;byte&gt; span, ref bool isNegative, ref ReadOnlySpan&lt;byte&gt; integral, ref ReadOnlySpan&lt;byte&gt; fractional, ref int exponent)
+<pre><code class="language-csharp">public static void ParseNumber(ReadOnlySpan&lt;byte&gt; span, out bool isNegative, out ReadOnlySpan&lt;byte&gt; integral, out ReadOnlySpan&lt;byte&gt; fractional, out int exponent)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,22 +121,22 @@
 </tr>
 <tr>
 <td><code>isNegative</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>ref bool</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
 <td>When this method returns, indicates whether the number is negative.</td>
 </tr>
 <tr>
 <td><code>integral</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ref ReadOnlySpan&lt;byte&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
 <td>When this method returns, contains the integral part of the number without leading zeros.</td>
 </tr>
 <tr>
 <td><code>fractional</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ref ReadOnlySpan&lt;byte&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
 <td>When this method returns, contains the fractional part of the number without trailing zeros.</td>
 </tr>
 <tr>
 <td><code>exponent</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the exponent value for scientific notation.</td>
 </tr>
 </tbody>

@@ -113,7 +113,7 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-ref-messagecontext-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, ref MessageContext, JsonElement, CancellationToken)</a></td>
+<td><a href="#requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-messagecontext-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, MessageContext, JsonElement, CancellationToken)</a></td>
 <td></td>
 </tr>
 </tbody>
@@ -185,8 +185,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-ref-messagecontext-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, ref MessageContext, JsonElement, CancellationToken)</h2>
-<pre><code class="language-csharp">public ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, ref MessageContext context, JsonElement headers, CancellationToken cancellationToken)
+<h2 id="requestasync-readonlymemory-byte-readonlymemory-byte-trequest-readonlymemory-byte-messagecontext-jsonelement-cancellationtoken">RequestAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, TRequest, ReadOnlyMemory&lt;byte&gt;, MessageContext, JsonElement, CancellationToken)</h2>
+<pre><code class="language-csharp">public ValueTask&lt;ValueTuple&lt;TReply, JsonElement&gt;&gt; RequestAsync&lt;TRequest, TReply&gt;(ReadOnlyMemory&lt;byte&gt; requestChannelUtf8, ReadOnlyMemory&lt;byte&gt; replyChannelUtf8, TRequest request, ReadOnlyMemory&lt;byte&gt; correlationIdUtf8, in MessageContext context, JsonElement headers, CancellationToken cancellationToken)
     where TRequest : struct, IJsonElement&lt;TRequest&gt;
     where TReply : struct, IJsonElement&lt;TReply&gt;
 </code></pre>
@@ -222,7 +222,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.html"><code>ref MessageContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.html"><code>MessageContext</code></a></td>
 <td></td>
 </tr>
 <tr>

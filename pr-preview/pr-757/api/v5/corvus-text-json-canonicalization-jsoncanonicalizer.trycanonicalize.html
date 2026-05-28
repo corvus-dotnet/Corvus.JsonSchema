@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Canonicalization<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Canonicalization/JsonCanonicalizer.cs#L43">JsonCanonicalizer.cs</a></p>
-<h2 id="trycanonicalize-ref-jsonelement-span-byte-ref-int">TryCanonicalize(ref JsonElement, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="trycanonicalize-jsonelement-span-byte-int">TryCanonicalize(JsonElement, Span&lt;byte&gt;, int)</h2>
 <p>Canonicalizes a JSON element per RFC 8785 and writes the result to a byte span.</p>
-<pre><code class="language-csharp">public static bool TryCanonicalize(ref JsonElement element, Span&lt;byte&gt; destination, ref int bytesWritten)
+<pre><code class="language-csharp">public static bool TryCanonicalize(in JsonElement element, Span&lt;byte&gt; destination, out int bytesWritten)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>element</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The element to canonicalize.</td>
 </tr>
 <tr>
@@ -126,7 +126,7 @@
 </tr>
 <tr>
 <td><code>bytesWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written.</td>
 </tr>
 </tbody>

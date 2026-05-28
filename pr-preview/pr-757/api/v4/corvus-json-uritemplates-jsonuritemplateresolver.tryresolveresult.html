@@ -109,23 +109,23 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#tryresolveresult-readonlyspan-char-bool-ref-t-parameternamecallback-tstate-resolveduritemplatecallback-tstate-ref-tstate">TryResolveResult(ReadOnlySpan&lt;char&gt;, bool, ref T, ParameterNameCallback&lt;TState&gt;, ResolvedUriTemplateCallback&lt;TState&gt;, ref TState)</a></td>
+<td><a href="#tryresolveresult-readonlyspan-char-bool-t-parameternamecallback-tstate-resolveduritemplatecallback-tstate-tstate">TryResolveResult(ReadOnlySpan&lt;char&gt;, bool, T, ParameterNameCallback&lt;TState&gt;, ResolvedUriTemplateCallback&lt;TState&gt;, TState)</a></td>
 <td>Resolve the template into an output result.</td>
 </tr>
 <tr>
-<td><a href="#tryresolveresult-readonlyspan-char-bool-ref-t-resolveduritemplatecallback-tstate-ref-tstate">TryResolveResult(ReadOnlySpan&lt;char&gt;, bool, ref T, ResolvedUriTemplateCallback&lt;TState&gt;, ref TState)</a></td>
+<td><a href="#tryresolveresult-readonlyspan-char-bool-t-resolveduritemplatecallback-tstate-tstate">TryResolveResult(ReadOnlySpan&lt;char&gt;, bool, T, ResolvedUriTemplateCallback&lt;TState&gt;, TState)</a></td>
 <td>Resolve the template into an output result.</td>
 </tr>
 <tr>
-<td><a href="#tryresolveresult-readonlyspan-char-ref-valuestringbuilder-bool-ref-t">TryResolveResult(ReadOnlySpan&lt;char&gt;, ref ValueStringBuilder, bool, ref T)</a></td>
+<td><a href="#tryresolveresult-readonlyspan-char-valuestringbuilder-bool-t">TryResolveResult(ReadOnlySpan&lt;char&gt;, ValueStringBuilder, bool, T)</a></td>
 <td>Resolve the template into an output result.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="tryresolveresult-readonlyspan-char-bool-ref-t-parameternamecallback-tstate-resolveduritemplatecallback-tstate-ref-tstate">TryResolveResult(ReadOnlySpan&lt;char&gt;, bool, ref T, ParameterNameCallback&lt;TState&gt;, ResolvedUriTemplateCallback&lt;TState&gt;, ref TState)</h2>
+<h2 id="tryresolveresult-readonlyspan-char-bool-t-parameternamecallback-tstate-resolveduritemplatecallback-tstate-tstate">TryResolveResult(ReadOnlySpan&lt;char&gt;, bool, T, ParameterNameCallback&lt;TState&gt;, ResolvedUriTemplateCallback&lt;TState&gt;, TState)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/UriTemplates/JsonUriTemplateResolver.cs#L1">JsonUriTemplateResolver.cs</a></p>
 <p>Resolve the template into an output result.</p>
-<pre><code class="language-csharp">public static bool TryResolveResult&lt;TState, T&gt;(ReadOnlySpan&lt;char&gt; template, bool resolvePartially, ref T parameters, ParameterNameCallback&lt;TState&gt; parameterNameCallback, ResolvedUriTemplateCallback&lt;TState&gt; callback, ref TState state)
+<pre><code class="language-csharp">public static bool TryResolveResult&lt;TState, T&gt;(ReadOnlySpan&lt;char&gt; template, bool resolvePartially, in T parameters, ParameterNameCallback&lt;TState&gt; parameterNameCallback, ResolvedUriTemplateCallback&lt;TState&gt; callback, ref TState state)
     where T : struct, IJsonObject&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -169,7 +169,7 @@
 </tr>
 <tr>
 <td><code>parameters</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The parameters to apply to the template.</td>
 </tr>
 <tr>
@@ -184,7 +184,7 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state passed to the callback(s).</td>
 </tr>
 </tbody>
@@ -212,10 +212,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryresolveresult-readonlyspan-char-bool-ref-t-resolveduritemplatecallback-tstate-ref-tstate">TryResolveResult(ReadOnlySpan&lt;char&gt;, bool, ref T, ResolvedUriTemplateCallback&lt;TState&gt;, ref TState)</h2>
+<h2 id="tryresolveresult-readonlyspan-char-bool-t-resolveduritemplatecallback-tstate-tstate">TryResolveResult(ReadOnlySpan&lt;char&gt;, bool, T, ResolvedUriTemplateCallback&lt;TState&gt;, TState)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/UriTemplates/JsonUriTemplateResolver.cs#L1">JsonUriTemplateResolver.cs</a></p>
 <p>Resolve the template into an output result.</p>
-<pre><code class="language-csharp">public static bool TryResolveResult&lt;TState, T&gt;(ReadOnlySpan&lt;char&gt; template, bool resolvePartially, ref T parameters, ResolvedUriTemplateCallback&lt;TState&gt; callback, ref TState state)
+<pre><code class="language-csharp">public static bool TryResolveResult&lt;TState, T&gt;(ReadOnlySpan&lt;char&gt; template, bool resolvePartially, in T parameters, ResolvedUriTemplateCallback&lt;TState&gt; callback, ref TState state)
     where T : struct, IJsonObject&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -259,7 +259,7 @@
 </tr>
 <tr>
 <td><code>parameters</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The parameters to apply to the template.</td>
 </tr>
 <tr>
@@ -269,7 +269,7 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state passed to the callback(s).</td>
 </tr>
 </tbody>
@@ -297,10 +297,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryresolveresult-readonlyspan-char-ref-valuestringbuilder-bool-ref-t">TryResolveResult(ReadOnlySpan&lt;char&gt;, ref ValueStringBuilder, bool, ref T)</h2>
+<h2 id="tryresolveresult-readonlyspan-char-valuestringbuilder-bool-t">TryResolveResult(ReadOnlySpan&lt;char&gt;, ValueStringBuilder, bool, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/UriTemplates/JsonUriTemplateResolver.cs#L1">JsonUriTemplateResolver.cs</a></p>
 <p>Resolve the template into an output result.</p>
-<pre><code class="language-csharp">public static bool TryResolveResult&lt;T&gt;(ReadOnlySpan&lt;char&gt; template, ref ValueStringBuilder output, bool resolvePartially, ref T parameters)
+<pre><code class="language-csharp">public static bool TryResolveResult&lt;T&gt;(ReadOnlySpan&lt;char&gt; template, ref ValueStringBuilder output, bool resolvePartially, in T parameters)
     where T : struct, IJsonObject&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-2">Type Parameters</h3>
@@ -335,7 +335,7 @@
 </tr>
 <tr>
 <td><code>output</code></td>
-<td><code>ref ValueStringBuilder</code></td>
+<td><code>ValueStringBuilder</code></td>
 <td>The output buffer into which to resolve the template.</td>
 </tr>
 <tr>
@@ -345,7 +345,7 @@
 </tr>
 <tr>
 <td><code>parameters</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The parameters to apply to the template.</td>
 </tr>
 </tbody>

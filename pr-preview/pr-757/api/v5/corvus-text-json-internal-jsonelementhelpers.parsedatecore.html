@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.DateTime.Core.cs#L32">JsonElementHelpers.DateTime.Core.cs</a></p>
-<h2 id="parsedatecore-readonlyspan-byte-ref-int-ref-int-ref-int">ParseDateCore(ReadOnlySpan&lt;byte&gt;, ref int, ref int, ref int)</h2>
+<h2 id="parsedatecore-readonlyspan-byte-int-int-int">ParseDateCore(ReadOnlySpan&lt;byte&gt;, int, int, int)</h2>
 <p>Parses a date string in ISO 8601 format (YYYY-MM-DD) and extracts the year, month, and day components.</p>
-<pre><code class="language-csharp">public static bool ParseDateCore(ReadOnlySpan&lt;byte&gt; text, ref int year, ref int month, ref int day)
+<pre><code class="language-csharp">public static bool ParseDateCore(ReadOnlySpan&lt;byte&gt; text, out int year, out int month, out int day)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,17 +121,17 @@
 </tr>
 <tr>
 <td><code>year</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the year component of the date.</td>
 </tr>
 <tr>
 <td><code>month</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the month component of the date (1-12).</td>
 </tr>
 <tr>
 <td><code>day</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the day component of the date (1-31).</td>
 </tr>
 </tbody>

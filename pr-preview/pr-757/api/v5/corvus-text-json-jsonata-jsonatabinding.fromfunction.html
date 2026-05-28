@@ -109,7 +109,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#fromfunction-sequencefunction-int-string">FromFunction(SequenceFunction, int, string)</a></td>
+<td><a href="#fromfunction-sequencefunction-int-string">FromFunction(SequenceFunction, int, string?)</a></td>
 <td>Creates a function binding using <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonata-sequence.html"><code>Sequence</code></a>-based arguments and return value. This is the preferred overload as it allows functions to participate...</td>
 </tr>
 <tr>
@@ -121,14 +121,14 @@
 <td>Creates a binary (<code>double</code>, <code>double</code>)→<code>double</code> function binding. Arguments are automatically extracted via <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonata-sequence.asdouble.html"><code>AsDouble</code></a> and the result is st...</td>
 </tr>
 <tr>
-<td><a href="#fromfunction-func-jsonelement-jsonworkspace-jsonelement-int-string">FromFunction(Func&lt;JsonElement[], JsonWorkspace, JsonElement&gt;, int, string)</a></td>
+<td><a href="#fromfunction-func-jsonelement-jsonworkspace-jsonelement-int-string">FromFunction(Func&lt;JsonElement[], JsonWorkspace, JsonElement&gt;, int, string?)</a></td>
 <td>Creates a function binding using <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>-based arguments and return value.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="fromfunction-sequencefunction-int-string">FromFunction(SequenceFunction, int, string)</h2>
+<h2 id="fromfunction-sequencefunction-int-string">FromFunction(SequenceFunction, int, string?)</h2>
 <p>Creates a function binding using <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonata-sequence.html"><code>Sequence</code></a>-based arguments and return value. This is the preferred overload as it allows functions to participate in the JSONata runtime's value proxy system, avoiding unnecessary <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> materialization.</p>
-<pre><code class="language-csharp">public static JsonataBinding FromFunction(SequenceFunction function, int parameterCount, string signature)
+<pre><code class="language-csharp">public static JsonataBinding FromFunction(SequenceFunction function, int parameterCount, string? signature)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -152,7 +152,7 @@
 </tr>
 <tr>
 <td><code>signature</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>An optional JSONata type signature string for argument validation (e.g. <code>&quot;&lt;n:n&gt;&quot;</code>). When provided, the JSONata runtime validates argument types before calling the function. <em>(optional)</em></td>
 </tr>
 </tbody>
@@ -317,9 +317,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="fromfunction-func-jsonelement-jsonworkspace-jsonelement-int-string">FromFunction(Func&lt;JsonElement[], JsonWorkspace, JsonElement&gt;, int, string)</h2>
+<h2 id="fromfunction-func-jsonelement-jsonworkspace-jsonelement-int-string">FromFunction(Func&lt;JsonElement[], JsonWorkspace, JsonElement&gt;, int, string?)</h2>
 <p>Creates a function binding using <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>-based arguments and return value.</p>
-<pre><code class="language-csharp">public static JsonataBinding FromFunction(Func&lt;JsonElement[], JsonWorkspace, JsonElement&gt; function, int parameterCount, string signature)
+<pre><code class="language-csharp">public static JsonataBinding FromFunction(Func&lt;JsonElement[], JsonWorkspace, JsonElement&gt; function, int parameterCount, string? signature)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -343,7 +343,7 @@
 </tr>
 <tr>
 <td><code>signature</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>An optional JSONata type signature string for argument validation (e.g. <code>&quot;&lt;s-s:s&gt;&quot;</code>). When provided, the JSONata runtime validates argument types before calling the function. <em>(optional)</em></td>
 </tr>
 </tbody>

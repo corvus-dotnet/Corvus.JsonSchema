@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="tryapplypatchoperation-t-ref-jsonpatchdocument-patchoperation-ref-jsonany">TryApplyPatchOperation(T, ref JsonPatchDocument.PatchOperation, ref JsonAny)</h2>
-<pre><code class="language-csharp">public static bool TryApplyPatchOperation&lt;T&gt;(T value, ref JsonPatchDocument.PatchOperation patchOperation, ref JsonAny result)
+<h2 id="tryapplypatchoperation-t-jsonpatchdocument-patchoperation-jsonany">TryApplyPatchOperation(T, JsonPatchDocument.PatchOperation, JsonAny)</h2>
+<pre><code class="language-csharp">public static bool TryApplyPatchOperation&lt;T&gt;(T value, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     where T : struct, IJsonValue
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -120,12 +120,12 @@
 </tr>
 <tr>
 <td><code>patchOperation</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-patchoperation.html"><code>ref JsonPatchDocument.PatchOperation</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-patchoperation.html"><code>JsonPatchDocument.PatchOperation</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td></td>
 </tr>
 </tbody>

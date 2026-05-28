@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonNotAny.cs#L1">JsonNotAny.cs</a></p>
-<h2 id="fromstring-ref-tvalue">FromString(ref TValue)</h2>
+<h2 id="fromstring-tvalue">FromString(TValue)</h2>
 <p>Gets an instance of the JSON value from the provided value.</p>
-<pre><code class="language-csharp">public static JsonNotAny FromString&lt;TValue&gt;(ref TValue value)
+<pre><code class="language-csharp">public static JsonNotAny FromString&lt;TValue&gt;(in TValue value)
     where TValue : struct, IJsonString&lt;TValue&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -132,7 +132,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td>The value from which to instantiate the instance.</td>
 </tr>
 </tbody>

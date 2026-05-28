@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="zipelementandbuffer-ref-jsonelement-jsonelement-int-jsonworkspace">ZipElementAndBuffer(ref JsonElement, JsonElement[], int, JsonWorkspace)</h2>
+<h2 id="zipelementandbuffer-jsonelement-jsonelement-int-jsonworkspace">ZipElementAndBuffer(JsonElement, JsonElement[], int, JsonWorkspace)</h2>
 <p>Buffer-fused mixed zip: one arg is a pre-resolved JsonElement (e.g., a constant), the other is a raw buffer from property chain navigation.</p>
-<pre><code class="language-csharp">public static JsonElement ZipElementAndBuffer(ref JsonElement resolved, JsonElement[] arr1, int cnt1, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement ZipElementAndBuffer(in JsonElement resolved, JsonElement[] arr1, int cnt1, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>resolved</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

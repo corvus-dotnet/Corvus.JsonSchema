@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="getcoretypesfor-ref-jsonelement">GetCoreTypesFor(ref JsonElement)</h2>
+<h2 id="getcoretypesfor-jsonelement">GetCoreTypesFor(JsonElement)</h2>
 <p>Get the core types for the given format string.</p>
-<pre><code class="language-csharp">public static CoreTypes GetCoreTypesFor(ref JsonElement formatValue)
+<pre><code class="language-csharp">public static CoreTypes GetCoreTypesFor(in JsonElement formatValue)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>formatValue</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value of the format string.</td>
 </tr>
 </tbody>

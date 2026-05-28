@@ -109,7 +109,11 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#jsonpropertyname-ref-jsonelement">JsonPropertyName(ref JsonElement)</a></td>
+<td><a href="#jsonpropertyname-jsonelement">JsonPropertyName(JsonElement)</a></td>
+<td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a> struct.</td>
+</tr>
+<tr>
+<td><a href="#jsonpropertyname-jsonproperty">JsonPropertyName(JsonProperty)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a> struct.</td>
 </tr>
 <tr>
@@ -118,10 +122,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="jsonpropertyname-ref-jsonelement">JsonPropertyName(ref JsonElement)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L29">JsonPropertyName.cs</a></p>
+<h2 id="jsonpropertyname-jsonelement">JsonPropertyName(JsonElement)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L30">JsonPropertyName.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonPropertyName(ref JsonElement value)
+<pre><code class="language-csharp">public JsonPropertyName(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -135,7 +139,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value from which to construct the property name.</td>
 </tr>
 </tbody>
@@ -160,12 +164,54 @@
 </tbody>
 </table>
 <hr />
+<h2 id="jsonpropertyname-jsonproperty">JsonPropertyName(JsonProperty)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L42">JsonPropertyName.cs</a></p>
+<p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a> struct.</p>
+<pre><code class="language-csharp">public JsonPropertyName(in JsonProperty value)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty"><code>JsonProperty</code></a></td>
+<td>The value from which to construct the property name.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="jsonpropertyname-string">JsonPropertyName(string)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L40">JsonPropertyName.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L54">JsonPropertyName.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a> struct.</p>
 <pre><code class="language-csharp">public JsonPropertyName(string value)
 </code></pre>
-<h3 id="parameters-1">Parameters</h3>
+<h3 id="parameters-2">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -182,7 +228,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="applies-to-1">Applies To</h2>
+<h2 id="applies-to-2">Applies To</h2>
 <table>
 <thead>
 <tr>

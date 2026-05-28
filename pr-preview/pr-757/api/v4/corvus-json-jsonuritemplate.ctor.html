@@ -113,7 +113,7 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonuritemplate.html"><code>JsonUriTemplate</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonuritemplate-ref-jsonelement">JsonUriTemplate(ref JsonElement)</a></td>
+<td><a href="#jsonuritemplate-jsonelement">JsonUriTemplate(JsonElement)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonuritemplate.html"><code>JsonUriTemplate</code></a> struct.</td>
 </tr>
 <tr>
@@ -121,11 +121,11 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonuritemplate.html"><code>JsonUriTemplate</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonuritemplate-ref-readonlyspan-char">JsonUriTemplate(ref ReadOnlySpan&lt;char&gt;)</a></td>
+<td><a href="#jsonuritemplate-readonlyspan-char">JsonUriTemplate(ReadOnlySpan&lt;char&gt;)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonuritemplate.html"><code>JsonUriTemplate</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonuritemplate-ref-readonlyspan-byte">JsonUriTemplate(ref ReadOnlySpan&lt;byte&gt;)</a></td>
+<td><a href="#jsonuritemplate-readonlyspan-byte">JsonUriTemplate(ReadOnlySpan&lt;byte&gt;)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonuritemplate.html"><code>JsonUriTemplate</code></a> struct.</td>
 </tr>
 </tbody>
@@ -155,10 +155,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonuritemplate-ref-jsonelement">JsonUriTemplate(ref JsonElement)</h2>
+<h2 id="jsonuritemplate-jsonelement">JsonUriTemplate(JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonUriTemplate.cs#L45">JsonUriTemplate.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonuritemplate.html"><code>JsonUriTemplate</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonUriTemplate(ref JsonElement value)
+<pre><code class="language-csharp">public JsonUriTemplate(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -172,7 +172,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>
@@ -239,10 +239,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonuritemplate-ref-readonlyspan-char">JsonUriTemplate(ref ReadOnlySpan&lt;char&gt;)</h2>
+<h2 id="jsonuritemplate-readonlyspan-char">JsonUriTemplate(ReadOnlySpan&lt;char&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonUriTemplate.String.cs#L35">JsonUriTemplate.String.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonuritemplate.html"><code>JsonUriTemplate</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonUriTemplate(ref ReadOnlySpan&lt;char&gt; value)
+<pre><code class="language-csharp">public JsonUriTemplate(in ReadOnlySpan&lt;char&gt; value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -256,7 +256,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ref ReadOnlySpan&lt;char&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;char&gt;</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>
@@ -281,10 +281,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonuritemplate-ref-readonlyspan-byte">JsonUriTemplate(ref ReadOnlySpan&lt;byte&gt;)</h2>
+<h2 id="jsonuritemplate-readonlyspan-byte">JsonUriTemplate(ReadOnlySpan&lt;byte&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonUriTemplate.String.cs#L46">JsonUriTemplate.String.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonuritemplate.html"><code>JsonUriTemplate</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonUriTemplate(ref ReadOnlySpan&lt;byte&gt; value)
+<pre><code class="language-csharp">public JsonUriTemplate(in ReadOnlySpan&lt;byte&gt; value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -298,7 +298,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ref ReadOnlySpan&lt;byte&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>

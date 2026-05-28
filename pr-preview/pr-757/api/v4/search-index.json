@@ -711,13 +711,13 @@
     "Title": "IJsonObject<T>",
     "Description": "A JSON object.",
     "Keywords": "IJsonObject<T> interface Corvus.Json T",
-    "Body": "A JSON object.\nthis[ref JsonPropertyName]: Gets the value of the property with the given name.\nEnumerateObject: Enumerate the object.\nHasProperties: Gets a value indicating whether the object has any properties.\nHasProperty: Determine if a property exists on the object.\nHasProperty: Determine if a property exists on the object.\nHasProperty: Determine if a property exists on the object.\nHasProperty: Determine if a property exists on the object.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nSetProperty: Sets the given property value.\nRemoveProperty: Removes the given property value.\nRemoveProperty: Removes the given property value.\nRemoveProperty: Removes the given property value.\nRemoveProperty: Removes the given property value.\nFromProperties: Creates an instance of the type from the given dictionary of properties.\nFromProperties: Creates an instance of the type from the given dictionary of properties.\nFromProperties: Creates an instance of the type from the given dictionary of properties.\nAsPropertyBacking: Gets the object as an immutable dictionary of properties."
+    "Body": "A JSON object.\nthis[JsonPropertyName]: Gets the value of the property with the given name.\nEnumerateObject: Enumerate the object.\nHasProperties: Gets a value indicating whether the object has any properties.\nHasProperty: Determine if a property exists on the object.\nHasProperty: Determine if a property exists on the object.\nHasProperty: Determine if a property exists on the object.\nHasProperty: Determine if a property exists on the object.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nTryGetProperty: Get a property.\nSetProperty: Sets the given property value.\nRemoveProperty: Removes the given property value.\nRemoveProperty: Removes the given property value.\nRemoveProperty: Removes the given property value.\nRemoveProperty: Removes the given property value.\nFromProperties: Creates an instance of the type from the given dictionary of properties.\nFromProperties: Creates an instance of the type from the given dictionary of properties.\nFromProperties: Creates an instance of the type from the given dictionary of properties.\nAsPropertyBacking: Gets the object as an immutable dictionary of properties."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-ijsonobject-t.item.html",
-    "Title": "IJsonObject<T>.this[ref JsonPropertyName]",
+    "Title": "IJsonObject<T>.this[JsonPropertyName]",
     "Description": "Gets the value of the property with the given name.",
-    "Keywords": "IJsonObject<T> this[ref JsonPropertyName] property Corvus.Json",
+    "Keywords": "IJsonObject<T> this[JsonPropertyName] property Corvus.Json",
     "Body": "Gets the value of the property with the given name."
   },
   {
@@ -9423,9 +9423,9 @@
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonobject.item.html",
-    "Title": "JsonObject.this[ref JsonPropertyName]",
+    "Title": "JsonObject.this[JsonPropertyName]",
     "Description": "",
-    "Keywords": "JsonObject this[ref JsonPropertyName] property Corvus.Json",
+    "Keywords": "JsonObject this[JsonPropertyName] property Corvus.Json",
     "Body": ""
   },
   {
@@ -10231,14 +10231,14 @@
     "Title": "JsonPropertyName",
     "Description": "A JSON property name.",
     "Keywords": "JsonPropertyName struct Corvus.Json",
-    "Body": "A JSON property name.\nHasStringBacking: Gets a value indicating whether this has a string backing.\nHasJsonElementBacking: Gets a value indicating whether this has a [`JsonElement`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement) backing.\nFromJsonString: Initializes a new instance of the [`JsonPropertyName`](/api/v4/corvus-json-jsonpropertyname.html) struct.\nParseValue: Parses a JSON value from a buffer.\nParseValue: Parses a JSON property name from a buffer.\nParseValue: Parses a JSON property name from a buffer.\nCompareTo: Compares with another property name.\nEquals: Equality comparison.\nEqualsJsonElement: Compares with a JsonElement.\nEqualsPropertyNameOf: Compare with the name of a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty).\nEqualsString: Compare with the name of a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty).\nEqualsJsonString: Compare with a [`JsonString`](/api/v4/corvus-json-jsonstring.html).\nEquals: Compare with the name of a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty).\nEqualsUtf8String: Compare with the name of a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty).\nGetString: Gets the value as a string.\nTryGetProperty: Try to get a property from a JSON element.\nTryGetString: Try to get the value as a string.\nTryGetValue: Parses a value from a JsonString type.\nTryGetValue: Parses a value from a JsonString type.\nTryGetValue: Parses a value from a JsonString type.\nWriteTo: Write the name to a [`Utf8JsonReader`](https://learn.microsoft.com/dotnet/api/system.text.json.utf8jsonreader).\nAs: Gets the property name as a JSON string of the given type.\nIsMatch: Gets a value indicating whether this property name matches the given [`Regex`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex)."
+    "Body": "A JSON property name.\nHasStringBacking: Gets a value indicating whether this has a string backing.\nHasJsonPropertyBacking: Gets a value indicating whether this has a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty) backing.\nHasJsonElementBacking: Gets a value indicating whether this has a [`JsonElement`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement) backing.\nFromJsonString: Initializes a new instance of the [`JsonPropertyName`](/api/v4/corvus-json-jsonpropertyname.html) struct.\nParseValue: Parses a JSON value from a buffer.\nParseValue: Parses a JSON property name from a buffer.\nParseValue: Parses a JSON property name from a buffer.\nCompareTo: Compares with another property name.\nEquals: Equality comparison.\nEqualsJsonElement: Compares with a JsonElement.\nEqualsPropertyNameOf: Compare with the name of a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty).\nEqualsString: Compare with the name of a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty).\nEqualsJsonString: Compare with a [`JsonString`](/api/v4/corvus-json-jsonstring.html).\nEquals: Compare with the name of a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty).\nEqualsUtf8String: Compare with the name of a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty).\nGetString: Gets the value as a string.\nTryGetProperty: Try to get a property from a JSON element.\nTryGetString: Try to get the value as a string.\nTryGetValue: Parses a value from a JsonString type.\nTryGetValue: Parses a value from a JsonString type.\nTryGetValue: Parses a value from a JsonString type.\nWriteTo: Write the name to a [`Utf8JsonReader`](https://learn.microsoft.com/dotnet/api/system.text.json.utf8jsonreader).\nAs: Gets the property name as a JSON string of the given type.\nIsMatch: Gets a value indicating whether this property name matches the given [`Regex`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex)."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.ctor.html",
     "Title": "JsonPropertyName Constructor",
     "Description": "Initializes a new instance of the [`JsonPropertyName`](/api/v4/corvus-json-jsonpropertyname.html) struct.",
     "Keywords": "JsonPropertyName constructor new Corvus.Json",
-    "Body": "Initializes a new instance of the [`JsonPropertyName`](/api/v4/corvus-json-jsonpropertyname.html) struct. Initializes a new instance of the [`JsonPropertyName`](/api/v4/corvus-json-jsonpropertyname.html) struct."
+    "Body": "Initializes a new instance of the [`JsonPropertyName`](/api/v4/corvus-json-jsonpropertyname.html) struct. Initializes a new instance of the [`JsonPropertyName`](/api/v4/corvus-json-jsonpropertyname.html) struct. Initializes a new instance of the [`JsonPropertyName`](/api/v4/corvus-json-jsonpropertyname.html) struct."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.hasstringbacking.html",
@@ -10246,6 +10246,13 @@
     "Description": "Gets a value indicating whether this has a string backing.",
     "Keywords": "JsonPropertyName HasStringBacking property Corvus.Json",
     "Body": "Gets a value indicating whether this has a string backing."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.hasjsonpropertybacking.html",
+    "Title": "JsonPropertyName.HasJsonPropertyBacking",
+    "Description": "Gets a value indicating whether this has a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty) backing.",
+    "Keywords": "JsonPropertyName HasJsonPropertyBacking property Corvus.Json",
+    "Body": "Gets a value indicating whether this has a [`JsonProperty`](https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty) backing."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.hasjsonelementbacking.html",
@@ -14480,7 +14487,14 @@
     "Title": "LowAllocJsonUtils",
     "Description": "Utilities for low allocation access to JSON values.",
     "Keywords": "LowAllocJsonUtils class Corvus.Json",
-    "Body": "Utilities for low allocation access to JSON values.\nThese adapters give access to the underlying UTF8 bytes of JSON string values, unless/until https://github.com/dotnet/runtime/issues/74028 lands.\nProcessRawText: Process raw JSON text.\nProcessRawValue: Process raw JSON value.\nConcatenateAsUtf8JsonString: Concatenate two JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate three JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate four JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate five JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate six JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate seven JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate eight JSON values, as a UTF8 JSON string (including quotes)."
+    "Body": "Utilities for low allocation access to JSON values.\nThese adapters give access to the underlying UTF8 bytes of JSON string values, unless/until https://github.com/dotnet/runtime/issues/74028 lands.\nTryFormatJsonValue: Format a JSON value to a UTF-8 span.\nTryFormatJsonValue: Format a JSON value to a character span.\nProcessRawText: Process raw JSON text.\nProcessRawValue: Process raw JSON value.\nConcatenateAsUtf8JsonString: Concatenate two JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate three JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate four JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate five JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate six JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate seven JSON values, as a UTF8 JSON string (including quotes).\nConcatenateAsUtf8JsonString: Concatenate eight JSON values, as a UTF8 JSON string (including quotes)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-lowallocjsonutils.tryformatjsonvalue.html",
+    "Title": "LowAllocJsonUtils.TryFormatJsonValue",
+    "Description": "Format a JSON value to a UTF-8 span.",
+    "Keywords": "LowAllocJsonUtils TryFormatJsonValue method Corvus.Json",
+    "Body": "Format a JSON value to a UTF-8 span. Format a JSON value to a character span."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-lowallocjsonutils.processrawtext.html",
@@ -32656,9 +32670,9 @@
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-addoperation.item.html",
-    "Title": "JsonPatchDocument.AddOperation.this[ref JsonPropertyName]",
+    "Title": "JsonPatchDocument.AddOperation.this[JsonPropertyName]",
     "Description": "",
-    "Keywords": "JsonPatchDocument.AddOperation this[ref JsonPropertyName] property Corvus.Json.Patch.Model",
+    "Keywords": "JsonPatchDocument.AddOperation this[JsonPropertyName] property Corvus.Json.Patch.Model",
     "Body": ""
   },
   {
@@ -33279,9 +33293,9 @@
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-copyoperation.item.html",
-    "Title": "JsonPatchDocument.CopyOperation.this[ref JsonPropertyName]",
+    "Title": "JsonPatchDocument.CopyOperation.this[JsonPropertyName]",
     "Description": "",
-    "Keywords": "JsonPatchDocument.CopyOperation this[ref JsonPropertyName] property Corvus.Json.Patch.Model",
+    "Keywords": "JsonPatchDocument.CopyOperation this[JsonPropertyName] property Corvus.Json.Patch.Model",
     "Body": ""
   },
   {
@@ -33909,9 +33923,9 @@
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-moveoperation.item.html",
-    "Title": "JsonPatchDocument.MoveOperation.this[ref JsonPropertyName]",
+    "Title": "JsonPatchDocument.MoveOperation.this[JsonPropertyName]",
     "Description": "",
-    "Keywords": "JsonPatchDocument.MoveOperation this[ref JsonPropertyName] property Corvus.Json.Patch.Model",
+    "Keywords": "JsonPatchDocument.MoveOperation this[JsonPropertyName] property Corvus.Json.Patch.Model",
     "Body": ""
   },
   {
@@ -34616,9 +34630,9 @@
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-patchoperation.item.html",
-    "Title": "JsonPatchDocument.PatchOperation.this[ref JsonPropertyName]",
+    "Title": "JsonPatchDocument.PatchOperation.this[JsonPropertyName]",
     "Description": "",
-    "Keywords": "JsonPatchDocument.PatchOperation this[ref JsonPropertyName] property Corvus.Json.Patch.Model",
+    "Keywords": "JsonPatchDocument.PatchOperation this[JsonPropertyName] property Corvus.Json.Patch.Model",
     "Body": ""
   },
   {
@@ -35001,9 +35015,9 @@
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-patchoperationcommon.item.html",
-    "Title": "JsonPatchDocument.PatchOperationCommon.this[ref JsonPropertyName]",
+    "Title": "JsonPatchDocument.PatchOperationCommon.this[JsonPropertyName]",
     "Description": "",
-    "Keywords": "JsonPatchDocument.PatchOperationCommon this[ref JsonPropertyName] property Corvus.Json.Patch.Model",
+    "Keywords": "JsonPatchDocument.PatchOperationCommon this[JsonPropertyName] property Corvus.Json.Patch.Model",
     "Body": ""
   },
   {
@@ -35337,9 +35351,9 @@
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-removeoperation.item.html",
-    "Title": "JsonPatchDocument.RemoveOperation.this[ref JsonPropertyName]",
+    "Title": "JsonPatchDocument.RemoveOperation.this[JsonPropertyName]",
     "Description": "",
-    "Keywords": "JsonPatchDocument.RemoveOperation this[ref JsonPropertyName] property Corvus.Json.Patch.Model",
+    "Keywords": "JsonPatchDocument.RemoveOperation this[JsonPropertyName] property Corvus.Json.Patch.Model",
     "Body": ""
   },
   {
@@ -35939,9 +35953,9 @@
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-replaceoperation.item.html",
-    "Title": "JsonPatchDocument.ReplaceOperation.this[ref JsonPropertyName]",
+    "Title": "JsonPatchDocument.ReplaceOperation.this[JsonPropertyName]",
     "Description": "",
-    "Keywords": "JsonPatchDocument.ReplaceOperation this[ref JsonPropertyName] property Corvus.Json.Patch.Model",
+    "Keywords": "JsonPatchDocument.ReplaceOperation this[JsonPropertyName] property Corvus.Json.Patch.Model",
     "Body": ""
   },
   {
@@ -36562,9 +36576,9 @@
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument-testoperation.item.html",
-    "Title": "JsonPatchDocument.TestOperation.this[ref JsonPropertyName]",
+    "Title": "JsonPatchDocument.TestOperation.this[JsonPropertyName]",
     "Description": "",
-    "Keywords": "JsonPatchDocument.TestOperation this[ref JsonPropertyName] property Corvus.Json.Patch.Model",
+    "Keywords": "JsonPatchDocument.TestOperation this[JsonPropertyName] property Corvus.Json.Patch.Model",
     "Body": ""
   },
   {

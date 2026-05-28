@@ -109,11 +109,11 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#equals-object">Equals(object)</a></td>
+<td><a href="#equals-object">Equals(object?)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#equals-ref-jsonpropertyname">Equals(ref JsonPropertyName)</a></td>
+<td><a href="#equals-jsonpropertyname">Equals(JsonPropertyName)</a></td>
 <td>Equality comparison.</td>
 </tr>
 <tr>
@@ -122,9 +122,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="equals-object">Equals(object)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L230">JsonPropertyName.cs</a></p>
-<pre><code class="language-csharp">public override bool Equals(object obj)
+<h2 id="equals-object">Equals(object?)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L251">JsonPropertyName.cs</a></p>
+<pre><code class="language-csharp">public override bool Equals(object? obj)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -138,7 +138,7 @@
 <tbody>
 <tr>
 <td><code>obj</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -165,10 +165,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-jsonpropertyname">Equals(ref JsonPropertyName)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L342">JsonPropertyName.cs</a></p>
+<h2 id="equals-jsonpropertyname">Equals(JsonPropertyName)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L411">JsonPropertyName.cs</a></p>
 <p>Equality comparison.</p>
-<pre><code class="language-csharp">public bool Equals(ref JsonPropertyName other)
+<pre><code class="language-csharp">public bool Equals(in JsonPropertyName other)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -182,7 +182,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td>The other item with which to compare.</td>
 </tr>
 </tbody>
@@ -226,7 +226,7 @@
 </table>
 <hr />
 <h2 id="equals-readonlyspan-byte-string">Equals(ReadOnlySpan&lt;byte&gt;, string)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L485">JsonPropertyName.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L590">JsonPropertyName.cs</a></p>
 <p>Compare with the name of a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty"><code>JsonProperty</code></a>.</p>
 <pre><code class="language-csharp">public bool Equals(ReadOnlySpan&lt;byte&gt; utf8Name, string name)
 </code></pre>

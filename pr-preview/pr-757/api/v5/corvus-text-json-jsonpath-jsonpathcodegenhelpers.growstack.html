@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonPath<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="growstack-ref-jsonelement-ref-int-int">GrowStack(ref JsonElement[], ref int, int)</h2>
+<h2 id="growstack-jsonelement-int-int">GrowStack(JsonElement[], int, int)</h2>
 <p>Doubles the capacity of a DFS stack, returning the old array to the pool.</p>
 <pre><code class="language-csharp">public static void GrowStack(ref JsonElement[] stack, ref int capacity, int currentSize)
 </code></pre>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>stack</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement[]</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement[]</code></a></td>
 <td>The current stack array (replaced on return).</td>
 </tr>
 <tr>
 <td><code>capacity</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The current capacity (doubled on return).</td>
 </tr>
 <tr>

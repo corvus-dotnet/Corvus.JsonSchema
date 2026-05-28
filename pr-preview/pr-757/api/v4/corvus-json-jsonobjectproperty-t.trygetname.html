@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetname-ref-utf8parser-tstate-tresult-ref-tstate-ref-tresult">TryGetName(ref Utf8Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</a></td>
+<td><a href="#trygetname-utf8parser-tstate-tresult-tstate-tresult">TryGetName(Utf8Parser&lt;TState, TResult&gt;, TState, TResult)</a></td>
 <td>Attempts to represent the current JSON string as the given type.</td>
 </tr>
 <tr>
-<td><a href="#trygetname-ref-parser-tstate-tresult-ref-tstate-ref-tresult">TryGetName(ref Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</a></td>
+<td><a href="#trygetname-parser-tstate-tresult-tstate-tresult">TryGetName(Parser&lt;TState, TResult&gt;, TState, TResult)</a></td>
 <td>Attempts to represent the current JSON string as the given type.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetname-ref-utf8parser-tstate-tresult-ref-tstate-ref-tresult">TryGetName(ref Utf8Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</h2>
+<h2 id="trygetname-utf8parser-tstate-tresult-tstate-tresult">TryGetName(Utf8Parser&lt;TState, TResult&gt;, TState, TResult)</h2>
 <p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L1">JsonObjectProperty.cs</a></p>
 <p>Attempts to represent the current JSON string as the given type.</p>
-<pre><code class="language-csharp">public bool TryGetName&lt;TState, TResult&gt;(ref Utf8Parser&lt;TState, TResult&gt; parser, ref TState state, ref TResult value)
+<pre><code class="language-csharp">public bool TryGetName&lt;TState, TResult&gt;(in Utf8Parser&lt;TState, TResult&gt; parser, in TState state, out TResult value)
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
 <table>
@@ -154,17 +154,17 @@
 <tbody>
 <tr>
 <td><code>parser</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-utf8parser-tstate-tresult.html"><code>ref Utf8Parser&lt;TState, TResult&gt;</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-utf8parser-tstate-tresult.html"><code>Utf8Parser&lt;TState, TResult&gt;</code></a></td>
 <td>A delegate to the method that parses the JSON string.</td>
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state for the parser.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>Receives the value.</td>
 </tr>
 </tbody>
@@ -209,10 +209,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetname-ref-parser-tstate-tresult-ref-tstate-ref-tresult">TryGetName(ref Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</h2>
+<h2 id="trygetname-parser-tstate-tresult-tstate-tresult">TryGetName(Parser&lt;TState, TResult&gt;, TState, TResult)</h2>
 <p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L1">JsonObjectProperty.cs</a></p>
 <p>Attempts to represent the current JSON string as the given type.</p>
-<pre><code class="language-csharp">public bool TryGetName&lt;TState, TResult&gt;(ref Parser&lt;TState, TResult&gt; parser, ref TState state, ref TResult value)
+<pre><code class="language-csharp">public bool TryGetName&lt;TState, TResult&gt;(in Parser&lt;TState, TResult&gt; parser, in TState state, out TResult value)
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
 <table>
@@ -245,17 +245,17 @@
 <tbody>
 <tr>
 <td><code>parser</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-parser-tstate-tresult.html"><code>ref Parser&lt;TState, TResult&gt;</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-parser-tstate-tresult.html"><code>Parser&lt;TState, TResult&gt;</code></a></td>
 <td>A delegate to the method that parses the JSON string.</td>
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state for the parser.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>Receives the value.</td>
 </tr>
 </tbody>

@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonLogic<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="isemptystring-ref-jsonelement">IsEmptyString(ref JsonElement)</h2>
+<h2 id="isemptystring-jsonelement">IsEmptyString(JsonElement)</h2>
 <p>Determines whether a string <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> is the empty string. Checks the raw UTF-8 length (including quotes) — empty string is exactly <code>&quot;&quot;</code> (2 bytes).</p>
-<pre><code class="language-csharp">public static bool IsEmptyString(ref JsonElement value)
+<pre><code class="language-csharp">public static bool IsEmptyString(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 </tbody>

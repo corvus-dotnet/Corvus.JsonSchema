@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi.Testing<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="deconstruct-ref-string-ref-string-ref-byte-ref-byte-ref-exception">Deconstruct(ref string, ref string, ref byte[], ref byte[], ref Exception)</h2>
-<pre><code class="language-csharp">public void Deconstruct(ref string DeadLetterChannel, ref string OriginalChannel, ref byte[] PayloadBytes, ref byte[] HeaderBytes, ref Exception Exception)
+<h2 id="deconstruct-string-string-byte-byte-exception">Deconstruct(string, string, byte[], byte[], Exception)</h2>
+<pre><code class="language-csharp">public void Deconstruct(out string DeadLetterChannel, out string OriginalChannel, out byte[] PayloadBytes, out byte[] HeaderBytes, out Exception Exception)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,27 +114,27 @@
 <tbody>
 <tr>
 <td><code>DeadLetterChannel</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>OriginalChannel</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>PayloadBytes</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>ref byte[]</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>byte[]</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>HeaderBytes</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>ref byte[]</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>byte[]</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>Exception</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.exception"><code>ref Exception</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.exception"><code>Exception</code></a></td>
 <td></td>
 </tr>
 </tbody>

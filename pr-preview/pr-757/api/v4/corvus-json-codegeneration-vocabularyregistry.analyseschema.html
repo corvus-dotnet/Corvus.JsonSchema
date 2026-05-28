@@ -101,7 +101,7 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
 <h2 id="analyseschema-jsonelement">AnalyseSchema(JsonElement)</h2>
 <p>Analyses a schema element to discover its vocabulary.</p>
-<pre><code class="language-csharp">public ValueTask&lt;IVocabulary&gt; AnalyseSchema(JsonElement schemaElement)
+<pre><code class="language-csharp">public ValueTask&lt;IVocabulary?&gt; AnalyseSchema(JsonElement schemaElement)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,7 +121,7 @@
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
-<p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask&lt;IVocabulary&gt;</code></a></p>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask&lt;IVocabulary?&gt;</code></a></p>
 <p>A <a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask</code></a> which, when complete, provides the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-ivocabulary.html"><code>IVocabulary</code></a> or <code>null</code> if no vocabulary could be found for the schema.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>

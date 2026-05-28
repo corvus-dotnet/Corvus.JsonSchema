@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonLogic<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="resolvevar-ref-jsonelement-ref-jsonelement">ResolveVar(ref JsonElement, ref JsonElement)</h2>
+<h2 id="resolvevar-jsonelement-jsonelement">ResolveVar(JsonElement, JsonElement)</h2>
 <p>Resolves a variable path from <code>data</code> using <code>pathElement</code>. Handles dotted paths (e.g. &quot;a.b.c&quot;) and array indexing. Zero-allocation for common paths.</p>
-<pre><code class="language-csharp">public static JsonElement ResolveVar(ref JsonElement data, ref JsonElement pathElement)
+<pre><code class="language-csharp">public static JsonElement ResolveVar(in JsonElement data, in JsonElement pathElement)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>pathElement</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 </tbody>

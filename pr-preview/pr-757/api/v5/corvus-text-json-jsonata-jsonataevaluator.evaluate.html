@@ -149,11 +149,11 @@
 <td>Evaluates a JSONata expression against input data using the caller's workspace, with optional typed bindings that can include both values and callable functions.</td>
 </tr>
 <tr>
-<td><a href="#evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string, int, int)</a></td>
+<td><a href="#evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string?, int, int)</a></td>
 <td>Evaluates a JSONata expression provided as pre-encoded UTF-8 bytes. This overload bypasses the string-to-UTF-8 transcode. When a <code>cacheKey</code> is provided, the compiled expression is cached under that...</td>
 </tr>
 <tr>
-<td><a href="#evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string, int, int)</a></td>
+<td><a href="#evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string?, int, int)</a></td>
 <td>Evaluates a JSONata expression provided as pre-encoded UTF-8 bytes. This overload bypasses the string-to-UTF-8 transcode. When a <code>cacheKey</code> is provided, the compiled expression is cached under that...</td>
 </tr>
 </tbody>
@@ -896,9 +896,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string, int, int)</h2>
+<h2 id="evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string?, int, int)</h2>
 <p>Evaluates a JSONata expression provided as pre-encoded UTF-8 bytes. This overload bypasses the string-to-UTF-8 transcode. When a <code>cacheKey</code> is provided, the compiled expression is cached under that key (same cache as the string overloads). When <code>cacheKey</code> is <code>null</code>, the expression is compiled fresh each invocation — ideal for cold-start scenarios where each expression is evaluated once.</p>
-<pre><code class="language-csharp">public TElement Evaluate&lt;TElement&gt;(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, string cacheKey, int maxDepth, int timeLimitMs)
+<pre><code class="language-csharp">public TElement Evaluate&lt;TElement&gt;(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, string? cacheKey, int maxDepth, int timeLimitMs)
     where TElement : struct, IJsonElement&lt;TElement&gt;
 </code></pre>
 <h3 id="type-parameters-5">Type Parameters</h3>
@@ -943,7 +943,7 @@
 </tr>
 <tr>
 <td><code>cacheKey</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>Optional cache key. When non-null, the compiled expression is stored (and retrieved on subsequent calls) using this key. The caller is responsible for ensuring the key uniquely identifies the expression. <em>(optional)</em></td>
 </tr>
 <tr>
@@ -981,9 +981,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string, int, int)</h2>
+<h2 id="evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string?, int, int)</h2>
 <p>Evaluates a JSONata expression provided as pre-encoded UTF-8 bytes. This overload bypasses the string-to-UTF-8 transcode. When a <code>cacheKey</code> is provided, the compiled expression is cached under that key (same cache as the string overloads). When <code>cacheKey</code> is <code>null</code>, the expression is compiled fresh each invocation — ideal for cold-start scenarios where each expression is evaluated once.</p>
-<pre><code class="language-csharp">public JsonElement Evaluate(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, string cacheKey, int maxDepth, int timeLimitMs)
+<pre><code class="language-csharp">public JsonElement Evaluate(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, string? cacheKey, int maxDepth, int timeLimitMs)
 </code></pre>
 <h3 id="parameters-11">Parameters</h3>
 <table>
@@ -1012,7 +1012,7 @@
 </tr>
 <tr>
 <td><code>cacheKey</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>Optional cache key. When non-null, the compiled expression is stored (and retrieved on subsequent calls) using this key. The caller is responsible for ensuring the key uniquely identifies the expression. <em>(optional)</em></td>
 </tr>
 <tr>

@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonLogic<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="appendcoercedtobuffer-ref-jsonelement-ref-byte-ref-int">AppendCoercedToBuffer(ref JsonElement, ref byte[], ref int)</h2>
+<h2 id="appendcoercedtobuffer-jsonelement-byte-int">AppendCoercedToBuffer(JsonElement, byte[], int)</h2>
 <p>Appends the coerced string representation of a JSON element to a buffer.</p>
-<pre><code class="language-csharp">public static void AppendCoercedToBuffer(ref JsonElement elem, ref byte[] buffer, ref int pos)
+<pre><code class="language-csharp">public static void AppendCoercedToBuffer(in JsonElement elem, ref byte[] buffer, ref int pos)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,17 +115,17 @@
 <tbody>
 <tr>
 <td><code>elem</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>buffer</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>ref byte[]</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>byte[]</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>pos</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 </tbody>

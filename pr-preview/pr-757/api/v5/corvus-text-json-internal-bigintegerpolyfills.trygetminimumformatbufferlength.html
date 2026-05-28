@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/BigIntegerPolyfills.cs#L79">BigIntegerPolyfills.cs</a></p>
-<h2 id="trygetminimumformatbufferlength-ref-biginteger-ref-int">TryGetMinimumFormatBufferLength(ref BigInteger, ref int)</h2>
+<h2 id="trygetminimumformatbufferlength-biginteger-int">TryGetMinimumFormatBufferLength(BigInteger, int)</h2>
 <p>Gets the minimum format buffer length.</p>
-<pre><code class="language-csharp">public static bool TryGetMinimumFormatBufferLength(ref BigInteger bigInteger, ref int minimumLength)
+<pre><code class="language-csharp">public static bool TryGetMinimumFormatBufferLength(in BigInteger bigInteger, out int minimumLength)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,12 +116,12 @@
 <tbody>
 <tr>
 <td><code>bigInteger</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>ref BigInteger</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a></td>
 <td>The value for which to get the format buffer length.</td>
 </tr>
 <tr>
 <td><code>minimumLength</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The minimum length for a text buffer to format the number.</td>
 </tr>
 </tbody>

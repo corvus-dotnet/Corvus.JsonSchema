@@ -99,10 +99,10 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/NumericTypeExtensions.cs#L25">NumericTypeExtensions.cs</a></p>
-<h2 id="trygetint32withfallbacks-jsonelement-ref-int">TryGetInt32WithFallbacks(JsonElement, ref int)</h2>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/NumericTypeExtensions.cs#L27">NumericTypeExtensions.cs</a></p>
+<h2 id="trygetint32withfallbacks-jsonelement-int">TryGetInt32WithFallbacks(JsonElement, int)</h2>
 <p>Safely get an int32 value.</p>
-<pre><code class="language-csharp">public static bool TryGetInt32WithFallbacks(JsonElement value, ref int result)
+<pre><code class="language-csharp">public static bool TryGetInt32WithFallbacks(JsonElement value, out int result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,7 +121,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The value as an integer.</td>
 </tr>
 </tbody>

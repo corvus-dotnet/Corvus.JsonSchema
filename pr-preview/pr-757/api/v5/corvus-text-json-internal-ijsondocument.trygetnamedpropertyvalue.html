@@ -109,35 +109,35 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-char-ref-jsonelement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, ref JsonElement)</a></td>
+<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-char-jsonelement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, JsonElement)</a></td>
 <td>Tries to get the value of a named property as a JSON element.</td>
 </tr>
 <tr>
-<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-byte-ref-jsonelement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, ref JsonElement)</a></td>
+<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-byte-jsonelement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, JsonElement)</a></td>
 <td>Tries to get the value of a named property as a JSON element.</td>
 </tr>
 <tr>
-<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-byte-ref-telement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, ref TElement)</a></td>
+<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-byte-telement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, TElement)</a></td>
 <td>Tries to get the value of a named property as a JSON element.</td>
 </tr>
 <tr>
-<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-char-ref-telement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, ref TElement)</a></td>
+<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-char-telement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, TElement)</a></td>
 <td>Tries to get the value of a named property as a JSON element.</td>
 </tr>
 <tr>
-<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-char-ref-ijsondocument-ref-int">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, ref IJsonDocument, ref int)</a></td>
+<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-char-ijsondocument-int">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, IJsonDocument?, int)</a></td>
 <td>Tries to get the value of a named property as a mutable JSON element.</td>
 </tr>
 <tr>
-<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-byte-ref-ijsondocument-ref-int">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, ref IJsonDocument, ref int)</a></td>
+<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-byte-ijsondocument-int">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, IJsonDocument?, int)</a></td>
 <td>Tries to get the value of a named property as a mutable JSON element.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetnamedpropertyvalue-int-readonlyspan-char-ref-jsonelement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, ref JsonElement)</h2>
+<h2 id="trygetnamedpropertyvalue-int-readonlyspan-char-jsonelement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L136">IJsonDocument.cs</a></p>
 <p>Tries to get the value of a named property as a JSON element.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;char&gt; propertyName, ref JsonElement value)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;char&gt; propertyName, out JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -161,7 +161,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The value of the property.</td>
 </tr>
 </tbody>
@@ -189,10 +189,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetnamedpropertyvalue-int-readonlyspan-byte-ref-jsonelement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, ref JsonElement)</h2>
+<h2 id="trygetnamedpropertyvalue-int-readonlyspan-byte-jsonelement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L136">IJsonDocument.cs</a></p>
 <p>Tries to get the value of a named property as a JSON element.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;byte&gt; propertyName, ref JsonElement value)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;byte&gt; propertyName, out JsonElement value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -216,7 +216,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The value of the property.</td>
 </tr>
 </tbody>
@@ -244,10 +244,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetnamedpropertyvalue-int-readonlyspan-byte-ref-telement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, ref TElement)</h2>
+<h2 id="trygetnamedpropertyvalue-int-readonlyspan-byte-telement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, TElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L21">IJsonDocument.cs</a></p>
 <p>Tries to get the value of a named property as a JSON element.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue&lt;TElement&gt;(int index, ReadOnlySpan&lt;byte&gt; propertyName, ref TElement value)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue&lt;TElement&gt;(int index, ReadOnlySpan&lt;byte&gt; propertyName, out TElement value)
     where TElement : struct, IJsonElement&lt;TElement&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -287,7 +287,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TElement</code></td>
+<td><code>TElement</code></td>
 <td>The value of the property.</td>
 </tr>
 </tbody>
@@ -315,10 +315,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetnamedpropertyvalue-int-readonlyspan-char-ref-telement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, ref TElement)</h2>
+<h2 id="trygetnamedpropertyvalue-int-readonlyspan-char-telement">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, TElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L21">IJsonDocument.cs</a></p>
 <p>Tries to get the value of a named property as a JSON element.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue&lt;TElement&gt;(int index, ReadOnlySpan&lt;char&gt; propertyName, ref TElement value)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue&lt;TElement&gt;(int index, ReadOnlySpan&lt;char&gt; propertyName, out TElement value)
     where TElement : struct, IJsonElement&lt;TElement&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -358,7 +358,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TElement</code></td>
+<td><code>TElement</code></td>
 <td>The value of the property.</td>
 </tr>
 </tbody>
@@ -386,10 +386,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetnamedpropertyvalue-int-readonlyspan-char-ref-ijsondocument-ref-int">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, ref IJsonDocument, ref int)</h2>
+<h2 id="trygetnamedpropertyvalue-int-readonlyspan-char-ijsondocument-int">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, IJsonDocument?, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L136">IJsonDocument.cs</a></p>
 <p>Tries to get the value of a named property as a mutable JSON element.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;char&gt; propertyName, ref IJsonDocument elementParent, ref int elementIndex)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;char&gt; propertyName, out IJsonDocument? elementParent, out int elementIndex)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -413,12 +413,12 @@
 </tr>
 <tr>
 <td><code>elementParent</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-ijsondocument.html"><code>ref IJsonDocument</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-ijsondocument.html"><code>IJsonDocument?</code></a></td>
 <td>The parent document of the retrieved value.</td>
 </tr>
 <tr>
 <td><code>elementIndex</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The index of the retrieved value in the parent document.</td>
 </tr>
 </tbody>
@@ -446,10 +446,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetnamedpropertyvalue-int-readonlyspan-byte-ref-ijsondocument-ref-int">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, ref IJsonDocument, ref int)</h2>
+<h2 id="trygetnamedpropertyvalue-int-readonlyspan-byte-ijsondocument-int">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, IJsonDocument?, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L136">IJsonDocument.cs</a></p>
 <p>Tries to get the value of a named property as a mutable JSON element.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;byte&gt; propertyName, ref IJsonDocument elementParent, ref int elementIndex)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;byte&gt; propertyName, out IJsonDocument? elementParent, out int elementIndex)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -473,12 +473,12 @@
 </tr>
 <tr>
 <td><code>elementParent</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-ijsondocument.html"><code>ref IJsonDocument</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-ijsondocument.html"><code>IJsonDocument?</code></a></td>
 <td>The parent document of the retrieved value.</td>
 </tr>
 <tr>
 <td><code>elementIndex</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The index of the retrieved value in the parent document.</td>
 </tr>
 </tbody>

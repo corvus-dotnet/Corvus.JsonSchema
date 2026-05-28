@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygethandlersfor-ikeyword-ref-ireadonlycollection-ikeywordvalidationhandler">TryGetHandlersFor(IKeyword, ref IReadOnlyCollection&lt;IKeywordValidationHandler&gt;)</h2>
+<h2 id="trygethandlersfor-ikeyword-ireadonlycollection-ikeywordvalidationhandler">TryGetHandlersFor(IKeyword, IReadOnlyCollection&lt;IKeywordValidationHandler&gt;)</h2>
 <p>Gets the registered validation handlers for the given keyword.</p>
-<pre><code class="language-csharp">public bool TryGetHandlersFor(IKeyword keyword, ref IReadOnlyCollection&lt;IKeywordValidationHandler&gt; validationHandlers)
+<pre><code class="language-csharp">public bool TryGetHandlersFor(IKeyword keyword, out IReadOnlyCollection&lt;IKeywordValidationHandler&gt; validationHandlers)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>validationHandlers</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlycollection-1"><code>ref IReadOnlyCollection&lt;IKeywordValidationHandler&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlycollection-1"><code>IReadOnlyCollection&lt;IKeywordValidationHandler&gt;</code></a></td>
 <td>The collection of <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-ikeywordvalidationhandler.html"><code>IKeywordValidationHandler</code></a> instances for the handler type, or <code>null</code> if no handler was registered.</td>
 </tr>
 </tbody>

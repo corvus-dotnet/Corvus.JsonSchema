@@ -100,8 +100,8 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ObjectBuilder.cs#L43">JsonElement.ObjectBuilder.cs</a></p>
-<h2 id="tryapply-ref-tapplicator">TryApply(ref TApplicator)</h2>
-<pre><code class="language-csharp">public bool TryApply&lt;TApplicator&gt;(ref TApplicator value)
+<h2 id="tryapply-tapplicator">TryApply(TApplicator)</h2>
+<pre><code class="language-csharp">public bool TryApply&lt;TApplicator&gt;(in TApplicator value)
     where TApplicator : struct, IJsonElement&lt;TApplicator&gt;
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TApplicator</code></td>
+<td><code>TApplicator</code></td>
 <td></td>
 </tr>
 </tbody>

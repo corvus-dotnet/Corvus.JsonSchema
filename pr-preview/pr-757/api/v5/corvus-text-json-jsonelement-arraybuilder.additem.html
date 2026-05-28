@@ -113,7 +113,7 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-tcontext-jsonelement-objectbuilder-build-tcontext">AddItem(ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;)</a></td>
+<td><a href="#additem-tcontext-jsonelement-objectbuilder-build-tcontext">AddItem(TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -121,7 +121,7 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-tcontext-jsonelement-arraybuilder-build-tcontext">AddItem(ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;)</a></td>
+<td><a href="#additem-tcontext-jsonelement-arraybuilder-build-tcontext">AddItem(TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -149,31 +149,31 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-datetime">AddItem(ref DateTime)</a></td>
+<td><a href="#additem-datetime">AddItem(DateTime)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-datetimeoffset">AddItem(ref DateTimeOffset)</a></td>
+<td><a href="#additem-datetimeoffset">AddItem(DateTimeOffset)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-offsetdatetime">AddItem(ref OffsetDateTime)</a></td>
+<td><a href="#additem-offsetdatetime">AddItem(OffsetDateTime)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-offsetdate">AddItem(ref OffsetDate)</a></td>
+<td><a href="#additem-offsetdate">AddItem(OffsetDate)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-offsettime">AddItem(ref OffsetTime)</a></td>
+<td><a href="#additem-offsettime">AddItem(OffsetTime)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-localdate">AddItem(ref LocalDate)</a></td>
+<td><a href="#additem-localdate">AddItem(LocalDate)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-period">AddItem(ref Period)</a></td>
+<td><a href="#additem-period">AddItem(Period)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -221,11 +221,11 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-biginteger">AddItem(ref BigInteger)</a></td>
+<td><a href="#additem-biginteger">AddItem(BigInteger)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#additem-ref-bignumber">AddItem(ref BigNumber)</a></td>
+<td><a href="#additem-bignumber">AddItem(BigNumber)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -283,9 +283,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-tcontext-jsonelement-objectbuilder-build-tcontext">AddItem(ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;)</h2>
+<h2 id="additem-tcontext-jsonelement-objectbuilder-build-tcontext">AddItem(TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L41">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem&lt;TContext&gt;(ref TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; value)
+<pre><code class="language-csharp">public void AddItem&lt;TContext&gt;(in TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -299,7 +299,7 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
@@ -370,9 +370,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-tcontext-jsonelement-arraybuilder-build-tcontext">AddItem(ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;)</h2>
+<h2 id="additem-tcontext-jsonelement-arraybuilder-build-tcontext">AddItem(TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L41">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem&lt;TContext&gt;(ref TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; value)
+<pre><code class="language-csharp">public void AddItem&lt;TContext&gt;(in TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -386,7 +386,7 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
@@ -663,9 +663,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-datetime">AddItem(ref DateTime)</h2>
+<h2 id="additem-datetime">AddItem(DateTime)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L281">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem(ref DateTime value)
+<pre><code class="language-csharp">public void AddItem(in DateTime value)
 </code></pre>
 <h3 id="parameters-10">Parameters</h3>
 <table>
@@ -679,7 +679,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.datetime"><code>ref DateTime</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.datetime"><code>DateTime</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -704,9 +704,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-datetimeoffset">AddItem(ref DateTimeOffset)</h2>
+<h2 id="additem-datetimeoffset">AddItem(DateTimeOffset)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L290">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem(ref DateTimeOffset value)
+<pre><code class="language-csharp">public void AddItem(in DateTimeOffset value)
 </code></pre>
 <h3 id="parameters-11">Parameters</h3>
 <table>
@@ -720,7 +720,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.datetimeoffset"><code>ref DateTimeOffset</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.datetimeoffset"><code>DateTimeOffset</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -745,9 +745,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-offsetdatetime">AddItem(ref OffsetDateTime)</h2>
+<h2 id="additem-offsetdatetime">AddItem(OffsetDateTime)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L299">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem(ref OffsetDateTime value)
+<pre><code class="language-csharp">public void AddItem(in OffsetDateTime value)
 </code></pre>
 <h3 id="parameters-12">Parameters</h3>
 <table>
@@ -761,7 +761,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>ref OffsetDateTime</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -786,9 +786,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-offsetdate">AddItem(ref OffsetDate)</h2>
+<h2 id="additem-offsetdate">AddItem(OffsetDate)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L308">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem(ref OffsetDate value)
+<pre><code class="language-csharp">public void AddItem(in OffsetDate value)
 </code></pre>
 <h3 id="parameters-13">Parameters</h3>
 <table>
@@ -802,7 +802,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html"><code>ref OffsetDate</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html"><code>OffsetDate</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -827,9 +827,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-offsettime">AddItem(ref OffsetTime)</h2>
+<h2 id="additem-offsettime">AddItem(OffsetTime)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L317">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem(ref OffsetTime value)
+<pre><code class="language-csharp">public void AddItem(in OffsetTime value)
 </code></pre>
 <h3 id="parameters-14">Parameters</h3>
 <table>
@@ -843,7 +843,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>ref OffsetTime</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -868,9 +868,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-localdate">AddItem(ref LocalDate)</h2>
+<h2 id="additem-localdate">AddItem(LocalDate)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L326">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem(ref LocalDate value)
+<pre><code class="language-csharp">public void AddItem(in LocalDate value)
 </code></pre>
 <h3 id="parameters-15">Parameters</h3>
 <table>
@@ -884,7 +884,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>ref LocalDate</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -909,9 +909,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-period">AddItem(ref Period)</h2>
+<h2 id="additem-period">AddItem(Period)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L335">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem(ref Period value)
+<pre><code class="language-csharp">public void AddItem(in Period value)
 </code></pre>
 <h3 id="parameters-16">Parameters</h3>
 <table>
@@ -925,7 +925,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-period.html"><code>ref Period</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-period.html"><code>Period</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -1401,9 +1401,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-biginteger">AddItem(ref BigInteger)</h2>
+<h2 id="additem-biginteger">AddItem(BigInteger)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L447">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem(ref BigInteger value)
+<pre><code class="language-csharp">public void AddItem(in BigInteger value)
 </code></pre>
 <h3 id="parameters-28">Parameters</h3>
 <table>
@@ -1417,7 +1417,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>ref BigInteger</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -1442,9 +1442,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="additem-ref-bignumber">AddItem(ref BigNumber)</h2>
+<h2 id="additem-bignumber">AddItem(BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L457">JsonElement.ArrayBuilder.cs</a></p>
-<pre><code class="language-csharp">public void AddItem(ref BigNumber value)
+<pre><code class="language-csharp">public void AddItem(in BigNumber value)
 </code></pre>
 <h3 id="parameters-29">Parameters</h3>
 <table>
@@ -1458,7 +1458,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td></td>
 </tr>
 </tbody>

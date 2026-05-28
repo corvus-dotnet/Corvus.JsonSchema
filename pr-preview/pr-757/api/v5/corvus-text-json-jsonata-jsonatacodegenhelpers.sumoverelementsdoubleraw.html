@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="sumoverelementsdoubleraw-ref-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">SumOverElementsDoubleRaw(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
+<h2 id="sumoverelementsdoubleraw-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">SumOverElementsDoubleRaw(JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
 <p>Raw double variant of <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sumoverelementsdouble.html"><code>SumOverElementsDouble</code></a>: returns the accumulated sum as a <code>double</code> (<a href="https://learn.microsoft.com/dotnet/api/system.double"><code>NaN</code></a> when the input is undefined or a single NaN element). Avoids the <code>NumberFromDouble</code> document allocation so the caller can pass the result directly to <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement-objectbuilder.addproperty.html"><code>AddProperty</code></a>.</p>
-<pre><code class="language-csharp">public static double SumOverElementsDoubleRaw(ref JsonElement data, Func&lt;JsonElement, JsonWorkspace, double&gt; step, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static double SumOverElementsDoubleRaw(in JsonElement data, Func&lt;JsonElement, JsonWorkspace, double&gt; step, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

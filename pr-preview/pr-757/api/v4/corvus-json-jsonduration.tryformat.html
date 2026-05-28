@@ -100,8 +100,8 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonDuration.String.cs#L572">JsonDuration.String.cs</a></p>
-<h2 id="tryformat-span-char-ref-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;char&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</h2>
-<pre><code class="language-csharp">public bool TryFormat(Span&lt;char&gt; destination, ref int charsWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider provider)
+<h2 id="tryformat-span-char-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;char&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</h2>
+<pre><code class="language-csharp">public bool TryFormat(Span&lt;char&gt; destination, out int charsWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider? provider)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>charsWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -130,7 +130,7 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td></td>
 </tr>
 </tbody>

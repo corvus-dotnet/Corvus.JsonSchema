@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/JsonValueHelpers.ToJsonElement.cs#L33">JsonValueHelpers.ToJsonElement.cs</a></p>
-<h2 id="numbertojsonelement-ref-binaryjsonnumber">NumberToJsonElement(ref BinaryJsonNumber)</h2>
+<h2 id="numbertojsonelement-binaryjsonnumber">NumberToJsonElement(BinaryJsonNumber)</h2>
 <p>Write a number to a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a>.</p>
-<pre><code class="language-csharp">public static JsonElement NumberToJsonElement(ref BinaryJsonNumber numberBacking)
+<pre><code class="language-csharp">public static JsonElement NumberToJsonElement(in BinaryJsonNumber numberBacking)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>numberBacking</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The byte array backing the number.</td>
 </tr>
 </tbody>

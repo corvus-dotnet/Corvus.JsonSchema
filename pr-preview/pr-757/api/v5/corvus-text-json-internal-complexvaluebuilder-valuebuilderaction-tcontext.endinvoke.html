@@ -100,8 +100,8 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/ComplexValueBuilder.cs#L49">ComplexValueBuilder.cs</a></p>
-<h2 id="endinvoke-ref-tcontext-ref-complexvaluebuilder-iasyncresult">EndInvoke(ref TContext, ref ComplexValueBuilder, IAsyncResult)</h2>
-<pre><code class="language-csharp">public virtual void EndInvoke(ref TContext context, ref ComplexValueBuilder builder, IAsyncResult result)
+<h2 id="endinvoke-tcontext-complexvaluebuilder-iasyncresult">EndInvoke(TContext, ComplexValueBuilder, IAsyncResult)</h2>
+<pre><code class="language-csharp">public virtual void EndInvoke(in TContext context, ref ComplexValueBuilder builder, IAsyncResult result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>builder</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ref ComplexValueBuilder</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a></td>
 <td></td>
 </tr>
 <tr>

@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetlongdocumentation-typedeclaration-ref-string">TryGetLongDocumentation(TypeDeclaration, ref string)</h2>
+<h2 id="trygetlongdocumentation-typedeclaration-string">TryGetLongDocumentation(TypeDeclaration, string?)</h2>
 <p>Try to get long (remarks-like) documentation for the type declaration.</p>
-<pre><code class="language-csharp">public static bool TryGetLongDocumentation(TypeDeclaration typeDeclaration, ref string longDocumentation)
+<pre><code class="language-csharp">public static bool TryGetLongDocumentation(TypeDeclaration typeDeclaration, out string? longDocumentation)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>longDocumentation</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The long-form documentation for the type declaration or <code>null</code> if no short form documentation was found.</td>
 </tr>
 </tbody>

@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonLogic<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="substrfromelement-ref-jsonelement-int-int-jsonworkspace">SubstrFromElement(ref JsonElement, int, int, JsonWorkspace)</h2>
+<h2 id="substrfromelement-jsonelement-int-int-jsonworkspace">SubstrFromElement(JsonElement, int, int, JsonWorkspace)</h2>
 <p>Extracts a substring from a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> string value using JsonLogic substr semantics. Uses a zero-allocation UTF-8 fast path for ASCII strings.</p>
-<pre><code class="language-csharp">public static JsonElement SubstrFromElement(ref JsonElement source, int start, int length, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement SubstrFromElement(in JsonElement source, int start, int length, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>source</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The source element (coerced to string if not already).</td>
 </tr>
 <tr>

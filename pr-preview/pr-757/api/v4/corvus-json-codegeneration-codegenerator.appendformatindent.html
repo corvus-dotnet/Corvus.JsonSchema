@@ -109,15 +109,15 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#appendformatindent-string-object">AppendFormatIndent(string, object)</a></td>
+<td><a href="#appendformatindent-string-object">AppendFormatIndent(string, object?)</a></td>
 <td>Formatted append.</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-string-object-object">AppendFormatIndent(string, object, object)</a></td>
+<td><a href="#appendformatindent-string-object-object">AppendFormatIndent(string, object?, object?)</a></td>
 <td>Formatted append.</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-string-object-object-object">AppendFormatIndent(string, object, object, object)</a></td>
+<td><a href="#appendformatindent-string-object-object-object">AppendFormatIndent(string, object?, object?, object?)</a></td>
 <td>Formatted append.</td>
 </tr>
 <tr>
@@ -125,46 +125,46 @@
 <td>Formatted append.</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-iformatprovider-string-object">AppendFormatIndent(IFormatProvider, string, object)</a></td>
+<td><a href="#appendformatindent-iformatprovider-string-object">AppendFormatIndent(IFormatProvider?, string, object?)</a></td>
 <td>Formatted append.</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-iformatprovider-string-object-object">AppendFormatIndent(IFormatProvider, string, object, object)</a></td>
+<td><a href="#appendformatindent-iformatprovider-string-object-object">AppendFormatIndent(IFormatProvider?, string, object?, object?)</a></td>
 <td>Formatted append.</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-iformatprovider-string-object-object-object">AppendFormatIndent(IFormatProvider, string, object, object, object)</a></td>
+<td><a href="#appendformatindent-iformatprovider-string-object-object-object">AppendFormatIndent(IFormatProvider?, string, object?, object?, object?)</a></td>
 <td>Formatted append.</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-iformatprovider-string-object">AppendFormatIndent(IFormatProvider, string, object[])</a></td>
+<td><a href="#appendformatindent-iformatprovider-string-object">AppendFormatIndent(IFormatProvider?, string, object[])</a></td>
 <td>Formatted append.</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-iformatprovider-compositeformat-targ0">AppendFormatIndent(IFormatProvider, CompositeFormat, TArg0)</a></td>
+<td><a href="#appendformatindent-iformatprovider-compositeformat-targ0">AppendFormatIndent(IFormatProvider?, CompositeFormat, TArg0)</a></td>
 <td>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of...</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-iformatprovider-compositeformat-targ0-targ1">AppendFormatIndent(IFormatProvider, CompositeFormat, TArg0, TArg1)</a></td>
+<td><a href="#appendformatindent-iformatprovider-compositeformat-targ0-targ1">AppendFormatIndent(IFormatProvider?, CompositeFormat, TArg0, TArg1)</a></td>
 <td>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of...</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-iformatprovider-compositeformat-targ0-targ1-targ2">AppendFormatIndent(IFormatProvider, CompositeFormat, TArg0, TArg1, TArg2)</a></td>
+<td><a href="#appendformatindent-iformatprovider-compositeformat-targ0-targ1-targ2">AppendFormatIndent(IFormatProvider?, CompositeFormat, TArg0, TArg1, TArg2)</a></td>
 <td>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of...</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-iformatprovider-compositeformat-object">AppendFormatIndent(IFormatProvider, CompositeFormat, object[])</a></td>
+<td><a href="#appendformatindent-iformatprovider-compositeformat-object">AppendFormatIndent(IFormatProvider?, CompositeFormat, object[])</a></td>
 <td>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of...</td>
 </tr>
 <tr>
-<td><a href="#appendformatindent-iformatprovider-compositeformat-readonlyspan-object">AppendFormatIndent(IFormatProvider, CompositeFormat, ReadOnlySpan&lt;object&gt;)</a></td>
+<td><a href="#appendformatindent-iformatprovider-compositeformat-readonlyspan-object">AppendFormatIndent(IFormatProvider?, CompositeFormat, ReadOnlySpan&lt;object?&gt;)</a></td>
 <td>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of...</td>
 </tr>
 </tbody>
 </table>
-<h2 id="appendformatindent-string-object">AppendFormatIndent(string, object)</h2>
+<h2 id="appendformatindent-string-object">AppendFormatIndent(string, object?)</h2>
 <p>Formatted append.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(string format, object arg0)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(string format, object? arg0)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -183,7 +183,7 @@
 </tr>
 <tr>
 <td><code>arg0</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The argument.</td>
 </tr>
 </tbody>
@@ -211,9 +211,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-string-object-object">AppendFormatIndent(string, object, object)</h2>
+<h2 id="appendformatindent-string-object-object">AppendFormatIndent(string, object?, object?)</h2>
 <p>Formatted append.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(string format, object arg0, object arg1)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(string format, object? arg0, object? arg1)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -232,12 +232,12 @@
 </tr>
 <tr>
 <td><code>arg0</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The first argument.</td>
 </tr>
 <tr>
 <td><code>arg1</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The second argument.</td>
 </tr>
 </tbody>
@@ -265,9 +265,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-string-object-object-object">AppendFormatIndent(string, object, object, object)</h2>
+<h2 id="appendformatindent-string-object-object-object">AppendFormatIndent(string, object?, object?, object?)</h2>
 <p>Formatted append.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(string format, object arg0, object arg1, object arg2)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(string format, object? arg0, object? arg1, object? arg2)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -286,17 +286,17 @@
 </tr>
 <tr>
 <td><code>arg0</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The first argument.</td>
 </tr>
 <tr>
 <td><code>arg1</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The second argument.</td>
 </tr>
 <tr>
 <td><code>arg2</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The third argument.</td>
 </tr>
 </tbody>
@@ -373,9 +373,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-iformatprovider-string-object">AppendFormatIndent(IFormatProvider, string, object)</h2>
+<h2 id="appendformatindent-iformatprovider-string-object">AppendFormatIndent(IFormatProvider?, string, object?)</h2>
 <p>Formatted append.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider provider, string format, object arg0)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider? provider, string format, object? arg0)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -389,7 +389,7 @@
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>The format provider.</td>
 </tr>
 <tr>
@@ -399,7 +399,7 @@
 </tr>
 <tr>
 <td><code>arg0</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The argument.</td>
 </tr>
 </tbody>
@@ -427,9 +427,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-iformatprovider-string-object-object">AppendFormatIndent(IFormatProvider, string, object, object)</h2>
+<h2 id="appendformatindent-iformatprovider-string-object-object">AppendFormatIndent(IFormatProvider?, string, object?, object?)</h2>
 <p>Formatted append.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider provider, string format, object arg0, object arg1)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider? provider, string format, object? arg0, object? arg1)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -443,7 +443,7 @@
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>The format provider.</td>
 </tr>
 <tr>
@@ -453,12 +453,12 @@
 </tr>
 <tr>
 <td><code>arg0</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The first argument.</td>
 </tr>
 <tr>
 <td><code>arg1</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The second argument.</td>
 </tr>
 </tbody>
@@ -486,9 +486,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-iformatprovider-string-object-object-object">AppendFormatIndent(IFormatProvider, string, object, object, object)</h2>
+<h2 id="appendformatindent-iformatprovider-string-object-object-object">AppendFormatIndent(IFormatProvider?, string, object?, object?, object?)</h2>
 <p>Formatted append.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider provider, string format, object arg0, object arg1, object arg2)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider? provider, string format, object? arg0, object? arg1, object? arg2)
 </code></pre>
 <h3 id="parameters-6">Parameters</h3>
 <table>
@@ -502,7 +502,7 @@
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>The format provider.</td>
 </tr>
 <tr>
@@ -512,17 +512,17 @@
 </tr>
 <tr>
 <td><code>arg0</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The first argument.</td>
 </tr>
 <tr>
 <td><code>arg1</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The second argument.</td>
 </tr>
 <tr>
 <td><code>arg2</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The third argument.</td>
 </tr>
 </tbody>
@@ -550,9 +550,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-iformatprovider-string-object">AppendFormatIndent(IFormatProvider, string, object[])</h2>
+<h2 id="appendformatindent-iformatprovider-string-object">AppendFormatIndent(IFormatProvider?, string, object[])</h2>
 <p>Formatted append.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider provider, string format, object[] args)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider? provider, string format, object[] args)
 </code></pre>
 <h3 id="parameters-7">Parameters</h3>
 <table>
@@ -566,7 +566,7 @@
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>The format provider.</td>
 </tr>
 <tr>
@@ -604,9 +604,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-iformatprovider-compositeformat-targ0">AppendFormatIndent(IFormatProvider, CompositeFormat, TArg0)</h2>
+<h2 id="appendformatindent-iformatprovider-compositeformat-targ0">AppendFormatIndent(IFormatProvider?, CompositeFormat, TArg0)</h2>
 <p>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of the arguments using a specified format provider.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent&lt;TArg0&gt;(IFormatProvider provider, CompositeFormat format, TArg0 arg0)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent&lt;TArg0&gt;(IFormatProvider? provider, CompositeFormat format, TArg0 arg0)
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
 <table>
@@ -635,7 +635,7 @@
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>An object that supplies culture-specific formatting information.</td>
 </tr>
 <tr>
@@ -692,9 +692,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-iformatprovider-compositeformat-targ0-targ1">AppendFormatIndent(IFormatProvider, CompositeFormat, TArg0, TArg1)</h2>
+<h2 id="appendformatindent-iformatprovider-compositeformat-targ0-targ1">AppendFormatIndent(IFormatProvider?, CompositeFormat, TArg0, TArg1)</h2>
 <p>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of the arguments using a specified format provider.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent&lt;TArg0, TArg1&gt;(IFormatProvider provider, CompositeFormat format, TArg0 arg0, TArg1 arg1)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent&lt;TArg0, TArg1&gt;(IFormatProvider? provider, CompositeFormat format, TArg0 arg0, TArg1 arg1)
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
 <table>
@@ -727,7 +727,7 @@
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>An object that supplies culture-specific formatting information.</td>
 </tr>
 <tr>
@@ -789,9 +789,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-iformatprovider-compositeformat-targ0-targ1-targ2">AppendFormatIndent(IFormatProvider, CompositeFormat, TArg0, TArg1, TArg2)</h2>
+<h2 id="appendformatindent-iformatprovider-compositeformat-targ0-targ1-targ2">AppendFormatIndent(IFormatProvider?, CompositeFormat, TArg0, TArg1, TArg2)</h2>
 <p>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of the arguments using a specified format provider.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent&lt;TArg0, TArg1, TArg2&gt;(IFormatProvider provider, CompositeFormat format, TArg0 arg0, TArg1 arg1, TArg2 arg2)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent&lt;TArg0, TArg1, TArg2&gt;(IFormatProvider? provider, CompositeFormat format, TArg0 arg0, TArg1 arg1, TArg2 arg2)
 </code></pre>
 <h3 id="type-parameters-2">Type Parameters</h3>
 <table>
@@ -828,7 +828,7 @@
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>An object that supplies culture-specific formatting information.</td>
 </tr>
 <tr>
@@ -895,9 +895,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-iformatprovider-compositeformat-object">AppendFormatIndent(IFormatProvider, CompositeFormat, object[])</h2>
+<h2 id="appendformatindent-iformatprovider-compositeformat-object">AppendFormatIndent(IFormatProvider?, CompositeFormat, object[])</h2>
 <p>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of the arguments using a specified format provider.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider provider, CompositeFormat format, object[] args)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider? provider, CompositeFormat format, object[] args)
 </code></pre>
 <h3 id="parameters-11">Parameters</h3>
 <table>
@@ -911,7 +911,7 @@
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>An object that supplies culture-specific formatting information.</td>
 </tr>
 <tr>
@@ -972,9 +972,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendformatindent-iformatprovider-compositeformat-readonlyspan-object">AppendFormatIndent(IFormatProvider, CompositeFormat, ReadOnlySpan&lt;object&gt;)</h2>
+<h2 id="appendformatindent-iformatprovider-compositeformat-readonlyspan-object">AppendFormatIndent(IFormatProvider?, CompositeFormat, ReadOnlySpan&lt;object?&gt;)</h2>
 <p>Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of any of the arguments using a specified format provider.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider provider, CompositeFormat format, ReadOnlySpan&lt;object&gt; args)
+<pre><code class="language-csharp">public CodeGenerator AppendFormatIndent(IFormatProvider? provider, CompositeFormat format, ReadOnlySpan&lt;object?&gt; args)
 </code></pre>
 <h3 id="parameters-12">Parameters</h3>
 <table>
@@ -988,7 +988,7 @@
 <tbody>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>An object that supplies culture-specific formatting information.</td>
 </tr>
 <tr>
@@ -998,7 +998,7 @@
 </tr>
 <tr>
 <td><code>args</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;object&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;object?&gt;</code></a></td>
 <td>A span of objects to format.</td>
 </tr>
 </tbody>

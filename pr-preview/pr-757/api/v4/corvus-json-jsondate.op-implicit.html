@@ -121,7 +121,7 @@
 <td>Conversion to <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#implicit-operator-jsondate-ref-localdate">implicit operator JsonDate(ref LocalDate)</a></td>
+<td><a href="#implicit-operator-jsondate-localdate">implicit operator JsonDate(LocalDate)</a></td>
 <td>Conversion from <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a>.</td>
 </tr>
 <tr>
@@ -270,10 +270,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="implicit-operator-jsondate-ref-localdate">implicit operator JsonDate(ref LocalDate)</h2>
+<h2 id="implicit-operator-jsondate-localdate">implicit operator JsonDate(LocalDate)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonDate.cs#L247">JsonDate.cs</a></p>
 <p>Conversion from <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a>.</p>
-<pre><code class="language-csharp">public static implicit operator JsonDate(ref LocalDate value)
+<pre><code class="language-csharp">public static implicit operator JsonDate(in LocalDate value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -287,7 +287,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>ref LocalDate</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a></td>
 <td>The value from which to convert.</td>
 </tr>
 </tbody>

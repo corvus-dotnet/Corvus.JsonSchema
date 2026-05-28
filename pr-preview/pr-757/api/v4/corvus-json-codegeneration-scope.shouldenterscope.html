@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="shouldenterscope-jsonelement-ivocabulary-ref-string">ShouldEnterScope(JsonElement, IVocabulary, ref string)</h2>
+<h2 id="shouldenterscope-jsonelement-ivocabulary-string">ShouldEnterScope(JsonElement, IVocabulary, string?)</h2>
 <p>Determines if the current vocabulary indicates that we should enter a new scope.</p>
-<pre><code class="language-csharp">public static bool ShouldEnterScope(JsonElement schema, IVocabulary vocabulary, ref string scopeName)
+<pre><code class="language-csharp">public static bool ShouldEnterScope(JsonElement schema, IVocabulary vocabulary, out string? scopeName)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -125,7 +125,7 @@
 </tr>
 <tr>
 <td><code>scopeName</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The new scope name.</td>
 </tr>
 </tbody>

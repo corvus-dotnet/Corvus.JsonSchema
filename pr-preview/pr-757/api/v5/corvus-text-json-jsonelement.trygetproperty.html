@@ -109,23 +109,23 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetproperty-string-ref-jsonelement">TryGetProperty(string, ref JsonElement)</a></td>
+<td><a href="#trygetproperty-string-jsonelement">TryGetProperty(string, JsonElement)</a></td>
 <td>Looks for a property named <code>propertyName</code> in the current object, returning whether or not such a property existed. When the property exists <code>value</code> is assigned to the value of that property.</td>
 </tr>
 <tr>
-<td><a href="#trygetproperty-readonlyspan-char-ref-jsonelement">TryGetProperty(ReadOnlySpan&lt;char&gt;, ref JsonElement)</a></td>
+<td><a href="#trygetproperty-readonlyspan-char-jsonelement">TryGetProperty(ReadOnlySpan&lt;char&gt;, JsonElement)</a></td>
 <td>Looks for a property named <code>propertyName</code> in the current object, returning whether or not such a property existed. When the property exists <code>value</code> is assigned to the value of that property.</td>
 </tr>
 <tr>
-<td><a href="#trygetproperty-readonlyspan-byte-ref-jsonelement">TryGetProperty(ReadOnlySpan&lt;byte&gt;, ref JsonElement)</a></td>
+<td><a href="#trygetproperty-readonlyspan-byte-jsonelement">TryGetProperty(ReadOnlySpan&lt;byte&gt;, JsonElement)</a></td>
 <td>Looks for a property named <code>utf8PropertyName</code> in the current object, returning whether or not such a property existed. When the property exists <code>value</code> is assigned to the value of that property.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetproperty-string-ref-jsonelement">TryGetProperty(string, ref JsonElement)</h2>
+<h2 id="trygetproperty-string-jsonelement">TryGetProperty(string, JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.cs#L434">JsonElement.cs</a></p>
 <p>Looks for a property named <code>propertyName</code> in the current object, returning whether or not such a property existed. When the property exists <code>value</code> is assigned to the value of that property.</p>
-<pre><code class="language-csharp">public bool TryGetProperty(string propertyName, ref JsonElement value)
+<pre><code class="language-csharp">public bool TryGetProperty(string propertyName, out JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Receives the value of the located property.</td>
 </tr>
 </tbody>
@@ -197,10 +197,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetproperty-readonlyspan-char-ref-jsonelement">TryGetProperty(ReadOnlySpan&lt;char&gt;, ref JsonElement)</h2>
+<h2 id="trygetproperty-readonlyspan-char-jsonelement">TryGetProperty(ReadOnlySpan&lt;char&gt;, JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.cs#L468">JsonElement.cs</a></p>
 <p>Looks for a property named <code>propertyName</code> in the current object, returning whether or not such a property existed. When the property exists <code>value</code> is assigned to the value of that property.</p>
-<pre><code class="language-csharp">public bool TryGetProperty(ReadOnlySpan&lt;char&gt; propertyName, ref JsonElement value)
+<pre><code class="language-csharp">public bool TryGetProperty(ReadOnlySpan&lt;char&gt; propertyName, out JsonElement value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -219,7 +219,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Receives the value of the located property.</td>
 </tr>
 </tbody>
@@ -268,10 +268,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetproperty-readonlyspan-byte-ref-jsonelement">TryGetProperty(ReadOnlySpan&lt;byte&gt;, ref JsonElement)</h2>
+<h2 id="trygetproperty-readonlyspan-byte-jsonelement">TryGetProperty(ReadOnlySpan&lt;byte&gt;, JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.cs#L504">JsonElement.cs</a></p>
 <p>Looks for a property named <code>utf8PropertyName</code> in the current object, returning whether or not such a property existed. When the property exists <code>value</code> is assigned to the value of that property.</p>
-<pre><code class="language-csharp">public bool TryGetProperty(ReadOnlySpan&lt;byte&gt; utf8PropertyName, ref JsonElement value)
+<pre><code class="language-csharp">public bool TryGetProperty(ReadOnlySpan&lt;byte&gt; utf8PropertyName, out JsonElement value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -290,7 +290,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Receives the value of the located property.</td>
 </tr>
 </tbody>

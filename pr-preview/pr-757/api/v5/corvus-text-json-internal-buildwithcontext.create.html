@@ -100,8 +100,8 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/BuildWithContext.cs#L12">BuildWithContext.cs</a></p>
-<h2 id="create-ref-tcontext-tbuilder">Create(ref TContext, TBuilder)</h2>
-<pre><code class="language-csharp">public static BuildWithContext&lt;TContext, TBuilder&gt; Create&lt;TContext, TBuilder&gt;(ref TContext context, TBuilder build)
+<h2 id="create-tcontext-tbuilder">Create(TContext, TBuilder)</h2>
+<pre><code class="language-csharp">public static BuildWithContext&lt;TContext, TBuilder&gt; Create&lt;TContext, TBuilder&gt;(in TContext context, TBuilder build)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>

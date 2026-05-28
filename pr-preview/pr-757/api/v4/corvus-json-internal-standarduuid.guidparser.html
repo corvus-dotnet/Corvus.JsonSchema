@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardUuid.cs#L22">StandardUuid.cs</a></p>
-<h2 id="guidparser-readonlyspan-char-ref-object-ref-guid">GuidParser(ReadOnlySpan&lt;char&gt;, ref object, ref Guid)</h2>
+<h2 id="guidparser-readonlyspan-char-object-guid">GuidParser(ReadOnlySpan&lt;char&gt;, object?, Guid)</h2>
 <p>Parse a uuid string.</p>
-<pre><code class="language-csharp">public static bool GuidParser(ReadOnlySpan&lt;char&gt; text, ref object state, ref Guid value)
+<pre><code class="language-csharp">public static bool GuidParser(ReadOnlySpan&lt;char&gt; text, in object? state, out Guid value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,12 +121,12 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>ref object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The state object (expects null).</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.guid"><code>ref Guid</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.guid"><code>Guid</code></a></td>
 <td>The parsed IP address.</td>
 </tr>
 </tbody>

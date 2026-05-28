@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L34">JsonSchemaContext.cs</a></p>
-<h2 id="begincontext-t-int-bool-bool-ijsonschemaresultscollector">BeginContext(T, int, bool, bool, IJsonSchemaResultsCollector)</h2>
+<h2 id="begincontext-t-int-bool-bool-ijsonschemaresultscollector">BeginContext(T, int, bool, bool, IJsonSchemaResultsCollector?)</h2>
 <p>Begins a new JSON schema evaluation context for the specified document.</p>
-<pre><code class="language-csharp">public static JsonSchemaContext BeginContext&lt;T&gt;(T parentDocument, int parentDocumentIndex, bool usingEvaluatedItems, bool usingEvaluatedProperties, IJsonSchemaResultsCollector resultsCollector)
+<pre><code class="language-csharp">public static JsonSchemaContext BeginContext&lt;T&gt;(T parentDocument, int parentDocumentIndex, bool usingEvaluatedItems, bool usingEvaluatedProperties, IJsonSchemaResultsCollector? resultsCollector)
     where T : IJsonDocument
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -152,7 +152,7 @@
 </tr>
 <tr>
 <td><code>resultsCollector</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-ijsonschemaresultscollector.html"><code>IJsonSchemaResultsCollector</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-ijsonschemaresultscollector.html"><code>IJsonSchemaResultsCollector?</code></a></td>
 <td>An optional results collector for gathering evaluation results. <em>(optional)</em></td>
 </tr>
 </tbody>

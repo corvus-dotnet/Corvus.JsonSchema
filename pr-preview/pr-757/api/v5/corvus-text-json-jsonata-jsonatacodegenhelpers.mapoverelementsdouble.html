@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="mapoverelementsdouble-ref-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">MapOverElementsDouble(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
+<h2 id="mapoverelementsdouble-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">MapOverElementsDouble(JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
 <p>Fused map-over-elements for computed steps that produce <code>double</code> results. Writes doubles directly into the array builder via <code>AddItem(double)</code> (implicit <code>Source</code> conversion), avoiding per-element <code>NumberFromDouble</code> / <code>FixedJsonValueDocument</code> overhead.</p>
-<pre><code class="language-csharp">public static JsonElement MapOverElementsDouble(ref JsonElement data, Func&lt;JsonElement, JsonWorkspace, double&gt; step, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement MapOverElementsDouble(in JsonElement data, Func&lt;JsonElement, JsonWorkspace, double&gt; step, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input (array or single value).</td>
 </tr>
 <tr>

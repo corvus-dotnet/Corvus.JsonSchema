@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonEmail.cs#L296">JsonEmail.cs</a></p>
-<h2 id="fromjson-ref-jsonelement">FromJson(ref JsonElement)</h2>
+<h2 id="fromjson-jsonelement">FromJson(JsonElement)</h2>
 <p>Gets an instance of the JSON value from a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a> value.</p>
-<pre><code class="language-csharp">public static JsonEmail FromJson(ref JsonElement value)
+<pre><code class="language-csharp">public static JsonEmail FromJson(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a> value from which to instantiate the instance.</td>
 </tr>
 </tbody>

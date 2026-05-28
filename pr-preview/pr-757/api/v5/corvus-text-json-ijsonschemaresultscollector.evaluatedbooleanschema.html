@@ -109,7 +109,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#evaluatedbooleanschema-bool-jsonschemamessageprovider">EvaluatedBooleanSchema(bool, JsonSchemaMessageProvider)</a></td>
+<td><a href="#evaluatedbooleanschema-bool-jsonschemamessageprovider">EvaluatedBooleanSchema(bool, JsonSchemaMessageProvider?)</a></td>
 <td>Indicates that a boolean schema was evaluated.</td>
 </tr>
 <tr>
@@ -118,10 +118,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="evaluatedbooleanschema-bool-jsonschemamessageprovider">EvaluatedBooleanSchema(bool, JsonSchemaMessageProvider)</h2>
+<h2 id="evaluatedbooleanschema-bool-jsonschemamessageprovider">EvaluatedBooleanSchema(bool, JsonSchemaMessageProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/IJsonSchemaResultsCollector.cs#L229">IJsonSchemaResultsCollector.cs</a></p>
 <p>Indicates that a boolean schema was evaluated.</p>
-<pre><code class="language-csharp">public abstract void EvaluatedBooleanSchema(bool isMatch, JsonSchemaMessageProvider messageProvider)
+<pre><code class="language-csharp">public abstract void EvaluatedBooleanSchema(bool isMatch, JsonSchemaMessageProvider? messageProvider)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -140,7 +140,7 @@
 </tr>
 <tr>
 <td><code>messageProvider</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider?</code></a></td>
 <td>The (optional) provider for a JSON schema evaluation message.</td>
 </tr>
 </tbody>

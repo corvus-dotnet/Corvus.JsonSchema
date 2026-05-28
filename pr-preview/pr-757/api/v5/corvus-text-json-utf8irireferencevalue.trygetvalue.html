@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/Utf8IriReferenceValue.cs#L20">Utf8IriReferenceValue.cs</a></p>
-<h2 id="trygetvalue-ref-t-int-ref-utf8irireferencevalue">TryGetValue(ref T, int, ref Utf8IriReferenceValue)</h2>
+<h2 id="trygetvalue-t-int-utf8irireferencevalue">TryGetValue(T, int, Utf8IriReferenceValue)</h2>
 <p>Tries to get the value of the element at the specified index as a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8irireferencevalue.html"><code>Utf8IriReferenceValue</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryGetValue&lt;T&gt;(ref T jsonDocument, int index, ref Utf8IriReferenceValue value)
+<pre><code class="language-csharp">public static bool TryGetValue&lt;T&gt;(in T jsonDocument, int index, out Utf8IriReferenceValue value)
     where T : IJsonDocument
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -132,7 +132,7 @@
 <tbody>
 <tr>
 <td><code>jsonDocument</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td></td>
 </tr>
 <tr>
@@ -142,7 +142,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8irireferencevalue.html"><code>ref Utf8IriReferenceValue</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8irireferencevalue.html"><code>Utf8IriReferenceValue</code></a></td>
 <td>The <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8irireferencevalue.html"><code>Utf8IriReferenceValue</code></a> value.</td>
 </tr>
 </tbody>

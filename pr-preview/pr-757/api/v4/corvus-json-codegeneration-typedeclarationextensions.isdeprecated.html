@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="isdeprecated-typedeclaration-ref-string">IsDeprecated(TypeDeclaration, ref string)</h2>
+<h2 id="isdeprecated-typedeclaration-string">IsDeprecated(TypeDeclaration, string?)</h2>
 <p>Gets a value indicating whether the type is deprecated.</p>
-<pre><code class="language-csharp">public static bool IsDeprecated(TypeDeclaration that, ref string message)
+<pre><code class="language-csharp">public static bool IsDeprecated(TypeDeclaration that, out string? message)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>message</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>A deprecation message, or <code>null</code> if no message is provided.</td>
 </tr>
 </tbody>

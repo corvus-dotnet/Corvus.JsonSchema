@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonContentPre201909.String.cs#L492">JsonContentPre201909.String.cs</a></p>
-<h2 id="trygetunescapedstring-memory-char-ref-int">TryGetUnescapedString(Memory&lt;char&gt;, ref int)</h2>
+<h2 id="trygetunescapedstring-memory-char-int">TryGetUnescapedString(Memory&lt;char&gt;, int)</h2>
 <p>Gets the value as an unescaped string.</p>
-<pre><code class="language-csharp">public bool TryGetUnescapedString(Memory&lt;char&gt; buffer, ref int written)
+<pre><code class="language-csharp">public bool TryGetUnescapedString(Memory&lt;char&gt; buffer, out int written)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,7 +121,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of characters written.</td>
 </tr>
 </tbody>

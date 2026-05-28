@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.cs#L29">JsonElementHelpers.cs</a></p>
-<h2 id="applyunsafe-ttarget-ref-tsource">ApplyUnsafe(TTarget, ref TSource)</h2>
+<h2 id="applyunsafe-ttarget-tsource">ApplyUnsafe(TTarget, TSource)</h2>
 <p>Applies all properties from a source JSON object element to a target JSON object element.</p>
-<pre><code class="language-csharp">public static void ApplyUnsafe&lt;TTarget, TSource&gt;(TTarget targetElement, ref TSource sourceElement)
+<pre><code class="language-csharp">public static void ApplyUnsafe&lt;TTarget, TSource&gt;(TTarget targetElement, in TSource sourceElement)
     where TTarget : struct, IMutableJsonElement&lt;TTarget&gt;
     where TSource : struct, IJsonElement&lt;TSource&gt;
 </code></pre>
@@ -142,7 +142,7 @@
 </tr>
 <tr>
 <td><code>sourceElement</code></td>
-<td><code>ref TSource</code></td>
+<td><code>TSource</code></td>
 <td>The source JSON object element from which properties will be copied.</td>
 </tr>
 </tbody>

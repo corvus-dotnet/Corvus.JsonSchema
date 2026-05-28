@@ -109,16 +109,16 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#buildvalue-jsonelement-objectbuilder-build-ref-complexvaluebuilder">BuildValue(JsonElement.ObjectBuilder.Build, ref ComplexValueBuilder)</a></td>
+<td><a href="#buildvalue-jsonelement-objectbuilder-build-complexvaluebuilder">BuildValue(JsonElement.ObjectBuilder.Build, ComplexValueBuilder)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#buildvalue-ref-tcontext-jsonelement-objectbuilder-build-tcontext-ref-complexvaluebuilder">BuildValue(ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, ref ComplexValueBuilder)</a></td>
+<td><a href="#buildvalue-tcontext-jsonelement-objectbuilder-build-tcontext-complexvaluebuilder">BuildValue(TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, ComplexValueBuilder)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="buildvalue-jsonelement-objectbuilder-build-ref-complexvaluebuilder">BuildValue(JsonElement.ObjectBuilder.Build, ref ComplexValueBuilder)</h2>
+<h2 id="buildvalue-jsonelement-objectbuilder-build-complexvaluebuilder">BuildValue(JsonElement.ObjectBuilder.Build, ComplexValueBuilder)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ObjectBuilder.cs#L74">JsonElement.ObjectBuilder.cs</a></p>
 <pre><code class="language-csharp">public static void BuildValue(JsonElement.ObjectBuilder.Build value, ref ComplexValueBuilder valueBuilder)
 </code></pre>
@@ -139,7 +139,7 @@
 </tr>
 <tr>
 <td><code>valueBuilder</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ref ComplexValueBuilder</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -164,9 +164,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="buildvalue-ref-tcontext-jsonelement-objectbuilder-build-tcontext-ref-complexvaluebuilder">BuildValue(ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, ref ComplexValueBuilder)</h2>
+<h2 id="buildvalue-tcontext-jsonelement-objectbuilder-build-tcontext-complexvaluebuilder">BuildValue(TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, ComplexValueBuilder)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ObjectBuilder.cs#L43">JsonElement.ObjectBuilder.cs</a></p>
-<pre><code class="language-csharp">public static void BuildValue&lt;TContext&gt;(ref TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; value, ref ComplexValueBuilder valueBuilder)
+<pre><code class="language-csharp">public static void BuildValue&lt;TContext&gt;(in TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; value, ref ComplexValueBuilder valueBuilder)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -180,7 +180,7 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
@@ -190,7 +190,7 @@
 </tr>
 <tr>
 <td><code>valueBuilder</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ref ComplexValueBuilder</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a></td>
 <td></td>
 </tr>
 </tbody>

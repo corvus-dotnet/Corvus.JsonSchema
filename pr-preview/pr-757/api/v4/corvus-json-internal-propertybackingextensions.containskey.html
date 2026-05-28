@@ -109,7 +109,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#containskey-immutablelist-jsonobjectproperty-ref-jsonpropertyname">ContainsKey(ImmutableList&lt;JsonObjectProperty&gt;, ref JsonPropertyName)</a></td>
+<td><a href="#containskey-immutablelist-jsonobjectproperty-jsonpropertyname">ContainsKey(ImmutableList&lt;JsonObjectProperty&gt;, JsonPropertyName)</a></td>
 <td>Gets a value indicating whether the property backing contains the given property.</td>
 </tr>
 <tr>
@@ -126,10 +126,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="containskey-immutablelist-jsonobjectproperty-ref-jsonpropertyname">ContainsKey(ImmutableList&lt;JsonObjectProperty&gt;, ref JsonPropertyName)</h2>
+<h2 id="containskey-immutablelist-jsonobjectproperty-jsonpropertyname">ContainsKey(ImmutableList&lt;JsonObjectProperty&gt;, JsonPropertyName)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingExtensions.cs#L306">PropertyBackingExtensions.cs</a></p>
 <p>Gets a value indicating whether the property backing contains the given property.</p>
-<pre><code class="language-csharp">public static bool ContainsKey(ImmutableList&lt;JsonObjectProperty&gt; properties, ref JsonPropertyName name)
+<pre><code class="language-csharp">public static bool ContainsKey(ImmutableList&lt;JsonObjectProperty&gt; properties, in JsonPropertyName name)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -148,7 +148,7 @@
 </tr>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td>The name to test.</td>
 </tr>
 </tbody>

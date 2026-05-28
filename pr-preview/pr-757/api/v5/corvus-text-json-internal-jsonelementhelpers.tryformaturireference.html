@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#tryformaturireference-utf8urireference-bool-ref-string">TryFormatUriReference(Utf8UriReference, bool, ref string)</a></td>
+<td><a href="#tryformaturireference-utf8urireference-bool-string">TryFormatUriReference(Utf8UriReference, bool, string?)</a></td>
 <td>Tries to format a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8urireference.html"><code>Utf8UriReference</code></a> as a display (human-readable) or canonical (percent-encoded) string.</td>
 </tr>
 <tr>
-<td><a href="#tryformaturireference-utf8urireference-bool-span-char-ref-int">TryFormatUriReference(Utf8UriReference, bool, Span&lt;char&gt;, ref int)</a></td>
+<td><a href="#tryformaturireference-utf8urireference-bool-span-char-int">TryFormatUriReference(Utf8UriReference, bool, Span&lt;char&gt;, int)</a></td>
 <td>Tries to format a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8urireference.html"><code>Utf8UriReference</code></a> as a display (human-readable) or canonical (percent-encoded) string into a...</td>
 </tr>
 </tbody>
 </table>
-<h2 id="tryformaturireference-utf8urireference-bool-ref-string">TryFormatUriReference(Utf8UriReference, bool, ref string)</h2>
+<h2 id="tryformaturireference-utf8urireference-bool-string">TryFormatUriReference(Utf8UriReference, bool, string?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.Uri.cs#L121">JsonElementHelpers.Uri.cs</a></p>
 <p>Tries to format a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8urireference.html"><code>Utf8UriReference</code></a> as a display (human-readable) or canonical (percent-encoded) string.</p>
-<pre><code class="language-csharp">public static bool TryFormatUriReference(Utf8UriReference uriReference, bool isDisplay, ref string result)
+<pre><code class="language-csharp">public static bool TryFormatUriReference(Utf8UriReference uriReference, bool isDisplay, out string? result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -145,7 +145,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The formatted string, or <code>null</code> if formatting failed.</td>
 </tr>
 </tbody>
@@ -173,10 +173,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryformaturireference-utf8urireference-bool-span-char-ref-int">TryFormatUriReference(Utf8UriReference, bool, Span&lt;char&gt;, ref int)</h2>
+<h2 id="tryformaturireference-utf8urireference-bool-span-char-int">TryFormatUriReference(Utf8UriReference, bool, Span&lt;char&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.Uri.cs#L170">JsonElementHelpers.Uri.cs</a></p>
 <p>Tries to format a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8urireference.html"><code>Utf8UriReference</code></a> as a display (human-readable) or canonical (percent-encoded) string into a <a href="https://learn.microsoft.com/dotnet/api/system.span-1"><code>Span</code></a> of <a href="https://learn.microsoft.com/dotnet/api/system.char"><code>Char</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryFormatUriReference(Utf8UriReference uriReference, bool isDisplay, Span&lt;char&gt; destination, ref int charsWritten)
+<pre><code class="language-csharp">public static bool TryFormatUriReference(Utf8UriReference uriReference, bool isDisplay, Span&lt;char&gt; destination, out int charsWritten)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -205,7 +205,7 @@
 </tr>
 <tr>
 <td><code>charsWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of characters written.</td>
 </tr>
 </tbody>

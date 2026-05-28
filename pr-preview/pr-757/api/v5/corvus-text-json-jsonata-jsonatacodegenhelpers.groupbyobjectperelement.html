@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="groupbyobjectperelement-ref-jsonelement-func-jsonelement-jsonworkspace-string-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">GroupByObjectPerElement(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, string&gt;, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</h2>
+<h2 id="groupbyobjectperelement-jsonelement-func-jsonelement-jsonworkspace-string-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">GroupByObjectPerElement(JsonElement, Func&lt;JsonElement, JsonWorkspace, string?&gt;, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</h2>
 <p>Per-element group-by for path steps (<code>.{key: value}</code>). Each element of the input array is individually passed to <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.groupbyobject.html"><code>GroupByObject</code></a>, producing one object per element. Results are collected with standard singleton semantics (single result unwrapped, multiple results in array).</p>
-<pre><code class="language-csharp">public static JsonElement GroupByObjectPerElement(ref JsonElement input, Func&lt;JsonElement, JsonWorkspace, string&gt; keySelector, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt; valueSelector, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement GroupByObjectPerElement(in JsonElement input, Func&lt;JsonElement, JsonWorkspace, string?&gt; keySelector, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt; valueSelector, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input (array or scalar).</td>
 </tr>
 <tr>
 <td><code>keySelector</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.func-3"><code>Func&lt;JsonElement, JsonWorkspace, string&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.func-3"><code>Func&lt;JsonElement, JsonWorkspace, string?&gt;</code></a></td>
 <td>Function to extract the group key from each element.</td>
 </tr>
 <tr>

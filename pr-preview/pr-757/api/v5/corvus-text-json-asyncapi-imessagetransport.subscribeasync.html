@@ -113,7 +113,7 @@
 <td>Subscribes to messages on the specified channel, delivering typed payloads.</td>
 </tr>
 <tr>
-<td><a href="#subscribeasync-readonlymemory-byte-func-tpayload-jsonelement-cancellationtoken-valuetask-ref-messagecontext-cancellationtoken">SubscribeAsync(ReadOnlyMemory&lt;byte&gt;, Func&lt;TPayload, JsonElement, CancellationToken, ValueTask&gt;, ref MessageContext, CancellationToken)</a></td>
+<td><a href="#subscribeasync-readonlymemory-byte-func-tpayload-jsonelement-cancellationtoken-valuetask-messagecontext-cancellationtoken">SubscribeAsync(ReadOnlyMemory&lt;byte&gt;, Func&lt;TPayload, JsonElement, CancellationToken, ValueTask&gt;, MessageContext, CancellationToken)</a></td>
 <td>Subscribes to messages on the specified channel with protocol-specific metadata.</td>
 </tr>
 </tbody>
@@ -184,9 +184,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="subscribeasync-readonlymemory-byte-func-tpayload-jsonelement-cancellationtoken-valuetask-ref-messagecontext-cancellationtoken">SubscribeAsync(ReadOnlyMemory&lt;byte&gt;, Func&lt;TPayload, JsonElement, CancellationToken, ValueTask&gt;, ref MessageContext, CancellationToken)</h2>
+<h2 id="subscribeasync-readonlymemory-byte-func-tpayload-jsonelement-cancellationtoken-valuetask-messagecontext-cancellationtoken">SubscribeAsync(ReadOnlyMemory&lt;byte&gt;, Func&lt;TPayload, JsonElement, CancellationToken, ValueTask&gt;, MessageContext, CancellationToken)</h2>
 <p>Subscribes to messages on the specified channel with protocol-specific metadata.</p>
-<pre><code class="language-csharp">public virtual ValueTask SubscribeAsync&lt;TPayload&gt;(ReadOnlyMemory&lt;byte&gt; channelUtf8, Func&lt;TPayload, JsonElement, CancellationToken, ValueTask&gt; handler, ref MessageContext context, CancellationToken cancellationToken)
+<pre><code class="language-csharp">public virtual ValueTask SubscribeAsync&lt;TPayload&gt;(ReadOnlyMemory&lt;byte&gt; channelUtf8, Func&lt;TPayload, JsonElement, CancellationToken, ValueTask&gt; handler, in MessageContext context, CancellationToken cancellationToken)
     where TPayload : struct, IJsonElement&lt;TPayload&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -226,7 +226,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.html"><code>ref MessageContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagecontext.html"><code>MessageContext</code></a></td>
 <td>The message context containing bindings and content type.</td>
 </tr>
 <tr>

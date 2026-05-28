@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/RawUtf8JsonString.cs#L57">RawUtf8JsonString.cs</a></p>
-<h2 id="takeownership-ref-byte">TakeOwnership(ref byte[])</h2>
+<h2 id="takeownership-byte">TakeOwnership(byte[])</h2>
 <p>Takes ownership of the underlying memory and any extra rented array pool bytes.</p>
-<pre><code class="language-csharp">public ReadOnlyMemory&lt;byte&gt; TakeOwnership(ref byte[] extraRentedArrayPoolBytes)
+<pre><code class="language-csharp">public ReadOnlyMemory&lt;byte&gt; TakeOwnership(out byte[] extraRentedArrayPoolBytes)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>extraRentedArrayPoolBytes</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>ref byte[]</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>byte[]</code></a></td>
 <td>When this method returns, contains the extra rented array pool bytes, if any.</td>
 </tr>
 </tbody>

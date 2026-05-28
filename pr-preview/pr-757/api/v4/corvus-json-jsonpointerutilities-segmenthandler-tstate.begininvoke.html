@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="begininvoke-bool-readonlyspan-char-jsonelement-ref-tstate-asynccallback-object">BeginInvoke(bool, ReadOnlySpan&lt;char&gt;, JsonElement, ref TState, AsyncCallback, object)</h2>
+<h2 id="begininvoke-bool-readonlyspan-char-jsonelement-tstate-asynccallback-object">BeginInvoke(bool, ReadOnlySpan&lt;char&gt;, JsonElement, TState, AsyncCallback, object)</h2>
 <pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(bool isLastSegment, ReadOnlySpan&lt;char&gt; segment, JsonElement element, ref TState state, AsyncCallback callback, object object)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -129,7 +129,7 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td></td>
 </tr>
 <tr>

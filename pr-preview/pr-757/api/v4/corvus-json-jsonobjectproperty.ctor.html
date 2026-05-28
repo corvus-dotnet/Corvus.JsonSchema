@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#jsonobjectproperty-ref-jsonproperty">JsonObjectProperty(ref JsonProperty)</a></td>
+<td><a href="#jsonobjectproperty-jsonproperty">JsonObjectProperty(JsonProperty)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonobjectproperty.html"><code>JsonObjectProperty</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonobjectproperty-ref-jsonpropertyname-ref-jsonany">JsonObjectProperty(ref JsonPropertyName, ref JsonAny)</a></td>
+<td><a href="#jsonobjectproperty-jsonpropertyname-jsonany">JsonObjectProperty(JsonPropertyName, JsonAny)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonobjectproperty.html"><code>JsonObjectProperty</code></a> struct.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="jsonobjectproperty-ref-jsonproperty">JsonObjectProperty(ref JsonProperty)</h2>
+<h2 id="jsonobjectproperty-jsonproperty">JsonObjectProperty(JsonProperty)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty.cs#L27">JsonObjectProperty.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonobjectproperty.html"><code>JsonObjectProperty</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonObjectProperty(ref JsonProperty jsonProperty)
+<pre><code class="language-csharp">public JsonObjectProperty(in JsonProperty jsonProperty)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -135,7 +135,7 @@
 <tbody>
 <tr>
 <td><code>jsonProperty</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty"><code>ref JsonProperty</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty"><code>JsonProperty</code></a></td>
 <td>The JSON property over which to construct this instance.</td>
 </tr>
 </tbody>
@@ -160,10 +160,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonobjectproperty-ref-jsonpropertyname-ref-jsonany">JsonObjectProperty(ref JsonPropertyName, ref JsonAny)</h2>
+<h2 id="jsonobjectproperty-jsonpropertyname-jsonany">JsonObjectProperty(JsonPropertyName, JsonAny)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty.cs#L40">JsonObjectProperty.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonobjectproperty.html"><code>JsonObjectProperty</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonObjectProperty(ref JsonPropertyName name, ref JsonAny value)
+<pre><code class="language-csharp">public JsonObjectProperty(in JsonPropertyName name, in JsonAny value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -177,12 +177,12 @@
 <tbody>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td>The property name.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The property value.</td>
 </tr>
 </tbody>

@@ -109,18 +109,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#existsoverchain-ref-jsonelement-byte-jsonworkspace">ExistsOverChain(ref JsonElement, byte[][], JsonWorkspace)</a></td>
+<td><a href="#existsoverchain-jsonelement-byte-jsonworkspace">ExistsOverChain(JsonElement, byte[][], JsonWorkspace)</a></td>
 <td>Fused <code>$exists(chain)</code> — walks the property chain and returns a boolean indicating whether at least one value exists. Short-circuits on the first found element — never allocates an [<code>ElementBuffer</code>...</td>
 </tr>
 <tr>
-<td><a href="#existsoverchain-ref-jsonelement-byte-int-jsonworkspace">ExistsOverChain(ref JsonElement, byte[][], int, JsonWorkspace)</a></td>
+<td><a href="#existsoverchain-jsonelement-byte-int-jsonworkspace">ExistsOverChain(JsonElement, byte[][], int, JsonWorkspace)</a></td>
 <td>Fused <code>$exists(chain)</code> variant starting from <code>startIndex</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="existsoverchain-ref-jsonelement-byte-jsonworkspace">ExistsOverChain(ref JsonElement, byte[][], JsonWorkspace)</h2>
+<h2 id="existsoverchain-jsonelement-byte-jsonworkspace">ExistsOverChain(JsonElement, byte[][], JsonWorkspace)</h2>
 <p>Fused <code>$exists(chain)</code> — walks the property chain and returns a boolean indicating whether at least one value exists. Short-circuits on the first found element — never allocates an <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> or builds intermediate arrays.</p>
-<pre><code class="language-csharp">public static JsonElement ExistsOverChain(ref JsonElement data, byte[][] names, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement ExistsOverChain(in JsonElement data, byte[][] names, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -134,7 +134,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -171,9 +171,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="existsoverchain-ref-jsonelement-byte-int-jsonworkspace">ExistsOverChain(ref JsonElement, byte[][], int, JsonWorkspace)</h2>
+<h2 id="existsoverchain-jsonelement-byte-int-jsonworkspace">ExistsOverChain(JsonElement, byte[][], int, JsonWorkspace)</h2>
 <p>Fused <code>$exists(chain)</code> variant starting from <code>startIndex</code>.</p>
-<pre><code class="language-csharp">public static JsonElement ExistsOverChain(ref JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement ExistsOverChain(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -187,7 +187,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

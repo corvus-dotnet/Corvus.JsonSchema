@@ -109,47 +109,47 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T, ref T, ref T, ref T, ref T)</a></td>
+<td><a href="#validateenum-t-validationcontext-validationlevel-t-t-t-t-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T, T, T, T, T)</a></td>
 <td>Validate an enumeration.</td>
 </tr>
 <tr>
-<td><a href="#validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T, ref T, ref T, ref T)</a></td>
+<td><a href="#validateenum-t-validationcontext-validationlevel-t-t-t-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T, T, T, T)</a></td>
 <td>Validate an enumeration.</td>
 </tr>
 <tr>
-<td><a href="#validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T, ref T, ref T)</a></td>
+<td><a href="#validateenum-t-validationcontext-validationlevel-t-t-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T, T, T)</a></td>
 <td>Validate an enumeration.</td>
 </tr>
 <tr>
-<td><a href="#validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T, ref T)</a></td>
+<td><a href="#validateenum-t-validationcontext-validationlevel-t-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T, T)</a></td>
 <td>Validate an enumeration.</td>
 </tr>
 <tr>
-<td><a href="#validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T)</a></td>
+<td><a href="#validateenum-t-validationcontext-validationlevel-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T)</a></td>
 <td>Validate an enumeration.</td>
 </tr>
 <tr>
-<td><a href="#validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T)</a></td>
+<td><a href="#validateenum-t-validationcontext-validationlevel-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T)</a></td>
 <td>Validate an enumeration.</td>
 </tr>
 <tr>
-<td><a href="#validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T)</a></td>
+<td><a href="#validateenum-t-validationcontext-validationlevel-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T)</a></td>
 <td>Validate an enumeration.</td>
 </tr>
 <tr>
-<td><a href="#validateenum-ref-t-ref-validationcontext-validationlevel-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T)</a></td>
+<td><a href="#validateenum-t-validationcontext-validationlevel-t">ValidateEnum(T, ValidationContext, ValidationLevel, T)</a></td>
 <td>Validate an enumeration.</td>
 </tr>
 <tr>
-<td><a href="#validateenum-ref-t-ref-validationcontext-validationlevel-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, T[])</a></td>
+<td><a href="#validateenum-t-validationcontext-validationlevel-t">ValidateEnum(T, ValidationContext, ValidationLevel, T[])</a></td>
 <td>Validate an enumeration.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T, ref T, ref T, ref T, ref T)</h2>
+<h2 id="validateenum-t-validationcontext-validationlevel-t-t-t-t-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T, T, T, T, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
 <p>Validate an enumeration.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, ref T enum1, ref T enum2, ref T enum3, ref T enum4, ref T enum5, ref T enum6, ref T enum7, ref T enum8)
+<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, in T enum1, in T enum2, in T enum3, in T enum4, in T enum5, in T enum6, in T enum7, in T enum8)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -179,12 +179,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -194,42 +194,42 @@
 </tr>
 <tr>
 <td><code>enum1</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The first enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum2</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The second enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum3</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The third enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum4</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The fourth enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum5</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The fifth enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum6</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The sixth enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum7</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The seventh enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum8</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The eighth enumeration value.</td>
 </tr>
 </tbody>
@@ -257,10 +257,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T, ref T, ref T, ref T)</h2>
+<h2 id="validateenum-t-validationcontext-validationlevel-t-t-t-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T, T, T, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
 <p>Validate an enumeration.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, ref T enum1, ref T enum2, ref T enum3, ref T enum4, ref T enum5, ref T enum6, ref T enum7)
+<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, in T enum1, in T enum2, in T enum3, in T enum4, in T enum5, in T enum6, in T enum7)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -290,12 +290,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -305,37 +305,37 @@
 </tr>
 <tr>
 <td><code>enum1</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The first enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum2</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The second enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum3</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The third enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum4</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The fourth enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum5</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The fifth enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum6</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The sixth enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum7</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The seventh enumeration value.</td>
 </tr>
 </tbody>
@@ -363,10 +363,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T, ref T, ref T)</h2>
+<h2 id="validateenum-t-validationcontext-validationlevel-t-t-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T, T, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
 <p>Validate an enumeration.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, ref T enum1, ref T enum2, ref T enum3, ref T enum4, ref T enum5, ref T enum6)
+<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, in T enum1, in T enum2, in T enum3, in T enum4, in T enum5, in T enum6)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-2">Type Parameters</h3>
@@ -396,12 +396,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -411,32 +411,32 @@
 </tr>
 <tr>
 <td><code>enum1</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The first enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum2</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The second enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum3</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The third enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum4</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The fourth enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum5</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The fifth enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum6</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The sixth enumeration value.</td>
 </tr>
 </tbody>
@@ -464,10 +464,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T, ref T)</h2>
+<h2 id="validateenum-t-validationcontext-validationlevel-t-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
 <p>Validate an enumeration.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, ref T enum1, ref T enum2, ref T enum3, ref T enum4, ref T enum5)
+<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, in T enum1, in T enum2, in T enum3, in T enum4, in T enum5)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-3">Type Parameters</h3>
@@ -497,12 +497,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -512,27 +512,27 @@
 </tr>
 <tr>
 <td><code>enum1</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The first enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum2</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The second enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum3</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The third enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum4</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The fourth enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum5</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The fifth enumeration value.</td>
 </tr>
 </tbody>
@@ -560,10 +560,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T, ref T)</h2>
+<h2 id="validateenum-t-validationcontext-validationlevel-t-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
 <p>Validate an enumeration.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, ref T enum1, ref T enum2, ref T enum3, ref T enum4)
+<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, in T enum1, in T enum2, in T enum3, in T enum4)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-4">Type Parameters</h3>
@@ -593,12 +593,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -608,22 +608,22 @@
 </tr>
 <tr>
 <td><code>enum1</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The first enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum2</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The second enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum3</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The third enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum4</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The fourth enumeration value.</td>
 </tr>
 </tbody>
@@ -651,10 +651,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T, ref T)</h2>
+<h2 id="validateenum-t-validationcontext-validationlevel-t-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
 <p>Validate an enumeration.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, ref T enum1, ref T enum2, ref T enum3)
+<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, in T enum1, in T enum2, in T enum3)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-5">Type Parameters</h3>
@@ -684,12 +684,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -699,17 +699,17 @@
 </tr>
 <tr>
 <td><code>enum1</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The first enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum2</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The second enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum3</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The third enumeration value.</td>
 </tr>
 </tbody>
@@ -737,10 +737,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="validateenum-ref-t-ref-validationcontext-validationlevel-ref-t-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T, ref T)</h2>
+<h2 id="validateenum-t-validationcontext-validationlevel-t-t">ValidateEnum(T, ValidationContext, ValidationLevel, T, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
 <p>Validate an enumeration.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, ref T enum1, ref T enum2)
+<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, in T enum1, in T enum2)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-6">Type Parameters</h3>
@@ -770,12 +770,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -785,12 +785,12 @@
 </tr>
 <tr>
 <td><code>enum1</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The first enumeration value.</td>
 </tr>
 <tr>
 <td><code>enum2</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The second enumeration value.</td>
 </tr>
 </tbody>
@@ -818,10 +818,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="validateenum-ref-t-ref-validationcontext-validationlevel-ref-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, ref T)</h2>
+<h2 id="validateenum-t-validationcontext-validationlevel-t">ValidateEnum(T, ValidationContext, ValidationLevel, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
 <p>Validate an enumeration.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, ref T enum1)
+<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, in T enum1)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-7">Type Parameters</h3>
@@ -851,12 +851,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -866,7 +866,7 @@
 </tr>
 <tr>
 <td><code>enum1</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The first enumeration value.</td>
 </tr>
 </tbody>
@@ -894,10 +894,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="validateenum-ref-t-ref-validationcontext-validationlevel-t">ValidateEnum(ref T, ref ValidationContext, ValidationLevel, T[])</h2>
+<h2 id="validateenum-t-validationcontext-validationlevel-t">ValidateEnum(T, ValidationContext, ValidationLevel, T[])</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
 <p>Validate an enumeration.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, T[] enums)
+<pre><code class="language-csharp">public static ValidationContext ValidateEnum&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, T[] enums)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-8">Type Parameters</h3>
@@ -927,12 +927,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>

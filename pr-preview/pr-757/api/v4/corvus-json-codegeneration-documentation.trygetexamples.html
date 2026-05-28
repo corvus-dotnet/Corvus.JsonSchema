@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetexamples-typedeclaration-ref-string">TryGetExamples(TypeDeclaration, ref string[])</h2>
+<h2 id="trygetexamples-typedeclaration-string">TryGetExamples(TypeDeclaration, string[])</h2>
 <p>Try to get examples for the type declaration.</p>
-<pre><code class="language-csharp">public static bool TryGetExamples(TypeDeclaration typeDeclaration, ref string[] examples)
+<pre><code class="language-csharp">public static bool TryGetExamples(TypeDeclaration typeDeclaration, out string[] examples)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>examples</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string[]</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string[]</code></a></td>
 <td>The examples for the type declaration or <code>null</code> if no short form documentation was found.</td>
 </tr>
 </tbody>

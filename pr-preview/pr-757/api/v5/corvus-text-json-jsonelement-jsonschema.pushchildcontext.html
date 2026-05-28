@@ -109,26 +109,26 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#pushchildcontext-ijsondocument-int-ref-jsonschemacontext-jsonschemapathprovider-jsonschemapathprovider">PushChildContext(IJsonDocument, int, ref JsonSchemaContext, JsonSchemaPathProvider, JsonSchemaPathProvider)</a></td>
+<td><a href="#pushchildcontext-ijsondocument-int-jsonschemacontext-jsonschemapathprovider-jsonschemapathprovider">PushChildContext(IJsonDocument, int, JsonSchemaContext, JsonSchemaPathProvider?, JsonSchemaPathProvider?)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#pushchildcontext-ijsondocument-int-ref-jsonschemacontext-tcontext-jsonschemapathprovider-tcontext-jsonschemapathprovider-tcontext">PushChildContext(IJsonDocument, int, ref JsonSchemaContext, TContext, JsonSchemaPathProvider&lt;TContext&gt;, JsonSchemaPathProvider&lt;TContext&gt;)</a></td>
+<td><a href="#pushchildcontext-ijsondocument-int-jsonschemacontext-tcontext-jsonschemapathprovider-tcontext-jsonschemapathprovider-tcontext">PushChildContext(IJsonDocument, int, JsonSchemaContext, TContext, JsonSchemaPathProvider&lt;TContext&gt;, JsonSchemaPathProvider&lt;TContext&gt;)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#pushchildcontext-ijsondocument-int-ref-jsonschemacontext-readonlyspan-byte-jsonschemapathprovider">PushChildContext(IJsonDocument, int, ref JsonSchemaContext, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider)</a></td>
+<td><a href="#pushchildcontext-ijsondocument-int-jsonschemacontext-readonlyspan-byte-jsonschemapathprovider">PushChildContext(IJsonDocument, int, JsonSchemaContext, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider?)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#pushchildcontext-ijsondocument-int-ref-jsonschemacontext-int-jsonschemapathprovider">PushChildContext(IJsonDocument, int, ref JsonSchemaContext, int, JsonSchemaPathProvider)</a></td>
+<td><a href="#pushchildcontext-ijsondocument-int-jsonschemacontext-int-jsonschemapathprovider">PushChildContext(IJsonDocument, int, JsonSchemaContext, int, JsonSchemaPathProvider?)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="pushchildcontext-ijsondocument-int-ref-jsonschemacontext-jsonschemapathprovider-jsonschemapathprovider">PushChildContext(IJsonDocument, int, ref JsonSchemaContext, JsonSchemaPathProvider, JsonSchemaPathProvider)</h2>
+<h2 id="pushchildcontext-ijsondocument-int-jsonschemacontext-jsonschemapathprovider-jsonschemapathprovider">PushChildContext(IJsonDocument, int, JsonSchemaContext, JsonSchemaPathProvider?, JsonSchemaPathProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.JsonSchema.cs#L68">JsonElement.JsonSchema.cs</a></p>
-<pre><code class="language-csharp">public static JsonSchemaContext PushChildContext(IJsonDocument parentDocument, int parentDocumentIndex, ref JsonSchemaContext context, JsonSchemaPathProvider schemaEvaluationPath, JsonSchemaPathProvider documentEvaluationPath)
+<pre><code class="language-csharp">public static JsonSchemaContext PushChildContext(IJsonDocument parentDocument, int parentDocumentIndex, ref JsonSchemaContext context, JsonSchemaPathProvider? schemaEvaluationPath, JsonSchemaPathProvider? documentEvaluationPath)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -152,17 +152,17 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>schemaEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>documentEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
 </tbody>
@@ -189,7 +189,7 @@
 </tbody>
 </table>
 <hr />
-<h2 id="pushchildcontext-ijsondocument-int-ref-jsonschemacontext-tcontext-jsonschemapathprovider-tcontext-jsonschemapathprovider-tcontext">PushChildContext(IJsonDocument, int, ref JsonSchemaContext, TContext, JsonSchemaPathProvider&lt;TContext&gt;, JsonSchemaPathProvider&lt;TContext&gt;)</h2>
+<h2 id="pushchildcontext-ijsondocument-int-jsonschemacontext-tcontext-jsonschemapathprovider-tcontext-jsonschemapathprovider-tcontext">PushChildContext(IJsonDocument, int, JsonSchemaContext, TContext, JsonSchemaPathProvider&lt;TContext&gt;, JsonSchemaPathProvider&lt;TContext&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.JsonSchema.cs#L34">JsonElement.JsonSchema.cs</a></p>
 <pre><code class="language-csharp">public static JsonSchemaContext PushChildContext&lt;TContext&gt;(IJsonDocument parentDocument, int parentDocumentIndex, ref JsonSchemaContext context, TContext providerContext, JsonSchemaPathProvider&lt;TContext&gt; schemaEvaluationPath, JsonSchemaPathProvider&lt;TContext&gt; documentEvaluationPath)
 </code></pre>
@@ -215,7 +215,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -257,9 +257,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="pushchildcontext-ijsondocument-int-ref-jsonschemacontext-readonlyspan-byte-jsonschemapathprovider">PushChildContext(IJsonDocument, int, ref JsonSchemaContext, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider)</h2>
+<h2 id="pushchildcontext-ijsondocument-int-jsonschemacontext-readonlyspan-byte-jsonschemapathprovider">PushChildContext(IJsonDocument, int, JsonSchemaContext, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.JsonSchema.cs#L126">JsonElement.JsonSchema.cs</a></p>
-<pre><code class="language-csharp">public static JsonSchemaContext PushChildContext(IJsonDocument parentDocument, int parentDocumentIndex, ref JsonSchemaContext context, ReadOnlySpan&lt;byte&gt; propertyName, JsonSchemaPathProvider evaluationPath)
+<pre><code class="language-csharp">public static JsonSchemaContext PushChildContext(IJsonDocument parentDocument, int parentDocumentIndex, ref JsonSchemaContext context, ReadOnlySpan&lt;byte&gt; propertyName, JsonSchemaPathProvider? evaluationPath)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -283,7 +283,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -293,7 +293,7 @@
 </tr>
 <tr>
 <td><code>evaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
 </tbody>
@@ -320,9 +320,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="pushchildcontext-ijsondocument-int-ref-jsonschemacontext-int-jsonschemapathprovider">PushChildContext(IJsonDocument, int, ref JsonSchemaContext, int, JsonSchemaPathProvider)</h2>
+<h2 id="pushchildcontext-ijsondocument-int-jsonschemacontext-int-jsonschemapathprovider">PushChildContext(IJsonDocument, int, JsonSchemaContext, int, JsonSchemaPathProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.JsonSchema.cs#L154">JsonElement.JsonSchema.cs</a></p>
-<pre><code class="language-csharp">public static JsonSchemaContext PushChildContext(IJsonDocument parentDocument, int parentDocumentIndex, ref JsonSchemaContext context, int itemIndex, JsonSchemaPathProvider evaluationPath)
+<pre><code class="language-csharp">public static JsonSchemaContext PushChildContext(IJsonDocument parentDocument, int parentDocumentIndex, ref JsonSchemaContext context, int itemIndex, JsonSchemaPathProvider? evaluationPath)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -346,7 +346,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -356,7 +356,7 @@
 </tr>
 <tr>
 <td><code>evaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
 </tbody>

@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#unescape-readonlyspan-byte-span-byte-ref-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</a></td>
+<td><a href="#unescape-readonlyspan-byte-span-byte-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</a></td>
 <td>Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to <code>destination</code>. The first backslash is located automatically.</td>
 </tr>
 <tr>
-<td><a href="#unescape-readonlyspan-byte-span-byte-int-ref-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, ref int)</a></td>
+<td><a href="#unescape-readonlyspan-byte-span-byte-int-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, int)</a></td>
 <td>Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to <code>destination</code>. The caller provides the index of the first backslash to avoid a redundant scan.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="unescape-readonlyspan-byte-span-byte-ref-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="unescape-readonlyspan-byte-span-byte-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L40">JsonStringUnescaper.cs</a></p>
 <p>Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to <code>destination</code>. The first backslash is located automatically.</p>
-<pre><code class="language-csharp">public static void Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, ref int written)
+<pre><code class="language-csharp">public static void Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, out int written)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -145,7 +145,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written to <code>destination</code>.</td>
 </tr>
 </tbody>
@@ -172,10 +172,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="unescape-readonlyspan-byte-span-byte-int-ref-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, ref int)</h2>
+<h2 id="unescape-readonlyspan-byte-span-byte-int-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L53">JsonStringUnescaper.cs</a></p>
 <p>Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to <code>destination</code>. The caller provides the index of the first backslash to avoid a redundant scan.</p>
-<pre><code class="language-csharp">public static void Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, int idx, ref int written)
+<pre><code class="language-csharp">public static void Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, int idx, out int written)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -204,7 +204,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written to <code>destination</code>.</td>
 </tr>
 </tbody>

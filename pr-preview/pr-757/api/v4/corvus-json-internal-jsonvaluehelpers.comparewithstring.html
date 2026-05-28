@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/JsonValueHelpers.Comparisons.cs#L1">JsonValueHelpers.Comparisons.cs</a></p>
-<h2 id="comparewithstring-ref-titem1-readonlyspan-char">CompareWithString(ref TItem1, ReadOnlySpan&lt;char&gt;)</h2>
+<h2 id="comparewithstring-titem1-readonlyspan-char">CompareWithString(TItem1, ReadOnlySpan&lt;char&gt;)</h2>
 <p>Compares two values.</p>
-<pre><code class="language-csharp">public static bool CompareWithString&lt;TItem1&gt;(ref TItem1 item1, ReadOnlySpan&lt;char&gt; item2)
+<pre><code class="language-csharp">public static bool CompareWithString&lt;TItem1&gt;(in TItem1 item1, ReadOnlySpan&lt;char&gt; item2)
     where TItem1 : struct, IJsonValue&lt;TItem1&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -132,7 +132,7 @@
 <tbody>
 <tr>
 <td><code>item1</code></td>
-<td><code>ref TItem1</code></td>
+<td><code>TItem1</code></td>
 <td>The first value.</td>
 </tr>
 <tr>

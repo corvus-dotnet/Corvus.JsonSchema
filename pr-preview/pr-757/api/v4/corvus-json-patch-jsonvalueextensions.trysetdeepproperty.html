@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trysetdeepproperty-t-readonlyspan-char-ref-tvalue-ref-t">TrySetDeepProperty(T, ReadOnlySpan&lt;char&gt;, ref TValue, ref T)</h2>
+<h2 id="trysetdeepproperty-t-readonlyspan-char-tvalue-t">TrySetDeepProperty(T, ReadOnlySpan&lt;char&gt;, TValue, T)</h2>
 <p>Sets a property on a JSON value, building any missing object property structure on the way.</p>
-<pre><code class="language-csharp">public static bool TrySetDeepProperty&lt;T, TValue&gt;(T jsonValue, ReadOnlySpan&lt;char&gt; path, ref TValue value, ref T result)
+<pre><code class="language-csharp">public static bool TrySetDeepProperty&lt;T, TValue&gt;(T jsonValue, ReadOnlySpan&lt;char&gt; path, in TValue value, out T result)
     where T : struct, IJsonValue&lt;T&gt;
     where TValue : struct, IJsonValue&lt;TValue&gt;
 </code></pre>
@@ -146,12 +146,12 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td>The value to set at that path.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>An instance of the value, with any additional object property structure built, and the appropriate value added or replaced.</td>
 </tr>
 </tbody>

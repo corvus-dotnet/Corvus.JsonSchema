@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="groupbyobject-ref-jsonelement-func-jsonelement-jsonworkspace-string-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">GroupByObject(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, string&gt;, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</h2>
+<h2 id="groupbyobject-jsonelement-func-jsonelement-jsonworkspace-string-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">GroupByObject(JsonElement, Func&lt;JsonElement, JsonWorkspace, string?&gt;, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</h2>
 <p>Group-by object construction: <code>data{keyExpr: valueExpr}</code>. Mirrors the runtime's two-phase approach: Phase 1: Evaluate KEY per element → group ELEMENTS by key. Phase 2: For each group, build context (single element or JSON array), then evaluate VALUE on the group context.</p>
-<pre><code class="language-csharp">public static JsonElement GroupByObject(ref JsonElement input, Func&lt;JsonElement, JsonWorkspace, string&gt; keySelector, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt; valueSelector, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement GroupByObject(in JsonElement input, Func&lt;JsonElement, JsonWorkspace, string?&gt; keySelector, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt; valueSelector, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input data (array or scalar).</td>
 </tr>
 <tr>
 <td><code>keySelector</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.func-3"><code>Func&lt;JsonElement, JsonWorkspace, string&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.func-3"><code>Func&lt;JsonElement, JsonWorkspace, string?&gt;</code></a></td>
 <td>Evaluates the key expression for each element. Returns <code>null</code> if the key is undefined.</td>
 </tr>
 <tr>

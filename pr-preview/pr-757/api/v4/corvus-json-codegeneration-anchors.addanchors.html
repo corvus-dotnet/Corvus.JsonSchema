@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="addanchors-jsonschemaregistry-ref-jsonelement-ref-jsonreference-ivocabulary">AddAnchors(JsonSchemaRegistry, ref JsonElement, ref JsonReference, IVocabulary)</h2>
+<h2 id="addanchors-jsonschemaregistry-jsonelement-jsonreference-ivocabulary">AddAnchors(JsonSchemaRegistry, JsonElement, JsonReference, IVocabulary)</h2>
 <p>Add anchors to the base schema for the given schema.</p>
-<pre><code class="language-csharp">public static void AddAnchors(JsonSchemaRegistry jsonSchemaRegistry, ref JsonElement schema, ref JsonReference currentLocation, IVocabulary vocabulary)
+<pre><code class="language-csharp">public static void AddAnchors(JsonSchemaRegistry jsonSchemaRegistry, in JsonElement schema, in JsonReference currentLocation, IVocabulary vocabulary)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,12 +120,12 @@
 </tr>
 <tr>
 <td><code>schema</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The anchoring schema.</td>
 </tr>
 <tr>
 <td><code>currentLocation</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonreference.html"><code>ref JsonReference</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonreference.html"><code>JsonReference</code></a></td>
 <td>The current location.</td>
 </tr>
 <tr>

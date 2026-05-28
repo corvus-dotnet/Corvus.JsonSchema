@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonPath<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="descendantsforname-ref-jsonelement-readonlyspan-byte-ref-jsonpathresult">DescendantsForName(ref JsonElement, ReadOnlySpan&lt;byte&gt;, ref JsonPathResult)</h2>
+<h2 id="descendantsforname-jsonelement-readonlyspan-byte-jsonpathresult">DescendantsForName(JsonElement, ReadOnlySpan&lt;byte&gt;, JsonPathResult)</h2>
 <p>Recursively visits all descendants of <code>node</code>, appending matching named property values to <code>result</code>. Specialized for descendant-name patterns (e.g. <code>$..author</code>). Only recurses into container children (objects and arrays), skipping primitives.</p>
-<pre><code class="language-csharp">public static void DescendantsForName(ref JsonElement node, ReadOnlySpan&lt;byte&gt; propertyName, ref JsonPathResult result)
+<pre><code class="language-csharp">public static void DescendantsForName(in JsonElement node, ReadOnlySpan&lt;byte&gt; propertyName, ref JsonPathResult result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>node</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The current node to visit.</td>
 </tr>
 <tr>
@@ -125,7 +125,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonpath-jsonpathresult.html"><code>ref JsonPathResult</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonpath-jsonpathresult.html"><code>JsonPathResult</code></a></td>
 <td>The result to append matching values to.</td>
 </tr>
 </tbody>

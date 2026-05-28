@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetpropertynamedeclaration-typedeclaration-ref-typedeclaration">TryGetPropertyNameDeclaration(TypeDeclaration, ref TypeDeclaration)</h2>
+<h2 id="trygetpropertynamedeclaration-typedeclaration-typedeclaration">TryGetPropertyNameDeclaration(TypeDeclaration, TypeDeclaration?)</h2>
 <p>Tries to get the type declaration for a property name subschema validation keyword.</p>
-<pre><code class="language-csharp">public abstract bool TryGetPropertyNameDeclaration(TypeDeclaration typeDeclaration, ref TypeDeclaration propertyNameType)
+<pre><code class="language-csharp">public abstract bool TryGetPropertyNameDeclaration(TypeDeclaration typeDeclaration, out TypeDeclaration? propertyNameType)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>propertyNameType</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>ref TypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
 <td>The type declaration for the property name.</td>
 </tr>
 </tbody>

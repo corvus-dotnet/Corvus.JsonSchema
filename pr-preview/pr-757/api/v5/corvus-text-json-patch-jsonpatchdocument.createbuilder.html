@@ -109,7 +109,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#createbuilder-jsonworkspace-ref-jsonpatchdocument-source-int">CreateBuilder(JsonWorkspace, ref JsonPatchDocument.Source, int)</a></td>
+<td><a href="#createbuilder-jsonworkspace-jsonpatchdocument-source-int">CreateBuilder(JsonWorkspace, JsonPatchDocument.Source, int)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -117,11 +117,11 @@
 <td>Creates an empty mutable document builder.</td>
 </tr>
 <tr>
-<td><a href="#createbuilder-jsonworkspace-ref-jsonpatchdocument-builder-build-int-int">CreateBuilder(JsonWorkspace, ref JsonPatchDocument.Builder.Build, int, int)</a></td>
+<td><a href="#createbuilder-jsonworkspace-jsonpatchdocument-builder-build-int-int">CreateBuilder(JsonWorkspace, JsonPatchDocument.Builder.Build, int, int)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#createbuilder-jsonworkspace-ref-tcontext-ref-jsonpatchdocument-builder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, ref TContext, ref JsonPatchDocument.Builder.Build&lt;TContext&gt;, int, int)</a></td>
+<td><a href="#createbuilder-jsonworkspace-tcontext-jsonpatchdocument-builder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, TContext, JsonPatchDocument.Builder.Build&lt;TContext&gt;, int, int)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -130,8 +130,8 @@
 </tr>
 </tbody>
 </table>
-<h2 id="createbuilder-jsonworkspace-ref-jsonpatchdocument-source-int">CreateBuilder(JsonWorkspace, ref JsonPatchDocument.Source, int)</h2>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.Mutable&gt; CreateBuilder(JsonWorkspace workspace, ref JsonPatchDocument.Source value, int initialCapacity)
+<h2 id="createbuilder-jsonworkspace-jsonpatchdocument-source-int">CreateBuilder(JsonWorkspace, JsonPatchDocument.Source, int)</h2>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.Mutable&gt; CreateBuilder(JsonWorkspace workspace, in JsonPatchDocument.Source value, int initialCapacity)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -150,7 +150,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-patch-jsonpatchdocument-source.html"><code>ref JsonPatchDocument.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-patch-jsonpatchdocument-source.html"><code>JsonPatchDocument.Source</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -236,8 +236,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="createbuilder-jsonworkspace-ref-jsonpatchdocument-builder-build-int-int">CreateBuilder(JsonWorkspace, ref JsonPatchDocument.Builder.Build, int, int)</h2>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.Mutable&gt; CreateBuilder(JsonWorkspace workspace, ref JsonPatchDocument.Builder.Build value, int initialCapacity, int initialValueBufferSize)
+<h2 id="createbuilder-jsonworkspace-jsonpatchdocument-builder-build-int-int">CreateBuilder(JsonWorkspace, JsonPatchDocument.Builder.Build, int, int)</h2>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.Mutable&gt; CreateBuilder(JsonWorkspace workspace, in JsonPatchDocument.Builder.Build value, int initialCapacity, int initialValueBufferSize)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -256,7 +256,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-patch-jsonpatchdocument-builder-build.html"><code>ref JsonPatchDocument.Builder.Build</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-patch-jsonpatchdocument-builder-build.html"><code>JsonPatchDocument.Builder.Build</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -293,8 +293,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="createbuilder-jsonworkspace-ref-tcontext-ref-jsonpatchdocument-builder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, ref TContext, ref JsonPatchDocument.Builder.Build&lt;TContext&gt;, int, int)</h2>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.Mutable&gt; CreateBuilder&lt;TContext&gt;(JsonWorkspace workspace, ref TContext context, ref JsonPatchDocument.Builder.Build&lt;TContext&gt; value, int initialCapacity, int initialValueBufferSize)
+<h2 id="createbuilder-jsonworkspace-tcontext-jsonpatchdocument-builder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, TContext, JsonPatchDocument.Builder.Build&lt;TContext&gt;, int, int)</h2>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonPatchDocument.Mutable&gt; CreateBuilder&lt;TContext&gt;(JsonWorkspace workspace, in TContext context, in JsonPatchDocument.Builder.Build&lt;TContext&gt; value, int initialCapacity, int initialValueBufferSize)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -313,12 +313,12 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-patch-jsonpatchdocument-builder-build.html"><code>ref JsonPatchDocument.Builder.Build&lt;TContext&gt;</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-patch-jsonpatchdocument-builder-build.html"><code>JsonPatchDocument.Builder.Build&lt;TContext&gt;</code></a></td>
 <td></td>
 </tr>
 <tr>

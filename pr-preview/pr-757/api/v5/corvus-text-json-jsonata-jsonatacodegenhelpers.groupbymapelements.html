@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="groupbymapelements-ref-jsonelement-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">GroupByMapElements(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</h2>
+<h2 id="groupbymapelements-jsonelement-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">GroupByMapElements(JsonElement, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</h2>
 <p>Per-element object construction with groupby semantics: returns <code>default</code> for empty or null/undefined input, singularises a 1-element result, and skips undefined transform results. Used for <code>path.{StringKey: expr, ...}</code> where all keys are literal string constants.</p>
-<pre><code class="language-csharp">public static JsonElement GroupByMapElements(ref JsonElement input, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt; transform, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement GroupByMapElements(in JsonElement input, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt; transform, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

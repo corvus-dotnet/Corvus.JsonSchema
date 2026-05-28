@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonLogic<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="comparecoerced-ref-jsonelement-ref-jsonelement-int">CompareCoerced(ref JsonElement, ref JsonElement, int)</h2>
+<h2 id="comparecoerced-jsonelement-jsonelement-int">CompareCoerced(JsonElement, JsonElement, int)</h2>
 <p>Compare two elements with double fast-path and BigNumber fallback. <code>op</code>: 1 = &gt;, 2 = &gt;=, 3 = &lt;, 4 = &lt;=.</p>
-<pre><code class="language-csharp">public static bool CompareCoerced(ref JsonElement left, ref JsonElement right, int op)
+<pre><code class="language-csharp">public static bool CompareCoerced(in JsonElement left, in JsonElement right, int op)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>left</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>right</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

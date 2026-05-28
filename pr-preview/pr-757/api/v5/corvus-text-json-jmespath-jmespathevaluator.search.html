@@ -109,18 +109,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#search-string-ref-jsonelement">Search(string, ref JsonElement)</a></td>
+<td><a href="#search-string-jsonelement">Search(string, JsonElement)</a></td>
 <td>Evaluates a JMESPath expression against the given data, using an internally managed workspace. The result is cloned and safe to use after this call returns.</td>
 </tr>
 <tr>
-<td><a href="#search-string-ref-jsonelement-jsonworkspace">Search(string, ref JsonElement, JsonWorkspace)</a></td>
+<td><a href="#search-string-jsonelement-jsonworkspace">Search(string, JsonElement, JsonWorkspace)</a></td>
 <td>Evaluates a JMESPath expression against the given data, using the caller's workspace. The result lifetime is tied to the workspace.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="search-string-ref-jsonelement">Search(string, ref JsonElement)</h2>
+<h2 id="search-string-jsonelement">Search(string, JsonElement)</h2>
 <p>Evaluates a JMESPath expression against the given data, using an internally managed workspace. The result is cloned and safe to use after this call returns.</p>
-<pre><code class="language-csharp">public JsonElement Search(string expression, ref JsonElement data)
+<pre><code class="language-csharp">public JsonElement Search(string expression, in JsonElement data)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -139,7 +139,7 @@
 </tr>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The JSON data to query.</td>
 </tr>
 </tbody>
@@ -167,9 +167,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="search-string-ref-jsonelement-jsonworkspace">Search(string, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="search-string-jsonelement-jsonworkspace">Search(string, JsonElement, JsonWorkspace)</h2>
 <p>Evaluates a JMESPath expression against the given data, using the caller's workspace. The result lifetime is tied to the workspace.</p>
-<pre><code class="language-csharp">public JsonElement Search(string expression, ref JsonElement data, JsonWorkspace workspace)
+<pre><code class="language-csharp">public JsonElement Search(string expression, in JsonElement data, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -188,7 +188,7 @@
 </tr>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The JSON data to query.</td>
 </tr>
 <tr>

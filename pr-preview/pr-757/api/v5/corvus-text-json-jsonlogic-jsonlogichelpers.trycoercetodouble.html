@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonLogic<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trycoercetodouble-ref-jsonelement-ref-double">TryCoerceToDouble(ref JsonElement, ref double)</h2>
+<h2 id="trycoercetodouble-jsonelement-double">TryCoerceToDouble(JsonElement, double)</h2>
 <p>Attempts to coerce a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> to a <code>double</code>. Handles Number, True (1), False/Null (0), and numeric strings.</p>
-<pre><code class="language-csharp">public static bool TryCoerceToDouble(ref JsonElement element, ref double value)
+<pre><code class="language-csharp">public static bool TryCoerceToDouble(in JsonElement element, out double value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>element</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.double"><code>ref double</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.double"><code>double</code></a></td>
 <td></td>
 </tr>
 </tbody>

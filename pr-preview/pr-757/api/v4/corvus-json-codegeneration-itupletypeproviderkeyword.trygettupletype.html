@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygettupletype-typedeclaration-ref-tupletypedeclaration">TryGetTupleType(TypeDeclaration, ref TupleTypeDeclaration)</h2>
+<h2 id="trygettupletype-typedeclaration-tupletypedeclaration">TryGetTupleType(TypeDeclaration, TupleTypeDeclaration?)</h2>
 <p>Try to get the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-tupletypedeclaration.html"><code>TupleTypeDeclaration</code></a> for the type declaration.</p>
-<pre><code class="language-csharp">public abstract bool TryGetTupleType(TypeDeclaration typeDeclaration, ref TupleTypeDeclaration tupleType)
+<pre><code class="language-csharp">public abstract bool TryGetTupleType(TypeDeclaration typeDeclaration, out TupleTypeDeclaration? tupleType)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>tupleType</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-tupletypedeclaration.html"><code>ref TupleTypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-tupletypedeclaration.html"><code>TupleTypeDeclaration?</code></a></td>
 <td>The type of the tuple, or <code>null</code> if no single items type is found.</td>
 </tr>
 </tbody>

@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonBase64String.String.cs#L508">JsonBase64String.String.cs</a></p>
-<h2 id="trygetdecodedbase64bytes-span-byte-ref-int">TryGetDecodedBase64Bytes(Span&lt;byte&gt;, ref int)</h2>
+<h2 id="trygetdecodedbase64bytes-span-byte-int">TryGetDecodedBase64Bytes(Span&lt;byte&gt;, int)</h2>
 <p>Try to get the decoded base64 bytes.</p>
-<pre><code class="language-csharp">public bool TryGetDecodedBase64Bytes(Span&lt;byte&gt; result, ref int written)
+<pre><code class="language-csharp">public bool TryGetDecodedBase64Bytes(Span&lt;byte&gt; result, out int written)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,7 +121,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written.</td>
 </tr>
 </tbody>

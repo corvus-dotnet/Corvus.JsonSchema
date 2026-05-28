@@ -109,11 +109,11 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#insert-int-string-int">Insert(int, string, int)</a></td>
+<td><a href="#insert-int-string-int">Insert(int, string?, int)</a></td>
 <td>Inserts a string 0 or more times into this builder at the specified position.</td>
 </tr>
 <tr>
-<td><a href="#insert-int-string">Insert(int, string)</a></td>
+<td><a href="#insert-int-string">Insert(int, string?)</a></td>
 <td>Insert the string at the index.</td>
 </tr>
 <tr>
@@ -177,7 +177,7 @@
 <td>Insert the string at the index.</td>
 </tr>
 <tr>
-<td><a href="#insert-int-object">Insert(int, object)</a></td>
+<td><a href="#insert-int-object">Insert(int, object?)</a></td>
 <td>Insert the string at the index.</td>
 </tr>
 <tr>
@@ -186,9 +186,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="insert-int-string-int">Insert(int, string, int)</h2>
+<h2 id="insert-int-string-int">Insert(int, string?, int)</h2>
 <p>Inserts a string 0 or more times into this builder at the specified position.</p>
-<pre><code class="language-csharp">public CodeGenerator Insert(int index, string value, int count)
+<pre><code class="language-csharp">public CodeGenerator Insert(int index, string? value, int count)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -207,7 +207,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to insert.</td>
 </tr>
 <tr>
@@ -240,9 +240,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="insert-int-string">Insert(int, string)</h2>
+<h2 id="insert-int-string">Insert(int, string?)</h2>
 <p>Insert the string at the index.</p>
-<pre><code class="language-csharp">public CodeGenerator Insert(int index, string value)
+<pre><code class="language-csharp">public CodeGenerator Insert(int index, string? value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -261,7 +261,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to insert.</td>
 </tr>
 </tbody>
@@ -1034,9 +1034,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="insert-int-object">Insert(int, object)</h2>
+<h2 id="insert-int-object">Insert(int, object?)</h2>
 <p>Insert the string at the index.</p>
-<pre><code class="language-csharp">public CodeGenerator Insert(int index, object value)
+<pre><code class="language-csharp">public CodeGenerator Insert(int index, object? value)
 </code></pre>
 <h3 id="parameters-17">Parameters</h3>
 <table>
@@ -1055,7 +1055,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The string to insert.</td>
 </tr>
 </tbody>

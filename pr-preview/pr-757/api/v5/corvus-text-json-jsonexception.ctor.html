@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#jsonexception-string-string-nullable-long-nullable-long-exception">JsonException(string, string, Nullable&lt;long&gt;, Nullable&lt;long&gt;, Exception)</a></td>
+<td><a href="#jsonexception-string-string-nullable-long-nullable-long-exception">JsonException(string?, string?, Nullable&lt;long&gt;, Nullable&lt;long&gt;, Exception?)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a> class with a specified error message, path, line number, byte position, and a reference to the inner...</td>
 </tr>
 <tr>
-<td><a href="#jsonexception-string-string-nullable-long-nullable-long">JsonException(string, string, Nullable&lt;long&gt;, Nullable&lt;long&gt;)</a></td>
+<td><a href="#jsonexception-string-string-nullable-long-nullable-long">JsonException(string?, string?, Nullable&lt;long&gt;, Nullable&lt;long&gt;)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a> class with a specified error message, path, line number, and byte position.</td>
 </tr>
 <tr>
-<td><a href="#jsonexception-string-exception">JsonException(string, Exception)</a></td>
+<td><a href="#jsonexception-string-exception">JsonException(string?, Exception?)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a> class with a specified error message and a reference to the inner exception that is the cause of thi...</td>
 </tr>
 <tr>
-<td><a href="#jsonexception-string">JsonException(string)</a></td>
+<td><a href="#jsonexception-string">JsonException(string?)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a> class with a specified error message.</td>
 </tr>
 <tr>
@@ -130,10 +130,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="jsonexception-string-string-nullable-long-nullable-long-exception">JsonException(string, string, Nullable&lt;long&gt;, Nullable&lt;long&gt;, Exception)</h2>
+<h2 id="jsonexception-string-string-nullable-long-nullable-long-exception">JsonException(string?, string?, Nullable&lt;long&gt;, Nullable&lt;long&gt;, Exception?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonException.cs#L33">JsonException.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a> class with a specified error message, path, line number, byte position, and a reference to the inner exception that is the cause of this exception.</p>
-<pre><code class="language-csharp">public JsonException(string message, string path, Nullable&lt;long&gt; lineNumber, Nullable&lt;long&gt; bytePositionInLine, Exception innerException)
+<pre><code class="language-csharp">public JsonException(string? message, string? path, Nullable&lt;long&gt; lineNumber, Nullable&lt;long&gt; bytePositionInLine, Exception? innerException)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -147,12 +147,12 @@
 <tbody>
 <tr>
 <td><code>message</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The context specific error message.</td>
 </tr>
 <tr>
 <td><code>path</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The path where the invalid JSON was encountered.</td>
 </tr>
 <tr>
@@ -167,7 +167,7 @@
 </tr>
 <tr>
 <td><code>innerException</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.exception"><code>Exception</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.exception"><code>Exception?</code></a></td>
 <td>The exception that caused the current exception.</td>
 </tr>
 </tbody>
@@ -194,10 +194,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonexception-string-string-nullable-long-nullable-long">JsonException(string, string, Nullable&lt;long&gt;, Nullable&lt;long&gt;)</h2>
+<h2 id="jsonexception-string-string-nullable-long-nullable-long">JsonException(string?, string?, Nullable&lt;long&gt;, Nullable&lt;long&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonException.cs#L52">JsonException.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a> class with a specified error message, path, line number, and byte position.</p>
-<pre><code class="language-csharp">public JsonException(string message, string path, Nullable&lt;long&gt; lineNumber, Nullable&lt;long&gt; bytePositionInLine)
+<pre><code class="language-csharp">public JsonException(string? message, string? path, Nullable&lt;long&gt; lineNumber, Nullable&lt;long&gt; bytePositionInLine)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -211,12 +211,12 @@
 <tbody>
 <tr>
 <td><code>message</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The context specific error message.</td>
 </tr>
 <tr>
 <td><code>path</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The path where the invalid JSON was encountered.</td>
 </tr>
 <tr>
@@ -253,10 +253,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonexception-string-exception">JsonException(string, Exception)</h2>
+<h2 id="jsonexception-string-exception">JsonException(string?, Exception?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonException.cs#L66">JsonException.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a> class with a specified error message and a reference to the inner exception that is the cause of this exception.</p>
-<pre><code class="language-csharp">public JsonException(string message, Exception innerException)
+<pre><code class="language-csharp">public JsonException(string? message, Exception? innerException)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -270,12 +270,12 @@
 <tbody>
 <tr>
 <td><code>message</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The context specific error message.</td>
 </tr>
 <tr>
 <td><code>innerException</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.exception"><code>Exception</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.exception"><code>Exception?</code></a></td>
 <td>The exception that caused the current exception.</td>
 </tr>
 </tbody>
@@ -300,10 +300,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonexception-string">JsonException(string)</h2>
+<h2 id="jsonexception-string">JsonException(string?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonException.cs#L76">JsonException.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a> class with a specified error message.</p>
-<pre><code class="language-csharp">public JsonException(string message)
+<pre><code class="language-csharp">public JsonException(string? message)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -317,7 +317,7 @@
 <tbody>
 <tr>
 <td><code>message</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The context specific error message.</td>
 </tr>
 </tbody>

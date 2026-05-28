@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetfallbackobjectpropertytype-typedeclaration-ref-fallbackobjectpropertytype">TryGetFallbackObjectPropertyType(TypeDeclaration, ref FallbackObjectPropertyType)</h2>
+<h2 id="trygetfallbackobjectpropertytype-typedeclaration-fallbackobjectpropertytype">TryGetFallbackObjectPropertyType(TypeDeclaration, FallbackObjectPropertyType?)</h2>
 <p>Try to get the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-fallbackobjectpropertytype.html"><code>FallbackObjectPropertyType</code></a> for the type declaration.</p>
-<pre><code class="language-csharp">public abstract bool TryGetFallbackObjectPropertyType(TypeDeclaration typeDeclaration, ref FallbackObjectPropertyType objectPropertyType)
+<pre><code class="language-csharp">public abstract bool TryGetFallbackObjectPropertyType(TypeDeclaration typeDeclaration, out FallbackObjectPropertyType? objectPropertyType)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>objectPropertyType</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-fallbackobjectpropertytype.html"><code>ref FallbackObjectPropertyType</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-fallbackobjectpropertytype.html"><code>FallbackObjectPropertyType?</code></a></td>
 <td>The object property type, or <code>null</code> if no single object property type is found.</td>
 </tr>
 </tbody>

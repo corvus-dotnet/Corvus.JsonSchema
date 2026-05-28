@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
-<h2 id="validateconst-ref-t-ref-validationcontext-validationlevel-ref-t">ValidateConst(ref T, ref ValidationContext, ValidationLevel, ref T)</h2>
+<h2 id="validateconst-t-validationcontext-validationlevel-t">ValidateConst(T, ValidationContext, ValidationLevel, T)</h2>
 <p>Validate a const value.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateConst&lt;T&gt;(ref T value, ref ValidationContext validationContext, ValidationLevel level, ref T constValue)
+<pre><code class="language-csharp">public static ValidationContext ValidateConst&lt;T&gt;(in T value, in ValidationContext validationContext, ValidationLevel level, in T constValue)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -132,12 +132,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -147,7 +147,7 @@
 </tr>
 <tr>
 <td><code>constValue</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The const value.</td>
 </tr>
 </tbody>

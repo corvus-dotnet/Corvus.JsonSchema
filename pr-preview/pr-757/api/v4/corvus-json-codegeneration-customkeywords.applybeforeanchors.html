@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="applybeforeanchors-jsonschemaregistry-ref-jsonelement-jsonreference-ivocabulary-cancellationtoken">ApplyBeforeAnchors(JsonSchemaRegistry, ref JsonElement, JsonReference, IVocabulary, CancellationToken)</h2>
+<h2 id="applybeforeanchors-jsonschemaregistry-jsonelement-jsonreference-ivocabulary-cancellationtoken">ApplyBeforeAnchors(JsonSchemaRegistry, JsonElement, JsonReference, IVocabulary, CancellationToken)</h2>
 <p>Apply the custom keyword during schema registration.</p>
-<pre><code class="language-csharp">public static void ApplyBeforeAnchors(JsonSchemaRegistry schemaRegistry, ref JsonElement schemaValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
+<pre><code class="language-csharp">public static void ApplyBeforeAnchors(JsonSchemaRegistry schemaRegistry, in JsonElement schemaValue, JsonReference currentLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>schemaValue</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The current schema value.</td>
 </tr>
 <tr>

@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
-<h2 id="typebase64contentpre201909-ref-tvalue-ref-validationcontext-validationlevel-string">TypeBase64ContentPre201909(ref TValue, ref ValidationContext, ValidationLevel, string)</h2>
+<h2 id="typebase64contentpre201909-tvalue-validationcontext-validationlevel-string">TypeBase64ContentPre201909(TValue, ValidationContext, ValidationLevel, string?)</h2>
 <p>Validates a base64Content value.</p>
-<pre><code class="language-csharp">public static ValidationContext TypeBase64ContentPre201909&lt;TValue&gt;(ref TValue value, ref ValidationContext validationContext, ValidationLevel level, string typeKeyword)
+<pre><code class="language-csharp">public static ValidationContext TypeBase64ContentPre201909&lt;TValue&gt;(in TValue value, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword)
     where TValue : struct, IJsonValue&lt;TValue&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -132,12 +132,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td>The instance to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The current validation context.</td>
 </tr>
 <tr>
@@ -147,7 +147,7 @@
 </tr>
 <tr>
 <td><code>typeKeyword</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The type keyword. <em>(optional)</em></td>
 </tr>
 </tbody>

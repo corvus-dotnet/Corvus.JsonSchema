@@ -109,7 +109,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#remove-immutablelist-jsonobjectproperty-ref-jsonpropertyname">Remove(ImmutableList&lt;JsonObjectProperty&gt;, ref JsonPropertyName)</a></td>
+<td><a href="#remove-immutablelist-jsonobjectproperty-jsonpropertyname">Remove(ImmutableList&lt;JsonObjectProperty&gt;, JsonPropertyName)</a></td>
 <td>Removes a property from the object.</td>
 </tr>
 <tr>
@@ -125,7 +125,7 @@
 <td>Removes a property from the object.</td>
 </tr>
 <tr>
-<td><a href="#remove-immutablelist-t-builder-jsonobjectproperty-ref-jsonpropertyname">Remove(ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt;, ref JsonPropertyName)</a></td>
+<td><a href="#remove-immutablelist-t-builder-jsonobjectproperty-jsonpropertyname">Remove(ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt;, JsonPropertyName)</a></td>
 <td>Removes a property from the object.</td>
 </tr>
 <tr>
@@ -142,10 +142,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="remove-immutablelist-jsonobjectproperty-ref-jsonpropertyname">Remove(ImmutableList&lt;JsonObjectProperty&gt;, ref JsonPropertyName)</h2>
+<h2 id="remove-immutablelist-jsonobjectproperty-jsonpropertyname">Remove(ImmutableList&lt;JsonObjectProperty&gt;, JsonPropertyName)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingExtensions.cs#L42">PropertyBackingExtensions.cs</a></p>
 <p>Removes a property from the object.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;JsonObjectProperty&gt; Remove(ImmutableList&lt;JsonObjectProperty&gt; properties, ref JsonPropertyName name)
+<pre><code class="language-csharp">public static ImmutableList&lt;JsonObjectProperty&gt; Remove(ImmutableList&lt;JsonObjectProperty&gt; properties, in JsonPropertyName name)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -164,7 +164,7 @@
 </tr>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td>The name of the property to remove.</td>
 </tr>
 </tbody>
@@ -342,10 +342,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="remove-immutablelist-t-builder-jsonobjectproperty-ref-jsonpropertyname">Remove(ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt;, ref JsonPropertyName)</h2>
+<h2 id="remove-immutablelist-t-builder-jsonobjectproperty-jsonpropertyname">Remove(ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt;, JsonPropertyName)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingExtensions.cs#L42">PropertyBackingExtensions.cs</a></p>
 <p>Removes a property from the object.</p>
-<pre><code class="language-csharp">public static void Remove(ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; properties, ref JsonPropertyName name)
+<pre><code class="language-csharp">public static void Remove(ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; properties, in JsonPropertyName name)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -364,7 +364,7 @@
 </tr>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td>The name of the property to remove.</td>
 </tr>
 </tbody>

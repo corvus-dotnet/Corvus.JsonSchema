@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi.Testing<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="publishasync-readonlymemory-byte-ref-tpayload-ref-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, ref TPayload, ref JsonElement, CancellationToken)</h2>
-<pre><code class="language-csharp">public ValueTask PublishAsync&lt;TPayload&gt;(ReadOnlyMemory&lt;byte&gt; channelUtf8, ref TPayload payload, ref JsonElement headers, CancellationToken cancellationToken)
+<h2 id="publishasync-readonlymemory-byte-tpayload-jsonelement-cancellationtoken">PublishAsync(ReadOnlyMemory&lt;byte&gt;, TPayload, JsonElement, CancellationToken)</h2>
+<pre><code class="language-csharp">public ValueTask PublishAsync&lt;TPayload&gt;(ReadOnlyMemory&lt;byte&gt; channelUtf8, in TPayload payload, in JsonElement headers, CancellationToken cancellationToken)
     where TPayload : struct, IJsonElement&lt;TPayload&gt;
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -120,12 +120,12 @@
 </tr>
 <tr>
 <td><code>payload</code></td>
-<td><code>ref TPayload</code></td>
+<td><code>TPayload</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>headers</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
 <tr>

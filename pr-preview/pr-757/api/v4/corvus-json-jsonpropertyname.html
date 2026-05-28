@@ -134,6 +134,11 @@
 <td>Gets a value indicating whether this has a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a> backing.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.hasjsonpropertybacking.html">HasJsonPropertyBacking</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
+<td>Gets a value indicating whether this has a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty"><code>JsonProperty</code></a> backing.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.hasstringbacking.html">HasStringBacking</a></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
 <td>Gets a value indicating whether this has a string backing.</td>
@@ -154,7 +159,7 @@
 <td>Gets the property name as a JSON string of the given type.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.compareto.html#compareto-ref-jsonpropertyname">CompareTo(ref JsonPropertyName)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.compareto.html#compareto-jsonpropertyname">CompareTo(JsonPropertyName)</a></td>
 <td>Compares with another property name.</td>
 </tr>
 <tr>
@@ -166,7 +171,7 @@
 <td>Compares with a JsonElement.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.equalsjsonstring.html#equalsjsonstring-ref-jsonstring">EqualsJsonString(ref JsonString)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.equalsjsonstring.html#equalsjsonstring-jsonstring">EqualsJsonString(JsonString)</a></td>
 <td>Compare with a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a>.</td>
 </tr>
 <tr>
@@ -182,7 +187,7 @@
 <td>Compare with the name of a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonproperty"><code>JsonProperty</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.fromjsonstring.html#fromjsonstring-ref-t">FromJsonString(ref T)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.fromjsonstring.html#fromjsonstring-t">FromJsonString(T)</a> <code>static</code></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a> struct.</td>
 </tr>
 <tr>
@@ -206,11 +211,11 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.trygetproperty.html#trygetproperty-ref-jsonelement-ref-jsonelement">TryGetProperty(ref JsonElement, ref JsonElement)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.trygetproperty.html#trygetproperty-jsonelement-jsonelement">TryGetProperty(JsonElement, JsonElement)</a></td>
 <td>Try to get a property from a JSON element.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.trygetstring.html#trygetstring-ref-string">TryGetString(ref string)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.trygetstring.html#trygetstring-string">TryGetString(string?)</a></td>
 <td>Try to get the value as a string.</td>
 </tr>
 <tr>
@@ -233,7 +238,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-equality.html#operator-ref-jsonpropertyname-ref-jsonpropertyname">operator ==(ref JsonPropertyName, ref JsonPropertyName)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-equality.html#operator-jsonpropertyname-jsonpropertyname">operator ==(JsonPropertyName, JsonPropertyName)</a></td>
 <td>Equals operator.</td>
 </tr>
 <tr>
@@ -241,11 +246,11 @@
 <td>Conversion to string.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-greaterthan.html#operator-ref-jsonpropertyname-ref-jsonpropertyname">operator &gt;(ref JsonPropertyName, ref JsonPropertyName)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-greaterthan.html#operator-jsonpropertyname-jsonpropertyname">operator &gt;(JsonPropertyName, JsonPropertyName)</a></td>
 <td>Greater than operator.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-greaterthanorequal.html#operator-ref-jsonpropertyname-ref-jsonpropertyname">operator &gt;=(ref JsonPropertyName, ref JsonPropertyName)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-greaterthanorequal.html#operator-jsonpropertyname-jsonpropertyname">operator &gt;=(JsonPropertyName, JsonPropertyName)</a></td>
 <td>Greater than or equal to operator.</td>
 </tr>
 <tr>
@@ -253,15 +258,15 @@
 <td>Conversion from string.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-inequality.html#operator-ref-jsonpropertyname-ref-jsonpropertyname">operator !=(ref JsonPropertyName, ref JsonPropertyName)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-inequality.html#operator-jsonpropertyname-jsonpropertyname">operator !=(JsonPropertyName, JsonPropertyName)</a></td>
 <td>Not equals operator.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-lessthan.html#operator-ref-jsonpropertyname-ref-jsonpropertyname">operator &lt;(ref JsonPropertyName, ref JsonPropertyName)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-lessthan.html#operator-jsonpropertyname-jsonpropertyname">operator &lt;(JsonPropertyName, JsonPropertyName)</a></td>
 <td>Less than operator.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-lessthanorequal.html#operator-ref-jsonpropertyname-ref-jsonpropertyname">operator &lt;=(ref JsonPropertyName, ref JsonPropertyName)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.op-lessthanorequal.html#operator-jsonpropertyname-jsonpropertyname">operator &lt;=(JsonPropertyName, JsonPropertyName)</a></td>
 <td>Less than or equals operator.</td>
 </tr>
 </tbody>

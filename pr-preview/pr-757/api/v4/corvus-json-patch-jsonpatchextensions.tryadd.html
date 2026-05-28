@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="tryadd-t-string-ref-jsonany-ref-t">TryAdd(T, string, ref JsonAny, ref T)</h2>
+<h2 id="tryadd-t-string-jsonany-t">TryAdd(T, string, JsonAny, T)</h2>
 <p>Applies an Add operation to the node.</p>
-<pre><code class="language-csharp">public static bool TryAdd&lt;T&gt;(T node, string path, ref JsonAny value, ref T result)
+<pre><code class="language-csharp">public static bool TryAdd&lt;T&gt;(T node, string path, in JsonAny value, out T result)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -141,12 +141,12 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The value to add.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The resulting entity.</td>
 </tr>
 </tbody>

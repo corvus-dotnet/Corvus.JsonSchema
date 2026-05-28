@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetschemadialect-string-ref-ivocabulary">TryGetSchemaDialect(string, ref IVocabulary)</h2>
+<h2 id="trygetschemadialect-string-ivocabulary">TryGetSchemaDialect(string, IVocabulary?)</h2>
 <p>Gets the standard vocabulary for the given schema dialect.</p>
-<pre><code class="language-csharp">public bool TryGetSchemaDialect(string schemaUri, ref IVocabulary vocabulary)
+<pre><code class="language-csharp">public bool TryGetSchemaDialect(string schemaUri, out IVocabulary? vocabulary)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>vocabulary</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-ivocabulary.html"><code>ref IVocabulary</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-ivocabulary.html"><code>IVocabulary?</code></a></td>
 <td>The <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-ivocabulary.html"><code>IVocabulary</code></a> with the given URI.</td>
 </tr>
 </tbody>

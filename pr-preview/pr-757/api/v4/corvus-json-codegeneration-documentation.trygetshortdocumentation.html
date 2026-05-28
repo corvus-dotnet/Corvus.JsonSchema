@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetshortdocumentation-typedeclaration-ref-string">TryGetShortDocumentation(TypeDeclaration, ref string)</h2>
+<h2 id="trygetshortdocumentation-typedeclaration-string">TryGetShortDocumentation(TypeDeclaration, string?)</h2>
 <p>Try to get short (summary-like) documentation for the type declaration.</p>
-<pre><code class="language-csharp">public static bool TryGetShortDocumentation(TypeDeclaration typeDeclaration, ref string shortDocumentation)
+<pre><code class="language-csharp">public static bool TryGetShortDocumentation(TypeDeclaration typeDeclaration, out string? shortDocumentation)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>shortDocumentation</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The short-form documentation for the type declaration or <code>null</code> if no short form documentation was found.</td>
 </tr>
 </tbody>

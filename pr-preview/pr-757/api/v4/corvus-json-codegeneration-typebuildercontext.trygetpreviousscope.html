@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetpreviousscope-ref-nullable-jsonreference">TryGetPreviousScope(ref Nullable&lt;JsonReference&gt;)</h2>
+<h2 id="trygetpreviousscope-nullable-jsonreference">TryGetPreviousScope(Nullable&lt;JsonReference&gt;)</h2>
 <p>Finds the previous scope Location in the stack, collapsing any identical scopes.</p>
-<pre><code class="language-csharp">public bool TryGetPreviousScope(ref Nullable&lt;JsonReference&gt; previousScope)
+<pre><code class="language-csharp">public bool TryGetPreviousScope(out Nullable&lt;JsonReference&gt; previousScope)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>previousScope</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>ref Nullable&lt;JsonReference&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>Nullable&lt;JsonReference&gt;</code></a></td>
 <td>The previous scope Location.</td>
 </tr>
 </tbody>

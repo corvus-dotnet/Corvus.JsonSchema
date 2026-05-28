@@ -101,10 +101,10 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
 <h2 id="errorpolicy">ErrorPolicy()</h2>
 <p>Gets or sets the error policy that determines what action to take when a message permanently fails processing.</p>
-<pre><code class="language-csharp">public abstract IMessageErrorPolicy ErrorPolicy { get; set; }
+<pre><code class="language-csharp">public abstract IMessageErrorPolicy? ErrorPolicy { get; set; }
 </code></pre>
 <h3 id="returns">Returns</h3>
-<p><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html"><code>IMessageErrorPolicy</code></a></p>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html"><code>IMessageErrorPolicy?</code></a></p>
 <h3 id="remarks">Remarks</h3>
 <p>If <code>null</code>, a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-defaultmessageerrorpolicy.html"><code>DefaultMessageErrorPolicy</code></a> is used (dead-letter on handler/deserialization errors, abort on transport errors).</p>
 <h2 id="applies-to">Applies To</h2>

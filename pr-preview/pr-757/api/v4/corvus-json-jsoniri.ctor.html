@@ -113,7 +113,7 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoniri.html"><code>JsonIri</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsoniri-ref-jsonelement">JsonIri(ref JsonElement)</a></td>
+<td><a href="#jsoniri-jsonelement">JsonIri(JsonElement)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoniri.html"><code>JsonIri</code></a> struct.</td>
 </tr>
 <tr>
@@ -121,11 +121,11 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoniri.html"><code>JsonIri</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsoniri-ref-readonlyspan-char">JsonIri(ref ReadOnlySpan&lt;char&gt;)</a></td>
+<td><a href="#jsoniri-readonlyspan-char">JsonIri(ReadOnlySpan&lt;char&gt;)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoniri.html"><code>JsonIri</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsoniri-ref-readonlyspan-byte">JsonIri(ref ReadOnlySpan&lt;byte&gt;)</a></td>
+<td><a href="#jsoniri-readonlyspan-byte">JsonIri(ReadOnlySpan&lt;byte&gt;)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoniri.html"><code>JsonIri</code></a> struct.</td>
 </tr>
 <tr>
@@ -159,10 +159,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsoniri-ref-jsonelement">JsonIri(ref JsonElement)</h2>
+<h2 id="jsoniri-jsonelement">JsonIri(JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonIri.cs#L45">JsonIri.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoniri.html"><code>JsonIri</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonIri(ref JsonElement value)
+<pre><code class="language-csharp">public JsonIri(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -176,7 +176,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>
@@ -243,10 +243,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsoniri-ref-readonlyspan-char">JsonIri(ref ReadOnlySpan&lt;char&gt;)</h2>
+<h2 id="jsoniri-readonlyspan-char">JsonIri(ReadOnlySpan&lt;char&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonIri.String.cs#L35">JsonIri.String.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoniri.html"><code>JsonIri</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonIri(ref ReadOnlySpan&lt;char&gt; value)
+<pre><code class="language-csharp">public JsonIri(in ReadOnlySpan&lt;char&gt; value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -260,7 +260,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ref ReadOnlySpan&lt;char&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;char&gt;</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>
@@ -285,10 +285,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsoniri-ref-readonlyspan-byte">JsonIri(ref ReadOnlySpan&lt;byte&gt;)</h2>
+<h2 id="jsoniri-readonlyspan-byte">JsonIri(ReadOnlySpan&lt;byte&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonIri.String.cs#L46">JsonIri.String.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoniri.html"><code>JsonIri</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonIri(ref ReadOnlySpan&lt;byte&gt; value)
+<pre><code class="language-csharp">public JsonIri(in ReadOnlySpan&lt;byte&gt; value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -302,7 +302,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ref ReadOnlySpan&lt;byte&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>

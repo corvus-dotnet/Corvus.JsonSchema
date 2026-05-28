@@ -109,23 +109,23 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetrawtext-jsonelement-ref-utf8parser-tstate-tresult-ref-tstate-ref-tresult">TryGetRawText(JsonElement, ref Utf8Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</a></td>
+<td><a href="#trygetrawtext-jsonelement-utf8parser-tstate-tresult-tstate-tresult">TryGetRawText(JsonElement, Utf8Parser&lt;TState, TResult&gt;, TState, TResult)</a></td>
 <td>Attempts to represent the current JSON value as the given type.</td>
 </tr>
 <tr>
-<td><a href="#trygetrawtext-jsonelement-ref-utf8parser-tstate-tresult-ref-tstate-bool-ref-tresult">TryGetRawText(JsonElement, ref Utf8Parser&lt;TState, TResult&gt;, ref TState, bool, ref TResult)</a></td>
+<td><a href="#trygetrawtext-jsonelement-utf8parser-tstate-tresult-tstate-bool-tresult">TryGetRawText(JsonElement, Utf8Parser&lt;TState, TResult&gt;, TState, bool, TResult)</a></td>
 <td>Attempts to represent the current JSON string as the given type.</td>
 </tr>
 <tr>
-<td><a href="#trygetrawtext-jsonelement-ref-parser-tstate-tresult-ref-tstate-ref-tresult">TryGetRawText(JsonElement, ref Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</a></td>
+<td><a href="#trygetrawtext-jsonelement-parser-tstate-tresult-tstate-tresult">TryGetRawText(JsonElement, Parser&lt;TState, TResult&gt;, TState, TResult)</a></td>
 <td>Attempts to represent the current JSON string as the given type.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetrawtext-jsonelement-ref-utf8parser-tstate-tresult-ref-tstate-ref-tresult">TryGetRawText(JsonElement, ref Utf8Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</h2>
+<h2 id="trygetrawtext-jsonelement-utf8parser-tstate-tresult-tstate-tresult">TryGetRawText(JsonElement, Utf8Parser&lt;TState, TResult&gt;, TState, TResult)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonElementExtensions.cs#L1">JsonElementExtensions.cs</a></p>
 <p>Attempts to represent the current JSON value as the given type.</p>
-<pre><code class="language-csharp">public static bool TryGetRawText&lt;TState, TResult&gt;(JsonElement element, ref Utf8Parser&lt;TState, TResult&gt; parser, ref TState state, ref TResult value)
+<pre><code class="language-csharp">public static bool TryGetRawText&lt;TState, TResult&gt;(JsonElement element, in Utf8Parser&lt;TState, TResult&gt; parser, in TState state, out TResult value)
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
 <table>
@@ -163,17 +163,17 @@
 </tr>
 <tr>
 <td><code>parser</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-utf8parser-tstate-tresult.html"><code>ref Utf8Parser&lt;TState, TResult&gt;</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-utf8parser-tstate-tresult.html"><code>Utf8Parser&lt;TState, TResult&gt;</code></a></td>
 <td>A delegate to the method that parses the JSON string.</td>
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state for the parser.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>Receives the value.</td>
 </tr>
 </tbody>
@@ -218,10 +218,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetrawtext-jsonelement-ref-utf8parser-tstate-tresult-ref-tstate-bool-ref-tresult">TryGetRawText(JsonElement, ref Utf8Parser&lt;TState, TResult&gt;, ref TState, bool, ref TResult)</h2>
+<h2 id="trygetrawtext-jsonelement-utf8parser-tstate-tresult-tstate-bool-tresult">TryGetRawText(JsonElement, Utf8Parser&lt;TState, TResult&gt;, TState, bool, TResult)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonElementExtensions.cs#L1">JsonElementExtensions.cs</a></p>
 <p>Attempts to represent the current JSON string as the given type.</p>
-<pre><code class="language-csharp">public static bool TryGetRawText&lt;TState, TResult&gt;(JsonElement element, ref Utf8Parser&lt;TState, TResult&gt; parser, ref TState state, bool decode, ref TResult value)
+<pre><code class="language-csharp">public static bool TryGetRawText&lt;TState, TResult&gt;(JsonElement element, in Utf8Parser&lt;TState, TResult&gt; parser, in TState state, bool decode, out TResult value)
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
 <table>
@@ -259,12 +259,12 @@
 </tr>
 <tr>
 <td><code>parser</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-utf8parser-tstate-tresult.html"><code>ref Utf8Parser&lt;TState, TResult&gt;</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-utf8parser-tstate-tresult.html"><code>Utf8Parser&lt;TState, TResult&gt;</code></a></td>
 <td>A delegate to the method that parses the JSON string.</td>
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state for the parser.</td>
 </tr>
 <tr>
@@ -274,7 +274,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>Receives the value.</td>
 </tr>
 </tbody>
@@ -319,10 +319,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetrawtext-jsonelement-ref-parser-tstate-tresult-ref-tstate-ref-tresult">TryGetRawText(JsonElement, ref Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</h2>
+<h2 id="trygetrawtext-jsonelement-parser-tstate-tresult-tstate-tresult">TryGetRawText(JsonElement, Parser&lt;TState, TResult&gt;, TState, TResult)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonElementExtensions.cs#L1">JsonElementExtensions.cs</a></p>
 <p>Attempts to represent the current JSON string as the given type.</p>
-<pre><code class="language-csharp">public static bool TryGetRawText&lt;TState, TResult&gt;(JsonElement element, ref Parser&lt;TState, TResult&gt; parser, ref TState state, ref TResult value)
+<pre><code class="language-csharp">public static bool TryGetRawText&lt;TState, TResult&gt;(JsonElement element, in Parser&lt;TState, TResult&gt; parser, in TState state, out TResult value)
 </code></pre>
 <h3 id="type-parameters-2">Type Parameters</h3>
 <table>
@@ -360,17 +360,17 @@
 </tr>
 <tr>
 <td><code>parser</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-parser-tstate-tresult.html"><code>ref Parser&lt;TState, TResult&gt;</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-parser-tstate-tresult.html"><code>Parser&lt;TState, TResult&gt;</code></a></td>
 <td>A delegate to the method that parses the JSON string.</td>
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state for the parser.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>Receives the value.</td>
 </tr>
 </tbody>

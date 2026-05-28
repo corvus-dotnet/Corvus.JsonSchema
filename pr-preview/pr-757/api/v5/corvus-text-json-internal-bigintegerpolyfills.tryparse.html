@@ -100,8 +100,8 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/BigIntegerPolyfills.cs#L147">BigIntegerPolyfills.cs</a></p>
-<h2 id="tryparse-readonlyspan-byte-ref-biginteger">TryParse(ReadOnlySpan&lt;byte&gt;, ref BigInteger)</h2>
-<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;byte&gt; segment, ref BigInteger value)
+<h2 id="tryparse-readonlyspan-byte-biginteger">TryParse(ReadOnlySpan&lt;byte&gt;, BigInteger)</h2>
+<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;byte&gt; segment, out BigInteger value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>ref BigInteger</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a></td>
 <td></td>
 </tr>
 </tbody>

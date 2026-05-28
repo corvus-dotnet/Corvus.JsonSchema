@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="sumoverchaindoubleraw-ref-jsonelement-byte-func-jsonelement-jsonworkspace-double-jsonworkspace">SumOverChainDoubleRaw(ref JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
+<h2 id="sumoverchaindoubleraw-jsonelement-byte-func-jsonelement-jsonworkspace-double-jsonworkspace">SumOverChainDoubleRaw(JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
 <p>Fused sum-over-property-chain: navigates a property name chain from the input, auto-flattening arrays at each step, then applies <code>step</code> to each leaf element and accumulates the sum. Returns <a href="https://learn.microsoft.com/dotnet/api/system.double"><code>NaN</code></a> when no numeric values are found.</p>
-<pre><code class="language-csharp">public static double SumOverChainDoubleRaw(ref JsonElement input, byte[][] names, Func&lt;JsonElement, JsonWorkspace, double&gt; step, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static double SumOverChainDoubleRaw(in JsonElement input, byte[][] names, Func&lt;JsonElement, JsonWorkspace, double&gt; step, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

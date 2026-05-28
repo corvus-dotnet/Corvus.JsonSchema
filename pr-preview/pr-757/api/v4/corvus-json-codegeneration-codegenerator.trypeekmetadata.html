@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trypeekmetadata-string-ref-t">TryPeekMetadata(string, ref T)</h2>
+<h2 id="trypeekmetadata-string-t">TryPeekMetadata(string, T)</h2>
 <p>Peeks the value of the metadata with the given key.</p>
-<pre><code class="language-csharp">public bool TryPeekMetadata&lt;T&gt;(string key, ref T value)
+<pre><code class="language-csharp">public bool TryPeekMetadata&lt;T&gt;(string key, out T value)
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
 <table>
@@ -135,7 +135,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The current value of the metadata with the given key, or <code>null</code> if the key is not present.</td>
 </tr>
 </tbody>

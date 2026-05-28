@@ -121,7 +121,7 @@
 <td>Conversion to <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#implicit-operator-jsontime-ref-offsettime">implicit operator JsonTime(ref OffsetTime)</a></td>
+<td><a href="#implicit-operator-jsontime-offsettime">implicit operator JsonTime(OffsetTime)</a></td>
 <td>Conversion from <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a>.</td>
 </tr>
 <tr>
@@ -129,7 +129,7 @@
 <td>Conversion to <a href="https://learn.microsoft.com/dotnet/api/system.timeonly"><code>TimeOnly</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#implicit-operator-jsontime-ref-timeonly">implicit operator JsonTime(ref TimeOnly)</a></td>
+<td><a href="#implicit-operator-jsontime-timeonly">implicit operator JsonTime(TimeOnly)</a></td>
 <td>Conversion from <a href="https://learn.microsoft.com/dotnet/api/system.timeonly"><code>TimeOnly</code></a>.</td>
 </tr>
 <tr>
@@ -278,10 +278,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="implicit-operator-jsontime-ref-offsettime">implicit operator JsonTime(ref OffsetTime)</h2>
+<h2 id="implicit-operator-jsontime-offsettime">implicit operator JsonTime(OffsetTime)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonTime.cs#L247">JsonTime.cs</a></p>
 <p>Conversion from <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a>.</p>
-<pre><code class="language-csharp">public static implicit operator JsonTime(ref OffsetTime value)
+<pre><code class="language-csharp">public static implicit operator JsonTime(in OffsetTime value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -295,7 +295,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>ref OffsetTime</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a></td>
 <td>The value from which to convert.</td>
 </tr>
 </tbody>
@@ -366,10 +366,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="implicit-operator-jsontime-ref-timeonly">implicit operator JsonTime(ref TimeOnly)</h2>
+<h2 id="implicit-operator-jsontime-timeonly">implicit operator JsonTime(TimeOnly)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonTime.cs#L247">JsonTime.cs</a></p>
 <p>Conversion from <a href="https://learn.microsoft.com/dotnet/api/system.timeonly"><code>TimeOnly</code></a>.</p>
-<pre><code class="language-csharp">public static implicit operator JsonTime(ref TimeOnly value)
+<pre><code class="language-csharp">public static implicit operator JsonTime(in TimeOnly value)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -383,7 +383,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.timeonly"><code>ref TimeOnly</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.timeonly"><code>TimeOnly</code></a></td>
 <td>The value from which to convert.</td>
 </tr>
 </tbody>

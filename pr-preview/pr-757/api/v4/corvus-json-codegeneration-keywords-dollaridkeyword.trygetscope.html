@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.Keywords<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetscope-ref-jsonelement-ref-string">TryGetScope(ref JsonElement, ref string)</h2>
-<pre><code class="language-csharp">public bool TryGetScope(ref JsonElement schemaValue, ref string scope)
+<h2 id="trygetscope-jsonelement-string">TryGetScope(JsonElement, string?)</h2>
+<pre><code class="language-csharp">public bool TryGetScope(in JsonElement schemaValue, out string? scope)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>schemaValue</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>scope</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td></td>
 </tr>
 </tbody>

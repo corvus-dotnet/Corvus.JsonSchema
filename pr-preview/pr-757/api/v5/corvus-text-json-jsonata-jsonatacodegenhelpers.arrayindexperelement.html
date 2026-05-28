@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="arrayindexperelement-ref-jsonelement-int">ArrayIndexPerElement(ref JsonElement, int)</h2>
+<h2 id="arrayindexperelement-jsonelement-int">ArrayIndexPerElement(JsonElement, int)</h2>
 <p>Per-element array index: matches the runtime's <code>ApplyPerElementFilterStages</code> behaviour for constant numeric indices within a path step.</p>
-<pre><code class="language-csharp">public static JsonElement ArrayIndexPerElement(ref JsonElement data, int index)
+<pre><code class="language-csharp">public static JsonElement ArrayIndexPerElement(in JsonElement data, int index)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The per-element navigation result.</td>
 </tr>
 <tr>

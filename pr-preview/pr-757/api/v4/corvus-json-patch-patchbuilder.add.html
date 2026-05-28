@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="add-ref-jsonany-ref-jsonpointer">Add(ref JsonAny, ref JsonPointer)</h2>
+<h2 id="add-jsonany-jsonpointer">Add(JsonAny, JsonPointer)</h2>
 <p>Add the given <code>value</code> to the entity at the given <code>path</code>.</p>
-<pre><code class="language-csharp">public PatchBuilder Add(ref JsonAny value, ref JsonPointer path)
+<pre><code class="language-csharp">public PatchBuilder Add(in JsonAny value, in JsonPointer path)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-ijsonvalue.html"><code>IJsonValue</code></a> to add.</td>
 </tr>
 <tr>
 <td><code>path</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpointer.html"><code>ref JsonPointer</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpointer.html"><code>JsonPointer</code></a></td>
 <td>The path at which to add the value.</td>
 </tr>
 </tbody>

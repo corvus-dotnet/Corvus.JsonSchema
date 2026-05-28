@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Yaml<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="begininvoke-ref-yamlevent-asynccallback-object">BeginInvoke(ref YamlEvent, AsyncCallback, object)</h2>
-<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(ref YamlEvent yamlEvent, AsyncCallback callback, object object)
+<h2 id="begininvoke-yamlevent-asynccallback-object">BeginInvoke(YamlEvent, AsyncCallback, object)</h2>
+<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(in YamlEvent yamlEvent, AsyncCallback callback, object object)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>yamlEvent</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-yaml-yamlevent.html"><code>ref YamlEvent</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-yaml-yamlevent.html"><code>YamlEvent</code></a></td>
 <td></td>
 </tr>
 <tr>

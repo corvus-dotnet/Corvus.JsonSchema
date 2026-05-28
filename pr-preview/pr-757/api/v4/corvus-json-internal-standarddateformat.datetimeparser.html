@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardDateFormat.cs#L135">StandardDateFormat.cs</a></p>
-<h2 id="datetimeparser-readonlyspan-char-ref-object-ref-offsetdatetime">DateTimeParser(ReadOnlySpan&lt;char&gt;, ref object, ref OffsetDateTime)</h2>
+<h2 id="datetimeparser-readonlyspan-char-object-offsetdatetime">DateTimeParser(ReadOnlySpan&lt;char&gt;, object?, OffsetDateTime)</h2>
 <p>Parse a date time from a string for the <code>date-time</code> format.</p>
-<pre><code class="language-csharp">public static bool DateTimeParser(ReadOnlySpan&lt;char&gt; text, ref object state, ref OffsetDateTime value)
+<pre><code class="language-csharp">public static bool DateTimeParser(ReadOnlySpan&lt;char&gt; text, in object? state, out OffsetDateTime value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,12 +121,12 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>ref object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The (unused) state.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>ref OffsetDateTime</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a></td>
 <td>The resulting date time.</td>
 </tr>
 </tbody>

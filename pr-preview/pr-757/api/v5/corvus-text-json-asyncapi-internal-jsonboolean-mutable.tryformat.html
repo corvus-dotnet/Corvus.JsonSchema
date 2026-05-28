@@ -109,17 +109,17 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#tryformat-span-char-ref-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;char&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</a></td>
+<td><a href="#tryformat-span-char-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;char&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#tryformat-span-byte-ref-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;byte&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</a></td>
+<td><a href="#tryformat-span-byte-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;byte&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="tryformat-span-char-ref-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;char&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</h2>
-<pre><code class="language-csharp">public bool TryFormat(Span&lt;char&gt; destination, ref int charsWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider provider)
+<h2 id="tryformat-span-char-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;char&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</h2>
+<pre><code class="language-csharp">public bool TryFormat(Span&lt;char&gt; destination, out int charsWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider? provider)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -138,7 +138,7 @@
 </tr>
 <tr>
 <td><code>charsWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -148,7 +148,7 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -173,8 +173,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryformat-span-byte-ref-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;byte&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</h2>
-<pre><code class="language-csharp">public bool TryFormat(Span&lt;byte&gt; utf8Destination, ref int bytesWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider provider)
+<h2 id="tryformat-span-byte-int-readonlyspan-char-iformatprovider">TryFormat(Span&lt;byte&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</h2>
+<pre><code class="language-csharp">public bool TryFormat(Span&lt;byte&gt; utf8Destination, out int bytesWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider? provider)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -193,7 +193,7 @@
 </tr>
 <tr>
 <td><code>bytesWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -203,7 +203,7 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td></td>
 </tr>
 </tbody>

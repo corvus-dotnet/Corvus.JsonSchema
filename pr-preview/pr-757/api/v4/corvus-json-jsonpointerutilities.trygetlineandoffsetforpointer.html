@@ -109,18 +109,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetlineandoffsetforpointer-readonlyspan-byte-readonlyspan-char-ref-int-ref-int-ref-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, ref int, ref int, ref long)</a></td>
+<td><a href="#trygetlineandoffsetforpointer-readonlyspan-byte-readonlyspan-char-int-int-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, int, int, long)</a></td>
 <td>Get s the line and offset for the pointer in the input.</td>
 </tr>
 <tr>
-<td><a href="#trygetlineandoffsetforpointer-readonlyspan-byte-readonlyspan-char-jsonreaderoptions-ref-int-ref-int-ref-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, JsonReaderOptions, ref int, ref int, ref long)</a></td>
+<td><a href="#trygetlineandoffsetforpointer-readonlyspan-byte-readonlyspan-char-jsonreaderoptions-int-int-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, JsonReaderOptions, int, int, long)</a></td>
 <td>Gets the line and offset for the pointer in the input.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetlineandoffsetforpointer-readonlyspan-byte-readonlyspan-char-ref-int-ref-int-ref-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, ref int, ref int, ref long)</h2>
+<h2 id="trygetlineandoffsetforpointer-readonlyspan-byte-readonlyspan-char-int-int-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, int, int, long)</h2>
 <p>Get s the line and offset for the pointer in the input.</p>
-<pre><code class="language-csharp">public static bool TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt; utf8Input, ReadOnlySpan&lt;char&gt; fragment, ref int line, ref int chars, ref long lineOffset)
+<pre><code class="language-csharp">public static bool TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt; utf8Input, ReadOnlySpan&lt;char&gt; fragment, out int line, out int chars, out long lineOffset)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -144,17 +144,17 @@
 </tr>
 <tr>
 <td><code>line</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>If the pointer was successfully resolved, this is the line in the input text.</td>
 </tr>
 <tr>
 <td><code>chars</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>If the pointer was successfully resolved, this is the character offset in the line.</td>
 </tr>
 <tr>
 <td><code>lineOffset</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>ref long</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
 <td>If the pointer was successfully resolved, this is the total offset to the start of the line in the input text.</td>
 </tr>
 </tbody>
@@ -182,9 +182,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetlineandoffsetforpointer-readonlyspan-byte-readonlyspan-char-jsonreaderoptions-ref-int-ref-int-ref-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, JsonReaderOptions, ref int, ref int, ref long)</h2>
+<h2 id="trygetlineandoffsetforpointer-readonlyspan-byte-readonlyspan-char-jsonreaderoptions-int-int-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, JsonReaderOptions, int, int, long)</h2>
 <p>Gets the line and offset for the pointer in the input.</p>
-<pre><code class="language-csharp">public static bool TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt; utf8Input, ReadOnlySpan&lt;char&gt; fragment, JsonReaderOptions options, ref int line, ref int chars, ref long lineOffset)
+<pre><code class="language-csharp">public static bool TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt; utf8Input, ReadOnlySpan&lt;char&gt; fragment, JsonReaderOptions options, out int line, out int chars, out long lineOffset)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -213,17 +213,17 @@
 </tr>
 <tr>
 <td><code>line</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>If the pointer was successfully resolved, this is the line in the input text.</td>
 </tr>
 <tr>
 <td><code>chars</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>If the pointer was successfully resolved, this is the character offset in the line.</td>
 </tr>
 <tr>
 <td><code>lineOffset</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>ref long</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
 <td>If the pointer was successfully resolved, this is the total offset to the start of the line in the input text.</td>
 </tr>
 </tbody>

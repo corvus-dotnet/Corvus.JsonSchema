@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetnottype-typedeclaration-ref-nullable-reducedtypedeclaration">TryGetNotType(TypeDeclaration, ref Nullable&lt;ReducedTypeDeclaration&gt;)</h2>
+<h2 id="trygetnottype-typedeclaration-nullable-reducedtypedeclaration">TryGetNotType(TypeDeclaration, Nullable&lt;ReducedTypeDeclaration&gt;)</h2>
 <p>Try to get the type for the keyword.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNotType(TypeDeclaration typeDeclaration, ref Nullable&lt;ReducedTypeDeclaration&gt; notType)
+<pre><code class="language-csharp">public abstract bool TryGetNotType(TypeDeclaration typeDeclaration, out Nullable&lt;ReducedTypeDeclaration&gt; notType)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>notType</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>ref Nullable&lt;ReducedTypeDeclaration&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>Nullable&lt;ReducedTypeDeclaration&gt;</code></a></td>
 <td>The type, or <code>null</code> if no type is available.</td>
 </tr>
 </tbody>

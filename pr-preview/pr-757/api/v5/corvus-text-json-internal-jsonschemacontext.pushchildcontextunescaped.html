@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L442">JsonSchemaContext.cs</a></p>
-<h2 id="pushchildcontextunescaped-ijsondocument-int-bool-bool-readonlyspan-byte-jsonschemapathprovider-jsonschemapathprovider">PushChildContextUnescaped(IJsonDocument, int, bool, bool, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider, JsonSchemaPathProvider)</h2>
+<h2 id="pushchildcontextunescaped-ijsondocument-int-bool-bool-readonlyspan-byte-jsonschemapathprovider-jsonschemapathprovider">PushChildContextUnescaped(IJsonDocument, int, bool, bool, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider?, JsonSchemaPathProvider?)</h2>
 <p>Creates a new child context for schema evaluation with unescaped property name tracking.</p>
-<pre><code class="language-csharp">public JsonSchemaContext PushChildContextUnescaped(IJsonDocument parentDocument, int parentDocumentIndex, bool useEvaluatedItems, bool useEvaluatedProperties, ReadOnlySpan&lt;byte&gt; unescapedPropertyName, JsonSchemaPathProvider evaluationPath, JsonSchemaPathProvider schemaEvaluationPath)
+<pre><code class="language-csharp">public JsonSchemaContext PushChildContextUnescaped(IJsonDocument parentDocument, int parentDocumentIndex, bool useEvaluatedItems, bool useEvaluatedProperties, ReadOnlySpan&lt;byte&gt; unescapedPropertyName, JsonSchemaPathProvider? evaluationPath, JsonSchemaPathProvider? schemaEvaluationPath)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -141,12 +141,12 @@
 </tr>
 <tr>
 <td><code>evaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td>Optional provider for the reduced evaluation path in the schema. <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>schemaEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td>Optional provider for the full schema evaluation path. <em>(optional)</em></td>
 </tr>
 </tbody>

@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="simplegroupbyannotation-ref-jsonelement-byte-byte-jsonworkspace">SimpleGroupByAnnotation(ref JsonElement, byte[], byte[], JsonWorkspace)</h2>
+<h2 id="simplegroupbyannotation-jsonelement-byte-byte-jsonworkspace">SimpleGroupByAnnotation(JsonElement, byte[], byte[], JsonWorkspace)</h2>
 <p>Optimized annotation group-by where both key and value are simple property names. Groups ALL elements by key property, collecting values per group. Mirrors the runtime's <code>ApplySimpleNamePairGroupBy</code> using ArrayPool buffers and O(n²) grouping with stackalloc — no Dictionary, no List, no lambda dispatch.</p>
-<pre><code class="language-csharp">public static JsonElement SimpleGroupByAnnotation(ref JsonElement input, byte[] keyPropUtf8, byte[] valuePropUtf8, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement SimpleGroupByAnnotation(in JsonElement input, byte[] keyPropUtf8, byte[] valuePropUtf8, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input (array or scalar).</td>
 </tr>
 <tr>

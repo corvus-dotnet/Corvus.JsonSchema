@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/BigIntegerPolyfills.cs#L108">BigIntegerPolyfills.cs</a></p>
-<h2 id="tryformat-ref-biginteger-span-byte-ref-int">TryFormat(ref BigInteger, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="tryformat-biginteger-span-byte-int">TryFormat(BigInteger, Span&lt;byte&gt;, int)</h2>
 <p>Tries to format the value of the current <a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a> instance into the provided span of bytes.</p>
-<pre><code class="language-csharp">public static bool TryFormat(ref BigInteger value, Span&lt;byte&gt; destination, ref int bytesWritten)
+<pre><code class="language-csharp">public static bool TryFormat(in BigInteger value, Span&lt;byte&gt; destination, out int bytesWritten)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>ref BigInteger</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a></td>
 <td>The value to format.</td>
 </tr>
 <tr>
@@ -126,7 +126,7 @@
 </tr>
 <tr>
 <td><code>bytesWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the number of bytes that were written to the destination.</td>
 </tr>
 </tbody>

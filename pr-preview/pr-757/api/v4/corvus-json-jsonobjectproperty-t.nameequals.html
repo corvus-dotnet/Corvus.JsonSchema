@@ -117,11 +117,11 @@
 <td>Compares the specified text to the name of this property.</td>
 </tr>
 <tr>
-<td><a href="#nameequals-ref-jsonpropertyname">NameEquals(ref JsonPropertyName)</a></td>
+<td><a href="#nameequals-jsonpropertyname">NameEquals(JsonPropertyName)</a></td>
 <td>Compares the specified text to the name of this property.</td>
 </tr>
 <tr>
-<td><a href="#nameequals-ref-jsonstring">NameEquals(ref JsonString)</a></td>
+<td><a href="#nameequals-jsonstring">NameEquals(JsonString)</a></td>
 <td>Compares the specified text to the name of this property.</td>
 </tr>
 <tr>
@@ -131,7 +131,7 @@
 </tbody>
 </table>
 <h2 id="nameequals-readonlyspan-byte">NameEquals(ReadOnlySpan&lt;byte&gt;)</h2>
-<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L257">JsonObjectProperty.cs</a></p>
+<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L264">JsonObjectProperty.cs</a></p>
 <p>Compares the specified UTF-8 encoded text to the name of this property.</p>
 <pre><code class="language-csharp">public bool NameEquals(ReadOnlySpan&lt;byte&gt; utf8Name)
 </code></pre>
@@ -176,7 +176,7 @@
 </table>
 <hr />
 <h2 id="nameequals-readonlyspan-char">NameEquals(ReadOnlySpan&lt;char&gt;)</h2>
-<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L277">JsonObjectProperty.cs</a></p>
+<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L284">JsonObjectProperty.cs</a></p>
 <p>Compares the specified text to the name of this property.</p>
 <pre><code class="language-csharp">public bool NameEquals(ReadOnlySpan&lt;char&gt; name)
 </code></pre>
@@ -220,10 +220,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="nameequals-ref-jsonpropertyname">NameEquals(ref JsonPropertyName)</h2>
-<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L297">JsonObjectProperty.cs</a></p>
+<h2 id="nameequals-jsonpropertyname">NameEquals(JsonPropertyName)</h2>
+<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L304">JsonObjectProperty.cs</a></p>
 <p>Compares the specified text to the name of this property.</p>
-<pre><code class="language-csharp">public bool NameEquals(ref JsonPropertyName name)
+<pre><code class="language-csharp">public bool NameEquals(in JsonPropertyName name)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -237,7 +237,7 @@
 <tbody>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td>The name to match.</td>
 </tr>
 </tbody>
@@ -265,10 +265,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="nameequals-ref-jsonstring">NameEquals(ref JsonString)</h2>
-<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L317">JsonObjectProperty.cs</a></p>
+<h2 id="nameequals-jsonstring">NameEquals(JsonString)</h2>
+<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L324">JsonObjectProperty.cs</a></p>
 <p>Compares the specified text to the name of this property.</p>
-<pre><code class="language-csharp">public bool NameEquals(ref JsonString name)
+<pre><code class="language-csharp">public bool NameEquals(in JsonString name)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -282,7 +282,7 @@
 <tbody>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonstring.html"><code>ref JsonString</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a></td>
 <td>The name to match.</td>
 </tr>
 </tbody>
@@ -311,7 +311,7 @@
 </table>
 <hr />
 <h2 id="nameequals-string">NameEquals(string)</h2>
-<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L348">JsonObjectProperty.cs</a></p>
+<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L355">JsonObjectProperty.cs</a></p>
 <p>Compares the specified text to the name of this property.</p>
 <pre><code class="language-csharp">public bool NameEquals(string name)
 </code></pre>

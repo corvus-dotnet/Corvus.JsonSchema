@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L918">JsonSchemaContext.cs</a></p>
-<h2 id="applyevaluated-ref-jsonschemacontext">ApplyEvaluated(ref JsonSchemaContext)</h2>
+<h2 id="applyevaluated-jsonschemacontext">ApplyEvaluated(JsonSchemaContext)</h2>
 <p>Applies the evaluated properties/items from the child context to this (parent) context, if appropriate.</p>
-<pre><code class="language-csharp">public void ApplyEvaluated(ref JsonSchemaContext childContext)
+<pre><code class="language-csharp">public void ApplyEvaluated(in JsonSchemaContext childContext)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>childContext</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td>The child context from which to apply evaluated properties/items</td>
 </tr>
 </tbody>

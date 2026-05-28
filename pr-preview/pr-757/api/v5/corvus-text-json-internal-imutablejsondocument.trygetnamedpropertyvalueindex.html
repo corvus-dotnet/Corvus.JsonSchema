@@ -109,23 +109,23 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetnamedpropertyvalueindex-ref-metadatadb-int-int-readonlyspan-byte-ref-int">TryGetNamedPropertyValueIndex(ref MetadataDb, int, int, ReadOnlySpan&lt;byte&gt;, ref int)</a></td>
+<td><a href="#trygetnamedpropertyvalueindex-metadatadb-int-int-readonlyspan-byte-int">TryGetNamedPropertyValueIndex(MetadataDb, int, int, ReadOnlySpan&lt;byte&gt;, int)</a></td>
 <td>Gets the named property value from a specific <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-metadatadb.html"><code>MetadataDb</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#trygetnamedpropertyvalueindex-int-readonlyspan-char-ref-int">TryGetNamedPropertyValueIndex(int, ReadOnlySpan&lt;char&gt;, ref int)</a></td>
+<td><a href="#trygetnamedpropertyvalueindex-int-readonlyspan-char-int">TryGetNamedPropertyValueIndex(int, ReadOnlySpan&lt;char&gt;, int)</a></td>
 <td>Gets the named property value from a specific <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-metadatadb.html"><code>MetadataDb</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#trygetnamedpropertyvalueindex-int-readonlyspan-byte-ref-int">TryGetNamedPropertyValueIndex(int, ReadOnlySpan&lt;byte&gt;, ref int)</a></td>
+<td><a href="#trygetnamedpropertyvalueindex-int-readonlyspan-byte-int">TryGetNamedPropertyValueIndex(int, ReadOnlySpan&lt;byte&gt;, int)</a></td>
 <td>Gets the named property value from a specific <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-metadatadb.html"><code>MetadataDb</code></a>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetnamedpropertyvalueindex-ref-metadatadb-int-int-readonlyspan-byte-ref-int">TryGetNamedPropertyValueIndex(ref MetadataDb, int, int, ReadOnlySpan&lt;byte&gt;, ref int)</h2>
+<h2 id="trygetnamedpropertyvalueindex-metadatadb-int-int-readonlyspan-byte-int">TryGetNamedPropertyValueIndex(MetadataDb, int, int, ReadOnlySpan&lt;byte&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L62">IMutableJsonDocument.cs</a></p>
 <p>Gets the named property value from a specific <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-metadatadb.html"><code>MetadataDb</code></a>.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValueIndex(ref MetadataDb parsedData, int startIndex, int endIndex, ReadOnlySpan&lt;byte&gt; propertyName, ref int valueIndex)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValueIndex(ref MetadataDb parsedData, int startIndex, int endIndex, ReadOnlySpan&lt;byte&gt; propertyName, out int valueIndex)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -139,7 +139,7 @@
 <tbody>
 <tr>
 <td><code>parsedData</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-metadatadb.html"><code>ref MetadataDb</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-metadatadb.html"><code>MetadataDb</code></a></td>
 <td>The parsed data. This is used in place of the document's own MetadataDb.</td>
 </tr>
 <tr>
@@ -159,7 +159,7 @@
 </tr>
 <tr>
 <td><code>valueIndex</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The index of the value corresponding to the given property name.</td>
 </tr>
 </tbody>
@@ -187,10 +187,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetnamedpropertyvalueindex-int-readonlyspan-char-ref-int">TryGetNamedPropertyValueIndex(int, ReadOnlySpan&lt;char&gt;, ref int)</h2>
+<h2 id="trygetnamedpropertyvalueindex-int-readonlyspan-char-int">TryGetNamedPropertyValueIndex(int, ReadOnlySpan&lt;char&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L62">IMutableJsonDocument.cs</a></p>
 <p>Gets the named property value from a specific <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-metadatadb.html"><code>MetadataDb</code></a>.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValueIndex(int index, ReadOnlySpan&lt;char&gt; propertyName, ref int valueIndex)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValueIndex(int index, ReadOnlySpan&lt;char&gt; propertyName, out int valueIndex)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -214,7 +214,7 @@
 </tr>
 <tr>
 <td><code>valueIndex</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The index of the value corresponding to the given property name.</td>
 </tr>
 </tbody>
@@ -242,10 +242,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetnamedpropertyvalueindex-int-readonlyspan-byte-ref-int">TryGetNamedPropertyValueIndex(int, ReadOnlySpan&lt;byte&gt;, ref int)</h2>
+<h2 id="trygetnamedpropertyvalueindex-int-readonlyspan-byte-int">TryGetNamedPropertyValueIndex(int, ReadOnlySpan&lt;byte&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L62">IMutableJsonDocument.cs</a></p>
 <p>Gets the named property value from a specific <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-metadatadb.html"><code>MetadataDb</code></a>.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValueIndex(int index, ReadOnlySpan&lt;byte&gt; propertyName, ref int valueIndex)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValueIndex(int index, ReadOnlySpan&lt;byte&gt; propertyName, out int valueIndex)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -269,7 +269,7 @@
 </tr>
 <tr>
 <td><code>valueIndex</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The index of the value corresponding to the given property name.</td>
 </tr>
 </tbody>

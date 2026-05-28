@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="canreducenonreducingkeyword-ref-jsonelement-readonlyspan-byte">CanReduceNonReducingKeyword(ref JsonElement, ReadOnlySpan&lt;byte&gt;)</h2>
+<h2 id="canreducenonreducingkeyword-jsonelement-readonlyspan-byte">CanReduceNonReducingKeyword(JsonElement, ReadOnlySpan&lt;byte&gt;)</h2>
 <p>Determine if a non-reducing keyword applies to a particular schema value.</p>
-<pre><code class="language-csharp">public static bool CanReduceNonReducingKeyword(ref JsonElement schemaValue, ReadOnlySpan&lt;byte&gt; keyword)
+<pre><code class="language-csharp">public static bool CanReduceNonReducingKeyword(in JsonElement schemaValue, ReadOnlySpan&lt;byte&gt; keyword)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>schemaValue</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The schema value to test.</td>
 </tr>
 <tr>

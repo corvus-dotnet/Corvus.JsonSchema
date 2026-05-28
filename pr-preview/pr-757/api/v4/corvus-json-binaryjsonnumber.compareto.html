@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#compareto-ref-binaryjsonnumber">CompareTo(ref BinaryJsonNumber)</a></td>
+<td><a href="#compareto-binaryjsonnumber">CompareTo(BinaryJsonNumber)</a></td>
 <td>Comparison with another value.</td>
 </tr>
 <tr>
-<td><a href="#compareto-ref-jsonelement">CompareTo(ref JsonElement)</a></td>
+<td><a href="#compareto-jsonelement">CompareTo(JsonElement)</a></td>
 <td>Comparison with another value.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="compareto-ref-binaryjsonnumber">CompareTo(ref BinaryJsonNumber)</h2>
+<h2 id="compareto-binaryjsonnumber">CompareTo(BinaryJsonNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/BinaryJsonNumber.Net8.cs#L2816">BinaryJsonNumber.Net8.cs</a></p>
 <p>Comparison with another value.</p>
-<pre><code class="language-csharp">public int CompareTo(ref BinaryJsonNumber other)
+<pre><code class="language-csharp">public int CompareTo(in BinaryJsonNumber other)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -135,7 +135,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The value with which to compare.</td>
 </tr>
 </tbody>
@@ -163,10 +163,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="compareto-ref-jsonelement">CompareTo(ref JsonElement)</h2>
+<h2 id="compareto-jsonelement">CompareTo(JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/BinaryJsonNumber.Net8.cs#L2826">BinaryJsonNumber.Net8.cs</a></p>
 <p>Comparison with another value.</p>
-<pre><code class="language-csharp">public int CompareTo(ref JsonElement other)
+<pre><code class="language-csharp">public int CompareTo(in JsonElement other)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -180,7 +180,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value with which to compare.</td>
 </tr>
 </tbody>

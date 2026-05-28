@@ -109,18 +109,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#oauth2authenticationprovider-string-string-string">OAuth2AuthenticationProvider(string, string, string)</a></td>
+<td><a href="#oauth2authenticationprovider-string-string-string">OAuth2AuthenticationProvider(string, string, string?)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.html"><code>OAuth2AuthenticationProvider</code></a> class with a static access token.</td>
 </tr>
 <tr>
-<td><a href="#oauth2authenticationprovider-func-cancellationtoken-valuetask-string-string-string">OAuth2AuthenticationProvider(Func&lt;CancellationToken, ValueTask&lt;string&gt;&gt;, string, string)</a></td>
+<td><a href="#oauth2authenticationprovider-func-cancellationtoken-valuetask-string-string-string">OAuth2AuthenticationProvider(Func&lt;CancellationToken, ValueTask&lt;string&gt;&gt;, string, string?)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.html"><code>OAuth2AuthenticationProvider</code></a> class with a dynamic token factory.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="oauth2authenticationprovider-string-string-string">OAuth2AuthenticationProvider(string, string, string)</h2>
+<h2 id="oauth2authenticationprovider-string-string-string">OAuth2AuthenticationProvider(string, string, string?)</h2>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.html"><code>OAuth2AuthenticationProvider</code></a> class with a static access token.</p>
-<pre><code class="language-csharp">public OAuth2AuthenticationProvider(string accessToken, string tokenType, string scopes)
+<pre><code class="language-csharp">public OAuth2AuthenticationProvider(string accessToken, string tokenType, string? scopes)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>scopes</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The requested scopes (space-separated). <em>(optional)</em></td>
 </tr>
 </tbody>
@@ -165,9 +165,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="oauth2authenticationprovider-func-cancellationtoken-valuetask-string-string-string">OAuth2AuthenticationProvider(Func&lt;CancellationToken, ValueTask&lt;string&gt;&gt;, string, string)</h2>
+<h2 id="oauth2authenticationprovider-func-cancellationtoken-valuetask-string-string-string">OAuth2AuthenticationProvider(Func&lt;CancellationToken, ValueTask&lt;string&gt;&gt;, string, string?)</h2>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-oauth2authenticationprovider.html"><code>OAuth2AuthenticationProvider</code></a> class with a dynamic token factory.</p>
-<pre><code class="language-csharp">public OAuth2AuthenticationProvider(Func&lt;CancellationToken, ValueTask&lt;string&gt;&gt; accessTokenFactory, string tokenType, string scopes)
+<pre><code class="language-csharp">public OAuth2AuthenticationProvider(Func&lt;CancellationToken, ValueTask&lt;string&gt;&gt; accessTokenFactory, string tokenType, string? scopes)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -191,7 +191,7 @@
 </tr>
 <tr>
 <td><code>scopes</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The requested scopes (space-separated). <em>(optional)</em></td>
 </tr>
 </tbody>

@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.cs#L29">JsonElementHelpers.cs</a></p>
-<h2 id="deepequals-ref-tleft-ref-tright">DeepEquals(ref TLeft, ref TRight)</h2>
+<h2 id="deepequals-tleft-tright">DeepEquals(TLeft, TRight)</h2>
 <p>Compares the values of two <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-ijsonelement.html"><code>IJsonElement</code></a> values for equality, including the values of all descendant elements.</p>
-<pre><code class="language-csharp">public static bool DeepEquals&lt;TLeft, TRight&gt;(ref TLeft element1, ref TRight element2)
+<pre><code class="language-csharp">public static bool DeepEquals&lt;TLeft, TRight&gt;(in TLeft element1, in TRight element2)
     where TLeft : struct, IJsonElement
     where TRight : struct, IJsonElement
 </code></pre>
@@ -137,12 +137,12 @@
 <tbody>
 <tr>
 <td><code>element1</code></td>
-<td><code>ref TLeft</code></td>
+<td><code>TLeft</code></td>
 <td>The first <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-ijsonelement.html"><code>IJsonElement</code></a> to compare.</td>
 </tr>
 <tr>
 <td><code>element2</code></td>
-<td><code>ref TRight</code></td>
+<td><code>TRight</code></td>
 <td>The second <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-ijsonelement.html"><code>IJsonElement</code></a> to compare.</td>
 </tr>
 </tbody>

@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="begininvoke-tpayload-ref-tcontext-asynccallback-object">BeginInvoke(TPayload, ref TContext, AsyncCallback, object)</h2>
-<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(TPayload payload, ref TContext context, AsyncCallback callback, object object)
+<h2 id="begininvoke-tpayload-tcontext-asynccallback-object">BeginInvoke(TPayload, TContext, AsyncCallback, object)</h2>
+<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(TPayload payload, in TContext context, AsyncCallback callback, object object)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>

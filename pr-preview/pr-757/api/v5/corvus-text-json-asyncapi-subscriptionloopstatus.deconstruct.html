@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="deconstruct-ref-string-ref-string-ref-bool-ref-bool-ref-timespan">Deconstruct(ref string, ref string, ref bool, ref bool, ref TimeSpan)</h2>
-<pre><code class="language-csharp">public void Deconstruct(ref string Channel, ref string MessagingSystem, ref bool IsAlive, ref bool IsRunning, ref TimeSpan TimeSinceLastTick)
+<h2 id="deconstruct-string-string-bool-bool-timespan">Deconstruct(string, string, bool, bool, TimeSpan)</h2>
+<pre><code class="language-csharp">public void Deconstruct(out string Channel, out string MessagingSystem, out bool IsAlive, out bool IsRunning, out TimeSpan TimeSinceLastTick)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,27 +114,27 @@
 <tbody>
 <tr>
 <td><code>Channel</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>MessagingSystem</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>IsAlive</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>ref bool</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>IsRunning</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>ref bool</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>TimeSinceLastTick</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.timespan"><code>ref TimeSpan</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.timespan"><code>TimeSpan</code></a></td>
 <td></td>
 </tr>
 </tbody>

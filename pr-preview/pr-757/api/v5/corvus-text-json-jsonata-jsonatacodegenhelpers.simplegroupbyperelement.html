@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="simplegroupbyperelement-ref-jsonelement-byte-byte-jsonworkspace">SimpleGroupByPerElement(ref JsonElement, byte[], byte[], JsonWorkspace)</h2>
+<h2 id="simplegroupbyperelement-jsonelement-byte-byte-jsonworkspace">SimpleGroupByPerElement(JsonElement, byte[], byte[], JsonWorkspace)</h2>
 <p>Optimized per-element group-by for path steps where both key and value are simple property names (<code>.{keyProp: valueProp}</code>). Accesses properties directly via <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetproperty.html"><code>TryGetProperty</code></a> with pre-compiled UTF-8 names — no Dictionary, no List, no lambda dispatch.</p>
-<pre><code class="language-csharp">public static JsonElement SimpleGroupByPerElement(ref JsonElement input, byte[] keyPropUtf8, byte[] valuePropUtf8, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement SimpleGroupByPerElement(in JsonElement input, byte[] keyPropUtf8, byte[] valuePropUtf8, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input (array or scalar).</td>
 </tr>
 <tr>

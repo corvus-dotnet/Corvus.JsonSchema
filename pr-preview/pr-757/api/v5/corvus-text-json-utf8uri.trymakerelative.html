@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Uri.cs#L291">Utf8Uri.cs</a></p>
-<h2 id="trymakerelative-ref-utf8uri-span-byte-ref-utf8urireference">TryMakeRelative(ref Utf8Uri, Span&lt;byte&gt;, ref Utf8UriReference)</h2>
+<h2 id="trymakerelative-utf8uri-span-byte-utf8urireference">TryMakeRelative(Utf8Uri, Span&lt;byte&gt;, Utf8UriReference)</h2>
 <p>Makes a relative URI reference from the current (base) URI to the target URI. If the scheme, host, and port match, a relative reference is created; otherwise, the full target URI is returned.</p>
-<pre><code class="language-csharp">public bool TryMakeRelative(ref Utf8Uri targetUri, Span&lt;byte&gt; buffer, ref Utf8UriReference result)
+<pre><code class="language-csharp">public bool TryMakeRelative(in Utf8Uri targetUri, Span&lt;byte&gt; buffer, out Utf8UriReference result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>targetUri</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8uri.html"><code>ref Utf8Uri</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8uri.html"><code>Utf8Uri</code></a></td>
 <td>The target URI to make relative.</td>
 </tr>
 <tr>
@@ -126,7 +126,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8urireference.html"><code>ref Utf8UriReference</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-utf8urireference.html"><code>Utf8UriReference</code></a></td>
 <td>The resulting URI reference (relative or absolute).</td>
 </tr>
 </tbody>

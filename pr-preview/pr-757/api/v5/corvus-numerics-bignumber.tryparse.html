@@ -109,43 +109,43 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#tryparse-string-ref-bignumber">TryParse(string, ref BigNumber)</a></td>
+<td><a href="#tryparse-string-bignumber">TryParse(string?, BigNumber)</a></td>
 <td>Attempts to parse a string into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#tryparse-string-iformatprovider-ref-bignumber">TryParse(string, IFormatProvider, ref BigNumber)</a></td>
+<td><a href="#tryparse-string-iformatprovider-bignumber">TryParse(string?, IFormatProvider?, BigNumber)</a></td>
 <td>Attempts to parse a string into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#tryparse-readonlyspan-char-iformatprovider-ref-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, IFormatProvider, ref BigNumber)</a></td>
+<td><a href="#tryparse-readonlyspan-char-iformatprovider-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, IFormatProvider?, BigNumber)</a></td>
 <td>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#tryparse-readonlyspan-char-ref-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, ref BigNumber)</a></td>
+<td><a href="#tryparse-readonlyspan-char-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, BigNumber)</a></td>
 <td>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#tryparse-readonlyspan-byte-iformatprovider-ref-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, IFormatProvider, ref BigNumber)</a></td>
+<td><a href="#tryparse-readonlyspan-byte-iformatprovider-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, IFormatProvider?, BigNumber)</a></td>
 <td>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#tryparse-readonlyspan-byte-ref-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, ref BigNumber)</a></td>
+<td><a href="#tryparse-readonlyspan-byte-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, BigNumber)</a></td>
 <td>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#tryparse-readonlyspan-char-numberstyles-iformatprovider-ref-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, NumberStyles, IFormatProvider, ref BigNumber)</a></td>
+<td><a href="#tryparse-readonlyspan-char-numberstyles-iformatprovider-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, NumberStyles, IFormatProvider?, BigNumber)</a></td>
 <td>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#tryparse-readonlyspan-byte-numberstyles-iformatprovider-ref-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, NumberStyles, IFormatProvider, ref BigNumber)</a></td>
+<td><a href="#tryparse-readonlyspan-byte-numberstyles-iformatprovider-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, NumberStyles, IFormatProvider?, BigNumber)</a></td>
 <td>Attempts to parse UTF-8 bytes into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="tryparse-string-ref-bignumber">TryParse(string, ref BigNumber)</h2>
+<h2 id="tryparse-string-bignumber">TryParse(string?, BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L1065">BigNumber.cs</a></p>
 <p>Attempts to parse a string into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryParse(string s, ref BigNumber result)
+<pre><code class="language-csharp">public static bool TryParse(string? s, out BigNumber result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -159,12 +159,12 @@
 <tbody>
 <tr>
 <td><code>s</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to parse.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td>The parsed number.</td>
 </tr>
 </tbody>
@@ -192,10 +192,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryparse-string-iformatprovider-ref-bignumber">TryParse(string, IFormatProvider, ref BigNumber)</h2>
+<h2 id="tryparse-string-iformatprovider-bignumber">TryParse(string?, IFormatProvider?, BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L1083">BigNumber.cs</a></p>
 <p>Attempts to parse a string into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryParse(string s, IFormatProvider provider, ref BigNumber result)
+<pre><code class="language-csharp">public static bool TryParse(string? s, IFormatProvider? provider, out BigNumber result)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -209,17 +209,17 @@
 <tbody>
 <tr>
 <td><code>s</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to parse.</td>
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>Format provider.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td>The parsed number.</td>
 </tr>
 </tbody>
@@ -247,10 +247,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryparse-readonlyspan-char-iformatprovider-ref-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, IFormatProvider, ref BigNumber)</h2>
+<h2 id="tryparse-readonlyspan-char-iformatprovider-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, IFormatProvider?, BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L1101">BigNumber.cs</a></p>
 <p>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;char&gt; s, IFormatProvider provider, ref BigNumber result)
+<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;char&gt; s, IFormatProvider? provider, out BigNumber result)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -269,12 +269,12 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>Format provider.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td>The parsed number.</td>
 </tr>
 </tbody>
@@ -302,10 +302,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryparse-readonlyspan-char-ref-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, ref BigNumber)</h2>
+<h2 id="tryparse-readonlyspan-char-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L1112">BigNumber.cs</a></p>
 <p>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;char&gt; s, ref BigNumber result)
+<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;char&gt; s, out BigNumber result)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -324,7 +324,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td>The parsed number.</td>
 </tr>
 </tbody>
@@ -352,10 +352,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryparse-readonlyspan-byte-iformatprovider-ref-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, IFormatProvider, ref BigNumber)</h2>
+<h2 id="tryparse-readonlyspan-byte-iformatprovider-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, IFormatProvider?, BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L1124">BigNumber.cs</a></p>
 <p>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;byte&gt; s, IFormatProvider provider, ref BigNumber result)
+<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;byte&gt; s, IFormatProvider? provider, out BigNumber result)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -374,12 +374,12 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>Format provider.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td>The parsed number.</td>
 </tr>
 </tbody>
@@ -407,10 +407,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryparse-readonlyspan-byte-ref-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, ref BigNumber)</h2>
+<h2 id="tryparse-readonlyspan-byte-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L1135">BigNumber.cs</a></p>
 <p>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;byte&gt; s, ref BigNumber result)
+<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;byte&gt; s, out BigNumber result)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -429,7 +429,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td>The parsed number.</td>
 </tr>
 </tbody>
@@ -457,10 +457,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryparse-readonlyspan-char-numberstyles-iformatprovider-ref-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, NumberStyles, IFormatProvider, ref BigNumber)</h2>
+<h2 id="tryparse-readonlyspan-char-numberstyles-iformatprovider-bignumber">TryParse(ReadOnlySpan&lt;char&gt;, NumberStyles, IFormatProvider?, BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L1149">BigNumber.cs</a></p>
 <p>Attempts to parse a span of characters into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;char&gt; s, NumberStyles style, IFormatProvider provider, ref BigNumber result)
+<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;char&gt; s, NumberStyles style, IFormatProvider? provider, out BigNumber result)
 </code></pre>
 <h3 id="parameters-6">Parameters</h3>
 <table>
@@ -484,12 +484,12 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>Format provider.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td>The parsed number.</td>
 </tr>
 </tbody>
@@ -517,10 +517,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryparse-readonlyspan-byte-numberstyles-iformatprovider-ref-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, NumberStyles, IFormatProvider, ref BigNumber)</h2>
+<h2 id="tryparse-readonlyspan-byte-numberstyles-iformatprovider-bignumber">TryParse(ReadOnlySpan&lt;byte&gt;, NumberStyles, IFormatProvider?, BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L1500">BigNumber.cs</a></p>
 <p>Attempts to parse UTF-8 bytes into a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;byte&gt; utf8Text, NumberStyles style, IFormatProvider provider, ref BigNumber result)
+<pre><code class="language-csharp">public static bool TryParse(ReadOnlySpan&lt;byte&gt; utf8Text, NumberStyles style, IFormatProvider? provider, out BigNumber result)
 </code></pre>
 <h3 id="parameters-7">Parameters</h3>
 <table>
@@ -544,12 +544,12 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>Format provider.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td>The parsed number.</td>
 </tr>
 </tbody>

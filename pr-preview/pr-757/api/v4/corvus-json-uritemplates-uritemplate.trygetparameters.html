@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetparameters-uri-ref-immutabledictionary-string-jsonany">TryGetParameters(Uri, ref ImmutableDictionary&lt;string, JsonAny&gt;)</a></td>
+<td><a href="#trygetparameters-uri-immutabledictionary-string-jsonany">TryGetParameters(Uri, ImmutableDictionary&lt;string, JsonAny&gt;)</a></td>
 <td>Gets the parameters from the given URI.</td>
 </tr>
 <tr>
-<td><a href="#trygetparameters-string-ref-immutabledictionary-string-jsonany">TryGetParameters(string, ref ImmutableDictionary&lt;string, JsonAny&gt;)</a></td>
+<td><a href="#trygetparameters-string-immutabledictionary-string-jsonany">TryGetParameters(string, ImmutableDictionary&lt;string, JsonAny&gt;)</a></td>
 <td>Gets the parameters from the given URI.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetparameters-uri-ref-immutabledictionary-string-jsonany">TryGetParameters(Uri, ref ImmutableDictionary&lt;string, JsonAny&gt;)</h2>
+<h2 id="trygetparameters-uri-immutabledictionary-string-jsonany">TryGetParameters(Uri, ImmutableDictionary&lt;string, JsonAny&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/UriTemplates/UriTemplate.cs#L112">UriTemplate.cs</a></p>
 <p>Gets the parameters from the given URI.</p>
-<pre><code class="language-csharp">public bool TryGetParameters(Uri uri, ref ImmutableDictionary&lt;string, JsonAny&gt; parameters)
+<pre><code class="language-csharp">public bool TryGetParameters(Uri uri, out ImmutableDictionary&lt;string, JsonAny&gt; parameters)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -140,7 +140,7 @@
 </tr>
 <tr>
 <td><code>parameters</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutabledictionary-2"><code>ref ImmutableDictionary&lt;string, JsonAny&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutabledictionary-2"><code>ImmutableDictionary&lt;string, JsonAny&gt;</code></a></td>
 <td>The parameters decomposed from the Uri.</td>
 </tr>
 </tbody>
@@ -168,10 +168,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetparameters-string-ref-immutabledictionary-string-jsonany">TryGetParameters(string, ref ImmutableDictionary&lt;string, JsonAny&gt;)</h2>
+<h2 id="trygetparameters-string-immutabledictionary-string-jsonany">TryGetParameters(string, ImmutableDictionary&lt;string, JsonAny&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/UriTemplates/UriTemplate.cs#L123">UriTemplate.cs</a></p>
 <p>Gets the parameters from the given URI.</p>
-<pre><code class="language-csharp">public bool TryGetParameters(string uri, ref ImmutableDictionary&lt;string, JsonAny&gt; parameters)
+<pre><code class="language-csharp">public bool TryGetParameters(string uri, out ImmutableDictionary&lt;string, JsonAny&gt; parameters)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -190,7 +190,7 @@
 </tr>
 <tr>
 <td><code>parameters</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutabledictionary-2"><code>ref ImmutableDictionary&lt;string, JsonAny&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutabledictionary-2"><code>ImmutableDictionary&lt;string, JsonAny&gt;</code></a></td>
 <td>The parameters decomposed from the Uri.</td>
 </tr>
 </tbody>

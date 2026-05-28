@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#withresult-bool-string-string">WithResult(bool, string, string)</a></td>
+<td><a href="#withresult-bool-string-string">WithResult(bool, string?, string?)</a></td>
 <td>Adds a result to the validation context.</td>
 </tr>
 <tr>
-<td><a href="#withresult-bool-jsonreference-string">WithResult(bool, JsonReference, string)</a></td>
+<td><a href="#withresult-bool-jsonreference-string">WithResult(bool, JsonReference, string?)</a></td>
 <td>Adds a result to the validation context.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="withresult-bool-string-string">WithResult(bool, string, string)</h2>
+<h2 id="withresult-bool-string-string">WithResult(bool, string?, string?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L285">ValidationContext.cs</a></p>
 <p>Adds a result to the validation context.</p>
-<pre><code class="language-csharp">public ValidationContext WithResult(bool isValid, string message, string keyword)
+<pre><code class="language-csharp">public ValidationContext WithResult(bool isValid, string? message, string? keyword)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -140,12 +140,12 @@
 </tr>
 <tr>
 <td><code>message</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The validation message. <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>keyword</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The keyword that produced the result. <em>(optional)</em></td>
 </tr>
 </tbody>
@@ -173,10 +173,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="withresult-bool-jsonreference-string">WithResult(bool, JsonReference, string)</h2>
+<h2 id="withresult-bool-jsonreference-string">WithResult(bool, JsonReference, string?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L315">ValidationContext.cs</a></p>
 <p>Adds a result to the validation context.</p>
-<pre><code class="language-csharp">public ValidationContext WithResult(bool isValid, JsonReference validationLocationReducedPathModifier, string message)
+<pre><code class="language-csharp">public ValidationContext WithResult(bool isValid, JsonReference validationLocationReducedPathModifier, string? message)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -200,7 +200,7 @@
 </tr>
 <tr>
 <td><code>message</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The validation message. <em>(optional)</em></td>
 </tr>
 </tbody>

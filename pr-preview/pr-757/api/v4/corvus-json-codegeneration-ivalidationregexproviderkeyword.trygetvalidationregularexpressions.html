@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetvalidationregularexpressions-typedeclaration-ref-ireadonlylist-string">TryGetValidationRegularExpressions(TypeDeclaration, ref IReadOnlyList&lt;string&gt;)</h2>
+<h2 id="trygetvalidationregularexpressions-typedeclaration-ireadonlylist-string">TryGetValidationRegularExpressions(TypeDeclaration, IReadOnlyList&lt;string&gt;)</h2>
 <p>Try to get validation regular expressions from the type declaration.</p>
-<pre><code class="language-csharp">public abstract bool TryGetValidationRegularExpressions(TypeDeclaration typeDeclaration, ref IReadOnlyList&lt;string&gt; regexes)
+<pre><code class="language-csharp">public abstract bool TryGetValidationRegularExpressions(TypeDeclaration typeDeclaration, out IReadOnlyList&lt;string&gt; regexes)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>regexes</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1"><code>ref IReadOnlyList&lt;string&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1"><code>IReadOnlyList&lt;string&gt;</code></a></td>
 <td>The validation regular expressions, or <code>null</code> if no validation regular expressions were generated.</td>
 </tr>
 </tbody>

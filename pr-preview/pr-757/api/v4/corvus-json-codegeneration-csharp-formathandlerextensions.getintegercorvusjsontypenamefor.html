@@ -101,7 +101,7 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
 <h2 id="getintegercorvusjsontypenamefor-ienumerable-t-string">GetIntegerCorvusJsonTypeNameFor(IEnumerable&lt;T&gt;, string)</h2>
 <p>Gets the JSON type for the given integer format.</p>
-<pre><code class="language-csharp">public static string GetIntegerCorvusJsonTypeNameFor&lt;T&gt;(IEnumerable&lt;T&gt; handlers, string format)
+<pre><code class="language-csharp">public static string? GetIntegerCorvusJsonTypeNameFor&lt;T&gt;(IEnumerable&lt;T&gt; handlers, string format)
     where T : INumberFormatHandler
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -142,7 +142,7 @@
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
-<p><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></p>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></p>
 <p>The <code>Corvus.Json</code> type name corresponding to the format, or <code>JsonNumber</code> if the format is not recognized.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>

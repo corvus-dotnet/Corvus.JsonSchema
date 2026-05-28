@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch.Model<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="fromstring-ref-tvalue">FromString(ref TValue)</h2>
-<pre><code class="language-csharp">public static JsonPatchDocument.AddOperation.OpEntity FromString&lt;TValue&gt;(ref TValue value)
+<h2 id="fromstring-tvalue">FromString(TValue)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.AddOperation.OpEntity FromString&lt;TValue&gt;(in TValue value)
     where TValue : struct, IJsonString&lt;TValue&gt;
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td></td>
 </tr>
 </tbody>

@@ -173,7 +173,7 @@
 <td>Determines whether the specified object is equal to the current JsonElement.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.evaluateschema.html#evaluateschema-ijsonschemaresultscollector">EvaluateSchema(IJsonSchemaResultsCollector)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.evaluateschema.html#evaluateschema-ijsonschemaresultscollector">EvaluateSchema(IJsonSchemaResultsCollector?)</a></td>
 <td>Evaluates the JSON Schema for this element.</td>
 </tr>
 <tr>
@@ -181,7 +181,7 @@
 <td>Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.from.html#from-ref-t">From(ref T)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.from.html#from-t">From(T)</a> <code>static</code></td>
 <td>Create an instance of a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> from a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-internal-ijsonelement.html"><code>IJsonElement</code></a>.</td>
 </tr>
 <tr>
@@ -333,63 +333,63 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetbiginteger.html#trygetbiginteger-ref-biginteger">TryGetBigInteger(ref BigInteger)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetbiginteger.html#trygetbiginteger-biginteger">TryGetBigInteger(BigInteger)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetbignumber.html#trygetbignumber-ref-bignumber">TryGetBigNumber(ref BigNumber)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetbignumber.html#trygetbignumber-bignumber">TryGetBigNumber(BigNumber)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetboolean.html#trygetboolean-ref-bool">TryGetBoolean(ref bool)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetboolean.html#trygetboolean-bool">TryGetBoolean(bool)</a></td>
 <td>Tries to get the value as a boolean</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetbyte.html#trygetbyte-ref-byte">TryGetByte(ref byte)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetbyte.html#trygetbyte-byte">TryGetByte(byte)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>Byte</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetbytesfrombase64.html#trygetbytesfrombase64-ref-byte">TryGetBytesFromBase64(ref byte[])</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetbytesfrombase64.html#trygetbytesfrombase64-byte">TryGetBytesFromBase64(byte[])</a></td>
 <td>Attempts to represent the current JSON string as bytes assuming it is Base64 encoded.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetdatetime.html#trygetdatetime-ref-datetime">TryGetDateTime(ref DateTime)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetdatetime.html#trygetdatetime-datetime">TryGetDateTime(DateTime)</a></td>
 <td>Attempts to represent the current JSON string as a <a href="https://learn.microsoft.com/dotnet/api/system.datetime"><code>DateTime</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetdatetimeoffset.html#trygetdatetimeoffset-ref-datetimeoffset">TryGetDateTimeOffset(ref DateTimeOffset)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetdatetimeoffset.html#trygetdatetimeoffset-datetimeoffset">TryGetDateTimeOffset(DateTimeOffset)</a></td>
 <td>Attempts to represent the current JSON string as a <a href="https://learn.microsoft.com/dotnet/api/system.datetimeoffset"><code>DateTimeOffset</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetdecimal.html#trygetdecimal-ref-decimal">TryGetDecimal(ref decimal)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetdecimal.html#trygetdecimal-decimal">TryGetDecimal(decimal)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.decimal"><code>Decimal</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetdouble.html#trygetdouble-ref-double">TryGetDouble(ref double)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetdouble.html#trygetdouble-double">TryGetDouble(double)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.double"><code>Double</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetguid.html#trygetguid-ref-guid">TryGetGuid(ref Guid)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetguid.html#trygetguid-guid">TryGetGuid(Guid)</a></td>
 <td>Attempts to represent the current JSON string as a <a href="https://learn.microsoft.com/dotnet/api/system.guid"><code>Guid</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygethalf.html#trygethalf-ref-half">TryGetHalf(ref Half)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygethalf.html#trygethalf-half">TryGetHalf(Half)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.half"><code>Half</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetint128.html#trygetint128-ref-int128">TryGetInt128(ref Int128)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetint128.html#trygetint128-int128">TryGetInt128(Int128)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.int128"><code>Int128</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetint16.html#trygetint16-ref-short">TryGetInt16(ref short)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetint16.html#trygetint16-short">TryGetInt16(short)</a></td>
 <td>Attempts to represent the current JSON number as an <a href="https://learn.microsoft.com/dotnet/api/system.int16"><code>Int16</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetint32.html#trygetint32-ref-int">TryGetInt32(ref int)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetint32.html#trygetint32-int">TryGetInt32(int)</a></td>
 <td>Attempts to represent the current JSON number as an <a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>Int32</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetint64.html#trygetint64-ref-long">TryGetInt64(ref long)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetint64.html#trygetint64-long">TryGetInt64(long)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>Int64</code></a>.</td>
 </tr>
 <tr>
@@ -401,23 +401,23 @@
 <td>Tries to get the 1-based line number and character offset of this element in the original source document.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetlocaldate.html#trygetlocaldate-ref-localdate">TryGetLocalDate(ref LocalDate)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetlocaldate.html#trygetlocaldate-localdate">TryGetLocalDate(LocalDate)</a></td>
 <td>Attempts to represent the current JSON string as a <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetoffsetdate.html#trygetoffsetdate-ref-offsetdate">TryGetOffsetDate(ref OffsetDate)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetoffsetdate.html#trygetoffsetdate-offsetdate">TryGetOffsetDate(OffsetDate)</a></td>
 <td>Attempts to represent the current JSON string as a <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html"><code>OffsetDate</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetoffsetdatetime.html#trygetoffsetdatetime-ref-offsetdatetime">TryGetOffsetDateTime(ref OffsetDateTime)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetoffsetdatetime.html#trygetoffsetdatetime-offsetdatetime">TryGetOffsetDateTime(OffsetDateTime)</a></td>
 <td>Attempts to represent the current JSON string as a <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetoffsettime.html#trygetoffsettime-ref-offsettime">TryGetOffsetTime(ref OffsetTime)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetoffsettime.html#trygetoffsettime-offsettime">TryGetOffsetTime(OffsetTime)</a></td>
 <td>Attempts to represent the current JSON string as a <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetperiod.html#trygetperiod-ref-period">TryGetPeriod(ref Period)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetperiod.html#trygetperiod-period">TryGetPeriod(Period)</a></td>
 <td>Attempts to represent the current JSON string as a <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-period.html"><code>Period</code></a>.</td>
 </tr>
 <tr>
@@ -425,31 +425,31 @@
 <td>Looks for a property named <code>propertyName</code> in the current object, returning whether or not such a property existed. When the property exists <code>value</code> is assigned to the value of that property.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetsbyte.html#trygetsbyte-ref-sbyte">TryGetSByte(ref sbyte)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetsbyte.html#trygetsbyte-sbyte">TryGetSByte(sbyte)</a></td>
 <td>Attempts to represent the current JSON number as an <a href="https://learn.microsoft.com/dotnet/api/system.sbyte"><code>SByte</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetsingle.html#trygetsingle-ref-float">TryGetSingle(ref float)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetsingle.html#trygetsingle-float">TryGetSingle(float)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.single"><code>Single</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetuint128.html#trygetuint128-ref-uint128">TryGetUInt128(ref UInt128)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetuint128.html#trygetuint128-uint128">TryGetUInt128(UInt128)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.uint128"><code>UInt128</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetuint16.html#trygetuint16-ref-ushort">TryGetUInt16(ref ushort)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetuint16.html#trygetuint16-ushort">TryGetUInt16(ushort)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.uint16"><code>UInt16</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetuint32.html#trygetuint32-ref-uint">TryGetUInt32(ref uint)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetuint32.html#trygetuint32-uint">TryGetUInt32(uint)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.uint32"><code>UInt32</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetuint64.html#trygetuint64-ref-ulong">TryGetUInt64(ref ulong)</a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.trygetuint64.html#trygetuint64-ulong">TryGetUInt64(ulong)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.uint64"><code>UInt64</code></a>.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.tryparsevalue.html#tryparsevalue-ref-utf8jsonreader-ref-nullable-jsonelement">TryParseValue(ref Utf8JsonReader, ref Nullable&lt;JsonElement&gt;)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.tryparsevalue.html#tryparsevalue-utf8jsonreader-nullable-jsonelement">TryParseValue(Utf8JsonReader, Nullable&lt;JsonElement&gt;)</a> <code>static</code></td>
 <td>Attempts to parse one JSON value (including objects or arrays) from the provided reader.</td>
 </tr>
 <tr>
@@ -482,38 +482,50 @@
 </tbody>
 </table>
 <h2 id="examples">Examples</h2>
-<p>The following example demonstrates common property access patterns on a <code>JsonElement</code>-based generated type.</p>
-<pre><code class="language-csharp">using ParsedJsonDocument&lt;Person&gt; doc =
-    ParsedJsonDocument&lt;Person&gt;.Parse(jsonString);
-Person person = doc.RootElement;
+<p><code>JsonElement</code> is the general-purpose read-only JSON value type in Corvus.Text.Json. Parse through <code>ParsedJsonDocument&lt;JsonElement&gt;</code> so the document owns the pooled memory while you inspect the root element.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
 
-// Explicit cast to a .NET type (throws if null or undefined)
-string familyName = (string)person.FamilyName;
+using ParsedJsonDocument&lt;JsonElement&gt; doc =
+    ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+        &quot;&quot;&quot;
+        {
+          &quot;name&quot;: &quot;Anne&quot;,
+          &quot;age&quot;: 42,
+          &quot;roles&quot;: [&quot;admin&quot;, &quot;editor&quot;]
+        }
+        &quot;&quot;&quot;);
 
-// TryGetValue for optional properties (does not throw)
-if (person.GivenName.TryGetValue(out string? givenName))
+JsonElement root = doc.RootElement;
+string? name = root.GetProperty(&quot;name&quot;u8).GetString();
+int age = root.GetProperty(&quot;age&quot;u8).GetInt32();
+
+if (root.TryGetProperty(&quot;roles&quot;u8, out JsonElement roles))
 {
-    Console.WriteLine($&quot;Given name: {givenName}&quot;);
+    foreach (JsonElement role in roles.EnumerateArray())
+    {
+        Console.WriteLine(role.GetString());
+    }
 }
+</code></pre>
+<h3 id="inspecting-value-kinds">Inspecting value kinds</h3>
+<p>Use <code>ValueKind</code> before reading a value when the shape is not guaranteed.</p>
+<pre><code class="language-csharp">JsonElement maybeName = root.GetProperty(&quot;name&quot;u8);
 
-// Check whether an optional property is present
-if (person.OtherNames.IsUndefined())
+if (maybeName.ValueKind == JsonValueKind.String)
 {
-    Console.WriteLine(&quot;otherNames is not present.&quot;);
+    Console.WriteLine(maybeName.GetString());
 }
 </code></pre>
 <h3 id="zero-allocation-string-comparison">Zero-allocation string comparison</h3>
 <p>Compare string values directly against UTF-8 or UTF-16 literals without allocating:</p>
-<pre><code class="language-csharp">bool isAnne = person.GivenName.ValueEquals(&quot;Anne&quot;u8);
+<pre><code class="language-csharp">bool isAnne = root.GetProperty(&quot;name&quot;u8).ValueEquals(&quot;Anne&quot;u8);
 </code></pre>
-<h3 id="equality">Equality</h3>
-<p>Generated types support structural equality — two elements are equal if their underlying JSON is equivalent, regardless of which document they came from:</p>
-<pre><code class="language-csharp">using ParsedJsonDocument&lt;Person&gt; doc1 =
-    ParsedJsonDocument&lt;Person&gt;.Parse(jsonString);
-using ParsedJsonDocument&lt;Person&gt; doc2 =
-    ParsedJsonDocument&lt;Person&gt;.Parse(jsonString);
-
-bool areEqual = doc1.RootElement == doc2.RootElement; // true
+<h3 id="enumerating-object-properties">Enumerating object properties</h3>
+<p>Object enumeration exposes property names and values without converting the entire object to another model:</p>
+<pre><code class="language-csharp">foreach (JsonProperty&lt;JsonElement&gt; property in root.EnumerateObject())
+{
+    Console.WriteLine($&quot;{property.Name}: {property.Value.ValueKind}&quot;);
+}
 </code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>

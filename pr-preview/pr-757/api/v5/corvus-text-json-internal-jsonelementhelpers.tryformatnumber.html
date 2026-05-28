@@ -109,18 +109,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#tryformatnumber-readonlyspan-byte-span-char-ref-int-readonlyspan-char-iformatprovider">TryFormatNumber(ReadOnlySpan&lt;byte&gt;, Span&lt;char&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</a></td>
+<td><a href="#tryformatnumber-readonlyspan-byte-span-char-int-readonlyspan-char-iformatprovider">TryFormatNumber(ReadOnlySpan&lt;byte&gt;, Span&lt;char&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#tryformatnumber-readonlyspan-byte-span-byte-ref-int-readonlyspan-char-iformatprovider">TryFormatNumber(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</a></td>
+<td><a href="#tryformatnumber-readonlyspan-byte-span-byte-int-readonlyspan-char-iformatprovider">TryFormatNumber(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="tryformatnumber-readonlyspan-byte-span-char-ref-int-readonlyspan-char-iformatprovider">TryFormatNumber(ReadOnlySpan&lt;byte&gt;, Span&lt;char&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</h2>
+<h2 id="tryformatnumber-readonlyspan-byte-span-char-int-readonlyspan-char-iformatprovider">TryFormatNumber(ReadOnlySpan&lt;byte&gt;, Span&lt;char&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.Numeric.cs#L372">JsonElementHelpers.Numeric.cs</a></p>
-<pre><code class="language-csharp">public static bool TryFormatNumber(ReadOnlySpan&lt;byte&gt; span, Span&lt;char&gt; destination, ref int charsWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider provider)
+<pre><code class="language-csharp">public static bool TryFormatNumber(ReadOnlySpan&lt;byte&gt; span, Span&lt;char&gt; destination, out int charsWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider? provider)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>charsWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -154,7 +154,7 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -181,9 +181,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryformatnumber-readonlyspan-byte-span-byte-ref-int-readonlyspan-char-iformatprovider">TryFormatNumber(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</h2>
+<h2 id="tryformatnumber-readonlyspan-byte-span-byte-int-readonlyspan-char-iformatprovider">TryFormatNumber(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.Numeric.cs#L3691">JsonElementHelpers.Numeric.cs</a></p>
-<pre><code class="language-csharp">public static bool TryFormatNumber(ReadOnlySpan&lt;byte&gt; span, Span&lt;byte&gt; destination, ref int bytesWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider provider)
+<pre><code class="language-csharp">public static bool TryFormatNumber(ReadOnlySpan&lt;byte&gt; span, Span&lt;byte&gt; destination, out int bytesWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider? provider)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -207,7 +207,7 @@
 </tr>
 <tr>
 <td><code>bytesWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -217,7 +217,7 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td></td>
 </tr>
 </tbody>

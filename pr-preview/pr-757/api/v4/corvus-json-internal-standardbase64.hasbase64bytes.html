@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#hasbase64bytes-ref-jsonelement">HasBase64Bytes(ref JsonElement)</a></td>
+<td><a href="#hasbase64bytes-jsonelement">HasBase64Bytes(JsonElement)</a></td>
 <td>Gets a value indcating whether the string has valid base64 encoded content.</td>
 </tr>
 <tr>
-<td><a href="#hasbase64bytes-string">HasBase64Bytes(string)</a></td>
+<td><a href="#hasbase64bytes-string">HasBase64Bytes(string?)</a></td>
 <td>Gets a value indcating whether the string has valid base64 encoded content.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="hasbase64bytes-ref-jsonelement">HasBase64Bytes(ref JsonElement)</h2>
+<h2 id="hasbase64bytes-jsonelement">HasBase64Bytes(JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardBase64.cs#L82">StandardBase64.cs</a></p>
 <p>Gets a value indcating whether the string has valid base64 encoded content.</p>
-<pre><code class="language-csharp">public static bool HasBase64Bytes(ref JsonElement jsonElementBacking)
+<pre><code class="language-csharp">public static bool HasBase64Bytes(in JsonElement jsonElementBacking)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -135,7 +135,7 @@
 <tbody>
 <tr>
 <td><code>jsonElementBacking</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value to test.</td>
 </tr>
 </tbody>
@@ -163,10 +163,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="hasbase64bytes-string">HasBase64Bytes(string)</h2>
+<h2 id="hasbase64bytes-string">HasBase64Bytes(string?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardBase64.cs#L174">StandardBase64.cs</a></p>
 <p>Gets a value indcating whether the string has valid base64 encoded content.</p>
-<pre><code class="language-csharp">public static bool HasBase64Bytes(string stringBacking)
+<pre><code class="language-csharp">public static bool HasBase64Bytes(string? stringBacking)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -180,7 +180,7 @@
 <tbody>
 <tr>
 <td><code>stringBacking</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The value to test.</td>
 </tr>
 </tbody>

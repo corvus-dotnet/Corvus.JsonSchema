@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetcontentmediatype-typedeclaration-ref-string">TryGetContentMediaType(TypeDeclaration, ref string)</h2>
+<h2 id="trygetcontentmediatype-typedeclaration-string">TryGetContentMediaType(TypeDeclaration, string?)</h2>
 <p>Try to get the content encoding for the type declaration.</p>
-<pre><code class="language-csharp">public abstract bool TryGetContentMediaType(TypeDeclaration typeDeclaration, ref string contentMediaType)
+<pre><code class="language-csharp">public abstract bool TryGetContentMediaType(TypeDeclaration typeDeclaration, out string? contentMediaType)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>contentMediaType</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The content encoding, or <code>null</code> if not present.</td>
 </tr>
 </tbody>

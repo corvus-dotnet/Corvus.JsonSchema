@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Validator<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="fromtext-string-string-jsonschema-options-bool">FromText(string, string, JsonSchema.Options, bool)</h2>
-<pre><code class="language-csharp">public static JsonSchema FromText(string text, string canonicalUri, JsonSchema.Options options, bool refreshCache)
+<h2 id="fromtext-string-string-jsonschema-options-bool">FromText(string, string?, JsonSchema.Options, bool)</h2>
+<pre><code class="language-csharp">public static JsonSchema FromText(string text, string? canonicalUri, JsonSchema.Options options, bool refreshCache)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>canonicalUri</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
 <tr>

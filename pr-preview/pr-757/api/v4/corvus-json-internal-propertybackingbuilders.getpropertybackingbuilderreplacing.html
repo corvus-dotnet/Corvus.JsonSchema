@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingBuilders.cs#L203">PropertyBackingBuilders.cs</a></p>
-<h2 id="getpropertybackingbuilderreplacing-ref-jsonelement-ref-jsonpropertyname-ref-jsonany">GetPropertyBackingBuilderReplacing(ref JsonElement, ref JsonPropertyName, ref JsonAny)</h2>
+<h2 id="getpropertybackingbuilderreplacing-jsonelement-jsonpropertyname-jsonany">GetPropertyBackingBuilderReplacing(JsonElement, JsonPropertyName, JsonAny)</h2>
 <p>Builds an <a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1.builder"><code>Builder</code></a> from the object, replacing a specific property.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderReplacing(ref JsonElement jsonElementBacking, ref JsonPropertyName name, ref JsonAny value)
+<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderReplacing(in JsonElement jsonElementBacking, in JsonPropertyName name, in JsonAny value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,17 +116,17 @@
 <tbody>
 <tr>
 <td><code>jsonElementBacking</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The JSON element backing the property.</td>
 </tr>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td>The name of the property to replace.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The new value of the property.</td>
 </tr>
 </tbody>

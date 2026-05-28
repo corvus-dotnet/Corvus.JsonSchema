@@ -109,18 +109,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-char-ref-jsonelement-mutable">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, ref JsonElement.Mutable)</a></td>
+<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-char-jsonelement-mutable">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, JsonElement.Mutable)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-byte-ref-jsonelement-mutable">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, ref JsonElement.Mutable)</a></td>
+<td><a href="#trygetnamedpropertyvalue-int-readonlyspan-byte-jsonelement-mutable">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, JsonElement.Mutable)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetnamedpropertyvalue-int-readonlyspan-char-ref-jsonelement-mutable">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, ref JsonElement.Mutable)</h2>
+<h2 id="trygetnamedpropertyvalue-int-readonlyspan-char-jsonelement-mutable">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;char&gt;, JsonElement.Mutable)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L89">IMutableJsonDocument.cs</a></p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;char&gt; propertyName, ref JsonElement.Mutable value)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;char&gt; propertyName, out JsonElement.Mutable value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement-mutable.html"><code>ref JsonElement.Mutable</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement-mutable.html"><code>JsonElement.Mutable</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -171,9 +171,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetnamedpropertyvalue-int-readonlyspan-byte-ref-jsonelement-mutable">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, ref JsonElement.Mutable)</h2>
+<h2 id="trygetnamedpropertyvalue-int-readonlyspan-byte-jsonelement-mutable">TryGetNamedPropertyValue(int, ReadOnlySpan&lt;byte&gt;, JsonElement.Mutable)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L89">IMutableJsonDocument.cs</a></p>
-<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;byte&gt; propertyName, ref JsonElement.Mutable value)
+<pre><code class="language-csharp">public abstract bool TryGetNamedPropertyValue(int index, ReadOnlySpan&lt;byte&gt; propertyName, out JsonElement.Mutable value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -197,7 +197,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement-mutable.html"><code>ref JsonElement.Mutable</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement-mutable.html"><code>JsonElement.Mutable</code></a></td>
 <td></td>
 </tr>
 </tbody>

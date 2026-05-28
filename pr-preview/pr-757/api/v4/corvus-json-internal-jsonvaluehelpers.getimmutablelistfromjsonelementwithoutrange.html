@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/JsonValueHelpers.ImmutableList.cs#L100">JsonValueHelpers.ImmutableList.cs</a></p>
-<h2 id="getimmutablelistfromjsonelementwithoutrange-ref-jsonelement-int-int">GetImmutableListFromJsonElementWithoutRange(ref JsonElement, int, int)</h2>
+<h2 id="getimmutablelistfromjsonelementwithoutrange-jsonelement-int-int">GetImmutableListFromJsonElementWithoutRange(JsonElement, int, int)</h2>
 <p>Builds an immutable list from a JsonElement, removing a range of values from the specified point.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementWithoutRange(ref JsonElement jsonElement, int index, int count)
+<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementWithoutRange(in JsonElement jsonElement, int index, int count)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>jsonElement</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The json element containing the source array.</td>
 </tr>
 <tr>

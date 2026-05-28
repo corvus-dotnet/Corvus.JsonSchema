@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.CSharp<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetdotnettypename-typedeclaration-ref-string">TryGetDotnetTypeName(TypeDeclaration, ref string)</h2>
+<h2 id="trygetdotnettypename-typedeclaration-string">TryGetDotnetTypeName(TypeDeclaration, string?)</h2>
 <p>Tries to get the .NET type name for the type declaration.</p>
-<pre><code class="language-csharp">public static bool TryGetDotnetTypeName(TypeDeclaration typeDeclaration, ref string name)
+<pre><code class="language-csharp">public static bool TryGetDotnetTypeName(TypeDeclaration typeDeclaration, out string? name)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>name</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The .NET type name.</td>
 </tr>
 </tbody>

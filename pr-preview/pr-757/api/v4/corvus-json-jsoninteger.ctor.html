@@ -113,7 +113,7 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoninteger.html"><code>JsonInteger</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsoninteger-ref-jsonelement">JsonInteger(ref JsonElement)</a></td>
+<td><a href="#jsoninteger-jsonelement">JsonInteger(JsonElement)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoninteger.html"><code>JsonInteger</code></a> struct.</td>
 </tr>
 <tr>
@@ -151,10 +151,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsoninteger-ref-jsonelement">JsonInteger(ref JsonElement)</h2>
+<h2 id="jsoninteger-jsonelement">JsonInteger(JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonInteger.cs#L45">JsonInteger.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsoninteger.html"><code>JsonInteger</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonInteger(ref JsonElement value)
+<pre><code class="language-csharp">public JsonInteger(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -168,7 +168,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>

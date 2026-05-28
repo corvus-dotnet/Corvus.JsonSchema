@@ -99,10 +99,10 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/NumericTypeExtensions.cs#L536">NumericTypeExtensions.cs</a></p>
-<h2 id="trygetsbytewithfallbacks-jsonelement-ref-sbyte">TryGetSByteWithFallbacks(JsonElement, ref sbyte)</h2>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/NumericTypeExtensions.cs#L524">NumericTypeExtensions.cs</a></p>
+<h2 id="trygetsbytewithfallbacks-jsonelement-sbyte">TryGetSByteWithFallbacks(JsonElement, sbyte)</h2>
 <p>Safely get and sbyte value.</p>
-<pre><code class="language-csharp">public static bool TryGetSByteWithFallbacks(JsonElement value, ref sbyte result)
+<pre><code class="language-csharp">public static bool TryGetSByteWithFallbacks(JsonElement value, out sbyte result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,7 +121,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.sbyte"><code>ref sbyte</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.sbyte"><code>sbyte</code></a></td>
 <td>The value as an sbyte.</td>
 </tr>
 </tbody>

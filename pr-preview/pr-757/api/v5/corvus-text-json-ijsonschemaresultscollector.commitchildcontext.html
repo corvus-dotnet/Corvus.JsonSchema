@@ -109,7 +109,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#commitchildcontext-int-bool-bool-jsonschemamessageprovider">CommitChildContext(int, bool, bool, JsonSchemaMessageProvider)</a></td>
+<td><a href="#commitchildcontext-int-bool-bool-jsonschemamessageprovider">CommitChildContext(int, bool, bool, JsonSchemaMessageProvider?)</a></td>
 <td>Commits the last child context.</td>
 </tr>
 <tr>
@@ -118,10 +118,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="commitchildcontext-int-bool-bool-jsonschemamessageprovider">CommitChildContext(int, bool, bool, JsonSchemaMessageProvider)</h2>
+<h2 id="commitchildcontext-int-bool-bool-jsonschemamessageprovider">CommitChildContext(int, bool, bool, JsonSchemaMessageProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/IJsonSchemaResultsCollector.cs#L197">IJsonSchemaResultsCollector.cs</a></p>
 <p>Commits the last child context.</p>
-<pre><code class="language-csharp">public abstract void CommitChildContext(int sequenceNumber, bool parentIsMatch, bool childIsMatch, JsonSchemaMessageProvider messageProvider)
+<pre><code class="language-csharp">public abstract void CommitChildContext(int sequenceNumber, bool parentIsMatch, bool childIsMatch, JsonSchemaMessageProvider? messageProvider)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -150,7 +150,7 @@
 </tr>
 <tr>
 <td><code>messageProvider</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider?</code></a></td>
 <td>The (optional) provider for a JSON validation message.</td>
 </tr>
 </tbody>

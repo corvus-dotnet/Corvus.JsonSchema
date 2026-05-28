@@ -109,19 +109,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#escapeandstorerawstringvalue-readonlyspan-char-ref-bool">EscapeAndStoreRawStringValue(ReadOnlySpan&lt;char&gt;, ref bool)</a></td>
+<td><a href="#escapeandstorerawstringvalue-readonlyspan-char-bool">EscapeAndStoreRawStringValue(ReadOnlySpan&lt;char&gt;, bool)</a></td>
 <td>Escapes and stores a raw string value in the document.</td>
 </tr>
 <tr>
-<td><a href="#escapeandstorerawstringvalue-readonlyspan-byte-ref-bool">EscapeAndStoreRawStringValue(ReadOnlySpan&lt;byte&gt;, ref bool)</a></td>
+<td><a href="#escapeandstorerawstringvalue-readonlyspan-byte-bool">EscapeAndStoreRawStringValue(ReadOnlySpan&lt;byte&gt;, bool)</a></td>
 <td>Escapes and stores a raw string value in the document.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="escapeandstorerawstringvalue-readonlyspan-char-ref-bool">EscapeAndStoreRawStringValue(ReadOnlySpan&lt;char&gt;, ref bool)</h2>
+<h2 id="escapeandstorerawstringvalue-readonlyspan-char-bool">EscapeAndStoreRawStringValue(ReadOnlySpan&lt;char&gt;, bool)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L144">IMutableJsonDocument.cs</a></p>
 <p>Escapes and stores a raw string value in the document.</p>
-<pre><code class="language-csharp">public abstract int EscapeAndStoreRawStringValue(ReadOnlySpan&lt;char&gt; value, ref bool requiredEscaping)
+<pre><code class="language-csharp">public abstract int EscapeAndStoreRawStringValue(ReadOnlySpan&lt;char&gt; value, out bool requiredEscaping)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -140,7 +140,7 @@
 </tr>
 <tr>
 <td><code>requiredEscaping</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>ref bool</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
 <td>Set to <code>true</code> if escaping was required.</td>
 </tr>
 </tbody>
@@ -168,10 +168,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="escapeandstorerawstringvalue-readonlyspan-byte-ref-bool">EscapeAndStoreRawStringValue(ReadOnlySpan&lt;byte&gt;, ref bool)</h2>
+<h2 id="escapeandstorerawstringvalue-readonlyspan-byte-bool">EscapeAndStoreRawStringValue(ReadOnlySpan&lt;byte&gt;, bool)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L144">IMutableJsonDocument.cs</a></p>
 <p>Escapes and stores a raw string value in the document.</p>
-<pre><code class="language-csharp">public abstract int EscapeAndStoreRawStringValue(ReadOnlySpan&lt;byte&gt; value, ref bool requiredEscaping)
+<pre><code class="language-csharp">public abstract int EscapeAndStoreRawStringValue(ReadOnlySpan&lt;byte&gt; value, out bool requiredEscaping)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -190,7 +190,7 @@
 </tr>
 <tr>
 <td><code>requiredEscaping</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>ref bool</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
 <td>Set to <code>true</code> if escaping was required.</td>
 </tr>
 </tbody>

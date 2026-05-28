@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="power-ref-jsonelement-ref-jsonelement-jsonworkspace">Power(ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="power-jsonelement-jsonelement-jsonworkspace">Power(JsonElement, JsonElement, JsonWorkspace)</h2>
 <p>JSONata <code>$power</code> function. Throws D3061 if result is non-finite.</p>
-<pre><code class="language-csharp">public static JsonElement Power(ref JsonElement baseInput, ref JsonElement exponentInput, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement Power(in JsonElement baseInput, in JsonElement exponentInput, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>baseInput</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>exponentInput</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

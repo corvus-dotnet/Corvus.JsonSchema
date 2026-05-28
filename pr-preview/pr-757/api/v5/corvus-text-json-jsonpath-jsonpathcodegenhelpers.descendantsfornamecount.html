@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonPath<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="descendantsfornamecount-ref-jsonelement-readonlyspan-byte-ref-int-ref-jsonelement">DescendantsForNameCount(ref JsonElement, ReadOnlySpan&lt;byte&gt;, ref int, ref JsonElement)</h2>
+<h2 id="descendantsfornamecount-jsonelement-readonlyspan-byte-int-jsonelement">DescendantsForNameCount(JsonElement, ReadOnlySpan&lt;byte&gt;, int, JsonElement)</h2>
 <p>Recursively visits all descendants of <code>node</code>, counting matching named property values and capturing the first match. Specialized for descendant-name patterns in filter sub-queries.</p>
-<pre><code class="language-csharp">public static void DescendantsForNameCount(ref JsonElement node, ReadOnlySpan&lt;byte&gt; propertyName, ref int count, ref JsonElement first)
+<pre><code class="language-csharp">public static void DescendantsForNameCount(in JsonElement node, ReadOnlySpan&lt;byte&gt; propertyName, ref int count, ref JsonElement first)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>node</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The current node to visit.</td>
 </tr>
 <tr>
@@ -125,12 +125,12 @@
 </tr>
 <tr>
 <td><code>count</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The running count of matched nodes.</td>
 </tr>
 <tr>
 <td><code>first</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Receives the first matched element (set when <code>count</code> transitions from 0).</td>
 </tr>
 </tbody>

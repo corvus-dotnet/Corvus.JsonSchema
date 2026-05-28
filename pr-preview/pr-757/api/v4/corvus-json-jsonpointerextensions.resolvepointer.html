@@ -109,11 +109,11 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#resolvepointer-t-ref-jsonpointer">ResolvePointer(T, ref JsonPointer)</a></td>
+<td><a href="#resolvepointer-t-jsonpointer">ResolvePointer(T, JsonPointer)</a></td>
 <td>Resolve a json element from a fragment pointer into a json document.</td>
 </tr>
 <tr>
-<td><a href="#resolvepointer-t-ref-jsonrelativepointer">ResolvePointer(T, ref JsonRelativePointer)</a></td>
+<td><a href="#resolvepointer-t-jsonrelativepointer">ResolvePointer(T, JsonRelativePointer)</a></td>
 <td>Resolve a json element from a fragment pointer into a json document.</td>
 </tr>
 <tr>
@@ -122,10 +122,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="resolvepointer-t-ref-jsonpointer">ResolvePointer(T, ref JsonPointer)</h2>
+<h2 id="resolvepointer-t-jsonpointer">ResolvePointer(T, JsonPointer)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPointerExtensions.cs#L1">JsonPointerExtensions.cs</a></p>
 <p>Resolve a json element from a fragment pointer into a json document.</p>
-<pre><code class="language-csharp">public static JsonAny ResolvePointer&lt;T&gt;(T root, ref JsonPointer pointer)
+<pre><code class="language-csharp">public static JsonAny ResolvePointer&lt;T&gt;(T root, in JsonPointer pointer)
     where T : struct, IJsonValue
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -160,7 +160,7 @@
 </tr>
 <tr>
 <td><code>pointer</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpointer.html"><code>ref JsonPointer</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonpointer.html"><code>JsonPointer</code></a></td>
 <td>The pointer to resolve.</td>
 </tr>
 </tbody>
@@ -188,10 +188,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="resolvepointer-t-ref-jsonrelativepointer">ResolvePointer(T, ref JsonRelativePointer)</h2>
+<h2 id="resolvepointer-t-jsonrelativepointer">ResolvePointer(T, JsonRelativePointer)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPointerExtensions.cs#L1">JsonPointerExtensions.cs</a></p>
 <p>Resolve a json element from a fragment pointer into a json document.</p>
-<pre><code class="language-csharp">public static JsonAny ResolvePointer&lt;T&gt;(T root, ref JsonRelativePointer pointer)
+<pre><code class="language-csharp">public static JsonAny ResolvePointer&lt;T&gt;(T root, in JsonRelativePointer pointer)
     where T : struct, IJsonValue
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -226,7 +226,7 @@
 </tr>
 <tr>
 <td><code>pointer</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonrelativepointer.html"><code>ref JsonRelativePointer</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonrelativepointer.html"><code>JsonRelativePointer</code></a></td>
 <td>The pointer to resolve.</td>
 </tr>
 </tbody>

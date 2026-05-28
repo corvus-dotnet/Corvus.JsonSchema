@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.DateTime.Core.cs#L116">JsonElementHelpers.DateTime.Core.cs</a></p>
-<h2 id="parseoffsetcore-readonlyspan-byte-ref-int">ParseOffsetCore(ReadOnlySpan&lt;byte&gt;, ref int)</h2>
+<h2 id="parseoffsetcore-readonlyspan-byte-int">ParseOffsetCore(ReadOnlySpan&lt;byte&gt;, int)</h2>
 <p>Parses a timezone offset string in ISO 8601 format (±HH:MM or Z) and extracts the offset in seconds.</p>
-<pre><code class="language-csharp">public static bool ParseOffsetCore(ReadOnlySpan&lt;byte&gt; text, ref int offsetSeconds)
+<pre><code class="language-csharp">public static bool ParseOffsetCore(ReadOnlySpan&lt;byte&gt; text, out int offsetSeconds)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,7 +121,7 @@
 </tr>
 <tr>
 <td><code>offsetSeconds</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the timezone offset in seconds from UTC.</td>
 </tr>
 </tbody>

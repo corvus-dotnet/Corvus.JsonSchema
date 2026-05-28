@@ -109,7 +109,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#insertrange-int-ref-tarray">InsertRange(int, ref TArray)</a></td>
+<td><a href="#insertrange-int-tarray">InsertRange(int, TArray)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -122,9 +122,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="insertrange-int-ref-tarray">InsertRange(int, ref TArray)</h2>
+<h2 id="insertrange-int-tarray">InsertRange(int, TArray)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonArray.cs#L1">JsonArray.cs</a></p>
-<pre><code class="language-csharp">public JsonArray InsertRange&lt;TArray&gt;(int index, ref TArray items)
+<pre><code class="language-csharp">public JsonArray InsertRange&lt;TArray&gt;(int index, in TArray items)
     where TArray : struct, IJsonArray&lt;TArray&gt;
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>items</code></td>
-<td><code>ref TArray</code></td>
+<td><code>TArray</code></td>
 <td></td>
 </tr>
 </tbody>

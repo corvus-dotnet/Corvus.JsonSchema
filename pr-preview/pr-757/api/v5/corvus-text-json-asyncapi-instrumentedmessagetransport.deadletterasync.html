@@ -99,8 +99,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.AsyncApi<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="deadletterasync-readonlymemory-byte-readonlymemory-byte-ref-jsonelement-ref-jsonelement-exception-cancellationtoken">DeadLetterAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, ref JsonElement, ref JsonElement, Exception, CancellationToken)</h2>
-<pre><code class="language-csharp">public ValueTask DeadLetterAsync(ReadOnlyMemory&lt;byte&gt; deadLetterChannelUtf8, ReadOnlyMemory&lt;byte&gt; originalChannelUtf8, ref JsonElement payload, ref JsonElement headers, Exception exception, CancellationToken cancellationToken)
+<h2 id="deadletterasync-readonlymemory-byte-readonlymemory-byte-jsonelement-jsonelement-exception-cancellationtoken">DeadLetterAsync(ReadOnlyMemory&lt;byte&gt;, ReadOnlyMemory&lt;byte&gt;, JsonElement, JsonElement, Exception, CancellationToken)</h2>
+<pre><code class="language-csharp">public ValueTask DeadLetterAsync(ReadOnlyMemory&lt;byte&gt; deadLetterChannelUtf8, ReadOnlyMemory&lt;byte&gt; originalChannelUtf8, in JsonElement payload, in JsonElement headers, Exception exception, CancellationToken cancellationToken)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -124,12 +124,12 @@
 </tr>
 <tr>
 <td><code>payload</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>headers</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

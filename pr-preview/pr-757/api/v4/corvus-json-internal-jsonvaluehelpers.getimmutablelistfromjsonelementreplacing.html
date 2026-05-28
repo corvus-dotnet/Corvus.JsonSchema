@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/JsonValueHelpers.ImmutableList.cs#L61">JsonValueHelpers.ImmutableList.cs</a></p>
-<h2 id="getimmutablelistfromjsonelementreplacing-ref-jsonelement-ref-jsonany-ref-jsonany">GetImmutableListFromJsonElementReplacing(ref JsonElement, ref JsonAny, ref JsonAny)</h2>
+<h2 id="getimmutablelistfromjsonelementreplacing-jsonelement-jsonany-jsonany">GetImmutableListFromJsonElementReplacing(JsonElement, JsonAny, JsonAny)</h2>
 <p>Builds an immutable list from a JsonElement, removing the first instance of a specific value, and replacing it with a new value.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementReplacing(ref JsonElement jsonElement, ref JsonAny oldItem, ref JsonAny newItem)
+<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementReplacing(in JsonElement jsonElement, in JsonAny oldItem, in JsonAny newItem)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,17 +116,17 @@
 <tbody>
 <tr>
 <td><code>jsonElement</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The json element containing the source array.</td>
 </tr>
 <tr>
 <td><code>oldItem</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The item to remove.</td>
 </tr>
 <tr>
 <td><code>newItem</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The item to insert.</td>
 </tr>
 </tbody>

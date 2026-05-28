@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetvalidationconstantforkeyword-typedeclaration-ivalidationconstantproviderkeyword-nullable-int-ref-jsonelement">TryGetValidationConstantForKeyword(TypeDeclaration, IValidationConstantProviderKeyword, Nullable&lt;int&gt;, ref JsonElement)</h2>
+<h2 id="trygetvalidationconstantforkeyword-typedeclaration-ivalidationconstantproviderkeyword-nullable-int-jsonelement">TryGetValidationConstantForKeyword(TypeDeclaration, IValidationConstantProviderKeyword, Nullable&lt;int&gt;, JsonElement)</h2>
 <p>Gets the validation constant value for the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-ivalidationconstantproviderkeyword.html"><code>IValidationConstantProviderKeyword</code></a>, at the specific index.</p>
-<pre><code class="language-csharp">public static bool TryGetValidationConstantForKeyword(TypeDeclaration typeDeclaration, IValidationConstantProviderKeyword keyword, Nullable&lt;int&gt; index, ref JsonElement value)
+<pre><code class="language-csharp">public static bool TryGetValidationConstantForKeyword(TypeDeclaration typeDeclaration, IValidationConstantProviderKeyword keyword, Nullable&lt;int&gt; index, out JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -130,7 +130,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The resulting validation constant, or an undefined <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a> if no such value exists. This includes out-of-range requests.</td>
 </tr>
 </tbody>

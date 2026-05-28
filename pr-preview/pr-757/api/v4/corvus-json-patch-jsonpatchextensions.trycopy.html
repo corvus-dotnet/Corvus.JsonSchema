@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trycopy-t-string-string-ref-t">TryCopy(T, string, string, ref T)</h2>
+<h2 id="trycopy-t-string-string-t">TryCopy(T, string, string, T)</h2>
 <p>Applies a Copy operation to the node.</p>
-<pre><code class="language-csharp">public static bool TryCopy&lt;T&gt;(T node, string destinationPath, string sourcePath, ref T result)
+<pre><code class="language-csharp">public static bool TryCopy&lt;T&gt;(T node, string destinationPath, string sourcePath, out T result)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -146,7 +146,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The resulting entity.</td>
 </tr>
 </tbody>

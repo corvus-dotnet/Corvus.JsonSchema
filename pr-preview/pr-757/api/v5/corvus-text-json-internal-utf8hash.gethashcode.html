@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src/Corvus.Text.Json/Corvus/Text/Json/Internal/Utf8Hash.cs#L51">Utf8Hash.cs</a></p>
-<h2 id="gethashcode-ref-readonlyspan-byte">GetHashCode(ref ReadOnlySpan&lt;byte&gt;)</h2>
+<h2 id="gethashcode-readonlyspan-byte">GetHashCode(ReadOnlySpan&lt;byte&gt;)</h2>
 <p>Calculates a hash code for the specified UTF-8 byte span.</p>
-<pre><code class="language-csharp">public static ulong GetHashCode(ref ReadOnlySpan&lt;byte&gt; key)
+<pre><code class="language-csharp">public static ulong GetHashCode(in ReadOnlySpan&lt;byte&gt; key)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>key</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ref ReadOnlySpan&lt;byte&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
 <td>The UTF-8 key to hash.</td>
 </tr>
 </tbody>

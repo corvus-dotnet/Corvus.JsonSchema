@@ -101,10 +101,10 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
 <h2 id="handlermiddleware">HandlerMiddleware()</h2>
 <p>Gets or sets the middleware that wraps handler invocations with resilience patterns (retry, circuit-breaker, timeout, etc.).</p>
-<pre><code class="language-csharp">public abstract MessageHandlerMiddleware HandlerMiddleware { get; set; }
+<pre><code class="language-csharp">public abstract MessageHandlerMiddleware? HandlerMiddleware { get; set; }
 </code></pre>
 <h3 id="returns">Returns</h3>
-<p><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.html"><code>MessageHandlerMiddleware</code></a></p>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-asyncapi-messagehandlermiddleware.html"><code>MessageHandlerMiddleware?</code></a></p>
 <h3 id="remarks">Remarks</h3>
 <p>If <code>null</code>, the handler is invoked directly with no retry. Use the <code>Corvus.Text.Json.AsyncApi.Polly</code> package to create middleware backed by a <code>ResiliencePipeline</code>.</p>
 <h2 id="applies-to">Applies To</h2>

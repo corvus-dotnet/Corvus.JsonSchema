@@ -109,15 +109,15 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#equals-ref-binaryjsonnumber-ref-binaryjsonnumber">Equals(ref BinaryJsonNumber, ref BinaryJsonNumber)</a></td>
+<td><a href="#equals-binaryjsonnumber-binaryjsonnumber">Equals(BinaryJsonNumber, BinaryJsonNumber)</a></td>
 <td>Compare two numbers in binary form.</td>
 </tr>
 <tr>
-<td><a href="#equals-ref-jsonelement-ref-binaryjsonnumber">Equals(ref JsonElement, ref BinaryJsonNumber)</a></td>
+<td><a href="#equals-jsonelement-binaryjsonnumber">Equals(JsonElement, BinaryJsonNumber)</a></td>
 <td>Compare a binary number with a number represented by a JsonElement.</td>
 </tr>
 <tr>
-<td><a href="#equals-ref-binaryjsonnumber-ref-jsonelement">Equals(ref BinaryJsonNumber, ref JsonElement)</a></td>
+<td><a href="#equals-binaryjsonnumber-jsonelement">Equals(BinaryJsonNumber, JsonElement)</a></td>
 <td>Compare a binary number with a number represented by a JsonElement.</td>
 </tr>
 <tr>
@@ -125,23 +125,23 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#equals-object">Equals(object)</a></td>
+<td><a href="#equals-object">Equals(object?)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#equals-ref-binaryjsonnumber">Equals(ref BinaryJsonNumber)</a></td>
+<td><a href="#equals-binaryjsonnumber">Equals(BinaryJsonNumber)</a></td>
 <td>Equality comparison.</td>
 </tr>
 <tr>
-<td><a href="#equals-ref-jsonelement">Equals(ref JsonElement)</a></td>
+<td><a href="#equals-jsonelement">Equals(JsonElement)</a></td>
 <td>Equality comparison.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="equals-ref-binaryjsonnumber-ref-binaryjsonnumber">Equals(ref BinaryJsonNumber, ref BinaryJsonNumber)</h2>
+<h2 id="equals-binaryjsonnumber-binaryjsonnumber">Equals(BinaryJsonNumber, BinaryJsonNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/BinaryJsonNumber.Net8.cs#L1516">BinaryJsonNumber.Net8.cs</a></p>
 <p>Compare two numbers in binary form.</p>
-<pre><code class="language-csharp">public static bool Equals(ref BinaryJsonNumber left, ref BinaryJsonNumber right)
+<pre><code class="language-csharp">public static bool Equals(in BinaryJsonNumber left, in BinaryJsonNumber right)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -155,12 +155,12 @@
 <tbody>
 <tr>
 <td><code>left</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The binary backing for the lhs.</td>
 </tr>
 <tr>
 <td><code>right</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The binary backing for the rhs.</td>
 </tr>
 </tbody>
@@ -203,10 +203,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-jsonelement-ref-binaryjsonnumber">Equals(ref JsonElement, ref BinaryJsonNumber)</h2>
+<h2 id="equals-jsonelement-binaryjsonnumber">Equals(JsonElement, BinaryJsonNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/BinaryJsonNumber.Net8.cs#L1568">BinaryJsonNumber.Net8.cs</a></p>
 <p>Compare a binary number with a number represented by a JsonElement.</p>
-<pre><code class="language-csharp">public static bool Equals(ref JsonElement jsonNumber, ref BinaryJsonNumber binaryNumber)
+<pre><code class="language-csharp">public static bool Equals(in JsonElement jsonNumber, in BinaryJsonNumber binaryNumber)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -220,12 +220,12 @@
 <tbody>
 <tr>
 <td><code>jsonNumber</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The jsonElement backing for the rhs.</td>
 </tr>
 <tr>
 <td><code>binaryNumber</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The binary backing for the lhs.</td>
 </tr>
 </tbody>
@@ -268,10 +268,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-binaryjsonnumber-ref-jsonelement">Equals(ref BinaryJsonNumber, ref JsonElement)</h2>
+<h2 id="equals-binaryjsonnumber-jsonelement">Equals(BinaryJsonNumber, JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/BinaryJsonNumber.Net8.cs#L1581">BinaryJsonNumber.Net8.cs</a></p>
 <p>Compare a binary number with a number represented by a JsonElement.</p>
-<pre><code class="language-csharp">public static bool Equals(ref BinaryJsonNumber binaryNumber, ref JsonElement jsonNumber)
+<pre><code class="language-csharp">public static bool Equals(in BinaryJsonNumber binaryNumber, in JsonElement jsonNumber)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -285,12 +285,12 @@
 <tbody>
 <tr>
 <td><code>binaryNumber</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The binary backing for the lhs.</td>
 </tr>
 <tr>
 <td><code>jsonNumber</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The jsonElement backing for the rhs.</td>
 </tr>
 </tbody>
@@ -378,9 +378,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-object">Equals(object)</h2>
+<h2 id="equals-object">Equals(object?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/BinaryJsonNumber.Net8.cs#L2749">BinaryJsonNumber.Net8.cs</a></p>
-<pre><code class="language-csharp">public override bool Equals(object obj)
+<pre><code class="language-csharp">public override bool Equals(object? obj)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -394,7 +394,7 @@
 <tbody>
 <tr>
 <td><code>obj</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -421,10 +421,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-binaryjsonnumber">Equals(ref BinaryJsonNumber)</h2>
+<h2 id="equals-binaryjsonnumber">Equals(BinaryJsonNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/BinaryJsonNumber.Net8.cs#L2760">BinaryJsonNumber.Net8.cs</a></p>
 <p>Equality comparison.</p>
-<pre><code class="language-csharp">public bool Equals(ref BinaryJsonNumber other)
+<pre><code class="language-csharp">public bool Equals(in BinaryJsonNumber other)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -438,7 +438,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The value with which to compare.</td>
 </tr>
 </tbody>
@@ -466,10 +466,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-jsonelement">Equals(ref JsonElement)</h2>
+<h2 id="equals-jsonelement">Equals(JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/BinaryJsonNumber.Net8.cs#L2770">BinaryJsonNumber.Net8.cs</a></p>
 <p>Equality comparison.</p>
-<pre><code class="language-csharp">public bool Equals(ref JsonElement other)
+<pre><code class="language-csharp">public bool Equals(in JsonElement other)
 </code></pre>
 <h3 id="parameters-6">Parameters</h3>
 <table>
@@ -483,7 +483,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value with which to compare.</td>
 </tr>
 </tbody>

@@ -100,9 +100,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/JsonValueHelpers.ImmutableList.cs#L25">JsonValueHelpers.ImmutableList.cs</a></p>
-<h2 id="getimmutablelistfromjsonelementwithout-ref-jsonelement-ref-jsonany">GetImmutableListFromJsonElementWithout(ref JsonElement, ref JsonAny)</h2>
+<h2 id="getimmutablelistfromjsonelementwithout-jsonelement-jsonany">GetImmutableListFromJsonElementWithout(JsonElement, JsonAny)</h2>
 <p>Builds an immutable list from a JsonElement, removing the first instance of a specific value.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementWithout(ref JsonElement jsonElement, ref JsonAny item)
+<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementWithout(in JsonElement jsonElement, in JsonAny item)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -116,12 +116,12 @@
 <tbody>
 <tr>
 <td><code>jsonElement</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The json element containing the source array.</td>
 </tr>
 <tr>
 <td><code>item</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The item to remove.</td>
 </tr>
 </tbody>

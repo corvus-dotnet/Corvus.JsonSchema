@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetoperator-typedeclaration-ref-operator">TryGetOperator(TypeDeclaration, ref Operator)</h2>
+<h2 id="trygetoperator-typedeclaration-operator">TryGetOperator(TypeDeclaration, Operator)</h2>
 <p>Gets the operator to use for the comparison.</p>
-<pre><code class="language-csharp">public abstract bool TryGetOperator(TypeDeclaration typeDeclaration, ref Operator op)
+<pre><code class="language-csharp">public abstract bool TryGetOperator(TypeDeclaration typeDeclaration, out Operator op)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>op</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-operator.html"><code>ref Operator</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-codegeneration-operator.html"><code>Operator</code></a></td>
 <td>The resulting operator, or <code>null</code> if the keyword was not available.</td>
 </tr>
 </tbody>

@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetmetadata-string-ref-t">TryGetMetadata(string, ref T)</h2>
+<h2 id="trygetmetadata-string-t">TryGetMetadata(string, T)</h2>
 <p>Gets a metadata value set for the property declaration.</p>
-<pre><code class="language-csharp">public bool TryGetMetadata&lt;T&gt;(string key, ref T value)
+<pre><code class="language-csharp">public bool TryGetMetadata&lt;T&gt;(string key, out T value)
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
 <table>
@@ -135,7 +135,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The metadata value, if found.</td>
 </tr>
 </tbody>

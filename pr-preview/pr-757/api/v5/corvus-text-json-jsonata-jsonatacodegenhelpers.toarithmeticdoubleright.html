@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="toarithmeticdoubleright-ref-jsonelement">ToArithmeticDoubleRight(ref JsonElement)</h2>
+<h2 id="toarithmeticdoubleright-jsonelement">ToArithmeticDoubleRight(JsonElement)</h2>
 <p>Extracts a <code>double</code> from a right operand <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> for arithmetic. Returns <a href="https://learn.microsoft.com/dotnet/api/system.double"><code>NaN</code></a> for undefined (propagation sentinel).</p>
-<pre><code class="language-csharp">public static double ToArithmeticDoubleRight(ref JsonElement element)
+<pre><code class="language-csharp">public static double ToArithmeticDoubleRight(in JsonElement element)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>element</code></td>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 </tbody>

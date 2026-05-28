@@ -113,7 +113,7 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument.html"><code>JsonPatchDocument</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonpatchdocument-ref-jsonelement">JsonPatchDocument(ref JsonElement)</a></td>
+<td><a href="#jsonpatchdocument-jsonelement">JsonPatchDocument(JsonElement)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument.html"><code>JsonPatchDocument</code></a> struct.</td>
 </tr>
 <tr>
@@ -146,9 +146,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonpatchdocument-ref-jsonelement">JsonPatchDocument(ref JsonElement)</h2>
+<h2 id="jsonpatchdocument-jsonelement">JsonPatchDocument(JsonElement)</h2>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-757/api/v4/corvus-json-patch-model-jsonpatchdocument.html"><code>JsonPatchDocument</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonPatchDocument(ref JsonElement value)
+<pre><code class="language-csharp">public JsonPatchDocument(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -162,7 +162,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>

@@ -99,10 +99,10 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/NumericTypeExtensions.cs#L69">NumericTypeExtensions.cs</a></p>
-<h2 id="trygetint16withfallbacks-jsonelement-ref-short">TryGetInt16WithFallbacks(JsonElement, ref short)</h2>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/NumericTypeExtensions.cs#L71">NumericTypeExtensions.cs</a></p>
+<h2 id="trygetint16withfallbacks-jsonelement-short">TryGetInt16WithFallbacks(JsonElement, short)</h2>
 <p>Safely get an short value.</p>
-<pre><code class="language-csharp">public static bool TryGetInt16WithFallbacks(JsonElement value, ref short result)
+<pre><code class="language-csharp">public static bool TryGetInt16WithFallbacks(JsonElement value, out short result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -121,7 +121,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int16"><code>ref short</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int16"><code>short</code></a></td>
 <td>The value as an integer.</td>
 </tr>
 </tbody>

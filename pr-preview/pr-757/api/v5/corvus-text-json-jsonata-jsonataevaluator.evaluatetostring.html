@@ -113,26 +113,26 @@
 <td>Evaluates a JSONata expression against a JSON string.</td>
 </tr>
 <tr>
-<td><a href="#evaluatetostring-string-jsonelement-jsonworkspace-span-byte-ref-int-int-int">EvaluateToString(string, JsonElement, JsonWorkspace, Span&lt;byte&gt;, ref int, int, int)</a></td>
+<td><a href="#evaluatetostring-string-jsonelement-jsonworkspace-span-byte-int-int-int">EvaluateToString(string, JsonElement, JsonWorkspace, Span&lt;byte&gt;, int, int, int)</a></td>
 <td>Evaluates a JSONata expression and writes the JSON result as UTF-8 bytes into the caller-provided buffer.</td>
 </tr>
 <tr>
-<td><a href="#evaluatetostring-string-jsonelement-jsonworkspace-span-char-ref-int-int-int">EvaluateToString(string, JsonElement, JsonWorkspace, Span&lt;char&gt;, ref int, int, int)</a></td>
+<td><a href="#evaluatetostring-string-jsonelement-jsonworkspace-span-char-int-int-int">EvaluateToString(string, JsonElement, JsonWorkspace, Span&lt;char&gt;, int, int, int)</a></td>
 <td>Evaluates a JSONata expression and writes the JSON result as UTF-16 characters into the caller-provided buffer.</td>
 </tr>
 <tr>
-<td><a href="#evaluatetostring-byte-jsonelement-jsonworkspace-span-byte-ref-int-string-int-int">EvaluateToString(byte[], JsonElement, JsonWorkspace, Span&lt;byte&gt;, ref int, string, int, int)</a></td>
+<td><a href="#evaluatetostring-byte-jsonelement-jsonworkspace-span-byte-int-string-int-int">EvaluateToString(byte[], JsonElement, JsonWorkspace, Span&lt;byte&gt;, int, string?, int, int)</a></td>
 <td>Evaluates a JSONata expression provided as UTF-8 bytes and writes the JSON result as UTF-8 bytes into the caller-provided buffer.</td>
 </tr>
 <tr>
-<td><a href="#evaluatetostring-byte-jsonelement-jsonworkspace-span-char-ref-int-string-int-int">EvaluateToString(byte[], JsonElement, JsonWorkspace, Span&lt;char&gt;, ref int, string, int, int)</a></td>
+<td><a href="#evaluatetostring-byte-jsonelement-jsonworkspace-span-char-int-string-int-int">EvaluateToString(byte[], JsonElement, JsonWorkspace, Span&lt;char&gt;, int, string?, int, int)</a></td>
 <td>Evaluates a JSONata expression provided as UTF-8 bytes and writes the JSON result as UTF-16 characters into the caller-provided buffer.</td>
 </tr>
 </tbody>
 </table>
 <h2 id="evaluatetostring-string-string">EvaluateToString(string, string)</h2>
 <p>Evaluates a JSONata expression against a JSON string.</p>
-<pre><code class="language-csharp">public string EvaluateToString(string expression, string json)
+<pre><code class="language-csharp">public string? EvaluateToString(string expression, string json)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -157,7 +157,7 @@
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
-<p><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></p>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></p>
 <p>The result as a JSON string, or <code>null</code> if undefined.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
@@ -179,9 +179,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="evaluatetostring-string-jsonelement-jsonworkspace-span-byte-ref-int-int-int">EvaluateToString(string, JsonElement, JsonWorkspace, Span&lt;byte&gt;, ref int, int, int)</h2>
+<h2 id="evaluatetostring-string-jsonelement-jsonworkspace-span-byte-int-int-int">EvaluateToString(string, JsonElement, JsonWorkspace, Span&lt;byte&gt;, int, int, int)</h2>
 <p>Evaluates a JSONata expression and writes the JSON result as UTF-8 bytes into the caller-provided buffer.</p>
-<pre><code class="language-csharp">public bool EvaluateToString(string expression, JsonElement data, JsonWorkspace workspace, Span&lt;byte&gt; utf8Destination, ref int bytesWritten, int maxDepth, int timeLimitMs)
+<pre><code class="language-csharp">public bool EvaluateToString(string expression, JsonElement data, JsonWorkspace workspace, Span&lt;byte&gt; utf8Destination, out int bytesWritten, int maxDepth, int timeLimitMs)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -215,7 +215,7 @@
 </tr>
 <tr>
 <td><code>bytesWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns <code>true</code>, the number of bytes written. Zero when the expression produces an undefined result.</td>
 </tr>
 <tr>
@@ -255,9 +255,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="evaluatetostring-string-jsonelement-jsonworkspace-span-char-ref-int-int-int">EvaluateToString(string, JsonElement, JsonWorkspace, Span&lt;char&gt;, ref int, int, int)</h2>
+<h2 id="evaluatetostring-string-jsonelement-jsonworkspace-span-char-int-int-int">EvaluateToString(string, JsonElement, JsonWorkspace, Span&lt;char&gt;, int, int, int)</h2>
 <p>Evaluates a JSONata expression and writes the JSON result as UTF-16 characters into the caller-provided buffer.</p>
-<pre><code class="language-csharp">public bool EvaluateToString(string expression, JsonElement data, JsonWorkspace workspace, Span&lt;char&gt; destination, ref int charsWritten, int maxDepth, int timeLimitMs)
+<pre><code class="language-csharp">public bool EvaluateToString(string expression, JsonElement data, JsonWorkspace workspace, Span&lt;char&gt; destination, out int charsWritten, int maxDepth, int timeLimitMs)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -291,7 +291,7 @@
 </tr>
 <tr>
 <td><code>charsWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns <code>true</code>, the number of characters written. Zero when the expression produces an undefined result.</td>
 </tr>
 <tr>
@@ -331,9 +331,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="evaluatetostring-byte-jsonelement-jsonworkspace-span-byte-ref-int-string-int-int">EvaluateToString(byte[], JsonElement, JsonWorkspace, Span&lt;byte&gt;, ref int, string, int, int)</h2>
+<h2 id="evaluatetostring-byte-jsonelement-jsonworkspace-span-byte-int-string-int-int">EvaluateToString(byte[], JsonElement, JsonWorkspace, Span&lt;byte&gt;, int, string?, int, int)</h2>
 <p>Evaluates a JSONata expression provided as UTF-8 bytes and writes the JSON result as UTF-8 bytes into the caller-provided buffer.</p>
-<pre><code class="language-csharp">public bool EvaluateToString(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, Span&lt;byte&gt; utf8Destination, ref int bytesWritten, string cacheKey, int maxDepth, int timeLimitMs)
+<pre><code class="language-csharp">public bool EvaluateToString(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, Span&lt;byte&gt; utf8Destination, out int bytesWritten, string? cacheKey, int maxDepth, int timeLimitMs)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -367,12 +367,12 @@
 </tr>
 <tr>
 <td><code>bytesWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns <code>true</code>, the number of bytes written. Zero when the expression produces an undefined result.</td>
 </tr>
 <tr>
 <td><code>cacheKey</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>Optional cache key for the compiled expression. When non-null, the compiled expression is cached (and retrieved on subsequent calls) using this key. <em>(optional)</em></td>
 </tr>
 <tr>
@@ -412,9 +412,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="evaluatetostring-byte-jsonelement-jsonworkspace-span-char-ref-int-string-int-int">EvaluateToString(byte[], JsonElement, JsonWorkspace, Span&lt;char&gt;, ref int, string, int, int)</h2>
+<h2 id="evaluatetostring-byte-jsonelement-jsonworkspace-span-char-int-string-int-int">EvaluateToString(byte[], JsonElement, JsonWorkspace, Span&lt;char&gt;, int, string?, int, int)</h2>
 <p>Evaluates a JSONata expression provided as UTF-8 bytes and writes the JSON result as UTF-16 characters into the caller-provided buffer.</p>
-<pre><code class="language-csharp">public bool EvaluateToString(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, Span&lt;char&gt; destination, ref int charsWritten, string cacheKey, int maxDepth, int timeLimitMs)
+<pre><code class="language-csharp">public bool EvaluateToString(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, Span&lt;char&gt; destination, out int charsWritten, string? cacheKey, int maxDepth, int timeLimitMs)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -448,12 +448,12 @@
 </tr>
 <tr>
 <td><code>charsWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns <code>true</code>, the number of characters written. Zero when the expression produces an undefined result.</td>
 </tr>
 <tr>
 <td><code>cacheKey</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>Optional cache key for the compiled expression. When non-null, the compiled expression is cached (and retrieved on subsequent calls) using this key. <em>(optional)</em></td>
 </tr>
 <tr>

@@ -121,7 +121,7 @@
 <td>Conversion to <a href="https://learn.microsoft.com/dotnet/api/system.net.ipaddress"><code>IPAddress</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#implicit-operator-jsonipv6-ref-ipaddress">implicit operator JsonIpV6(ref IPAddress)</a></td>
+<td><a href="#implicit-operator-jsonipv6-ipaddress">implicit operator JsonIpV6(IPAddress)</a></td>
 <td>Conversion from <a href="https://learn.microsoft.com/dotnet/api/system.net.ipaddress"><code>IPAddress</code></a>.</td>
 </tr>
 <tr>
@@ -270,10 +270,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="implicit-operator-jsonipv6-ref-ipaddress">implicit operator JsonIpV6(ref IPAddress)</h2>
+<h2 id="implicit-operator-jsonipv6-ipaddress">implicit operator JsonIpV6(IPAddress)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/750-net-api-client-generator-from-openapi-corvus-alternative-to-kiota/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonIpV6.cs#L247">JsonIpV6.cs</a></p>
 <p>Conversion from <a href="https://learn.microsoft.com/dotnet/api/system.net.ipaddress"><code>IPAddress</code></a>.</p>
-<pre><code class="language-csharp">public static implicit operator JsonIpV6(ref IPAddress value)
+<pre><code class="language-csharp">public static implicit operator JsonIpV6(in IPAddress value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -287,7 +287,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.net.ipaddress"><code>ref IPAddress</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.net.ipaddress"><code>IPAddress</code></a></td>
 <td>The value from which to convert.</td>
 </tr>
 </tbody>
