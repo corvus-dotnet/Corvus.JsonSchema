@@ -5,7 +5,7 @@ using Corvus.Text.Json.OpenApi.HttpTransport;
 using Playground;
 
 // ── Setting up the client ────────────────────────────────────────────────────
-HttpClient httpClient = new() { BaseAddress = new Uri("https://petstore.example.com/v1") };
+HttpClient httpClient = new(new PlaygroundHttpMessageHandler()) { BaseAddress = new Uri("https://petstore.example.com/v1") };
 await using HttpClientTransport transport = new(httpClient, disposeClient: true);
 ApiPetsClient client = new(transport);
 

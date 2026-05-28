@@ -22,6 +22,7 @@ public class WorkspaceService
         "System.Console",
         "System.Collections",
         "System.IO",
+        "System.IO.Pipelines",
         "System.Linq",
         "System.Threading",
         "System.Threading.Tasks",
@@ -39,6 +40,7 @@ public class WorkspaceService
         "System.Text.Json",
         "System.Text.Encodings.Web",
         "System.Text.RegularExpressions",
+        "Corvus.Text.Json.OpenApi.Playground",
         "Corvus.Text.Json",
         "Corvus.Text.Json.Patch",
         "Corvus.Text.Json.OpenApi",
@@ -61,6 +63,7 @@ public class WorkspaceService
         global using Corvus.Text.Json;
         global using Corvus.Text.Json.OpenApi;
         global using Corvus.Text.Json.OpenApi.HttpTransport;
+        global using Corvus.Text.Json.OpenApi.Playground.Services;
         """;
 
     public WorkspaceService(HttpClient httpClient)
