@@ -334,6 +334,80 @@ public class CodeGenRegressionTests
     }
 
     [TestMethod]
+    public async Task WithApplied_ReducedCompositionObjectWithoutObjectPartial_Compiles()
+    {
+        using var driver = DriverFactory.CreateDraft7Driver();
+        Type generatedType = await driver.GenerateTypeForVirtualFile(
+            """
+            {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "title": "Reduced Composition Object",
+              "definitions": {
+                "const_not_anchor": {
+                  "const": {
+                    "$id": "#not_a_real_anchor"
+                  }
+                }
+              },
+              "oneOf": [
+                {
+                  "const": "skip not_a_real_anchor"
+                },
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "const": "skip not_a_real_anchor"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/const_not_anchor"
+                    }
+                  ]
+                }
+              ]
+            }
+            """,
+            "reduced-composition-object.json",
+            "WithApplied",
+            "ReducedCompositionObject",
+            validateFormat: false,
+            optionalAsNullable: false,
+            useImplicitOperatorString: false);
+
+        Assert.AreEqual("ReducedCompositionObject", generatedType.Name);
+    }
+
+    [TestMethod]
+    public async Task Utf8SpanFormatting_NestedTypeCompilesWhenParentHasEncodingProperty()
+    {
+        using var driver = DriverFactory.CreateDraft7Driver();
+        Type generatedType = await driver.GenerateTypeForVirtualFile(
+            """
+            {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "title": "Encoding Parent",
+              "type": "object",
+              "properties": {
+                "encoding": {
+                  "title": "Backend Encoding",
+                  "type": "string",
+                  "enum": [ "json", "string" ]
+                }
+              }
+            }
+            """,
+            "encoding-parent.json",
+            "Formatting",
+            "NestedEncoding",
+            validateFormat: false,
+            optionalAsNullable: false,
+            useImplicitOperatorString: false);
+
+        Assert.AreEqual("EncodingParent", generatedType.Name);
+    }
+
+    [TestMethod]
     public void JsonPropertyNameIsMatch_WithEscapedJsonPropertyBacking_MatchesUnescapedName()
     {
         using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse("""{"S_\u006Eame":1}""");

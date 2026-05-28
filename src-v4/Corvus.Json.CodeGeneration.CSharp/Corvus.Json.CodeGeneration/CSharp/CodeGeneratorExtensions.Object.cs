@@ -1391,7 +1391,7 @@ internal static partial class CodeGeneratorExtensions
                 return generator;
             }
 
-            if ((composedType.ImpliedCoreTypesOrAny() & CoreTypes.Object) == 0 || composedType.DoNotGenerate())
+            if ((composedType.ImpliedCoreTypes() & CoreTypes.Object) == 0 || composedType.DoNotGenerate())
             {
                 return generator;
             }
