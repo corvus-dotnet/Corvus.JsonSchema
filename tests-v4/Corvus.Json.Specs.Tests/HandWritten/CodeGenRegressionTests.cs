@@ -228,6 +228,28 @@ public class CodeGenRegressionTests
     }
 
     [TestMethod]
+    public async Task CoreTypeConversions_MultiCoreBoolean_Compiles()
+    {
+        using var driver = DriverFactory.CreateDraft7Driver();
+        Type generatedType = await driver.GenerateTypeForVirtualFile(
+            """
+            {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "title": "Boolean Or String",
+              "type": [ "boolean", "string" ]
+            }
+            """,
+            "multiCoreBoolean.json",
+            "CoreTypeConversions",
+            "MultiCoreBoolean",
+            validateFormat: false,
+            optionalAsNullable: false,
+            useImplicitOperatorString: false);
+
+        Assert.AreEqual("MultiCoreBoolean", generatedType.Name);
+    }
+
+    [TestMethod]
     public async Task PatternProperties_GenerateVisitorDispatch()
     {
         using var driver = DriverFactory.CreateDraft7Driver();

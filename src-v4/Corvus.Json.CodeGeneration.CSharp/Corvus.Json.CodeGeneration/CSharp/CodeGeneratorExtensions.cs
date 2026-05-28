@@ -2507,7 +2507,7 @@ internal static partial class CodeGeneratorExtensions
                 CoreTypes.String)
             .AppendConditionalBackingValueLineIndent(
                 "Backing.Bool",
-                (typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Boolean) != 0 ? "return TTarget.FromBoolean(this);" : "return TTarget.FromBoolean(this.AsBoolean);",
+                ShouldPassThisToFromBoolean(typeDeclaration) ? "return TTarget.FromBoolean(this);" : "return TTarget.FromBoolean(this.AsBoolean);",
                 typeDeclaration.ImpliedCoreTypesOrAny(),
                 CoreTypes.Boolean)
             .AppendConditionalBackingValueLineIndent(
@@ -2535,6 +2535,13 @@ internal static partial class CodeGeneratorExtensions
             .AppendLine("#endif")
             .PopIndent()
             .AppendLineIndent("}");
+
+        static bool ShouldPassThisToFromBoolean(TypeDeclaration typeDeclaration)
+        {
+            return
+                (typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Boolean) != 0 &&
+                typeDeclaration.ImpliedCoreTypes().CountTypes() == 1;
+        }
     }
 
     /// <summary>

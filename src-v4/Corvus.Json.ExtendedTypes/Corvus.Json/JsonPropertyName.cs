@@ -1123,7 +1123,22 @@ public readonly struct JsonPropertyName
             return this.stringBacking.Length;
         }
 
+        if (this.HasJsonPropertyBacking)
+        {
+            const int state = default;
+            if (TryGetJsonPropertyNameValue(this.jsonPropertyBacking, GetLength, state, out int result))
+            {
+                return result;
+            }
+        }
+
         throw new InvalidOperationException("Unsupported JSON property name");
+
+        static bool GetLength(ReadOnlySpan<char> span, in int state, out int result)
+        {
+            result = span.Length;
+            return true;
+        }
     }
 
     /// <summary>
@@ -1153,6 +1168,11 @@ public readonly struct JsonPropertyName
         if (this.HasJsonElementBacking)
         {
             return this.jsonElementBacking.TryGetValue(CopyTo, memory, out length);
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            return TryGetJsonPropertyNameValue(this.jsonPropertyBacking, CopyTo, memory, out length);
         }
 
         throw new InvalidOperationException();

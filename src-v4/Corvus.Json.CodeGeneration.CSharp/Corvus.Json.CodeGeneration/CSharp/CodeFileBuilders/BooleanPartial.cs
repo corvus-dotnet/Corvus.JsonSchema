@@ -54,7 +54,7 @@ public sealed class BooleanPartial : ICodeFileBuilder
                             typeDeclaration.DotnetTypeName(),
                             interfaces:
                                 [
-                                    new(g => g.GenericTypeOf("IJsonBoolean", typeDeclaration))
+                                    new(g => g.GenericTypeOf("IJsonBoolean", typeDeclaration), EmitIJsonBooleanInterface(typeDeclaration))
                                 ])
                                 .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "bool")
                                 .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonBoolean", [JsonValueKind.False, JsonValueKind.True], "(bool)value")
@@ -82,6 +82,13 @@ public sealed class BooleanPartial : ICodeFileBuilder
             return (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0
                  ? FrameworkType.All
                  : FrameworkType.NotEmitted;
+        }
+
+        static FrameworkType EmitIJsonBooleanInterface(TypeDeclaration typeDeclaration)
+        {
+            return typeDeclaration.ImpliedCoreTypes().CountTypes() == 1
+                ? FrameworkType.All
+                : FrameworkType.PreNet80;
         }
     }
 }
