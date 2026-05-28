@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="deconstruct-ref-jsonreference-ref-jsonreference-ref-locatedschema-ref-immutablelist-valuetuple-jsonreference-typedeclaration">Deconstruct(ref JsonReference, ref JsonReference, ref LocatedSchema, ref ImmutableList&lt;ValueTuple&lt;JsonReference, TypeDeclaration&gt;&gt;)</h2>
-<pre><code class="language-csharp">public void Deconstruct(ref JsonReference Location, ref JsonReference Pointer, ref LocatedSchema LocatedSchema, ref ImmutableList&lt;ValueTuple&lt;JsonReference, TypeDeclaration&gt;&gt; ReplacedDynamicTypes)
+<h2 id="deconstruct-jsonreference-jsonreference-locatedschema-immutablelist-valuetuple-jsonreference-typedeclaration">Deconstruct(JsonReference, JsonReference, LocatedSchema, ImmutableList&lt;ValueTuple&lt;JsonReference, TypeDeclaration&gt;&gt;)</h2>
+<pre><code class="language-csharp">public void Deconstruct(out JsonReference Location, out JsonReference Pointer, out LocatedSchema LocatedSchema, out ImmutableList&lt;ValueTuple&lt;JsonReference, TypeDeclaration&gt;&gt; ReplacedDynamicTypes)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -113,22 +113,22 @@
 <tbody>
 <tr>
 <td><code>Location</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonreference.html"><code>ref JsonReference</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonreference.html"><code>JsonReference</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>Pointer</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonreference.html"><code>ref JsonReference</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonreference.html"><code>JsonReference</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>LocatedSchema</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-locatedschema.html"><code>ref LocatedSchema</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-locatedschema.html"><code>LocatedSchema</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>ReplacedDynamicTypes</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1"><code>ref ImmutableList&lt;ValueTuple&lt;JsonReference, TypeDeclaration&gt;&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1"><code>ImmutableList&lt;ValueTuple&lt;JsonReference, TypeDeclaration&gt;&gt;</code></a></td>
 <td></td>
 </tr>
 </tbody>

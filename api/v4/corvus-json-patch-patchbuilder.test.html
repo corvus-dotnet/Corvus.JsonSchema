@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="test-ref-jsonpointer-ref-jsonany">Test(ref JsonPointer, ref JsonAny)</h2>
+<h2 id="test-jsonpointer-jsonany">Test(JsonPointer, JsonAny)</h2>
 <p>Tests that the <code>value</code> is found at the given <code>path</code>.</p>
-<pre><code class="language-csharp">public PatchBuilder Test(ref JsonPointer path, ref JsonAny value)
+<pre><code class="language-csharp">public PatchBuilder Test(in JsonPointer path, in JsonAny value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>path</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpointer.html"><code>ref JsonPointer</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpointer.html"><code>JsonPointer</code></a></td>
 <td>The path at which to replace the existing value.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The <a href="/Corvus.JsonSchema/api/v4/corvus-json-ijsonvalue.html"><code>IJsonValue</code></a> expected at the given path.</td>
 </tr>
 </tbody>

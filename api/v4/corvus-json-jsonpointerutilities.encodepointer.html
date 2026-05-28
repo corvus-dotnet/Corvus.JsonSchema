@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="encodepointer-readonlyspan-char-ref-span-char">EncodePointer(ReadOnlySpan&lt;char&gt;, ref Span&lt;char&gt;)</h2>
+<h2 id="encodepointer-readonlyspan-char-span-char">EncodePointer(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;)</h2>
 <p>Encodes the ~ encoding in a pointer.</p>
 <pre><code class="language-csharp">public static int EncodePointer(ReadOnlySpan&lt;char&gt; unencodedFragment, ref Span&lt;char&gt; fragment)
 </code></pre>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>fragment</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.span-1"><code>ref Span&lt;char&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.span-1"><code>Span&lt;char&gt;</code></a></td>
 <td>The span into which to write the result.</td>
 </tr>
 </tbody>

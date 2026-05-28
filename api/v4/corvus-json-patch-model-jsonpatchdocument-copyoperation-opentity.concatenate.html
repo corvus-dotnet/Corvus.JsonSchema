@@ -108,37 +108,37 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#concatenate-span-byte-ref-t1-ref-t2">Concatenate(Span&lt;byte&gt;, ref T1, ref T2)</a></td>
+<td><a href="#concatenate-span-byte-t1-t2">Concatenate(Span&lt;byte&gt;, T1, T2)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#concatenate-span-byte-ref-t1-ref-t2-ref-t3">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3)</a></td>
+<td><a href="#concatenate-span-byte-t1-t2-t3">Concatenate(Span&lt;byte&gt;, T1, T2, T3)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4)</a></td>
+<td><a href="#concatenate-span-byte-t1-t2-t3-t4">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4-ref-t5">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4, ref T5)</a></td>
+<td><a href="#concatenate-span-byte-t1-t2-t3-t4-t5">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4, T5)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4-ref-t5-ref-t6">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4, ref T5, ref T6)</a></td>
+<td><a href="#concatenate-span-byte-t1-t2-t3-t4-t5-t6">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4, T5, T6)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4-ref-t5-ref-t6-ref-t7">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4, ref T5, ref T6, ref T7)</a></td>
+<td><a href="#concatenate-span-byte-t1-t2-t3-t4-t5-t6-t7">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4, T5, T6, T7)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4-ref-t5-ref-t6-ref-t7-ref-t8">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4, ref T5, ref T6, ref T7, ref T8)</a></td>
+<td><a href="#concatenate-span-byte-t1-t2-t3-t4-t5-t6-t7-t8">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4, T5, T6, T7, T8)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="concatenate-span-byte-ref-t1-ref-t2">Concatenate(Span&lt;byte&gt;, ref T1, ref T2)</h2>
-<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2&gt;(Span&lt;byte&gt; buffer, ref T1 value1, ref T2 value2)
+<h2 id="concatenate-span-byte-t1-t2">Concatenate(Span&lt;byte&gt;, T1, T2)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2&gt;(Span&lt;byte&gt; buffer, in T1 value1, in T2 value2)
     where T1 : struct, IJsonValue&lt;T1&gt;
     where T2 : struct, IJsonValue&lt;T2&gt;
 </code></pre>
@@ -159,12 +159,12 @@
 </tr>
 <tr>
 <td><code>value1</code></td>
-<td><code>ref T1</code></td>
+<td><code>T1</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value2</code></td>
-<td><code>ref T2</code></td>
+<td><code>T2</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -191,8 +191,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="concatenate-span-byte-ref-t1-ref-t2-ref-t3">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3)</h2>
-<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3&gt;(Span&lt;byte&gt; buffer, ref T1 value1, ref T2 value2, ref T3 value3)
+<h2 id="concatenate-span-byte-t1-t2-t3">Concatenate(Span&lt;byte&gt;, T1, T2, T3)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3&gt;(Span&lt;byte&gt; buffer, in T1 value1, in T2 value2, in T3 value3)
     where T1 : struct, IJsonValue&lt;T1&gt;
     where T2 : struct, IJsonValue&lt;T2&gt;
     where T3 : struct, IJsonValue&lt;T3&gt;
@@ -214,17 +214,17 @@
 </tr>
 <tr>
 <td><code>value1</code></td>
-<td><code>ref T1</code></td>
+<td><code>T1</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value2</code></td>
-<td><code>ref T2</code></td>
+<td><code>T2</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value3</code></td>
-<td><code>ref T3</code></td>
+<td><code>T3</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -251,8 +251,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4)</h2>
-<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4&gt;(Span&lt;byte&gt; buffer, ref T1 value1, ref T2 value2, ref T3 value3, ref T4 value4)
+<h2 id="concatenate-span-byte-t1-t2-t3-t4">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4&gt;(Span&lt;byte&gt; buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4)
     where T1 : struct, IJsonValue&lt;T1&gt;
     where T2 : struct, IJsonValue&lt;T2&gt;
     where T3 : struct, IJsonValue&lt;T3&gt;
@@ -275,22 +275,22 @@
 </tr>
 <tr>
 <td><code>value1</code></td>
-<td><code>ref T1</code></td>
+<td><code>T1</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value2</code></td>
-<td><code>ref T2</code></td>
+<td><code>T2</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value3</code></td>
-<td><code>ref T3</code></td>
+<td><code>T3</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value4</code></td>
-<td><code>ref T4</code></td>
+<td><code>T4</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -317,8 +317,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4-ref-t5">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4, ref T5)</h2>
-<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4, T5&gt;(Span&lt;byte&gt; buffer, ref T1 value1, ref T2 value2, ref T3 value3, ref T4 value4, ref T5 value5)
+<h2 id="concatenate-span-byte-t1-t2-t3-t4-t5">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4, T5)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4, T5&gt;(Span&lt;byte&gt; buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5)
     where T1 : struct, IJsonValue&lt;T1&gt;
     where T2 : struct, IJsonValue&lt;T2&gt;
     where T3 : struct, IJsonValue&lt;T3&gt;
@@ -342,27 +342,27 @@
 </tr>
 <tr>
 <td><code>value1</code></td>
-<td><code>ref T1</code></td>
+<td><code>T1</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value2</code></td>
-<td><code>ref T2</code></td>
+<td><code>T2</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value3</code></td>
-<td><code>ref T3</code></td>
+<td><code>T3</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value4</code></td>
-<td><code>ref T4</code></td>
+<td><code>T4</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value5</code></td>
-<td><code>ref T5</code></td>
+<td><code>T5</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -389,8 +389,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4-ref-t5-ref-t6">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4, ref T5, ref T6)</h2>
-<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4, T5, T6&gt;(Span&lt;byte&gt; buffer, ref T1 value1, ref T2 value2, ref T3 value3, ref T4 value4, ref T5 value5, ref T6 value6)
+<h2 id="concatenate-span-byte-t1-t2-t3-t4-t5-t6">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4, T5, T6)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4, T5, T6&gt;(Span&lt;byte&gt; buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6)
     where T1 : struct, IJsonValue&lt;T1&gt;
     where T2 : struct, IJsonValue&lt;T2&gt;
     where T3 : struct, IJsonValue&lt;T3&gt;
@@ -415,32 +415,32 @@
 </tr>
 <tr>
 <td><code>value1</code></td>
-<td><code>ref T1</code></td>
+<td><code>T1</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value2</code></td>
-<td><code>ref T2</code></td>
+<td><code>T2</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value3</code></td>
-<td><code>ref T3</code></td>
+<td><code>T3</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value4</code></td>
-<td><code>ref T4</code></td>
+<td><code>T4</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value5</code></td>
-<td><code>ref T5</code></td>
+<td><code>T5</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value6</code></td>
-<td><code>ref T6</code></td>
+<td><code>T6</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -467,8 +467,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4-ref-t5-ref-t6-ref-t7">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4, ref T5, ref T6, ref T7)</h2>
-<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4, T5, T6, T7&gt;(Span&lt;byte&gt; buffer, ref T1 value1, ref T2 value2, ref T3 value3, ref T4 value4, ref T5 value5, ref T6 value6, ref T7 value7)
+<h2 id="concatenate-span-byte-t1-t2-t3-t4-t5-t6-t7">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4, T5, T6, T7)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4, T5, T6, T7&gt;(Span&lt;byte&gt; buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7)
     where T1 : struct, IJsonValue&lt;T1&gt;
     where T2 : struct, IJsonValue&lt;T2&gt;
     where T3 : struct, IJsonValue&lt;T3&gt;
@@ -494,37 +494,37 @@
 </tr>
 <tr>
 <td><code>value1</code></td>
-<td><code>ref T1</code></td>
+<td><code>T1</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value2</code></td>
-<td><code>ref T2</code></td>
+<td><code>T2</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value3</code></td>
-<td><code>ref T3</code></td>
+<td><code>T3</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value4</code></td>
-<td><code>ref T4</code></td>
+<td><code>T4</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value5</code></td>
-<td><code>ref T5</code></td>
+<td><code>T5</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value6</code></td>
-<td><code>ref T6</code></td>
+<td><code>T6</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value7</code></td>
-<td><code>ref T7</code></td>
+<td><code>T7</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -551,8 +551,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="concatenate-span-byte-ref-t1-ref-t2-ref-t3-ref-t4-ref-t5-ref-t6-ref-t7-ref-t8">Concatenate(Span&lt;byte&gt;, ref T1, ref T2, ref T3, ref T4, ref T5, ref T6, ref T7, ref T8)</h2>
-<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4, T5, T6, T7, T8&gt;(Span&lt;byte&gt; buffer, ref T1 value1, ref T2 value2, ref T3 value3, ref T4 value4, ref T5 value5, ref T6 value6, ref T7 value7, ref T8 value8)
+<h2 id="concatenate-span-byte-t1-t2-t3-t4-t5-t6-t7-t8">Concatenate(Span&lt;byte&gt;, T1, T2, T3, T4, T5, T6, T7, T8)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.OpEntity Concatenate&lt;T1, T2, T3, T4, T5, T6, T7, T8&gt;(Span&lt;byte&gt; buffer, in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7, in T8 value8)
     where T1 : struct, IJsonValue&lt;T1&gt;
     where T2 : struct, IJsonValue&lt;T2&gt;
     where T3 : struct, IJsonValue&lt;T3&gt;
@@ -579,42 +579,42 @@
 </tr>
 <tr>
 <td><code>value1</code></td>
-<td><code>ref T1</code></td>
+<td><code>T1</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value2</code></td>
-<td><code>ref T2</code></td>
+<td><code>T2</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value3</code></td>
-<td><code>ref T3</code></td>
+<td><code>T3</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value4</code></td>
-<td><code>ref T4</code></td>
+<td><code>T4</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value5</code></td>
-<td><code>ref T5</code></td>
+<td><code>T5</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value6</code></td>
-<td><code>ref T6</code></td>
+<td><code>T6</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value7</code></td>
-<td><code>ref T7</code></td>
+<td><code>T7</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value8</code></td>
-<td><code>ref T8</code></td>
+<td><code>T8</code></td>
 <td></td>
 </tr>
 </tbody>

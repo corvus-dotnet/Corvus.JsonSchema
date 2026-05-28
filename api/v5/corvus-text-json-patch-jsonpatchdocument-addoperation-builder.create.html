@@ -108,17 +108,17 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#create-ref-jsonpointer-source-ref-jsonelement-source">Create(ref JsonPointer.Source, ref JsonElement.Source)</a></td>
+<td><a href="#create-jsonpointer-source-jsonelement-source">Create(JsonPointer.Source, JsonElement.Source)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#create-ref-tcontext-ref-jsonpointer-source-ref-jsonelement-source-tcontext">Create(ref TContext, ref JsonPointer.Source, ref JsonElement.Source&lt;TContext&gt;)</a></td>
+<td><a href="#create-tcontext-jsonpointer-source-jsonelement-source-tcontext">Create(TContext, JsonPointer.Source, JsonElement.Source&lt;TContext&gt;)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="create-ref-jsonpointer-source-ref-jsonelement-source">Create(ref JsonPointer.Source, ref JsonElement.Source)</h2>
-<pre><code class="language-csharp">public void Create(ref JsonPointer.Source path, ref JsonElement.Source value)
+<h2 id="create-jsonpointer-source-jsonelement-source">Create(JsonPointer.Source, JsonElement.Source)</h2>
+<pre><code class="language-csharp">public void Create(in JsonPointer.Source path, in JsonElement.Source value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -132,12 +132,12 @@
 <tbody>
 <tr>
 <td><code>path</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer-source.html"><code>ref JsonPointer.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer-source.html"><code>JsonPointer.Source</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>ref JsonElement.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -162,8 +162,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="create-ref-tcontext-ref-jsonpointer-source-ref-jsonelement-source-tcontext">Create(ref TContext, ref JsonPointer.Source, ref JsonElement.Source&lt;TContext&gt;)</h2>
-<pre><code class="language-csharp">public void Create&lt;TContext&gt;(ref TContext context, ref JsonPointer.Source path, ref JsonElement.Source&lt;TContext&gt; value)
+<h2 id="create-tcontext-jsonpointer-source-jsonelement-source-tcontext">Create(TContext, JsonPointer.Source, JsonElement.Source&lt;TContext&gt;)</h2>
+<pre><code class="language-csharp">public void Create&lt;TContext&gt;(in TContext context, in JsonPointer.Source path, in JsonElement.Source&lt;TContext&gt; value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -177,17 +177,17 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>path</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer-source.html"><code>ref JsonPointer.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer-source.html"><code>JsonPointer.Source</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>ref JsonElement.Source&lt;TContext&gt;</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source&lt;TContext&gt;</code></a></td>
 <td></td>
 </tr>
 </tbody>

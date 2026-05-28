@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="isrecursiveanchor-ref-jsonelement">IsRecursiveAnchor(ref JsonElement)</h2>
+<h2 id="isrecursiveanchor-jsonelement">IsRecursiveAnchor(JsonElement)</h2>
 <p>Determines whether the given schema has a recursive anchor.</p>
-<pre><code class="language-csharp">public abstract bool IsRecursiveAnchor(ref JsonElement schema)
+<pre><code class="language-csharp">public abstract bool IsRecursiveAnchor(in JsonElement schema)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>schema</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The schema to check.</td>
 </tr>
 </tbody>

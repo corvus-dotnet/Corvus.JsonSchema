@@ -98,10 +98,10 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/NumericTypeExtensions.cs#L452">NumericTypeExtensions.cs</a></p>
-<h2 id="trygetuint128withfallbacks-jsonelement-ref-uint128">TryGetUInt128WithFallbacks(JsonElement, ref UInt128)</h2>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/NumericTypeExtensions.cs#L445">NumericTypeExtensions.cs</a></p>
+<h2 id="trygetuint128withfallbacks-jsonelement-uint128">TryGetUInt128WithFallbacks(JsonElement, UInt128)</h2>
 <p>Safely get a UInt128 value.</p>
-<pre><code class="language-csharp">public static bool TryGetUInt128WithFallbacks(JsonElement value, ref UInt128 result)
+<pre><code class="language-csharp">public static bool TryGetUInt128WithFallbacks(JsonElement value, out UInt128 result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.uint128"><code>ref UInt128</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.uint128"><code>UInt128</code></a></td>
 <td>The value as an integer.</td>
 </tr>
 </tbody>

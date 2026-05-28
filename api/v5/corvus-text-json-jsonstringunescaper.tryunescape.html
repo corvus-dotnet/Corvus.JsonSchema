@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L74">JsonStringUnescaper.cs</a></p>
-<h2 id="tryunescape-readonlyspan-byte-span-byte-ref-int">TryUnescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="tryunescape-readonlyspan-byte-span-byte-int">TryUnescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</h2>
 <p>Attempts to unescape a JSON-encoded UTF-8 byte sequence into <code>destination</code>. Returns <code>false</code> if the destination buffer is too small. The first backslash is located automatically.</p>
-<pre><code class="language-csharp">public static bool TryUnescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, ref int written)
+<pre><code class="language-csharp">public static bool TryUnescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, out int written)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -125,7 +125,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written to <code>destination</code>.</td>
 </tr>
 </tbody>

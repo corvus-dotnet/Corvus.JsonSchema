@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/EnumStringMap.cs#L88">EnumStringMap.cs</a></p>
-<h2 id="trygetvalue-readonlyspan-byte-ref-int">TryGetValue(ReadOnlySpan&lt;byte&gt;, ref int)</h2>
+<h2 id="trygetvalue-readonlyspan-byte-int">TryGetValue(ReadOnlySpan&lt;byte&gt;, int)</h2>
 <p>Attempts to find the integer value associated with the specified UTF-8 string key.</p>
-<pre><code class="language-csharp">public bool TryGetValue(ReadOnlySpan&lt;byte&gt; utf8Key, ref int value)
+<pre><code class="language-csharp">public bool TryGetValue(ReadOnlySpan&lt;byte&gt; utf8Key, out int value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns <code>true</code>, contains the integer value (the index of the key in the original list).</td>
 </tr>
 </tbody>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="unionlocallyimpliedcoretypefortypedeclaration-typedeclaration-ref-coretypes">UnionLocallyImpliedCoreTypeForTypeDeclaration(TypeDeclaration, ref CoreTypes)</h2>
+<h2 id="unionlocallyimpliedcoretypefortypedeclaration-typedeclaration-coretypes">UnionLocallyImpliedCoreTypeForTypeDeclaration(TypeDeclaration, CoreTypes)</h2>
 <p>Gets the locally implied core type for subschema.</p>
-<pre><code class="language-csharp">public static CoreTypes UnionLocallyImpliedCoreTypeForTypeDeclaration(TypeDeclaration typeDeclaration, ref CoreTypes currentCoreTypes)
+<pre><code class="language-csharp">public static CoreTypes UnionLocallyImpliedCoreTypeForTypeDeclaration(TypeDeclaration typeDeclaration, in CoreTypes currentCoreTypes)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>currentCoreTypes</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-coretypes.html"><code>ref CoreTypes</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-coretypes.html"><code>CoreTypes</code></a></td>
 <td>The current implied core types.</td>
 </tr>
 </tbody>

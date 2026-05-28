@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JMESPath<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="join-ref-jsonelement-ref-jsonelement-jsonworkspace">Join(ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="join-jsonelement-jsonelement-jsonworkspace">Join(JsonElement, JsonElement, JsonWorkspace)</h2>
 <p>Computes <code>join(separator, array)</code>.</p>
-<pre><code class="language-csharp">public static JsonElement Join(ref JsonElement separator, ref JsonElement array, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement Join(in JsonElement separator, in JsonElement array, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>separator</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>array</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

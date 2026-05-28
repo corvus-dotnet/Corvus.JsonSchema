@@ -112,7 +112,7 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonstring-ref-jsonelement">JsonString(ref JsonElement)</a></td>
+<td><a href="#jsonstring-jsonelement">JsonString(JsonElement)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a> struct.</td>
 </tr>
 <tr>
@@ -120,11 +120,11 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonstring-ref-readonlyspan-char">JsonString(ref ReadOnlySpan&lt;char&gt;)</a></td>
+<td><a href="#jsonstring-readonlyspan-char">JsonString(ReadOnlySpan&lt;char&gt;)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonstring-ref-readonlyspan-byte">JsonString(ref ReadOnlySpan&lt;byte&gt;)</a></td>
+<td><a href="#jsonstring-readonlyspan-byte">JsonString(ReadOnlySpan&lt;byte&gt;)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a> struct.</td>
 </tr>
 </tbody>
@@ -154,10 +154,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonstring-ref-jsonelement">JsonString(ref JsonElement)</h2>
+<h2 id="jsonstring-jsonelement">JsonString(JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonString.cs#L45">JsonString.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonString(ref JsonElement value)
+<pre><code class="language-csharp">public JsonString(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -171,7 +171,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>
@@ -238,10 +238,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonstring-ref-readonlyspan-char">JsonString(ref ReadOnlySpan&lt;char&gt;)</h2>
+<h2 id="jsonstring-readonlyspan-char">JsonString(ReadOnlySpan&lt;char&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonString.String.cs#L35">JsonString.String.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonString(ref ReadOnlySpan&lt;char&gt; value)
+<pre><code class="language-csharp">public JsonString(in ReadOnlySpan&lt;char&gt; value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -255,7 +255,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ref ReadOnlySpan&lt;char&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;char&gt;</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>
@@ -280,10 +280,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonstring-ref-readonlyspan-byte">JsonString(ref ReadOnlySpan&lt;byte&gt;)</h2>
+<h2 id="jsonstring-readonlyspan-byte">JsonString(ReadOnlySpan&lt;byte&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonString.String.cs#L46">JsonString.String.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonString(ref ReadOnlySpan&lt;byte&gt; value)
+<pre><code class="language-csharp">public JsonString(in ReadOnlySpan&lt;byte&gt; value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -297,7 +297,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ref ReadOnlySpan&lt;byte&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>

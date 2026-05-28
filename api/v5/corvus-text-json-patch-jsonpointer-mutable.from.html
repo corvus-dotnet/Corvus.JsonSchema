@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="from-ref-t">From(ref T)</h2>
-<pre><code class="language-csharp">public static JsonPointer.Mutable From&lt;T&gt;(ref T instance)
+<h2 id="from-t">From(T)</h2>
+<pre><code class="language-csharp">public static JsonPointer.Mutable From&lt;T&gt;(in T instance)
     where T : struct, IMutableJsonElement&lt;T&gt;
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>instance</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td></td>
 </tr>
 </tbody>

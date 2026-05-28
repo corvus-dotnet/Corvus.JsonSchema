@@ -99,7 +99,7 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.Number.cs#L927">JsonSchemaEvaluation.Number.cs</a></p>
-<h2 id="matchint64-bool-readonlyspan-byte-readonlyspan-byte-int-readonlyspan-byte-ref-jsonschemacontext">MatchInt64(bool, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, int, ReadOnlySpan&lt;byte&gt;, ref JsonSchemaContext)</h2>
+<h2 id="matchint64-bool-readonlyspan-byte-readonlyspan-byte-int-readonlyspan-byte-jsonschemacontext">MatchInt64(bool, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, int, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</h2>
 <p>Matches a JSON number against the Int64 type constraint, validating it as a 64-bit signed integer.</p>
 <pre><code class="language-csharp">public static bool MatchInt64(bool isNegative, ReadOnlySpan&lt;byte&gt; integral, ReadOnlySpan&lt;byte&gt; fractional, int exponent, ReadOnlySpan&lt;byte&gt; keyword, ref JsonSchemaContext context)
 </code></pre>
@@ -140,7 +140,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td>The schema validation context.</td>
 </tr>
 </tbody>

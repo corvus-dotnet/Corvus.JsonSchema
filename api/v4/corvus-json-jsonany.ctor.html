@@ -112,7 +112,7 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonany-ref-jsonelement">JsonAny(ref JsonElement)</a></td>
+<td><a href="#jsonany-jsonelement">JsonAny(JsonElement)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a> struct.</td>
 </tr>
 <tr>
@@ -162,10 +162,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonany-ref-jsonelement">JsonAny(ref JsonElement)</h2>
+<h2 id="jsonany-jsonelement">JsonAny(JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonAny.cs#L54">JsonAny.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonAny(ref JsonElement value)
+<pre><code class="language-csharp">public JsonAny(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -179,7 +179,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>

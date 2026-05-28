@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="validategroupbykey-ref-jsonelement">ValidateGroupByKey(ref JsonElement)</h2>
+<h2 id="validategroupbykey-jsonelement">ValidateGroupByKey(JsonElement)</h2>
 <p>Validates a group-by key expression result, returning the string key or <code>null</code> if the key is undefined. Throws T1003 for non-string, non-undefined keys.</p>
-<pre><code class="language-csharp">public static string ValidateGroupByKey(ref JsonElement key)
+<pre><code class="language-csharp">public static string? ValidateGroupByKey(in JsonElement key)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,13 +114,13 @@
 <tbody>
 <tr>
 <td><code>key</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The evaluated key element.</td>
 </tr>
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
-<p><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></p>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></p>
 <p>The string key, or <code>null</code> if the key is undefined.</p>
 <h3 id="exceptions">Exceptions</h3>
 <table>

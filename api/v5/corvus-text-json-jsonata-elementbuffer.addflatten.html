@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="addflatten-ref-jsonelement">AddFlatten(ref JsonElement)</h2>
+<h2 id="addflatten-jsonelement">AddFlatten(JsonElement)</h2>
 <p>Adds each element of an array to the buffer (auto-flatten one level). If <code>value</code> is not an array, adds it directly.</p>
-<pre><code class="language-csharp">public void AddFlatten(ref JsonElement value)
+<pre><code class="language-csharp">public void AddFlatten(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 </tbody>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="match-ref-jsonelement-regex-ref-jsonelement-jsonworkspace">Match(ref JsonElement, Regex, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="match-jsonelement-regex-jsonelement-jsonworkspace">Match(JsonElement, Regex, JsonElement, JsonWorkspace)</h2>
 <p>JSONata <code>$match</code> function — matches a string against a compiled <a href="https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex"><code>Regex</code></a> and returns an array of match objects <code>{&quot;match&quot;,&quot;index&quot;,&quot;groups&quot;}</code>. Uses <a href="https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex.enumeratematches"><code>EnumerateMatches</code></a> for patterns without capture groups (zero <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.match.html"><code>Match</code></a> allocations), and CVB for building results.</p>
-<pre><code class="language-csharp">public static JsonElement Match(ref JsonElement input, Regex regex, ref JsonElement limitElement, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement Match(in JsonElement input, Regex regex, in JsonElement limitElement, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input string element.</td>
 </tr>
 <tr>
@@ -124,7 +124,7 @@
 </tr>
 <tr>
 <td><code>limitElement</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Optional limit element (number or undefined).</td>
 </tr>
 <tr>

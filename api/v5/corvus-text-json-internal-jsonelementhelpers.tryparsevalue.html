@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.cs#L29">JsonElementHelpers.cs</a></p>
-<h2 id="tryparsevalue-ref-utf8jsonreader-ref-nullable-t">TryParseValue(ref Utf8JsonReader, ref Nullable&lt;T&gt;)</h2>
+<h2 id="tryparsevalue-utf8jsonreader-nullable-t">TryParseValue(Utf8JsonReader, Nullable&lt;T&gt;)</h2>
 <p>Attempts to parse one JSON value (including objects or arrays) from the provided reader.</p>
-<pre><code class="language-csharp">public static bool TryParseValue&lt;T&gt;(ref Utf8JsonReader reader, ref Nullable&lt;T&gt; element)
+<pre><code class="language-csharp">public static bool TryParseValue&lt;T&gt;(ref Utf8JsonReader reader, out Nullable&lt;T&gt; element)
     where T : struct, IJsonElement&lt;T&gt;
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -116,12 +116,12 @@
 <tbody>
 <tr>
 <td><code>reader</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonreader.html"><code>ref Utf8JsonReader</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonreader.html"><code>Utf8JsonReader</code></a></td>
 <td>The reader to read.</td>
 </tr>
 <tr>
 <td><code>element</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>ref Nullable&lt;T&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>Nullable&lt;T&gt;</code></a></td>
 <td>Receives the parsed element.</td>
 </tr>
 </tbody>

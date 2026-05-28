@@ -108,18 +108,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#querynodes-string-ref-jsonelement">QueryNodes(string, ref JsonElement)</a></td>
+<td><a href="#querynodes-string-jsonelement">QueryNodes(string, JsonElement)</a></td>
 <td>Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathresult.html"><code>JsonPathResult</code></a>. Uses an...</td>
 </tr>
 <tr>
-<td><a href="#querynodes-string-ref-jsonelement-span-jsonelement">QueryNodes(string, ref JsonElement, Span&lt;JsonElement&gt;)</a></td>
+<td><a href="#querynodes-string-jsonelement-span-jsonelement">QueryNodes(string, JsonElement, Span&lt;JsonElement&gt;)</a></td>
 <td>Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathresult.html"><code>JsonPathResult</code></a>. The initial buffer is call...</td>
 </tr>
 </tbody>
 </table>
-<h2 id="querynodes-string-ref-jsonelement">QueryNodes(string, ref JsonElement)</h2>
+<h2 id="querynodes-string-jsonelement">QueryNodes(string, JsonElement)</h2>
 <p>Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathresult.html"><code>JsonPathResult</code></a>. Uses an <a href="https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1"><code>ArrayPool</code></a>-backed buffer internally.</p>
-<pre><code class="language-csharp">public JsonPathResult QueryNodes(string expression, ref JsonElement data)
+<pre><code class="language-csharp">public JsonPathResult QueryNodes(string expression, in JsonElement data)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -138,7 +138,7 @@
 </tr>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The JSON data to query.</td>
 </tr>
 </tbody>
@@ -181,9 +181,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="querynodes-string-ref-jsonelement-span-jsonelement">QueryNodes(string, ref JsonElement, Span&lt;JsonElement&gt;)</h2>
+<h2 id="querynodes-string-jsonelement-span-jsonelement">QueryNodes(string, JsonElement, Span&lt;JsonElement&gt;)</h2>
 <p>Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathresult.html"><code>JsonPathResult</code></a>. The initial buffer is caller-provided and can be stack-allocated for zero-heap-allocation queries.</p>
-<pre><code class="language-csharp">public JsonPathResult QueryNodes(string expression, ref JsonElement data, Span&lt;JsonElement&gt; initialBuffer)
+<pre><code class="language-csharp">public JsonPathResult QueryNodes(string expression, in JsonElement data, Span&lt;JsonElement&gt; initialBuffer)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -202,7 +202,7 @@
 </tr>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The JSON data to query.</td>
 </tr>
 <tr>

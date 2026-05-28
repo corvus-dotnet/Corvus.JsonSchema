@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JsonPath<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="query-string-ref-jsonelement-jsonworkspace">Query(string, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="query-string-jsonelement-jsonworkspace">Query(string, JsonElement, JsonWorkspace)</h2>
 <p>Evaluates a JSONPath expression against the given data, returning a JSON array of matched nodes. The returned element is backed by the provided workspace.</p>
-<pre><code class="language-csharp">public JsonElement Query(string expression, ref JsonElement data, JsonWorkspace workspace)
+<pre><code class="language-csharp">public JsonElement Query(string expression, in JsonElement data, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The JSON data to query.</td>
 </tr>
 <tr>

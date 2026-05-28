@@ -112,7 +112,7 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonuint32.html"><code>JsonUInt32</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#jsonuint32-ref-jsonelement">JsonUInt32(ref JsonElement)</a></td>
+<td><a href="#jsonuint32-jsonelement">JsonUInt32(JsonElement)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonuint32.html"><code>JsonUInt32</code></a> struct.</td>
 </tr>
 <tr>
@@ -150,10 +150,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonuint32-ref-jsonelement">JsonUInt32(ref JsonElement)</h2>
+<h2 id="jsonuint32-jsonelement">JsonUInt32(JsonElement)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonUInt32.cs#L45">JsonUInt32.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonuint32.html"><code>JsonUInt32</code></a> struct.</p>
-<pre><code class="language-csharp">public JsonUInt32(ref JsonElement value)
+<pre><code class="language-csharp">public JsonUInt32(in JsonElement value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -167,7 +167,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value from which to construct the instance.</td>
 </tr>
 </tbody>

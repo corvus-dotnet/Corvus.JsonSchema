@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Iri.cs#L204">Utf8Iri.cs</a></p>
-<h2 id="trycreateiri-readonlyspan-byte-ref-utf8iri">TryCreateIri(ReadOnlySpan&lt;byte&gt;, ref Utf8Iri)</h2>
+<h2 id="trycreateiri-readonlyspan-byte-utf8iri">TryCreateIri(ReadOnlySpan&lt;byte&gt;, Utf8Iri)</h2>
 <p>Tries to create a new UTF-8 IRI from the specified IRI bytes.</p>
-<pre><code class="language-csharp">public static bool TryCreateIri(ReadOnlySpan&lt;byte&gt; iri, ref Utf8Iri utf8Iri)
+<pre><code class="language-csharp">public static bool TryCreateIri(ReadOnlySpan&lt;byte&gt; iri, out Utf8Iri utf8Iri)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>utf8Iri</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>ref Utf8Iri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>Utf8Iri</code></a></td>
 <td>When this method returns, contains the created UTF-8 IRI if successful; otherwise, the default value.</td>
 </tr>
 </tbody>

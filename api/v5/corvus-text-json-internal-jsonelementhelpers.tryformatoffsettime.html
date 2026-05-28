@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.DateTime.cs#L71">JsonElementHelpers.DateTime.cs</a></p>
-<h2 id="tryformatoffsettime-ref-offsettime-span-byte-ref-int">TryFormatOffsetTime(ref OffsetTime, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="tryformatoffsettime-offsettime-span-byte-int">TryFormatOffsetTime(OffsetTime, Span&lt;byte&gt;, int)</h2>
 <p>Format a time as a UTF-8 string.</p>
-<pre><code class="language-csharp">public static bool TryFormatOffsetTime(ref OffsetTime value, Span&lt;byte&gt; output, ref int bytesWritten)
+<pre><code class="language-csharp">public static bool TryFormatOffsetTime(in OffsetTime value, Span&lt;byte&gt; output, out int bytesWritten)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>ref OffsetTime</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a></td>
 <td>The value to format.</td>
 </tr>
 <tr>
@@ -125,7 +125,7 @@
 </tr>
 <tr>
 <td><code>bytesWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written to the output buffer.</td>
 </tr>
 </tbody>

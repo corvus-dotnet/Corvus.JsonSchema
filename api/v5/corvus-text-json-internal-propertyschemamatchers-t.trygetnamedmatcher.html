@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/PropertySchemaMatchers.cs#L337">PropertySchemaMatchers.cs</a></p>
-<h2 id="trygetnamedmatcher-readonlyspan-byte-ref-t">TryGetNamedMatcher(ReadOnlySpan&lt;byte&gt;, ref T)</h2>
+<h2 id="trygetnamedmatcher-readonlyspan-byte-t">TryGetNamedMatcher(ReadOnlySpan&lt;byte&gt;, T)</h2>
 <p>Attempts to find the matcher for the named property value in the property map using efficient hash-based lookup.</p>
-<pre><code class="language-csharp">public bool TryGetNamedMatcher(ReadOnlySpan&lt;byte&gt; unescapedUtf8Name, ref T matcher)
+<pre><code class="language-csharp">public bool TryGetNamedMatcher(ReadOnlySpan&lt;byte&gt; unescapedUtf8Name, out T matcher)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>matcher</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>When this method returns, contains the matcher, otherwise null.</td>
 </tr>
 </tbody>

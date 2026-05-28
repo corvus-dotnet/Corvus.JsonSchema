@@ -108,7 +108,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#implicit-operator-period-ref-period">implicit operator Period(ref Period)</a></td>
+<td><a href="#implicit-operator-period-period">implicit operator Period(Period)</a></td>
 <td>Convert to a NodaTime.Period.</td>
 </tr>
 <tr>
@@ -117,10 +117,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="implicit-operator-period-ref-period">implicit operator Period(ref Period)</h2>
+<h2 id="implicit-operator-period-period">implicit operator Period(Period)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Period.cs#L255">Period.cs</a></p>
 <p>Convert to a NodaTime.Period.</p>
-<pre><code class="language-csharp">public static implicit operator Period(ref Period value)
+<pre><code class="language-csharp">public static implicit operator Period(in Period value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -134,7 +134,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-period.html"><code>ref Period</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-period.html"><code>Period</code></a></td>
 <td>The value to convert.</td>
 </tr>
 </tbody>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="range-ref-jsonelement-ref-jsonelement-jsonworkspace">Range(ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="range-jsonelement-jsonelement-jsonworkspace">Range(JsonElement, JsonElement, JsonWorkspace)</h2>
 <p>JSONata range (..) operator. Builds an array of integers from <code>left</code> to <code>right</code>.</p>
-<pre><code class="language-csharp">public static JsonElement Range(ref JsonElement left, ref JsonElement right, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement Range(in JsonElement left, in JsonElement right, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>left</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>right</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetdynamicsource-typedeclaration-ref-typedeclaration">TryGetDynamicSource(TypeDeclaration, ref TypeDeclaration)</h2>
+<h2 id="trygetdynamicsource-typedeclaration-typedeclaration">TryGetDynamicSource(TypeDeclaration, TypeDeclaration?)</h2>
 <p>Try to get the dynamic source for a type declaration.</p>
-<pre><code class="language-csharp">public static bool TryGetDynamicSource(TypeDeclaration that, ref TypeDeclaration source)
+<pre><code class="language-csharp">public static bool TryGetDynamicSource(TypeDeclaration that, out TypeDeclaration? source)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>source</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>ref TypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
 <td>The dynamic source, or null if this is not a dynamic type.</td>
 </tr>
 </tbody>

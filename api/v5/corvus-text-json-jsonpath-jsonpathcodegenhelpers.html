@@ -119,23 +119,23 @@
 <td>Builds a JSON array from a read-only span of elements.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.comparevalues.html#comparevalues-ref-jsonelement-ref-jsonelement-int">CompareValues(ref JsonElement, ref JsonElement, int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.comparevalues.html#comparevalues-jsonelement-jsonelement-int">CompareValues(JsonElement, JsonElement, int)</a> <code>static</code></td>
 <td>Compares two JSON element values per RFC 9535 comparison semantics.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.countnodes.html#countnodes-ref-jsonelement">CountNodes(ref JsonElement)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.countnodes.html#countnodes-jsonelement">CountNodes(JsonElement)</a> <code>static</code></td>
 <td>Returns the count of elements in a node list (JSON array).</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.deepequals.html#deepequals-ref-jsonelement-ref-jsonelement">DeepEquals(ref JsonElement, ref JsonElement)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.deepequals.html#deepequals-jsonelement-jsonelement">DeepEquals(JsonElement, JsonElement)</a> <code>static</code></td>
 <td>Performs a recursive deep structural equality comparison of two JSON elements.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.descendantsforname.html#descendantsforname-ref-jsonelement-readonlyspan-byte-ref-jsonpathresult">DescendantsForName(ref JsonElement, ReadOnlySpan&lt;byte&gt;, ref JsonPathResult)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.descendantsforname.html#descendantsforname-jsonelement-readonlyspan-byte-jsonpathresult">DescendantsForName(JsonElement, ReadOnlySpan&lt;byte&gt;, JsonPathResult)</a> <code>static</code></td>
 <td>Recursively visits all descendants of <code>node</code>, appending matching named property values to <code>result</code>. Specialized for descendant-name patterns (e.g. <code>$..author</code>). Only recurses into container childre...</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.descendantsfornamecount.html#descendantsfornamecount-ref-jsonelement-readonlyspan-byte-ref-int-ref-jsonelement">DescendantsForNameCount(ref JsonElement, ReadOnlySpan&lt;byte&gt;, ref int, ref JsonElement)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.descendantsfornamecount.html#descendantsfornamecount-jsonelement-readonlyspan-byte-int-jsonelement">DescendantsForNameCount(JsonElement, ReadOnlySpan&lt;byte&gt;, int, JsonElement)</a> <code>static</code></td>
 <td>Recursively visits all descendants of <code>node</code>, counting matching named property values and capturing the first match. Specialized for descendant-name patterns in filter sub-queries.</td>
 </tr>
 <tr>
@@ -143,7 +143,7 @@
 <td>Converts a <a href="https://learn.microsoft.com/dotnet/api/system.double"><code>Double</code></a> to a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> number.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.growstack.html#growstack-ref-jsonelement-ref-int-int">GrowStack(ref JsonElement[], ref int, int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.growstack.html#growstack-jsonelement-int-int">GrowStack(JsonElement[], int, int)</a> <code>static</code></td>
 <td>Doubles the capacity of a DFS stack, returning the old array to the pool.</td>
 </tr>
 <tr>
@@ -151,7 +151,7 @@
 <td>Converts an integer to a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> number.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.lengthvalue.html#lengthvalue-ref-jsonelement">LengthValue(ref JsonElement)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.lengthvalue.html#lengthvalue-jsonelement">LengthValue(JsonElement)</a> <code>static</code></td>
 <td>Returns the length of a JSON value per RFC 9535 <code>length()</code> function semantics.</td>
 </tr>
 <tr>
@@ -167,7 +167,7 @@
 <td>Reverses a region of elements in-place (for document-order DFS).</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.singletonarray.html#singletonarray-ref-jsonelement-jsonworkspace">SingletonArray(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.singletonarray.html#singletonarray-jsonelement-jsonworkspace">SingletonArray(JsonElement, JsonWorkspace)</a> <code>static</code></td>
 <td>Builds a JSON array containing a single element.</td>
 </tr>
 <tr>
@@ -179,7 +179,7 @@
 <td>Translates an I-Regexp (RFC 9485) pattern to a .NET regular expression pattern.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.valueofnodes.html#valueofnodes-ref-jsonelement">ValueOfNodes(ref JsonElement)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.valueofnodes.html#valueofnodes-jsonelement">ValueOfNodes(JsonElement)</a> <code>static</code></td>
 <td>Returns the single value from a node list, or <code>default</code> (Undefined) if the list does not contain exactly one element.</td>
 </tr>
 </tbody>

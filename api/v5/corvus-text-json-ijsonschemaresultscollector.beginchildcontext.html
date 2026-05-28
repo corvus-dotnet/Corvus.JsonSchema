@@ -108,15 +108,15 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#beginchildcontext-int-jsonschemapathprovider-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, JsonSchemaPathProvider, JsonSchemaPathProvider, JsonSchemaPathProvider)</a></td>
+<td><a href="#beginchildcontext-int-jsonschemapathprovider-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, JsonSchemaPathProvider?, JsonSchemaPathProvider?, JsonSchemaPathProvider?)</a></td>
 <td>Begin a child context.</td>
 </tr>
 <tr>
-<td><a href="#beginchildcontext-int-readonlyspan-byte-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider, JsonSchemaPathProvider)</a></td>
+<td><a href="#beginchildcontext-int-readonlyspan-byte-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider?, JsonSchemaPathProvider?)</a></td>
 <td>Begin a child context for a property evaluation.</td>
 </tr>
 <tr>
-<td><a href="#beginchildcontext-int-int-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, int, JsonSchemaPathProvider, JsonSchemaPathProvider)</a></td>
+<td><a href="#beginchildcontext-int-int-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, int, JsonSchemaPathProvider?, JsonSchemaPathProvider?)</a></td>
 <td>Begin a child context for an item evaluation.</td>
 </tr>
 <tr>
@@ -125,10 +125,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="beginchildcontext-int-jsonschemapathprovider-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, JsonSchemaPathProvider, JsonSchemaPathProvider, JsonSchemaPathProvider)</h2>
+<h2 id="beginchildcontext-int-jsonschemapathprovider-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, JsonSchemaPathProvider?, JsonSchemaPathProvider?, JsonSchemaPathProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/IJsonSchemaResultsCollector.cs#L94">IJsonSchemaResultsCollector.cs</a></p>
 <p>Begin a child context.</p>
-<pre><code class="language-csharp">public abstract int BeginChildContext(int parentSequenceNumber, JsonSchemaPathProvider reducedEvaluationPath, JsonSchemaPathProvider schemaEvaluationPath, JsonSchemaPathProvider documentEvaluationPath)
+<pre><code class="language-csharp">public abstract int BeginChildContext(int parentSequenceNumber, JsonSchemaPathProvider? reducedEvaluationPath, JsonSchemaPathProvider? schemaEvaluationPath, JsonSchemaPathProvider? documentEvaluationPath)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -147,17 +147,17 @@
 </tr>
 <tr>
 <td><code>reducedEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td>The path taken through the schema(s). <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>schemaEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td>The schema evaluation path. <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>documentEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td>The path in the JSON document instance. <em>(optional)</em></td>
 </tr>
 </tbody>
@@ -187,10 +187,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="beginchildcontext-int-readonlyspan-byte-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider, JsonSchemaPathProvider)</h2>
+<h2 id="beginchildcontext-int-readonlyspan-byte-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider?, JsonSchemaPathProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/IJsonSchemaResultsCollector.cs#L94">IJsonSchemaResultsCollector.cs</a></p>
 <p>Begin a child context for a property evaluation.</p>
-<pre><code class="language-csharp">public abstract int BeginChildContext(int parentSequenceNumber, ReadOnlySpan&lt;byte&gt; escapedPropertyName, JsonSchemaPathProvider reducedEvaluationPath, JsonSchemaPathProvider schemaEvaluationPath)
+<pre><code class="language-csharp">public abstract int BeginChildContext(int parentSequenceNumber, ReadOnlySpan&lt;byte&gt; escapedPropertyName, JsonSchemaPathProvider? reducedEvaluationPath, JsonSchemaPathProvider? schemaEvaluationPath)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -214,12 +214,12 @@
 </tr>
 <tr>
 <td><code>reducedEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td>The fully reduced evaluation path for the keyword. <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>schemaEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td>The schema evaluation path of the target schema. <em>(optional)</em></td>
 </tr>
 </tbody>
@@ -249,10 +249,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="beginchildcontext-int-int-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, int, JsonSchemaPathProvider, JsonSchemaPathProvider)</h2>
+<h2 id="beginchildcontext-int-int-jsonschemapathprovider-jsonschemapathprovider">BeginChildContext(int, int, JsonSchemaPathProvider?, JsonSchemaPathProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/IJsonSchemaResultsCollector.cs#L94">IJsonSchemaResultsCollector.cs</a></p>
 <p>Begin a child context for an item evaluation.</p>
-<pre><code class="language-csharp">public abstract int BeginChildContext(int parentSequenceNumber, int itemIndex, JsonSchemaPathProvider reducedEvaluationPath, JsonSchemaPathProvider schemaEvaluationPath)
+<pre><code class="language-csharp">public abstract int BeginChildContext(int parentSequenceNumber, int itemIndex, JsonSchemaPathProvider? reducedEvaluationPath, JsonSchemaPathProvider? schemaEvaluationPath)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -276,12 +276,12 @@
 </tr>
 <tr>
 <td><code>reducedEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td>The fully reduced evaluation path for the keyword. <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>schemaEvaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td>The schema evaluation path of the target schema. <em>(optional)</em></td>
 </tr>
 </tbody>

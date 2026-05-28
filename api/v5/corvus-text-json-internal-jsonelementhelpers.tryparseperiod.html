@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.DateTime.cs#L113">JsonElementHelpers.DateTime.cs</a></p>
-<h2 id="tryparseperiod-readonlyspan-byte-ref-period">TryParsePeriod(ReadOnlySpan&lt;byte&gt;, ref Period)</h2>
+<h2 id="tryparseperiod-readonlyspan-byte-period">TryParsePeriod(ReadOnlySpan&lt;byte&gt;, Period)</h2>
 <p>Parse a period from a string for the <code>duration</code> format.</p>
-<pre><code class="language-csharp">public static bool TryParsePeriod(ReadOnlySpan&lt;byte&gt; text, ref Period value)
+<pre><code class="language-csharp">public static bool TryParsePeriod(ReadOnlySpan&lt;byte&gt; text, out Period value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-period.html"><code>ref Period</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-period.html"><code>Period</code></a></td>
 <td>The resulting duration.</td>
 </tr>
 </tbody>

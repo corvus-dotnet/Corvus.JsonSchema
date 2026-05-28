@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="replace-ref-jsonelement-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">Replace(ref JsonElement, ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="replace-jsonelement-jsonelement-jsonelement-jsonelement-jsonworkspace">Replace(JsonElement, JsonElement, JsonElement, JsonElement, JsonWorkspace)</h2>
 <p>JSONata <code>$replace</code> function — string-only form (no regex). Replaces occurrences of a pattern string with a replacement string, with an optional limit on the number of replacements.</p>
-<pre><code class="language-csharp">public static JsonElement Replace(ref JsonElement input, ref JsonElement pattern, ref JsonElement replacement, ref JsonElement limitElement, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement Replace(in JsonElement input, in JsonElement pattern, in JsonElement replacement, in JsonElement limitElement, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,22 +114,22 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input string element.</td>
 </tr>
 <tr>
 <td><code>pattern</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The pattern string to search for.</td>
 </tr>
 <tr>
 <td><code>replacement</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The replacement string.</td>
 </tr>
 <tr>
 <td><code>limitElement</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>Optional limit element (number or undefined).</td>
 </tr>
 <tr>

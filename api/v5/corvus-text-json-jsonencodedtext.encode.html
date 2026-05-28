@@ -108,23 +108,23 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#encode-string-javascriptencoder">Encode(string, JavaScriptEncoder)</a></td>
+<td><a href="#encode-string-javascriptencoder">Encode(string, JavaScriptEncoder?)</a></td>
 <td>Encodes the string text value as a JSON string.</td>
 </tr>
 <tr>
-<td><a href="#encode-readonlyspan-char-javascriptencoder">Encode(ReadOnlySpan&lt;char&gt;, JavaScriptEncoder)</a></td>
+<td><a href="#encode-readonlyspan-char-javascriptencoder">Encode(ReadOnlySpan&lt;char&gt;, JavaScriptEncoder?)</a></td>
 <td>Encodes the text value as a JSON string.</td>
 </tr>
 <tr>
-<td><a href="#encode-readonlyspan-byte-javascriptencoder">Encode(ReadOnlySpan&lt;byte&gt;, JavaScriptEncoder)</a></td>
+<td><a href="#encode-readonlyspan-byte-javascriptencoder">Encode(ReadOnlySpan&lt;byte&gt;, JavaScriptEncoder?)</a></td>
 <td>Encodes the UTF-8 text value as a JSON string.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="encode-string-javascriptencoder">Encode(string, JavaScriptEncoder)</h2>
+<h2 id="encode-string-javascriptencoder">Encode(string, JavaScriptEncoder?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonEncodedText.cs#L59">JsonEncodedText.cs</a></p>
 <p>Encodes the string text value as a JSON string.</p>
-<pre><code class="language-csharp">public static JsonEncodedText Encode(string value, JavaScriptEncoder encoder)
+<pre><code class="language-csharp">public static JsonEncodedText Encode(string value, JavaScriptEncoder? encoder)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -143,7 +143,7 @@
 </tr>
 <tr>
 <td><code>encoder</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.encodings.web.javascriptencoder"><code>JavaScriptEncoder</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.encodings.web.javascriptencoder"><code>JavaScriptEncoder?</code></a></td>
 <td>The encoder to use when escaping the string, or <code>null</code> to use the default encoder. <em>(optional)</em></td>
 </tr>
 </tbody>
@@ -189,10 +189,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="encode-readonlyspan-char-javascriptencoder">Encode(ReadOnlySpan&lt;char&gt;, JavaScriptEncoder)</h2>
+<h2 id="encode-readonlyspan-char-javascriptencoder">Encode(ReadOnlySpan&lt;char&gt;, JavaScriptEncoder?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonEncodedText.cs#L74">JsonEncodedText.cs</a></p>
 <p>Encodes the text value as a JSON string.</p>
-<pre><code class="language-csharp">public static JsonEncodedText Encode(ReadOnlySpan&lt;char&gt; value, JavaScriptEncoder encoder)
+<pre><code class="language-csharp">public static JsonEncodedText Encode(ReadOnlySpan&lt;char&gt; value, JavaScriptEncoder? encoder)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -211,7 +211,7 @@
 </tr>
 <tr>
 <td><code>encoder</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.encodings.web.javascriptencoder"><code>JavaScriptEncoder</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.encodings.web.javascriptencoder"><code>JavaScriptEncoder?</code></a></td>
 <td>The encoder to use when escaping the string, or <code>null</code> to use the default encoder. <em>(optional)</em></td>
 </tr>
 </tbody>
@@ -253,10 +253,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="encode-readonlyspan-byte-javascriptencoder">Encode(ReadOnlySpan&lt;byte&gt;, JavaScriptEncoder)</h2>
+<h2 id="encode-readonlyspan-byte-javascriptencoder">Encode(ReadOnlySpan&lt;byte&gt;, JavaScriptEncoder?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonEncodedText.cs#L92">JsonEncodedText.cs</a></p>
 <p>Encodes the UTF-8 text value as a JSON string.</p>
-<pre><code class="language-csharp">public static JsonEncodedText Encode(ReadOnlySpan&lt;byte&gt; utf8Value, JavaScriptEncoder encoder)
+<pre><code class="language-csharp">public static JsonEncodedText Encode(ReadOnlySpan&lt;byte&gt; utf8Value, JavaScriptEncoder? encoder)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -275,7 +275,7 @@
 </tr>
 <tr>
 <td><code>encoder</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.encodings.web.javascriptencoder"><code>JavaScriptEncoder</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.encodings.web.javascriptencoder"><code>JavaScriptEncoder?</code></a></td>
 <td>The encoder to use when escaping the string, or <code>null</code> to use the default encoder. <em>(optional)</em></td>
 </tr>
 </tbody>

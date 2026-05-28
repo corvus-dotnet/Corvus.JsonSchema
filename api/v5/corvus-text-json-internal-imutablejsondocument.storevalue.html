@@ -112,31 +112,31 @@
 <td>Stores a <a href="https://learn.microsoft.com/dotnet/api/system.guid"><code>Guid</code></a> value in the document.</td>
 </tr>
 <tr>
-<td><a href="#storevalue-ref-datetime">StoreValue(ref DateTime)</a></td>
+<td><a href="#storevalue-datetime">StoreValue(DateTime)</a></td>
 <td>Stores a <a href="https://learn.microsoft.com/dotnet/api/system.datetime"><code>DateTime</code></a> value in the document.</td>
 </tr>
 <tr>
-<td><a href="#storevalue-ref-datetimeoffset">StoreValue(ref DateTimeOffset)</a></td>
+<td><a href="#storevalue-datetimeoffset">StoreValue(DateTimeOffset)</a></td>
 <td>Stores a <a href="https://learn.microsoft.com/dotnet/api/system.datetimeoffset"><code>DateTimeOffset</code></a> value in the document.</td>
 </tr>
 <tr>
-<td><a href="#storevalue-ref-offsetdatetime">StoreValue(ref OffsetDateTime)</a></td>
+<td><a href="#storevalue-offsetdatetime">StoreValue(OffsetDateTime)</a></td>
 <td>Stores an <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a> value in the document.</td>
 </tr>
 <tr>
-<td><a href="#storevalue-ref-offsetdate">StoreValue(ref OffsetDate)</a></td>
+<td><a href="#storevalue-offsetdate">StoreValue(OffsetDate)</a></td>
 <td>Stores an <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html"><code>OffsetDate</code></a> value in the document.</td>
 </tr>
 <tr>
-<td><a href="#storevalue-ref-offsettime">StoreValue(ref OffsetTime)</a></td>
+<td><a href="#storevalue-offsettime">StoreValue(OffsetTime)</a></td>
 <td>Stores an <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a> value in the document.</td>
 </tr>
 <tr>
-<td><a href="#storevalue-ref-localdate">StoreValue(ref LocalDate)</a></td>
+<td><a href="#storevalue-localdate">StoreValue(LocalDate)</a></td>
 <td>Stores a <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a> value in the document.</td>
 </tr>
 <tr>
-<td><a href="#storevalue-ref-period">StoreValue(ref Period)</a></td>
+<td><a href="#storevalue-period">StoreValue(Period)</a></td>
 <td>Stores a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-period.html"><code>Period</code></a> value in the document.</td>
 </tr>
 <tr>
@@ -184,11 +184,11 @@
 <td>Stores a <a href="https://learn.microsoft.com/dotnet/api/system.decimal"><code>Decimal</code></a> value in the document.</td>
 </tr>
 <tr>
-<td><a href="#storevalue-ref-biginteger">StoreValue(ref BigInteger)</a></td>
+<td><a href="#storevalue-biginteger">StoreValue(BigInteger)</a></td>
 <td>Stores a <a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a> value in the document.</td>
 </tr>
 <tr>
-<td><a href="#storevalue-ref-bignumber">StoreValue(ref BigNumber)</a></td>
+<td><a href="#storevalue-bignumber">StoreValue(BigNumber)</a></td>
 <td>Stores a <a href="/Corvus.JsonSchema/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> value in the document.</td>
 </tr>
 <tr>
@@ -250,10 +250,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="storevalue-ref-datetime">StoreValue(ref DateTime)</h2>
+<h2 id="storevalue-datetime">StoreValue(DateTime)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L166">IMutableJsonDocument.cs</a></p>
 <p>Stores a <a href="https://learn.microsoft.com/dotnet/api/system.datetime"><code>DateTime</code></a> value in the document.</p>
-<pre><code class="language-csharp">public abstract int StoreValue(ref DateTime value)
+<pre><code class="language-csharp">public abstract int StoreValue(in DateTime value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -267,7 +267,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.datetime"><code>ref DateTime</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.datetime"><code>DateTime</code></a></td>
 <td>The <a href="https://learn.microsoft.com/dotnet/api/system.datetime"><code>DateTime</code></a> value to store.</td>
 </tr>
 </tbody>
@@ -295,10 +295,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="storevalue-ref-datetimeoffset">StoreValue(ref DateTimeOffset)</h2>
+<h2 id="storevalue-datetimeoffset">StoreValue(DateTimeOffset)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L166">IMutableJsonDocument.cs</a></p>
 <p>Stores a <a href="https://learn.microsoft.com/dotnet/api/system.datetimeoffset"><code>DateTimeOffset</code></a> value in the document.</p>
-<pre><code class="language-csharp">public abstract int StoreValue(ref DateTimeOffset value)
+<pre><code class="language-csharp">public abstract int StoreValue(in DateTimeOffset value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -312,7 +312,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.datetimeoffset"><code>ref DateTimeOffset</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.datetimeoffset"><code>DateTimeOffset</code></a></td>
 <td>The <a href="https://learn.microsoft.com/dotnet/api/system.datetimeoffset"><code>DateTimeOffset</code></a> value to store.</td>
 </tr>
 </tbody>
@@ -340,10 +340,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="storevalue-ref-offsetdatetime">StoreValue(ref OffsetDateTime)</h2>
+<h2 id="storevalue-offsetdatetime">StoreValue(OffsetDateTime)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L166">IMutableJsonDocument.cs</a></p>
 <p>Stores an <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a> value in the document.</p>
-<pre><code class="language-csharp">public abstract int StoreValue(ref OffsetDateTime value)
+<pre><code class="language-csharp">public abstract int StoreValue(in OffsetDateTime value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -357,7 +357,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>ref OffsetDateTime</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a></td>
 <td>The <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a> value to store.</td>
 </tr>
 </tbody>
@@ -385,10 +385,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="storevalue-ref-offsetdate">StoreValue(ref OffsetDate)</h2>
+<h2 id="storevalue-offsetdate">StoreValue(OffsetDate)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L166">IMutableJsonDocument.cs</a></p>
 <p>Stores an <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html"><code>OffsetDate</code></a> value in the document.</p>
-<pre><code class="language-csharp">public abstract int StoreValue(ref OffsetDate value)
+<pre><code class="language-csharp">public abstract int StoreValue(in OffsetDate value)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -402,7 +402,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html"><code>ref OffsetDate</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html"><code>OffsetDate</code></a></td>
 <td>The <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html"><code>OffsetDate</code></a> value to store.</td>
 </tr>
 </tbody>
@@ -430,10 +430,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="storevalue-ref-offsettime">StoreValue(ref OffsetTime)</h2>
+<h2 id="storevalue-offsettime">StoreValue(OffsetTime)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L166">IMutableJsonDocument.cs</a></p>
 <p>Stores an <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a> value in the document.</p>
-<pre><code class="language-csharp">public abstract int StoreValue(ref OffsetTime value)
+<pre><code class="language-csharp">public abstract int StoreValue(in OffsetTime value)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -447,7 +447,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>ref OffsetTime</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a></td>
 <td>The <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a> value to store.</td>
 </tr>
 </tbody>
@@ -475,10 +475,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="storevalue-ref-localdate">StoreValue(ref LocalDate)</h2>
+<h2 id="storevalue-localdate">StoreValue(LocalDate)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L166">IMutableJsonDocument.cs</a></p>
 <p>Stores a <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a> value in the document.</p>
-<pre><code class="language-csharp">public abstract int StoreValue(ref LocalDate value)
+<pre><code class="language-csharp">public abstract int StoreValue(in LocalDate value)
 </code></pre>
 <h3 id="parameters-6">Parameters</h3>
 <table>
@@ -492,7 +492,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>ref LocalDate</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a></td>
 <td>The <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a> value to store.</td>
 </tr>
 </tbody>
@@ -520,10 +520,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="storevalue-ref-period">StoreValue(ref Period)</h2>
+<h2 id="storevalue-period">StoreValue(Period)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L166">IMutableJsonDocument.cs</a></p>
 <p>Stores a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-period.html"><code>Period</code></a> value in the document.</p>
-<pre><code class="language-csharp">public abstract int StoreValue(ref Period value)
+<pre><code class="language-csharp">public abstract int StoreValue(in Period value)
 </code></pre>
 <h3 id="parameters-7">Parameters</h3>
 <table>
@@ -537,7 +537,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-period.html"><code>ref Period</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-period.html"><code>Period</code></a></td>
 <td>The <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-period.html"><code>Period</code></a> value to store.</td>
 </tr>
 </tbody>
@@ -1060,10 +1060,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="storevalue-ref-biginteger">StoreValue(ref BigInteger)</h2>
+<h2 id="storevalue-biginteger">StoreValue(BigInteger)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L166">IMutableJsonDocument.cs</a></p>
 <p>Stores a <a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a> value in the document.</p>
-<pre><code class="language-csharp">public abstract int StoreValue(ref BigInteger value)
+<pre><code class="language-csharp">public abstract int StoreValue(in BigInteger value)
 </code></pre>
 <h3 id="parameters-19">Parameters</h3>
 <table>
@@ -1077,7 +1077,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>ref BigInteger</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a></td>
 <td>The <a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a> value to store.</td>
 </tr>
 </tbody>
@@ -1105,10 +1105,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="storevalue-ref-bignumber">StoreValue(ref BigNumber)</h2>
+<h2 id="storevalue-bignumber">StoreValue(BigNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L166">IMutableJsonDocument.cs</a></p>
 <p>Stores a <a href="/Corvus.JsonSchema/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> value in the document.</p>
-<pre><code class="language-csharp">public abstract int StoreValue(ref BigNumber value)
+<pre><code class="language-csharp">public abstract int StoreValue(in BigNumber value)
 </code></pre>
 <h3 id="parameters-20">Parameters</h3>
 <table>
@@ -1122,7 +1122,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-numerics-bignumber.html"><code>ref BigNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
 <td>The <a href="/Corvus.JsonSchema/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> value to store.</td>
 </tr>
 </tbody>

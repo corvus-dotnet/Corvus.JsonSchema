@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.Array.cs#L205">JsonSchemaEvaluation.Array.cs</a></p>
-<h2 id="expecteditemcountlessthanvalue-int-span-byte-ref-int">ExpectedItemCountLessThanValue(int, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="expecteditemcountlessthanvalue-int-span-byte-int">ExpectedItemCountLessThanValue(int, Span&lt;byte&gt;, int)</h2>
 <p>Tries to write a message indicating the expected value for a item count.</p>
-<pre><code class="language-csharp">public static bool ExpectedItemCountLessThanValue(int value, Span&lt;byte&gt; buffer, ref int written)
+<pre><code class="language-csharp">public static bool ExpectedItemCountLessThanValue(int value, Span&lt;byte&gt; buffer, out int written)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -125,7 +125,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written to the buffer.</td>
 </tr>
 </tbody>

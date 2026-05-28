@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="deepaddorreplaceobjectproperties-ref-jsonany-readonlyspan-char">DeepAddOrReplaceObjectProperties(ref JsonAny, ReadOnlySpan&lt;char&gt;)</h2>
+<h2 id="deepaddorreplaceobjectproperties-jsonany-readonlyspan-char">DeepAddOrReplaceObjectProperties(JsonAny, ReadOnlySpan&lt;char&gt;)</h2>
 <p>Adds or replaces the value found at the given location, building any missing intermediate structure as object properties.</p>
-<pre><code class="language-csharp">public PatchBuilder DeepAddOrReplaceObjectProperties(ref JsonAny value, ReadOnlySpan&lt;char&gt; path)
+<pre><code class="language-csharp">public PatchBuilder DeepAddOrReplaceObjectProperties(in JsonAny value, ReadOnlySpan&lt;char&gt; path)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The value to add or replace at the <code>path</code>.</td>
 </tr>
 <tr>

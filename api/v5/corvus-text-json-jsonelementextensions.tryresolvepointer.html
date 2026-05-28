@@ -108,23 +108,23 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#tryresolvepointer-t-readonlyspan-byte-ref-t">TryResolvePointer(T, ReadOnlySpan&lt;byte&gt;, ref T)</a></td>
+<td><a href="#tryresolvepointer-t-readonlyspan-byte-t">TryResolvePointer(T, ReadOnlySpan&lt;byte&gt;, T)</a></td>
 <td>Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists.</td>
 </tr>
 <tr>
-<td><a href="#tryresolvepointer-t-readonlyspan-char-ref-t">TryResolvePointer(T, ReadOnlySpan&lt;char&gt;, ref T)</a></td>
+<td><a href="#tryresolvepointer-t-readonlyspan-char-t">TryResolvePointer(T, ReadOnlySpan&lt;char&gt;, T)</a></td>
 <td>Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists.</td>
 </tr>
 <tr>
-<td><a href="#tryresolvepointer-t-string-ref-t">TryResolvePointer(T, string, ref T)</a></td>
+<td><a href="#tryresolvepointer-t-string-t">TryResolvePointer(T, string, T)</a></td>
 <td>Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="tryresolvepointer-t-readonlyspan-byte-ref-t">TryResolvePointer(T, ReadOnlySpan&lt;byte&gt;, ref T)</h2>
+<h2 id="tryresolvepointer-t-readonlyspan-byte-t">TryResolvePointer(T, ReadOnlySpan&lt;byte&gt;, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElementExtensions.cs#L18">JsonElementExtensions.cs</a></p>
 <p>Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists.</p>
-<pre><code class="language-csharp">public static bool TryResolvePointer&lt;T&gt;(T element, ReadOnlySpan&lt;byte&gt; utf8Pointer, ref T result)
+<pre><code class="language-csharp">public static bool TryResolvePointer&lt;T&gt;(T element, ReadOnlySpan&lt;byte&gt; utf8Pointer, out T result)
     where T : struct, IJsonElement&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -164,7 +164,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>When this method returns <code>true</code>, contains the element at the target path; otherwise, the default value.</td>
 </tr>
 </tbody>
@@ -192,10 +192,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryresolvepointer-t-readonlyspan-char-ref-t">TryResolvePointer(T, ReadOnlySpan&lt;char&gt;, ref T)</h2>
+<h2 id="tryresolvepointer-t-readonlyspan-char-t">TryResolvePointer(T, ReadOnlySpan&lt;char&gt;, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElementExtensions.cs#L18">JsonElementExtensions.cs</a></p>
 <p>Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists.</p>
-<pre><code class="language-csharp">public static bool TryResolvePointer&lt;T&gt;(T element, ReadOnlySpan&lt;char&gt; pointer, ref T result)
+<pre><code class="language-csharp">public static bool TryResolvePointer&lt;T&gt;(T element, ReadOnlySpan&lt;char&gt; pointer, out T result)
     where T : struct, IJsonElement&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -235,7 +235,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>When this method returns <code>true</code>, contains the element at the target path; otherwise, the default value.</td>
 </tr>
 </tbody>
@@ -263,10 +263,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryresolvepointer-t-string-ref-t">TryResolvePointer(T, string, ref T)</h2>
+<h2 id="tryresolvepointer-t-string-t">TryResolvePointer(T, string, T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElementExtensions.cs#L18">JsonElementExtensions.cs</a></p>
 <p>Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists.</p>
-<pre><code class="language-csharp">public static bool TryResolvePointer&lt;T&gt;(T element, string pointer, ref T result)
+<pre><code class="language-csharp">public static bool TryResolvePointer&lt;T&gt;(T element, string pointer, out T result)
     where T : struct, IJsonElement&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters-2">Type Parameters</h3>
@@ -306,7 +306,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>When this method returns <code>true</code>, contains the element at the target path; otherwise, the default value.</td>
 </tr>
 </tbody>

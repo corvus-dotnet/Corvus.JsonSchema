@@ -112,8 +112,16 @@
 <td>Parses UTF-8 encoded JSON directly into a mutable document builder, avoiding the intermediate <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.html"><code>ParsedJsonDocument</code></a> allocation and tree walk.</td>
 </tr>
 <tr>
+<td><a href="#parse-jsonworkspace-readonlyspan-byte-jsondocumentoptions">Parse(JsonWorkspace, ReadOnlySpan&lt;byte&gt;, JsonDocumentOptions)</a></td>
+<td>Parses UTF-8 encoded JSON from a byte span directly into a mutable document builder.</td>
+</tr>
+<tr>
 <td><a href="#parse-jsonworkspace-readonlymemory-char-jsondocumentoptions">Parse(JsonWorkspace, ReadOnlyMemory&lt;char&gt;, JsonDocumentOptions)</a></td>
 <td>Parses text representing a single JSON value directly into a mutable document builder.</td>
+</tr>
+<tr>
+<td><a href="#parse-jsonworkspace-readonlyspan-char-jsondocumentoptions">Parse(JsonWorkspace, ReadOnlySpan&lt;char&gt;, JsonDocumentOptions)</a></td>
+<td>Parses a character span representing a single JSON value directly into a mutable document builder.</td>
 </tr>
 <tr>
 <td><a href="#parse-jsonworkspace-string-jsondocumentoptions">Parse(JsonWorkspace, string, JsonDocumentOptions)</a></td>
@@ -201,12 +209,88 @@
 </tbody>
 </table>
 <hr />
-<h2 id="parse-jsonworkspace-readonlymemory-char-jsondocumentoptions">Parse(JsonWorkspace, ReadOnlyMemory&lt;char&gt;, JsonDocumentOptions)</h2>
+<h2 id="parse-jsonworkspace-readonlyspan-byte-jsondocumentoptions">Parse(JsonWorkspace, ReadOnlySpan&lt;byte&gt;, JsonDocumentOptions)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L88">JsonDocumentBuilder.Parse.cs</a></p>
+<p>Parses UTF-8 encoded JSON from a byte span directly into a mutable document builder.</p>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;T&gt; Parse(JsonWorkspace workspace, ReadOnlySpan&lt;byte&gt; utf8Json, JsonDocumentOptions options)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td>The workspace that will own this builder.</td>
+</tr>
+<tr>
+<td><code>utf8Json</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
+<td>UTF-8 encoded JSON text to parse.</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentoptions.html"><code>JsonDocumentOptions</code></a></td>
+<td>Options to control the reader behavior during parsing. <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-1">Returns</h3>
+<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a></p>
+<p>A <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder</code></a> representation of the JSON value.</p>
+<h3 id="exceptions-1">Exceptions</h3>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a></td>
+<td><code>utf8Json</code> does not represent a valid single JSON value.</td>
+</tr>
+<tr>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.argumentexception"><code>ArgumentException</code></a></td>
+<td><code>options</code> contains unsupported options.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="remarks-1">Remarks</h3>
+<p>This overload accepts a <a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan</code></a> of bytes, making it suitable for use with stack-allocated or sliced buffers. The data is copied into a pooled buffer internally, so the caller's span does not need to remain valid after this method returns.</p>
+<h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="parse-jsonworkspace-readonlymemory-char-jsondocumentoptions">Parse(JsonWorkspace, ReadOnlyMemory&lt;char&gt;, JsonDocumentOptions)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L118">JsonDocumentBuilder.Parse.cs</a></p>
 <p>Parses text representing a single JSON value directly into a mutable document builder.</p>
 <pre><code class="language-csharp">public static JsonDocumentBuilder&lt;T&gt; Parse(JsonWorkspace workspace, ReadOnlyMemory&lt;char&gt; json, JsonDocumentOptions options)
 </code></pre>
-<h3 id="parameters-1">Parameters</h3>
+<h3 id="parameters-2">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -233,10 +317,10 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-1">Returns</h3>
+<h3 id="returns-2">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a></p>
 <p>A <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder</code></a> representation of the JSON value.</p>
-<h3 id="exceptions-1">Exceptions</h3>
+<h3 id="exceptions-2">Exceptions</h3>
 <table>
 <thead>
 <tr>
@@ -255,9 +339,85 @@
 </tr>
 </tbody>
 </table>
-<h3 id="remarks-1">Remarks</h3>
+<h3 id="remarks-2">Remarks</h3>
 <p>The text is transcoded from UTF-16 to UTF-8 before parsing. For best performance, prefer the <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.parse.html"><code>Parse</code></a> overload if you already have UTF-8 data.</p>
-<h2 id="applies-to-1">Applies To</h2>
+<h2 id="applies-to-2">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="parse-jsonworkspace-readonlyspan-char-jsondocumentoptions">Parse(JsonWorkspace, ReadOnlySpan&lt;char&gt;, JsonDocumentOptions)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L164">JsonDocumentBuilder.Parse.cs</a></p>
+<p>Parses a character span representing a single JSON value directly into a mutable document builder.</p>
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;T&gt; Parse(JsonWorkspace workspace, ReadOnlySpan&lt;char&gt; json, JsonDocumentOptions options)
+</code></pre>
+<h3 id="parameters-3">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td>The workspace that will own this builder.</td>
+</tr>
+<tr>
+<td><code>json</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;char&gt;</code></a></td>
+<td>JSON text to parse.</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentoptions.html"><code>JsonDocumentOptions</code></a></td>
+<td>Options to control the reader behavior during parsing. <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-3">Returns</h3>
+<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a></p>
+<p>A <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder</code></a> representation of the JSON value.</p>
+<h3 id="exceptions-3">Exceptions</h3>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonexception.html"><code>JsonException</code></a></td>
+<td><code>json</code> does not represent a valid single JSON value.</td>
+</tr>
+<tr>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.argumentexception"><code>ArgumentException</code></a></td>
+<td><code>options</code> contains unsupported options.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="remarks-3">Remarks</h3>
+<p>The text is transcoded from UTF-16 to UTF-8 before parsing. For best performance, prefer the <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.parse.html"><code>Parse</code></a> overload if you already have UTF-8 data.</p>
+<h2 id="applies-to-3">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -278,11 +438,11 @@
 </table>
 <hr />
 <h2 id="parse-jsonworkspace-string-jsondocumentoptions">Parse(JsonWorkspace, string, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L130">JsonDocumentBuilder.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L205">JsonDocumentBuilder.Parse.cs</a></p>
 <p>Parses a string representing a single JSON value directly into a mutable document builder.</p>
 <pre><code class="language-csharp">public static JsonDocumentBuilder&lt;T&gt; Parse(JsonWorkspace workspace, string json, JsonDocumentOptions options)
 </code></pre>
-<h3 id="parameters-2">Parameters</h3>
+<h3 id="parameters-4">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -309,10 +469,10 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-2">Returns</h3>
+<h3 id="returns-4">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a></p>
 <p>A <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder</code></a> representation of the JSON value.</p>
-<h3 id="exceptions-2">Exceptions</h3>
+<h3 id="exceptions-4">Exceptions</h3>
 <table>
 <thead>
 <tr>
@@ -335,7 +495,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="applies-to-2">Applies To</h2>
+<h2 id="applies-to-4">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -356,11 +516,11 @@
 </table>
 <hr />
 <h2 id="parse-jsonworkspace-stream-jsondocumentoptions">Parse(JsonWorkspace, Stream, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L157">JsonDocumentBuilder.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L232">JsonDocumentBuilder.Parse.cs</a></p>
 <p>Parses a <a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a> of UTF-8 encoded data representing a single JSON value directly into a mutable document builder. The Stream will be read to completion.</p>
 <pre><code class="language-csharp">public static JsonDocumentBuilder&lt;T&gt; Parse(JsonWorkspace workspace, Stream utf8Json, JsonDocumentOptions options)
 </code></pre>
-<h3 id="parameters-3">Parameters</h3>
+<h3 id="parameters-5">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -387,10 +547,10 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-3">Returns</h3>
+<h3 id="returns-5">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a></p>
 <p>A <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder</code></a> representation of the JSON value.</p>
-<h3 id="exceptions-3">Exceptions</h3>
+<h3 id="exceptions-5">Exceptions</h3>
 <table>
 <thead>
 <tr>
@@ -413,7 +573,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="applies-to-3">Applies To</h2>
+<h2 id="applies-to-5">Applies To</h2>
 <table>
 <thead>
 <tr>

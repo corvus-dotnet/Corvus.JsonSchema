@@ -108,7 +108,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#add-ref-jsonany">Add(ref JsonAny)</a></td>
+<td><a href="#add-jsonany">Add(JsonAny)</a></td>
 <td>Add an item to the array.</td>
 </tr>
 <tr>
@@ -117,10 +117,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="add-ref-jsonany">Add(ref JsonAny)</h2>
+<h2 id="add-jsonany">Add(JsonAny)</h2>
 <p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/IJsonArray%7BT%7D.cs#L1">IJsonArray.cs</a></p>
 <p>Add an item to the array.</p>
-<pre><code class="language-csharp">public abstract T Add(ref JsonAny item1)
+<pre><code class="language-csharp">public abstract T Add(in JsonAny item1)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -134,7 +134,7 @@
 <tbody>
 <tr>
 <td><code>item1</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The item to add.</td>
 </tr>
 </tbody>

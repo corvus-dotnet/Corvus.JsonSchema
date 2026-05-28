@@ -119,7 +119,7 @@
 </table>
 <h2 id="trygetvocabulary-jsonelement">TryGetVocabulary(JsonElement)</h2>
 <p>Gets the vocabulary for the given schema instance.</p>
-<pre><code class="language-csharp">public abstract ValueTask&lt;IVocabulary&gt; TryGetVocabulary(JsonElement schemaInstance)
+<pre><code class="language-csharp">public abstract ValueTask&lt;IVocabulary?&gt; TryGetVocabulary(JsonElement schemaInstance)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -139,7 +139,7 @@
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
-<p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask&lt;IVocabulary&gt;</code></a></p>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask&lt;IVocabulary?&gt;</code></a></p>
 <p>The <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ivocabulary.html"><code>IVocabulary</code></a> for the schema instance.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
@@ -163,7 +163,7 @@
 <hr />
 <h2 id="trygetvocabulary-string">TryGetVocabulary(string)</h2>
 <p>Gets the default vocabulary for the well-known schema IRI.</p>
-<pre><code class="language-csharp">public abstract IVocabulary TryGetVocabulary(string iri)
+<pre><code class="language-csharp">public abstract IVocabulary? TryGetVocabulary(string iri)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -183,7 +183,7 @@
 </tbody>
 </table>
 <h3 id="returns-1">Returns</h3>
-<p><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ivocabulary.html"><code>IVocabulary</code></a></p>
+<p><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ivocabulary.html"><code>IVocabulary?</code></a></p>
 <p>The <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ivocabulary.html"><code>IVocabulary</code></a> corresponding to the schema version identified by the given IRI, or <code>null</code>.</p>
 <h2 id="applies-to-1">Applies To</h2>
 <table>

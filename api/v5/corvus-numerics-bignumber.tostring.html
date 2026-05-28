@@ -112,7 +112,7 @@
 <td>Returns the string representation of this <a href="/Corvus.JsonSchema/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> value.</td>
 </tr>
 <tr>
-<td><a href="#tostring-string-iformatprovider">ToString(string, IFormatProvider)</a></td>
+<td><a href="#tostring-string-iformatprovider">ToString(string?, IFormatProvider?)</a></td>
 <td>Formats this <a href="/Corvus.JsonSchema/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> value using the specified format string and format provider.</td>
 </tr>
 </tbody>
@@ -145,10 +145,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tostring-string-iformatprovider">ToString(string, IFormatProvider)</h2>
+<h2 id="tostring-string-iformatprovider">ToString(string?, IFormatProvider?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L397">BigNumber.cs</a></p>
 <p>Formats this <a href="/Corvus.JsonSchema/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> value using the specified format string and format provider.</p>
-<pre><code class="language-csharp">public string ToString(string format, IFormatProvider formatProvider)
+<pre><code class="language-csharp">public string ToString(string? format, IFormatProvider? formatProvider)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -162,12 +162,12 @@
 <tbody>
 <tr>
 <td><code>format</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The format string.</td>
 </tr>
 <tr>
 <td><code>formatProvider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>The format provider.</td>
 </tr>
 </tbody>

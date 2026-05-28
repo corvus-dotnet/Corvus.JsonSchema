@@ -100,7 +100,7 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
 <h2 id="findchildnamecollision-typedeclaration-typedeclaration-readonlyspan-char">FindChildNameCollision(TypeDeclaration, TypeDeclaration, ReadOnlySpan&lt;char&gt;)</h2>
 <p>Determines if there is a child of the parent type declaration whose name matches the proposed name for a given child type declaration.</p>
-<pre><code class="language-csharp">public static TypeDeclaration FindChildNameCollision(TypeDeclaration parent, TypeDeclaration child, ReadOnlySpan&lt;char&gt; span)
+<pre><code class="language-csharp">public static TypeDeclaration? FindChildNameCollision(TypeDeclaration parent, TypeDeclaration child, ReadOnlySpan&lt;char&gt; span)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -130,7 +130,7 @@
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
-<p><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration</code></a></p>
+<p><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></p>
 <p>The type declaration whose name collides with the proposed name, or <code>null</code> if there is no collision.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>

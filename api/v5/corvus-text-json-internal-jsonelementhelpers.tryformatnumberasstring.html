@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.Numeric.cs#L358">JsonElementHelpers.Numeric.cs</a></p>
-<h2 id="tryformatnumberasstring-readonlyspan-byte-readonlyspan-char-iformatprovider-ref-string">TryFormatNumberAsString(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, IFormatProvider, ref string)</h2>
+<h2 id="tryformatnumberasstring-readonlyspan-byte-readonlyspan-char-iformatprovider-string">TryFormatNumberAsString(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, IFormatProvider?, string?)</h2>
 <p>Format the number as a string.</p>
-<pre><code class="language-csharp">public static bool TryFormatNumberAsString(ReadOnlySpan&lt;byte&gt; span, ReadOnlySpan&lt;char&gt; format, IFormatProvider provider, ref string value)
+<pre><code class="language-csharp">public static bool TryFormatNumberAsString(ReadOnlySpan&lt;byte&gt; span, ReadOnlySpan&lt;char&gt; format, IFormatProvider? provider, out string? value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -125,12 +125,12 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>The (optional) format provider.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The result if formatting succeeds, otherwise <code>null</code>.</td>
 </tr>
 </tbody>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetvalidationconstants-typedeclaration-ref-jsonelement">TryGetValidationConstants(TypeDeclaration, ref JsonElement[])</h2>
+<h2 id="trygetvalidationconstants-typedeclaration-jsonelement">TryGetValidationConstants(TypeDeclaration, JsonElement[])</h2>
 <p>Try to get validation constants from the type declaration.</p>
-<pre><code class="language-csharp">public abstract bool TryGetValidationConstants(TypeDeclaration typeDeclaration, ref JsonElement[] constants)
+<pre><code class="language-csharp">public abstract bool TryGetValidationConstants(TypeDeclaration typeDeclaration, out JsonElement[] constants)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>constants</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement[]</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement[]</code></a></td>
 <td>The validation constants, or <code>null</code> if no validation constants were generated.</td>
 </tr>
 </tbody>

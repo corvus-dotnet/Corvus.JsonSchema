@@ -108,27 +108,27 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#getpropertybackingbuilderwithout-ref-jsonelement-ref-jsonpropertyname">GetPropertyBackingBuilderWithout(ref JsonElement, ref JsonPropertyName)</a></td>
+<td><a href="#getpropertybackingbuilderwithout-jsonelement-jsonpropertyname">GetPropertyBackingBuilderWithout(JsonElement, JsonPropertyName)</a></td>
 <td>Builds an <a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1.builder"><code>Builder</code></a> from the object, without a specific property.</td>
 </tr>
 <tr>
-<td><a href="#getpropertybackingbuilderwithout-ref-jsonelement-readonlyspan-char">GetPropertyBackingBuilderWithout(ref JsonElement, ReadOnlySpan&lt;char&gt;)</a></td>
+<td><a href="#getpropertybackingbuilderwithout-jsonelement-readonlyspan-char">GetPropertyBackingBuilderWithout(JsonElement, ReadOnlySpan&lt;char&gt;)</a></td>
 <td>Builds an <a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1.builder"><code>Builder</code></a> from the object, without a specific property.</td>
 </tr>
 <tr>
-<td><a href="#getpropertybackingbuilderwithout-ref-jsonelement-readonlyspan-byte">GetPropertyBackingBuilderWithout(ref JsonElement, ReadOnlySpan&lt;byte&gt;)</a></td>
+<td><a href="#getpropertybackingbuilderwithout-jsonelement-readonlyspan-byte">GetPropertyBackingBuilderWithout(JsonElement, ReadOnlySpan&lt;byte&gt;)</a></td>
 <td>Builds an <a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1.builder"><code>Builder</code></a> from the object, without a specific property.</td>
 </tr>
 <tr>
-<td><a href="#getpropertybackingbuilderwithout-ref-jsonelement-string">GetPropertyBackingBuilderWithout(ref JsonElement, string)</a></td>
+<td><a href="#getpropertybackingbuilderwithout-jsonelement-string">GetPropertyBackingBuilderWithout(JsonElement, string)</a></td>
 <td>Builds an <a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1.builder"><code>Builder</code></a> from the object, without a specific property.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="getpropertybackingbuilderwithout-ref-jsonelement-ref-jsonpropertyname">GetPropertyBackingBuilderWithout(ref JsonElement, ref JsonPropertyName)</h2>
+<h2 id="getpropertybackingbuilderwithout-jsonelement-jsonpropertyname">GetPropertyBackingBuilderWithout(JsonElement, JsonPropertyName)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingBuilders.cs#L46">PropertyBackingBuilders.cs</a></p>
 <p>Builds an <a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1.builder"><code>Builder</code></a> from the object, without a specific property.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderWithout(ref JsonElement jsonElementBacking, ref JsonPropertyName name)
+<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderWithout(in JsonElement jsonElementBacking, in JsonPropertyName name)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -142,12 +142,12 @@
 <tbody>
 <tr>
 <td><code>jsonElementBacking</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The JSON element backing the property.</td>
 </tr>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td>The name of the property to remove.</td>
 </tr>
 </tbody>
@@ -190,10 +190,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getpropertybackingbuilderwithout-ref-jsonelement-readonlyspan-char">GetPropertyBackingBuilderWithout(ref JsonElement, ReadOnlySpan&lt;char&gt;)</h2>
+<h2 id="getpropertybackingbuilderwithout-jsonelement-readonlyspan-char">GetPropertyBackingBuilderWithout(JsonElement, ReadOnlySpan&lt;char&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingBuilders.cs#L85">PropertyBackingBuilders.cs</a></p>
 <p>Builds an <a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1.builder"><code>Builder</code></a> from the object, without a specific property.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderWithout(ref JsonElement jsonElementBacking, ReadOnlySpan&lt;char&gt; name)
+<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderWithout(in JsonElement jsonElementBacking, ReadOnlySpan&lt;char&gt; name)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -207,7 +207,7 @@
 <tbody>
 <tr>
 <td><code>jsonElementBacking</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The JSON element backing the property.</td>
 </tr>
 <tr>
@@ -255,10 +255,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getpropertybackingbuilderwithout-ref-jsonelement-readonlyspan-byte">GetPropertyBackingBuilderWithout(ref JsonElement, ReadOnlySpan&lt;byte&gt;)</h2>
+<h2 id="getpropertybackingbuilderwithout-jsonelement-readonlyspan-byte">GetPropertyBackingBuilderWithout(JsonElement, ReadOnlySpan&lt;byte&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingBuilders.cs#L124">PropertyBackingBuilders.cs</a></p>
 <p>Builds an <a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1.builder"><code>Builder</code></a> from the object, without a specific property.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderWithout(ref JsonElement jsonElementBacking, ReadOnlySpan&lt;byte&gt; utf8Name)
+<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderWithout(in JsonElement jsonElementBacking, ReadOnlySpan&lt;byte&gt; utf8Name)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -272,7 +272,7 @@
 <tbody>
 <tr>
 <td><code>jsonElementBacking</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The JSON element backing the property.</td>
 </tr>
 <tr>
@@ -320,10 +320,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getpropertybackingbuilderwithout-ref-jsonelement-string">GetPropertyBackingBuilderWithout(ref JsonElement, string)</h2>
+<h2 id="getpropertybackingbuilderwithout-jsonelement-string">GetPropertyBackingBuilderWithout(JsonElement, string)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingBuilders.cs#L163">PropertyBackingBuilders.cs</a></p>
 <p>Builds an <a href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablelist-1.builder"><code>Builder</code></a> from the object, without a specific property.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderWithout(ref JsonElement jsonElementBacking, string name)
+<pre><code class="language-csharp">public static ImmutableList&lt;T&gt;.Builder&lt;JsonObjectProperty&gt; GetPropertyBackingBuilderWithout(in JsonElement jsonElementBacking, string name)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -337,7 +337,7 @@
 <tbody>
 <tr>
 <td><code>jsonElementBacking</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The JSON element backing the property.</td>
 </tr>
 <tr>

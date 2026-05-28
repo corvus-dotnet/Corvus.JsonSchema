@@ -112,11 +112,11 @@
 <td>Sets multiple parameters on the URI template.</td>
 </tr>
 <tr>
-<td><a href="#setparameters-ref-jsonany">SetParameters(ref JsonAny)</a></td>
+<td><a href="#setparameters-jsonany">SetParameters(JsonAny)</a></td>
 <td>Sets multiple parameters on the URI template.</td>
 </tr>
 <tr>
-<td><a href="#setparameters-ref-jsonobject">SetParameters(ref JsonObject)</a></td>
+<td><a href="#setparameters-jsonobject">SetParameters(JsonObject)</a></td>
 <td>Sets multiple parameters on the URI template.</td>
 </tr>
 <tr>
@@ -192,10 +192,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="setparameters-ref-jsonany">SetParameters(ref JsonAny)</h2>
+<h2 id="setparameters-jsonany">SetParameters(JsonAny)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/UriTemplates/UriTemplate.cs#L177">UriTemplate.cs</a></p>
 <p>Sets multiple parameters on the URI template.</p>
-<pre><code class="language-csharp">public UriTemplate SetParameters(ref JsonAny parameters)
+<pre><code class="language-csharp">public UriTemplate SetParameters(in JsonAny parameters)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -209,7 +209,7 @@
 <tbody>
 <tr>
 <td><code>parameters</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The parameters to set.</td>
 </tr>
 </tbody>
@@ -239,10 +239,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="setparameters-ref-jsonobject">SetParameters(ref JsonObject)</h2>
+<h2 id="setparameters-jsonobject">SetParameters(JsonObject)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/UriTemplates/UriTemplate.cs#L193">UriTemplate.cs</a></p>
 <p>Sets multiple parameters on the URI template.</p>
-<pre><code class="language-csharp">public UriTemplate SetParameters(ref JsonObject parameters)
+<pre><code class="language-csharp">public UriTemplate SetParameters(in JsonObject parameters)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -256,7 +256,7 @@
 <tbody>
 <tr>
 <td><code>parameters</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonobject.html"><code>ref JsonObject</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonobject.html"><code>JsonObject</code></a></td>
 <td>The parameters to set.</td>
 </tr>
 </tbody>

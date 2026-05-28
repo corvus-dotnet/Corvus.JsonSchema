@@ -114,7 +114,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.applyunsafe.html#applyunsafe-ttarget-ref-tsource">ApplyUnsafe(TTarget, ref TSource)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.applyunsafe.html#applyunsafe-ttarget-tsource">ApplyUnsafe(TTarget, TSource)</a> <code>static</code></td>
 <td>Applies all properties from a source JSON object element to a target JSON object element.</td>
 </tr>
 <tr>
@@ -142,7 +142,7 @@
 <td>Creates an offset time from its individual components including nanosecond precision.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.deepequals.html#deepequals-ref-tleft-ref-tright">DeepEquals(ref TLeft, ref TRight)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.deepequals.html#deepequals-tleft-tright">DeepEquals(TLeft, TRight)</a> <code>static</code></td>
 <td>Compares the values of two <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsonelement.html"><code>IJsonElement</code></a> values for equality, including the values of all descendant elements.</td>
 </tr>
 <tr>
@@ -166,7 +166,7 @@
 <td>Determines whether the normalized JSON number is an exact multiple of the given integer divisor.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parsedatecore.html#parsedatecore-readonlyspan-byte-ref-int-ref-int-ref-int">ParseDateCore(ReadOnlySpan&lt;byte&gt;, ref int, ref int, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parsedatecore.html#parsedatecore-readonlyspan-byte-int-int-int">ParseDateCore(ReadOnlySpan&lt;byte&gt;, int, int, int)</a> <code>static</code></td>
 <td>Parses a date string in ISO 8601 format (YYYY-MM-DD) and extracts the year, month, and day components.</td>
 </tr>
 <tr>
@@ -174,11 +174,11 @@
 <td>Parse a local date from a UTF-8 encoded string for the <code>date</code> format.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parsenumber.html#parsenumber-readonlyspan-byte-ref-bool-ref-readonlyspan-byte-ref-readonlyspan-byte-ref-int">ParseNumber(ReadOnlySpan&lt;byte&gt;, ref bool, ref ReadOnlySpan&lt;byte&gt;, ref ReadOnlySpan&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parsenumber.html#parsenumber-readonlyspan-byte-bool-readonlyspan-byte-readonlyspan-byte-int">ParseNumber(ReadOnlySpan&lt;byte&gt;, bool, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, int)</a> <code>static</code></td>
 <td>Parses a JSON number into its component parts using normal-form decimal representation.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parseoffsetcore.html#parseoffsetcore-readonlyspan-byte-ref-int">ParseOffsetCore(ReadOnlySpan&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parseoffsetcore.html#parseoffsetcore-readonlyspan-byte-int">ParseOffsetCore(ReadOnlySpan&lt;byte&gt;, int)</a> <code>static</code></td>
 <td>Parses a timezone offset string in ISO 8601 format (±HH:MM or Z) and extracts the offset in seconds.</td>
 </tr>
 <tr>
@@ -194,7 +194,7 @@
 <td>Parse an offset time from a UTF-8 encoded string for the <code>time</code> format.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parseoffsettimecore.html#parseoffsettimecore-readonlyspan-byte-ref-int-ref-int-ref-int-ref-int-ref-int-ref-int-ref-int">ParseOffsetTimeCore(ReadOnlySpan&lt;byte&gt;, ref int, ref int, ref int, ref int, ref int, ref int, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parseoffsettimecore.html#parseoffsettimecore-readonlyspan-byte-int-int-int-int-int-int-int">ParseOffsetTimeCore(ReadOnlySpan&lt;byte&gt;, int, int, int, int, int, int, int)</a> <code>static</code></td>
 <td>Parses a time string with optional offset in ISO 8601 format and extracts the time and offset components.</td>
 </tr>
 <tr>
@@ -202,7 +202,7 @@
 <td>Parse a period from a UTF-8 encoded string for the <code>duration</code> format.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parsetimecore.html#parsetimecore-readonlyspan-byte-ref-int-ref-int-ref-int-ref-int-ref-int-ref-int">ParseTimeCore(ReadOnlySpan&lt;byte&gt;, ref int, ref int, ref int, ref int, ref int, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parsetimecore.html#parsetimecore-readonlyspan-byte-int-int-int-int-int-int">ParseTimeCore(ReadOnlySpan&lt;byte&gt;, int, int, int, int, int, int)</a> <code>static</code></td>
 <td>Parses a time string in ISO 8601 format (HH:MM:SS[.nnnnnnnnn]) and extracts the time components.</td>
 </tr>
 <tr>
@@ -210,7 +210,11 @@
 <td>Parses one JSON value (including objects or arrays) from the provided span.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.removefirstunsafe.html#removefirstunsafe-tarray-ref-t">RemoveFirstUnsafe(TArray, ref T)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.reinterpret.html#reinterpret-tsource">Reinterpret(TSource)</a> <code>static</code></td>
+<td>Reinterprets a source element as a different target element type, sharing the same underlying document and location. This is a zero-copy operation that creates a new struct view over the same data.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.removefirstunsafe.html#removefirstunsafe-tarray-t">RemoveFirstUnsafe(TArray, T)</a> <code>static</code></td>
 <td>Removes the first array element that equals the specified item.</td>
 </tr>
 <tr>
@@ -242,7 +246,7 @@
 <td>Tries to format a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8irireference.html"><code>Utf8IriReference</code></a> as a display (human-readable) or canonical (percent-encoded) string.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatlocaldate.html#tryformatlocaldate-ref-localdate-span-byte-ref-int">TryFormatLocalDate(ref LocalDate, Span&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatlocaldate.html#tryformatlocaldate-localdate-span-byte-int">TryFormatLocalDate(LocalDate, Span&lt;byte&gt;, int)</a> <code>static</code></td>
 <td>Format a date as a UTF-8 string.</td>
 </tr>
 <tr>
@@ -250,23 +254,23 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatnumberasstring.html#tryformatnumberasstring-readonlyspan-byte-readonlyspan-char-iformatprovider-ref-string">TryFormatNumberAsString(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, IFormatProvider, ref string)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatnumberasstring.html#tryformatnumberasstring-readonlyspan-byte-readonlyspan-char-iformatprovider-string">TryFormatNumberAsString(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, IFormatProvider?, string?)</a> <code>static</code></td>
 <td>Format the number as a string.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatoffsetdate.html#tryformatoffsetdate-ref-offsetdate-span-byte-ref-int">TryFormatOffsetDate(ref OffsetDate, Span&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatoffsetdate.html#tryformatoffsetdate-offsetdate-span-byte-int">TryFormatOffsetDate(OffsetDate, Span&lt;byte&gt;, int)</a> <code>static</code></td>
 <td>Format a date as a UTF-8 string.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatoffsetdatetime.html#tryformatoffsetdatetime-ref-offsetdatetime-span-byte-ref-int">TryFormatOffsetDateTime(ref OffsetDateTime, Span&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatoffsetdatetime.html#tryformatoffsetdatetime-offsetdatetime-span-byte-int">TryFormatOffsetDateTime(OffsetDateTime, Span&lt;byte&gt;, int)</a> <code>static</code></td>
 <td>Format an offset date time as a UTF-8 string.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatoffsettime.html#tryformatoffsettime-ref-offsettime-span-byte-ref-int">TryFormatOffsetTime(ref OffsetTime, Span&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatoffsettime.html#tryformatoffsettime-offsettime-span-byte-int">TryFormatOffsetTime(OffsetTime, Span&lt;byte&gt;, int)</a> <code>static</code></td>
 <td>Format a time as a UTF-8 string.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatperiod.html#tryformatperiod-ref-period-span-byte-ref-int">TryFormatPeriod(ref Period, Span&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryformatperiod.html#tryformatperiod-period-span-byte-int">TryFormatPeriod(Period, Span&lt;byte&gt;, int)</a> <code>static</code></td>
 <td>Format a period as a UTF-8 string for the <code>duration</code> format.</td>
 </tr>
 <tr>
@@ -278,35 +282,35 @@
 <td>Tries to format a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8urireference.html"><code>Utf8UriReference</code></a> as a display (human-readable) or canonical (percent-encoded) string.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.trygetnormalizedint64.html#trygetnormalizedint64-bool-readonlyspan-byte-readonlyspan-byte-int-ref-long">TryGetNormalizedInt64(bool, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, int, ref long)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.trygetnormalizedint64.html#trygetnormalizedint64-bool-readonlyspan-byte-readonlyspan-byte-int-long">TryGetNormalizedInt64(bool, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, int, long)</a> <code>static</code></td>
 <td>Attempts to convert a normalized JSON number to a <a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>Int64</code></a> value.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparselocaldate.html#tryparselocaldate-readonlyspan-byte-ref-localdate">TryParseLocalDate(ReadOnlySpan&lt;byte&gt;, ref LocalDate)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparselocaldate.html#tryparselocaldate-readonlyspan-byte-localdate">TryParseLocalDate(ReadOnlySpan&lt;byte&gt;, LocalDate)</a> <code>static</code></td>
 <td>Parse a date from a string for the <code>date</code> format.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparsenumber.html#tryparsenumber-readonlyspan-byte-ref-bool-ref-readonlyspan-byte-ref-readonlyspan-byte-ref-int">TryParseNumber(ReadOnlySpan&lt;byte&gt;, ref bool, ref ReadOnlySpan&lt;byte&gt;, ref ReadOnlySpan&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparsenumber.html#tryparsenumber-readonlyspan-byte-bool-readonlyspan-byte-readonlyspan-byte-int">TryParseNumber(ReadOnlySpan&lt;byte&gt;, bool, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, int)</a> <code>static</code></td>
 <td>Parses a JSON number into its component parts using normal-form decimal representation.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparseoffsetdate.html#tryparseoffsetdate-readonlyspan-byte-ref-offsetdate">TryParseOffsetDate(ReadOnlySpan&lt;byte&gt;, ref OffsetDate)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparseoffsetdate.html#tryparseoffsetdate-readonlyspan-byte-offsetdate">TryParseOffsetDate(ReadOnlySpan&lt;byte&gt;, OffsetDate)</a> <code>static</code></td>
 <td>Parse a date time from a string for the <code>date-time</code> format.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparseoffsetdatetime.html#tryparseoffsetdatetime-readonlyspan-byte-ref-offsetdatetime">TryParseOffsetDateTime(ReadOnlySpan&lt;byte&gt;, ref OffsetDateTime)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparseoffsetdatetime.html#tryparseoffsetdatetime-readonlyspan-byte-offsetdatetime">TryParseOffsetDateTime(ReadOnlySpan&lt;byte&gt;, OffsetDateTime)</a> <code>static</code></td>
 <td>Parse a date time from a string for the <code>date-time</code> format.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparseoffsettime.html#tryparseoffsettime-readonlyspan-byte-ref-offsettime">TryParseOffsetTime(ReadOnlySpan&lt;byte&gt;, ref OffsetTime)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparseoffsettime.html#tryparseoffsettime-readonlyspan-byte-offsettime">TryParseOffsetTime(ReadOnlySpan&lt;byte&gt;, OffsetTime)</a> <code>static</code></td>
 <td>Parse a time from a string for the <code>time</code> format.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparseperiod.html#tryparseperiod-readonlyspan-byte-ref-period">TryParsePeriod(ReadOnlySpan&lt;byte&gt;, ref Period)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparseperiod.html#tryparseperiod-readonlyspan-byte-period">TryParsePeriod(ReadOnlySpan&lt;byte&gt;, Period)</a> <code>static</code></td>
 <td>Parse a period from a string for the <code>duration</code> format.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparsevalue.html#tryparsevalue-ref-utf8jsonreader-ref-nullable-t">TryParseValue(ref Utf8JsonReader, ref Nullable&lt;T&gt;)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.tryparsevalue.html#tryparsevalue-utf8jsonreader-nullable-t">TryParseValue(Utf8JsonReader, Nullable&lt;T&gt;)</a> <code>static</code></td>
 <td>Attempts to parse one JSON value (including objects or arrays) from the provided reader.</td>
 </tr>
 </tbody>

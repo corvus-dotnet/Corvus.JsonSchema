@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="mapchaindouble-ref-jsonelement-byte-func-jsonelement-jsonworkspace-double-jsonworkspace">MapChainDouble(ref JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
+<h2 id="mapchaindouble-jsonelement-byte-func-jsonelement-jsonworkspace-double-jsonworkspace">MapChainDouble(JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
 <p>Fused property-chain navigation + double-space map. Navigates <code>names</code> into an <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (ArrayPool-backed), then maps each element through <code>step</code>, building the final array in one pass. Eliminates the intermediate <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.createarraybuilder.html"><code>CreateArrayBuilder</code></a> that <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.navigatepropertychain.html"><code>NavigatePropertyChain</code></a> would create.</p>
-<pre><code class="language-csharp">public static JsonElement MapChainDouble(ref JsonElement data, byte[][] names, Func&lt;JsonElement, JsonWorkspace, double&gt; step, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement MapChainDouble(in JsonElement data, byte[][] names, Func&lt;JsonElement, JsonWorkspace, double&gt; step, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

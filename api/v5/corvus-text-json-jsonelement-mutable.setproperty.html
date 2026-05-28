@@ -108,15 +108,15 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#setproperty-string-ref-jsonelement-source">SetProperty(string, ref JsonElement.Source)</a></td>
+<td><a href="#setproperty-string-jsonelement-source">SetProperty(string, JsonElement.Source)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#setproperty-readonlyspan-char-ref-jsonelement-source-int">SetProperty(ReadOnlySpan&lt;char&gt;, ref JsonElement.Source, int)</a></td>
+<td><a href="#setproperty-readonlyspan-char-jsonelement-source-int">SetProperty(ReadOnlySpan&lt;char&gt;, JsonElement.Source, int)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#setproperty-readonlyspan-byte-ref-jsonelement-source-int">SetProperty(ReadOnlySpan&lt;byte&gt;, ref JsonElement.Source, int)</a></td>
+<td><a href="#setproperty-readonlyspan-byte-jsonelement-source-int">SetProperty(ReadOnlySpan&lt;byte&gt;, JsonElement.Source, int)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -124,7 +124,7 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#setproperty-string-ref-tcontext-jsonelement-objectbuilder-build-tcontext-int">SetProperty(string, ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, int)</a></td>
+<td><a href="#setproperty-string-tcontext-jsonelement-objectbuilder-build-tcontext-int">SetProperty(string, TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, int)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -148,7 +148,7 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#setproperty-string-ref-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(string, ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</a></td>
+<td><a href="#setproperty-string-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(string, TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -156,7 +156,7 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#setproperty-readonlyspan-char-ref-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(ReadOnlySpan&lt;char&gt;, ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</a></td>
+<td><a href="#setproperty-readonlyspan-char-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(ReadOnlySpan&lt;char&gt;, TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -164,14 +164,14 @@
 <td></td>
 </tr>
 <tr>
-<td><a href="#setproperty-readonlyspan-byte-ref-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(ReadOnlySpan&lt;byte&gt;, ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</a></td>
+<td><a href="#setproperty-readonlyspan-byte-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(ReadOnlySpan&lt;byte&gt;, TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="setproperty-string-ref-jsonelement-source">SetProperty(string, ref JsonElement.Source)</h2>
+<h2 id="setproperty-string-jsonelement-source">SetProperty(string, JsonElement.Source)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L4615">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public void SetProperty(string propertyName, ref JsonElement.Source source)
+<pre><code class="language-csharp">public void SetProperty(string propertyName, in JsonElement.Source source)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -190,7 +190,7 @@
 </tr>
 <tr>
 <td><code>source</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>ref JsonElement.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -215,9 +215,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="setproperty-readonlyspan-char-ref-jsonelement-source-int">SetProperty(ReadOnlySpan&lt;char&gt;, ref JsonElement.Source, int)</h2>
+<h2 id="setproperty-readonlyspan-char-jsonelement-source-int">SetProperty(ReadOnlySpan&lt;char&gt;, JsonElement.Source, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L4638">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public void SetProperty(ReadOnlySpan&lt;char&gt; propertyName, ref JsonElement.Source source, int estimatedMemberCount)
+<pre><code class="language-csharp">public void SetProperty(ReadOnlySpan&lt;char&gt; propertyName, in JsonElement.Source source, int estimatedMemberCount)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -236,7 +236,7 @@
 </tr>
 <tr>
 <td><code>source</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>ref JsonElement.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -266,9 +266,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="setproperty-readonlyspan-byte-ref-jsonelement-source-int">SetProperty(ReadOnlySpan&lt;byte&gt;, ref JsonElement.Source, int)</h2>
+<h2 id="setproperty-readonlyspan-byte-jsonelement-source-int">SetProperty(ReadOnlySpan&lt;byte&gt;, JsonElement.Source, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L4683">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public void SetProperty(ReadOnlySpan&lt;byte&gt; propertyName, ref JsonElement.Source source, int estimatedMemberCount)
+<pre><code class="language-csharp">public void SetProperty(ReadOnlySpan&lt;byte&gt; propertyName, in JsonElement.Source source, int estimatedMemberCount)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -287,7 +287,7 @@
 </tr>
 <tr>
 <td><code>source</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>ref JsonElement.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -368,9 +368,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="setproperty-string-ref-tcontext-jsonelement-objectbuilder-build-tcontext-int">SetProperty(string, ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, int)</h2>
+<h2 id="setproperty-string-tcontext-jsonelement-objectbuilder-build-tcontext-int">SetProperty(string, TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L1992">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public void SetProperty&lt;TContext&gt;(string propertyName, ref TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; objectValue, int estimatedMemberCount)
+<pre><code class="language-csharp">public void SetProperty&lt;TContext&gt;(string propertyName, in TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; objectValue, int estimatedMemberCount)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -389,7 +389,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
@@ -689,9 +689,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="setproperty-string-ref-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(string, ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</h2>
+<h2 id="setproperty-string-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(string, TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L1992">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public void SetProperty&lt;TContext&gt;(string propertyName, ref TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; arrayValue, int estimatedMemberCount)
+<pre><code class="language-csharp">public void SetProperty&lt;TContext&gt;(string propertyName, in TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; arrayValue, int estimatedMemberCount)
 </code></pre>
 <h3 id="parameters-10">Parameters</h3>
 <table>
@@ -710,7 +710,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
@@ -796,9 +796,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="setproperty-readonlyspan-char-ref-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(ReadOnlySpan&lt;char&gt;, ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</h2>
+<h2 id="setproperty-readonlyspan-char-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(ReadOnlySpan&lt;char&gt;, TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L1992">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public void SetProperty&lt;TContext&gt;(ReadOnlySpan&lt;char&gt; propertyName, ref TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; arrayValue, int estimatedMemberCount)
+<pre><code class="language-csharp">public void SetProperty&lt;TContext&gt;(ReadOnlySpan&lt;char&gt; propertyName, in TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; arrayValue, int estimatedMemberCount)
 </code></pre>
 <h3 id="parameters-12">Parameters</h3>
 <table>
@@ -817,7 +817,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
@@ -903,9 +903,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="setproperty-readonlyspan-byte-ref-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(ReadOnlySpan&lt;byte&gt;, ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</h2>
+<h2 id="setproperty-readonlyspan-byte-tcontext-jsonelement-arraybuilder-build-tcontext-int">SetProperty(ReadOnlySpan&lt;byte&gt;, TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L1992">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public void SetProperty&lt;TContext&gt;(ReadOnlySpan&lt;byte&gt; propertyName, ref TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; arrayValue, int estimatedMemberCount)
+<pre><code class="language-csharp">public void SetProperty&lt;TContext&gt;(ReadOnlySpan&lt;byte&gt; propertyName, in TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; arrayValue, int estimatedMemberCount)
 </code></pre>
 <h3 id="parameters-14">Parameters</h3>
 <table>
@@ -924,7 +924,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>

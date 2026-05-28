@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="canreduce-ref-jsonelement">CanReduce(ref JsonElement)</h2>
+<h2 id="canreduce-jsonelement">CanReduce(JsonElement)</h2>
 <p>Gets a value indicating whether this keyword prevents the type from being reduced .</p>
-<pre><code class="language-csharp">public abstract bool CanReduce(ref JsonElement schemaValue)
+<pre><code class="language-csharp">public abstract bool CanReduce(in JsonElement schemaValue)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>schemaValue</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The schema value containing the keyword.</td>
 </tr>
 </tbody>

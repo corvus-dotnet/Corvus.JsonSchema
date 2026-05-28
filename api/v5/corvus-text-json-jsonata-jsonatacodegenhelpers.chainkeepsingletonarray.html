@@ -108,18 +108,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#chainkeepsingletonarray-ref-jsonelement-byte-jsonworkspace">ChainKeepSingletonArray(ref JsonElement, byte[][], JsonWorkspace)</a></td>
+<td><a href="#chainkeepsingletonarray-jsonelement-byte-jsonworkspace">ChainKeepSingletonArray(JsonElement, byte[][], JsonWorkspace)</a></td>
 <td>Fused chain navigation + keep-singleton-array (<code>\[\]</code> syntax). Navigates the property chain into an <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (no intermediate builder), t...</td>
 </tr>
 <tr>
-<td><a href="#chainkeepsingletonarray-ref-jsonelement-byte-int-jsonworkspace">ChainKeepSingletonArray(ref JsonElement, byte[][], int, JsonWorkspace)</a></td>
+<td><a href="#chainkeepsingletonarray-jsonelement-byte-int-jsonworkspace">ChainKeepSingletonArray(JsonElement, byte[][], int, JsonWorkspace)</a></td>
 <td>Fused chain navigation + keep-singleton-array with a start index for partially-resolved chains.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="chainkeepsingletonarray-ref-jsonelement-byte-jsonworkspace">ChainKeepSingletonArray(ref JsonElement, byte[][], JsonWorkspace)</h2>
+<h2 id="chainkeepsingletonarray-jsonelement-byte-jsonworkspace">ChainKeepSingletonArray(JsonElement, byte[][], JsonWorkspace)</h2>
 <p>Fused chain navigation + keep-singleton-array (<code>[]</code> syntax). Navigates the property chain into an <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (no intermediate builder), then builds the result array directly from the buffer.</p>
-<pre><code class="language-csharp">public static JsonElement ChainKeepSingletonArray(ref JsonElement data, byte[][] names, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement ChainKeepSingletonArray(in JsonElement data, byte[][] names, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -133,7 +133,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The root element to navigate from.</td>
 </tr>
 <tr>
@@ -171,9 +171,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="chainkeepsingletonarray-ref-jsonelement-byte-int-jsonworkspace">ChainKeepSingletonArray(ref JsonElement, byte[][], int, JsonWorkspace)</h2>
+<h2 id="chainkeepsingletonarray-jsonelement-byte-int-jsonworkspace">ChainKeepSingletonArray(JsonElement, byte[][], int, JsonWorkspace)</h2>
 <p>Fused chain navigation + keep-singleton-array with a start index for partially-resolved chains.</p>
-<pre><code class="language-csharp">public static JsonElement ChainKeepSingletonArray(ref JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement ChainKeepSingletonArray(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -187,7 +187,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The element at the start position (already resolved up to <code>startIndex</code>).</td>
 </tr>
 <tr>

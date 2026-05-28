@@ -112,7 +112,7 @@
 <td>Computes <code>merge(obj1, obj2, ...)</code>.</td>
 </tr>
 <tr>
-<td><a href="#merge-ref-jsonelement-ref-jsonelement-jsonworkspace">Merge(ref JsonElement, ref JsonElement, JsonWorkspace)</a></td>
+<td><a href="#merge-jsonelement-jsonelement-jsonworkspace">Merge(JsonElement, JsonElement, JsonWorkspace)</a></td>
 <td>Computes <code>merge(obj1, obj2)</code> for exactly 2 arguments, avoiding heap array allocation.</td>
 </tr>
 </tbody>
@@ -165,9 +165,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="merge-ref-jsonelement-ref-jsonelement-jsonworkspace">Merge(ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="merge-jsonelement-jsonelement-jsonworkspace">Merge(JsonElement, JsonElement, JsonWorkspace)</h2>
 <p>Computes <code>merge(obj1, obj2)</code> for exactly 2 arguments, avoiding heap array allocation.</p>
-<pre><code class="language-csharp">public static JsonElement Merge(ref JsonElement obj1, ref JsonElement obj2, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement Merge(in JsonElement obj1, in JsonElement obj2, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -181,12 +181,12 @@
 <tbody>
 <tr>
 <td><code>obj1</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>obj2</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

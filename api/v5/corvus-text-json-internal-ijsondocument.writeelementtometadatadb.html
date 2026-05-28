@@ -99,7 +99,7 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L656">IJsonDocument.cs</a></p>
-<h2 id="writeelementtometadatadb-int-jsonworkspace-ref-metadatadb-int">WriteElementToMetadataDb(int, JsonWorkspace, ref MetadataDb, int)</h2>
+<h2 id="writeelementtometadatadb-int-jsonworkspace-metadatadb-int">WriteElementToMetadataDb(int, JsonWorkspace, MetadataDb, int)</h2>
 <p>Writes the element at the given index into the specified metadata database at a specific position, creating external reference rows. This is the positional variant of <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.appendelementtometadatadb.html"><code>AppendElementToMetadataDb</code></a>.</p>
 <pre><code class="language-csharp">public abstract int WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition)
 </code></pre>
@@ -125,7 +125,7 @@
 </tr>
 <tr>
 <td><code>db</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-metadatadb.html"><code>ref MetadataDb</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-metadatadb.html"><code>MetadataDb</code></a></td>
 <td>The target metadata database (must already have a gap at <code>writePosition</code>).</td>
 </tr>
 <tr>

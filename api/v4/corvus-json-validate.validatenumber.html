@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
-<h2 id="validatenumber-ref-tvalue-ref-validationcontext-validationlevel-ref-binaryjsonnumber-ref-binaryjsonnumber-ref-binaryjsonnumber-ref-binaryjsonnumber-ref-binaryjsonnumber">ValidateNumber(ref TValue, ref ValidationContext, ValidationLevel, ref BinaryJsonNumber, ref BinaryJsonNumber, ref BinaryJsonNumber, ref BinaryJsonNumber, ref BinaryJsonNumber)</h2>
+<h2 id="validatenumber-tvalue-validationcontext-validationlevel-binaryjsonnumber-binaryjsonnumber-binaryjsonnumber-binaryjsonnumber-binaryjsonnumber">ValidateNumber(TValue, ValidationContext, ValidationLevel, BinaryJsonNumber, BinaryJsonNumber, BinaryJsonNumber, BinaryJsonNumber, BinaryJsonNumber)</h2>
 <p>Perform numeric validation on the value.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateNumber&lt;TValue&gt;(ref TValue value, ref ValidationContext validationContext, ValidationLevel level, ref BinaryJsonNumber multipleOf, ref BinaryJsonNumber maximum, ref BinaryJsonNumber exclusiveMaximum, ref BinaryJsonNumber minimum, ref BinaryJsonNumber exclusiveMinimum)
+<pre><code class="language-csharp">public static ValidationContext ValidateNumber&lt;TValue&gt;(in TValue value, in ValidationContext validationContext, ValidationLevel level, in BinaryJsonNumber multipleOf, in BinaryJsonNumber maximum, in BinaryJsonNumber exclusiveMaximum, in BinaryJsonNumber minimum, in BinaryJsonNumber exclusiveMinimum)
     where TValue : struct, IJsonValue
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -131,12 +131,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td>The value to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The current validation context.</td>
 </tr>
 <tr>
@@ -146,27 +146,27 @@
 </tr>
 <tr>
 <td><code>multipleOf</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The optional multiple-of validation.</td>
 </tr>
 <tr>
 <td><code>maximum</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The optional maximum validation.</td>
 </tr>
 <tr>
 <td><code>exclusiveMaximum</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The optional exclusive maximum validation.</td>
 </tr>
 <tr>
 <td><code>minimum</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The optional minimum validation.</td>
 </tr>
 <tr>
 <td><code>exclusiveMinimum</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The optional exclusive minimum validation.</td>
 </tr>
 </tbody>

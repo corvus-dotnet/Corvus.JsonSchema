@@ -108,41 +108,41 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetproperty-ref-jsonpropertyname-ref-jsonany">TryGetProperty(ref JsonPropertyName, ref JsonAny)</a></td>
+<td><a href="#trygetproperty-jsonpropertyname-jsonany">TryGetProperty(JsonPropertyName, JsonAny)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trygetproperty-string-ref-jsonany">TryGetProperty(string, ref JsonAny)</a></td>
+<td><a href="#trygetproperty-string-jsonany">TryGetProperty(string, JsonAny)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trygetproperty-readonlyspan-char-ref-jsonany">TryGetProperty(ReadOnlySpan&lt;char&gt;, ref JsonAny)</a></td>
+<td><a href="#trygetproperty-readonlyspan-char-jsonany">TryGetProperty(ReadOnlySpan&lt;char&gt;, JsonAny)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trygetproperty-readonlyspan-byte-ref-jsonany">TryGetProperty(ReadOnlySpan&lt;byte&gt;, ref JsonAny)</a></td>
+<td><a href="#trygetproperty-readonlyspan-byte-jsonany">TryGetProperty(ReadOnlySpan&lt;byte&gt;, JsonAny)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trygetproperty-ref-jsonpropertyname-ref-tvalue">TryGetProperty(ref JsonPropertyName, ref TValue)</a></td>
+<td><a href="#trygetproperty-jsonpropertyname-tvalue">TryGetProperty(JsonPropertyName, TValue)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trygetproperty-string-ref-tvalue">TryGetProperty(string, ref TValue)</a></td>
+<td><a href="#trygetproperty-string-tvalue">TryGetProperty(string, TValue)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trygetproperty-readonlyspan-char-ref-tvalue">TryGetProperty(ReadOnlySpan&lt;char&gt;, ref TValue)</a></td>
+<td><a href="#trygetproperty-readonlyspan-char-tvalue">TryGetProperty(ReadOnlySpan&lt;char&gt;, TValue)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trygetproperty-readonlyspan-byte-ref-tvalue">TryGetProperty(ReadOnlySpan&lt;byte&gt;, ref TValue)</a></td>
+<td><a href="#trygetproperty-readonlyspan-byte-tvalue">TryGetProperty(ReadOnlySpan&lt;byte&gt;, TValue)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetproperty-ref-jsonpropertyname-ref-jsonany">TryGetProperty(ref JsonPropertyName, ref JsonAny)</h2>
-<pre><code class="language-csharp">public bool TryGetProperty(ref JsonPropertyName name, ref JsonAny value)
+<h2 id="trygetproperty-jsonpropertyname-jsonany">TryGetProperty(JsonPropertyName, JsonAny)</h2>
+<pre><code class="language-csharp">public bool TryGetProperty(in JsonPropertyName name, out JsonAny value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -156,12 +156,12 @@
 <tbody>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -190,8 +190,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetproperty-string-ref-jsonany">TryGetProperty(string, ref JsonAny)</h2>
-<pre><code class="language-csharp">public bool TryGetProperty(string name, ref JsonAny value)
+<h2 id="trygetproperty-string-jsonany">TryGetProperty(string, JsonAny)</h2>
+<pre><code class="language-csharp">public bool TryGetProperty(string name, out JsonAny value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -210,7 +210,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -239,8 +239,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetproperty-readonlyspan-char-ref-jsonany">TryGetProperty(ReadOnlySpan&lt;char&gt;, ref JsonAny)</h2>
-<pre><code class="language-csharp">public bool TryGetProperty(ReadOnlySpan&lt;char&gt; name, ref JsonAny value)
+<h2 id="trygetproperty-readonlyspan-char-jsonany">TryGetProperty(ReadOnlySpan&lt;char&gt;, JsonAny)</h2>
+<pre><code class="language-csharp">public bool TryGetProperty(ReadOnlySpan&lt;char&gt; name, out JsonAny value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -259,7 +259,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -288,8 +288,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetproperty-readonlyspan-byte-ref-jsonany">TryGetProperty(ReadOnlySpan&lt;byte&gt;, ref JsonAny)</h2>
-<pre><code class="language-csharp">public bool TryGetProperty(ReadOnlySpan&lt;byte&gt; name, ref JsonAny value)
+<h2 id="trygetproperty-readonlyspan-byte-jsonany">TryGetProperty(ReadOnlySpan&lt;byte&gt;, JsonAny)</h2>
+<pre><code class="language-csharp">public bool TryGetProperty(ReadOnlySpan&lt;byte&gt; name, out JsonAny value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -308,7 +308,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -337,8 +337,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetproperty-ref-jsonpropertyname-ref-tvalue">TryGetProperty(ref JsonPropertyName, ref TValue)</h2>
-<pre><code class="language-csharp">public bool TryGetProperty&lt;TValue&gt;(ref JsonPropertyName name, ref TValue value)
+<h2 id="trygetproperty-jsonpropertyname-tvalue">TryGetProperty(JsonPropertyName, TValue)</h2>
+<pre><code class="language-csharp">public bool TryGetProperty&lt;TValue&gt;(in JsonPropertyName name, out TValue value)
     where TValue : struct, IJsonValue&lt;TValue&gt;
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
@@ -353,12 +353,12 @@
 <tbody>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -387,8 +387,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetproperty-string-ref-tvalue">TryGetProperty(string, ref TValue)</h2>
-<pre><code class="language-csharp">public bool TryGetProperty&lt;TValue&gt;(string name, ref TValue value)
+<h2 id="trygetproperty-string-tvalue">TryGetProperty(string, TValue)</h2>
+<pre><code class="language-csharp">public bool TryGetProperty&lt;TValue&gt;(string name, out TValue value)
     where TValue : struct, IJsonValue&lt;TValue&gt;
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
@@ -408,7 +408,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -437,8 +437,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetproperty-readonlyspan-char-ref-tvalue">TryGetProperty(ReadOnlySpan&lt;char&gt;, ref TValue)</h2>
-<pre><code class="language-csharp">public bool TryGetProperty&lt;TValue&gt;(ReadOnlySpan&lt;char&gt; name, ref TValue value)
+<h2 id="trygetproperty-readonlyspan-char-tvalue">TryGetProperty(ReadOnlySpan&lt;char&gt;, TValue)</h2>
+<pre><code class="language-csharp">public bool TryGetProperty&lt;TValue&gt;(ReadOnlySpan&lt;char&gt; name, out TValue value)
     where TValue : struct, IJsonValue&lt;TValue&gt;
 </code></pre>
 <h3 id="parameters-6">Parameters</h3>
@@ -458,7 +458,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -487,8 +487,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetproperty-readonlyspan-byte-ref-tvalue">TryGetProperty(ReadOnlySpan&lt;byte&gt;, ref TValue)</h2>
-<pre><code class="language-csharp">public bool TryGetProperty&lt;TValue&gt;(ReadOnlySpan&lt;byte&gt; name, ref TValue value)
+<h2 id="trygetproperty-readonlyspan-byte-tvalue">TryGetProperty(ReadOnlySpan&lt;byte&gt;, TValue)</h2>
+<pre><code class="language-csharp">public bool TryGetProperty&lt;TValue&gt;(ReadOnlySpan&lt;byte&gt; name, out TValue value)
     where TValue : struct, IJsonValue&lt;TValue&gt;
 </code></pre>
 <h3 id="parameters-7">Parameters</h3>
@@ -508,7 +508,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td></td>
 </tr>
 </tbody>

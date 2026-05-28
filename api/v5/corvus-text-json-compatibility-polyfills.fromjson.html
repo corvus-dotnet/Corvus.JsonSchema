@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Compatibility<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Compatibility/Polyfills.cs#L18">Polyfills.cs</a></p>
-<h2 id="fromjson-ref-ttarget">FromJson(ref TTarget)</h2>
-<pre><code class="language-csharp">public static T FromJson&lt;T, TTarget&gt;(ref TTarget value)
+<h2 id="fromjson-ttarget">FromJson(TTarget)</h2>
+<pre><code class="language-csharp">public static T FromJson&lt;T, TTarget&gt;(in TTarget value)
     where T : struct, IJsonElement&lt;T&gt;
     where TTarget : struct, IJsonElement&lt;TTarget&gt;
 </code></pre>
@@ -116,7 +116,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TTarget</code></td>
+<td><code>TTarget</code></td>
 <td></td>
 </tr>
 </tbody>

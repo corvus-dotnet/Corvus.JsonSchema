@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JMESPath<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="begininvoke-ref-jsonelement-jsonworkspace-asynccallback-object">BeginInvoke(ref JsonElement, JsonWorkspace, AsyncCallback, object)</h2>
-<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(ref JsonElement data, JsonWorkspace workspace, AsyncCallback callback, object object)
+<h2 id="begininvoke-jsonelement-jsonworkspace-asynccallback-object">BeginInvoke(JsonElement, JsonWorkspace, AsyncCallback, object)</h2>
+<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(in JsonElement data, JsonWorkspace workspace, AsyncCallback callback, object object)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -113,7 +113,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

@@ -108,16 +108,16 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#evaluate-ijsondocument-int-ref-jsonschemacontext">Evaluate(IJsonDocument, int, ref JsonSchemaContext)</a></td>
+<td><a href="#evaluate-ijsondocument-int-jsonschemacontext">Evaluate(IJsonDocument, int, JsonSchemaContext)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#evaluate-ijsondocument-int-ijsonschemaresultscollector">Evaluate(IJsonDocument, int, IJsonSchemaResultsCollector)</a></td>
+<td><a href="#evaluate-ijsondocument-int-ijsonschemaresultscollector">Evaluate(IJsonDocument, int, IJsonSchemaResultsCollector?)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="evaluate-ijsondocument-int-ref-jsonschemacontext">Evaluate(IJsonDocument, int, ref JsonSchemaContext)</h2>
+<h2 id="evaluate-ijsondocument-int-jsonschemacontext">Evaluate(IJsonDocument, int, JsonSchemaContext)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonElementForBooleanFalseSchema.JsonSchema.cs#L167">JsonElementForBooleanFalseSchema.JsonSchema.cs</a></p>
 <pre><code class="language-csharp">public static void Evaluate(IJsonDocument parentDocument, int parentIndex, ref JsonSchemaContext context)
 </code></pre>
@@ -143,7 +143,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -168,9 +168,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="evaluate-ijsondocument-int-ijsonschemaresultscollector">Evaluate(IJsonDocument, int, IJsonSchemaResultsCollector)</h2>
+<h2 id="evaluate-ijsondocument-int-ijsonschemaresultscollector">Evaluate(IJsonDocument, int, IJsonSchemaResultsCollector?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonElementForBooleanFalseSchema.JsonSchema.cs#L173">JsonElementForBooleanFalseSchema.JsonSchema.cs</a></p>
-<pre><code class="language-csharp">public static bool Evaluate(IJsonDocument parentDocument, int parentIndex, IJsonSchemaResultsCollector resultsCollector)
+<pre><code class="language-csharp">public static bool Evaluate(IJsonDocument parentDocument, int parentIndex, IJsonSchemaResultsCollector? resultsCollector)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -194,7 +194,7 @@
 </tr>
 <tr>
 <td><code>resultsCollector</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-ijsonschemaresultscollector.html"><code>IJsonSchemaResultsCollector</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-ijsonschemaresultscollector.html"><code>IJsonSchemaResultsCollector?</code></a></td>
 <td></td>
 </tr>
 </tbody>

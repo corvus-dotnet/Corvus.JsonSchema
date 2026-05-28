@@ -108,19 +108,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#decode-ref-jsonelement-span-byte-ref-int">Decode(ref JsonElement, Span&lt;byte&gt;, ref int)</a></td>
+<td><a href="#decode-jsonelement-span-byte-int">Decode(JsonElement, Span&lt;byte&gt;, int)</a></td>
 <td>Decode a base64 string.</td>
 </tr>
 <tr>
-<td><a href="#decode-string-span-byte-ref-int">Decode(string, Span&lt;byte&gt;, ref int)</a></td>
+<td><a href="#decode-string-span-byte-int">Decode(string?, Span&lt;byte&gt;, int)</a></td>
 <td>Decode a base64 string.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="decode-ref-jsonelement-span-byte-ref-int">Decode(ref JsonElement, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="decode-jsonelement-span-byte-int">Decode(JsonElement, Span&lt;byte&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardBase64.cs#L139">StandardBase64.cs</a></p>
 <p>Decode a base64 string.</p>
-<pre><code class="language-csharp">public static bool Decode(ref JsonElement jsonElementBacking, Span&lt;byte&gt; result, ref int written)
+<pre><code class="language-csharp">public static bool Decode(in JsonElement jsonElementBacking, Span&lt;byte&gt; result, out int written)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -134,7 +134,7 @@
 <tbody>
 <tr>
 <td><code>jsonElementBacking</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The JSON element containing the base64 string.</td>
 </tr>
 <tr>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written.</td>
 </tr>
 </tbody>
@@ -172,10 +172,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="decode-string-span-byte-ref-int">Decode(string, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="decode-string-span-byte-int">Decode(string?, Span&lt;byte&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardBase64.cs#L191">StandardBase64.cs</a></p>
 <p>Decode a base64 string.</p>
-<pre><code class="language-csharp">public static bool Decode(string stringBacking, Span&lt;byte&gt; result, ref int written)
+<pre><code class="language-csharp">public static bool Decode(string? stringBacking, Span&lt;byte&gt; result, out int written)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -189,7 +189,7 @@
 <tbody>
 <tr>
 <td><code>stringBacking</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The base64 string.</td>
 </tr>
 <tr>
@@ -199,7 +199,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written.</td>
 </tr>
 </tbody>

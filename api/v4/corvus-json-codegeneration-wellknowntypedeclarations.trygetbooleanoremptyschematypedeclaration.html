@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetbooleanoremptyschematypedeclaration-locatedschema-ref-typedeclaration">TryGetBooleanOrEmptySchemaTypeDeclaration(LocatedSchema, ref TypeDeclaration)</h2>
+<h2 id="trygetbooleanoremptyschematypedeclaration-locatedschema-typedeclaration">TryGetBooleanOrEmptySchemaTypeDeclaration(LocatedSchema, TypeDeclaration?)</h2>
 <p>Try to get the type declaration for a boolean schema.</p>
-<pre><code class="language-csharp">public static bool TryGetBooleanOrEmptySchemaTypeDeclaration(LocatedSchema schema, ref TypeDeclaration booleanTypeDeclaration)
+<pre><code class="language-csharp">public static bool TryGetBooleanOrEmptySchemaTypeDeclaration(LocatedSchema schema, out TypeDeclaration? booleanTypeDeclaration)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>booleanTypeDeclaration</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>ref TypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
 <td>The resulting type declaration, or <code>null</code> if it was not a boolean type declaration.</td>
 </tr>
 </tbody>

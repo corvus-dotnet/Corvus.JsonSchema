@@ -108,27 +108,27 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetvalue-immutablelist-jsonobjectproperty-ref-jsonpropertyname-ref-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ref JsonPropertyName, ref JsonAny)</a></td>
+<td><a href="#trygetvalue-immutablelist-jsonobjectproperty-jsonpropertyname-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, JsonPropertyName, JsonAny)</a></td>
 <td>Tries to get the value of the property with the given name.</td>
 </tr>
 <tr>
-<td><a href="#trygetvalue-immutablelist-jsonobjectproperty-readonlyspan-char-ref-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ReadOnlySpan&lt;char&gt;, ref JsonAny)</a></td>
+<td><a href="#trygetvalue-immutablelist-jsonobjectproperty-readonlyspan-char-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ReadOnlySpan&lt;char&gt;, JsonAny)</a></td>
 <td>Gets a value indicating whether the property backing contains the given property.</td>
 </tr>
 <tr>
-<td><a href="#trygetvalue-immutablelist-jsonobjectproperty-readonlyspan-byte-ref-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ReadOnlySpan&lt;byte&gt;, ref JsonAny)</a></td>
+<td><a href="#trygetvalue-immutablelist-jsonobjectproperty-readonlyspan-byte-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ReadOnlySpan&lt;byte&gt;, JsonAny)</a></td>
 <td>Gets a value indicating whether the property backing contains the given property.</td>
 </tr>
 <tr>
-<td><a href="#trygetvalue-immutablelist-jsonobjectproperty-string-ref-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, string, ref JsonAny)</a></td>
+<td><a href="#trygetvalue-immutablelist-jsonobjectproperty-string-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, string, JsonAny)</a></td>
 <td>Gets a value indicating whether the property backing contains the given property.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetvalue-immutablelist-jsonobjectproperty-ref-jsonpropertyname-ref-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ref JsonPropertyName, ref JsonAny)</h2>
+<h2 id="trygetvalue-immutablelist-jsonobjectproperty-jsonpropertyname-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, JsonPropertyName, JsonAny)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingExtensions.cs#L219">PropertyBackingExtensions.cs</a></p>
 <p>Tries to get the value of the property with the given name.</p>
-<pre><code class="language-csharp">public static bool TryGetValue(ImmutableList&lt;JsonObjectProperty&gt; properties, ref JsonPropertyName name, ref JsonAny value)
+<pre><code class="language-csharp">public static bool TryGetValue(ImmutableList&lt;JsonObjectProperty&gt; properties, in JsonPropertyName name, out JsonAny value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -147,12 +147,12 @@
 </tr>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td>The name to test.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The value of the property.</td>
 </tr>
 </tbody>
@@ -180,10 +180,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetvalue-immutablelist-jsonobjectproperty-readonlyspan-char-ref-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ReadOnlySpan&lt;char&gt;, ref JsonAny)</h2>
+<h2 id="trygetvalue-immutablelist-jsonobjectproperty-readonlyspan-char-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ReadOnlySpan&lt;char&gt;, JsonAny)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingExtensions.cs#L241">PropertyBackingExtensions.cs</a></p>
 <p>Gets a value indicating whether the property backing contains the given property.</p>
-<pre><code class="language-csharp">public static bool TryGetValue(ImmutableList&lt;JsonObjectProperty&gt; properties, ReadOnlySpan&lt;char&gt; name, ref JsonAny value)
+<pre><code class="language-csharp">public static bool TryGetValue(ImmutableList&lt;JsonObjectProperty&gt; properties, ReadOnlySpan&lt;char&gt; name, out JsonAny value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -207,7 +207,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The value of the property.</td>
 </tr>
 </tbody>
@@ -235,10 +235,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetvalue-immutablelist-jsonobjectproperty-readonlyspan-byte-ref-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ReadOnlySpan&lt;byte&gt;, ref JsonAny)</h2>
+<h2 id="trygetvalue-immutablelist-jsonobjectproperty-readonlyspan-byte-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, ReadOnlySpan&lt;byte&gt;, JsonAny)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingExtensions.cs#L263">PropertyBackingExtensions.cs</a></p>
 <p>Gets a value indicating whether the property backing contains the given property.</p>
-<pre><code class="language-csharp">public static bool TryGetValue(ImmutableList&lt;JsonObjectProperty&gt; properties, ReadOnlySpan&lt;byte&gt; name, ref JsonAny value)
+<pre><code class="language-csharp">public static bool TryGetValue(ImmutableList&lt;JsonObjectProperty&gt; properties, ReadOnlySpan&lt;byte&gt; name, out JsonAny value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -262,7 +262,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The value of the property.</td>
 </tr>
 </tbody>
@@ -290,10 +290,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetvalue-immutablelist-jsonobjectproperty-string-ref-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, string, ref JsonAny)</h2>
+<h2 id="trygetvalue-immutablelist-jsonobjectproperty-string-jsonany">TryGetValue(ImmutableList&lt;JsonObjectProperty&gt;, string, JsonAny)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyBackingExtensions.cs#L285">PropertyBackingExtensions.cs</a></p>
 <p>Gets a value indicating whether the property backing contains the given property.</p>
-<pre><code class="language-csharp">public static bool TryGetValue(ImmutableList&lt;JsonObjectProperty&gt; properties, string name, ref JsonAny value)
+<pre><code class="language-csharp">public static bool TryGetValue(ImmutableList&lt;JsonObjectProperty&gt; properties, string name, out JsonAny value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -317,7 +317,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The value of the property.</td>
 </tr>
 </tbody>

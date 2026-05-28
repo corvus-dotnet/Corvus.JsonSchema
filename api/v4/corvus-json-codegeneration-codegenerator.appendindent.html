@@ -116,27 +116,27 @@
 <td>Appends a range of characters to the end of this builder.</td>
 </tr>
 <tr>
-<td><a href="#appendindent-string">AppendIndent(string)</a></td>
+<td><a href="#appendindent-string">AppendIndent(string?)</a></td>
 <td>Appends a string to the end of this builder.</td>
 </tr>
 <tr>
-<td><a href="#appendindent-string-int-int">AppendIndent(string, int, int)</a></td>
+<td><a href="#appendindent-string-int-int">AppendIndent(string?, int, int)</a></td>
 <td>Appends part of a string to the end of this builder.</td>
 </tr>
 <tr>
-<td><a href="#appendindent-stringbuilder">AppendIndent(StringBuilder)</a></td>
+<td><a href="#appendindent-stringbuilder">AppendIndent(StringBuilder?)</a></td>
 <td>Append the contents of the builder.</td>
 </tr>
 <tr>
-<td><a href="#appendindent-codegenerator">AppendIndent(CodeGenerator)</a></td>
+<td><a href="#appendindent-codegenerator">AppendIndent(CodeGenerator?)</a></td>
 <td>Append the contents of the builder.</td>
 </tr>
 <tr>
-<td><a href="#appendindent-stringbuilder-int-int">AppendIndent(StringBuilder, int, int)</a></td>
+<td><a href="#appendindent-stringbuilder-int-int">AppendIndent(StringBuilder?, int, int)</a></td>
 <td>Append the contents of the builder in a range.</td>
 </tr>
 <tr>
-<td><a href="#appendindent-codegenerator-int-int">AppendIndent(CodeGenerator, int, int)</a></td>
+<td><a href="#appendindent-codegenerator-int-int">AppendIndent(CodeGenerator?, int, int)</a></td>
 <td>Append the contents of the builder in a range.</td>
 </tr>
 <tr>
@@ -260,9 +260,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendindent-string">AppendIndent(string)</h2>
+<h2 id="appendindent-string">AppendIndent(string?)</h2>
 <p>Appends a string to the end of this builder.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendIndent(string value)
+<pre><code class="language-csharp">public CodeGenerator AppendIndent(string? value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -276,7 +276,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to append.</td>
 </tr>
 </tbody>
@@ -304,9 +304,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendindent-string-int-int">AppendIndent(string, int, int)</h2>
+<h2 id="appendindent-string-int-int">AppendIndent(string?, int, int)</h2>
 <p>Appends part of a string to the end of this builder.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendIndent(string value, int startIndex, int count)
+<pre><code class="language-csharp">public CodeGenerator AppendIndent(string? value, int startIndex, int count)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -320,7 +320,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to append.</td>
 </tr>
 <tr>
@@ -358,9 +358,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendindent-stringbuilder">AppendIndent(StringBuilder)</h2>
+<h2 id="appendindent-stringbuilder">AppendIndent(StringBuilder?)</h2>
 <p>Append the contents of the builder.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendIndent(StringBuilder value)
+<pre><code class="language-csharp">public CodeGenerator AppendIndent(StringBuilder? value)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -374,7 +374,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder?</code></a></td>
 <td>The builder to append.</td>
 </tr>
 </tbody>
@@ -402,9 +402,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendindent-codegenerator">AppendIndent(CodeGenerator)</h2>
+<h2 id="appendindent-codegenerator">AppendIndent(CodeGenerator?)</h2>
 <p>Append the contents of the builder.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendIndent(CodeGenerator value)
+<pre><code class="language-csharp">public CodeGenerator AppendIndent(CodeGenerator? value)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -418,7 +418,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.html"><code>CodeGenerator</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.html"><code>CodeGenerator?</code></a></td>
 <td>The builder to append.</td>
 </tr>
 </tbody>
@@ -446,9 +446,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendindent-stringbuilder-int-int">AppendIndent(StringBuilder, int, int)</h2>
+<h2 id="appendindent-stringbuilder-int-int">AppendIndent(StringBuilder?, int, int)</h2>
 <p>Append the contents of the builder in a range.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendIndent(StringBuilder value, int startIndex, int count)
+<pre><code class="language-csharp">public CodeGenerator AppendIndent(StringBuilder? value, int startIndex, int count)
 </code></pre>
 <h3 id="parameters-6">Parameters</h3>
 <table>
@@ -462,7 +462,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder?</code></a></td>
 <td>The builder to append.</td>
 </tr>
 <tr>
@@ -500,9 +500,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendindent-codegenerator-int-int">AppendIndent(CodeGenerator, int, int)</h2>
+<h2 id="appendindent-codegenerator-int-int">AppendIndent(CodeGenerator?, int, int)</h2>
 <p>Append the contents of the builder in a range.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendIndent(CodeGenerator value, int startIndex, int count)
+<pre><code class="language-csharp">public CodeGenerator AppendIndent(CodeGenerator? value, int startIndex, int count)
 </code></pre>
 <h3 id="parameters-7">Parameters</h3>
 <table>
@@ -516,7 +516,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.html"><code>CodeGenerator</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.html"><code>CodeGenerator?</code></a></td>
 <td>The builder to append.</td>
 </tr>
 <tr>

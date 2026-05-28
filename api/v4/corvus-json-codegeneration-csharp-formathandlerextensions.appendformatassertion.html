@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.CSharp<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="appendformatassertion-ienumerable-t-codegenerator-string-string-string-ikeyword-ikeyword-bool-bool">AppendFormatAssertion(IEnumerable&lt;T&gt;, CodeGenerator, string, string, string, IKeyword, IKeyword, bool, bool)</h2>
+<h2 id="appendformatassertion-ienumerable-t-codegenerator-string-string-string-ikeyword-ikeyword-bool-bool">AppendFormatAssertion(IEnumerable&lt;T&gt;, CodeGenerator, string, string, string, IKeyword?, IKeyword?, bool, bool)</h2>
 <p>Append a format assertion to the generator.</p>
-<pre><code class="language-csharp">public static bool AppendFormatAssertion&lt;T&gt;(IEnumerable&lt;T&gt; handlers, CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, IKeyword typeKeyword, IKeyword formatKeyword, bool returnFromMethod, bool includeType)
+<pre><code class="language-csharp">public static bool AppendFormatAssertion&lt;T&gt;(IEnumerable&lt;T&gt; handlers, CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod, bool includeType)
     where T : IFormatHandler
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -155,12 +155,12 @@
 </tr>
 <tr>
 <td><code>typeKeyword</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ikeyword.html"><code>IKeyword</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ikeyword.html"><code>IKeyword?</code></a></td>
 <td>The type keyword.</td>
 </tr>
 <tr>
 <td><code>formatKeyword</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ikeyword.html"><code>IKeyword</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ikeyword.html"><code>IKeyword?</code></a></td>
 <td>The format keyword.</td>
 </tr>
 <tr>

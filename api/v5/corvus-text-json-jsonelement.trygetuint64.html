@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.cs#L1050">JsonElement.cs</a></p>
-<h2 id="trygetuint64-ref-ulong">TryGetUInt64(ref ulong)</h2>
+<h2 id="trygetuint64-ulong">TryGetUInt64(ulong)</h2>
 <p>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.uint64"><code>UInt64</code></a>.</p>
-<pre><code class="language-csharp">public bool TryGetUInt64(ref ulong value)
+<pre><code class="language-csharp">public bool TryGetUInt64(out ulong value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.uint64"><code>ref ulong</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.uint64"><code>ulong</code></a></td>
 <td>Receives the value.</td>
 </tr>
 </tbody>

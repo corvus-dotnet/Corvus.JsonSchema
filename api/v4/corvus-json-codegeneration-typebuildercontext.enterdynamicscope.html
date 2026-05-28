@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="enterdynamicscope-typedeclaration-typedeclaration-jsonreference-ref-typedeclaration">EnterDynamicScope(TypeDeclaration, TypeDeclaration, JsonReference, ref TypeDeclaration)</h2>
+<h2 id="enterdynamicscope-typedeclaration-typedeclaration-jsonreference-typedeclaration">EnterDynamicScope(TypeDeclaration, TypeDeclaration, JsonReference, TypeDeclaration?)</h2>
 <p>Enter a dynamic scope.</p>
-<pre><code class="language-csharp">public void EnterDynamicScope(TypeDeclaration typeDeclaration, TypeDeclaration dynamicTypeDeclaration, JsonReference dynamicScope, ref TypeDeclaration existingScopeTypeDeclaration)
+<pre><code class="language-csharp">public void EnterDynamicScope(TypeDeclaration typeDeclaration, TypeDeclaration dynamicTypeDeclaration, JsonReference dynamicScope, out TypeDeclaration? existingScopeTypeDeclaration)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -129,7 +129,7 @@
 </tr>
 <tr>
 <td><code>existingScopeTypeDeclaration</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>ref TypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
 <td>The existing type declaration for the dynamic scope, or <code>null</code> if there is no existing type declaration.</td>
 </tr>
 </tbody>

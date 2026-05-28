@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/PatternPropertyValidator.cs#L1">PatternPropertyValidator.cs</a></p>
-<h2 id="begininvoke-ref-jsonobjectproperty-ref-validationcontext-validationlevel-asynccallback-object">BeginInvoke(ref JsonObjectProperty, ref ValidationContext, ValidationLevel, AsyncCallback, object)</h2>
-<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(ref JsonObjectProperty that, ref ValidationContext validationContext, ValidationLevel level, AsyncCallback callback, object object)
+<h2 id="begininvoke-jsonobjectproperty-validationcontext-validationlevel-asynccallback-object">BeginInvoke(JsonObjectProperty, ValidationContext, ValidationLevel, AsyncCallback, object)</h2>
+<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(in JsonObjectProperty that, in ValidationContext validationContext, ValidationLevel level, AsyncCallback callback, object object)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>that</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonobjectproperty.html"><code>ref JsonObjectProperty</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonobjectproperty.html"><code>JsonObjectProperty</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td></td>
 </tr>
 <tr>

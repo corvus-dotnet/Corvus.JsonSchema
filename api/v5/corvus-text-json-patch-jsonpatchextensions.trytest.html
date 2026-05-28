@@ -108,21 +108,21 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trytest-ref-jsonelement-mutable-readonlyspan-byte-ref-jsonelement">TryTest(ref JsonElement.Mutable, ReadOnlySpan&lt;byte&gt;, ref JsonElement)</a></td>
+<td><a href="#trytest-jsonelement-mutable-readonlyspan-byte-jsonelement">TryTest(JsonElement.Mutable, ReadOnlySpan&lt;byte&gt;, JsonElement)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trytest-ref-jsonelement-mutable-readonlyspan-char-ref-jsonelement">TryTest(ref JsonElement.Mutable, ReadOnlySpan&lt;char&gt;, ref JsonElement)</a></td>
+<td><a href="#trytest-jsonelement-mutable-readonlyspan-char-jsonelement">TryTest(JsonElement.Mutable, ReadOnlySpan&lt;char&gt;, JsonElement)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#trytest-ref-jsonelement-mutable-string-ref-jsonelement">TryTest(ref JsonElement.Mutable, string, ref JsonElement)</a></td>
+<td><a href="#trytest-jsonelement-mutable-string-jsonelement">TryTest(JsonElement.Mutable, string, JsonElement)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="trytest-ref-jsonelement-mutable-readonlyspan-byte-ref-jsonelement">TryTest(ref JsonElement.Mutable, ReadOnlySpan&lt;byte&gt;, ref JsonElement)</h2>
-<pre><code class="language-csharp">public static bool TryTest(ref JsonElement.Mutable target, ReadOnlySpan&lt;byte&gt; path, ref JsonElement expected)
+<h2 id="trytest-jsonelement-mutable-readonlyspan-byte-jsonelement">TryTest(JsonElement.Mutable, ReadOnlySpan&lt;byte&gt;, JsonElement)</h2>
+<pre><code class="language-csharp">public static bool TryTest(ref JsonElement.Mutable target, ReadOnlySpan&lt;byte&gt; path, in JsonElement expected)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -136,7 +136,7 @@
 <tbody>
 <tr>
 <td><code>target</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>ref JsonElement.Mutable</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>JsonElement.Mutable</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -146,7 +146,7 @@
 </tr>
 <tr>
 <td><code>expected</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -173,8 +173,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trytest-ref-jsonelement-mutable-readonlyspan-char-ref-jsonelement">TryTest(ref JsonElement.Mutable, ReadOnlySpan&lt;char&gt;, ref JsonElement)</h2>
-<pre><code class="language-csharp">public static bool TryTest(ref JsonElement.Mutable target, ReadOnlySpan&lt;char&gt; path, ref JsonElement expected)
+<h2 id="trytest-jsonelement-mutable-readonlyspan-char-jsonelement">TryTest(JsonElement.Mutable, ReadOnlySpan&lt;char&gt;, JsonElement)</h2>
+<pre><code class="language-csharp">public static bool TryTest(ref JsonElement.Mutable target, ReadOnlySpan&lt;char&gt; path, in JsonElement expected)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -188,7 +188,7 @@
 <tbody>
 <tr>
 <td><code>target</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>ref JsonElement.Mutable</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>JsonElement.Mutable</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -198,7 +198,7 @@
 </tr>
 <tr>
 <td><code>expected</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -225,8 +225,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trytest-ref-jsonelement-mutable-string-ref-jsonelement">TryTest(ref JsonElement.Mutable, string, ref JsonElement)</h2>
-<pre><code class="language-csharp">public static bool TryTest(ref JsonElement.Mutable target, string path, ref JsonElement expected)
+<h2 id="trytest-jsonelement-mutable-string-jsonelement">TryTest(JsonElement.Mutable, string, JsonElement)</h2>
+<pre><code class="language-csharp">public static bool TryTest(ref JsonElement.Mutable target, string path, in JsonElement expected)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -240,7 +240,7 @@
 <tbody>
 <tr>
 <td><code>target</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>ref JsonElement.Mutable</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>JsonElement.Mutable</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -250,7 +250,7 @@
 </tr>
 <tr>
 <td><code>expected</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 </tbody>

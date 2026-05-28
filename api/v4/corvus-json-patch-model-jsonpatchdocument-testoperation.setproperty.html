@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch.Model<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="setproperty-ref-jsonpropertyname-tvalue">SetProperty(ref JsonPropertyName, TValue)</h2>
-<pre><code class="language-csharp">public JsonPatchDocument.TestOperation SetProperty&lt;TValue&gt;(ref JsonPropertyName name, TValue value)
+<h2 id="setproperty-jsonpropertyname-tvalue">SetProperty(JsonPropertyName, TValue)</h2>
+<pre><code class="language-csharp">public JsonPatchDocument.TestOperation SetProperty&lt;TValue&gt;(in JsonPropertyName name, TValue value)
     where TValue : struct, IJsonValue
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>name</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>ref JsonPropertyName</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpropertyname.html"><code>JsonPropertyName</code></a></td>
 <td></td>
 </tr>
 <tr>

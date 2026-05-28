@@ -108,19 +108,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#getimmutablelistfromjsonelementwith-ref-jsonelement-int-ref-jsonany">GetImmutableListFromJsonElementWith(ref JsonElement, int, ref JsonAny)</a></td>
+<td><a href="#getimmutablelistfromjsonelementwith-jsonelement-int-jsonany">GetImmutableListFromJsonElementWith(JsonElement, int, JsonAny)</a></td>
 <td>Builds an immutable list from a JsonElement, adding an item at the specified point.</td>
 </tr>
 <tr>
-<td><a href="#getimmutablelistfromjsonelementwith-ref-jsonelement-int-ref-tenumerable">GetImmutableListFromJsonElementWith(ref JsonElement, int, ref TEnumerable)</a></td>
+<td><a href="#getimmutablelistfromjsonelementwith-jsonelement-int-tenumerable">GetImmutableListFromJsonElementWith(JsonElement, int, TEnumerable)</a></td>
 <td>Builds an immutable list from a JsonElement, adding a range of values at the specified point.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="getimmutablelistfromjsonelementwith-ref-jsonelement-int-ref-jsonany">GetImmutableListFromJsonElementWith(ref JsonElement, int, ref JsonAny)</h2>
+<h2 id="getimmutablelistfromjsonelementwith-jsonelement-int-jsonany">GetImmutableListFromJsonElementWith(JsonElement, int, JsonAny)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/JsonValueHelpers.ImmutableList.cs#L182">JsonValueHelpers.ImmutableList.cs</a></p>
 <p>Builds an immutable list from a JsonElement, adding an item at the specified point.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementWith(ref JsonElement jsonElement, int index, ref JsonAny value)
+<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementWith(in JsonElement jsonElement, int index, in JsonAny value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -134,7 +134,7 @@
 <tbody>
 <tr>
 <td><code>jsonElement</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The json element containing the source array.</td>
 </tr>
 <tr>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The item to add.</td>
 </tr>
 </tbody>
@@ -191,10 +191,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getimmutablelistfromjsonelementwith-ref-jsonelement-int-ref-tenumerable">GetImmutableListFromJsonElementWith(ref JsonElement, int, ref TEnumerable)</h2>
+<h2 id="getimmutablelistfromjsonelementwith-jsonelement-int-tenumerable">GetImmutableListFromJsonElementWith(JsonElement, int, TEnumerable)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/JsonValueHelpers.Comparisons.cs#L1">JsonValueHelpers.Comparisons.cs</a></p>
 <p>Builds an immutable list from a JsonElement, adding a range of values at the specified point.</p>
-<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementWith&lt;TEnumerable&gt;(ref JsonElement jsonElement, int index, ref TEnumerable values)
+<pre><code class="language-csharp">public static ImmutableList&lt;JsonAny&gt; GetImmutableListFromJsonElementWith&lt;TEnumerable&gt;(in JsonElement jsonElement, int index, in TEnumerable values)
     where TEnumerable : IEnumerable&lt;JsonAny&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -224,7 +224,7 @@
 <tbody>
 <tr>
 <td><code>jsonElement</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The json element containing the source array.</td>
 </tr>
 <tr>
@@ -234,7 +234,7 @@
 </tr>
 <tr>
 <td><code>values</code></td>
-<td><code>ref TEnumerable</code></td>
+<td><code>TEnumerable</code></td>
 <td>The items to add.</td>
 </tr>
 </tbody>

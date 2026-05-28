@@ -108,34 +108,34 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#getunicode-readonlyspan-char-span-char-ref-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, ref int)</a></td>
+<td><a href="#getunicode-readonlyspan-char-span-char-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#getunicode-readonlyspan-char-span-char-int-ref-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, ref int)</a></td>
+<td><a href="#getunicode-readonlyspan-char-span-char-int-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, int)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#getunicode-readonlyspan-char-span-char-int-int-ref-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, int, ref int)</a></td>
+<td><a href="#getunicode-readonlyspan-char-span-char-int-int-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, int, int)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#getunicode-readonlyspan-byte-span-byte-ref-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</a></td>
+<td><a href="#getunicode-readonlyspan-byte-span-byte-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#getunicode-readonlyspan-byte-span-byte-int-ref-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, ref int)</a></td>
+<td><a href="#getunicode-readonlyspan-byte-span-byte-int-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, int)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#getunicode-readonlyspan-byte-span-byte-int-int-ref-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, int, ref int)</a></td>
+<td><a href="#getunicode-readonlyspan-byte-span-byte-int-int-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, int, int)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="getunicode-readonlyspan-char-span-char-ref-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, ref int)</h2>
+<h2 id="getunicode-readonlyspan-char-span-char-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus/Globalization/IdnMapping.Unicode.cs#L40">IdnMapping.Unicode.cs</a></p>
-<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;char&gt; ascii, Span&lt;char&gt; outputBuffer, ref int written)
+<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;char&gt; ascii, Span&lt;char&gt; outputBuffer, out int written)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -159,7 +159,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -186,9 +186,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getunicode-readonlyspan-char-span-char-int-ref-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, ref int)</h2>
+<h2 id="getunicode-readonlyspan-char-span-char-int-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus/Globalization/IdnMapping.Unicode.cs#L45">IdnMapping.Unicode.cs</a></p>
-<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;char&gt; ascii, Span&lt;char&gt; outputBuffer, int index, ref int written)
+<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;char&gt; ascii, Span&lt;char&gt; outputBuffer, int index, out int written)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -217,7 +217,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -244,9 +244,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getunicode-readonlyspan-char-span-char-int-int-ref-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, int, ref int)</h2>
+<h2 id="getunicode-readonlyspan-char-span-char-int-int-int">GetUnicode(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, int, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus/Globalization/IdnMapping.Unicode.cs#L53">IdnMapping.Unicode.cs</a></p>
-<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;char&gt; ascii, Span&lt;char&gt; outputBuffer, int index, int count, ref int written)
+<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;char&gt; ascii, Span&lt;char&gt; outputBuffer, int index, int count, out int written)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -280,7 +280,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -307,9 +307,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getunicode-readonlyspan-byte-span-byte-ref-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</h2>
+<h2 id="getunicode-readonlyspan-byte-span-byte-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus/Globalization/IdnMapping.Unicode.UTF8.cs#L43">IdnMapping.Unicode.UTF8.cs</a></p>
-<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;byte&gt; ascii, Span&lt;byte&gt; outputBuffer, ref int written)
+<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;byte&gt; ascii, Span&lt;byte&gt; outputBuffer, out int written)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -333,7 +333,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -360,9 +360,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getunicode-readonlyspan-byte-span-byte-int-ref-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, ref int)</h2>
+<h2 id="getunicode-readonlyspan-byte-span-byte-int-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus/Globalization/IdnMapping.Unicode.UTF8.cs#L48">IdnMapping.Unicode.UTF8.cs</a></p>
-<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;byte&gt; ascii, Span&lt;byte&gt; outputBuffer, int index, ref int written)
+<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;byte&gt; ascii, Span&lt;byte&gt; outputBuffer, int index, out int written)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -391,7 +391,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -418,9 +418,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getunicode-readonlyspan-byte-span-byte-int-int-ref-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, int, ref int)</h2>
+<h2 id="getunicode-readonlyspan-byte-span-byte-int-int-int">GetUnicode(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, int, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus/Globalization/IdnMapping.Unicode.UTF8.cs#L56">IdnMapping.Unicode.UTF8.cs</a></p>
-<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;byte&gt; ascii, Span&lt;byte&gt; outputBuffer, int index, int count, ref int written)
+<pre><code class="language-csharp">public bool GetUnicode(ReadOnlySpan&lt;byte&gt; ascii, Span&lt;byte&gt; outputBuffer, int index, int count, out int written)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -454,7 +454,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 </tbody>

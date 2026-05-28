@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetlocatedschema-jsonreference-ref-locatedschema">TryGetLocatedSchema(JsonReference, ref LocatedSchema)</h2>
+<h2 id="trygetlocatedschema-jsonreference-locatedschema">TryGetLocatedSchema(JsonReference, LocatedSchema?)</h2>
 <p>Tries to get the located schema for the given scope.</p>
-<pre><code class="language-csharp">public bool TryGetLocatedSchema(JsonReference location, ref LocatedSchema schema)
+<pre><code class="language-csharp">public bool TryGetLocatedSchema(JsonReference location, out LocatedSchema? schema)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>schema</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-locatedschema.html"><code>ref LocatedSchema</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-locatedschema.html"><code>LocatedSchema?</code></a></td>
 <td>The schema found at the location.</td>
 </tr>
 </tbody>

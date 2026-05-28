@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonByte.Number.cs#L634">JsonByte.Number.cs</a></p>
-<h2 id="compare-ref-jsonbyte-ref-jsonbyte">Compare(ref JsonByte, ref JsonByte)</h2>
+<h2 id="compare-jsonbyte-jsonbyte">Compare(JsonByte, JsonByte)</h2>
 <p>Compare two numbers.</p>
-<pre><code class="language-csharp">public static int Compare(ref JsonByte lhs, ref JsonByte rhs)
+<pre><code class="language-csharp">public static int Compare(in JsonByte lhs, in JsonByte rhs)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>lhs</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonbyte.html"><code>ref JsonByte</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonbyte.html"><code>JsonByte</code></a></td>
 <td>The left hand side of the comparison.</td>
 </tr>
 <tr>
 <td><code>rhs</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonbyte.html"><code>ref JsonByte</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonbyte.html"><code>JsonByte</code></a></td>
 <td>The right hand side of the comparison.</td>
 </tr>
 </tbody>

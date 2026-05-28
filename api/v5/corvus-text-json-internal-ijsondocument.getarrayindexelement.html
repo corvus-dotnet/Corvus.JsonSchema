@@ -116,7 +116,7 @@
 <td>Gets the element at the specified array index within the current index.</td>
 </tr>
 <tr>
-<td><a href="#getarrayindexelement-int-int-ref-ijsondocument-ref-int">GetArrayIndexElement(int, int, ref IJsonDocument, ref int)</a></td>
+<td><a href="#getarrayindexelement-int-int-ijsondocument-int">GetArrayIndexElement(int, int, IJsonDocument, int)</a></td>
 <td>Gets the element at the specified array index within the current index.</td>
 </tr>
 </tbody>
@@ -237,10 +237,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="getarrayindexelement-int-int-ref-ijsondocument-ref-int">GetArrayIndexElement(int, int, ref IJsonDocument, ref int)</h2>
+<h2 id="getarrayindexelement-int-int-ijsondocument-int">GetArrayIndexElement(int, int, IJsonDocument, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L85">IJsonDocument.cs</a></p>
 <p>Gets the element at the specified array index within the current index.</p>
-<pre><code class="language-csharp">public abstract void GetArrayIndexElement(int currentIndex, int arrayIndex, ref IJsonDocument parentDocument, ref int parentDocumentIndex)
+<pre><code class="language-csharp">public abstract void GetArrayIndexElement(int currentIndex, int arrayIndex, out IJsonDocument parentDocument, out int parentDocumentIndex)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -264,12 +264,12 @@
 </tr>
 <tr>
 <td><code>parentDocument</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.html"><code>ref IJsonDocument</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.html"><code>IJsonDocument</code></a></td>
 <td>Produces the parent document of the result.</td>
 </tr>
 <tr>
 <td><code>parentDocumentIndex</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>Produces the parent document index.</td>
 </tr>
 </tbody>

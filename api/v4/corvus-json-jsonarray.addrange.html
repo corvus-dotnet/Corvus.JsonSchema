@@ -108,7 +108,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#addrange-ref-tarray">AddRange(ref TArray)</a></td>
+<td><a href="#addrange-tarray">AddRange(TArray)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -121,9 +121,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="addrange-ref-tarray">AddRange(ref TArray)</h2>
+<h2 id="addrange-tarray">AddRange(TArray)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonArray.cs#L1">JsonArray.cs</a></p>
-<pre><code class="language-csharp">public JsonArray AddRange&lt;TArray&gt;(ref TArray items)
+<pre><code class="language-csharp">public JsonArray AddRange&lt;TArray&gt;(in TArray items)
     where TArray : struct, IJsonArray&lt;TArray&gt;
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -138,7 +138,7 @@
 <tbody>
 <tr>
 <td><code>items</code></td>
-<td><code>ref TArray</code></td>
+<td><code>TArray</code></td>
 <td></td>
 </tr>
 </tbody>

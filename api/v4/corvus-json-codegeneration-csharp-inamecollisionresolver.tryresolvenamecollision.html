@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.CSharp<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="tryresolvenamecollision-csharplanguageprovider-typedeclaration-typedeclaration-readonlyspan-char-span-char-int-ref-int">TryResolveNameCollision(CSharpLanguageProvider, TypeDeclaration, TypeDeclaration, ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, ref int)</h2>
+<h2 id="tryresolvenamecollision-csharplanguageprovider-typedeclaration-typedeclaration-readonlyspan-char-span-char-int-int">TryResolveNameCollision(CSharpLanguageProvider, TypeDeclaration, TypeDeclaration, ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int, int)</h2>
 <p>Try to resolve a name collision.</p>
-<pre><code class="language-csharp">public abstract bool TryResolveNameCollision(CSharpLanguageProvider languageProvider, TypeDeclaration typeDeclaration, TypeDeclaration parent, ReadOnlySpan&lt;char&gt; parentName, Span&lt;char&gt; targetNameBuffer, int length, ref int written)
+<pre><code class="language-csharp">public abstract bool TryResolveNameCollision(CSharpLanguageProvider languageProvider, TypeDeclaration typeDeclaration, TypeDeclaration parent, ReadOnlySpan&lt;char&gt; parentName, Span&lt;char&gt; targetNameBuffer, int length, out int written)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of characters written.</td>
 </tr>
 </tbody>

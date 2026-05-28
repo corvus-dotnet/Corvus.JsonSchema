@@ -108,15 +108,15 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#createbuilder-jsonworkspace-ref-jsonelement-source-int-int">CreateBuilder(JsonWorkspace, ref JsonElement.Source, int, int)</a></td>
+<td><a href="#createbuilder-jsonworkspace-jsonelement-source-int-int">CreateBuilder(JsonWorkspace, JsonElement.Source, int, int)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#createbuilder-jsonworkspace-ref-tcontext-jsonelement-arraybuilder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int, int)</a></td>
+<td><a href="#createbuilder-jsonworkspace-tcontext-jsonelement-arraybuilder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int, int)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#createbuilder-jsonworkspace-ref-tcontext-jsonelement-objectbuilder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, int, int)</a></td>
+<td><a href="#createbuilder-jsonworkspace-tcontext-jsonelement-objectbuilder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, int, int)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -125,9 +125,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="createbuilder-jsonworkspace-ref-jsonelement-source-int-int">CreateBuilder(JsonWorkspace, ref JsonElement.Source, int, int)</h2>
+<h2 id="createbuilder-jsonworkspace-jsonelement-source-int-int">CreateBuilder(JsonWorkspace, JsonElement.Source, int, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L1770">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonElement.Mutable&gt; CreateBuilder(JsonWorkspace workspace, ref JsonElement.Source source, int estimatedMemberCount, int initialValueBufferSize)
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonElement.Mutable&gt; CreateBuilder(JsonWorkspace workspace, in JsonElement.Source source, int estimatedMemberCount, int initialValueBufferSize)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -146,7 +146,7 @@
 </tr>
 <tr>
 <td><code>source</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>ref JsonElement.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -183,9 +183,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="createbuilder-jsonworkspace-ref-tcontext-jsonelement-arraybuilder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int, int)</h2>
+<h2 id="createbuilder-jsonworkspace-tcontext-jsonelement-arraybuilder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;, int, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.cs#L24">JsonElement.cs</a></p>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonElement.Mutable&gt; CreateBuilder&lt;TContext&gt;(JsonWorkspace workspace, ref TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; builder, int estimatedMemberCount, int initialValueBufferSize)
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonElement.Mutable&gt; CreateBuilder&lt;TContext&gt;(JsonWorkspace workspace, in TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; builder, int estimatedMemberCount, int initialValueBufferSize)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -204,7 +204,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
@@ -246,9 +246,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="createbuilder-jsonworkspace-ref-tcontext-jsonelement-objectbuilder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, int, int)</h2>
+<h2 id="createbuilder-jsonworkspace-tcontext-jsonelement-objectbuilder-build-tcontext-int-int">CreateBuilder(JsonWorkspace, TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;, int, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.cs#L24">JsonElement.cs</a></p>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonElement.Mutable&gt; CreateBuilder&lt;TContext&gt;(JsonWorkspace workspace, ref TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; builder, int estimatedMemberCount, int initialValueBufferSize)
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonElement.Mutable&gt; CreateBuilder&lt;TContext&gt;(JsonWorkspace workspace, in TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; builder, int estimatedMemberCount, int initialValueBufferSize)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -267,7 +267,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>

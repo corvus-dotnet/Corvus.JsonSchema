@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="chainmerge-ref-jsonelement-byte-jsonworkspace">ChainMerge(ref JsonElement, byte[][], JsonWorkspace)</h2>
+<h2 id="chainmerge-jsonelement-byte-jsonworkspace">ChainMerge(JsonElement, byte[][], JsonWorkspace)</h2>
 <p>Fused chain navigation + merge. Navigates the property chain into an <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (no intermediate builder), then merges object properties from the buffer elements into a single result.</p>
-<pre><code class="language-csharp">public static JsonElement ChainMerge(ref JsonElement data, byte[][] names, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement ChainMerge(in JsonElement data, byte[][] names, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The root element to navigate from.</td>
 </tr>
 <tr>

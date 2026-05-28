@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="keepsingletonarray-ref-jsonelement-jsonworkspace">KeepSingletonArray(ref JsonElement, JsonWorkspace)</h2>
+<h2 id="keepsingletonarray-jsonelement-jsonworkspace">KeepSingletonArray(JsonElement, JsonWorkspace)</h2>
 <p>Implements the KeepSingletonArray semantics for path expressions. When a path has <code>[]</code> on a step, the result must be an array. For singleton results that are non-arrays, wraps in a single-element array.</p>
-<pre><code class="language-csharp">public static JsonElement KeepSingletonArray(ref JsonElement value, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement KeepSingletonArray(in JsonElement value, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The path result.</td>
 </tr>
 <tr>

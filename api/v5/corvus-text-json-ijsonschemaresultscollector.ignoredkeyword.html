@@ -108,7 +108,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#ignoredkeyword-jsonschemamessageprovider-readonlyspan-byte">IgnoredKeyword(JsonSchemaMessageProvider, ReadOnlySpan&lt;byte&gt;)</a></td>
+<td><a href="#ignoredkeyword-jsonschemamessageprovider-readonlyspan-byte">IgnoredKeyword(JsonSchemaMessageProvider?, ReadOnlySpan&lt;byte&gt;)</a></td>
 <td>Indicates that a schema keyword was ignored.</td>
 </tr>
 <tr>
@@ -117,10 +117,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="ignoredkeyword-jsonschemamessageprovider-readonlyspan-byte">IgnoredKeyword(JsonSchemaMessageProvider, ReadOnlySpan&lt;byte&gt;)</h2>
+<h2 id="ignoredkeyword-jsonschemamessageprovider-readonlyspan-byte">IgnoredKeyword(JsonSchemaMessageProvider?, ReadOnlySpan&lt;byte&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/IJsonSchemaResultsCollector.cs#L324">IJsonSchemaResultsCollector.cs</a></p>
 <p>Indicates that a schema keyword was ignored.</p>
-<pre><code class="language-csharp">public abstract void IgnoredKeyword(JsonSchemaMessageProvider messageProvider, ReadOnlySpan&lt;byte&gt; encodedKeyword)
+<pre><code class="language-csharp">public abstract void IgnoredKeyword(JsonSchemaMessageProvider? messageProvider, ReadOnlySpan&lt;byte&gt; encodedKeyword)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -134,7 +134,7 @@
 <tbody>
 <tr>
 <td><code>messageProvider</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider?</code></a></td>
 <td>The (optional) provider for a JSON schema evaluation message.</td>
 </tr>
 <tr>

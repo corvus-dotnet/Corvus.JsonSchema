@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonBase64Content.String.cs#L553">JsonBase64Content.String.cs</a></p>
-<h2 id="trygetjsondocument-ref-jsondocument">TryGetJsonDocument(ref JsonDocument)</h2>
+<h2 id="trygetjsondocument-jsondocument">TryGetJsonDocument(JsonDocument?)</h2>
 <p>Try to get the JSON document from the content.</p>
-<pre><code class="language-csharp">public EncodedContentMediaTypeParseStatus TryGetJsonDocument(ref JsonDocument result)
+<pre><code class="language-csharp">public EncodedContentMediaTypeParseStatus TryGetJsonDocument(out JsonDocument? result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>ref JsonDocument</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument?</code></a></td>
 <td>A JSON document produced from the content, or null if the content did not represent a Base64 encoded JSON document.</td>
 </tr>
 </tbody>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="jsonataexception-string-string-int-string">JsonataException(string, string, int, string)</h2>
+<h2 id="jsonataexception-string-string-int-string">JsonataException(string, string, int, string?)</h2>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-jsonataexception.html"><code>JsonataException</code></a> class.</p>
-<pre><code class="language-csharp">public JsonataException(string code, string message, int position, string token)
+<pre><code class="language-csharp">public JsonataException(string code, string message, int position, string? token)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -129,7 +129,7 @@
 </tr>
 <tr>
 <td><code>token</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>An optional token or fragment relevant to the error. <em>(optional)</em></td>
 </tr>
 </tbody>

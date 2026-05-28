@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/IJsonSchemaResultsCollector.cs#L53">IJsonSchemaResultsCollector.cs</a></p>
-<h2 id="begininvoke-span-byte-ref-int-asynccallback-object">BeginInvoke(Span&lt;byte&gt;, ref int, AsyncCallback, object)</h2>
-<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(Span&lt;byte&gt; buffer, ref int written, AsyncCallback callback, object object)
+<h2 id="begininvoke-span-byte-int-asynccallback-object">BeginInvoke(Span&lt;byte&gt;, int, AsyncCallback, object)</h2>
+<pre><code class="language-csharp">public virtual IAsyncResult BeginInvoke(Span&lt;byte&gt; buffer, out int written, AsyncCallback callback, object object)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 <tr>

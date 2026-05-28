@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="enumeratewildcard-ref-jsonelement-jsonworkspace">EnumerateWildcard(ref JsonElement, JsonWorkspace)</h2>
+<h2 id="enumeratewildcard-jsonelement-jsonworkspace">EnumerateWildcard(JsonElement, JsonWorkspace)</h2>
 <p>Wildcard step: enumerates all values of an object (flattening array values), or all elements of an array. Returns a collected JSON array.</p>
-<pre><code class="language-csharp">public static JsonElement EnumerateWildcard(ref JsonElement input, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement EnumerateWildcard(in JsonElement input, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input element.</td>
 </tr>
 <tr>

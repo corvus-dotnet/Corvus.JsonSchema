@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="tryapplypatch-t-ref-jsonpatchdocument-ref-jsonany">TryApplyPatch(T, ref JsonPatchDocument, ref JsonAny)</h2>
+<h2 id="tryapplypatch-t-jsonpatchdocument-jsonany">TryApplyPatch(T, JsonPatchDocument, JsonAny)</h2>
 <p>Apply a patch to a <a href="/Corvus.JsonSchema/api/v4/corvus-json-ijsonvalue.html"><code>IJsonValue</code></a>.</p>
-<pre><code class="language-csharp">public static bool TryApplyPatch&lt;T&gt;(T value, ref JsonPatchDocument patchOperations, ref JsonAny result)
+<pre><code class="language-csharp">public static bool TryApplyPatch&lt;T&gt;(T value, in JsonPatchDocument patchOperations, out JsonAny result)
     where T : struct, IJsonValue
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -135,12 +135,12 @@
 </tr>
 <tr>
 <td><code>patchOperations</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-patch-model-jsonpatchdocument.html"><code>ref JsonPatchDocument</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-patch-model-jsonpatchdocument.html"><code>JsonPatchDocument</code></a></td>
 <td>The patch operations to apply.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td>The result of applying the patch.</td>
 </tr>
 </tbody>

@@ -108,7 +108,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#match-ref-tin-matcher-jsonpatchdocument-addoperation-tin-tout-matcher-jsonpatchdocument-removeoperation-tin-tout-matcher-jsonpatchdocument-replaceoperation-tin-tout-matcher-jsonpatchdocument-moveoperation-tin-tout-matcher-jsonpatchdocument-copyoperation-tin-tout-matcher-jsonpatchdocument-testoperation-tin-tout-matcher-jsonpatchdocument-patchoperation-tin-tout">Match(ref TIn, Matcher&lt;JsonPatchDocument.AddOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.RemoveOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.ReplaceOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.MoveOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.CopyOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.TestOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.PatchOperation, TIn, TOut&gt;)</a></td>
+<td><a href="#match-tin-matcher-jsonpatchdocument-addoperation-tin-tout-matcher-jsonpatchdocument-removeoperation-tin-tout-matcher-jsonpatchdocument-replaceoperation-tin-tout-matcher-jsonpatchdocument-moveoperation-tin-tout-matcher-jsonpatchdocument-copyoperation-tin-tout-matcher-jsonpatchdocument-testoperation-tin-tout-matcher-jsonpatchdocument-patchoperation-tin-tout">Match(TIn, Matcher&lt;JsonPatchDocument.AddOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.RemoveOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.ReplaceOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.MoveOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.CopyOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.TestOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.PatchOperation, TIn, TOut&gt;)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -117,8 +117,8 @@
 </tr>
 </tbody>
 </table>
-<h2 id="match-ref-tin-matcher-jsonpatchdocument-addoperation-tin-tout-matcher-jsonpatchdocument-removeoperation-tin-tout-matcher-jsonpatchdocument-replaceoperation-tin-tout-matcher-jsonpatchdocument-moveoperation-tin-tout-matcher-jsonpatchdocument-copyoperation-tin-tout-matcher-jsonpatchdocument-testoperation-tin-tout-matcher-jsonpatchdocument-patchoperation-tin-tout">Match(ref TIn, Matcher&lt;JsonPatchDocument.AddOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.RemoveOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.ReplaceOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.MoveOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.CopyOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.TestOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.PatchOperation, TIn, TOut&gt;)</h2>
-<pre><code class="language-csharp">public TOut Match&lt;TIn, TOut&gt;(ref TIn context, Matcher&lt;JsonPatchDocument.AddOperation, TIn, TOut&gt; matchAddOperation, Matcher&lt;JsonPatchDocument.RemoveOperation, TIn, TOut&gt; matchRemoveOperation, Matcher&lt;JsonPatchDocument.ReplaceOperation, TIn, TOut&gt; matchReplaceOperation, Matcher&lt;JsonPatchDocument.MoveOperation, TIn, TOut&gt; matchMoveOperation, Matcher&lt;JsonPatchDocument.CopyOperation, TIn, TOut&gt; matchCopyOperation, Matcher&lt;JsonPatchDocument.TestOperation, TIn, TOut&gt; matchTestOperation, Matcher&lt;JsonPatchDocument.PatchOperation, TIn, TOut&gt; defaultMatch)
+<h2 id="match-tin-matcher-jsonpatchdocument-addoperation-tin-tout-matcher-jsonpatchdocument-removeoperation-tin-tout-matcher-jsonpatchdocument-replaceoperation-tin-tout-matcher-jsonpatchdocument-moveoperation-tin-tout-matcher-jsonpatchdocument-copyoperation-tin-tout-matcher-jsonpatchdocument-testoperation-tin-tout-matcher-jsonpatchdocument-patchoperation-tin-tout">Match(TIn, Matcher&lt;JsonPatchDocument.AddOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.RemoveOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.ReplaceOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.MoveOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.CopyOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.TestOperation, TIn, TOut&gt;, Matcher&lt;JsonPatchDocument.PatchOperation, TIn, TOut&gt;)</h2>
+<pre><code class="language-csharp">public TOut Match&lt;TIn, TOut&gt;(in TIn context, Matcher&lt;JsonPatchDocument.AddOperation, TIn, TOut&gt; matchAddOperation, Matcher&lt;JsonPatchDocument.RemoveOperation, TIn, TOut&gt; matchRemoveOperation, Matcher&lt;JsonPatchDocument.ReplaceOperation, TIn, TOut&gt; matchReplaceOperation, Matcher&lt;JsonPatchDocument.MoveOperation, TIn, TOut&gt; matchMoveOperation, Matcher&lt;JsonPatchDocument.CopyOperation, TIn, TOut&gt; matchCopyOperation, Matcher&lt;JsonPatchDocument.TestOperation, TIn, TOut&gt; matchTestOperation, Matcher&lt;JsonPatchDocument.PatchOperation, TIn, TOut&gt; defaultMatch)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -132,7 +132,7 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TIn</code></td>
+<td><code>TIn</code></td>
 <td></td>
 </tr>
 <tr>

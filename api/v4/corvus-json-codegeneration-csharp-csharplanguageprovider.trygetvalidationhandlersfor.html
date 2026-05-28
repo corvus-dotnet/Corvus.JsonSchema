@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.CSharp<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetvalidationhandlersfor-ikeyword-ref-ireadonlycollection-ikeywordvalidationhandler">TryGetValidationHandlersFor(IKeyword, ref IReadOnlyCollection&lt;IKeywordValidationHandler&gt;)</h2>
-<pre><code class="language-csharp">public bool TryGetValidationHandlersFor(IKeyword keyword, ref IReadOnlyCollection&lt;IKeywordValidationHandler&gt; validationHandlers)
+<h2 id="trygetvalidationhandlersfor-ikeyword-ireadonlycollection-ikeywordvalidationhandler">TryGetValidationHandlersFor(IKeyword, IReadOnlyCollection&lt;IKeywordValidationHandler&gt;)</h2>
+<pre><code class="language-csharp">public bool TryGetValidationHandlersFor(IKeyword keyword, out IReadOnlyCollection&lt;IKeywordValidationHandler&gt; validationHandlers)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -118,7 +118,7 @@
 </tr>
 <tr>
 <td><code>validationHandlers</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlycollection-1"><code>ref IReadOnlyCollection&lt;IKeywordValidationHandler&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlycollection-1"><code>IReadOnlyCollection&lt;IKeywordValidationHandler&gt;</code></a></td>
 <td></td>
 </tr>
 </tbody>

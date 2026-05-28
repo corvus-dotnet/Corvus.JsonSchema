@@ -118,7 +118,7 @@
 <tbody>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.cachedworkspace.html">CachedWorkspace</a></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace?</code></a></td>
 <td>Gets or sets the cached workspace that this document was last registered in.</td>
 </tr>
 <tr>
@@ -153,11 +153,11 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.appendelementtometadatadb.html#appendelementtometadatadb-int-jsonworkspace-ref-metadatadb">AppendElementToMetadataDb(int, JsonWorkspace, ref MetadataDb)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.appendelementtometadatadb.html#appendelementtometadatadb-int-jsonworkspace-metadatadb">AppendElementToMetadataDb(int, JsonWorkspace, MetadataDb)</a></td>
 <td>Appends the element at the specified index to the metadata database.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.buildrentedmetadatadb.html#buildrentedmetadatadb-int-jsonworkspace-ref-byte">BuildRentedMetadataDb(int, JsonWorkspace, ref byte[])</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.buildrentedmetadatadb.html#buildrentedmetadatadb-int-jsonworkspace-byte">BuildRentedMetadataDb(int, JsonWorkspace, byte[])</a></td>
 <td>Builds a rented metadata database for the specified parent document index.</td>
 </tr>
 <tr>
@@ -257,7 +257,7 @@
 <td>Converts the element at the specified index to a string.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.tryfindnextdescendantpropertyvalue.html#tryfindnextdescendantpropertyvalue-int-ref-int-readonlyspan-byte-ref-int">TryFindNextDescendantPropertyValue(int, ref int, ReadOnlySpan&lt;byte&gt;, ref int)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.tryfindnextdescendantpropertyvalue.html#tryfindnextdescendantpropertyvalue-int-int-readonlyspan-byte-int">TryFindNextDescendantPropertyValue(int, int, ReadOnlySpan&lt;byte&gt;, int)</a></td>
 <td>Advances a linear scan over the subtree rooted at the element at <code>elementIndex</code>, returning the next property value whose unescaped name matches <code>utf8PropertyName</code>.</td>
 </tr>
 <tr>
@@ -269,11 +269,11 @@
 <td>Tries to get the specified line from the original source document as UTF-8 bytes.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.trygetlineandoffset.html#trygetlineandoffset-int-ref-int-ref-int-ref-long">TryGetLineAndOffset(int, ref int, ref int, ref long)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.trygetlineandoffset.html#trygetlineandoffset-int-int-int-long">TryGetLineAndOffset(int, int, int, long)</a></td>
 <td>Tries to get the line number and character offset in the original source document for the element at the specified index.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.trygetlineandoffsetforpointer.html#trygetlineandoffsetforpointer-readonlyspan-byte-int-ref-int-ref-int-ref-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, int, ref int, ref int, ref long)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.trygetlineandoffsetforpointer.html#trygetlineandoffsetforpointer-readonlyspan-byte-int-int-int-long">TryGetLineAndOffsetForPointer(ReadOnlySpan&lt;byte&gt;, int, int, int, long)</a></td>
 <td>Resolves a JSON pointer against the element at the specified index and gets the line number and character offset of the target element in the original source document.</td>
 </tr>
 <tr>
@@ -281,7 +281,7 @@
 <td>Tries to get the value of a named property as a JSON element.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.trygetstring.html#trygetstring-int-jsontokentype-ref-string">TryGetString(int, JsonTokenType, ref string)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.trygetstring.html#trygetstring-int-jsontokentype-string">TryGetString(int, JsonTokenType, string?)</a></td>
 <td>Tries to get the string value of the element at the specified index.</td>
 </tr>
 <tr>
@@ -289,7 +289,7 @@
 <td>Tries to get the value of the element at the specified index as a byte array.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.tryresolvejsonpointer.html#tryresolvejsonpointer-readonlyspan-byte-int-ref-tvalue">TryResolveJsonPointer(ReadOnlySpan&lt;byte&gt;, int, ref TValue)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.tryresolvejsonpointer.html#tryresolvejsonpointer-readonlyspan-byte-int-tvalue">TryResolveJsonPointer(ReadOnlySpan&lt;byte&gt;, int, TValue)</a></td>
 <td>Try to resolve the given JSON pointer.</td>
 </tr>
 <tr>
@@ -301,7 +301,7 @@
 <td>Writes the element at the specified index to the provided JSON writer.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.writeelementtometadatadb.html#writeelementtometadatadb-int-jsonworkspace-ref-metadatadb-int">WriteElementToMetadataDb(int, JsonWorkspace, ref MetadataDb, int)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsondocument.writeelementtometadatadb.html#writeelementtometadatadb-int-jsonworkspace-metadatadb-int">WriteElementToMetadataDb(int, JsonWorkspace, MetadataDb, int)</a></td>
 <td>Writes the element at the given index into the specified metadata database at a specific position, creating external reference rows. This is the positional variant of...</td>
 </tr>
 <tr>

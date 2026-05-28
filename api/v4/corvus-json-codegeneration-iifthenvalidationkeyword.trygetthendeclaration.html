@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetthendeclaration-typedeclaration-ref-typedeclaration">TryGetThenDeclaration(TypeDeclaration, ref TypeDeclaration)</h2>
+<h2 id="trygetthendeclaration-typedeclaration-typedeclaration">TryGetThenDeclaration(TypeDeclaration, TypeDeclaration?)</h2>
 <p>Tries to get the type declaration for a binary or ternary then expression..</p>
-<pre><code class="language-csharp">public abstract bool TryGetThenDeclaration(TypeDeclaration typeDeclaration, ref TypeDeclaration thenDeclaration)
+<pre><code class="language-csharp">public abstract bool TryGetThenDeclaration(TypeDeclaration typeDeclaration, out TypeDeclaration? thenDeclaration)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>thenDeclaration</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>ref TypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
 <td>The type declaration for then clause.</td>
 </tr>
 </tbody>

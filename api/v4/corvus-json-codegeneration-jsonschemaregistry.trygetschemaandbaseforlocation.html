@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetschemaandbaseforlocation-jsonreference-ref-locatedschema-ref-locatedschema">TryGetSchemaAndBaseForLocation(JsonReference, ref LocatedSchema, ref LocatedSchema)</h2>
+<h2 id="trygetschemaandbaseforlocation-jsonreference-locatedschema-locatedschema">TryGetSchemaAndBaseForLocation(JsonReference, LocatedSchema?, LocatedSchema?)</h2>
 <p>Try to get the subschema and its base schema for a given location.</p>
-<pre><code class="language-csharp">public bool TryGetSchemaAndBaseForLocation(JsonReference location, ref LocatedSchema baseSchema, ref LocatedSchema subschema)
+<pre><code class="language-csharp">public bool TryGetSchemaAndBaseForLocation(JsonReference location, out LocatedSchema? baseSchema, out LocatedSchema? subschema)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,12 +119,12 @@
 </tr>
 <tr>
 <td><code>baseSchema</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-locatedschema.html"><code>ref LocatedSchema</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-locatedschema.html"><code>LocatedSchema?</code></a></td>
 <td>The base schema.</td>
 </tr>
 <tr>
 <td><code>subschema</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-locatedschema.html"><code>ref LocatedSchema</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-locatedschema.html"><code>LocatedSchema?</code></a></td>
 <td>The subschema.</td>
 </tr>
 </tbody>

@@ -108,11 +108,11 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#jsonelement-source-ref-tcontext-jsonelement-arraybuilder-build-tcontext">JsonElement.Source(ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;)</a></td>
+<td><a href="#jsonelement-source-tcontext-jsonelement-arraybuilder-build-tcontext">JsonElement.Source(TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#jsonelement-source-ref-tcontext-jsonelement-objectbuilder-build-tcontext">JsonElement.Source(ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;)</a></td>
+<td><a href="#jsonelement-source-tcontext-jsonelement-objectbuilder-build-tcontext">JsonElement.Source(TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -121,9 +121,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="jsonelement-source-ref-tcontext-jsonelement-arraybuilder-build-tcontext">JsonElement.Source(ref TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;)</h2>
+<h2 id="jsonelement-source-tcontext-jsonelement-arraybuilder-build-tcontext">JsonElement.Source(TContext, JsonElement.ArrayBuilder.Build&lt;TContext&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L1498">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public JsonElement.Source(ref TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; value)
+<pre><code class="language-csharp">public JsonElement.Source(in TContext context, JsonElement.ArrayBuilder.Build&lt;TContext&gt; value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -137,7 +137,7 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>
@@ -167,9 +167,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="jsonelement-source-ref-tcontext-jsonelement-objectbuilder-build-tcontext">JsonElement.Source(ref TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;)</h2>
+<h2 id="jsonelement-source-tcontext-jsonelement-objectbuilder-build-tcontext">JsonElement.Source(TContext, JsonElement.ObjectBuilder.Build&lt;TContext&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L1509">JsonElement.Mutable.cs</a></p>
-<pre><code class="language-csharp">public JsonElement.Source(ref TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; value)
+<pre><code class="language-csharp">public JsonElement.Source(in TContext context, JsonElement.ObjectBuilder.Build&lt;TContext&gt; value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -183,7 +183,7 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>

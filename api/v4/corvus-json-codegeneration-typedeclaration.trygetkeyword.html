@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetkeyword-t-ref-jsonelement">TryGetKeyword(T, ref JsonElement)</h2>
+<h2 id="trygetkeyword-t-jsonelement">TryGetKeyword(T, JsonElement)</h2>
 <p>Tries to get the value of the keyword.</p>
-<pre><code class="language-csharp">public bool TryGetKeyword&lt;T&gt;(T keyword, ref JsonElement value)
+<pre><code class="language-csharp">public bool TryGetKeyword&lt;T&gt;(T keyword, out JsonElement value)
     where T : IKeyword
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -135,7 +135,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The value of the keyword.</td>
 </tr>
 </tbody>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="getcontents-ref-jsonelement-ref-int">GetContents(ref JsonElement[], ref int)</h2>
+<h2 id="getcontents-jsonelement-int">GetContents(JsonElement[], int)</h2>
 <p>Exposes the backing array and count for direct consumption (e.g., by buffer-fused zip). The caller must NOT modify or return the array; the buffer retains ownership.</p>
-<pre><code class="language-csharp">public void GetContents(ref JsonElement[] backingArray, ref int elementCount)
+<pre><code class="language-csharp">public void GetContents(out JsonElement[] backingArray, out int elementCount)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>backingArray</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement[]</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement[]</code></a></td>
 <td>The backing array (may be larger than <code>elementCount</code>).</td>
 </tr>
 <tr>
 <td><code>elementCount</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of valid elements in <code>backingArray</code>.</td>
 </tr>
 </tbody>

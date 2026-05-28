@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L204">IJsonDocument.cs</a></p>
-<h2 id="trygetstring-int-jsontokentype-ref-string">TryGetString(int, JsonTokenType, ref string)</h2>
+<h2 id="trygetstring-int-jsontokentype-string">TryGetString(int, JsonTokenType, string?)</h2>
 <p>Tries to get the string value of the element at the specified index.</p>
-<pre><code class="language-csharp">public abstract bool TryGetString(int index, JsonTokenType expectedType, ref string result)
+<pre><code class="language-csharp">public abstract bool TryGetString(int index, JsonTokenType expectedType, out string? result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -125,7 +125,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string value, or <code>null</code> if the value was not retrieved.</td>
 </tr>
 </tbody>

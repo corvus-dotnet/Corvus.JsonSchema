@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonValueExtensions.cs#L1">JsonValueExtensions.cs</a></p>
-<h2 id="trygetproperty-t-ref-tstring-ref-tvalue">TryGetProperty(T, ref TString, ref TValue)</h2>
+<h2 id="trygetproperty-t-tstring-tvalue">TryGetProperty(T, TString, TValue)</h2>
 <p>Gets a property.</p>
-<pre><code class="language-csharp">public static bool TryGetProperty&lt;T, TValue, TString&gt;(T jsonObject, ref TString name, ref TValue property)
+<pre><code class="language-csharp">public static bool TryGetProperty&lt;T, TValue, TString&gt;(T jsonObject, in TString name, out TValue property)
     where T : struct, IJsonObject&lt;T&gt;
     where TValue : struct, IJsonValue&lt;TValue&gt;
     where TString : struct, IJsonString&lt;TString&gt;
@@ -146,12 +146,12 @@
 </tr>
 <tr>
 <td><code>name</code></td>
-<td><code>ref TString</code></td>
+<td><code>TString</code></td>
 <td>The name of the property.</td>
 </tr>
 <tr>
 <td><code>property</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td>The resulting property, if any.</td>
 </tr>
 </tbody>

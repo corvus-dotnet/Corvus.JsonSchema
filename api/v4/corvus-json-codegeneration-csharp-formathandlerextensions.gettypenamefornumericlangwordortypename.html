@@ -100,7 +100,7 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
 <h2 id="gettypenamefornumericlangwordortypename-ienumerable-t-string">GetTypeNameForNumericLangwordOrTypeName(IEnumerable&lt;T&gt;, string)</h2>
 <p>Gets the .NET BCL type name for the given C# numeric langword, or BCL type name.</p>
-<pre><code class="language-csharp">public static string GetTypeNameForNumericLangwordOrTypeName&lt;T&gt;(IEnumerable&lt;T&gt; handlers, string langwordOrTypeName)
+<pre><code class="language-csharp">public static string? GetTypeNameForNumericLangwordOrTypeName&lt;T&gt;(IEnumerable&lt;T&gt; handlers, string langwordOrTypeName)
     where T : INumberFormatHandler
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -141,7 +141,7 @@
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
-<p><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></p>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></p>
 <p>The JSON string form suffix (e.g. <code>long</code> becomes <code>Int64</code>.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>

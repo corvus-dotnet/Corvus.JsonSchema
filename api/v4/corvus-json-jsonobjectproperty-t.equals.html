@@ -108,22 +108,22 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#equals-object">Equals(object)</a></td>
+<td><a href="#equals-object">Equals(object?)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#equals-ref-jsonobjectproperty-t">Equals(ref JsonObjectProperty&lt;T&gt;)</a></td>
+<td><a href="#equals-jsonobjectproperty-t">Equals(JsonObjectProperty&lt;T&gt;)</a></td>
 <td>Equality comparison.</td>
 </tr>
 <tr>
-<td><a href="#equals-ref-jsonobjectproperty">Equals(ref JsonObjectProperty)</a></td>
+<td><a href="#equals-jsonobjectproperty">Equals(JsonObjectProperty)</a></td>
 <td>Equality comparison.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="equals-object">Equals(object)</h2>
-<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L364">JsonObjectProperty.cs</a></p>
-<pre><code class="language-csharp">public override bool Equals(object obj)
+<h2 id="equals-object">Equals(object?)</h2>
+<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L371">JsonObjectProperty.cs</a></p>
+<pre><code class="language-csharp">public override bool Equals(object? obj)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -137,7 +137,7 @@
 <tbody>
 <tr>
 <td><code>obj</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -164,10 +164,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-jsonobjectproperty-t">Equals(ref JsonObjectProperty&lt;T&gt;)</h2>
-<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L374">JsonObjectProperty.cs</a></p>
+<h2 id="equals-jsonobjectproperty-t">Equals(JsonObjectProperty&lt;T&gt;)</h2>
+<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L381">JsonObjectProperty.cs</a></p>
 <p>Equality comparison.</p>
-<pre><code class="language-csharp">public bool Equals(ref JsonObjectProperty&lt;T&gt; other)
+<pre><code class="language-csharp">public bool Equals(in JsonObjectProperty&lt;T&gt; other)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -181,7 +181,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonobjectproperty.html"><code>ref JsonObjectProperty&lt;T&gt;</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonobjectproperty.html"><code>JsonObjectProperty&lt;T&gt;</code></a></td>
 <td>The other item with which to compare.</td>
 </tr>
 </tbody>
@@ -209,10 +209,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-jsonobjectproperty">Equals(ref JsonObjectProperty)</h2>
-<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L385">JsonObjectProperty.cs</a></p>
+<h2 id="equals-jsonobjectproperty">Equals(JsonObjectProperty)</h2>
+<p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonObjectProperty%7BT%7D.cs#L392">JsonObjectProperty.cs</a></p>
 <p>Equality comparison.</p>
-<pre><code class="language-csharp">public bool Equals(ref JsonObjectProperty other)
+<pre><code class="language-csharp">public bool Equals(in JsonObjectProperty other)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -226,7 +226,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonobjectproperty.html"><code>ref JsonObjectProperty</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonobjectproperty.html"><code>JsonObjectProperty</code></a></td>
 <td>The other item with which to compare.</td>
 </tr>
 </tbody>

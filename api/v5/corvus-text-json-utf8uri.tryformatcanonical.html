@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Uri.cs#L234">Utf8Uri.cs</a></p>
-<h2 id="tryformatcanonical-span-byte-ref-int">TryFormatCanonical(Span&lt;byte&gt;, ref int)</h2>
+<h2 id="tryformatcanonical-span-byte-int">TryFormatCanonical(Span&lt;byte&gt;, int)</h2>
 <p>Gets the URI in canonical form.</p>
-<pre><code class="language-csharp">public bool TryFormatCanonical(Span&lt;byte&gt; buffer, ref int writtenBytes)
+<pre><code class="language-csharp">public bool TryFormatCanonical(Span&lt;byte&gt; buffer, out int writtenBytes)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>writtenBytes</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written.</td>
 </tr>
 </tbody>

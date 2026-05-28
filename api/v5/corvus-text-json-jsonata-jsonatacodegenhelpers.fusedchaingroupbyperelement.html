@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="fusedchaingroupbyperelement-ref-jsonelement-byte-byte-byte-jsonworkspace">FusedChainGroupByPerElement(ref JsonElement, byte[][], byte[], byte[], JsonWorkspace)</h2>
+<h2 id="fusedchaingroupbyperelement-jsonelement-byte-byte-byte-jsonworkspace">FusedChainGroupByPerElement(JsonElement, byte[][], byte[], byte[], JsonWorkspace)</h2>
 <p>Fuses a property chain navigation with per-element group-by object construction. Navigates the chain into an <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (no intermediate <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.createarraybuilder.html"><code>CreateArrayBuilder</code></a>), then builds <code>{key: value}</code> objects directly into the result array. This saves one full builder allocation compared to the separate <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.navigatepropertychain.html"><code>NavigatePropertyChain</code></a> + <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.simplegroupbyperelement.html"><code>SimpleGroupByPerElement</code></a> path.</p>
-<pre><code class="language-csharp">public static JsonElement FusedChainGroupByPerElement(ref JsonElement data, byte[][] chainNames, byte[] keyPropUtf8, byte[] valuePropUtf8, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement FusedChainGroupByPerElement(in JsonElement data, byte[][] chainNames, byte[] keyPropUtf8, byte[] valuePropUtf8, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input data element.</td>
 </tr>
 <tr>

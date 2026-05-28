@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/IJsonSchemaResultsCollector.cs#L53">IJsonSchemaResultsCollector.cs</a></p>
-<h2 id="endinvoke-ref-int-iasyncresult">EndInvoke(ref int, IAsyncResult)</h2>
-<pre><code class="language-csharp">public virtual bool EndInvoke(ref int written, IAsyncResult result)
+<h2 id="endinvoke-int-iasyncresult">EndInvoke(int, IAsyncResult)</h2>
+<pre><code class="language-csharp">public virtual bool EndInvoke(out int written, IAsyncResult result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td></td>
 </tr>
 <tr>

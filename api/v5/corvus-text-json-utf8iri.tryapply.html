@@ -108,27 +108,27 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#tryapply-ref-utf8iri-span-byte-ref-utf8iri">TryApply(ref Utf8Iri, Span&lt;byte&gt;, ref Utf8Iri)</a></td>
+<td><a href="#tryapply-utf8iri-span-byte-utf8iri">TryApply(Utf8Iri, Span&lt;byte&gt;, Utf8Iri)</a></td>
 <td>Applies the given IRI to the current (base) IRI and writes the result to the provided buffer. It uses the rules of RFC 3986 Section 5.2 to resolve the reference against the base IRI, including hand...</td>
 </tr>
 <tr>
-<td><a href="#tryapply-ref-utf8irireference-span-byte-ref-utf8iri">TryApply(ref Utf8IriReference, Span&lt;byte&gt;, ref Utf8Iri)</a></td>
+<td><a href="#tryapply-utf8irireference-span-byte-utf8iri">TryApply(Utf8IriReference, Span&lt;byte&gt;, Utf8Iri)</a></td>
 <td>Applies the given IRI reference to the current (base) IRI and writes the result to the provided buffer. It uses the rules of RFC 3986 Section 5.2 to resolve the reference against the base IRI, incl...</td>
 </tr>
 <tr>
-<td><a href="#tryapply-ref-utf8urireference-span-byte-ref-utf8iri">TryApply(ref Utf8UriReference, Span&lt;byte&gt;, ref Utf8Iri)</a></td>
+<td><a href="#tryapply-utf8urireference-span-byte-utf8iri">TryApply(Utf8UriReference, Span&lt;byte&gt;, Utf8Iri)</a></td>
 <td>Applies the given URI reference to the current (base) IRI and writes the result to the provided buffer. It uses the rules of RFC 3986 Section 5.2 to resolve the reference against the base IRI, incl...</td>
 </tr>
 <tr>
-<td><a href="#tryapply-ref-utf8uri-span-byte-ref-utf8iri">TryApply(ref Utf8Uri, Span&lt;byte&gt;, ref Utf8Iri)</a></td>
+<td><a href="#tryapply-utf8uri-span-byte-utf8iri">TryApply(Utf8Uri, Span&lt;byte&gt;, Utf8Iri)</a></td>
 <td>Applies the given URI reference to the current (base) IRI and writes the result to the provided buffer. It uses the rules of RFC 3986 Section 5.2 to resolve the reference against the base IRI, incl...</td>
 </tr>
 </tbody>
 </table>
-<h2 id="tryapply-ref-utf8iri-span-byte-ref-utf8iri">TryApply(ref Utf8Iri, Span&lt;byte&gt;, ref Utf8Iri)</h2>
+<h2 id="tryapply-utf8iri-span-byte-utf8iri">TryApply(Utf8Iri, Span&lt;byte&gt;, Utf8Iri)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Iri.cs#L251">Utf8Iri.cs</a></p>
 <p>Applies the given IRI to the current (base) IRI and writes the result to the provided buffer. It uses the rules of RFC 3986 Section 5.2 to resolve the reference against the base IRI, including handling of relative references and merging of paths as needed.</p>
-<pre><code class="language-csharp">public bool TryApply(ref Utf8Iri iri, Span&lt;byte&gt; buffer, ref Utf8Iri result)
+<pre><code class="language-csharp">public bool TryApply(in Utf8Iri iri, Span&lt;byte&gt; buffer, out Utf8Iri result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -142,7 +142,7 @@
 <tbody>
 <tr>
 <td><code>iri</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>ref Utf8Iri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>Utf8Iri</code></a></td>
 <td>The IRI to apply.</td>
 </tr>
 <tr>
@@ -152,7 +152,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>ref Utf8Iri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>Utf8Iri</code></a></td>
 <td>The resulting IRI.</td>
 </tr>
 </tbody>
@@ -180,10 +180,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryapply-ref-utf8irireference-span-byte-ref-utf8iri">TryApply(ref Utf8IriReference, Span&lt;byte&gt;, ref Utf8Iri)</h2>
+<h2 id="tryapply-utf8irireference-span-byte-utf8iri">TryApply(Utf8IriReference, Span&lt;byte&gt;, Utf8Iri)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Iri.cs#L272">Utf8Iri.cs</a></p>
 <p>Applies the given IRI reference to the current (base) IRI and writes the result to the provided buffer. It uses the rules of RFC 3986 Section 5.2 to resolve the reference against the base IRI, including handling of relative references and merging of paths as needed.</p>
-<pre><code class="language-csharp">public bool TryApply(ref Utf8IriReference iriReference, Span&lt;byte&gt; buffer, ref Utf8Iri result)
+<pre><code class="language-csharp">public bool TryApply(in Utf8IriReference iriReference, Span&lt;byte&gt; buffer, out Utf8Iri result)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -197,7 +197,7 @@
 <tbody>
 <tr>
 <td><code>iriReference</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8irireference.html"><code>ref Utf8IriReference</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8irireference.html"><code>Utf8IriReference</code></a></td>
 <td>The IRI reference to apply.</td>
 </tr>
 <tr>
@@ -207,7 +207,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>ref Utf8Iri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>Utf8Iri</code></a></td>
 <td>The resulting IRI.</td>
 </tr>
 </tbody>
@@ -235,10 +235,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryapply-ref-utf8urireference-span-byte-ref-utf8iri">TryApply(ref Utf8UriReference, Span&lt;byte&gt;, ref Utf8Iri)</h2>
+<h2 id="tryapply-utf8urireference-span-byte-utf8iri">TryApply(Utf8UriReference, Span&lt;byte&gt;, Utf8Iri)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Iri.cs#L293">Utf8Iri.cs</a></p>
 <p>Applies the given URI reference to the current (base) IRI and writes the result to the provided buffer. It uses the rules of RFC 3986 Section 5.2 to resolve the reference against the base IRI, including handling of relative references and merging of paths as needed.</p>
-<pre><code class="language-csharp">public bool TryApply(ref Utf8UriReference uriReference, Span&lt;byte&gt; buffer, ref Utf8Iri result)
+<pre><code class="language-csharp">public bool TryApply(in Utf8UriReference uriReference, Span&lt;byte&gt; buffer, out Utf8Iri result)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -252,7 +252,7 @@
 <tbody>
 <tr>
 <td><code>uriReference</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8urireference.html"><code>ref Utf8UriReference</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8urireference.html"><code>Utf8UriReference</code></a></td>
 <td>The IRI to apply.</td>
 </tr>
 <tr>
@@ -262,7 +262,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>ref Utf8Iri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>Utf8Iri</code></a></td>
 <td>The resulting IRI.</td>
 </tr>
 </tbody>
@@ -290,10 +290,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryapply-ref-utf8uri-span-byte-ref-utf8iri">TryApply(ref Utf8Uri, Span&lt;byte&gt;, ref Utf8Iri)</h2>
+<h2 id="tryapply-utf8uri-span-byte-utf8iri">TryApply(Utf8Uri, Span&lt;byte&gt;, Utf8Iri)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Iri.cs#L314">Utf8Iri.cs</a></p>
 <p>Applies the given URI reference to the current (base) IRI and writes the result to the provided buffer. It uses the rules of RFC 3986 Section 5.2 to resolve the reference against the base IRI, including handling of relative references and merging of paths as needed.</p>
-<pre><code class="language-csharp">public bool TryApply(ref Utf8Uri uri, Span&lt;byte&gt; buffer, ref Utf8Iri result)
+<pre><code class="language-csharp">public bool TryApply(in Utf8Uri uri, Span&lt;byte&gt; buffer, out Utf8Iri result)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -307,7 +307,7 @@
 <tbody>
 <tr>
 <td><code>uri</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8uri.html"><code>ref Utf8Uri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8uri.html"><code>Utf8Uri</code></a></td>
 <td>The IRI to apply.</td>
 </tr>
 <tr>
@@ -317,7 +317,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>ref Utf8Iri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>Utf8Iri</code></a></td>
 <td>The resulting IRI.</td>
 </tr>
 </tbody>

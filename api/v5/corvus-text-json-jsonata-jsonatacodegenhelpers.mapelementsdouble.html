@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="mapelementsdouble-ref-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">MapElementsDouble(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
+<h2 id="mapelementsdouble-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">MapElementsDouble(JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</h2>
 <p>Specialized map that keeps results as raw <code>double</code> values, avoiding the per-element <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.doubletoelement.html"><code>DoubleToElement</code></a> and intermediate <code>FixedJsonValueDocument</code> creation. The result array is built via CVB <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-arraybuilder.additem.html"><code>AddItem</code></a> which writes doubles directly to the MetadataDb.</p>
-<pre><code class="language-csharp">public static JsonElement MapElementsDouble(ref JsonElement input, Func&lt;JsonElement, JsonWorkspace, double&gt; transform, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement MapElementsDouble(in JsonElement input, Func&lt;JsonElement, JsonWorkspace, double&gt; transform, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

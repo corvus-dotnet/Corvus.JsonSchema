@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L21">IJsonDocument.cs</a></p>
-<h2 id="tryresolvejsonpointer-readonlyspan-byte-int-ref-tvalue">TryResolveJsonPointer(ReadOnlySpan&lt;byte&gt;, int, ref TValue)</h2>
+<h2 id="tryresolvejsonpointer-readonlyspan-byte-int-tvalue">TryResolveJsonPointer(ReadOnlySpan&lt;byte&gt;, int, TValue)</h2>
 <p>Try to resolve the given JSON pointer.</p>
-<pre><code class="language-csharp">public abstract bool TryResolveJsonPointer&lt;TValue&gt;(ReadOnlySpan&lt;byte&gt; jsonPointer, int index, ref TValue value)
+<pre><code class="language-csharp">public abstract bool TryResolveJsonPointer&lt;TValue&gt;(ReadOnlySpan&lt;byte&gt; jsonPointer, int index, out TValue value)
     where TValue : struct, IJsonElement&lt;TValue&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -141,7 +141,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td>Providers the resolved value, if the pointer could be resolved.</td>
 </tr>
 </tbody>

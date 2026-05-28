@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/PropertyValidator.cs#L1">PropertyValidator.cs</a></p>
-<h2 id="endinvoke-ref-t-ref-validationcontext-iasyncresult">EndInvoke(ref T, ref ValidationContext, IAsyncResult)</h2>
-<pre><code class="language-csharp">public virtual ValidationContext EndInvoke(ref T that, ref ValidationContext validationContext, IAsyncResult result)
+<h2 id="endinvoke-t-validationcontext-iasyncresult">EndInvoke(T, ValidationContext, IAsyncResult)</h2>
+<pre><code class="language-csharp">public virtual ValidationContext EndInvoke(in T that, in ValidationContext validationContext, IAsyncResult result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>that</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td></td>
 </tr>
 <tr>

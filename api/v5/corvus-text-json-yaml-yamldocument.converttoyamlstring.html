@@ -108,7 +108,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#converttoyamlstring-ref-telement-yamlwriteroptions">ConvertToYamlString(ref TElement, YamlWriterOptions)</a></td>
+<td><a href="#converttoyamlstring-telement-yamlwriteroptions">ConvertToYamlString(TElement, YamlWriterOptions)</a></td>
 <td>Converts a JSON element to a YAML string.</td>
 </tr>
 <tr>
@@ -121,9 +121,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="converttoyamlstring-ref-telement-yamlwriteroptions">ConvertToYamlString(ref TElement, YamlWriterOptions)</h2>
+<h2 id="converttoyamlstring-telement-yamlwriteroptions">ConvertToYamlString(TElement, YamlWriterOptions)</h2>
 <p>Converts a JSON element to a YAML string.</p>
-<pre><code class="language-csharp">public static string ConvertToYamlString&lt;TElement&gt;(ref TElement element, YamlWriterOptions options)
+<pre><code class="language-csharp">public static string ConvertToYamlString&lt;TElement&gt;(in TElement element, YamlWriterOptions options)
     where TElement : struct, IJsonElement&lt;TElement&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -153,7 +153,7 @@
 <tbody>
 <tr>
 <td><code>element</code></td>
-<td><code>ref TElement</code></td>
+<td><code>TElement</code></td>
 <td>The JSON element to convert.</td>
 </tr>
 <tr>

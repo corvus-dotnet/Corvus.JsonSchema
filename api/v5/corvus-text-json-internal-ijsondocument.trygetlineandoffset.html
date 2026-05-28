@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/IJsonDocument.cs#L709">IJsonDocument.cs</a></p>
-<h2 id="trygetlineandoffset-int-ref-int-ref-int-ref-long">TryGetLineAndOffset(int, ref int, ref int, ref long)</h2>
+<h2 id="trygetlineandoffset-int-int-int-long">TryGetLineAndOffset(int, int, int, long)</h2>
 <p>Tries to get the line number and character offset in the original source document for the element at the specified index.</p>
-<pre><code class="language-csharp">public abstract bool TryGetLineAndOffset(int index, ref int line, ref int charOffset, ref long lineByteOffset)
+<pre><code class="language-csharp">public abstract bool TryGetLineAndOffset(int index, out int line, out int charOffset, out long lineByteOffset)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,17 +120,17 @@
 </tr>
 <tr>
 <td><code>line</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the 1-based line number if successful.</td>
 </tr>
 <tr>
 <td><code>charOffset</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the 1-based character offset within the line if successful.</td>
 </tr>
 <tr>
 <td><code>lineByteOffset</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>ref long</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
 <td>When this method returns, contains the byte offset of the start of the line if successful.</td>
 </tr>
 </tbody>

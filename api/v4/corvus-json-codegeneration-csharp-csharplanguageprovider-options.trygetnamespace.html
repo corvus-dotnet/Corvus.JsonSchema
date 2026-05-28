@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.CSharp<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetnamespace-jsonreference-frozendictionary-string-string-ref-string">TryGetNamespace(JsonReference, FrozenDictionary&lt;string, string&gt;, ref string)</h2>
-<pre><code class="language-csharp">public static bool TryGetNamespace(JsonReference baseUri, FrozenDictionary&lt;string, string&gt; namespaceMap, ref string ns)
+<h2 id="trygetnamespace-jsonreference-frozendictionary-string-string-string">TryGetNamespace(JsonReference, FrozenDictionary&lt;string, string&gt;, string?)</h2>
+<pre><code class="language-csharp">public static bool TryGetNamespace(JsonReference baseUri, FrozenDictionary&lt;string, string&gt; namespaceMap, out string? ns)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -123,7 +123,7 @@
 </tr>
 <tr>
 <td><code>ns</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td></td>
 </tr>
 </tbody>

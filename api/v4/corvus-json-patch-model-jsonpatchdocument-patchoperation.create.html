@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.Patch.Model<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="create-ref-jsonstring-ref-jsonpointer">Create(ref JsonString, ref JsonPointer)</h2>
-<pre><code class="language-csharp">public static JsonPatchDocument.PatchOperation Create(ref JsonString op, ref JsonPointer path)
+<h2 id="create-jsonstring-jsonpointer">Create(JsonString, JsonPointer)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.PatchOperation Create(in JsonString op, in JsonPointer path)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -113,12 +113,12 @@
 <tbody>
 <tr>
 <td><code>op</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>ref JsonString</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>path</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpointer.html"><code>ref JsonPointer</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonpointer.html"><code>JsonPointer</code></a></td>
 <td></td>
 </tr>
 </tbody>

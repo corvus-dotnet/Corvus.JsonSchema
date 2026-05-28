@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8JsonPointer.cs#L36">Utf8JsonPointer.cs</a></p>
-<h2 id="trycreatejsonpointer-readonlyspan-byte-ref-utf8jsonpointer">TryCreateJsonPointer(ReadOnlySpan&lt;byte&gt;, ref Utf8JsonPointer)</h2>
+<h2 id="trycreatejsonpointer-readonlyspan-byte-utf8jsonpointer">TryCreateJsonPointer(ReadOnlySpan&lt;byte&gt;, Utf8JsonPointer)</h2>
 <p>Tries to create a new UTF-8 JSON Pointer from the specified UTF-8 bytes.</p>
-<pre><code class="language-csharp">public static bool TryCreateJsonPointer(ReadOnlySpan&lt;byte&gt; jsonPointer, ref Utf8JsonPointer utf8JsonPointer)
+<pre><code class="language-csharp">public static bool TryCreateJsonPointer(ReadOnlySpan&lt;byte&gt; jsonPointer, out Utf8JsonPointer utf8JsonPointer)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>utf8JsonPointer</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonpointer.html"><code>ref Utf8JsonPointer</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonpointer.html"><code>Utf8JsonPointer</code></a></td>
 <td>When this method returns, contains the created UTF-8 JSON Pointer if successful; otherwise, the default value.</td>
 </tr>
 </tbody>

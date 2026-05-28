@@ -108,18 +108,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trynormalizeschemareference-string-ref-string">TryNormalizeSchemaReference(string, ref string)</a></td>
+<td><a href="#trynormalizeschemareference-string-string">TryNormalizeSchemaReference(string, string?)</a></td>
 <td>Normalizes a schema reference.</td>
 </tr>
 <tr>
-<td><a href="#trynormalizeschemareference-string-string-ref-string">TryNormalizeSchemaReference(string, string, ref string)</a></td>
+<td><a href="#trynormalizeschemareference-string-string-string">TryNormalizeSchemaReference(string, string?, string?)</a></td>
 <td>Normalizes a schema reference.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trynormalizeschemareference-string-ref-string">TryNormalizeSchemaReference(string, ref string)</h2>
+<h2 id="trynormalizeschemareference-string-string">TryNormalizeSchemaReference(string, string?)</h2>
 <p>Normalizes a schema reference.</p>
-<pre><code class="language-csharp">public static bool TryNormalizeSchemaReference(string schemaFile, ref string result)
+<pre><code class="language-csharp">public static bool TryNormalizeSchemaReference(string schemaFile, out string? result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -138,7 +138,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The resulting reference URI.</td>
 </tr>
 </tbody>
@@ -166,9 +166,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trynormalizeschemareference-string-string-ref-string">TryNormalizeSchemaReference(string, string, ref string)</h2>
+<h2 id="trynormalizeschemareference-string-string-string">TryNormalizeSchemaReference(string, string?, string?)</h2>
 <p>Normalizes a schema reference.</p>
-<pre><code class="language-csharp">public static bool TryNormalizeSchemaReference(string schemaFile, string basePath, ref string result)
+<pre><code class="language-csharp">public static bool TryNormalizeSchemaReference(string schemaFile, string? basePath, out string? result)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -187,12 +187,12 @@
 </tr>
 <tr>
 <td><code>basePath</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The current base path, for relative references.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The resulting reference URI.</td>
 </tr>
 </tbody>

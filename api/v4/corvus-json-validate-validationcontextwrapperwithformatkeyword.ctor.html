@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
-<h2 id="validate-validationcontextwrapperwithformatkeyword-ref-validationcontext-validationlevel-string">Validate.ValidationContextWrapperWithFormatKeyword(ref ValidationContext, ValidationLevel, string)</h2>
-<pre><code class="language-csharp">public Validate.ValidationContextWrapperWithFormatKeyword(ref ValidationContext Context, ValidationLevel Level, string FormatKeyword)
+<h2 id="validate-validationcontextwrapperwithformatkeyword-validationcontext-validationlevel-string">Validate.ValidationContextWrapperWithFormatKeyword(ValidationContext, ValidationLevel, string?)</h2>
+<pre><code class="language-csharp">public Validate.ValidationContextWrapperWithFormatKeyword(in ValidationContext Context, ValidationLevel Level, string? FormatKeyword)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>Context</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -124,7 +124,7 @@
 </tr>
 <tr>
 <td><code>FormatKeyword</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td></td>
 </tr>
 </tbody>

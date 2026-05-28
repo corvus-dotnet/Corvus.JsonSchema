@@ -108,22 +108,22 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#equals-object">Equals(object)</a></td>
+<td><a href="#equals-object">Equals(object?)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#equals-ref-t">Equals(ref T)</a></td>
+<td><a href="#equals-t">Equals(T)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#equals-ref-jsonhostname">Equals(ref JsonHostname)</a></td>
+<td><a href="#equals-jsonhostname">Equals(JsonHostname)</a></td>
 <td>Equality comparison.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="equals-object">Equals(object)</h2>
+<h2 id="equals-object">Equals(object?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonHostname.cs#L560">JsonHostname.cs</a></p>
-<pre><code class="language-csharp">public override bool Equals(object obj)
+<pre><code class="language-csharp">public override bool Equals(object? obj)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -137,7 +137,7 @@
 <tbody>
 <tr>
 <td><code>obj</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -164,9 +164,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-t">Equals(ref T)</h2>
+<h2 id="equals-t">Equals(T)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonHostname.cs#L1">JsonHostname.cs</a></p>
-<pre><code class="language-csharp">public bool Equals&lt;T&gt;(ref T other)
+<pre><code class="language-csharp">public bool Equals&lt;T&gt;(in T other)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
@@ -181,7 +181,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -210,10 +210,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-jsonhostname">Equals(ref JsonHostname)</h2>
+<h2 id="equals-jsonhostname">Equals(JsonHostname)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonHostname.cs#L579">JsonHostname.cs</a></p>
 <p>Equality comparison.</p>
-<pre><code class="language-csharp">public bool Equals(ref JsonHostname other)
+<pre><code class="language-csharp">public bool Equals(in JsonHostname other)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -227,7 +227,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonhostname.html"><code>ref JsonHostname</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonhostname.html"><code>JsonHostname</code></a></td>
 <td>The other item with which to compare.</td>
 </tr>
 </tbody>

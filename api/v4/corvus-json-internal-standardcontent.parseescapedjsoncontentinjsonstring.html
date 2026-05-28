@@ -108,19 +108,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#parseescapedjsoncontentinjsonstring-ref-jsonelement-bool-ref-jsondocument">ParseEscapedJsonContentInJsonString(ref JsonElement, bool, ref JsonDocument)</a></td>
+<td><a href="#parseescapedjsoncontentinjsonstring-jsonelement-bool-jsondocument">ParseEscapedJsonContentInJsonString(JsonElement, bool, JsonDocument?)</a></td>
 <td>This unescapes JSON data which has been escaped into a JSON string and parses it into a JSON document.</td>
 </tr>
 <tr>
-<td><a href="#parseescapedjsoncontentinjsonstring-readonlyspan-char-bool-ref-jsondocument">ParseEscapedJsonContentInJsonString(ReadOnlySpan&lt;char&gt;, bool, ref JsonDocument)</a></td>
+<td><a href="#parseescapedjsoncontentinjsonstring-readonlyspan-char-bool-jsondocument">ParseEscapedJsonContentInJsonString(ReadOnlySpan&lt;char&gt;, bool, JsonDocument?)</a></td>
 <td>This unescapes JSON data which has been escaped into a JSON string and parses it into a JSON document.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="parseescapedjsoncontentinjsonstring-ref-jsonelement-bool-ref-jsondocument">ParseEscapedJsonContentInJsonString(ref JsonElement, bool, ref JsonDocument)</h2>
+<h2 id="parseescapedjsoncontentinjsonstring-jsonelement-bool-jsondocument">ParseEscapedJsonContentInJsonString(JsonElement, bool, JsonDocument?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardContent.cs#L30">StandardContent.cs</a></p>
 <p>This unescapes JSON data which has been escaped into a JSON string and parses it into a JSON document.</p>
-<pre><code class="language-csharp">public static EncodedContentMediaTypeParseStatus ParseEscapedJsonContentInJsonString(ref JsonElement jsonElement, bool base64Decode, ref JsonDocument result)
+<pre><code class="language-csharp">public static EncodedContentMediaTypeParseStatus ParseEscapedJsonContentInJsonString(in JsonElement jsonElement, bool base64Decode, out JsonDocument? result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -134,7 +134,7 @@
 <tbody>
 <tr>
 <td><code>jsonElement</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The JSON string containing the escaped json text.</td>
 </tr>
 <tr>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>ref JsonDocument</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument?</code></a></td>
 <td>The parsed document.</td>
 </tr>
 </tbody>
@@ -172,10 +172,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="parseescapedjsoncontentinjsonstring-readonlyspan-char-bool-ref-jsondocument">ParseEscapedJsonContentInJsonString(ReadOnlySpan&lt;char&gt;, bool, ref JsonDocument)</h2>
+<h2 id="parseescapedjsoncontentinjsonstring-readonlyspan-char-bool-jsondocument">ParseEscapedJsonContentInJsonString(ReadOnlySpan&lt;char&gt;, bool, JsonDocument?)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardContent.cs#L136">StandardContent.cs</a></p>
 <p>This unescapes JSON data which has been escaped into a JSON string and parses it into a JSON document.</p>
-<pre><code class="language-csharp">public static EncodedContentMediaTypeParseStatus ParseEscapedJsonContentInJsonString(ReadOnlySpan&lt;char&gt; source, bool base64Decode, ref JsonDocument result)
+<pre><code class="language-csharp">public static EncodedContentMediaTypeParseStatus ParseEscapedJsonContentInJsonString(ReadOnlySpan&lt;char&gt; source, bool base64Decode, out JsonDocument? result)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -199,7 +199,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>ref JsonDocument</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument?</code></a></td>
 <td>The parsed document.</td>
 </tr>
 </tbody>

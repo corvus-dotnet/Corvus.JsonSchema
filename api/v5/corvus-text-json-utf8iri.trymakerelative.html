@@ -108,19 +108,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trymakerelative-ref-utf8iri-span-byte-ref-utf8irireference">TryMakeRelative(ref Utf8Iri, Span&lt;byte&gt;, ref Utf8IriReference)</a></td>
+<td><a href="#trymakerelative-utf8iri-span-byte-utf8irireference">TryMakeRelative(Utf8Iri, Span&lt;byte&gt;, Utf8IriReference)</a></td>
 <td>Makes a relative IRI reference from the current (base) IRI to the target IRI. If the scheme, host, and port match, a relative reference is created; otherwise, the full target IRI is returned.</td>
 </tr>
 <tr>
-<td><a href="#trymakerelative-ref-utf8uri-span-byte-ref-utf8irireference">TryMakeRelative(ref Utf8Uri, Span&lt;byte&gt;, ref Utf8IriReference)</a></td>
+<td><a href="#trymakerelative-utf8uri-span-byte-utf8irireference">TryMakeRelative(Utf8Uri, Span&lt;byte&gt;, Utf8IriReference)</a></td>
 <td>Makes a relative IRI reference from the current (base) IRI to the target URI. If the scheme, host, and port match, a relative reference is created; otherwise, the full target URI is returned.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trymakerelative-ref-utf8iri-span-byte-ref-utf8irireference">TryMakeRelative(ref Utf8Iri, Span&lt;byte&gt;, ref Utf8IriReference)</h2>
+<h2 id="trymakerelative-utf8iri-span-byte-utf8irireference">TryMakeRelative(Utf8Iri, Span&lt;byte&gt;, Utf8IriReference)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Iri.cs#L335">Utf8Iri.cs</a></p>
 <p>Makes a relative IRI reference from the current (base) IRI to the target IRI. If the scheme, host, and port match, a relative reference is created; otherwise, the full target IRI is returned.</p>
-<pre><code class="language-csharp">public bool TryMakeRelative(ref Utf8Iri targetIri, Span&lt;byte&gt; buffer, ref Utf8IriReference result)
+<pre><code class="language-csharp">public bool TryMakeRelative(in Utf8Iri targetIri, Span&lt;byte&gt; buffer, out Utf8IriReference result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -134,7 +134,7 @@
 <tbody>
 <tr>
 <td><code>targetIri</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>ref Utf8Iri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8iri.html"><code>Utf8Iri</code></a></td>
 <td>The target IRI to make relative.</td>
 </tr>
 <tr>
@@ -144,7 +144,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8irireference.html"><code>ref Utf8IriReference</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8irireference.html"><code>Utf8IriReference</code></a></td>
 <td>The resulting IRI reference (relative or absolute).</td>
 </tr>
 </tbody>
@@ -172,10 +172,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trymakerelative-ref-utf8uri-span-byte-ref-utf8irireference">TryMakeRelative(ref Utf8Uri, Span&lt;byte&gt;, ref Utf8IriReference)</h2>
+<h2 id="trymakerelative-utf8uri-span-byte-utf8irireference">TryMakeRelative(Utf8Uri, Span&lt;byte&gt;, Utf8IriReference)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Iri.cs#L356">Utf8Iri.cs</a></p>
 <p>Makes a relative IRI reference from the current (base) IRI to the target URI. If the scheme, host, and port match, a relative reference is created; otherwise, the full target URI is returned.</p>
-<pre><code class="language-csharp">public bool TryMakeRelative(ref Utf8Uri targetUri, Span&lt;byte&gt; buffer, ref Utf8IriReference result)
+<pre><code class="language-csharp">public bool TryMakeRelative(in Utf8Uri targetUri, Span&lt;byte&gt; buffer, out Utf8IriReference result)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -189,7 +189,7 @@
 <tbody>
 <tr>
 <td><code>targetUri</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8uri.html"><code>ref Utf8Uri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8uri.html"><code>Utf8Uri</code></a></td>
 <td>The target URI to make relative.</td>
 </tr>
 <tr>
@@ -199,7 +199,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8irireference.html"><code>ref Utf8IriReference</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8irireference.html"><code>Utf8IriReference</code></a></td>
 <td>The resulting IRI reference (relative or absolute).</td>
 </tr>
 </tbody>

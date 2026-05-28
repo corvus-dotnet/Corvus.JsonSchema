@@ -53,3 +53,11 @@ Apply, construct, and compute JSON patches. `Corvus.Text.Json.Patch` implements 
 ## [JSON Canonicalization (RFC 8785)](/docs/json-canonicalization.html)
 
 Produce a deterministic byte-exact serialization of JSON values using the [JSON Canonicalization Scheme (JCS)](https://datatracker.ietf.org/doc/html/rfc8785). Canonical output uses sorted property names, ECMAScript number formatting, and minimal string escaping. Ideal for digital signatures, content hashing, and content-addressed storage. The implementation operates directly on `JsonElement` with zero heap allocation.
+
+## [OpenAPI Code Generation](/docs/open-api.html)
+
+Generate strongly-typed HTTP clients and ASP.NET Core server stubs from OpenAPI 3.0/3.1/3.2 specifications. Handles parameter serialization, JSON Schema validation, streaming (SSE, NDJSON), binary transfers, form-encoded bodies, and cookie authentication — all generated from a single spec.
+
+## [AsyncAPI Code Generation](/docs/async-api.html)
+
+Generate strongly-typed producers, consumers, and handlers from [AsyncAPI](https://www.asyncapi.com/) 2.6/3.0 specifications. The generated code provides typed payloads, channel parameter resolution, schema validation (with configurable diagnostic detail), authentication providers (OAuth2, Bearer, API Key, mTLS, composite), request/reply correlation, error policies with dead-letter support, and OpenTelemetry instrumentation. Transport-agnostic — works with NATS, Kafka, AMQP, MQTT, and WebSocket transports.

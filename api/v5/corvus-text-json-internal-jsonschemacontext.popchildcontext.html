@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L820">JsonSchemaContext.cs</a></p>
-<h2 id="popchildcontext-ref-jsonschemacontext">PopChildContext(ref JsonSchemaContext)</h2>
+<h2 id="popchildcontext-jsonschemacontext">PopChildContext(JsonSchemaContext)</h2>
 <p>Pops the most recently pushed child context without committing changes.</p>
-<pre><code class="language-csharp">public void PopChildContext(ref JsonSchemaContext childContext)
+<pre><code class="language-csharp">public void PopChildContext(in JsonSchemaContext childContext)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>childContext</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td></td>
 </tr>
 </tbody>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetformat-typedeclaration-ref-string">TryGetFormat(TypeDeclaration, ref string)</h2>
+<h2 id="trygetformat-typedeclaration-string">TryGetFormat(TypeDeclaration, string?)</h2>
 <p>Try to get the format for the type declaration.</p>
-<pre><code class="language-csharp">public abstract bool TryGetFormat(TypeDeclaration typeDeclaration, ref string format)
+<pre><code class="language-csharp">public abstract bool TryGetFormat(TypeDeclaration typeDeclaration, out string? format)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>format</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The format, or <code>null</code> if the format is not available.</td>
 </tr>
 </tbody>

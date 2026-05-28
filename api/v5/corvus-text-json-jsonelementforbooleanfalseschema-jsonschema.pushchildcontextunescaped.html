@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonElementForBooleanFalseSchema.JsonSchema.cs#L146">JsonElementForBooleanFalseSchema.JsonSchema.cs</a></p>
-<h2 id="pushchildcontextunescaped-ijsondocument-int-ref-jsonschemacontext-readonlyspan-byte-jsonschemapathprovider">PushChildContextUnescaped(IJsonDocument, int, ref JsonSchemaContext, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider)</h2>
-<pre><code class="language-csharp">public static JsonSchemaContext PushChildContextUnescaped(IJsonDocument parentDocument, int parentDocumentIndex, ref JsonSchemaContext context, ReadOnlySpan&lt;byte&gt; propertyName, JsonSchemaPathProvider evaluationPath)
+<h2 id="pushchildcontextunescaped-ijsondocument-int-jsonschemacontext-readonlyspan-byte-jsonschemapathprovider">PushChildContextUnescaped(IJsonDocument, int, JsonSchemaContext, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider?)</h2>
+<pre><code class="language-csharp">public static JsonSchemaContext PushChildContextUnescaped(IJsonDocument parentDocument, int parentDocumentIndex, ref JsonSchemaContext context, ReadOnlySpan&lt;byte&gt; propertyName, JsonSchemaPathProvider? evaluationPath)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -124,7 +124,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>ref JsonSchemaContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -134,7 +134,7 @@
 </tr>
 <tr>
 <td><code>evaluationPath</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
 </tbody>

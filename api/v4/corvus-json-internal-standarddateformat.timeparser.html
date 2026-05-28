@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardDateFormat.cs#L100">StandardDateFormat.cs</a></p>
-<h2 id="timeparser-readonlyspan-char-ref-object-ref-offsettime">TimeParser(ReadOnlySpan&lt;char&gt;, ref object, ref OffsetTime)</h2>
+<h2 id="timeparser-readonlyspan-char-object-offsettime">TimeParser(ReadOnlySpan&lt;char&gt;, object?, OffsetTime)</h2>
 <p>Parse a time from a string for the <code>time</code> format.</p>
-<pre><code class="language-csharp">public static bool TimeParser(ReadOnlySpan&lt;char&gt; text, ref object state, ref OffsetTime value)
+<pre><code class="language-csharp">public static bool TimeParser(ReadOnlySpan&lt;char&gt; text, in object? state, out OffsetTime value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,12 +120,12 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>ref object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The (unused) state.</td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>ref OffsetTime</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html"><code>OffsetTime</code></a></td>
 <td>The resulting time.</td>
 </tr>
 </tbody>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetnontuplearrayitemstype-typedeclaration-ref-arrayitemstypedeclaration">TryGetNonTupleArrayItemsType(TypeDeclaration, ref ArrayItemsTypeDeclaration)</h2>
+<h2 id="trygetnontuplearrayitemstype-typedeclaration-arrayitemstypedeclaration">TryGetNonTupleArrayItemsType(TypeDeclaration, ArrayItemsTypeDeclaration?)</h2>
 <p>Try to get the non-tuple <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-arrayitemstypedeclaration.html"><code>ArrayItemsTypeDeclaration</code></a> for the type declaration.</p>
-<pre><code class="language-csharp">public abstract bool TryGetNonTupleArrayItemsType(TypeDeclaration typeDeclaration, ref ArrayItemsTypeDeclaration arrayItemsType)
+<pre><code class="language-csharp">public abstract bool TryGetNonTupleArrayItemsType(TypeDeclaration typeDeclaration, out ArrayItemsTypeDeclaration? arrayItemsType)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>arrayItemsType</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-arrayitemstypedeclaration.html"><code>ref ArrayItemsTypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-arrayitemstypedeclaration.html"><code>ArrayItemsTypeDeclaration?</code></a></td>
 <td>The non-tuple array items type, or <code>null</code> if no non-tuple items type is found.</td>
 </tr>
 </tbody>

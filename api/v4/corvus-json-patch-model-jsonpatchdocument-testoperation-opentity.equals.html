@@ -108,21 +108,21 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#equals-object">Equals(object)</a></td>
+<td><a href="#equals-object">Equals(object?)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#equals-ref-t">Equals(ref T)</a></td>
+<td><a href="#equals-t">Equals(T)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#equals-ref-jsonpatchdocument-testoperation-opentity">Equals(ref JsonPatchDocument.TestOperation.OpEntity)</a></td>
+<td><a href="#equals-jsonpatchdocument-testoperation-opentity">Equals(JsonPatchDocument.TestOperation.OpEntity)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="equals-object">Equals(object)</h2>
-<pre><code class="language-csharp">public override bool Equals(object obj)
+<h2 id="equals-object">Equals(object?)</h2>
+<pre><code class="language-csharp">public override bool Equals(object? obj)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -136,7 +136,7 @@
 <tbody>
 <tr>
 <td><code>obj</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -163,8 +163,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-t">Equals(ref T)</h2>
-<pre><code class="language-csharp">public bool Equals&lt;T&gt;(ref T other)
+<h2 id="equals-t">Equals(T)</h2>
+<pre><code class="language-csharp">public bool Equals&lt;T&gt;(in T other)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
@@ -179,7 +179,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -208,8 +208,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="equals-ref-jsonpatchdocument-testoperation-opentity">Equals(ref JsonPatchDocument.TestOperation.OpEntity)</h2>
-<pre><code class="language-csharp">public bool Equals(ref JsonPatchDocument.TestOperation.OpEntity other)
+<h2 id="equals-jsonpatchdocument-testoperation-opentity">Equals(JsonPatchDocument.TestOperation.OpEntity)</h2>
+<pre><code class="language-csharp">public bool Equals(in JsonPatchDocument.TestOperation.OpEntity other)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -223,7 +223,7 @@
 <tbody>
 <tr>
 <td><code>other</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-patch-model-jsonpatchdocument-testoperation-opentity.html"><code>ref JsonPatchDocument.TestOperation.OpEntity</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-patch-model-jsonpatchdocument-testoperation-opentity.html"><code>JsonPatchDocument.TestOperation.OpEntity</code></a></td>
 <td></td>
 </tr>
 </tbody>

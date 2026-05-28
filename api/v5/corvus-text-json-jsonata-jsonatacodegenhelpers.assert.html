@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="assert-ref-jsonelement-ref-jsonelement-jsonworkspace">Assert(ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="assert-jsonelement-jsonelement-jsonworkspace">Assert(JsonElement, JsonElement, JsonWorkspace)</h2>
 <p>JSONata <code>$assert</code> function — throws D3141 if the condition is false.</p>
-<pre><code class="language-csharp">public static JsonElement Assert(ref JsonElement condition, ref JsonElement messageElement, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement Assert(in JsonElement condition, in JsonElement messageElement, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>condition</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>messageElement</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="arrayindex-ref-jsonelement-int">ArrayIndex(ref JsonElement, int)</h2>
+<h2 id="arrayindex-jsonelement-int">ArrayIndex(JsonElement, int)</h2>
 <p>Gets an element from an array by index, supporting negative indices (from end). Used for global (post-aggregation) indexing.</p>
-<pre><code class="language-csharp">public static JsonElement ArrayIndex(ref JsonElement data, int index)
+<pre><code class="language-csharp">public static JsonElement ArrayIndex(in JsonElement data, int index)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The array element.</td>
 </tr>
 <tr>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="stringconcat3-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">StringConcat3(ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="stringconcat3-jsonelement-jsonelement-jsonelement-jsonworkspace">StringConcat3(JsonElement, JsonElement, JsonElement, JsonWorkspace)</h2>
 <p>Multi-operand string concatenation. Uses a single <code>Utf8ValueStringBuilder</code> pass instead of creating intermediate string elements.</p>
-<pre><code class="language-csharp">public static JsonElement StringConcat3(ref JsonElement a, ref JsonElement b, ref JsonElement c, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement StringConcat3(in JsonElement a, in JsonElement b, in JsonElement c, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,17 +114,17 @@
 <tbody>
 <tr>
 <td><code>a</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>b</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>c</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

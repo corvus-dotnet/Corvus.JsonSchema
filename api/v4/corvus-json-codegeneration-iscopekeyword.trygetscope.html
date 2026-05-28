@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetscope-ref-jsonelement-ref-string">TryGetScope(ref JsonElement, ref string)</h2>
+<h2 id="trygetscope-jsonelement-string">TryGetScope(JsonElement, string?)</h2>
 <p>Gets the scope for the keyword.</p>
-<pre><code class="language-csharp">public abstract bool TryGetScope(ref JsonElement schema, ref string scope)
+<pre><code class="language-csharp">public abstract bool TryGetScope(in JsonElement schema, out string? scope)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>schema</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The parent schema containing the keyword.</td>
 </tr>
 <tr>
 <td><code>scope</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>ref string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The scope defined by the keyword.</td>
 </tr>
 </tbody>

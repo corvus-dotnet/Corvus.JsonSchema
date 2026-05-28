@@ -97,9 +97,28 @@
             <h1>FixedJsonValueDocument&lt;T&gt;.ForNumberFromSpan Method</h1>
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
-<strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/FixedJsonValueDocument.cs#L87">FixedJsonValueDocument.cs</a></p>
+<strong>Assembly:</strong> Corvus.Text.Json.dll</p>
+<h2 id="overloads">Overloads</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#fornumberfromspan-readonlyspan-byte">ForNumberFromSpan(ReadOnlySpan&lt;byte&gt;)</a></td>
+<td>Creates a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-fixedjsonvaluedocument-t.html"><code>FixedJsonValueDocument</code></a> for a number value from a span, copying the data into the document's internal buffer (zero heap...</td>
+</tr>
+<tr>
+<td><a href="#fornumberfromspan-readonlyspan-char">ForNumberFromSpan(ReadOnlySpan&lt;char&gt;)</a></td>
+<td>Creates a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-fixedjsonvaluedocument-t.html"><code>FixedJsonValueDocument</code></a> for a number value from a char span, transcoding UTF-16 to UTF-8 (zero heap allocation).</td>
+</tr>
+</tbody>
+</table>
 <h2 id="fornumberfromspan-readonlyspan-byte">ForNumberFromSpan(ReadOnlySpan&lt;byte&gt;)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/FixedJsonValueDocument.cs#L87">FixedJsonValueDocument.cs</a></p>
 <p>Creates a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-fixedjsonvaluedocument-t.html"><code>FixedJsonValueDocument</code></a> for a number value from a span, copying the data into the document's internal buffer (zero heap allocation).</p>
 <pre><code class="language-csharp">public static FixedJsonValueDocument&lt;T&gt; ForNumberFromSpan(ReadOnlySpan&lt;byte&gt; rawUtf8Number)
 </code></pre>
@@ -142,6 +161,52 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="fornumberfromspan-readonlyspan-char">ForNumberFromSpan(ReadOnlySpan&lt;char&gt;)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/FixedJsonValueDocument.cs#L113">FixedJsonValueDocument.cs</a></p>
+<p>Creates a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-fixedjsonvaluedocument-t.html"><code>FixedJsonValueDocument</code></a> for a number value from a char span, transcoding UTF-16 to UTF-8 (zero heap allocation).</p>
+<pre><code class="language-csharp">public static FixedJsonValueDocument&lt;T&gt; ForNumberFromSpan(ReadOnlySpan&lt;char&gt; chars)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chars</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;char&gt;</code></a></td>
+<td>The number text as chars (e.g., &quot;42&quot;, &quot;3.14&quot;). Must contain only ASCII digits, sign, decimal point, and exponent characters.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-1">Returns</h3>
+<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-fixedjsonvaluedocument-t.html"><code>FixedJsonValueDocument&lt;T&gt;</code></a></p>
+<p>A pooled document instance wrapping the number value.</p>
+<h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
         </div>
         <div class="api-feedback">
             <div class="api-feedback__inner">

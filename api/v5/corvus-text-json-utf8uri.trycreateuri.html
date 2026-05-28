@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Uri.cs#L202">Utf8Uri.cs</a></p>
-<h2 id="trycreateuri-readonlyspan-byte-ref-utf8uri">TryCreateUri(ReadOnlySpan&lt;byte&gt;, ref Utf8Uri)</h2>
+<h2 id="trycreateuri-readonlyspan-byte-utf8uri">TryCreateUri(ReadOnlySpan&lt;byte&gt;, Utf8Uri)</h2>
 <p>Tries to create a new UTF-8 URI from the specified URI bytes.</p>
-<pre><code class="language-csharp">public static bool TryCreateUri(ReadOnlySpan&lt;byte&gt; uri, ref Utf8Uri utf8Uri)
+<pre><code class="language-csharp">public static bool TryCreateUri(ReadOnlySpan&lt;byte&gt; uri, out Utf8Uri utf8Uri)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>utf8Uri</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8uri.html"><code>ref Utf8Uri</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8uri.html"><code>Utf8Uri</code></a></td>
 <td>When this method returns, contains the created UTF-8 URI if successful; otherwise, the default value.</td>
 </tr>
 </tbody>

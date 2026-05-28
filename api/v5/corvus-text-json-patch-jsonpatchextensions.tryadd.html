@@ -108,21 +108,21 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#tryadd-ref-jsonelement-mutable-readonlyspan-byte-ref-jsonelement-source">TryAdd(ref JsonElement.Mutable, ReadOnlySpan&lt;byte&gt;, ref JsonElement.Source)</a></td>
+<td><a href="#tryadd-jsonelement-mutable-readonlyspan-byte-jsonelement-source">TryAdd(JsonElement.Mutable, ReadOnlySpan&lt;byte&gt;, JsonElement.Source)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#tryadd-ref-jsonelement-mutable-readonlyspan-char-ref-jsonelement-source">TryAdd(ref JsonElement.Mutable, ReadOnlySpan&lt;char&gt;, ref JsonElement.Source)</a></td>
+<td><a href="#tryadd-jsonelement-mutable-readonlyspan-char-jsonelement-source">TryAdd(JsonElement.Mutable, ReadOnlySpan&lt;char&gt;, JsonElement.Source)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#tryadd-ref-jsonelement-mutable-string-ref-jsonelement-source">TryAdd(ref JsonElement.Mutable, string, ref JsonElement.Source)</a></td>
+<td><a href="#tryadd-jsonelement-mutable-string-jsonelement-source">TryAdd(JsonElement.Mutable, string, JsonElement.Source)</a></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="tryadd-ref-jsonelement-mutable-readonlyspan-byte-ref-jsonelement-source">TryAdd(ref JsonElement.Mutable, ReadOnlySpan&lt;byte&gt;, ref JsonElement.Source)</h2>
-<pre><code class="language-csharp">public static bool TryAdd(ref JsonElement.Mutable target, ReadOnlySpan&lt;byte&gt; path, ref JsonElement.Source value)
+<h2 id="tryadd-jsonelement-mutable-readonlyspan-byte-jsonelement-source">TryAdd(JsonElement.Mutable, ReadOnlySpan&lt;byte&gt;, JsonElement.Source)</h2>
+<pre><code class="language-csharp">public static bool TryAdd(ref JsonElement.Mutable target, ReadOnlySpan&lt;byte&gt; path, in JsonElement.Source value)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -136,7 +136,7 @@
 <tbody>
 <tr>
 <td><code>target</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>ref JsonElement.Mutable</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>JsonElement.Mutable</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -146,7 +146,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>ref JsonElement.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -173,8 +173,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryadd-ref-jsonelement-mutable-readonlyspan-char-ref-jsonelement-source">TryAdd(ref JsonElement.Mutable, ReadOnlySpan&lt;char&gt;, ref JsonElement.Source)</h2>
-<pre><code class="language-csharp">public static bool TryAdd(ref JsonElement.Mutable target, ReadOnlySpan&lt;char&gt; path, ref JsonElement.Source value)
+<h2 id="tryadd-jsonelement-mutable-readonlyspan-char-jsonelement-source">TryAdd(JsonElement.Mutable, ReadOnlySpan&lt;char&gt;, JsonElement.Source)</h2>
+<pre><code class="language-csharp">public static bool TryAdd(ref JsonElement.Mutable target, ReadOnlySpan&lt;char&gt; path, in JsonElement.Source value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -188,7 +188,7 @@
 <tbody>
 <tr>
 <td><code>target</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>ref JsonElement.Mutable</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>JsonElement.Mutable</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -198,7 +198,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>ref JsonElement.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -225,8 +225,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryadd-ref-jsonelement-mutable-string-ref-jsonelement-source">TryAdd(ref JsonElement.Mutable, string, ref JsonElement.Source)</h2>
-<pre><code class="language-csharp">public static bool TryAdd(ref JsonElement.Mutable target, string path, ref JsonElement.Source value)
+<h2 id="tryadd-jsonelement-mutable-string-jsonelement-source">TryAdd(JsonElement.Mutable, string, JsonElement.Source)</h2>
+<pre><code class="language-csharp">public static bool TryAdd(ref JsonElement.Mutable target, string path, in JsonElement.Source value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -240,7 +240,7 @@
 <tbody>
 <tr>
 <td><code>target</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>ref JsonElement.Mutable</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-mutable.html"><code>JsonElement.Mutable</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -250,7 +250,7 @@
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>ref JsonElement.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
 <td></td>
 </tr>
 </tbody>

@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="from-ref-t">From(ref T)</h2>
+<h2 id="from-t">From(T)</h2>
 <p>Gets an instance of the JSON value from another element.</p>
-<pre><code class="language-csharp">public static JsonString From&lt;T&gt;(ref T instance)
+<pre><code class="language-csharp">public static JsonString From&lt;T&gt;(in T instance)
     where T : struct, IJsonElement&lt;T&gt;
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>instance</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td></td>
 </tr>
 </tbody>

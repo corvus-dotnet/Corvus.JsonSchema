@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
-<h2 id="typetime-ref-t-ref-validationcontext-validationlevel-string-string">TypeTime(ref T, ref ValidationContext, ValidationLevel, string, string)</h2>
+<h2 id="typetime-t-validationcontext-validationlevel-string-string">TypeTime(T, ValidationContext, ValidationLevel, string?, string?)</h2>
 <p>Validates the format time.</p>
-<pre><code class="language-csharp">public static ValidationContext TypeTime&lt;T&gt;(ref T instance, ref ValidationContext validationContext, ValidationLevel level, string typeKeyword, string formatKeyword)
+<pre><code class="language-csharp">public static ValidationContext TypeTime&lt;T&gt;(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword, string? formatKeyword)
     where T : struct, IJsonValue&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -131,12 +131,12 @@
 <tbody>
 <tr>
 <td><code>instance</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The instance to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -146,12 +146,12 @@
 </tr>
 <tr>
 <td><code>typeKeyword</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The type keyword. <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>formatKeyword</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The format keyword. <em>(optional)</em></td>
 </tr>
 </tbody>

@@ -108,15 +108,15 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#appendjoin-string-object">AppendJoin(string, object[])</a></td>
+<td><a href="#appendjoin-string-object">AppendJoin(string?, object[])</a></td>
 <td>Appends a formatted string to the builder, joining the parameters with a separator string.</td>
 </tr>
 <tr>
-<td><a href="#appendjoin-string-ienumerable-tvalue">AppendJoin(string, IEnumerable&lt;TValue&gt;)</a></td>
+<td><a href="#appendjoin-string-ienumerable-tvalue">AppendJoin(string?, IEnumerable&lt;TValue&gt;)</a></td>
 <td>Appends a formatted string to the builder, joining the parameters with a separator string.</td>
 </tr>
 <tr>
-<td><a href="#appendjoin-string-string">AppendJoin(string, string[])</a></td>
+<td><a href="#appendjoin-string-string">AppendJoin(string?, string[])</a></td>
 <td>Appends a formatted string to the builder, joining the parameters with a separator string.</td>
 </tr>
 <tr>
@@ -133,9 +133,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="appendjoin-string-object">AppendJoin(string, object[])</h2>
+<h2 id="appendjoin-string-object">AppendJoin(string?, object[])</h2>
 <p>Appends a formatted string to the builder, joining the parameters with a separator string.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendJoin(string separator, object[] values)
+<pre><code class="language-csharp">public CodeGenerator AppendJoin(string? separator, object[] values)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -149,7 +149,7 @@
 <tbody>
 <tr>
 <td><code>separator</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The separator.</td>
 </tr>
 <tr>
@@ -182,9 +182,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendjoin-string-ienumerable-tvalue">AppendJoin(string, IEnumerable&lt;TValue&gt;)</h2>
+<h2 id="appendjoin-string-ienumerable-tvalue">AppendJoin(string?, IEnumerable&lt;TValue&gt;)</h2>
 <p>Appends a formatted string to the builder, joining the parameters with a separator string.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendJoin&lt;TValue&gt;(string separator, IEnumerable&lt;TValue&gt; values)
+<pre><code class="language-csharp">public CodeGenerator AppendJoin&lt;TValue&gt;(string? separator, IEnumerable&lt;TValue&gt; values)
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
 <table>
@@ -213,7 +213,7 @@
 <tbody>
 <tr>
 <td><code>separator</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The separator.</td>
 </tr>
 <tr>
@@ -246,9 +246,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendjoin-string-string">AppendJoin(string, string[])</h2>
+<h2 id="appendjoin-string-string">AppendJoin(string?, string[])</h2>
 <p>Appends a formatted string to the builder, joining the parameters with a separator string.</p>
-<pre><code class="language-csharp">public CodeGenerator AppendJoin(string separator, string[] values)
+<pre><code class="language-csharp">public CodeGenerator AppendJoin(string? separator, string[] values)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -262,7 +262,7 @@
 <tbody>
 <tr>
 <td><code>separator</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The separator.</td>
 </tr>
 <tr>

@@ -108,18 +108,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#operator-ref-jsonpatchdocument-ref-jsonpatchdocument">operator ==(ref JsonPatchDocument, ref JsonPatchDocument)</a></td>
+<td><a href="#operator-jsonpatchdocument-jsonpatchdocument">operator ==(JsonPatchDocument, JsonPatchDocument)</a></td>
 <td>Operator ==.</td>
 </tr>
 <tr>
-<td><a href="#operator-ref-jsonpatchdocument-ref-jsonelement">operator ==(ref JsonPatchDocument, ref JsonElement)</a></td>
+<td><a href="#operator-jsonpatchdocument-jsonelement">operator ==(JsonPatchDocument, JsonElement)</a></td>
 <td>Operator ==.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="operator-ref-jsonpatchdocument-ref-jsonpatchdocument">operator ==(ref JsonPatchDocument, ref JsonPatchDocument)</h2>
+<h2 id="operator-jsonpatchdocument-jsonpatchdocument">operator ==(JsonPatchDocument, JsonPatchDocument)</h2>
 <p>Operator ==.</p>
-<pre><code class="language-csharp">public static bool operator ==(ref JsonPatchDocument left, ref JsonPatchDocument right)
+<pre><code class="language-csharp">public static bool operator ==(in JsonPatchDocument left, in JsonPatchDocument right)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -133,12 +133,12 @@
 <tbody>
 <tr>
 <td><code>left</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>ref JsonPatchDocument</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a></td>
 <td>The lhs of the operator.</td>
 </tr>
 <tr>
 <td><code>right</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>ref JsonPatchDocument</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a></td>
 <td>The rhs of the operator.</td>
 </tr>
 </tbody>
@@ -166,9 +166,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="operator-ref-jsonpatchdocument-ref-jsonelement">operator ==(ref JsonPatchDocument, ref JsonElement)</h2>
+<h2 id="operator-jsonpatchdocument-jsonelement">operator ==(JsonPatchDocument, JsonElement)</h2>
 <p>Operator ==.</p>
-<pre><code class="language-csharp">public static bool operator ==(ref JsonPatchDocument left, ref JsonElement right)
+<pre><code class="language-csharp">public static bool operator ==(in JsonPatchDocument left, in JsonElement right)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -182,12 +182,12 @@
 <tbody>
 <tr>
 <td><code>left</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>ref JsonPatchDocument</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a></td>
 <td>The lhs of the operator.</td>
 </tr>
 <tr>
 <td><code>right</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The rhs of the operator.</td>
 </tr>
 </tbody>

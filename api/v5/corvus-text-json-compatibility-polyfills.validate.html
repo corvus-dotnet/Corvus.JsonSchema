@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Compatibility<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Compatibility/Polyfills.cs#L18">Polyfills.cs</a></p>
-<h2 id="validate-t-ref-validationcontext-validationlevel">Validate(T, ref ValidationContext, ValidationLevel)</h2>
-<pre><code class="language-csharp">public static ValidationContext Validate&lt;T&gt;(T element, ref ValidationContext context, ValidationLevel validationLevel)
+<h2 id="validate-t-validationcontext-validationlevel">Validate(T, ValidationContext, ValidationLevel)</h2>
+<pre><code class="language-csharp">public static ValidationContext Validate&lt;T&gt;(T element, in ValidationContext context, ValidationLevel validationLevel)
     where T : struct, IJsonElement&lt;T&gt;
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-compatibility-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-compatibility-validationcontext.html"><code>ValidationContext</code></a></td>
 <td></td>
 </tr>
 <tr>

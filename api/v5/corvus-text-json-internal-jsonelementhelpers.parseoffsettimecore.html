@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.DateTime.Core.cs#L71">JsonElementHelpers.DateTime.Core.cs</a></p>
-<h2 id="parseoffsettimecore-readonlyspan-byte-ref-int-ref-int-ref-int-ref-int-ref-int-ref-int-ref-int">ParseOffsetTimeCore(ReadOnlySpan&lt;byte&gt;, ref int, ref int, ref int, ref int, ref int, ref int, ref int)</h2>
+<h2 id="parseoffsettimecore-readonlyspan-byte-int-int-int-int-int-int-int">ParseOffsetTimeCore(ReadOnlySpan&lt;byte&gt;, int, int, int, int, int, int, int)</h2>
 <p>Parses a time string with optional offset in ISO 8601 format and extracts the time and offset components.</p>
-<pre><code class="language-csharp">public static bool ParseOffsetTimeCore(ReadOnlySpan&lt;byte&gt; text, ref int hours, ref int minutes, ref int seconds, ref int milliseconds, ref int microseconds, ref int nanoseconds, ref int offsetSeconds)
+<pre><code class="language-csharp">public static bool ParseOffsetTimeCore(ReadOnlySpan&lt;byte&gt; text, out int hours, out int minutes, out int seconds, out int milliseconds, out int microseconds, out int nanoseconds, out int offsetSeconds)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,37 +120,37 @@
 </tr>
 <tr>
 <td><code>hours</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the hours component of the time (0-23).</td>
 </tr>
 <tr>
 <td><code>minutes</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the minutes component of the time (0-59).</td>
 </tr>
 <tr>
 <td><code>seconds</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the seconds component of the time (0-59).</td>
 </tr>
 <tr>
 <td><code>milliseconds</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the milliseconds component of the time (0-999).</td>
 </tr>
 <tr>
 <td><code>microseconds</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the microseconds component of the time (0-999).</td>
 </tr>
 <tr>
 <td><code>nanoseconds</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the nanoseconds component of the time (0-999).</td>
 </tr>
 <tr>
 <td><code>offsetSeconds</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the timezone offset in seconds from UTC.</td>
 </tr>
 </tbody>

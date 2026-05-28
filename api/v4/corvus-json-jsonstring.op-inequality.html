@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonString.cs#L272">JsonString.cs</a></p>
-<h2 id="operator-ref-jsonstring-ref-jsonstring">operator !=(ref JsonString, ref JsonString)</h2>
+<h2 id="operator-jsonstring-jsonstring">operator !=(JsonString, JsonString)</h2>
 <p>Operator !=.</p>
-<pre><code class="language-csharp">public static bool operator !=(ref JsonString left, ref JsonString right)
+<pre><code class="language-csharp">public static bool operator !=(in JsonString left, in JsonString right)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>left</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>ref JsonString</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a></td>
 <td>The lhs of the operator.</td>
 </tr>
 <tr>
 <td><code>right</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>ref JsonString</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonstring.html"><code>JsonString</code></a></td>
 <td>The rhs of the operator.</td>
 </tr>
 </tbody>

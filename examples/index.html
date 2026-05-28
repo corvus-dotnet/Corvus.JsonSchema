@@ -152,6 +152,15 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-path.html">JSONPath Query Language</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -245,6 +254,42 @@
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
                             </li>
                 </ul>
             </div>
@@ -401,6 +446,66 @@
                             <span class="card__tag">029</span>
                             <h3 class="card__title">Json Path</h3>
                             <p class="card__body">This recipe demonstrates how to query JSON data using [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) expressions with the `Corvus.Text.Json.JsonPath` library.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/open-api-client.html">
+                            <span class="card__tag">030</span>
+                            <h3 class="card__title">Open Api Client</h3>
+                            <p class="card__body">This recipe demonstrates how to generate and use a strongly-typed HTTP client from an [OpenAPI 3.2](https://spec.openapis.org/oas/v3.2.0) specification using `corvusjson openapi-client`.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/open-api-server.html">
+                            <span class="card__tag">031</span>
+                            <h3 class="card__title">Open Api Server</h3>
+                            <p class="card__body">This recipe demonstrates how to generate and implement an ASP.NET Core minimal API server from an [OpenAPI 3.2](https://spec.openapis.org/oas/v3.2.0) specification using `corvusjson openapi-server`.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">
+                            <span class="card__tag">032</span>
+                            <h3 class="card__title">Open Api Advanced Client</h3>
+                            <p class="card__body">Demonstrates advanced OpenAPI 3.2 client features using a **realistic extended Petstore** API.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">
+                            <span class="card__tag">033</span>
+                            <h3 class="card__title">Open Api Advanced Server</h3>
+                            <p class="card__body">Demonstrates the server-side implementation of the extended Petstore API, showing how the generated code handles parameter deserialization, cookie extraction, streaming, file uploads, and form-encoded bodies &#x2014; so your handler logic stays focused on business rules.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">
+                            <span class="card__tag">034</span>
+                            <h3 class="card__title">Open Api End To End</h3>
+                            <p class="card__body">Open Api End To End</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/open-api-callback-server.html">
+                            <span class="card__tag">035</span>
+                            <h3 class="card__title">Open Api Callback Server</h3>
+                            <p class="card__body">This recipe shows the **receiver side** of OpenAPI callbacks and webhooks: you generate ASP.NET Core minimal API endpoints that a remote service can call when it needs to notify your application.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/open-api-callback-client.html">
+                            <span class="card__tag">036</span>
+                            <h3 class="card__title">Open Api Callback Client</h3>
+                            <p class="card__body">This recipe shows how to generate the **server-side sender** for OpenAPI webhooks and callbacks.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/async-api-producer.html">
+                            <span class="card__tag">037</span>
+                            <h3 class="card__title">Async Api Producer</h3>
+                            <p class="card__body">Demonstrates how to **publish messages** using a generated AsyncAPI 3.0 producer.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/async-api-consumer.html">
+                            <span class="card__tag">038</span>
+                            <h3 class="card__title">Async Api Consumer</h3>
+                            <p class="card__body">Demonstrates how to **receive and handle messages** using a generated AsyncAPI 3.0 consumer.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">
+                            <span class="card__tag">039</span>
+                            <h3 class="card__title">Async Api End To End</h3>
+                            <p class="card__body">Demonstrates a complete AsyncAPI workflow with producer and consumer components using `InMemoryMessageTransport` for testing.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/async-api-authentication.html">
+                            <span class="card__tag">040</span>
+                            <h3 class="card__title">Async Api Authentication</h3>
+                            <p class="card__body">Demonstrates every **authentication provider** supported by the AsyncAPI runtime.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">
+                            <span class="card__tag">041</span>
+                            <h3 class="card__title">Pattern Property Matcher</h3>
+                            <p class="card__body">This recipe demonstrates generated helpers for JSON Schema `patternProperties`.</p>
                         </a>
             </div>
         </div>

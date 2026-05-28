@@ -108,7 +108,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#match-ref-tcontext-matcher-jsonpatchdocument-addoperation-tcontext-tresult-matcher-jsonpatchdocument-removeoperation-tcontext-tresult-matcher-jsonpatchdocument-replaceoperation-tcontext-tresult-matcher-jsonpatchdocument-moveoperation-tcontext-tresult-matcher-jsonpatchdocument-copyoperation-tcontext-tresult-matcher-jsonpatchdocument-testoperation-tcontext-tresult-matcher-jsonpatchdocument-patchoperation-mutable-tcontext-tresult">Match(ref TContext, Matcher&lt;JsonPatchDocument.AddOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.RemoveOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.ReplaceOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.MoveOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.CopyOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.TestOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.PatchOperation.Mutable, TContext, TResult&gt;)</a></td>
+<td><a href="#match-tcontext-matcher-jsonpatchdocument-addoperation-tcontext-tresult-matcher-jsonpatchdocument-removeoperation-tcontext-tresult-matcher-jsonpatchdocument-replaceoperation-tcontext-tresult-matcher-jsonpatchdocument-moveoperation-tcontext-tresult-matcher-jsonpatchdocument-copyoperation-tcontext-tresult-matcher-jsonpatchdocument-testoperation-tcontext-tresult-matcher-jsonpatchdocument-patchoperation-mutable-tcontext-tresult">Match(TContext, Matcher&lt;JsonPatchDocument.AddOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.RemoveOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.ReplaceOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.MoveOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.CopyOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.TestOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.PatchOperation.Mutable, TContext, TResult&gt;)</a></td>
 <td></td>
 </tr>
 <tr>
@@ -117,8 +117,8 @@
 </tr>
 </tbody>
 </table>
-<h2 id="match-ref-tcontext-matcher-jsonpatchdocument-addoperation-tcontext-tresult-matcher-jsonpatchdocument-removeoperation-tcontext-tresult-matcher-jsonpatchdocument-replaceoperation-tcontext-tresult-matcher-jsonpatchdocument-moveoperation-tcontext-tresult-matcher-jsonpatchdocument-copyoperation-tcontext-tresult-matcher-jsonpatchdocument-testoperation-tcontext-tresult-matcher-jsonpatchdocument-patchoperation-mutable-tcontext-tresult">Match(ref TContext, Matcher&lt;JsonPatchDocument.AddOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.RemoveOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.ReplaceOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.MoveOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.CopyOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.TestOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.PatchOperation.Mutable, TContext, TResult&gt;)</h2>
-<pre><code class="language-csharp">public TResult Match&lt;TContext, TResult&gt;(ref TContext context, Matcher&lt;JsonPatchDocument.AddOperation, TContext, TResult&gt; matchAddOperation, Matcher&lt;JsonPatchDocument.RemoveOperation, TContext, TResult&gt; matchRemoveOperation, Matcher&lt;JsonPatchDocument.ReplaceOperation, TContext, TResult&gt; matchReplaceOperation, Matcher&lt;JsonPatchDocument.MoveOperation, TContext, TResult&gt; matchMoveOperation, Matcher&lt;JsonPatchDocument.CopyOperation, TContext, TResult&gt; matchCopyOperation, Matcher&lt;JsonPatchDocument.TestOperation, TContext, TResult&gt; matchTestOperation, Matcher&lt;JsonPatchDocument.PatchOperation.Mutable, TContext, TResult&gt; defaultMatch)
+<h2 id="match-tcontext-matcher-jsonpatchdocument-addoperation-tcontext-tresult-matcher-jsonpatchdocument-removeoperation-tcontext-tresult-matcher-jsonpatchdocument-replaceoperation-tcontext-tresult-matcher-jsonpatchdocument-moveoperation-tcontext-tresult-matcher-jsonpatchdocument-copyoperation-tcontext-tresult-matcher-jsonpatchdocument-testoperation-tcontext-tresult-matcher-jsonpatchdocument-patchoperation-mutable-tcontext-tresult">Match(TContext, Matcher&lt;JsonPatchDocument.AddOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.RemoveOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.ReplaceOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.MoveOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.CopyOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.TestOperation, TContext, TResult&gt;, Matcher&lt;JsonPatchDocument.PatchOperation.Mutable, TContext, TResult&gt;)</h2>
+<pre><code class="language-csharp">public TResult Match&lt;TContext, TResult&gt;(in TContext context, Matcher&lt;JsonPatchDocument.AddOperation, TContext, TResult&gt; matchAddOperation, Matcher&lt;JsonPatchDocument.RemoveOperation, TContext, TResult&gt; matchRemoveOperation, Matcher&lt;JsonPatchDocument.ReplaceOperation, TContext, TResult&gt; matchReplaceOperation, Matcher&lt;JsonPatchDocument.MoveOperation, TContext, TResult&gt; matchMoveOperation, Matcher&lt;JsonPatchDocument.CopyOperation, TContext, TResult&gt; matchCopyOperation, Matcher&lt;JsonPatchDocument.TestOperation, TContext, TResult&gt; matchTestOperation, Matcher&lt;JsonPatchDocument.PatchOperation.Mutable, TContext, TResult&gt; defaultMatch)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -132,7 +132,7 @@
 <tbody>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>

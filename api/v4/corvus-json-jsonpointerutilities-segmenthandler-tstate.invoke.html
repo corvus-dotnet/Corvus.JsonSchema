@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="invoke-bool-readonlyspan-char-jsonelement-ref-tstate">Invoke(bool, ReadOnlySpan&lt;char&gt;, JsonElement, ref TState)</h2>
+<h2 id="invoke-bool-readonlyspan-char-jsonelement-tstate">Invoke(bool, ReadOnlySpan&lt;char&gt;, JsonElement, TState)</h2>
 <pre><code class="language-csharp">public virtual void Invoke(bool isLastSegment, ReadOnlySpan&lt;char&gt; segment, JsonElement element, ref TState state)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -128,7 +128,7 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td></td>
 </tr>
 </tbody>

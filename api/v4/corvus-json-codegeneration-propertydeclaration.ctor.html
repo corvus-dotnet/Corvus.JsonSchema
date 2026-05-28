@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="propertydeclaration-typedeclaration-string-typedeclaration-requiredoroptional-localorcomposed-iobjectvalidationkeyword-iobjectrequiredpropertyvalidationkeyword">PropertyDeclaration(TypeDeclaration, string, TypeDeclaration, RequiredOrOptional, LocalOrComposed, IObjectValidationKeyword, IObjectRequiredPropertyValidationKeyword)</h2>
+<h2 id="propertydeclaration-typedeclaration-string-typedeclaration-requiredoroptional-localorcomposed-iobjectvalidationkeyword-iobjectrequiredpropertyvalidationkeyword">PropertyDeclaration(TypeDeclaration, string, TypeDeclaration, RequiredOrOptional, LocalOrComposed, IObjectValidationKeyword?, IObjectRequiredPropertyValidationKeyword?)</h2>
 <p>Represents a property defined on a type.</p>
-<pre><code class="language-csharp">public PropertyDeclaration(TypeDeclaration owner, string jsonPropertyName, TypeDeclaration propertyType, RequiredOrOptional requiredOrOptional, LocalOrComposed localOrComposed, IObjectValidationKeyword keyword, IObjectRequiredPropertyValidationKeyword requiredKeyword)
+<pre><code class="language-csharp">public PropertyDeclaration(TypeDeclaration owner, string jsonPropertyName, TypeDeclaration propertyType, RequiredOrOptional requiredOrOptional, LocalOrComposed localOrComposed, IObjectValidationKeyword? keyword, IObjectRequiredPropertyValidationKeyword? requiredKeyword)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -139,12 +139,12 @@
 </tr>
 <tr>
 <td><code>keyword</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-iobjectvalidationkeyword.html"><code>IObjectValidationKeyword</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-iobjectvalidationkeyword.html"><code>IObjectValidationKeyword?</code></a></td>
 <td>The keyword that provided the property.</td>
 </tr>
 <tr>
 <td><code>requiredKeyword</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-iobjectrequiredpropertyvalidationkeyword.html"><code>IObjectRequiredPropertyValidationKeyword</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-iobjectrequiredpropertyvalidationkeyword.html"><code>IObjectRequiredPropertyValidationKeyword?</code></a></td>
 <td>The keyword that made this a required property.</td>
 </tr>
 </tbody>

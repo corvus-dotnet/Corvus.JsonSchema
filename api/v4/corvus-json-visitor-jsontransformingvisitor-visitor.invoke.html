@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Json.Visitor<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Visitor/JsonTransformingVisitor.cs#L1">JsonTransformingVisitor.cs</a></p>
-<h2 id="invoke-readonlyspan-char-ref-jsonany-ref-visitresult">Invoke(ReadOnlySpan&lt;char&gt;, ref JsonAny, ref VisitResult)</h2>
-<pre><code class="language-csharp">public virtual void Invoke(ReadOnlySpan&lt;char&gt; path, ref JsonAny nodeToVisit, ref VisitResult result)
+<h2 id="invoke-readonlyspan-char-jsonany-visitresult">Invoke(ReadOnlySpan&lt;char&gt;, JsonAny, VisitResult)</h2>
+<pre><code class="language-csharp">public virtual void Invoke(ReadOnlySpan&lt;char&gt; path, in JsonAny nodeToVisit, ref VisitResult result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,12 +119,12 @@
 </tr>
 <tr>
 <td><code>nodeToVisit</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>ref JsonAny</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonany.html"><code>JsonAny</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-visitor-visitresult.html"><code>ref VisitResult</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-visitor-visitresult.html"><code>VisitResult</code></a></td>
 <td></td>
 </tr>
 </tbody>

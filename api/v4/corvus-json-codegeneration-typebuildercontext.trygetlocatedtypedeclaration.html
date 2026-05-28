@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetlocatedtypedeclaration-jsonreference-ref-typedeclaration">TryGetLocatedTypeDeclaration(JsonReference, ref TypeDeclaration)</h2>
+<h2 id="trygetlocatedtypedeclaration-jsonreference-typedeclaration">TryGetLocatedTypeDeclaration(JsonReference, TypeDeclaration?)</h2>
 <p>Try to get a located type declaration.</p>
-<pre><code class="language-csharp">public bool TryGetLocatedTypeDeclaration(JsonReference location, ref TypeDeclaration typeDeclaration)
+<pre><code class="language-csharp">public bool TryGetLocatedTypeDeclaration(JsonReference location, out TypeDeclaration? typeDeclaration)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
 <td><code>typeDeclaration</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>ref TypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
 <td>The resulting type declaration.</td>
 </tr>
 </tbody>

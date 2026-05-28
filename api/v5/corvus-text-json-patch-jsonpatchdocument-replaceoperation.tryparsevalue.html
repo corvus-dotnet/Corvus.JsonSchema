@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="tryparsevalue-ref-utf8jsonreader-ref-nullable-jsonpatchdocument-replaceoperation">TryParseValue(ref Utf8JsonReader, ref Nullable&lt;JsonPatchDocument.ReplaceOperation&gt;)</h2>
-<pre><code class="language-csharp">public static bool TryParseValue(ref Utf8JsonReader reader, ref Nullable&lt;JsonPatchDocument.ReplaceOperation&gt; result)
+<h2 id="tryparsevalue-utf8jsonreader-nullable-jsonpatchdocument-replaceoperation">TryParseValue(Utf8JsonReader, Nullable&lt;JsonPatchDocument.ReplaceOperation&gt;)</h2>
+<pre><code class="language-csharp">public static bool TryParseValue(ref Utf8JsonReader reader, out Nullable&lt;JsonPatchDocument.ReplaceOperation&gt; result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -113,12 +113,12 @@
 <tbody>
 <tr>
 <td><code>reader</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonreader.html"><code>ref Utf8JsonReader</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonreader.html"><code>Utf8JsonReader</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>ref Nullable&lt;JsonPatchDocument.ReplaceOperation&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>Nullable&lt;JsonPatchDocument.ReplaceOperation&gt;</code></a></td>
 <td></td>
 </tr>
 </tbody>

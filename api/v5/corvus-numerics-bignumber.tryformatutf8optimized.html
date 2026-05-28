@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Numerics<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.OptimizedFormatting.cs#L147">BigNumber.OptimizedFormatting.cs</a></p>
-<h2 id="tryformatutf8optimized-span-byte-ref-int-readonlyspan-char-iformatprovider">TryFormatUtf8Optimized(Span&lt;byte&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</h2>
+<h2 id="tryformatutf8optimized-span-byte-int-readonlyspan-char-iformatprovider">TryFormatUtf8Optimized(Span&lt;byte&gt;, int, ReadOnlySpan&lt;char&gt;, IFormatProvider?)</h2>
 <p>Tries to format this instance into the provided UTF-8 span with zero allocations.</p>
-<pre><code class="language-csharp">public bool TryFormatUtf8Optimized(Span&lt;byte&gt; utf8Destination, ref int bytesWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider provider)
+<pre><code class="language-csharp">public bool TryFormatUtf8Optimized(Span&lt;byte&gt; utf8Destination, out int bytesWritten, ReadOnlySpan&lt;char&gt; format, IFormatProvider? provider)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>bytesWritten</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of bytes written.</td>
 </tr>
 <tr>
@@ -130,7 +130,7 @@
 </tr>
 <tr>
 <td><code>provider</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.iformatprovider"><code>IFormatProvider?</code></a></td>
 <td>The format provider.</td>
 </tr>
 </tbody>

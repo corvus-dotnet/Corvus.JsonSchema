@@ -116,7 +116,7 @@
 <td>Add a set of items to the array.</td>
 </tr>
 <tr>
-<td><a href="#addrange-ref-tarray">AddRange(ref TArray)</a></td>
+<td><a href="#addrange-tarray">AddRange(TArray)</a></td>
 <td>Add a set of items to the array.</td>
 </tr>
 </tbody>
@@ -257,10 +257,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="addrange-ref-tarray">AddRange(ref TArray)</h2>
+<h2 id="addrange-tarray">AddRange(TArray)</h2>
 <p T=""><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/IJsonArray%7BT%7D.cs#L1">IJsonArray.cs</a></p>
 <p>Add a set of items to the array.</p>
-<pre><code class="language-csharp">public abstract T AddRange&lt;TArray&gt;(ref TArray items)
+<pre><code class="language-csharp">public abstract T AddRange&lt;TArray&gt;(in TArray items)
     where TArray : struct, IJsonArray&lt;TArray&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -290,7 +290,7 @@
 <tbody>
 <tr>
 <td><code>items</code></td>
-<td><code>ref TArray</code></td>
+<td><code>TArray</code></td>
 <td>The items to add.</td>
 </tr>
 </tbody>

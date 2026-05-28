@@ -116,27 +116,27 @@
 <td>Appends a range of characters to the end of this builder.</td>
 </tr>
 <tr>
-<td><a href="#append-string">Append(string)</a></td>
+<td><a href="#append-string">Append(string?)</a></td>
 <td>Appends a string to the end of this builder.</td>
 </tr>
 <tr>
-<td><a href="#append-string-int-int">Append(string, int, int)</a></td>
+<td><a href="#append-string-int-int">Append(string?, int, int)</a></td>
 <td>Appends part of a string to the end of this builder.</td>
 </tr>
 <tr>
-<td><a href="#append-stringbuilder">Append(StringBuilder)</a></td>
+<td><a href="#append-stringbuilder">Append(StringBuilder?)</a></td>
 <td>Append the contents of the builder.</td>
 </tr>
 <tr>
-<td><a href="#append-codegenerator">Append(CodeGenerator)</a></td>
+<td><a href="#append-codegenerator">Append(CodeGenerator?)</a></td>
 <td>Append the contents of the builder.</td>
 </tr>
 <tr>
-<td><a href="#append-stringbuilder-int-int">Append(StringBuilder, int, int)</a></td>
+<td><a href="#append-stringbuilder-int-int">Append(StringBuilder?, int, int)</a></td>
 <td>Append the contents of the builder in a range.</td>
 </tr>
 <tr>
-<td><a href="#append-codegenerator-int-int">Append(CodeGenerator, int, int)</a></td>
+<td><a href="#append-codegenerator-int-int">Append(CodeGenerator?, int, int)</a></td>
 <td>Append the contents of the builder in a range.</td>
 </tr>
 <tr>
@@ -192,7 +192,7 @@
 <td>Appends and formats a value to the builder.</td>
 </tr>
 <tr>
-<td><a href="#append-object">Append(object)</a></td>
+<td><a href="#append-object">Append(object?)</a></td>
 <td>Appends and formats a value to the builder.</td>
 </tr>
 <tr>
@@ -312,9 +312,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="append-string">Append(string)</h2>
+<h2 id="append-string">Append(string?)</h2>
 <p>Appends a string to the end of this builder.</p>
-<pre><code class="language-csharp">public CodeGenerator Append(string value)
+<pre><code class="language-csharp">public CodeGenerator Append(string? value)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -328,7 +328,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to append.</td>
 </tr>
 </tbody>
@@ -356,9 +356,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="append-string-int-int">Append(string, int, int)</h2>
+<h2 id="append-string-int-int">Append(string?, int, int)</h2>
 <p>Appends part of a string to the end of this builder.</p>
-<pre><code class="language-csharp">public CodeGenerator Append(string value, int startIndex, int count)
+<pre><code class="language-csharp">public CodeGenerator Append(string? value, int startIndex, int count)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -372,7 +372,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to append.</td>
 </tr>
 <tr>
@@ -410,9 +410,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="append-stringbuilder">Append(StringBuilder)</h2>
+<h2 id="append-stringbuilder">Append(StringBuilder?)</h2>
 <p>Append the contents of the builder.</p>
-<pre><code class="language-csharp">public CodeGenerator Append(StringBuilder value)
+<pre><code class="language-csharp">public CodeGenerator Append(StringBuilder? value)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -426,7 +426,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder?</code></a></td>
 <td>The builder to append.</td>
 </tr>
 </tbody>
@@ -454,9 +454,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="append-codegenerator">Append(CodeGenerator)</h2>
+<h2 id="append-codegenerator">Append(CodeGenerator?)</h2>
 <p>Append the contents of the builder.</p>
-<pre><code class="language-csharp">public CodeGenerator Append(CodeGenerator value)
+<pre><code class="language-csharp">public CodeGenerator Append(CodeGenerator? value)
 </code></pre>
 <h3 id="parameters-5">Parameters</h3>
 <table>
@@ -470,7 +470,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.html"><code>CodeGenerator</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.html"><code>CodeGenerator?</code></a></td>
 <td>The builder to append.</td>
 </tr>
 </tbody>
@@ -498,9 +498,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="append-stringbuilder-int-int">Append(StringBuilder, int, int)</h2>
+<h2 id="append-stringbuilder-int-int">Append(StringBuilder?, int, int)</h2>
 <p>Append the contents of the builder in a range.</p>
-<pre><code class="language-csharp">public CodeGenerator Append(StringBuilder value, int startIndex, int count)
+<pre><code class="language-csharp">public CodeGenerator Append(StringBuilder? value, int startIndex, int count)
 </code></pre>
 <h3 id="parameters-6">Parameters</h3>
 <table>
@@ -514,7 +514,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder?</code></a></td>
 <td>The builder to append.</td>
 </tr>
 <tr>
@@ -552,9 +552,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="append-codegenerator-int-int">Append(CodeGenerator, int, int)</h2>
+<h2 id="append-codegenerator-int-int">Append(CodeGenerator?, int, int)</h2>
 <p>Append the contents of the builder in a range.</p>
-<pre><code class="language-csharp">public CodeGenerator Append(CodeGenerator value, int startIndex, int count)
+<pre><code class="language-csharp">public CodeGenerator Append(CodeGenerator? value, int startIndex, int count)
 </code></pre>
 <h3 id="parameters-7">Parameters</h3>
 <table>
@@ -568,7 +568,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.html"><code>CodeGenerator</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.html"><code>CodeGenerator?</code></a></td>
 <td>The builder to append.</td>
 </tr>
 <tr>
@@ -1178,9 +1178,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="append-object">Append(object)</h2>
+<h2 id="append-object">Append(object?)</h2>
 <p>Appends and formats a value to the builder.</p>
-<pre><code class="language-csharp">public CodeGenerator Append(object value)
+<pre><code class="language-csharp">public CodeGenerator Append(object? value)
 </code></pre>
 <h3 id="parameters-21">Parameters</h3>
 <table>
@@ -1194,7 +1194,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>object?</code></a></td>
 <td>The value to append.</td>
 </tr>
 </tbody>

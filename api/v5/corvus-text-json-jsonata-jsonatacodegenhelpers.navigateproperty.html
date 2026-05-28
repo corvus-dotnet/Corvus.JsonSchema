@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="navigateproperty-ref-jsonelement-byte-jsonworkspace">NavigateProperty(ref JsonElement, byte[], JsonWorkspace)</h2>
+<h2 id="navigateproperty-jsonelement-byte-jsonworkspace">NavigateProperty(JsonElement, byte[], JsonWorkspace)</h2>
 <p>Navigates a single property with auto-flattening over arrays.</p>
-<pre><code class="language-csharp">public static JsonElement NavigateProperty(ref JsonElement data, byte[] name, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement NavigateProperty(in JsonElement data, byte[] name, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input data element.</td>
 </tr>
 <tr>

@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/JsonValueHelpers.Numerics.cs#L62">JsonValueHelpers.Numerics.cs</a></p>
-<h2 id="numericcompare-ref-jsonelement-ref-jsonelement">NumericCompare(ref JsonElement, ref JsonElement)</h2>
+<h2 id="numericcompare-jsonelement-jsonelement">NumericCompare(JsonElement, JsonElement)</h2>
 <p>Compare two numbers backed by JsonElements.</p>
-<pre><code class="language-csharp">public static int NumericCompare(ref JsonElement jsonElementL, ref JsonElement jsonElementR)
+<pre><code class="language-csharp">public static int NumericCompare(in JsonElement jsonElementL, in JsonElement jsonElementR)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,12 +115,12 @@
 <tbody>
 <tr>
 <td><code>jsonElementL</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The JsonElement backing for the lhs.</td>
 </tr>
 <tr>
 <td><code>jsonElementR</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The JsonElement backing for the rhs.</td>
 </tr>
 </tbody>

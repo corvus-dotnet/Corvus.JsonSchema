@@ -108,11 +108,11 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#replace-string-string">Replace(string, string)</a></td>
+<td><a href="#replace-string-string">Replace(string, string?)</a></td>
 <td>Replaces all instances of one string with another in this builder.</td>
 </tr>
 <tr>
-<td><a href="#replace-string-string-int-int">Replace(string, string, int, int)</a></td>
+<td><a href="#replace-string-string-int-int">Replace(string, string?, int, int)</a></td>
 <td>Replaces all instances of one string with another in part of this builder.</td>
 </tr>
 <tr>
@@ -125,9 +125,9 @@
 </tr>
 </tbody>
 </table>
-<h2 id="replace-string-string">Replace(string, string)</h2>
+<h2 id="replace-string-string">Replace(string, string?)</h2>
 <p>Replaces all instances of one string with another in this builder.</p>
-<pre><code class="language-csharp">public CodeGenerator Replace(string oldValue, string newValue)
+<pre><code class="language-csharp">public CodeGenerator Replace(string oldValue, string? newValue)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -146,7 +146,7 @@
 </tr>
 <tr>
 <td><code>newValue</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to replace <code>oldValue</code> with.</td>
 </tr>
 </tbody>
@@ -176,9 +176,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="replace-string-string-int-int">Replace(string, string, int, int)</h2>
+<h2 id="replace-string-string-int-int">Replace(string, string?, int, int)</h2>
 <p>Replaces all instances of one string with another in part of this builder.</p>
-<pre><code class="language-csharp">public CodeGenerator Replace(string oldValue, string newValue, int startIndex, int count)
+<pre><code class="language-csharp">public CodeGenerator Replace(string oldValue, string? newValue, int startIndex, int count)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -197,7 +197,7 @@
 </tr>
 <tr>
 <td><code>newValue</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The string to replace <code>oldValue</code> with.</td>
 </tr>
 <tr>

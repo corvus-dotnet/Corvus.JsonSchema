@@ -108,7 +108,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#evaluatedkeyword-bool-jsonschemamessageprovider-readonlyspan-byte">EvaluatedKeyword(bool, JsonSchemaMessageProvider, ReadOnlySpan&lt;byte&gt;)</a></td>
+<td><a href="#evaluatedkeyword-bool-jsonschemamessageprovider-readonlyspan-byte">EvaluatedKeyword(bool, JsonSchemaMessageProvider?, ReadOnlySpan&lt;byte&gt;)</a></td>
 <td>Updates the match state for the given evaluated keyword.</td>
 </tr>
 <tr>
@@ -117,10 +117,10 @@
 </tr>
 </tbody>
 </table>
-<h2 id="evaluatedkeyword-bool-jsonschemamessageprovider-readonlyspan-byte">EvaluatedKeyword(bool, JsonSchemaMessageProvider, ReadOnlySpan&lt;byte&gt;)</h2>
+<h2 id="evaluatedkeyword-bool-jsonschemamessageprovider-readonlyspan-byte">EvaluatedKeyword(bool, JsonSchemaMessageProvider?, ReadOnlySpan&lt;byte&gt;)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/IJsonSchemaResultsCollector.cs#L248">IJsonSchemaResultsCollector.cs</a></p>
 <p>Updates the match state for the given evaluated keyword.</p>
-<pre><code class="language-csharp">public abstract void EvaluatedKeyword(bool isMatch, JsonSchemaMessageProvider messageProvider, ReadOnlySpan&lt;byte&gt; encodedKeyword)
+<pre><code class="language-csharp">public abstract void EvaluatedKeyword(bool isMatch, JsonSchemaMessageProvider? messageProvider, ReadOnlySpan&lt;byte&gt; encodedKeyword)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -139,7 +139,7 @@
 </tr>
 <tr>
 <td><code>messageProvider</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemamessageprovider.html"><code>JsonSchemaMessageProvider?</code></a></td>
 <td>The (optional) provider for a JSON schema evaluation message.</td>
 </tr>
 <tr>

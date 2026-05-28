@@ -116,31 +116,31 @@
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#fromitems-ref-titem1">FromItems(ref TItem1)</a></td>
+<td><a href="#fromitems-titem1">FromItems(TItem1)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#fromitems-ref-titem1-ref-titem2">FromItems(ref TItem1, ref TItem2)</a></td>
+<td><a href="#fromitems-titem1-titem2">FromItems(TItem1, TItem2)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#fromitems-ref-titem1-ref-titem2-ref-titem3">FromItems(ref TItem1, ref TItem2, ref TItem3)</a></td>
+<td><a href="#fromitems-titem1-titem2-titem3">FromItems(TItem1, TItem2, TItem3)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#fromitems-ref-titem1-ref-titem2-ref-titem3-ref-titem4">FromItems(ref TItem1, ref TItem2, ref TItem3, ref TItem4)</a></td>
+<td><a href="#fromitems-titem1-titem2-titem3-titem4">FromItems(TItem1, TItem2, TItem3, TItem4)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#fromitems-ref-titem1-ref-titem2-ref-titem3-ref-titem4-ref-titem5">FromItems(ref TItem1, ref TItem2, ref TItem3, ref TItem4, ref TItem5)</a></td>
+<td><a href="#fromitems-titem1-titem2-titem3-titem4-titem5">FromItems(TItem1, TItem2, TItem3, TItem4, TItem5)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#fromitems-ref-titem1-ref-titem2-ref-titem3-ref-titem4-ref-titem5-ref-titem6">FromItems(ref TItem1, ref TItem2, ref TItem3, ref TItem4, ref TItem5, ref TItem6)</a></td>
+<td><a href="#fromitems-titem1-titem2-titem3-titem4-titem5-titem6">FromItems(TItem1, TItem2, TItem3, TItem4, TItem5, TItem6)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</td>
 </tr>
 <tr>
-<td><a href="#fromitems-ref-titem1-ref-titem2-ref-titem3-ref-titem4-ref-titem5-ref-titem6-ref-titem7">FromItems(ref TItem1, ref TItem2, ref TItem3, ref TItem4, ref TItem5, ref TItem6, ref TItem7)</a></td>
+<td><a href="#fromitems-titem1-titem2-titem3-titem4-titem5-titem6-titem7">FromItems(TItem1, TItem2, TItem3, TItem4, TItem5, TItem6, TItem7)</a></td>
 <td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</td>
 </tr>
 </tbody>
@@ -251,10 +251,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="fromitems-ref-titem1">FromItems(ref TItem1)</h2>
+<h2 id="fromitems-titem1">FromItems(TItem1)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonArray.cs#L1">JsonArray.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</p>
-<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1&gt;(ref TItem1 item1)
+<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1&gt;(in TItem1 item1)
     where TItem1 : struct, IJsonValue&lt;TItem1&gt;
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
@@ -284,7 +284,7 @@
 <tbody>
 <tr>
 <td><code>item1</code></td>
-<td><code>ref TItem1</code></td>
+<td><code>TItem1</code></td>
 <td>The 1st item in the array.</td>
 </tr>
 </tbody>
@@ -312,10 +312,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="fromitems-ref-titem1-ref-titem2">FromItems(ref TItem1, ref TItem2)</h2>
+<h2 id="fromitems-titem1-titem2">FromItems(TItem1, TItem2)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonArray.cs#L1">JsonArray.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</p>
-<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2&gt;(ref TItem1 item1, ref TItem2 item2)
+<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2&gt;(in TItem1 item1, in TItem2 item2)
     where TItem1 : struct, IJsonValue&lt;TItem1&gt;
     where TItem2 : struct, IJsonValue&lt;TItem2&gt;
 </code></pre>
@@ -350,12 +350,12 @@
 <tbody>
 <tr>
 <td><code>item1</code></td>
-<td><code>ref TItem1</code></td>
+<td><code>TItem1</code></td>
 <td>The 1st item in the array.</td>
 </tr>
 <tr>
 <td><code>item2</code></td>
-<td><code>ref TItem2</code></td>
+<td><code>TItem2</code></td>
 <td>The 2nd item in the array.</td>
 </tr>
 </tbody>
@@ -383,10 +383,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="fromitems-ref-titem1-ref-titem2-ref-titem3">FromItems(ref TItem1, ref TItem2, ref TItem3)</h2>
+<h2 id="fromitems-titem1-titem2-titem3">FromItems(TItem1, TItem2, TItem3)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonArray.cs#L1">JsonArray.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</p>
-<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3&gt;(ref TItem1 item1, ref TItem2 item2, ref TItem3 item3)
+<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3&gt;(in TItem1 item1, in TItem2 item2, in TItem3 item3)
     where TItem1 : struct, IJsonValue&lt;TItem1&gt;
     where TItem2 : struct, IJsonValue&lt;TItem2&gt;
     where TItem3 : struct, IJsonValue&lt;TItem3&gt;
@@ -426,17 +426,17 @@
 <tbody>
 <tr>
 <td><code>item1</code></td>
-<td><code>ref TItem1</code></td>
+<td><code>TItem1</code></td>
 <td>The 1st item in the array.</td>
 </tr>
 <tr>
 <td><code>item2</code></td>
-<td><code>ref TItem2</code></td>
+<td><code>TItem2</code></td>
 <td>The 2nd item in the array.</td>
 </tr>
 <tr>
 <td><code>item3</code></td>
-<td><code>ref TItem3</code></td>
+<td><code>TItem3</code></td>
 <td>The 3rd item in the array.</td>
 </tr>
 </tbody>
@@ -464,10 +464,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="fromitems-ref-titem1-ref-titem2-ref-titem3-ref-titem4">FromItems(ref TItem1, ref TItem2, ref TItem3, ref TItem4)</h2>
+<h2 id="fromitems-titem1-titem2-titem3-titem4">FromItems(TItem1, TItem2, TItem3, TItem4)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonArray.cs#L1">JsonArray.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</p>
-<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3, TItem4&gt;(ref TItem1 item1, ref TItem2 item2, ref TItem3 item3, ref TItem4 item4)
+<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3, TItem4&gt;(in TItem1 item1, in TItem2 item2, in TItem3 item3, in TItem4 item4)
     where TItem1 : struct, IJsonValue&lt;TItem1&gt;
     where TItem2 : struct, IJsonValue&lt;TItem2&gt;
     where TItem3 : struct, IJsonValue&lt;TItem3&gt;
@@ -512,22 +512,22 @@
 <tbody>
 <tr>
 <td><code>item1</code></td>
-<td><code>ref TItem1</code></td>
+<td><code>TItem1</code></td>
 <td>The 1st item in the array.</td>
 </tr>
 <tr>
 <td><code>item2</code></td>
-<td><code>ref TItem2</code></td>
+<td><code>TItem2</code></td>
 <td>The 2nd item in the array.</td>
 </tr>
 <tr>
 <td><code>item3</code></td>
-<td><code>ref TItem3</code></td>
+<td><code>TItem3</code></td>
 <td>The 3rd item in the array.</td>
 </tr>
 <tr>
 <td><code>item4</code></td>
-<td><code>ref TItem4</code></td>
+<td><code>TItem4</code></td>
 <td>The 4th item in the array.</td>
 </tr>
 </tbody>
@@ -555,10 +555,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="fromitems-ref-titem1-ref-titem2-ref-titem3-ref-titem4-ref-titem5">FromItems(ref TItem1, ref TItem2, ref TItem3, ref TItem4, ref TItem5)</h2>
+<h2 id="fromitems-titem1-titem2-titem3-titem4-titem5">FromItems(TItem1, TItem2, TItem3, TItem4, TItem5)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonArray.cs#L1">JsonArray.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</p>
-<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3, TItem4, TItem5&gt;(ref TItem1 item1, ref TItem2 item2, ref TItem3 item3, ref TItem4 item4, ref TItem5 item5)
+<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3, TItem4, TItem5&gt;(in TItem1 item1, in TItem2 item2, in TItem3 item3, in TItem4 item4, in TItem5 item5)
     where TItem1 : struct, IJsonValue&lt;TItem1&gt;
     where TItem2 : struct, IJsonValue&lt;TItem2&gt;
     where TItem3 : struct, IJsonValue&lt;TItem3&gt;
@@ -608,27 +608,27 @@
 <tbody>
 <tr>
 <td><code>item1</code></td>
-<td><code>ref TItem1</code></td>
+<td><code>TItem1</code></td>
 <td>The 1st item in the array.</td>
 </tr>
 <tr>
 <td><code>item2</code></td>
-<td><code>ref TItem2</code></td>
+<td><code>TItem2</code></td>
 <td>The 2nd item in the array.</td>
 </tr>
 <tr>
 <td><code>item3</code></td>
-<td><code>ref TItem3</code></td>
+<td><code>TItem3</code></td>
 <td>The 3rd item in the array.</td>
 </tr>
 <tr>
 <td><code>item4</code></td>
-<td><code>ref TItem4</code></td>
+<td><code>TItem4</code></td>
 <td>The 4th item in the array.</td>
 </tr>
 <tr>
 <td><code>item5</code></td>
-<td><code>ref TItem5</code></td>
+<td><code>TItem5</code></td>
 <td>The 5th item in the array.</td>
 </tr>
 </tbody>
@@ -656,10 +656,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="fromitems-ref-titem1-ref-titem2-ref-titem3-ref-titem4-ref-titem5-ref-titem6">FromItems(ref TItem1, ref TItem2, ref TItem3, ref TItem4, ref TItem5, ref TItem6)</h2>
+<h2 id="fromitems-titem1-titem2-titem3-titem4-titem5-titem6">FromItems(TItem1, TItem2, TItem3, TItem4, TItem5, TItem6)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonArray.cs#L1">JsonArray.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</p>
-<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3, TItem4, TItem5, TItem6&gt;(ref TItem1 item1, ref TItem2 item2, ref TItem3 item3, ref TItem4 item4, ref TItem5 item5, ref TItem6 item6)
+<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3, TItem4, TItem5, TItem6&gt;(in TItem1 item1, in TItem2 item2, in TItem3 item3, in TItem4 item4, in TItem5 item5, in TItem6 item6)
     where TItem1 : struct, IJsonValue&lt;TItem1&gt;
     where TItem2 : struct, IJsonValue&lt;TItem2&gt;
     where TItem3 : struct, IJsonValue&lt;TItem3&gt;
@@ -714,32 +714,32 @@
 <tbody>
 <tr>
 <td><code>item1</code></td>
-<td><code>ref TItem1</code></td>
+<td><code>TItem1</code></td>
 <td>The 1st item in the array.</td>
 </tr>
 <tr>
 <td><code>item2</code></td>
-<td><code>ref TItem2</code></td>
+<td><code>TItem2</code></td>
 <td>The 2nd item in the array.</td>
 </tr>
 <tr>
 <td><code>item3</code></td>
-<td><code>ref TItem3</code></td>
+<td><code>TItem3</code></td>
 <td>The 3rd item in the array.</td>
 </tr>
 <tr>
 <td><code>item4</code></td>
-<td><code>ref TItem4</code></td>
+<td><code>TItem4</code></td>
 <td>The 4th item in the array.</td>
 </tr>
 <tr>
 <td><code>item5</code></td>
-<td><code>ref TItem5</code></td>
+<td><code>TItem5</code></td>
 <td>The 5th item in the array.</td>
 </tr>
 <tr>
 <td><code>item6</code></td>
-<td><code>ref TItem6</code></td>
+<td><code>TItem6</code></td>
 <td>The 6th item in the array.</td>
 </tr>
 </tbody>
@@ -767,10 +767,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="fromitems-ref-titem1-ref-titem2-ref-titem3-ref-titem4-ref-titem5-ref-titem6-ref-titem7">FromItems(ref TItem1, ref TItem2, ref TItem3, ref TItem4, ref TItem5, ref TItem6, ref TItem7)</h2>
+<h2 id="fromitems-titem1-titem2-titem3-titem4-titem5-titem6-titem7">FromItems(TItem1, TItem2, TItem3, TItem4, TItem5, TItem6, TItem7)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonArray.cs#L1">JsonArray.cs</a></p>
 <p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-jsonarray.html"><code>JsonArray</code></a> struct.</p>
-<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3, TItem4, TItem5, TItem6, TItem7&gt;(ref TItem1 item1, ref TItem2 item2, ref TItem3 item3, ref TItem4 item4, ref TItem5 item5, ref TItem6 item6, ref TItem7 item7)
+<pre><code class="language-csharp">public static JsonArray FromItems&lt;TItem1, TItem2, TItem3, TItem4, TItem5, TItem6, TItem7&gt;(in TItem1 item1, in TItem2 item2, in TItem3 item3, in TItem4 item4, in TItem5 item5, in TItem6 item6, in TItem7 item7)
     where TItem1 : struct, IJsonValue&lt;TItem1&gt;
     where TItem2 : struct, IJsonValue&lt;TItem2&gt;
     where TItem3 : struct, IJsonValue&lt;TItem3&gt;
@@ -830,37 +830,37 @@
 <tbody>
 <tr>
 <td><code>item1</code></td>
-<td><code>ref TItem1</code></td>
+<td><code>TItem1</code></td>
 <td>The 1st item in the array.</td>
 </tr>
 <tr>
 <td><code>item2</code></td>
-<td><code>ref TItem2</code></td>
+<td><code>TItem2</code></td>
 <td>The 2nd item in the array.</td>
 </tr>
 <tr>
 <td><code>item3</code></td>
-<td><code>ref TItem3</code></td>
+<td><code>TItem3</code></td>
 <td>The 3rd item in the array.</td>
 </tr>
 <tr>
 <td><code>item4</code></td>
-<td><code>ref TItem4</code></td>
+<td><code>TItem4</code></td>
 <td>The 4th item in the array.</td>
 </tr>
 <tr>
 <td><code>item5</code></td>
-<td><code>ref TItem5</code></td>
+<td><code>TItem5</code></td>
 <td>The 5th item in the array.</td>
 </tr>
 <tr>
 <td><code>item6</code></td>
-<td><code>ref TItem6</code></td>
+<td><code>TItem6</code></td>
 <td>The 6th item in the array.</td>
 </tr>
 <tr>
 <td><code>item7</code></td>
-<td><code>ref TItem7</code></td>
+<td><code>TItem7</code></td>
 <td>The 7th item in the array.</td>
 </tr>
 </tbody>

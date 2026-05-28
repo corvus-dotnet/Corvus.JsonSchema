@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="tomillis-ref-jsonelement-ref-jsonelement-jsonworkspace">ToMillis(ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="tomillis-jsonelement-jsonelement-jsonworkspace">ToMillis(JsonElement, JsonElement, JsonWorkspace)</h2>
 <p>JSONata <code>$toMillis</code> function — parses a date/time string to milliseconds.</p>
-<pre><code class="language-csharp">public static JsonElement ToMillis(ref JsonElement input, ref JsonElement pictureElement, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement ToMillis(in JsonElement input, in JsonElement pictureElement, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>input</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>pictureElement</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

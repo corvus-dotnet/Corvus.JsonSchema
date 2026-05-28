@@ -119,7 +119,7 @@
 </table>
 <h2 id="resolvebasereference-jsonreference-ivocabulary-cancellationtoken">ResolveBaseReference(JsonReference, IVocabulary, CancellationToken)</h2>
 <p>Resolves a base reference, registering any newly discovered schema if necessary.</p>
-<pre><code class="language-csharp">public ValueTask&lt;LocatedSchema&gt; ResolveBaseReference(JsonReference baseSchemaForReferenceLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
+<pre><code class="language-csharp">public ValueTask&lt;LocatedSchema?&gt; ResolveBaseReference(JsonReference baseSchemaForReferenceLocation, IVocabulary vocabulary, CancellationToken cancellationToken)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -149,7 +149,7 @@
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
-<p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask&lt;LocatedSchema&gt;</code></a></p>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask&lt;LocatedSchema?&gt;</code></a></p>
 <p>A <a href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1"><code>ValueTask</code></a> which, when complete, provides the located schema or <code>null</code> if no schema could be located.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>

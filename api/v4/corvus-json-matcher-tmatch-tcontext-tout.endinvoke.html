@@ -99,8 +99,8 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Matcher.cs#L1">Matcher.cs</a></p>
-<h2 id="endinvoke-ref-tmatch-ref-tcontext-iasyncresult">EndInvoke(ref TMatch, ref TContext, IAsyncResult)</h2>
-<pre><code class="language-csharp">public virtual TOut EndInvoke(ref TMatch match, ref TContext context, IAsyncResult result)
+<h2 id="endinvoke-tmatch-tcontext-iasyncresult">EndInvoke(TMatch, TContext, IAsyncResult)</h2>
+<pre><code class="language-csharp">public virtual TOut EndInvoke(in TMatch match, in TContext context, IAsyncResult result)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>match</code></td>
-<td><code>ref TMatch</code></td>
+<td><code>TMatch</code></td>
 <td></td>
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>ref TContext</code></td>
+<td><code>TContext</code></td>
 <td></td>
 </tr>
 <tr>

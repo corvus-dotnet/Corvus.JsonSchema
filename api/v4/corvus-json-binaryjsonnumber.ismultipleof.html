@@ -124,7 +124,7 @@
 <td>Determines if this value is a multiple of the other value.</td>
 </tr>
 <tr>
-<td><a href="#ismultipleof-ref-binaryjsonnumber">IsMultipleOf(ref BinaryJsonNumber)</a></td>
+<td><a href="#ismultipleof-binaryjsonnumber">IsMultipleOf(BinaryJsonNumber)</a></td>
 <td>Determines if this value is a multiple of the other value..</td>
 </tr>
 </tbody>
@@ -413,10 +413,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="ismultipleof-ref-binaryjsonnumber">IsMultipleOf(ref BinaryJsonNumber)</h2>
+<h2 id="ismultipleof-binaryjsonnumber">IsMultipleOf(BinaryJsonNumber)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/BinaryJsonNumber.Net8.cs#L2704">BinaryJsonNumber.Net8.cs</a></p>
 <p>Determines if this value is a multiple of the other value..</p>
-<pre><code class="language-csharp">public bool IsMultipleOf(ref BinaryJsonNumber multipleOf)
+<pre><code class="language-csharp">public bool IsMultipleOf(in BinaryJsonNumber multipleOf)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -430,7 +430,7 @@
 <tbody>
 <tr>
 <td><code>multipleOf</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>ref BinaryJsonNumber</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-binaryjsonnumber.html"><code>BinaryJsonNumber</code></a></td>
 <td>The factor to test.</td>
 </tr>
 </tbody>

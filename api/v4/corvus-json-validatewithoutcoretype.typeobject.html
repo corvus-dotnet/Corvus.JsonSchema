@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidateWithoutCoreType.cs#L248">ValidateWithoutCoreType.cs</a></p>
-<h2 id="typeobject-jsonvaluekind-ref-validationcontext-validationlevel-string">TypeObject(JsonValueKind, ref ValidationContext, ValidationLevel, string)</h2>
+<h2 id="typeobject-jsonvaluekind-validationcontext-validationlevel-string">TypeObject(JsonValueKind, ValidationContext, ValidationLevel, string?)</h2>
 <p>Validate an object type value.</p>
-<pre><code class="language-csharp">public static ValidationContext TypeObject(JsonValueKind valueKind, ref ValidationContext validationContext, ValidationLevel level, string typeKeyword)
+<pre><code class="language-csharp">public static ValidationContext TypeObject(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The validation context.</td>
 </tr>
 <tr>
@@ -130,7 +130,7 @@
 </tr>
 <tr>
 <td><code>typeKeyword</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The type keyword. <em>(optional)</em></td>
 </tr>
 </tbody>

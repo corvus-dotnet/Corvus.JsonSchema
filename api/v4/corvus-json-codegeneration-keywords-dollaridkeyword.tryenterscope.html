@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.Keywords<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="tryenterscope-typebuildercontext-typedeclaration-string-ref-typedeclaration">TryEnterScope(TypeBuilderContext, TypeDeclaration, string, ref TypeDeclaration)</h2>
-<pre><code class="language-csharp">public bool TryEnterScope(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, string scopeName, ref TypeDeclaration existingTypeDeclaration)
+<h2 id="tryenterscope-typebuildercontext-typedeclaration-string-typedeclaration">TryEnterScope(TypeBuilderContext, TypeDeclaration, string, TypeDeclaration?)</h2>
+<pre><code class="language-csharp">public bool TryEnterScope(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, string scopeName, out TypeDeclaration? existingTypeDeclaration)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -128,7 +128,7 @@
 </tr>
 <tr>
 <td><code>existingTypeDeclaration</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>ref TypeDeclaration</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
 <td></td>
 </tr>
 </tbody>

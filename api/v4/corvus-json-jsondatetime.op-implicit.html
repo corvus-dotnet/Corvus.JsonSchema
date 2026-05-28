@@ -120,7 +120,7 @@
 <td>Conversion to <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#implicit-operator-jsondatetime-ref-offsetdatetime">implicit operator JsonDateTime(ref OffsetDateTime)</a></td>
+<td><a href="#implicit-operator-jsondatetime-offsetdatetime">implicit operator JsonDateTime(OffsetDateTime)</a></td>
 <td>Conversion from <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a>.</td>
 </tr>
 <tr>
@@ -269,10 +269,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="implicit-operator-jsondatetime-ref-offsetdatetime">implicit operator JsonDateTime(ref OffsetDateTime)</h2>
+<h2 id="implicit-operator-jsondatetime-offsetdatetime">implicit operator JsonDateTime(OffsetDateTime)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonDateTime.cs#L247">JsonDateTime.cs</a></p>
 <p>Conversion from <a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a>.</p>
-<pre><code class="language-csharp">public static implicit operator JsonDateTime(ref OffsetDateTime value)
+<pre><code class="language-csharp">public static implicit operator JsonDateTime(in OffsetDateTime value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -286,7 +286,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>ref OffsetDateTime</code></a></td>
+<td><a href="https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html"><code>OffsetDateTime</code></a></td>
 <td>The value from which to convert.</td>
 </tr>
 </tbody>

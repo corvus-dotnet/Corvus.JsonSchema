@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="trygetanchorkeyword-ref-jsonelement-ivocabulary-ref-ianchorkeyword">TryGetAnchorKeyword(ref JsonElement, IVocabulary, ref IAnchorKeyword)</h2>
+<h2 id="trygetanchorkeyword-jsonelement-ivocabulary-ianchorkeyword">TryGetAnchorKeyword(JsonElement, IVocabulary, IAnchorKeyword?)</h2>
 <p>Try to get the anchor keyword for a schema.</p>
-<pre><code class="language-csharp">public static bool TryGetAnchorKeyword(ref JsonElement schema, IVocabulary vocabulary, ref IAnchorKeyword anchorKeyword)
+<pre><code class="language-csharp">public static bool TryGetAnchorKeyword(in JsonElement schema, IVocabulary vocabulary, out IAnchorKeyword? anchorKeyword)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,7 +114,7 @@
 <tbody>
 <tr>
 <td><code>schema</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The schema for which to get the anchor keyword.</td>
 </tr>
 <tr>
@@ -124,7 +124,7 @@
 </tr>
 <tr>
 <td><code>anchorKeyword</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ianchorkeyword.html"><code>ref IAnchorKeyword</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ianchorkeyword.html"><code>IAnchorKeyword?</code></a></td>
 <td>The resulting anchor keyword.</td>
 </tr>
 </tbody>

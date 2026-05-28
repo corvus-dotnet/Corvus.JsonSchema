@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/ComplexValueBuilder.cs#L43">ComplexValueBuilder.cs</a></p>
-<h2 id="tryapply-ref-t">TryApply(ref T)</h2>
+<h2 id="tryapply-t">TryApply(T)</h2>
 <p>Tries to apply an object instance value to the document.</p>
-<pre><code class="language-csharp">public bool TryApply&lt;T&gt;(ref T value)
+<pre><code class="language-csharp">public bool TryApply&lt;T&gt;(in T value)
     where T : struct, IJsonElement&lt;T&gt;
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -131,7 +131,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref T</code></td>
+<td><code>T</code></td>
 <td>The value to apply.</td>
 </tr>
 </tbody>

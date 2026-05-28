@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.JMESPath<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="deepequals-ref-jsonelement-ref-jsonelement">DeepEquals(ref JsonElement, ref JsonElement)</h2>
+<h2 id="deepequals-jsonelement-jsonelement">DeepEquals(JsonElement, JsonElement)</h2>
 <p>Performs a deep-equality comparison of two JSON elements per JMESPath semantics.</p>
-<pre><code class="language-csharp">public static bool DeepEquals(ref JsonElement left, ref JsonElement right)
+<pre><code class="language-csharp">public static bool DeepEquals(in JsonElement left, in JsonElement right)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -114,12 +114,12 @@
 <tbody>
 <tr>
 <td><code>left</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The left element.</td>
 </tr>
 <tr>
 <td><code>right</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The right element.</td>
 </tr>
 </tbody>

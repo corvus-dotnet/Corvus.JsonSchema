@@ -108,18 +108,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#string-ref-jsonelement-jsonworkspace">String(ref JsonElement, JsonWorkspace)</a></td>
+<td><a href="#string-jsonelement-jsonworkspace">String(JsonElement, JsonWorkspace)</a></td>
 <td>JSONata <code>$string</code> function — converts a value to its string representation.</td>
 </tr>
 <tr>
-<td><a href="#string-ref-jsonelement-ref-jsonelement-jsonworkspace">String(ref JsonElement, ref JsonElement, JsonWorkspace)</a></td>
+<td><a href="#string-jsonelement-jsonelement-jsonworkspace">String(JsonElement, JsonElement, JsonWorkspace)</a></td>
 <td>JSONata <code>$string</code> function with optional pretty-print parameter.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="string-ref-jsonelement-jsonworkspace">String(ref JsonElement, JsonWorkspace)</h2>
+<h2 id="string-jsonelement-jsonworkspace">String(JsonElement, JsonWorkspace)</h2>
 <p>JSONata <code>$string</code> function — converts a value to its string representation.</p>
-<pre><code class="language-csharp">public static JsonElement String(ref JsonElement value, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement String(in JsonElement value, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -133,7 +133,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -165,9 +165,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="string-ref-jsonelement-ref-jsonelement-jsonworkspace">String(ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
+<h2 id="string-jsonelement-jsonelement-jsonworkspace">String(JsonElement, JsonElement, JsonWorkspace)</h2>
 <p>JSONata <code>$string</code> function with optional pretty-print parameter.</p>
-<pre><code class="language-csharp">public static JsonElement String(ref JsonElement value, ref JsonElement prettyFlag, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement String(in JsonElement value, in JsonElement prettyFlag, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -181,12 +181,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>prettyFlag</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td></td>
 </tr>
 <tr>

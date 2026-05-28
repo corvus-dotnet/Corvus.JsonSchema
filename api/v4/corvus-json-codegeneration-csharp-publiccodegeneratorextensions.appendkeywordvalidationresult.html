@@ -108,18 +108,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#appendkeywordvalidationresult-codegenerator-bool-ikeyword-string-string-bool-bool-string">AppendKeywordValidationResult(CodeGenerator, bool, IKeyword, string, string, bool, bool, string)</a></td>
+<td><a href="#appendkeywordvalidationresult-codegenerator-bool-ikeyword-string-string-bool-bool-string">AppendKeywordValidationResult(CodeGenerator, bool, IKeyword, string, string, bool, bool, string?)</a></td>
 <td>Append the validation result for a keyword.</td>
 </tr>
 <tr>
-<td><a href="#appendkeywordvalidationresult-codegenerator-bool-ikeyword-string-action-codegenerator-bool-bool-string">AppendKeywordValidationResult(CodeGenerator, bool, IKeyword, string, Action&lt;CodeGenerator&gt;, bool, bool, string)</a></td>
+<td><a href="#appendkeywordvalidationresult-codegenerator-bool-ikeyword-string-action-codegenerator-bool-bool-string">AppendKeywordValidationResult(CodeGenerator, bool, IKeyword, string, Action&lt;CodeGenerator&gt;, bool, bool, string?)</a></td>
 <td>Append the validation result for a keyword.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="appendkeywordvalidationresult-codegenerator-bool-ikeyword-string-string-bool-bool-string">AppendKeywordValidationResult(CodeGenerator, bool, IKeyword, string, string, bool, bool, string)</h2>
+<h2 id="appendkeywordvalidationresult-codegenerator-bool-ikeyword-string-string-bool-bool-string">AppendKeywordValidationResult(CodeGenerator, bool, IKeyword, string, string, bool, bool, string?)</h2>
 <p>Append the validation result for a keyword.</p>
-<pre><code class="language-csharp">public static CodeGenerator AppendKeywordValidationResult(CodeGenerator generator, bool isValid, IKeyword keyword, string validationContextIdentifier, string reasonText, bool useInterpolatedString, bool withKeyword, string reducedPathModifier)
+<pre><code class="language-csharp">public static CodeGenerator AppendKeywordValidationResult(CodeGenerator generator, bool isValid, IKeyword keyword, string validationContextIdentifier, string reasonText, bool useInterpolatedString, bool withKeyword, string? reducedPathModifier)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -168,7 +168,7 @@
 </tr>
 <tr>
 <td><code>reducedPathModifier</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The reduced path modifier to add to the result. Incompatible with <code>withKeyword``true</code>. <em>(optional)</em></td>
 </tr>
 </tbody>
@@ -196,9 +196,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="appendkeywordvalidationresult-codegenerator-bool-ikeyword-string-action-codegenerator-bool-bool-string">AppendKeywordValidationResult(CodeGenerator, bool, IKeyword, string, Action&lt;CodeGenerator&gt;, bool, bool, string)</h2>
+<h2 id="appendkeywordvalidationresult-codegenerator-bool-ikeyword-string-action-codegenerator-bool-bool-string">AppendKeywordValidationResult(CodeGenerator, bool, IKeyword, string, Action&lt;CodeGenerator&gt;, bool, bool, string?)</h2>
 <p>Append the validation result for a keyword.</p>
-<pre><code class="language-csharp">public static CodeGenerator AppendKeywordValidationResult(CodeGenerator generator, bool isValid, IKeyword keyword, string validationContextIdentifier, Action&lt;CodeGenerator&gt; appendReasonText, bool useInterpolatedString, bool withKeyword, string reducedPathModifier)
+<pre><code class="language-csharp">public static CodeGenerator AppendKeywordValidationResult(CodeGenerator generator, bool isValid, IKeyword keyword, string validationContextIdentifier, Action&lt;CodeGenerator&gt; appendReasonText, bool useInterpolatedString, bool withKeyword, string? reducedPathModifier)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -247,7 +247,7 @@
 </tr>
 <tr>
 <td><code>reducedPathModifier</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string?</code></a></td>
 <td>The reduced path modifier to add to the result. Incompatible with <code>withKeyword``true</code>. <em>(optional)</em></td>
 </tr>
 </tbody>

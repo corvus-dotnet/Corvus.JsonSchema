@@ -108,23 +108,23 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#unescape-ref-jsonelement-memory-char-ref-int">Unescape(ref JsonElement, Memory&lt;char&gt;, ref int)</a></td>
+<td><a href="#unescape-jsonelement-memory-char-int">Unescape(JsonElement, Memory&lt;char&gt;, int)</a></td>
 <td>Unescape escaped JSON data stored in a JSON string.</td>
 </tr>
 <tr>
-<td><a href="#unescape-readonlyspan-char-span-char-ref-int">Unescape(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, ref int)</a></td>
+<td><a href="#unescape-readonlyspan-char-span-char-int">Unescape(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int)</a></td>
 <td>Unescape escaped JSON data stored in a JSON string.</td>
 </tr>
 <tr>
-<td><a href="#unescape-readonlyspan-byte-span-char-ref-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;char&gt;, ref int)</a></td>
+<td><a href="#unescape-readonlyspan-byte-span-char-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;char&gt;, int)</a></td>
 <td>Unescape the JSON string.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="unescape-ref-jsonelement-memory-char-ref-int">Unescape(ref JsonElement, Memory&lt;char&gt;, ref int)</h2>
+<h2 id="unescape-jsonelement-memory-char-int">Unescape(JsonElement, Memory&lt;char&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardContent.cs#L203">StandardContent.cs</a></p>
 <p>Unescape escaped JSON data stored in a JSON string.</p>
-<pre><code class="language-csharp">public static bool Unescape(ref JsonElement source, Memory&lt;char&gt; unescaped, ref int written)
+<pre><code class="language-csharp">public static bool Unescape(in JsonElement source, Memory&lt;char&gt; unescaped, out int written)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -138,7 +138,7 @@
 <tbody>
 <tr>
 <td><code>source</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>ref JsonElement</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsonelement"><code>JsonElement</code></a></td>
 <td>The source text to unescape.</td>
 </tr>
 <tr>
@@ -148,7 +148,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of characters written into the target buffer.</td>
 </tr>
 </tbody>
@@ -176,10 +176,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="unescape-readonlyspan-char-span-char-ref-int">Unescape(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, ref int)</h2>
+<h2 id="unescape-readonlyspan-char-span-char-int">Unescape(ReadOnlySpan&lt;char&gt;, Span&lt;char&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardContent.cs#L220">StandardContent.cs</a></p>
 <p>Unescape escaped JSON data stored in a JSON string.</p>
-<pre><code class="language-csharp">public static bool Unescape(ReadOnlySpan&lt;char&gt; source, Span&lt;char&gt; unescaped, ref int written)
+<pre><code class="language-csharp">public static bool Unescape(ReadOnlySpan&lt;char&gt; source, Span&lt;char&gt; unescaped, out int written)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -203,7 +203,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of characters written into the target buffer.</td>
 </tr>
 </tbody>
@@ -231,10 +231,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="unescape-readonlyspan-byte-span-char-ref-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;char&gt;, ref int)</h2>
+<h2 id="unescape-readonlyspan-byte-span-char-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;char&gt;, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Internal/StandardContent.cs#L263">StandardContent.cs</a></p>
 <p>Unescape the JSON string.</p>
-<pre><code class="language-csharp">public static bool Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;char&gt; unescaped, ref int written)
+<pre><code class="language-csharp">public static bool Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;char&gt; unescaped, out int written)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -258,7 +258,7 @@
 </tr>
 <tr>
 <td><code>written</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The number of characters written into the target buffer.</td>
 </tr>
 </tbody>

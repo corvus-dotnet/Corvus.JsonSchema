@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidationContext.cs#L360">ValidationContext.cs</a></p>
-<h2 id="mergechildcontext-ref-validationcontext-bool">MergeChildContext(ref ValidationContext, bool)</h2>
+<h2 id="mergechildcontext-validationcontext-bool">MergeChildContext(ValidationContext, bool)</h2>
 <p>Merges the local and applied evaluated entities from a child context into the applied evaluated entities in a parent context.</p>
-<pre><code class="language-csharp">public ValidationContext MergeChildContext(ref ValidationContext childContext, bool includeResults)
+<pre><code class="language-csharp">public ValidationContext MergeChildContext(in ValidationContext childContext, bool includeResults)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -115,7 +115,7 @@
 <tbody>
 <tr>
 <td><code>childContext</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The evaluated child context.</td>
 </tr>
 <tr>

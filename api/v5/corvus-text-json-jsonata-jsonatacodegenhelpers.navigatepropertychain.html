@@ -108,18 +108,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#navigatepropertychain-ref-jsonelement-byte-jsonworkspace">NavigatePropertyChain(ref JsonElement, byte[][], JsonWorkspace)</a></td>
+<td><a href="#navigatepropertychain-jsonelement-byte-jsonworkspace">NavigatePropertyChain(JsonElement, byte[][], JsonWorkspace)</a></td>
 <td>Navigates a chain of property names with JSONata auto-flattening semantics, using at most one <code>ArrayBuilder</code> for the entire chain regardless of how many nested arrays are encountered.</td>
 </tr>
 <tr>
-<td><a href="#navigatepropertychain-ref-jsonelement-byte-int-jsonworkspace">NavigatePropertyChain(ref JsonElement, byte[][], int, JsonWorkspace)</a></td>
+<td><a href="#navigatepropertychain-jsonelement-byte-int-jsonworkspace">NavigatePropertyChain(JsonElement, byte[][], int, JsonWorkspace)</a></td>
 <td>Navigates a property chain starting at <code>startIndex</code>, skipping already-resolved prefix steps. Used by generated code that resolves chain steps incrementally via nested <code>if</code> checks and falls back to...</td>
 </tr>
 </tbody>
 </table>
-<h2 id="navigatepropertychain-ref-jsonelement-byte-jsonworkspace">NavigatePropertyChain(ref JsonElement, byte[][], JsonWorkspace)</h2>
+<h2 id="navigatepropertychain-jsonelement-byte-jsonworkspace">NavigatePropertyChain(JsonElement, byte[][], JsonWorkspace)</h2>
 <p>Navigates a chain of property names with JSONata auto-flattening semantics, using at most one <code>ArrayBuilder</code> for the entire chain regardless of how many nested arrays are encountered.</p>
-<pre><code class="language-csharp">public static JsonElement NavigatePropertyChain(ref JsonElement data, byte[][] names, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement NavigatePropertyChain(in JsonElement data, byte[][] names, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -133,7 +133,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input data element.</td>
 </tr>
 <tr>
@@ -173,9 +173,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="navigatepropertychain-ref-jsonelement-byte-int-jsonworkspace">NavigatePropertyChain(ref JsonElement, byte[][], int, JsonWorkspace)</h2>
+<h2 id="navigatepropertychain-jsonelement-byte-int-jsonworkspace">NavigatePropertyChain(JsonElement, byte[][], int, JsonWorkspace)</h2>
 <p>Navigates a property chain starting at <code>startIndex</code>, skipping already-resolved prefix steps. Used by generated code that resolves chain steps incrementally via nested <code>if</code> checks and falls back to this helper when an array is encountered partway through, avoiding re-navigation of already-known steps.</p>
-<pre><code class="language-csharp">public static JsonElement NavigatePropertyChain(ref JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+<pre><code class="language-csharp">public static JsonElement NavigatePropertyChain(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -189,7 +189,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The element at the start position (already resolved up to <code>startIndex</code>).</td>
 </tr>
 <tr>

@@ -99,9 +99,9 @@
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
-<h2 id="validatestring-ref-tvalue-ref-validationcontext-validationlevel-nullable-int-nullable-int-regex">ValidateString(ref TValue, ref ValidationContext, ValidationLevel, Nullable&lt;int&gt;, Nullable&lt;int&gt;, Regex)</h2>
+<h2 id="validatestring-tvalue-validationcontext-validationlevel-nullable-int-nullable-int-regex">ValidateString(TValue, ValidationContext, ValidationLevel, Nullable&lt;int&gt;, Nullable&lt;int&gt;, Regex?)</h2>
 <p>Validates a string value.</p>
-<pre><code class="language-csharp">public static ValidationContext ValidateString&lt;TValue&gt;(ref TValue value, ref ValidationContext validationContext, ValidationLevel level, Nullable&lt;int&gt; maxLength, Nullable&lt;int&gt; minLength, Regex pattern)
+<pre><code class="language-csharp">public static ValidationContext ValidateString&lt;TValue&gt;(in TValue value, in ValidationContext validationContext, ValidationLevel level, Nullable&lt;int&gt; maxLength, Nullable&lt;int&gt; minLength, Regex? pattern)
     where TValue : struct, IJsonValue
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -131,12 +131,12 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><code>ref TValue</code></td>
+<td><code>TValue</code></td>
 <td>The instance to validate.</td>
 </tr>
 <tr>
 <td><code>validationContext</code></td>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ref ValidationContext</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html"><code>ValidationContext</code></a></td>
 <td>The current validation context.</td>
 </tr>
 <tr>
@@ -156,7 +156,7 @@
 </tr>
 <tr>
 <td><code>pattern</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex"><code>Regex</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex"><code>Regex?</code></a></td>
 <td>The optional pattern validation.</td>
 </tr>
 </tbody>

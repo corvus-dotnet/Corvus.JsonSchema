@@ -108,18 +108,18 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#navigatepropertychaininto-ref-jsonelement-byte-ref-elementbuffer">NavigatePropertyChainInto(ref JsonElement, byte[][], ref ElementBuffer)</a></td>
+<td><a href="#navigatepropertychaininto-jsonelement-byte-elementbuffer">NavigatePropertyChainInto(JsonElement, byte[][], ElementBuffer)</a></td>
 <td>Navigates a property chain, collecting leaf results into an <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> instead of creating a...</td>
 </tr>
 <tr>
-<td><a href="#navigatepropertychaininto-ref-jsonelement-byte-int-ref-elementbuffer">NavigatePropertyChainInto(ref JsonElement, byte[][], int, ref ElementBuffer)</a></td>
+<td><a href="#navigatepropertychaininto-jsonelement-byte-int-elementbuffer">NavigatePropertyChainInto(JsonElement, byte[][], int, ElementBuffer)</a></td>
 <td>Navigates a property chain starting at <code>startIndex</code> into an <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a>, skipping already-resolved prefix steps.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="navigatepropertychaininto-ref-jsonelement-byte-ref-elementbuffer">NavigatePropertyChainInto(ref JsonElement, byte[][], ref ElementBuffer)</h2>
+<h2 id="navigatepropertychaininto-jsonelement-byte-elementbuffer">NavigatePropertyChainInto(JsonElement, byte[][], ElementBuffer)</h2>
 <p>Navigates a property chain, collecting leaf results into an <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> instead of creating a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.createarraybuilder.html"><code>CreateArrayBuilder</code></a>-backed array. This avoids MetadataDb overhead for intermediate results — the caller iterates the buffer directly and only materializes when the final result is needed.</p>
-<pre><code class="language-csharp">public static void NavigatePropertyChainInto(ref JsonElement data, byte[][] names, ref ElementBuffer buffer)
+<pre><code class="language-csharp">public static void NavigatePropertyChainInto(in JsonElement data, byte[][] names, ref ElementBuffer buffer)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -133,7 +133,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The input data element.</td>
 </tr>
 <tr>
@@ -143,7 +143,7 @@
 </tr>
 <tr>
 <td><code>buffer</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ref ElementBuffer</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a></td>
 <td>The buffer to collect results into.</td>
 </tr>
 </tbody>
@@ -168,9 +168,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="navigatepropertychaininto-ref-jsonelement-byte-int-ref-elementbuffer">NavigatePropertyChainInto(ref JsonElement, byte[][], int, ref ElementBuffer)</h2>
+<h2 id="navigatepropertychaininto-jsonelement-byte-int-elementbuffer">NavigatePropertyChainInto(JsonElement, byte[][], int, ElementBuffer)</h2>
 <p>Navigates a property chain starting at <code>startIndex</code> into an <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a>, skipping already-resolved prefix steps.</p>
-<pre><code class="language-csharp">public static void NavigatePropertyChainInto(ref JsonElement data, byte[][] names, int startIndex, ref ElementBuffer buffer)
+<pre><code class="language-csharp">public static void NavigatePropertyChainInto(in JsonElement data, byte[][] names, int startIndex, ref ElementBuffer buffer)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -184,7 +184,7 @@
 <tbody>
 <tr>
 <td><code>data</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
 <td>The element at the start position.</td>
 </tr>
 <tr>
@@ -199,7 +199,7 @@
 </tr>
 <tr>
 <td><code>buffer</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ref ElementBuffer</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a></td>
 <td>The buffer to collect results into.</td>
 </tr>
 </tbody>

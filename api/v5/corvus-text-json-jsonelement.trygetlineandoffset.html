@@ -108,19 +108,19 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetlineandoffset-ref-int-ref-int">TryGetLineAndOffset(ref int, ref int)</a></td>
+<td><a href="#trygetlineandoffset-int-int">TryGetLineAndOffset(int, int)</a></td>
 <td>Tries to get the 1-based line number and character offset of this element in the original source document.</td>
 </tr>
 <tr>
-<td><a href="#trygetlineandoffset-ref-int-ref-int-ref-long">TryGetLineAndOffset(ref int, ref int, ref long)</a></td>
+<td><a href="#trygetlineandoffset-int-int-long">TryGetLineAndOffset(int, int, long)</a></td>
 <td>Tries to get the 1-based line number, character offset, and byte offset of this element in the original source document.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetlineandoffset-ref-int-ref-int">TryGetLineAndOffset(ref int, ref int)</h2>
+<h2 id="trygetlineandoffset-int-int">TryGetLineAndOffset(int, int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.SourceLocation.cs#L28">JsonElement.SourceLocation.cs</a></p>
 <p>Tries to get the 1-based line number and character offset of this element in the original source document.</p>
-<pre><code class="language-csharp">public bool TryGetLineAndOffset(ref int line, ref int charOffset)
+<pre><code class="language-csharp">public bool TryGetLineAndOffset(out int line, out int charOffset)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -134,12 +134,12 @@
 <tbody>
 <tr>
 <td><code>line</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the 1-based line number if successful.</td>
 </tr>
 <tr>
 <td><code>charOffset</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the 1-based character offset within the line if successful.</td>
 </tr>
 </tbody>
@@ -169,10 +169,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetlineandoffset-ref-int-ref-int-ref-long">TryGetLineAndOffset(ref int, ref int, ref long)</h2>
+<h2 id="trygetlineandoffset-int-int-long">TryGetLineAndOffset(int, int, long)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.SourceLocation.cs#L52">JsonElement.SourceLocation.cs</a></p>
 <p>Tries to get the 1-based line number, character offset, and byte offset of this element in the original source document.</p>
-<pre><code class="language-csharp">public bool TryGetLineAndOffset(ref int line, ref int charOffset, ref long lineByteOffset)
+<pre><code class="language-csharp">public bool TryGetLineAndOffset(out int line, out int charOffset, out long lineByteOffset)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -186,17 +186,17 @@
 <tbody>
 <tr>
 <td><code>line</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the 1-based line number if successful.</td>
 </tr>
 <tr>
 <td><code>charOffset</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>When this method returns, contains the 1-based character offset within the line if successful.</td>
 </tr>
 <tr>
 <td><code>lineByteOffset</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>ref long</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
 <td>When this method returns, contains the byte offset of the start of the line if successful.</td>
 </tr>
 </tbody>

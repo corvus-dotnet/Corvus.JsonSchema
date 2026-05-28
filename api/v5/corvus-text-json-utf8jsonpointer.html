@@ -136,15 +136,19 @@
 <td>Returns an enumerator that yields the encoded reference tokens (segments) of this JSON Pointer.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonpointer.trycreatejsonpointer.html#trycreatejsonpointer-readonlyspan-byte-ref-utf8jsonpointer">TryCreateJsonPointer(ReadOnlySpan&lt;byte&gt;, ref Utf8JsonPointer)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonpointer.trycreatejsonpointer.html#trycreatejsonpointer-readonlyspan-byte-utf8jsonpointer">TryCreateJsonPointer(ReadOnlySpan&lt;byte&gt;, Utf8JsonPointer)</a> <code>static</code></td>
 <td>Tries to create a new UTF-8 JSON Pointer from the specified UTF-8 bytes.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonpointer.trygetlineandoffset.html#trygetlineandoffset-ref-t-ref-int-ref-int-ref-long">TryGetLineAndOffset(ref T, ref int, ref int, ref long)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonpointer.tryencodesegment.html#tryencodesegment-readonlyspan-byte-span-byte-int">TryEncodeSegment(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</a> <code>static</code></td>
+<td>Encodes a single JSON Pointer segment, escaping <code>~</code> to <code>~0</code> and <code>/</code> to <code>~1</code> as specified by RFC 6901.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonpointer.trygetlineandoffset.html#trygetlineandoffset-t-int-int-long">TryGetLineAndOffset(T, int, int, long)</a></td>
 <td>Try to resolve the path specified by this JSON Pointer against the provided JSON element, returning the 1-based line number and character offset of the target element in the original source document.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonpointer.tryresolve.html#tryresolve-ref-t-ref-tresult">TryResolve(ref T, ref TResult)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-utf8jsonpointer.tryresolve.html#tryresolve-t-tresult">TryResolve(T, TResult)</a></td>
 <td>Try to resolve the path specified by this JSON Pointer against the provided JSON element, returning the value at that path if it exists.</td>
 </tr>
 </tbody>

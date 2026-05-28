@@ -108,23 +108,23 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#trygetvalue-parser-tstate-tresult-ref-tstate-ref-tresult">TryGetValue(Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</a></td>
+<td><a href="#trygetvalue-parser-tstate-tresult-tstate-tresult">TryGetValue(Parser&lt;TState, TResult&gt;, TState, TResult)</a></td>
 <td>Parses a value from a JsonString type.</td>
 </tr>
 <tr>
-<td><a href="#trygetvalue-utf8parser-tstate-tresult-ref-tstate-ref-tresult">TryGetValue(Utf8Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</a></td>
+<td><a href="#trygetvalue-utf8parser-tstate-tresult-tstate-tresult">TryGetValue(Utf8Parser&lt;TState, TResult&gt;, TState, TResult)</a></td>
 <td>Parses a value from a JsonString type.</td>
 </tr>
 <tr>
-<td><a href="#trygetvalue-utf8parser-tstate-tresult-ref-tstate-bool-ref-tresult">TryGetValue(Utf8Parser&lt;TState, TResult&gt;, ref TState, bool, ref TResult)</a></td>
+<td><a href="#trygetvalue-utf8parser-tstate-tresult-tstate-bool-tresult">TryGetValue(Utf8Parser&lt;TState, TResult&gt;, TState, bool, TResult)</a></td>
 <td>Parses a value from a JsonString type.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="trygetvalue-parser-tstate-tresult-ref-tstate-ref-tresult">TryGetValue(Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</h2>
+<h2 id="trygetvalue-parser-tstate-tresult-tstate-tresult">TryGetValue(Parser&lt;TState, TResult&gt;, TState, TResult)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L1">JsonPropertyName.cs</a></p>
 <p>Parses a value from a JsonString type.</p>
-<pre><code class="language-csharp">public bool TryGetValue&lt;TState, TResult&gt;(Parser&lt;TState, TResult&gt; parser, ref TState state, ref TResult result)
+<pre><code class="language-csharp">public bool TryGetValue&lt;TState, TResult&gt;(Parser&lt;TState, TResult&gt; parser, in TState state, out TResult result)
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
 <table>
@@ -162,12 +162,12 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state to be passed to the parser.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>The result of the parsing.</td>
 </tr>
 </tbody>
@@ -195,10 +195,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetvalue-utf8parser-tstate-tresult-ref-tstate-ref-tresult">TryGetValue(Utf8Parser&lt;TState, TResult&gt;, ref TState, ref TResult)</h2>
+<h2 id="trygetvalue-utf8parser-tstate-tresult-tstate-tresult">TryGetValue(Utf8Parser&lt;TState, TResult&gt;, TState, TResult)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L1">JsonPropertyName.cs</a></p>
 <p>Parses a value from a JsonString type.</p>
-<pre><code class="language-csharp">public bool TryGetValue&lt;TState, TResult&gt;(Utf8Parser&lt;TState, TResult&gt; parser, ref TState state, ref TResult result)
+<pre><code class="language-csharp">public bool TryGetValue&lt;TState, TResult&gt;(Utf8Parser&lt;TState, TResult&gt; parser, in TState state, out TResult result)
 </code></pre>
 <h3 id="type-parameters-1">Type Parameters</h3>
 <table>
@@ -236,12 +236,12 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state to be passed to the parser.</td>
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>The result of the parsing.</td>
 </tr>
 </tbody>
@@ -269,10 +269,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="trygetvalue-utf8parser-tstate-tresult-ref-tstate-bool-ref-tresult">TryGetValue(Utf8Parser&lt;TState, TResult&gt;, ref TState, bool, ref TResult)</h2>
+<h2 id="trygetvalue-utf8parser-tstate-tresult-tstate-bool-tresult">TryGetValue(Utf8Parser&lt;TState, TResult&gt;, TState, bool, TResult)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/JsonPropertyName.cs#L1">JsonPropertyName.cs</a></p>
 <p>Parses a value from a JsonString type.</p>
-<pre><code class="language-csharp">public bool TryGetValue&lt;TState, TResult&gt;(Utf8Parser&lt;TState, TResult&gt; parser, ref TState state, bool decode, ref TResult result)
+<pre><code class="language-csharp">public bool TryGetValue&lt;TState, TResult&gt;(Utf8Parser&lt;TState, TResult&gt; parser, in TState state, bool decode, out TResult result)
 </code></pre>
 <h3 id="type-parameters-2">Type Parameters</h3>
 <table>
@@ -310,7 +310,7 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td>The state to be passed to the parser.</td>
 </tr>
 <tr>
@@ -320,7 +320,7 @@
 </tr>
 <tr>
 <td><code>result</code></td>
-<td><code>ref TResult</code></td>
+<td><code>TResult</code></td>
 <td>The result of the parsing.</td>
 </tr>
 </tbody>

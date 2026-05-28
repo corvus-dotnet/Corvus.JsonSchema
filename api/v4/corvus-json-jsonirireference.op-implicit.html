@@ -120,7 +120,7 @@
 <td>Conversion to <a href="https://learn.microsoft.com/dotnet/api/system.uri"><code>Uri</code></a>.</td>
 </tr>
 <tr>
-<td><a href="#implicit-operator-jsonirireference-ref-uri">implicit operator JsonIriReference(ref Uri)</a></td>
+<td><a href="#implicit-operator-jsonirireference-uri">implicit operator JsonIriReference(Uri)</a></td>
 <td>Conversion from <a href="https://learn.microsoft.com/dotnet/api/system.uri"><code>Uri</code></a>.</td>
 </tr>
 <tr>
@@ -269,10 +269,10 @@
 </tbody>
 </table>
 <hr />
-<h2 id="implicit-operator-jsonirireference-ref-uri">implicit operator JsonIriReference(ref Uri)</h2>
+<h2 id="implicit-operator-jsonirireference-uri">implicit operator JsonIriReference(Uri)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonIriReference.cs#L247">JsonIriReference.cs</a></p>
 <p>Conversion from <a href="https://learn.microsoft.com/dotnet/api/system.uri"><code>Uri</code></a>.</p>
-<pre><code class="language-csharp">public static implicit operator JsonIriReference(ref Uri value)
+<pre><code class="language-csharp">public static implicit operator JsonIriReference(in Uri value)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -286,7 +286,7 @@
 <tbody>
 <tr>
 <td><code>value</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.uri"><code>ref Uri</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.uri"><code>Uri</code></a></td>
 <td>The value from which to convert.</td>
 </tr>
 </tbody>

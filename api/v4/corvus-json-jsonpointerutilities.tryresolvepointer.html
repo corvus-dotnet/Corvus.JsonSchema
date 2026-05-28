@@ -108,30 +108,30 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="#tryresolvepointer-jsondocument-readonlyspan-char-ref-nullable-jsonelement">TryResolvePointer(JsonDocument, ReadOnlySpan&lt;char&gt;, ref Nullable&lt;JsonElement&gt;)</a></td>
+<td><a href="#tryresolvepointer-jsondocument-readonlyspan-char-nullable-jsonelement">TryResolvePointer(JsonDocument, ReadOnlySpan&lt;char&gt;, Nullable&lt;JsonElement&gt;)</a></td>
 <td>Resolve a json element from a fragment pointer into a json document.</td>
 </tr>
 <tr>
-<td><a href="#tryresolvepointer-jsonelement-readonlyspan-char-ref-nullable-jsonelement">TryResolvePointer(JsonElement, ReadOnlySpan&lt;char&gt;, ref Nullable&lt;JsonElement&gt;)</a></td>
+<td><a href="#tryresolvepointer-jsonelement-readonlyspan-char-nullable-jsonelement">TryResolvePointer(JsonElement, ReadOnlySpan&lt;char&gt;, Nullable&lt;JsonElement&gt;)</a></td>
 <td>Resolve a json element from a fragment pointer into a json document.</td>
 </tr>
 <tr>
-<td><a href="#tryresolvepointer-jsondocument-readonlyspan-char-ref-nullable-jsonelement-jsonpointerutilities-segmenthandler-tstate-ref-tstate">TryResolvePointer(JsonDocument, ReadOnlySpan&lt;char&gt;, ref Nullable&lt;JsonElement&gt;, JsonPointerUtilities.SegmentHandler&lt;TState&gt;, ref TState)</a></td>
+<td><a href="#tryresolvepointer-jsondocument-readonlyspan-char-nullable-jsonelement-jsonpointerutilities-segmenthandler-tstate-tstate">TryResolvePointer(JsonDocument, ReadOnlySpan&lt;char&gt;, Nullable&lt;JsonElement&gt;, JsonPointerUtilities.SegmentHandler&lt;TState&gt;, TState)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#tryresolvepointer-jsonelement-readonlyspan-char-ref-nullable-jsonelement-jsonpointerutilities-segmenthandler-tstate-ref-tstate">TryResolvePointer(JsonElement, ReadOnlySpan&lt;char&gt;, ref Nullable&lt;JsonElement&gt;, JsonPointerUtilities.SegmentHandler&lt;TState&gt;, ref TState)</a></td>
+<td><a href="#tryresolvepointer-jsonelement-readonlyspan-char-nullable-jsonelement-jsonpointerutilities-segmenthandler-tstate-tstate">TryResolvePointer(JsonElement, ReadOnlySpan&lt;char&gt;, Nullable&lt;JsonElement&gt;, JsonPointerUtilities.SegmentHandler&lt;TState&gt;, TState)</a></td>
 <td></td>
 </tr>
 <tr>
-<td><a href="#tryresolvepointer-readonlyspan-byte-readonlyspan-char-bool-ref-long-jsonreaderoptions">TryResolvePointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, bool, ref long, JsonReaderOptions)</a></td>
+<td><a href="#tryresolvepointer-readonlyspan-byte-readonlyspan-char-bool-long-jsonreaderoptions">TryResolvePointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, bool, long, JsonReaderOptions)</a></td>
 <td>Resolve a json element from a fragment pointer into a json document.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="tryresolvepointer-jsondocument-readonlyspan-char-ref-nullable-jsonelement">TryResolvePointer(JsonDocument, ReadOnlySpan&lt;char&gt;, ref Nullable&lt;JsonElement&gt;)</h2>
+<h2 id="tryresolvepointer-jsondocument-readonlyspan-char-nullable-jsonelement">TryResolvePointer(JsonDocument, ReadOnlySpan&lt;char&gt;, Nullable&lt;JsonElement&gt;)</h2>
 <p>Resolve a json element from a fragment pointer into a json document.</p>
-<pre><code class="language-csharp">public static bool TryResolvePointer(JsonDocument root, ReadOnlySpan&lt;char&gt; fragment, ref Nullable&lt;JsonElement&gt; element)
+<pre><code class="language-csharp">public static bool TryResolvePointer(JsonDocument root, ReadOnlySpan&lt;char&gt; fragment, out Nullable&lt;JsonElement&gt; element)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -155,7 +155,7 @@
 </tr>
 <tr>
 <td><code>element</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>ref Nullable&lt;JsonElement&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>Nullable&lt;JsonElement&gt;</code></a></td>
 <td>The element found at the given location.</td>
 </tr>
 </tbody>
@@ -183,9 +183,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryresolvepointer-jsonelement-readonlyspan-char-ref-nullable-jsonelement">TryResolvePointer(JsonElement, ReadOnlySpan&lt;char&gt;, ref Nullable&lt;JsonElement&gt;)</h2>
+<h2 id="tryresolvepointer-jsonelement-readonlyspan-char-nullable-jsonelement">TryResolvePointer(JsonElement, ReadOnlySpan&lt;char&gt;, Nullable&lt;JsonElement&gt;)</h2>
 <p>Resolve a json element from a fragment pointer into a json document.</p>
-<pre><code class="language-csharp">public static bool TryResolvePointer(JsonElement root, ReadOnlySpan&lt;char&gt; fragment, ref Nullable&lt;JsonElement&gt; element)
+<pre><code class="language-csharp">public static bool TryResolvePointer(JsonElement root, ReadOnlySpan&lt;char&gt; fragment, out Nullable&lt;JsonElement&gt; element)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -209,7 +209,7 @@
 </tr>
 <tr>
 <td><code>element</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>ref Nullable&lt;JsonElement&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>Nullable&lt;JsonElement&gt;</code></a></td>
 <td>The element found at the given location.</td>
 </tr>
 </tbody>
@@ -237,8 +237,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryresolvepointer-jsondocument-readonlyspan-char-ref-nullable-jsonelement-jsonpointerutilities-segmenthandler-tstate-ref-tstate">TryResolvePointer(JsonDocument, ReadOnlySpan&lt;char&gt;, ref Nullable&lt;JsonElement&gt;, JsonPointerUtilities.SegmentHandler&lt;TState&gt;, ref TState)</h2>
-<pre><code class="language-csharp">public static bool TryResolvePointer&lt;TState&gt;(JsonDocument root, ReadOnlySpan&lt;char&gt; fragment, ref Nullable&lt;JsonElement&gt; element, JsonPointerUtilities.SegmentHandler&lt;TState&gt; handleSegment, ref TState state)
+<h2 id="tryresolvepointer-jsondocument-readonlyspan-char-nullable-jsonelement-jsonpointerutilities-segmenthandler-tstate-tstate">TryResolvePointer(JsonDocument, ReadOnlySpan&lt;char&gt;, Nullable&lt;JsonElement&gt;, JsonPointerUtilities.SegmentHandler&lt;TState&gt;, TState)</h2>
+<pre><code class="language-csharp">public static bool TryResolvePointer&lt;TState&gt;(JsonDocument root, ReadOnlySpan&lt;char&gt; fragment, out Nullable&lt;JsonElement&gt; element, JsonPointerUtilities.SegmentHandler&lt;TState&gt; handleSegment, ref TState state)
 </code></pre>
 <h3 id="parameters-2">Parameters</h3>
 <table>
@@ -262,7 +262,7 @@
 </tr>
 <tr>
 <td><code>element</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>ref Nullable&lt;JsonElement&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>Nullable&lt;JsonElement&gt;</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -272,7 +272,7 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -299,8 +299,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryresolvepointer-jsonelement-readonlyspan-char-ref-nullable-jsonelement-jsonpointerutilities-segmenthandler-tstate-ref-tstate">TryResolvePointer(JsonElement, ReadOnlySpan&lt;char&gt;, ref Nullable&lt;JsonElement&gt;, JsonPointerUtilities.SegmentHandler&lt;TState&gt;, ref TState)</h2>
-<pre><code class="language-csharp">public static bool TryResolvePointer&lt;TState&gt;(JsonElement root, ReadOnlySpan&lt;char&gt; fragment, ref Nullable&lt;JsonElement&gt; element, JsonPointerUtilities.SegmentHandler&lt;TState&gt; handleSegment, ref TState state)
+<h2 id="tryresolvepointer-jsonelement-readonlyspan-char-nullable-jsonelement-jsonpointerutilities-segmenthandler-tstate-tstate">TryResolvePointer(JsonElement, ReadOnlySpan&lt;char&gt;, Nullable&lt;JsonElement&gt;, JsonPointerUtilities.SegmentHandler&lt;TState&gt;, TState)</h2>
+<pre><code class="language-csharp">public static bool TryResolvePointer&lt;TState&gt;(JsonElement root, ReadOnlySpan&lt;char&gt; fragment, out Nullable&lt;JsonElement&gt; element, JsonPointerUtilities.SegmentHandler&lt;TState&gt; handleSegment, ref TState state)
 </code></pre>
 <h3 id="parameters-3">Parameters</h3>
 <table>
@@ -324,7 +324,7 @@
 </tr>
 <tr>
 <td><code>element</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>ref Nullable&lt;JsonElement&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1"><code>Nullable&lt;JsonElement&gt;</code></a></td>
 <td></td>
 </tr>
 <tr>
@@ -334,7 +334,7 @@
 </tr>
 <tr>
 <td><code>state</code></td>
-<td><code>ref TState</code></td>
+<td><code>TState</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -361,9 +361,9 @@
 </tbody>
 </table>
 <hr />
-<h2 id="tryresolvepointer-readonlyspan-byte-readonlyspan-char-bool-ref-long-jsonreaderoptions">TryResolvePointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, bool, ref long, JsonReaderOptions)</h2>
+<h2 id="tryresolvepointer-readonlyspan-byte-readonlyspan-char-bool-long-jsonreaderoptions">TryResolvePointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;char&gt;, bool, long, JsonReaderOptions)</h2>
 <p>Resolve a json element from a fragment pointer into a json document.</p>
-<pre><code class="language-csharp">public static bool TryResolvePointer(ReadOnlySpan&lt;byte&gt; input, ReadOnlySpan&lt;char&gt; fragment, bool throwOnFailure, ref long offset, JsonReaderOptions options)
+<pre><code class="language-csharp">public static bool TryResolvePointer(ReadOnlySpan&lt;byte&gt; input, ReadOnlySpan&lt;char&gt; fragment, bool throwOnFailure, out long offset, JsonReaderOptions options)
 </code></pre>
 <h3 id="parameters-4">Parameters</h3>
 <table>
@@ -392,7 +392,7 @@
 </tr>
 <tr>
 <td><code>offset</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>ref long</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
 <td>The element found at the given location.</td>
 </tr>
 <tr>
