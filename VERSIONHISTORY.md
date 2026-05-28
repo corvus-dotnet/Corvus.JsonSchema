@@ -20,6 +20,7 @@ V5.1 expands Corvus.Text.Json beyond JSON Schema model generation into strongly-
 ### Breaking changes
 
 - **V4 multi-core union conversions are now explicit** — Generated V4 conversions from a multi-core union type to `bool` or the preferred numeric .NET type are now `explicit` instead of `implicit`. This fixes unsafe implicit conversions that could throw at runtime when the instance held a different branch. Code that relied on these implicit conversions must now use an explicit cast and handle invalid branch values appropriately.
+- **V5 mutable composition conversions now return mutable results** — Generated `TryGetAs___` methods on mutable V5 composition types now use `out Component.Mutable` instead of `out Component`. Existing callers that declare the old immutable out-variable type, rely on `out var` inferring the immutable type, or depend on generic/overload inference from the old result type must update the declaration or assign the returned mutable value to an immutable variable after the call.
 
 ### Bug fixes
 
