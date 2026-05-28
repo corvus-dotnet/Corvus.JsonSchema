@@ -53,6 +53,14 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [DefaultValue(null)]
         public string? OutputRootTypeName { get; init; }
 
+        [CommandOption("--outputRootAccessibility")]
+        [Description("The accessibility for the generated root type when --outputRootTypeName is specified. Supported values: Public, Internal.")]
+        public CodeGeneration.GeneratedTypeAccessibility? OutputRootAccessibility { get; init; }
+
+        [CommandOption("--defaultAccessibility")]
+        [Description("The default accessibility for generated top-level types. Supported values: Public, Internal.")]
+        public CodeGeneration.GeneratedTypeAccessibility? DefaultAccessibility { get; init; }
+
         [CommandOption("--rebaseToRootPath")]
         [Description("If a --rootPath is specified, rebase the document as if it was rooted on the specified element.")]
         [DefaultValue(false)]
@@ -120,13 +128,21 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
         Engine engine = settings.GenerationEngine ?? CliDefaults.DefaultEngine;
 
-        var config = GeneratorConfig.Create(
-            settings.RootNamespace,
-            [GeneratorConfig.GenerationSpecification.Create(
+        GeneratorConfig.GenerationSpecification generationSpecification =
+            GeneratorConfig.GenerationSpecification.Create(
                 schemaFile: settings.SchemaFile,
                 outputRootTypeName: settings.OutputRootTypeName.AsNullableJsonString(),
                 rebaseToRootPath: settings.RebaseToRootPath,
-                rootPath: settings.RootPath.AsNullableJsonString())],
+                rootPath: settings.RootPath.AsNullableJsonString());
+
+        if (settings.OutputRootAccessibility is CodeGeneration.GeneratedTypeAccessibility outputRootAccessibility)
+        {
+            generationSpecification = generationSpecification.SetProperty("outputRootAccessibility", new JsonString(outputRootAccessibility.ToString()));
+        }
+
+        var config = GeneratorConfig.Create(
+            settings.RootNamespace,
+            [generationSpecification],
             additionalFiles: null,
             assertFormat: settings.AssertFormat,
             disabledNamingHeuristics: settings.DisableNamingHeuristic is string[] disabledItems ? JsonArray.FromRange(disabledItems) : default(GeneratorConfig.JsonStringArray?),
@@ -139,6 +155,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             useUnixLineEndings: settings.UseUnixLineEndings,
             supportYaml: settings.SupportYaml,
             addExplicitUsings: settings.AddExplicitUsings);
+
+        if (settings.DefaultAccessibility is CodeGeneration.GeneratedTypeAccessibility defaultAccessibility)
+        {
+            config = config.SetProperty("defaultAccessibility", new JsonString(defaultAccessibility.ToString()));
+        }
 
         return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, cancellationToken);
     }

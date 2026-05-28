@@ -390,6 +390,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
 
             if (options.TryGetTypeName(reference.ToString(), out NamedType typeName))
             {
+                targetType.SetCSharpOptions(options);
                 targetType.SetDotnetTypeName(typeName.DotnetTypeName);
 
                 if (typeName.DotnetNamespace is string nsOverride)

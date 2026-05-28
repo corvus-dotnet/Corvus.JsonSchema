@@ -160,6 +160,51 @@ public class ConfigOptionsTests : IDisposable
     }
 
     [TestMethod]
+    [DataRow("V4")]
+    [DataRow("V5")]
+    public async Task Config_WithNamedTypeAccessibility_GeneratesInternalNamedType(string engine)
+    {
+        string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
+        string schemaPath = Path.Combine(schemasDir, "person-with-ref.json");
+        string addressPath = Path.Combine(schemasDir, "address.json");
+        string typeName = $"{engine}PostalAddress";
+
+        string configPath = CreateConfigFile(new {
+            rootNamespace = "TestGenerated.NamedTypeAccessibility",
+            outputPath = _outputDir,
+            typesToGenerate = new[]
+            {
+                new { schemaFile = schemaPath, outputRootTypeName = $"{engine}Person" }
+            },
+            additionalFiles = new[]
+            {
+                new
+                {
+                    canonicalUri = "http://example.com/schemas/address",
+                    contentPath = addressPath
+                }
+            },
+            namedTypes = new[]
+            {
+                new
+                {
+                    reference = "http://example.com/schemas/address",
+                    dotnetTypeName = typeName,
+                    accessibility = "Internal"
+                }
+            }
+        });
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\" --engine {engine}");
+
+        Assert.AreEqual(0, result.ExitCode);
+
+        string generatedCode = string.Concat(Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        Assert.AreEqual(3, generatedCode.Split($"internal readonly partial struct {typeName}").Length - 1);
+        Assert.AreEqual(0, generatedCode.Split($"public readonly partial struct {typeName}").Length - 1);
+    }
+
+    [TestMethod]
     public async Task Config_WithOutputRootNamespace_OverridesDefault()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");

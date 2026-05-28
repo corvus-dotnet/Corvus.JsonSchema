@@ -1501,6 +1501,10 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
+        string conversionKind = typeDeclaration.ImpliedCoreTypes().CountTypes() == 1
+            ? "implicit"
+            : "explicit";
+
         return generator
             .AppendSeparatorLine()
             .AppendBlockIndent(
@@ -1511,7 +1515,7 @@ internal static partial class CodeGeneratorExtensions
                 /// <param name="value">The value from which to convert.</param>
                 /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
                 """)
-            .AppendIndent("public static implicit operator bool(")
+            .AppendIndent("public static ", conversionKind, " operator bool(")
             .Append(typeDeclaration.DotnetTypeName())
             .AppendLine(" value)")
             .AppendBlockIndent(
@@ -4271,6 +4275,41 @@ internal static partial class CodeGeneratorExtensions
             .AppendIndent("[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<")
             .Append(typeDeclaration.DotnetTypeName())
             .AppendLine(">))]");
+    }
+
+    /// <summary>
+    /// Append the DebuggerDisplay attribute.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the DebuggerDisplay attribute.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendDebuggerDisplayAttribute(this CodeGenerator generator)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        return generator
+            .AppendLineIndent("[global::System.Diagnostics.DebuggerDisplay(\"{__CorvusDebuggerDisplay,nq}\")]");
+    }
+
+    /// <summary>
+    /// Append the DebuggerDisplay property.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the DebuggerDisplay property.</param>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendDebuggerDisplayProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("[global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]")
+            .AppendLineIndent("private string __CorvusDebuggerDisplay => $\"", typeDeclaration.DotnetTypeName(), ": ValueKind = {ValueKind} : \\\"{ToString()}\\\"\";");
     }
 
     /// <summary>

@@ -860,6 +860,13 @@ internal static partial class CodeGeneratorExtensions
                         _ => JsonValueHelpers.UndefinedHashCode,
                     };
                 }
+                """)
+            .AppendSeparatorLine()
+            .ReserveNameIfNotReserved("TryFormat")
+            .AppendFormattableMethods(typeDeclaration)
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+                """
 
                 /// <inheritdoc/>
                 public override string ToString()
@@ -867,5 +874,155 @@ internal static partial class CodeGeneratorExtensions
                     return this.Serialize();
                 }
                 """);
+    }
+
+    private static CodeGenerator AppendFormattableMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        generator
+            .AppendLineIndent("/// <inheritdoc/>")
+            .AppendLineIndent("public string ToString(string? format, IFormatProvider? formatProvider)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("if (!string.IsNullOrEmpty(format))")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendFormatAwareToStringBody(typeDeclaration)
+                    .AppendLineIndent("if (this.ValueKind == JsonValueKind.Number)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.ToString(format, formatProvider);")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("return this.ToString();")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .AppendLine("#if NET8_0_OR_GREATER")
+            .AppendLineIndent("/// <inheritdoc/>")
+            .AppendLineIndent("public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("if (format.IsEmpty)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return LowAllocJsonUtils.TryFormatJsonValue(destination, this, out charsWritten);")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (this.ValueKind == JsonValueKind.Number)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.TryFormat(destination, out charsWritten, format, provider);")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("string formatted = this.ToString(format.IsEmpty ? null : format.ToString(), provider);")
+                .AppendLineIndent("if (formatted.Length > destination.Length)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("charsWritten = 0;")
+                    .AppendLineIndent("return false;")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("formatted.AsSpan().CopyTo(destination);")
+                .AppendLineIndent("charsWritten = formatted.Length;")
+                .AppendLineIndent("return true;")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <inheritdoc/>")
+            .AppendLineIndent("public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("if (format.IsEmpty)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return LowAllocJsonUtils.TryFormatJsonValue(utf8Destination, this, out bytesWritten);")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (this.ValueKind == JsonValueKind.Number)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.TryFormat(utf8Destination, out bytesWritten, format, provider);")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("string formatted = this.ToString(format.IsEmpty ? null : format.ToString(), provider);")
+                .AppendLineIndent("int requiredLength = Encoding.UTF8.GetByteCount(formatted);")
+                .AppendLineIndent("if (requiredLength > utf8Destination.Length)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("bytesWritten = 0;")
+                    .AppendLineIndent("return false;")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("bytesWritten = Encoding.UTF8.GetBytes(formatted.AsSpan(), utf8Destination);")
+                .AppendLineIndent("return true;")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendLine("#endif");
+
+        return generator;
+    }
+
+    private static CodeGenerator AppendFormatAwareToStringBody(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        switch (typeDeclaration.Format())
+        {
+            case "uuid":
+                return generator.AppendBlockIndent(
+                    """
+                    if (this.TryGetGuid(out Guid formattedValue))
+                    {
+                        return formattedValue.ToString(format);
+                    }
+                    """);
+
+            case "date":
+                return generator.AppendBlockIndent(
+                    """
+                    if (this.TryGetDate(out NodaTime.LocalDate formattedValue))
+                    {
+                        return formattedValue.ToString(format, formatProvider);
+                    }
+                    """);
+
+            case "date-time":
+                return generator.AppendBlockIndent(
+                    """
+                    if (this.TryGetDateTime(out NodaTime.OffsetDateTime formattedValue))
+                    {
+                        return formattedValue.ToString(format, formatProvider);
+                    }
+                    """);
+
+            case "time":
+                return generator.AppendBlockIndent(
+                    """
+                    if (this.TryGetTime(out NodaTime.OffsetTime formattedValue))
+                    {
+                        return formattedValue.ToString(format, formatProvider);
+                    }
+                    """);
+
+            default:
+                return generator;
+        }
     }
 }

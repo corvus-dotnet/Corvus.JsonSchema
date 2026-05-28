@@ -2,8 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using CommunityToolkit.HighPerformance.Buffers;
@@ -21,6 +23,82 @@ namespace Corvus.Json;
 public static class LowAllocJsonUtils
 {
     private static readonly ObjectPool<PooledWriter> WriterPool = new DefaultObjectPoolProvider().Create<PooledWriter>(new Utf8JsonWriterPooledObjectPolicy());
+
+    /// <summary>
+    /// Format a JSON value to a UTF-8 span.
+    /// </summary>
+    /// <typeparam name="T">The type of the value to format.</typeparam>
+    /// <param name="destination">The destination buffer to receive the serialized JSON value.</param>
+    /// <param name="value">The value to format.</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the value was formatted successfully; otherwise <see langword="false"/>.</returns>
+    public static bool TryFormatJsonValue<T>(Span<byte> destination, in T value, out int bytesWritten)
+        where T : struct, IJsonValue<T>
+    {
+        PooledWriter? writerPair = null;
+        try
+        {
+            writerPair = WriterPool.Get();
+            (Utf8JsonWriter w, ArrayPoolBufferWriter<byte> writer) = writerPair.Get();
+            value.WriteTo(w);
+            w.Flush();
+
+            if (writer.WrittenSpan.TryCopyTo(destination))
+            {
+                bytesWritten = writer.WrittenCount;
+                return true;
+            }
+
+            bytesWritten = 0;
+            return false;
+        }
+        finally
+        {
+            if (writerPair is not null)
+            {
+                WriterPool.Return(writerPair);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Format a JSON value to a character span.
+    /// </summary>
+    /// <typeparam name="T">The type of the value to format.</typeparam>
+    /// <param name="destination">The destination buffer to receive the serialized JSON value.</param>
+    /// <param name="value">The value to format.</param>
+    /// <param name="charsWritten">The number of characters written.</param>
+    /// <returns><see langword="true"/> if the value was formatted successfully; otherwise <see langword="false"/>.</returns>
+    public static bool TryFormatJsonValue<T>(Span<char> destination, in T value, out int charsWritten)
+        where T : struct, IJsonValue<T>
+    {
+        PooledWriter? writerPair = null;
+        try
+        {
+            writerPair = WriterPool.Get();
+            (Utf8JsonWriter w, ArrayPoolBufferWriter<byte> writer) = writerPair.Get();
+            value.WriteTo(w);
+            w.Flush();
+
+            ReadOnlySpan<byte> json = writer.WrittenSpan;
+            int charCount = GetCharCount(json);
+            if (charCount > destination.Length)
+            {
+                charsWritten = 0;
+                return false;
+            }
+
+            charsWritten = JsonReaderHelper.TranscodeHelper(json, destination);
+            return true;
+        }
+        finally
+        {
+            if (writerPair is not null)
+            {
+                WriterPool.Return(writerPair);
+            }
+        }
+    }
 
     /// <summary>
     /// Process raw JSON text.
@@ -578,6 +656,24 @@ public static class LowAllocJsonUtils
         }
 
         return offset;
+    }
+
+    private static int GetCharCount(ReadOnlySpan<byte> utf8)
+    {
+#if NET8_0_OR_GREATER
+        return Encoding.UTF8.GetCharCount(utf8);
+#else
+        byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8.Length);
+        try
+        {
+            utf8.CopyTo(bytes);
+            return Encoding.UTF8.GetCharCount(bytes, 0, utf8.Length);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+#endif
     }
 
     private static int CopyToBufferWithLeadingQuote<T>(Span<byte> buffer, in T value, int offset, Utf8JsonWriter jsonWriter, ArrayPoolBufferWriter<byte> writer)

@@ -125,6 +125,8 @@ public sealed class GenericConstraintInfo
 /// </summary>
 public sealed class AssemblyInspector(string assemblyPath)
 {
+    private static readonly NullabilityInfoContext NullabilityContext = new();
+
     /// <summary>
     /// Quick pre-scan: returns a map of type FullName → per-type page URL slug.
     /// Used to populate <see cref="XmlDocParser.TypeUrlMap"/> before XML parsing.
@@ -477,7 +479,7 @@ public sealed class AssemblyInspector(string assemblyPath)
     private static MemberInfo BuildConstructorMemberInfo(Type type, System.Reflection.ConstructorInfo ctor, DocMember? docs, string xmlKey)
     {
         System.Reflection.ParameterInfo[] parameters = ctor.GetParameters();
-        string paramList = string.Join(", ", parameters.Select(p => $"{FormatTypeName(p.ParameterType)} {p.Name}"));
+        string paramList = string.Join(", ", parameters.Select(FormatParameter));
         string shortName = FormatTypeName(type);
         // Remove generic suffix for constructor name
         int backtick = shortName.IndexOf('<');
@@ -494,7 +496,7 @@ public sealed class AssemblyInspector(string assemblyPath)
             Parameters = parameters.Select(p => new ParameterInfo
             {
                 Name = p.Name ?? string.Empty,
-                Type = FormatTypeName(p.ParameterType),
+                Type = FormatParameterTypeName(p),
                 TypeFullName = GetTypeFullName(p.ParameterType),
                 IsOptional = p.IsOptional,
                 DefaultValue = p.HasDefaultValue ? p.RawDefaultValue?.ToString() : null,
@@ -532,16 +534,16 @@ public sealed class AssemblyInspector(string assemblyPath)
 
         if (isIndexer)
         {
-            string paramList = string.Join(", ", indexParams.Select(p => $"{FormatTypeName(p.ParameterType)} {p.Name}"));
-            displayName = $"this[{string.Join(", ", indexParams.Select(p => FormatTypeName(p.ParameterType)))}]";
-            signature = $"{modifiers} {FormatTypeName(prop.PropertyType)} this[{paramList}]{accessors}";
+            string paramList = string.Join(", ", indexParams.Select(FormatParameter));
+            displayName = $"this[{string.Join(", ", indexParams.Select(FormatParameterTypeName))}]";
+            signature = $"{modifiers} {FormatPropertyTypeName(prop)} this[{paramList}]{accessors}";
 
             foreach (System.Reflection.ParameterInfo p in indexParams)
             {
                 parameters.Add(new ParameterInfo
                 {
                     Name = p.Name ?? "index",
-                    Type = FormatTypeName(p.ParameterType),
+                    Type = FormatParameterTypeName(p),
                     TypeFullName = GetTypeFullName(p.ParameterType),
                     IsOptional = p.IsOptional,
                 });
@@ -549,7 +551,7 @@ public sealed class AssemblyInspector(string assemblyPath)
         }
         else
         {
-            signature = $"{modifiers} {FormatTypeName(prop.PropertyType)} {prop.Name}{accessors}";
+            signature = $"{modifiers} {FormatPropertyTypeName(prop)} {prop.Name}{accessors}";
         }
 
         System.Reflection.MethodInfo? getter = prop.GetGetMethod();
@@ -568,7 +570,7 @@ public sealed class AssemblyInspector(string assemblyPath)
             Name = displayName,
             GroupKey = prop.Name,
             Signature = signature,
-            ReturnType = FormatTypeName(prop.PropertyType),
+            ReturnType = FormatPropertyTypeName(prop),
             ReturnTypeFullName = GetTypeFullName(prop.PropertyType),
             Documentation = docs,
             IsStatic = getter?.IsStatic ?? false,
@@ -584,7 +586,7 @@ public sealed class AssemblyInspector(string assemblyPath)
     private static MemberInfo BuildMethodMemberInfo(System.Reflection.MethodInfo method, DocMember? docs, string xmlKey)
     {
         System.Reflection.ParameterInfo[] parameters = method.GetParameters();
-        string paramList = string.Join(", ", parameters.Select(p => $"{FormatTypeName(p.ParameterType)} {p.Name}"));
+        string paramList = string.Join(", ", parameters.Select(FormatParameter));
 
         string genericSuffix = "";
         string genericConstraints = "";
@@ -618,13 +620,13 @@ public sealed class AssemblyInspector(string assemblyPath)
         {
             Name = method.Name,
             GroupKey = method.Name,
-            Signature = $"{modifiers} {FormatTypeName(method.ReturnType)} {method.Name}{genericSuffix}({paramList}){genericConstraints}",
-            ReturnType = FormatTypeName(method.ReturnType),
+            Signature = $"{modifiers} {FormatReturnTypeName(method)} {method.Name}{genericSuffix}({paramList}){genericConstraints}",
+            ReturnType = FormatReturnTypeName(method),
             ReturnTypeFullName = GetTypeFullName(method.ReturnType),
             Parameters = parameters.Select(p => new ParameterInfo
             {
                 Name = p.Name ?? string.Empty,
-                Type = FormatTypeName(p.ParameterType),
+                Type = FormatParameterTypeName(p),
                 TypeFullName = GetTypeFullName(p.ParameterType),
                 IsOptional = p.IsOptional,
                 DefaultValue = p.HasDefaultValue ? p.RawDefaultValue?.ToString() : null,
@@ -694,22 +696,22 @@ public sealed class AssemblyInspector(string assemblyPath)
     {
         System.Reflection.ParameterInfo[] parameters = method.GetParameters();
         string displayName = GetOperatorDisplayName(method);
-        string paramList = string.Join(", ", parameters.Select(p => $"{FormatTypeName(p.ParameterType)} {p.Name}"));
+        string paramList = string.Join(", ", parameters.Select(FormatParameter));
         string signature = method.Name is "op_Implicit" or "op_Explicit"
             ? $"public static {displayName}({paramList})"
-            : $"public static {FormatTypeName(method.ReturnType)} {displayName}({paramList})";
+            : $"public static {FormatReturnTypeName(method)} {displayName}({paramList})";
 
         return new MemberInfo
         {
             Name = displayName,
             GroupKey = method.Name,
             Signature = signature,
-            ReturnType = FormatTypeName(method.ReturnType),
+            ReturnType = FormatReturnTypeName(method),
             ReturnTypeFullName = GetTypeFullName(method.ReturnType),
             Parameters = parameters.Select(p => new ParameterInfo
             {
                 Name = p.Name ?? string.Empty,
-                Type = FormatTypeName(p.ParameterType),
+                Type = FormatParameterTypeName(p),
                 TypeFullName = GetTypeFullName(p.ParameterType),
             }).ToList(),
             Documentation = docs,
@@ -994,11 +996,67 @@ public sealed class AssemblyInspector(string assemblyPath)
         return type.FullName ?? type.Name;
     }
 
+    private static string FormatParameter(System.Reflection.ParameterInfo parameter)
+    {
+        string modifier = GetParameterModifier(parameter);
+        string typeName = FormatParameterTypeName(parameter);
+        string parameterName = parameter.Name ?? string.Empty;
+        return string.IsNullOrEmpty(modifier)
+            ? $"{typeName} {parameterName}"
+            : $"{modifier} {typeName} {parameterName}";
+    }
+
+    private static string GetParameterModifier(System.Reflection.ParameterInfo parameter)
+    {
+        if (!parameter.ParameterType.IsByRef)
+        {
+            return string.Empty;
+        }
+
+        if (parameter.IsOut)
+        {
+            return "out";
+        }
+
+        if (parameter.IsIn ||
+            parameter.GetRequiredCustomModifiers().Any(t => t.FullName == "System.Runtime.CompilerServices.IsReadOnlyAttribute"))
+        {
+            return "in";
+        }
+
+        return "ref";
+    }
+
+    private static string FormatParameterTypeName(System.Reflection.ParameterInfo parameter)
+    {
+        return FormatTypeName(parameter.ParameterType, NullabilityContext.Create(parameter));
+    }
+
+    private static string FormatPropertyTypeName(System.Reflection.PropertyInfo property)
+    {
+        return FormatTypeName(property.PropertyType, NullabilityContext.Create(property));
+    }
+
+    private static string FormatReturnTypeName(System.Reflection.MethodInfo method)
+    {
+        return FormatTypeName(method.ReturnType, NullabilityContext.Create(method.ReturnParameter));
+    }
+
     internal static string FormatTypeName(Type type)
+    {
+        return FormatTypeName(type, null);
+    }
+
+    private static string FormatTypeName(Type type, NullabilityInfo? nullabilityInfo)
     {
         if (type.IsGenericParameter)
         {
             return type.Name;
+        }
+
+        if (type.IsByRef)
+        {
+            return FormatTypeName(type.GetElementType()!, nullabilityInfo?.ElementType ?? nullabilityInfo);
         }
 
         if (type.IsArray)
@@ -1006,14 +1064,15 @@ public sealed class AssemblyInspector(string assemblyPath)
             return FormatTypeName(type.GetElementType()!) + "[]";
         }
 
-        if (type.IsByRef)
-        {
-            return "ref " + FormatTypeName(type.GetElementType()!);
-        }
-
         // Handle Nullable<T>
         if (type.IsGenericType)
         {
+            Type? underlyingType = Nullable.GetUnderlyingType(type);
+            if (underlyingType is not null)
+            {
+                return FormatTypeName(underlyingType) + "?";
+            }
+
             Type genericDef = type.GetGenericTypeDefinition();
             string baseName = genericDef.Name;
             int backtick = baseName.IndexOf('`');
@@ -1029,7 +1088,8 @@ public sealed class AssemblyInspector(string assemblyPath)
             }
 
             Type[] args = type.GetGenericArguments();
-            return $"{baseName}<{string.Join(", ", args.Select(FormatTypeName))}>";
+            NullabilityInfo[] nullableArgs = nullabilityInfo?.GenericTypeArguments ?? [];
+            return $"{baseName}<{string.Join(", ", args.Select((arg, index) => FormatTypeName(arg, index < nullableArgs.Length ? nullableArgs[index] : null)))}>";
         }
 
         if (type.IsNested && type.DeclaringType is not null)
@@ -1038,7 +1098,7 @@ public sealed class AssemblyInspector(string assemblyPath)
         }
 
         // Use C# keyword aliases for common types
-        return type.FullName switch
+        string result = type.FullName switch
         {
             "System.Void" => "void",
             "System.Boolean" => "bool",
@@ -1058,6 +1118,16 @@ public sealed class AssemblyInspector(string assemblyPath)
             "System.Object" => "object",
             _ => type.Name,
         };
+
+        return IsNullableReferenceType(type, nullabilityInfo) ? result + "?" : result;
+    }
+
+    private static bool IsNullableReferenceType(Type type, NullabilityInfo? nullabilityInfo)
+    {
+        return !type.IsValueType &&
+            nullabilityInfo is not null &&
+            (nullabilityInfo.ReadState == NullabilityState.Nullable ||
+                nullabilityInfo.WriteState == NullabilityState.Nullable);
     }
 
     private static string? GetBaseTypeName(Type type)

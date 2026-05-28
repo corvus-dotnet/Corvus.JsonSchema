@@ -88,6 +88,98 @@ public class ConfigCommandTests : IDisposable
             $"Expected V4 generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
     }
 
+    [TestMethod]
+    public async Task Config_WithDefaultAccessibilityInternal_GeneratesInternalRootType()
+    {
+        string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
+        string configPath = CreateConfigFile(new {
+            rootNamespace = "TestGenerated",
+            outputPath = _outputDir,
+            defaultAccessibility = "Internal",
+            typesToGenerate = new[]
+            {
+                new { schemaFile = Path.Combine(schemasDir, "simple-object.json"), outputRootTypeName = "ConfigInternalPerson" }
+            }
+        });
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
+
+        Assert.AreEqual(0, result.ExitCode);
+
+        string generatedCode = string.Concat(Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        Assert.AreEqual(3, generatedCode.Split("internal readonly partial struct ConfigInternalPerson").Length - 1);
+        Assert.AreEqual(0, generatedCode.Split("public readonly partial struct ConfigInternalPerson").Length - 1);
+    }
+
+    [TestMethod]
+    public async Task Config_WithOutputRootAccessibility_OverridesDefaultAccessibility()
+    {
+        string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
+        string configPath = CreateConfigFile(new {
+            rootNamespace = "TestGenerated",
+            outputPath = _outputDir,
+            defaultAccessibility = "Internal",
+            typesToGenerate = new[]
+            {
+                new { schemaFile = Path.Combine(schemasDir, "simple-object.json"), outputRootTypeName = "ConfigPublicPerson", outputRootAccessibility = "Public" }
+            }
+        });
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
+
+        Assert.AreEqual(0, result.ExitCode);
+
+        string generatedCode = string.Concat(Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        Assert.AreEqual(3, generatedCode.Split("public readonly partial struct ConfigPublicPerson").Length - 1);
+        Assert.AreEqual(0, generatedCode.Split("internal readonly partial struct ConfigPublicPerson").Length - 1);
+    }
+
+    [TestMethod]
+    public async Task Config_WithV4EngineAndDefaultAccessibilityInternal_GeneratesInternalRootType()
+    {
+        string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
+        string configPath = CreateConfigFile(new {
+            rootNamespace = "TestGenerated",
+            outputPath = _outputDir,
+            defaultAccessibility = "Internal",
+            typesToGenerate = new[]
+            {
+                new { schemaFile = Path.Combine(schemasDir, "simple-object.json"), outputRootTypeName = "ConfigV4InternalPerson" }
+            }
+        });
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\" --engine V4");
+
+        Assert.AreEqual(0, result.ExitCode);
+
+        string generatedCode = string.Concat(Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        Assert.AreEqual(6, generatedCode.Split("internal readonly partial struct ConfigV4InternalPerson").Length - 1);
+        Assert.AreEqual(0, generatedCode.Split("public readonly partial struct ConfigV4InternalPerson").Length - 1);
+    }
+
+    [TestMethod]
+    public async Task Config_WithV4EngineAndOutputRootAccessibility_OverridesDefaultAccessibility()
+    {
+        string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
+        string configPath = CreateConfigFile(new {
+            rootNamespace = "TestGenerated",
+            outputPath = _outputDir,
+            defaultAccessibility = "Internal",
+            typesToGenerate = new[]
+            {
+                new { schemaFile = Path.Combine(schemasDir, "simple-object.json"), outputRootTypeName = "ConfigV4PublicPerson", outputRootAccessibility = "Public" }
+            }
+        });
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\" --engine V4");
+
+        Assert.AreEqual(0, result.ExitCode);
+
+        string generatedCode = string.Concat(Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        Assert.AreEqual(6, generatedCode.Split("public readonly partial struct ConfigV4PublicPerson").Length - 1);
+        Assert.AreEqual(0, generatedCode.Split("internal readonly partial struct ConfigV4PublicPerson").Length - 1);
+    }
+
     private string CreateConfigFile(object config)
     {
         string path = Path.Combine(_tempConfigDir, $"config-{Guid.NewGuid():N}.json");

@@ -114,6 +114,10 @@ These rules apply whenever investigating or fixing a problem. Do not skip them.
 - **Do not commit speculative fixes**: if you cannot reproduce the problem locally, say so. Do not push a change and hope CI validates it — CI runs are expensive (30+ minutes) and limited.
 - **Diagnose before acting**: when a CI job is slow or failing, read the logs and identify the specific slow step or error before proposing a fix. Do not guess at the root cause and implement a solution without evidence.
 
+### GitHub issue workflow
+
+When working from a GitHub issue, always read the full issue context before planning or changing code. This means the issue body, labels/tags/categories, linked sub-issues, and the complete comments thread, especially any implementation plan or revised implementation plan. Do not implement from the issue body alone; comments often contain corrections, safety invariants, and required patterns that supersede the summary.
+
 ## Architecture
 
 ### Core abstractions

@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace Corvus.Json;
@@ -272,21 +274,14 @@ public static class NumericTypeExtensions
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
     public static bool TryGetInt128WithFallbacks(this JsonElement value, [NotNullWhen(true)] out Int128 result)
     {
-        try
+        if (value.ValueKind == JsonValueKind.Number &&
+            Int128.TryParse(JsonMarshal.GetRawUtf8Value(value), CultureInfo.InvariantCulture, out result))
         {
-            result = value.Deserialize<Int128>();
             return true;
         }
-        catch (JsonException)
-        {
-            result = default;
-            return false;
-        }
-        catch (FormatException)
-        {
-            result = default;
-            return false;
-        }
+
+        result = default;
+        return false;
     }
 
     /// <summary>
@@ -447,21 +442,14 @@ public static class NumericTypeExtensions
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
     public static bool TryGetUInt128WithFallbacks(this JsonElement value, [NotNullWhen(true)] out UInt128 result)
     {
-        try
+        if (value.ValueKind == JsonValueKind.Number &&
+            UInt128.TryParse(JsonMarshal.GetRawUtf8Value(value), CultureInfo.InvariantCulture, out result))
         {
-            result = value.Deserialize<UInt128>();
             return true;
         }
-        catch (FormatException)
-        {
-            result = default;
-            return false;
-        }
-        catch (JsonException)
-        {
-            result = default;
-            return false;
-        }
+
+        result = default;
+        return false;
     }
 
     /// <summary>

@@ -155,6 +155,62 @@ public class JsonPropertyNameTests
     }
 
     [TestMethod]
+    public void CompareTo_JsonPropertyBacking_StringBacking_UsesDecodedName()
+    {
+        using var doc = JsonDocument.Parse("""{"\u0041":1}""");
+
+        foreach (JsonProperty prop in doc.RootElement.EnumerateObject())
+        {
+            JsonPropertyName a = new(prop);
+            JsonPropertyName b = new("A");
+
+            Assert.AreEqual(0, a.CompareTo(b));
+            return;
+        }
+
+        Assert.Fail("Expected one property.");
+    }
+
+    [TestMethod]
+    public void CompareTo_JsonPropertyBacking_JsonElementBacking_UsesDecodedName()
+    {
+        using var doc = JsonDocument.Parse("""{"\u0041":1}""");
+        using var nameDoc = JsonDocument.Parse("\"A\"");
+
+        foreach (JsonProperty prop in doc.RootElement.EnumerateObject())
+        {
+            JsonPropertyName a = new(prop);
+            JsonPropertyName b = new(nameDoc.RootElement);
+
+            Assert.AreEqual(0, a.CompareTo(b));
+            return;
+        }
+
+        Assert.Fail("Expected one property.");
+    }
+
+    [TestMethod]
+    public void CompareTo_JsonPropertyBacking_JsonPropertyBacking_UsesDecodedName()
+    {
+        using var doc1 = JsonDocument.Parse("""{"\u0041":1}""");
+        using var doc2 = JsonDocument.Parse("""{"A":1}""");
+
+        foreach (JsonProperty prop1 in doc1.RootElement.EnumerateObject())
+        {
+            foreach (JsonProperty prop2 in doc2.RootElement.EnumerateObject())
+            {
+                JsonPropertyName a = new(prop1);
+                JsonPropertyName b = new(prop2);
+
+                Assert.AreEqual(0, a.CompareTo(b));
+                return;
+            }
+        }
+
+        Assert.Fail("Expected one property in each document.");
+    }
+
+    [TestMethod]
     public void EqualsObject_JsonPropertyName()
     {
         JsonPropertyName a = new("test");

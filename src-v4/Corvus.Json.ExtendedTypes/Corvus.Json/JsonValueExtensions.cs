@@ -106,7 +106,7 @@ public static class JsonValueExtensions
             return value.AsJsonElement.GetRawText();
         }
 
-        return JsonSerializer.Serialize(value);
+        return WriteValueToString(value);
     }
 
     /// <summary>
@@ -119,7 +119,29 @@ public static class JsonValueExtensions
     public static string Serialize<TValue>(this TValue value, JsonSerializerOptions options)
         where TValue : struct, IJsonValue
     {
-        return JsonSerializer.Serialize(value, options);
+        JsonWriterOptions writerOptions = options is null
+            ? default
+            : new()
+            {
+                Encoder = options.Encoder,
+                Indented = options.WriteIndented,
+                MaxDepth = options.MaxDepth,
+            };
+
+        return WriteValueToString(value, writerOptions);
+    }
+
+    private static string WriteValueToString(IJsonValue value, JsonWriterOptions options = default)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        using var writer = new Utf8JsonWriter(buffer, options);
+        value.WriteTo(writer);
+        writer.Flush();
+#if NET8_0_OR_GREATER
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+#else
+        return Encoding.UTF8.GetString(buffer.WrittenArray, 0, buffer.WrittenCount);
+#endif
     }
 
     /// <summary>

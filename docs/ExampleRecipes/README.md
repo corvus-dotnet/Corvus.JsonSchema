@@ -64,6 +64,7 @@ dotnet run
 | [037](037-AsyncApiConsumer/) | AsyncAPI Consumer | Consumer setup, message delivery, validation/error policy, typed handlers |
 | [038](038-AsyncApiEndToEnd/) | AsyncAPI End to End | Producer + consumer pipeline, in-memory transport, validation, dead-letter handling |
 | [039](039-AsyncApiAuthentication/) | AsyncAPI Authentication | Azure Identity, OAuth2, Bearer, API Key, mTLS, composite auth patterns |
+| [040](040-PatternPropertyMatcher/) | Pattern Property Matcher | `patternProperties`, generated `MatchesPattern*`, `TryAsPattern*`, visitor dispatch |
 
 ## Related documentation
 

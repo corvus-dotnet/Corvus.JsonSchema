@@ -19,6 +19,7 @@ namespace Corvus.Json;
 /// </summary>
 [DebuggerDisplay("{ToString()} [{numericKind}]")]
 public readonly struct BinaryJsonNumber :
+    IFormattable,
     IEquatable<BinaryJsonNumber>
 {
     private readonly long longBacking;
@@ -1798,6 +1799,26 @@ public readonly struct BinaryJsonNumber :
             Kind.UInt16 => CastTo<TOther>.From(this.ulongBacking),
             Kind.UInt32 => CastTo<TOther>.From(this.ulongBacking),
             Kind.UInt64 => CastTo<TOther>.From(this.ulongBacking),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        return this.numericKind switch
+        {
+            Kind.Byte => this.ulongBacking.ToString(format, formatProvider),
+            Kind.Decimal => this.decimalBacking.ToString(format, formatProvider),
+            Kind.Double => this.doubleBacking.ToString(format, formatProvider),
+            Kind.Int16 => this.longBacking.ToString(format, formatProvider),
+            Kind.Int32 => this.longBacking.ToString(format, formatProvider),
+            Kind.Int64 => this.longBacking.ToString(format, formatProvider),
+            Kind.SByte => this.longBacking.ToString(format, formatProvider),
+            Kind.Single => this.singleBacking.ToString(format, formatProvider),
+            Kind.UInt16 => this.ulongBacking.ToString(format, formatProvider),
+            Kind.UInt32 => this.ulongBacking.ToString(format, formatProvider),
+            Kind.UInt64 => this.ulongBacking.ToString(format, formatProvider),
             _ => throw new NotSupportedException(),
         };
     }

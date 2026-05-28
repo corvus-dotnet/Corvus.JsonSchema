@@ -123,4 +123,64 @@ public class GenerateCommandTests : IDisposable
             Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Length > 0,
             $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
     }
+
+    [TestMethod]
+    public async Task Generate_WithDefaultAccessibilityInternal_GeneratesInternalRootType()
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --outputRootTypeName InternalPerson --defaultAccessibility Internal");
+
+        Assert.AreEqual(0, result.ExitCode);
+
+        string generatedCode = string.Concat(Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        Assert.AreEqual(3, generatedCode.Split("internal readonly partial struct InternalPerson").Length - 1);
+        Assert.AreEqual(0, generatedCode.Split("public readonly partial struct InternalPerson").Length - 1);
+    }
+
+    [TestMethod]
+    public async Task Generate_WithOutputRootAccessibility_OverridesDefaultAccessibility()
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --outputRootTypeName PublicPerson --defaultAccessibility Internal --outputRootAccessibility Public");
+
+        Assert.AreEqual(0, result.ExitCode);
+
+        string generatedCode = string.Concat(Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        Assert.AreEqual(3, generatedCode.Split("public readonly partial struct PublicPerson").Length - 1);
+        Assert.AreEqual(0, generatedCode.Split("internal readonly partial struct PublicPerson").Length - 1);
+    }
+
+    [TestMethod]
+    public async Task Generate_WithV4EngineAndDefaultAccessibilityInternal_GeneratesInternalRootType()
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --outputRootTypeName V4InternalPerson --defaultAccessibility Internal --engine V4");
+
+        Assert.AreEqual(0, result.ExitCode);
+
+        string generatedCode = string.Concat(Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        Assert.AreEqual(6, generatedCode.Split("internal readonly partial struct V4InternalPerson").Length - 1);
+        Assert.AreEqual(0, generatedCode.Split("public readonly partial struct V4InternalPerson").Length - 1);
+    }
+
+    [TestMethod]
+    public async Task Generate_WithV4EngineAndOutputRootAccessibility_OverridesDefaultAccessibility()
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --outputRootTypeName V4PublicPerson --defaultAccessibility Internal --outputRootAccessibility Public --engine V4");
+
+        Assert.AreEqual(0, result.ExitCode);
+
+        string generatedCode = string.Concat(Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        Assert.AreEqual(6, generatedCode.Split("public readonly partial struct V4PublicPerson").Length - 1);
+        Assert.AreEqual(0, generatedCode.Split("internal readonly partial struct V4PublicPerson").Length - 1);
+    }
 }

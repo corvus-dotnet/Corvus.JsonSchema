@@ -1,0 +1,20 @@
+{
+  "title": "Metric Bag",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    }
+  },
+  "required": [ "name" ],
+  "patternProperties": {
+    "^S_": {
+      "type": "string"
+    },
+    "^I_": {
+      "type": "integer",
+      "format": "int32"
+    }
+  },
+  "additionalProperties": false
+}

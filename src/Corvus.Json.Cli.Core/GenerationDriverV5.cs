@@ -7,6 +7,7 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
@@ -174,7 +175,15 @@ public static class GenerationDriverV5
 
             if (generatorSpecification.OutputRootTypeName is JsonString outputRootTypeName)
             {
-                namedTypes = namedTypes.Add(GeneratorConfig.NamedTypeSpecification.Create(outputRootTypeName, new JsonIriReference(rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location), generatorSpecification.OutputRootNamespace));
+                GeneratorConfig.NamedTypeSpecification rootNamedType =
+                    GeneratorConfig.NamedTypeSpecification.Create(outputRootTypeName, new JsonIriReference(rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location), generatorSpecification.OutputRootNamespace);
+
+                if (TryGetStringProperty(generatorSpecification, "outputRootAccessibility", out string? outputRootAccessibility))
+                {
+                    rootNamedType = rootNamedType.SetProperty("accessibility", new JsonString(outputRootAccessibility));
+                }
+
+                namedTypes = namedTypes.Add(rootNamedType);
             }
 
             typeBuilderTask.Increment(100);
@@ -211,9 +220,11 @@ public static class GenerationDriverV5
 
     private static CodeGeneration.CSharpLanguageProvider.Options MapGeneratorConfigToOptions(in GeneratorConfig generatorConfig, in GeneratorConfig.NamedTypeList namedTypes, CodeGenerationMode codeGenerationMode)
     {
+        CodeGeneration.GeneratedTypeAccessibility defaultAccessibility = GetDefaultAccessibility(generatorConfig);
+
         return new CodeGeneration.CSharpLanguageProvider.Options(
             (string)generatorConfig.RootNamespace,
-            namedTypes: namedTypes.Select(n => new CodeGeneration.CSharpLanguageProvider.NamedType(new((string)n.Reference), (string)n.DotnetTypeName, n.DotnetNamespace?.GetString())).ToArray(),
+            namedTypes: namedTypes.Select(n => new CodeGeneration.CSharpLanguageProvider.NamedType(new((string)n.Reference), (string)n.DotnetTypeName, n.DotnetNamespace?.GetString(), GetAccessibility(n) ?? defaultAccessibility)).ToArray(),
             namespaces: generatorConfig.Namespaces?.Select(n => new CodeGeneration.CSharpLanguageProvider.Namespace(new JsonReference((string)n.Key), (string)n.Value)).ToArray(),
             alwaysAssertFormat: generatorConfig.AssertFormat ?? true,
             useOptionalNameHeuristics: !(generatorConfig.DisableOptionalNameHeuristics ?? false),
@@ -222,7 +233,71 @@ public static class GenerationDriverV5
             useImplicitOperatorString: generatorConfig.UseImplicitOperatorString ?? false,
             lineEndSequence: (generatorConfig.UseUnixLineEndings ?? false) ? "\n" : "\r\n",
             addExplicitUsings: generatorConfig.AddExplicitUsings ?? false,
+            defaultAccessibility: defaultAccessibility,
             codeGenerationMode: codeGenerationMode);
+    }
+
+    private static CodeGeneration.GeneratedTypeAccessibility GetDefaultAccessibility(in GeneratorConfig generatorConfig)
+    {
+        return TryGetStringProperty(generatorConfig, "defaultAccessibility", out string? accessibility)
+            ? ParseAccessibility(accessibility, "defaultAccessibility")
+            : CodeGeneration.GeneratedTypeAccessibility.Public;
+    }
+
+    private static CodeGeneration.GeneratedTypeAccessibility? GetAccessibility(in GeneratorConfig.NamedTypeSpecification namedType)
+    {
+        return TryGetStringProperty(namedType, "accessibility", out string? accessibility)
+            ? ParseAccessibility(accessibility, "namedTypes[].accessibility")
+            : null;
+    }
+
+    private static CodeGeneration.GeneratedTypeAccessibility ParseAccessibility(string accessibility, string propertyName)
+    {
+        return accessibility switch
+        {
+            "Public" or "public" => CodeGeneration.GeneratedTypeAccessibility.Public,
+            "Internal" or "internal" => CodeGeneration.GeneratedTypeAccessibility.Internal,
+            _ => throw new InvalidOperationException($"Invalid accessibility value for '{propertyName}': '{accessibility}'. Try 'Public' or 'Internal'."),
+        };
+    }
+
+    private static bool TryGetStringProperty(in GeneratorConfig generatorConfig, string propertyName, [NotNullWhen(true)] out string? value)
+    {
+        if (generatorConfig.TryGetProperty(propertyName, out JsonAny propertyValue) &&
+            !propertyValue.IsNullOrUndefined())
+        {
+            value = (string)propertyValue.As<JsonString>();
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static bool TryGetStringProperty(in GeneratorConfig.GenerationSpecification generatorSpecification, string propertyName, [NotNullWhen(true)] out string? value)
+    {
+        if (generatorSpecification.TryGetProperty(propertyName, out JsonAny propertyValue) &&
+            !propertyValue.IsNullOrUndefined())
+        {
+            value = (string)propertyValue.As<JsonString>();
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static bool TryGetStringProperty(in GeneratorConfig.NamedTypeSpecification namedType, string propertyName, [NotNullWhen(true)] out string? value)
+    {
+        if (namedType.TryGetProperty(propertyName, out JsonAny propertyValue) &&
+            !propertyValue.IsNullOrUndefined())
+        {
+            value = (string)propertyValue.As<JsonString>();
+            return true;
+        }
+
+        value = null;
+        return false;
     }
 
     private static async Task<string?> BeginMapFile(GeneratorConfig generatorConfig, string outputPath)

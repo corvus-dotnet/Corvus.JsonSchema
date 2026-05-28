@@ -9,6 +9,7 @@
 
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using Corvus.Json;
 using Corvus.Json.CodeGenerator;
 using Corvus.Text.Json.CodeGeneration;
 using Spectre.Console.Cli;
@@ -25,7 +26,12 @@ internal class GenerateWithDriverCommand : AsyncCommand<GenerateWithDriverComman
         ArgumentNullException.ThrowIfNullOrEmpty(settings.GenerationSpecificationFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
         Engine engine = settings.GenerationEngine ?? CliDefaults.DefaultEngine;
-        var config = GeneratorConfig.Parse(File.OpenRead(settings.GenerationSpecificationFile));
+        GeneratorConfig config = GeneratorConfig.Parse(File.OpenRead(settings.GenerationSpecificationFile));
+        if (settings.DefaultAccessibility is CodeGeneration.GeneratedTypeAccessibility defaultAccessibility)
+        {
+            config = config.SetProperty("defaultAccessibility", new JsonString(defaultAccessibility.ToString()));
+        }
+
         return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, cancellationToken);
     }
 
@@ -47,5 +53,9 @@ internal class GenerateWithDriverCommand : AsyncCommand<GenerateWithDriverComman
         [CommandOption("--codeGenerationMode")]
         [DefaultValue(CodeGenerationMode.TypeGeneration)]
         public CodeGenerationMode CodeGenerationMode { get; init; }
+
+        [CommandOption("--defaultAccessibility")]
+        [Description("Overrides the default accessibility for generated top-level types. Supported values: Public, Internal.")]
+        public CodeGeneration.GeneratedTypeAccessibility? DefaultAccessibility { get; init; }
     }
 }

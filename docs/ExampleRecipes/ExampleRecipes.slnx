@@ -113,4 +113,7 @@
   <Folder Name="/039-AsyncApiAuthentication/">
     <Project Path="039-AsyncApiAuthentication\AsyncApiAuthentication.csproj" />
   </Folder>
+  <Folder Name="/040-PatternPropertyMatcher/">
+    <Project Path="040-PatternPropertyMatcher\PatternPropertyMatcher.csproj" />
+  </Folder>
 </Solution>
