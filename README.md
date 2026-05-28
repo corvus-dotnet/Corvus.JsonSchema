@@ -7,6 +7,8 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 ## Features
 
 - **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool.
+- **[OpenAPI](#openapi)** — Generate strongly-typed OpenAPI 3.0, 3.1, and 3.2 HTTP clients and ASP.NET Core server stubs with typed parameters, request/response validation, streaming, and result matching.
+- **[AsyncAPI](#asyncapi)** — Generate strongly-typed AsyncAPI 2.6 and 3.0 producers, consumers, handlers, and request/reply flows with broker transport packages for NATS, Kafka, AMQP, MQTT, WebSocket, and Azure Service Bus.
 - **Schema Validation** — Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation. Over 10× faster than other .NET JSON Schema validators.
 - **Pooled Memory** — `ParsedJsonDocument<T>` uses `ArrayPool<byte>` for minimal GC impact. Just 136 bytes per-document allocation.
 - **Mutable Documents** — `JsonDocumentBuilder<T>` and `JsonWorkspace` provide a builder pattern for creating and modifying JSON with pooled workspace memory.
@@ -62,24 +64,52 @@ Console.WriteLine(root.ToString());
 
 ## NuGet Packages
 
-| Package | Description |
-|---|---|
-| **Corvus.Text.Json** | Core runtime library. Required by all generated types. |
-| **Corvus.Text.Json.SourceGenerator** | Roslyn incremental source generator. Generates C# from JSON Schema at build time. |
-| **Corvus.Json.Cli** | CLI tool (`corvusjson`) for ahead-of-time code generation. |
-| **Corvus.Json.CodeGenerator** | Legacy CLI tool (`generatejsonschematypes`). Delegates to the same engine; defaults to V4. |
-| **Corvus.Text.Json.Validator** | Dynamically load and validate JSON against JSON Schema at runtime using Roslyn. |
-| **Corvus.Text.Json.Jsonata** | JSONata query and transformation language — interpreted runtime evaluator. |
-| **Corvus.Text.Json.Jsonata.SourceGenerator** | Roslyn source generator for compile-time JSONata code generation. |
-| **Corvus.Text.Json.JMESPath** | JMESPath query language — interpreted runtime evaluator. |
-| **Corvus.Text.Json.JMESPath.SourceGenerator** | Roslyn source generator for compile-time JMESPath code generation. |
-| **Corvus.Text.Json.JsonLogic** | JsonLogic rule engine — interpreted runtime evaluator. |
-| **Corvus.Text.Json.JsonLogic.SourceGenerator** | Roslyn source generator for compile-time JsonLogic code generation. |
-| **Corvus.Text.Json.JsonPath** | JSONPath (RFC 9535) query language — interpreted runtime evaluator. |
-| **Corvus.Text.Json.JsonPath.SourceGenerator** | Roslyn source generator for compile-time JSONPath code generation. |
-| **Corvus.Text.Json.Patch** | RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff. |
-| **Corvus.Text.Json.Yaml** | YAML 1.2 to JSON converter with Corvus document model integration. |
-| **Corvus.Yaml.SystemTextJson** | YAML 1.2 to JSON converter using only System.Text.Json (no Corvus dependency). |
+Most applications need `Corvus.Text.Json` plus either the source generator or the `corvusjson` CLI. Add the feature-specific runtime packages you use.
+
+| Area | Package | Description |
+|---|---|---|
+| Core runtime | **Corvus.Text.Json** | Core V5 runtime library. Required by all V5 generated types. |
+| JSON Schema generation | **Corvus.Text.Json.SourceGenerator** | Roslyn incremental source generator for JSON Schema model generation at build time. |
+| JSON Schema generation | **Corvus.Text.Json.CodeGeneration** | Shared JSON Schema code-generation engine for tools and advanced extension scenarios. |
+| JSON Schema generation | **Corvus.Json.Cli** | CLI tool (`corvusjson`) for ahead-of-time JSON Schema, OpenAPI, AsyncAPI, and query-language code generation. |
+| JSON Schema generation | **Corvus.Json.CodeGenerator** | Immutable-model CLI tool (`generatejsonschematypes`). Delegates to the same engines; defaults to V4. |
+| Dynamic validation | **Corvus.Text.Json.Validator** | Dynamically load, compile, and validate JSON against JSON Schema at runtime using Roslyn. |
+| Compatibility | **Corvus.Text.Json.Compatibility** | Bridge helpers for interop with V4 `Corvus.Json.ExtendedTypes` and System.Text.Json during migration. |
+| Migration | **Corvus.Text.Json.Migration.Analyzers** | Roslyn analyzers and code fixes for migrating V4 `Corvus.Json` code to V5 `Corvus.Text.Json`. |
+| OpenAPI | **Corvus.Text.Json.OpenApi** | Runtime abstractions for generated OpenAPI clients and ASP.NET Core server stubs. |
+| OpenAPI | **Corvus.Text.Json.OpenApi.HttpTransport** | `HttpClient` transport for generated OpenAPI clients. |
+| OpenAPI | **Corvus.Text.Json.OpenApi.CodeGeneration** | Code-generation engine for OpenAPI and related API-generation tooling. |
+| OpenAPI | **Corvus.Text.Json.OpenApi30** | Strongly-typed V5 model types for OpenAPI 3.0 documents. |
+| OpenAPI | **Corvus.Text.Json.OpenApi31** | Strongly-typed V5 model types for OpenAPI 3.1 documents. |
+| OpenAPI | **Corvus.Text.Json.OpenApi32** | Strongly-typed V5 model types for OpenAPI 3.2 documents. |
+| AsyncAPI | **Corvus.Text.Json.AsyncApi** | Runtime support for generated AsyncAPI producers, consumers, handlers, and request/reply flows. |
+| AsyncAPI | **Corvus.Text.Json.AsyncApi.CodeGeneration** | Code-generation engine for AsyncAPI producer/consumer generation. |
+| AsyncAPI | **Corvus.Text.Json.AsyncApi26** | Strongly-typed V5 model types for AsyncAPI 2.6 documents. |
+| AsyncAPI | **Corvus.Text.Json.AsyncApi30** | Strongly-typed V5 model types for AsyncAPI 3.0 documents. |
+| AsyncAPI transports | **Corvus.Text.Json.AsyncApi.Nats** | NATS transport for generated AsyncAPI applications. |
+| AsyncAPI transports | **Corvus.Text.Json.AsyncApi.Kafka** | Kafka transport for generated AsyncAPI applications. |
+| AsyncAPI transports | **Corvus.Text.Json.AsyncApi.Amqp** | AMQP 0-9-1/RabbitMQ transport for generated AsyncAPI applications. |
+| AsyncAPI transports | **Corvus.Text.Json.AsyncApi.Mqtt** | MQTT 3.1.1/5.0 transport for generated AsyncAPI applications. |
+| AsyncAPI transports | **Corvus.Text.Json.AsyncApi.WebSocket** | WebSocket transport for generated AsyncAPI applications. |
+| AsyncAPI transports | **Corvus.Text.Json.AsyncApi.AzureServiceBus** | Azure Service Bus transport for generated AsyncAPI applications. |
+| AsyncAPI support | **Corvus.Text.Json.AsyncApi.Testing** | In-memory transport for testing generated AsyncAPI producers and consumers. |
+| AsyncAPI support | **Corvus.Text.Json.AsyncApi.HealthChecks** | ASP.NET Core health checks for AsyncAPI transports. |
+| AsyncAPI support | **Corvus.Text.Json.AsyncApi.Polly** | Polly-based resilience middleware for AsyncAPI handlers/transports. |
+| JSONata | **Corvus.Text.Json.Jsonata** | JSONata query and transformation evaluator. |
+| JSONata | **Corvus.Text.Json.Jsonata.SourceGenerator** | Roslyn source generator for compile-time JSONata code generation. |
+| JSONata | **Corvus.Text.Json.Jsonata.CodeGeneration** | Code-generation engine for JSONata expressions. |
+| JMESPath | **Corvus.Text.Json.JMESPath** | JMESPath query-language evaluator. |
+| JMESPath | **Corvus.Text.Json.JMESPath.SourceGenerator** | Roslyn source generator for compile-time JMESPath code generation. |
+| JMESPath | **Corvus.Text.Json.JMESPath.CodeGeneration** | Code-generation engine for JMESPath expressions. |
+| JsonLogic | **Corvus.Text.Json.JsonLogic** | JsonLogic rule engine. |
+| JsonLogic | **Corvus.Text.Json.JsonLogic.SourceGenerator** | Roslyn source generator for compile-time JsonLogic code generation. |
+| JsonLogic | **Corvus.Text.Json.JsonLogic.CodeGeneration** | Code-generation engine for JsonLogic rules. |
+| JSONPath | **Corvus.Text.Json.JsonPath** | JSONPath (RFC 9535) query-language evaluator. |
+| JSONPath | **Corvus.Text.Json.JsonPath.SourceGenerator** | Roslyn source generator for compile-time JSONPath code generation. |
+| JSONPath | **Corvus.Text.Json.JsonPath.CodeGeneration** | Code-generation engine for JSONPath expressions. |
+| JSON Patch | **Corvus.Text.Json.Patch** | RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff. |
+| YAML | **Corvus.Text.Json.Yaml** | YAML 1.2 to JSON converter with Corvus document model integration. |
+| YAML | **Corvus.Yaml.SystemTextJson** | YAML 1.2 to JSON converter using only System.Text.Json. |
 
 ### Install
 
@@ -94,7 +124,7 @@ dotnet tool install --global Corvus.Json.Cli
 For the source generator, add as an analyzer reference:
 
 ```xml
-<PackageReference Include="Corvus.Text.Json.SourceGenerator" Version="5.0.0">
+<PackageReference Include="Corvus.Text.Json.SourceGenerator" Version="5.1.0">
   <PrivateAssets>all</PrivateAssets>
   <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 </PackageReference>
@@ -132,6 +162,8 @@ Then open http://localhost:5000.
 - [Source Generator](docs/SourceGenerator.md)
 - [CLI Code Generation](docs/CodeGenerator.md)
 - [Dynamic Schema Validation](docs/Validator.md)
+- [OpenAPI Client and Server Generation](docs/OpenApi.md)
+- [AsyncAPI Producer and Consumer Generation](docs/AsyncApi.md)
 - [JSONata Query & Transformation](docs/Jsonata.md)
 - [JMESPath Query Language](docs/JMESPath.md)
 - [JSONPath Query Language](docs/JsonPath.md)
@@ -258,6 +290,28 @@ JsonElement result = JsonPathEvaluator.Default.Query(
 ```
 
 See [JSONPath documentation](docs/JsonPath.md) for the full API, code generation, and performance benchmarks.
+
+## OpenAPI
+
+`Corvus.Text.Json` can generate strongly-typed HTTP clients and ASP.NET Core server stubs from OpenAPI 3.0, 3.1, and 3.2 specifications. The generated code uses the same V5 JSON Schema engine as the core model generator, so request and response bodies are pooled, strongly typed, and schema-validated.
+
+- **Typed clients** — generated request parameter objects, response result types, and `MatchResult()` dispatch over documented responses.
+- **ASP.NET Core servers** — generated handler interfaces and endpoint mapping for minimal APIs.
+- **HTTP plumbing included** — path/query/header/cookie parameter serialization, request and response validation, headers, streaming, multipart forms, and binary payloads.
+- **Spec models** — strongly-typed packages for OpenAPI 3.0, 3.1, and 3.2 documents.
+
+See [OpenAPI documentation](docs/OpenApi.md) and the OpenAPI ExampleRecipes for client, server, callback, and end-to-end samples.
+
+## AsyncAPI
+
+`Corvus.Text.Json` can generate strongly-typed producers and consumers from AsyncAPI 2.6 and 3.0 specifications. Generated applications use typed payloads and channel parameters, with validation before publishing and when receiving messages.
+
+- **Typed producers and consumers** — generated APIs for publish, subscribe, and request/reply messaging patterns.
+- **Broker transports** — runtime packages for NATS, Kafka, AMQP, MQTT, WebSocket, and Azure Service Bus.
+- **Runtime policies** — validation modes, error handling, dead-letter routing, and test transports for local/in-memory scenarios.
+- **Spec models** — strongly-typed packages for AsyncAPI 2.6 and 3.0 documents.
+
+See [AsyncAPI documentation](docs/AsyncApi.md) and the AsyncAPI ExampleRecipes for producer, consumer, authentication, and end-to-end samples.
 
 ## YAML
 
