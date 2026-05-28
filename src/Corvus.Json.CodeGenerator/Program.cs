@@ -16,7 +16,7 @@ CliDefaults.DefaultEngine = Engine.V4;
 
 // Rewrite bare-args invocations to use the 'jsonschema' subcommand.
 // If the first argument is not a known subcommand or an option, prepend 'jsonschema'.
-string[] knownCommands = ["jsonschema", "config", "listNameHeuristics", "validateDocument", "version", "jsonlogic", "jsonata", "jmespath"];
+string[] knownCommands = ["jsonschema", "config", "listNameHeuristics", "validateDocument", "version", "jsonlogic", "jsonata", "jmespath", "jsonpath", "openapi-client", "openapi-server", "openapi-callback-server", "openapi-callback-client", "openapi-show", "asyncapi-show", "asyncapi-generate"];
 if (args.Length > 0
     && !args[0].StartsWith('-')
     && !knownCommands.Contains(args[0], StringComparer.OrdinalIgnoreCase))

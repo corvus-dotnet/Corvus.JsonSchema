@@ -20,7 +20,7 @@
     <Description>CLI tool for generating strongly-typed C# from JSON Schema, JSONata, JMESPath, and JSON Logic. Supports both Corvus.Text.Json (V5) and Corvus.Json (V4) output. Covers JSON Schema draft 4, 6, 7, 2019-09, and 2020-12.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\Corvus.Json.CodeGenerator\README.md" Pack="true" PackagePath="\" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.Cli.Core\Corvus.Json.Cli.Core.csproj" />

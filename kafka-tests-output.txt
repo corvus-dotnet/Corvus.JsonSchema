@@ -1,0 +1,13 @@
+D:\source\corvus-dotnet\Corvus.JsonSchema\tests\Corvus.Text.Json.AsyncApi.Transport.IntegrationTests\bin\net10.0\Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.dll (net10.0) Zero tests ran
+Exit code: -2147450751
+  Error output: The application to execute does not exist: 'D:\source\corvus-dotnet\Corvus.JsonSchema\tests\Corvus.Text.Json.AsyncApi.Transport.IntegrationTests\bin\net10.0\Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.dll'
+
+Test run summary: Zero tests ran
+  error: 1
+
+  total: 0
+  failed: 0
+  succeeded: 0
+  skipped: 0
+  duration: 15ms
+Test run completed with non-success exit code: -2147450751 (see: https://aka.ms/testingplatform/exitcodes)

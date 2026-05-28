@@ -434,6 +434,73 @@ public class GeneratedPatternPropertiesTests
 
     #endregion
 
+    #region Generated pattern property helper APIs
+
+    [TestMethod]
+    public void MatchesPattern_WithGeneratedPatterns_ReturnsExpectedResults()
+    {
+        Assert.IsTrue(ObjectWithPatternProperties.MatchesPatternJsonString("S_color"u8));
+        Assert.IsTrue(ObjectWithPatternProperties.MatchesPatternJsonInt32("I_count"u8));
+        Assert.IsFalse(ObjectWithPatternProperties.MatchesPatternJsonString("I_count"u8));
+        Assert.IsFalse(ObjectWithPatternProperties.MatchesPatternJsonInt32("name"u8));
+    }
+
+    [TestMethod]
+    public void TryAsPattern_WithGeneratedPatterns_ReturnsTypedValues()
+    {
+        JsonElement stringValue = JsonElement.ParseValue("\"blue\""u8);
+        Assert.IsTrue(ObjectWithPatternProperties.TryAsPatternJsonString("S_color"u8, in stringValue, out JsonString typedString));
+        Assert.IsTrue(typedString.ValueEquals("blue"));
+
+        JsonElement intValue = JsonElement.ParseValue("42"u8);
+        Assert.IsTrue(ObjectWithPatternProperties.TryAsPatternJsonInt32("I_count"u8, in intValue, out JsonInt32 typedInt));
+        Assert.AreEqual(42, (int)typedInt);
+
+        Assert.IsFalse(ObjectWithPatternProperties.TryAsPatternJsonString("I_count"u8, in intValue, out _));
+    }
+
+    [TestMethod]
+    public void MatchPatternProperties_DispatchesMatchesAndUnmatchedProperties()
+    {
+        var instance = ObjectWithPatternProperties.ParseValue(
+            """
+            {"name":"Alice","S_color":"blue","I_count":42}
+            """);
+
+        PatternDispatchState state = default;
+        bool result = instance.MatchPatternProperties(ref state, PatternDispatchVisitor.Instance);
+
+        Assert.IsTrue(result);
+        Assert.AreEqual(1, state.StringCount);
+        Assert.AreEqual(1, state.IntCount);
+        Assert.AreEqual(1, state.UnmatchedCount);
+        Assert.IsTrue(state.SawStringColor);
+        Assert.IsTrue(state.SawIntCount);
+        Assert.IsTrue(state.SawName);
+    }
+
+    [TestMethod]
+    public void MatchPatternProperties_WithShortCircuit_DispatchesMatchingPropertyOnce()
+    {
+        var instance = ObjectWithPatternProperties.ParseValue(
+            """
+            {"name":"Alice","S_color":"blue","I_count":42}
+            """);
+
+        PatternDispatchState state = default;
+        bool result = instance.MatchPatternProperties(ref state, PatternDispatchVisitor.Instance, shortCircuit: true);
+
+        Assert.IsTrue(result);
+        Assert.AreEqual(1, state.StringCount);
+        Assert.AreEqual(1, state.IntCount);
+        Assert.AreEqual(1, state.UnmatchedCount);
+        Assert.IsTrue(state.SawStringColor);
+        Assert.IsTrue(state.SawIntCount);
+        Assert.IsTrue(state.SawName);
+    }
+
+    #endregion
+
     #region Non-object values
 
     [TestMethod]
@@ -459,4 +526,60 @@ public class GeneratedPatternPropertiesTests
     }
 
     #endregion
+
+    private struct PatternDispatchState
+    {
+        public int StringCount;
+
+        public int IntCount;
+
+        public int UnmatchedCount;
+
+        public bool SawStringColor;
+
+        public bool SawIntCount;
+
+        public bool SawName;
+    }
+
+    private readonly struct PatternDispatchVisitor : ObjectWithPatternProperties.IPatternPropertyVisitor<PatternDispatchState>
+    {
+        public static readonly PatternDispatchVisitor Instance = new();
+
+        public bool VisitPatternJsonInt32(ReadOnlySpan<byte> name, in JsonInt32 value, ref PatternDispatchState state)
+        {
+            state.IntCount++;
+
+            if (name.SequenceEqual("I_count"u8) && (int)value == 42)
+            {
+                state.SawIntCount = true;
+            }
+
+            return true;
+        }
+
+        public bool VisitPatternJsonString(ReadOnlySpan<byte> name, in JsonString value, ref PatternDispatchState state)
+        {
+            state.StringCount++;
+
+            if (name.SequenceEqual("S_color"u8) && value.ValueEquals("blue"))
+            {
+                state.SawStringColor = true;
+            }
+
+            return true;
+        }
+
+        public bool VisitUnmatched(ReadOnlySpan<byte> name, in JsonElement value, ref PatternDispatchState state)
+        {
+            state.UnmatchedCount++;
+
+            if (name.SequenceEqual("name"u8) && value.ValueEquals("Alice"))
+            {
+                state.SawName = true;
+            }
+
+            return true;
+        }
+    }
 }

@@ -1,0 +1,137 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Streetlights Kafka API",
+    "version": "1.0.0",
+    "description": "The Smartylighting Streetlights API allows you to remotely manage the city lights."
+  },
+  "defaultContentType": "application/json",
+  "servers": {
+    "scram-connections": {
+      "host": "test.mykafkacluster.org:18092",
+      "protocol": "kafka-secure",
+      "description": "Test broker secured with scramSha256",
+      "security": [
+        {
+          "$ref": "#/components/securitySchemes/saslScram"
+        }
+      ],
+      "tags": [
+        { "name": "env:test-scram", "description": "This environment is meant for running internal tests through scramSha256" }
+      ]
+    }
+  },
+  "channels": {
+    "lightingMeasured": {
+      "address": "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured",
+      "messages": {
+        "lightMeasured": {
+          "$ref": "#/components/messages/lightMeasured"
+        }
+      },
+      "description": "The topic on which measured values may be produced and consumed.",
+      "parameters": {
+        "streetlightId": {
+          "description": "The ID of the streetlight."
+        }
+      }
+    },
+    "lightTurnOn": {
+      "address": "smartylighting.streetlights.1.0.action.{streetlightId}.turn.on",
+      "messages": {
+        "turnOn": {
+          "$ref": "#/components/messages/turnOnOff"
+        }
+      },
+      "parameters": {
+        "streetlightId": {
+          "description": "The ID of the streetlight."
+        }
+      }
+    }
+  },
+  "operations": {
+    "receiveLightMeasurement": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/lightingMeasured"
+      },
+      "summary": "Inform about environmental lighting conditions of a particular streetlight.",
+      "messages": [
+        {
+          "$ref": "#/channels/lightingMeasured/messages/lightMeasured"
+        }
+      ]
+    },
+    "turnOn": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/lightTurnOn"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/lightTurnOn/messages/turnOn"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "lightMeasured": {
+        "name": "lightMeasured",
+        "title": "Light measured",
+        "summary": "Inform about environmental lighting conditions of a particular streetlight.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/lightMeasuredPayload"
+        }
+      },
+      "turnOnOff": {
+        "name": "turnOnOff",
+        "title": "Turn on/off",
+        "summary": "Command a particular streetlight to turn the lights on or off.",
+        "payload": {
+          "$ref": "#/components/schemas/turnOnOffPayload"
+        }
+      }
+    },
+    "schemas": {
+      "lightMeasuredPayload": {
+        "type": "object",
+        "properties": {
+          "lumens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Light intensity measured in lumens."
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time when the message was sent."
+          }
+        }
+      },
+      "turnOnOffPayload": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "enum": ["on", "off"],
+            "description": "Whether to turn on or off the light."
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time when the message was sent."
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "saslScram": {
+        "type": "scramSha256",
+        "description": "Provide your username and password for SASL/SCRAM authentication"
+      }
+    }
+  }
+}

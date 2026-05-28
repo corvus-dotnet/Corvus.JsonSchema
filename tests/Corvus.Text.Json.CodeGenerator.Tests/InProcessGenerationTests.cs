@@ -1176,6 +1176,99 @@ public class InProcessGenerationTests
         }
     }
 
+    [TestMethod]
+    public async Task GenerateCode_PropertyCollidesWithChildType_NoBufferCorruption()
+    {
+        // Regression test for buffer corruption bug in PropertyDeclarationExtensions.BuildDotnetPropertyName.
+        // When a property name collides with a child type (gets "Value" suffix) AND then collides again
+        // with another property that already owns that suffixed name, the numeric suffix was written
+        // at the stale buffer position (before "Value"), producing corrupted identifiers with NUL bytes.
+        //
+        // Schema structure: "schema" property collides with child type "SchemaEntity",
+        // "$schema" property already takes "SchemaValue", so "schema" must get "SchemaValue1" —
+        // but with the bug it would produce "Schema1alue\0".
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "$schema": { "type": "string" },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" }
+                  }
+                },
+                "value": { "type": "string" }
+              }
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        Assert.IsTrue(files.Any());
+
+        // Verify no NUL bytes in any generated file (the corruption manifests as \0 characters)
+        foreach (GeneratedCodeFile file in files)
+        {
+            Assert.IsFalse(
+                file.FileContent.Contains('\0'),
+                $"Generated file '{file.FileName}' contains NUL byte corruption");
+        }
+
+        // Verify all property identifier tokens are valid C# identifiers (no embedded digits in wrong positions)
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+        Assert.IsFalse(
+            allCode.Contains("1alue", StringComparison.Ordinal),
+            "Generated code contains corrupted identifier '1alue' (buffer corruption bug)");
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_PropertyNamedPatternProperties_WithPatternPropertiesKeyword_NoDuplicateFields()
+    {
+        // Regression test for duplicate field name bug when a schema has BOTH:
+        // 1. A named property literally called "patternProperties" (common in meta-schemas)
+        // 2. AND actual patternProperties keyword validation on the same object
+        //
+        // Both PropertySubschemaChildHandler and PatternPropertiesValidationHandler would emit
+        // "PatternPropertiesSchemaEvaluationPath" as a field name. The fix makes the second handler
+        // use GetUniquePropertyNameInScope to disambiguate.
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "patternProperties": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                }
+              },
+              "patternProperties": {
+                "^x-": { "type": "string" }
+              }
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        Assert.IsTrue(files.Any());
+
+        // Check that no single file contains duplicate static readonly field declarations
+        foreach (GeneratedCodeFile file in files)
+        {
+            string[] lines = file.FileContent.Split('\n');
+            List<string> fieldDeclarations = lines
+                .Select(l => l.Trim())
+                .Where(l => l.StartsWith("private static readonly JsonSchemaPathProvider ", StringComparison.Ordinal))
+                .ToList();
+
+            HashSet<string> uniqueDeclarations = new(fieldDeclarations);
+            Assert.AreEqual(
+                fieldDeclarations.Count,
+                uniqueDeclarations.Count,
+                $"File '{file.FileName}' contains duplicate static readonly field declarations: " +
+                string.Join(", ", fieldDeclarations.GroupBy(x => x).Where(g => g.Count() > 1).Select(g => g.Key)));
+        }
+    }
+
     private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcessFromContent(
         string schemaContent)
     {

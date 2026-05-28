@@ -1,0 +1,30 @@
+<Project Sdk="MSTest.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <Net10Only>true</Net10Only>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>$(NoWarn);NU1504;CS1591;IDE0065;IDE0290;IDE0079;IDE0130</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi.CodeGeneration\Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi32\Corvus.Text.Json.OpenApi32.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi31\Corvus.Text.Json.OpenApi31.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="TestData\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

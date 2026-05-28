@@ -37,6 +37,13 @@
     <ProjectReference Include="..\Corvus.Text.Json.JsonPath.CodeGeneration\Corvus.Text.Json.JsonPath.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi.CodeGeneration\Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi32\Corvus.Text.Json.OpenApi32.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi31\Corvus.Text.Json.OpenApi31.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.AsyncApi.CodeGeneration\Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <None Update="metaschema\corvus\meta\corvus-extensions.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

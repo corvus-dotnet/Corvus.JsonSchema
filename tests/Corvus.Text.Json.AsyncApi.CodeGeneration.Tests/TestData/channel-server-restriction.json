@@ -1,0 +1,89 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Multi-Server Service",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "production": {
+      "host": "{region}.broker.example.com:9092",
+      "protocol": "kafka",
+      "variables": {
+        "region": {
+          "default": "eu-west-1",
+          "enum": ["eu-west-1", "us-east-1", "ap-southeast-1"],
+          "description": "The AWS region for the broker."
+        }
+      }
+    },
+    "staging": {
+      "host": "staging-broker.internal:9092",
+      "protocol": "kafka"
+    }
+  },
+  "channels": {
+    "orders": {
+      "address": "shop.orders.{orderId}",
+      "servers": [
+        { "$ref": "#/servers/production" }
+      ],
+      "messages": {
+        "OrderPlaced": { "$ref": "#/components/messages/OrderPlaced" }
+      },
+      "parameters": {
+        "orderId": {
+          "description": "The unique order identifier."
+        }
+      }
+    },
+    "internalAudit": {
+      "address": "internal.audit",
+      "servers": [
+        { "$ref": "#/servers/staging" }
+      ],
+      "messages": {
+        "AuditEvent": { "$ref": "#/components/messages/AuditEvent" }
+      }
+    }
+  },
+  "operations": {
+    "placeOrder": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/orders" },
+      "messages": [
+        { "$ref": "#/channels/orders/messages/OrderPlaced" }
+      ]
+    },
+    "publishAudit": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/internalAudit" },
+      "messages": [
+        { "$ref": "#/channels/internalAudit/messages/AuditEvent" }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "OrderPlaced": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "orderId": { "type": "string" },
+            "total": { "type": "number" }
+          },
+          "required": ["orderId", "total"]
+        }
+      },
+      "AuditEvent": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "event": { "type": "string" },
+            "timestamp": { "type": "string", "format": "date-time" }
+          },
+          "required": ["event", "timestamp"]
+        }
+      }
+    }
+  }
+}

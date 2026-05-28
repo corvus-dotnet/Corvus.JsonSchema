@@ -1,0 +1,130 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "IoT Sensors API",
+    "version": "1.0.0",
+    "description": "An API that receives multiple message types on a single channel."
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "sensorReadings": {
+      "address": "sensors.readings",
+      "messages": {
+        "temperature": {
+          "$ref": "#/components/messages/temperatureReading"
+        },
+        "humidity": {
+          "$ref": "#/components/messages/humidityReading"
+        }
+      }
+    },
+    "sensorCommands": {
+      "address": "sensors.commands",
+      "messages": {
+        "calibrate": {
+          "$ref": "#/components/messages/calibrateCommand"
+        }
+      }
+    }
+  },
+  "operations": {
+    "receiveSensorData": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/sensorReadings"
+      },
+      "summary": "Receive sensor readings which may be temperature or humidity.",
+      "messages": [
+        {
+          "$ref": "#/channels/sensorReadings/messages/temperature"
+        },
+        {
+          "$ref": "#/channels/sensorReadings/messages/humidity"
+        }
+      ]
+    },
+    "sendCalibrate": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/sensorCommands"
+      },
+      "summary": "Send a calibration command to a sensor.",
+      "messages": [
+        {
+          "$ref": "#/channels/sensorCommands/messages/calibrate"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "temperatureReading": {
+        "name": "temperatureReading",
+        "title": "Temperature Reading",
+        "payload": {
+          "$ref": "#/components/schemas/temperaturePayload"
+        }
+      },
+      "humidityReading": {
+        "name": "humidityReading",
+        "title": "Humidity Reading",
+        "payload": {
+          "$ref": "#/components/schemas/humidityPayload"
+        }
+      },
+      "calibrateCommand": {
+        "name": "calibrateCommand",
+        "title": "Calibrate Command",
+        "payload": {
+          "$ref": "#/components/schemas/calibratePayload"
+        }
+      }
+    },
+    "schemas": {
+      "temperaturePayload": {
+        "type": "object",
+        "required": ["celsius", "sensorId"],
+        "properties": {
+          "celsius": {
+            "type": "number",
+            "description": "Temperature in Celsius."
+          },
+          "sensorId": {
+            "type": "string",
+            "description": "Identifier of the sensor."
+          }
+        }
+      },
+      "humidityPayload": {
+        "type": "object",
+        "required": ["percent", "sensorId"],
+        "properties": {
+          "percent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Relative humidity percentage."
+          },
+          "sensorId": {
+            "type": "string",
+            "description": "Identifier of the sensor."
+          }
+        }
+      },
+      "calibratePayload": {
+        "type": "object",
+        "required": ["sensorId", "referenceValue"],
+        "properties": {
+          "sensorId": {
+            "type": "string",
+            "description": "Identifier of the sensor to calibrate."
+          },
+          "referenceValue": {
+            "type": "number",
+            "description": "Known reference value for calibration."
+          }
+        }
+      }
+    }
+  }
+}

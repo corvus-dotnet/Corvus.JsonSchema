@@ -18,6 +18,7 @@ public readonly struct JsonPropertyName
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
+    private readonly JsonProperty jsonPropertyBacking;
     private readonly string stringBacking;
 
     /// <summary>
@@ -28,6 +29,19 @@ public readonly struct JsonPropertyName
     {
         this.backing = Backing.JsonElement;
         this.jsonElementBacking = value;
+        this.jsonPropertyBacking = default;
+        this.stringBacking = string.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonPropertyName"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the property name.</param>
+    public JsonPropertyName(in JsonProperty value)
+    {
+        this.backing = Backing.JsonProperty;
+        this.jsonElementBacking = default;
+        this.jsonPropertyBacking = value;
         this.stringBacking = string.Empty;
     }
 
@@ -39,6 +53,7 @@ public readonly struct JsonPropertyName
     {
         this.backing = Backing.String;
         this.jsonElementBacking = default;
+        this.jsonPropertyBacking = default;
         this.stringBacking = value;
     }
 
@@ -47,6 +62,7 @@ public readonly struct JsonPropertyName
     {
         Unknown = 0,
         String = 0b0001,
+        JsonProperty = 0b0010,
         JsonElement = 0b1000,
     }
 
@@ -54,6 +70,11 @@ public readonly struct JsonPropertyName
     /// Gets a value indicating whether this has a string backing.
     /// </summary>
     public bool HasStringBacking => (this.backing & Backing.String) != 0;
+
+    /// <summary>
+    /// Gets a value indicating whether this has a <see cref="JsonProperty"/> backing.
+    /// </summary>
+    public bool HasJsonPropertyBacking => (this.backing & Backing.JsonProperty) != 0;
 
     /// <summary>
     /// Gets a value indicating whether this has a <see cref="JsonElement"/> backing.
@@ -291,6 +312,14 @@ public readonly struct JsonPropertyName
             }
         }
 
+        if (this.HasJsonPropertyBacking)
+        {
+            if (TryGetJsonPropertyNameValue(this.jsonPropertyBacking, ProcessComparisonFromSpan, other, out int result))
+            {
+                return result;
+            }
+        }
+
         throw new InvalidOperationException();
 
         static bool GetPooledChars(ReadOnlySpan<char> span, in int state, [NotNullWhen(true)] out (char[] Chars, int Length) value)
@@ -313,6 +342,11 @@ public readonly struct JsonPropertyName
                 return rhs.jsonElementBacking.TryGetValue(ReverseCompareTo, lhs, out result);
             }
 
+            if (rhs.HasJsonPropertyBacking)
+            {
+                return TryGetJsonPropertyNameValue(rhs.jsonPropertyBacking, ReverseCompareTo, lhs, out result);
+            }
+
             result = default;
             return false;
         }
@@ -321,6 +355,41 @@ public readonly struct JsonPropertyName
         {
             result = lhs.Span.CompareTo(rhs, StringComparison.Ordinal);
             return true;
+        }
+
+        static bool ProcessComparisonFromSpan(ReadOnlySpan<char> lhs, in JsonPropertyName rhs, out int result)
+        {
+            if (rhs.HasStringBacking)
+            {
+                result = lhs.CompareTo(rhs.stringBacking.AsSpan(), StringComparison.Ordinal);
+                return true;
+            }
+
+            char[]? pooledChars = null;
+            ReadOnlyMemory<char> memory;
+
+            if (lhs.Length == 0)
+            {
+                memory = ReadOnlyMemory<char>.Empty;
+            }
+            else
+            {
+                pooledChars = ArrayPool<char>.Shared.Rent(lhs.Length);
+                lhs.CopyTo(pooledChars);
+                memory = pooledChars.AsMemory(0, lhs.Length);
+            }
+
+            try
+            {
+                return ProcessComparison(memory, rhs, out result);
+            }
+            finally
+            {
+                if (pooledChars != null)
+                {
+                    ArrayPool<char>.Shared.Return(pooledChars);
+                }
+            }
         }
 
         static bool ReverseCompareTo(ReadOnlySpan<char> rhs, in ReadOnlyMemory<char> lhs, out int result)
@@ -353,6 +422,11 @@ public readonly struct JsonPropertyName
             return this.EqualsJsonElement(other.jsonElementBacking);
         }
 
+        if (other.HasJsonPropertyBacking)
+        {
+            return this.EqualsPropertyNameOf(other.jsonPropertyBacking);
+        }
+
         throw new InvalidOperationException();
     }
 
@@ -381,6 +455,16 @@ public readonly struct JsonPropertyName
             {
                 return result;
             }
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            if (TryGetJsonPropertyNameUtf8Value(this.jsonPropertyBacking, CompareElement, jsonElement, true, out bool result))
+            {
+                return result;
+            }
+
+            return false;
         }
 
         throw new InvalidOperationException();
@@ -416,11 +500,27 @@ public readonly struct JsonPropertyName
             return jp.NameEquals(this.stringBacking);
         }
 
+        if (this.HasJsonPropertyBacking)
+        {
+            if (TryGetJsonPropertyNameUtf8Value(this.jsonPropertyBacking, NameEquals, jp, true, out bool result))
+            {
+                return result;
+            }
+
+            return false;
+        }
+
         throw new InvalidOperationException("Unsupported JSON property name");
 
         static bool EqualsFor(ReadOnlySpan<byte> name, in JsonProperty jp, out bool result)
         {
             result = jp.NameEquals(name);
+            return true;
+        }
+
+        static bool NameEquals(ReadOnlySpan<byte> span, in JsonProperty state, out bool result)
+        {
+            result = state.NameEquals(span);
             return true;
         }
     }
@@ -446,6 +546,11 @@ public readonly struct JsonPropertyName
 #else
             return name.Equals(this.stringBacking.AsSpan(), StringComparison.Ordinal);
 #endif
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            return this.jsonPropertyBacking.NameEquals(name);
         }
 
         throw new InvalidOperationException("Unsupported JSON property name");
@@ -490,6 +595,11 @@ public readonly struct JsonPropertyName
         if (this.HasStringBacking)
         {
             return this.stringBacking.Equals(name);
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            return this.jsonPropertyBacking.NameEquals(utf8Name);
         }
 
         throw new InvalidOperationException("Unsupported JSON property name");
@@ -544,6 +654,11 @@ public readonly struct JsonPropertyName
 #endif
         }
 
+        if (this.HasJsonPropertyBacking)
+        {
+            return this.jsonPropertyBacking.NameEquals(name);
+        }
+
         throw new InvalidOperationException("Unsupported JSON property name");
     }
 
@@ -568,6 +683,21 @@ public readonly struct JsonPropertyName
         if (this.HasStringBacking)
         {
             return this.stringBacking.GetHashCode();
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+#if NET8_0_OR_GREATER
+            const int state = default;
+            if (TryGetJsonPropertyNameValue(this.jsonPropertyBacking, GetHashCodeParser, state, out int result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException();
+#else
+            return this.jsonPropertyBacking.Name.GetHashCode();
+#endif
         }
 
         throw new InvalidOperationException("Unsupported JSON property name");
@@ -622,7 +752,12 @@ public readonly struct JsonPropertyName
 
         if (this.HasJsonElementBacking)
         {
-            this.jsonElementBacking.TryGetValue(TryGetProperty, jsonElement, out value);
+            return this.jsonElementBacking.TryGetValue(TryGetProperty, jsonElement, out value);
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            return TryGetJsonPropertyNameUtf8Value(this.jsonPropertyBacking, TryGetProperty, jsonElement, true, out value);
         }
 
         throw new InvalidOperationException();
@@ -652,6 +787,12 @@ public readonly struct JsonPropertyName
             return value is not null;
         }
 
+        if (this.HasJsonPropertyBacking)
+        {
+            value = this.jsonPropertyBacking.Name;
+            return true;
+        }
+
         value = null;
         return false;
     }
@@ -675,6 +816,11 @@ public readonly struct JsonPropertyName
         if (this.HasStringBacking)
         {
             return parser(this.stringBacking.AsSpan(), state, out result);
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            return TryGetJsonPropertyNameValue(this.jsonPropertyBacking, parser, state, out result);
         }
 
         result = default;
@@ -712,8 +858,135 @@ public readonly struct JsonPropertyName
             return this.jsonElementBacking.TryGetValue(parser, state, decode, out result);
         }
 
+        if (this.HasJsonPropertyBacking)
+        {
+            return TryGetJsonPropertyNameUtf8Value(this.jsonPropertyBacking, parser, state, decode, out result);
+        }
+
         result = default;
         return false;
+    }
+
+    internal static bool TryGetJsonPropertyNameValue<TState, TResult>(
+        in JsonProperty jsonProperty,
+        Parser<TState, TResult> parser,
+        in TState state,
+        [NotNullWhen(true)] out TResult? result)
+    {
+#if BUILDING_SOURCE_GENERATOR
+        return parser(jsonProperty.Name.AsSpan(), state, out result);
+#else
+        ReadOnlySpan<byte> rawName = System.Runtime.InteropServices.JsonMarshal.GetRawUtf8PropertyName(jsonProperty);
+        int idx = rawName.IndexOf(JsonConstants.BackSlash);
+
+        if (idx < 0)
+        {
+            return TryGetJsonPropertyNameValueFromDecodedUtf8(rawName, parser, state, out result);
+        }
+
+        byte[]? rentedArray = null;
+        int length = rawName.Length;
+        Span<byte> unescaped = length <= JsonConstants.StackallocThreshold ?
+            stackalloc byte[JsonConstants.StackallocThreshold] :
+            (rentedArray = ArrayPool<byte>.Shared.Rent(length));
+
+        try
+        {
+            JsonReaderHelper.Unescape(rawName, unescaped, idx, out int written);
+            return TryGetJsonPropertyNameValueFromDecodedUtf8(unescaped[..written], parser, state, out result);
+        }
+        finally
+        {
+            if (rentedArray != null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray, true);
+            }
+        }
+#endif
+    }
+
+    internal static bool TryGetJsonPropertyNameUtf8Value<TState, TResult>(in JsonProperty jsonProperty, Utf8Parser<TState, TResult> parser, in TState state, bool decode, [NotNullWhen(true)] out TResult? result)
+    {
+#if BUILDING_SOURCE_GENERATOR
+        ReadOnlySpan<char> name = jsonProperty.Name.AsSpan();
+        byte[]? rentedArray = null;
+        int length = Encoding.UTF8.GetMaxByteCount(name.Length);
+        Span<byte> utf8Name = length <= JsonConstants.StackallocThreshold ?
+            stackalloc byte[JsonConstants.StackallocThreshold] :
+            (rentedArray = ArrayPool<byte>.Shared.Rent(length));
+
+        try
+        {
+            int written = JsonReaderHelper.TranscodeHelper(name, utf8Name);
+            return parser(utf8Name[..written], state, out result);
+        }
+        finally
+        {
+            if (rentedArray != null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray, true);
+            }
+        }
+#else
+        ReadOnlySpan<byte> rawName = System.Runtime.InteropServices.JsonMarshal.GetRawUtf8PropertyName(jsonProperty);
+
+        if (!decode)
+        {
+            return parser(rawName, state, out result);
+        }
+
+        int idx = rawName.IndexOf(JsonConstants.BackSlash);
+
+        if (idx < 0)
+        {
+            return parser(rawName, state, out result);
+        }
+
+        byte[]? rentedArray = null;
+        int length = rawName.Length;
+        Span<byte> unescaped = length <= JsonConstants.StackallocThreshold ?
+            stackalloc byte[JsonConstants.StackallocThreshold] :
+            (rentedArray = ArrayPool<byte>.Shared.Rent(length));
+
+        try
+        {
+            JsonReaderHelper.Unescape(rawName, unescaped, idx, out int written);
+            return parser(unescaped[..written], state, out result);
+        }
+        finally
+        {
+            if (rentedArray != null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray, true);
+            }
+        }
+#endif
+    }
+
+    private static bool TryGetJsonPropertyNameValueFromDecodedUtf8<TState, TResult>(
+        ReadOnlySpan<byte> decodedUtf8Name,
+        Parser<TState, TResult> parser,
+        in TState state,
+        [NotNullWhen(true)] out TResult? result)
+    {
+        char[]? rentedArray = null;
+        int length = checked(decodedUtf8Name.Length * JsonConstants.MaxExpansionFactorWhileTranscoding);
+        Span<char> transcoded = length <= JsonConstants.StackallocThreshold ?
+            stackalloc char[JsonConstants.StackallocThreshold] :
+            (rentedArray = ArrayPool<char>.Shared.Rent(length));
+
+        try
+        {
+            int written = JsonReaderHelper.TranscodeHelper(decodedUtf8Name, transcoded);
+            return parser(transcoded[..written], state, out result);
+        }
+        finally
+        {
+            if (rentedArray != null)
+            {
+                ArrayPool<char>.Shared.Return(rentedArray);
+            }
+        }
     }
 
     /// <summary>
@@ -731,6 +1004,12 @@ public readonly struct JsonPropertyName
         if (this.HasStringBacking)
         {
             writer.WritePropertyName(this.stringBacking);
+            return;
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            TryGetJsonPropertyNameUtf8Value(this.jsonPropertyBacking, WritePropertyName, writer, true, out int _);
             return;
         }
 
@@ -759,11 +1038,21 @@ public readonly struct JsonPropertyName
             return T.FromJson(this.jsonElementBacking);
         }
 
+        if (this.HasJsonPropertyBacking)
+        {
+            return T.FromString(new JsonString(this.jsonPropertyBacking.Name));
+        }
+
         return T.FromString(new JsonString(this.stringBacking));
 #else
         if (this.HasJsonElementBacking)
         {
             return JsonValueNetStandard20Extensions.FromJsonElement<T>(this.jsonElementBacking);
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            return new JsonString(this.jsonPropertyBacking.Name).As<T>();
         }
 
         return new JsonString(this.stringBacking).As<T>();
@@ -796,6 +1085,16 @@ public readonly struct JsonPropertyName
             return regex.IsMatch(this.stringBacking);
         }
 
+        if (this.HasJsonPropertyBacking)
+        {
+            if (TryGetJsonPropertyNameValue(this.jsonPropertyBacking, MatchRegex, regex, out bool isMatch))
+            {
+                return isMatch;
+            }
+
+            return false;
+        }
+
         throw new InvalidOperationException();
 
         static bool MatchRegex(ReadOnlySpan<char> span, in Regex regex, out bool value)
@@ -824,7 +1123,22 @@ public readonly struct JsonPropertyName
             return this.stringBacking.Length;
         }
 
+        if (this.HasJsonPropertyBacking)
+        {
+            const int state = default;
+            if (TryGetJsonPropertyNameValue(this.jsonPropertyBacking, GetLength, state, out int result))
+            {
+                return result;
+            }
+        }
+
         throw new InvalidOperationException("Unsupported JSON property name");
+
+        static bool GetLength(ReadOnlySpan<char> span, in int state, out int result)
+        {
+            result = span.Length;
+            return true;
+        }
     }
 
     /// <summary>
@@ -854,6 +1168,11 @@ public readonly struct JsonPropertyName
         if (this.HasJsonElementBacking)
         {
             return this.jsonElementBacking.TryGetValue(CopyTo, memory, out length);
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            return TryGetJsonPropertyNameValue(this.jsonPropertyBacking, CopyTo, memory, out length);
         }
 
         throw new InvalidOperationException();

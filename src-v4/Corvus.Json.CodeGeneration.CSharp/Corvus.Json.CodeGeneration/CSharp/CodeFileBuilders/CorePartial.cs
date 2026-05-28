@@ -40,18 +40,23 @@ public sealed class CorePartial : ICodeFileBuilder
                     "global::System.Buffers",
                     RequiresImmutableCollections(typeDeclaration) ? "global::System.Collections.Immutable" : ConditionalCodeSpecification.DoNotEmit,
                     "global::System.Runtime.CompilerServices",
+                    new("global::System.Text", FrameworkType.Net80OrGreater),
                     "global::System.Text.Json",
                     new("Corvus.Json", EmitIfNotCorvusJsonExtendedType(typeDeclaration)),
                     "Corvus.Json.Internal")
                 .AppendLine()
                 .BeginTypeDeclarationNesting(typeDeclaration)
                     .AppendDocumentation(typeDeclaration)
+                    .AppendDebuggerDisplayAttribute()
                     .AppendJsonConverterAttribute(typeDeclaration)
                     .BeginReadonlyPartialStructDeclaration(
                         typeDeclaration.DotnetAccessibility(),
                         typeDeclaration.DotnetTypeName(),
                         interfaces: [
-                            JsonAnyType(typeDeclaration)
+                            JsonAnyType(typeDeclaration),
+                            "IFormattable",
+                            new("ISpanFormattable", FrameworkType.Net80OrGreater),
+                            new("IUtf8SpanFormattable", FrameworkType.Net80OrGreater)
                             ])
                         .PushValidationClassNameAndScope()
                         .AppendBackingFields(typeDeclaration.ImpliedCoreTypesOrAny())
@@ -103,6 +108,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendEqualsOverloads(typeDeclaration)
                         .AppendWriteToMethod(typeDeclaration)
                         .AppendGetHashCodeAndToStringMethods(typeDeclaration)
+                        .AppendDebuggerDisplayProperty(typeDeclaration)
                         .AppendValidateMethodForNoValidation(typeDeclaration)
                         .AppendMatchMethods(typeDeclaration)
                         .AppendTryGetMethods(typeDeclaration)

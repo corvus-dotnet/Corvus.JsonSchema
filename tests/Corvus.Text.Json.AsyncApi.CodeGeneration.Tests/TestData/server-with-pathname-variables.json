@@ -1,0 +1,56 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Service with pathname and variables",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "production": {
+      "host": "{region}.broker.example.com:9092",
+      "protocol": "kafka",
+      "pathname": "/{vhost}/api",
+      "variables": {
+        "region": {
+          "default": "us-east-1",
+          "enum": ["us-east-1", "eu-west-1"],
+          "description": "Cloud region"
+        },
+        "vhost": {
+          "default": "default",
+          "description": "Virtual host path"
+        }
+      }
+    }
+  },
+  "channels": {
+    "events": {
+      "address": "app.events",
+      "messages": {
+        "Event": { "$ref": "#/components/messages/AppEvent" }
+      }
+    }
+  },
+  "operations": {
+    "publishEvent": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/events" },
+      "messages": [
+        { "$ref": "#/channels/events/messages/Event" }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "AppEvent": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "eventType": { "type": "string" },
+            "data": { "type": "object" }
+          },
+          "required": ["eventType"]
+        }
+      }
+    }
+  }
+}

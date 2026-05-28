@@ -1,11 +1,10 @@
-﻿// <copyright file="References.cs" company="Endjin Limited">
+// <copyright file="References.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
-using System.Web;
 
 namespace Corvus.Json.CodeGeneration;
 
@@ -56,7 +55,7 @@ public static class References
         string referenceValue,
         CancellationToken cancellationToken)
     {
-        JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
+        JsonReference reference = new(Uri.UnescapeDataString(referenceValue));
 
         (JsonReference baseSchemaForReferenceLocation, LocatedSchema baseSchemaForReference) =
             await typeBuilderContext.SchemaRegistry.ResolveBaseReference(
@@ -129,7 +128,7 @@ public static class References
         string referenceValue,
         CancellationToken cancellationToken)
     {
-        JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
+        JsonReference reference = new(Uri.UnescapeDataString(referenceValue));
 
         (JsonReference baseSchemaForReferenceLocation, LocatedSchema baseSchemaForReference) =
             await typeBuilderContext.SchemaRegistry.ResolveBaseReference(
@@ -218,7 +217,7 @@ public static class References
         string referenceValue,
         CancellationToken cancellationToken)
     {
-        JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
+        JsonReference reference = new(Uri.UnescapeDataString(referenceValue));
 
         (JsonReference baseSchemaForReferenceLocation, LocatedSchema baseSchemaForReference) =
             await typeBuilderContext.SchemaRegistry.ResolveBaseReference(

@@ -1,0 +1,232 @@
+@using Corvus.Text.Json.OpenApi.Playground.Models
+
+<div class="generated-files-panel @(SelectedFile is not null ? "viewing" : "")">
+    @if (Files.Count == 0)
+    {
+        <p class="tree-empty">Generate to see files</p>
+    }
+    else if (SelectedFile is not null)
+    {
+        <div class="file-viewer-header">
+            <button class="back-btn" @onclick="() => OnFileSelected.InvokeAsync((GeneratedFile?)null)">← Back</button>
+            <span class="file-name" title="@SelectedFile.FileName">@SelectedFile.FileName</span>
+        </div>
+        <div class="file-viewer-editor">
+            <StandaloneCodeEditor @ref="fileViewerEditor"
+                                  Id="file-viewer-editor"
+                                  ConstructionOptions="FileViewerEditorOptions" />
+        </div>
+    }
+    else
+    {
+        @if (ClientFiles.Count > 0)
+        {
+            <div class="file-group">
+                <div class="file-group-header">Client (@ClientFiles.Count)</div>
+                @foreach (GeneratedFile file in ClientFiles)
+                {
+                    <button type="button" class="file-item" title="@file.FileName" @onclick="() => OnFileSelected.InvokeAsync(file)">
+                        <span class="file-icon">📄</span>
+                        <span class="file-name">@file.FileName</span>
+                    </button>
+                }
+            </div>
+        }
+
+        @if (RequestResponseFiles.Count > 0)
+        {
+            <div class="file-group">
+                <div class="file-group-header">Requests / Responses (@RequestResponseFiles.Count)</div>
+                @foreach (GeneratedFile file in RequestResponseFiles)
+                {
+                    <button type="button" class="file-item" title="@file.FileName" @onclick="() => OnFileSelected.InvokeAsync(file)">
+                        <span class="file-icon">↔️</span>
+                        <span class="file-name">@file.FileName</span>
+                    </button>
+                }
+            </div>
+        }
+
+        @if (ModelFiles.Count > 0)
+        {
+            <div class="file-group">
+                <div class="file-group-header">Models (@ModelFiles.Count)</div>
+                @(RenderModelTree(ModelTree, 0))
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private StandaloneCodeEditor? fileViewerEditor;
+    private string? lastRenderedFileName;
+
+    private IReadOnlyList<GeneratedFile> ClientFiles => Files.Where(f => f.IsClient).ToList();
+
+    private IReadOnlyList<GeneratedFile> RequestResponseFiles => Files.Where(f => f.IsRequestResponse).ToList();
+
+    private IReadOnlyList<GeneratedFile> ModelFiles => Files.Where(f => f.IsModel).ToList();
+
+    private IReadOnlyList<ModelTreeNode> ModelTree => BuildModelTree(ModelFiles);
+
+    [Parameter]
+    public IReadOnlyList<GeneratedFile> Files { get; set; } = [];
+
+    [Parameter]
+    public GeneratedFile? SelectedFile { get; set; }
+
+    [Parameter]
+    public EventCallback<GeneratedFile?> OnFileSelected { get; set; }
+
+    [Parameter]
+    public string Theme { get; set; } = "vs-dark";
+
+    private StandaloneEditorConstructionOptions FileViewerEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "csharp",
+        Theme = Theme,
+        AutomaticLayout = true,
+        ReadOnly = true,
+        Value = SelectedFile?.Content ?? "",
+        FontSize = 13,
+        ScrollBeyondLastLine = false,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        LineNumbers = "on",
+        RenderLineHighlight = "none",
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (fileViewerEditor is not null && SelectedFile is not null && SelectedFile.FileName != lastRenderedFileName)
+        {
+            lastRenderedFileName = SelectedFile.FileName;
+            await fileViewerEditor.SetValue(SelectedFile.Content);
+        }
+        else if (SelectedFile is null)
+        {
+            lastRenderedFileName = null;
+        }
+    }
+
+    private RenderFragment RenderModelTree(IReadOnlyList<ModelTreeNode> nodes, int depth) => builder =>
+    {
+        int seq = 0;
+        foreach (ModelTreeNode node in nodes)
+        {
+            if (node.Children.Count == 0)
+            {
+                // Leaf node — just show the file
+                if (node.File is not null)
+                {
+                    builder.OpenElement(seq++, "button");
+                    builder.AddAttribute(seq++, "type", "button");
+                    builder.AddAttribute(seq++, "class", "file-item");
+                    builder.AddAttribute(seq++, "style", $"padding-left: {8 + depth * 16}px");
+                    builder.AddAttribute(seq++, "title", node.File.FileName);
+                    builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () => OnFileSelected.InvokeAsync(node.File)));
+                    builder.OpenElement(seq++, "span");
+                    builder.AddAttribute(seq++, "class", "file-icon");
+                    builder.AddContent(seq++, "📐");
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "span");
+                    builder.AddAttribute(seq++, "class", "file-name");
+                    builder.AddContent(seq++, node.File.FileName);
+                    builder.CloseElement();
+                    builder.CloseElement();
+                }
+            }
+            else
+            {
+                // Group node with children — collapsible
+                builder.OpenElement(seq++, "details");
+                builder.AddAttribute(seq++, "class", "file-item-group");
+                builder.OpenElement(seq++, "summary");
+                builder.AddAttribute(seq++, "class", "file-item");
+                builder.AddAttribute(seq++, "style", $"padding-left: {8 + depth * 16}px");
+                builder.OpenElement(seq++, "span");
+                builder.AddAttribute(seq++, "class", "file-icon");
+                builder.AddContent(seq++, "📐");
+                builder.CloseElement();
+                builder.OpenElement(seq++, "span");
+                builder.AddAttribute(seq++, "class", "file-name");
+                builder.AddContent(seq++, node.Name);
+                builder.CloseElement();
+                builder.CloseElement(); // summary
+
+                // Render the node's own file if it has one
+                if (node.File is not null)
+                {
+                    builder.OpenElement(seq++, "button");
+                    builder.AddAttribute(seq++, "type", "button");
+                    builder.AddAttribute(seq++, "class", "file-item");
+                    builder.AddAttribute(seq++, "style", $"padding-left: {8 + (depth + 1) * 16}px");
+                    builder.AddAttribute(seq++, "title", node.File.FileName);
+                    builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () => OnFileSelected.InvokeAsync(node.File)));
+                    builder.OpenElement(seq++, "span");
+                    builder.AddAttribute(seq++, "class", "file-icon");
+                    builder.AddContent(seq++, "📐");
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "span");
+                    builder.AddAttribute(seq++, "class", "file-name");
+                    builder.AddContent(seq++, node.File.FileName);
+                    builder.CloseElement();
+                    builder.CloseElement();
+                }
+
+                // Render children recursively
+                builder.AddContent(seq++, RenderModelTree(node.Children, depth + 1));
+                builder.CloseElement(); // details
+            }
+        }
+    };
+
+    private static IReadOnlyList<ModelTreeNode> BuildModelTree(IReadOnlyList<GeneratedFile> files)
+    {
+        Dictionary<string, ModelTreeNode> nodeMap = new(StringComparer.Ordinal);
+        List<ModelTreeNode> roots = [];
+
+        foreach (GeneratedFile file in files.OrderBy(f => f.FileName))
+        {
+            // Strip .cs to get the type path segments
+            string typePath = file.FileName.EndsWith(".cs", StringComparison.Ordinal)
+                ? file.FileName[..^3]
+                : file.FileName;
+
+            string[] segments = typePath.Split('.');
+
+            // Ensure all ancestor nodes exist
+            for (int i = 0; i < segments.Length; i++)
+            {
+                string key = string.Join(".", segments[..(i + 1)]);
+
+                if (!nodeMap.ContainsKey(key))
+                {
+                    ModelTreeNode newNode = new() { Name = segments[i] };
+                    nodeMap[key] = newNode;
+
+                    if (i == 0)
+                    {
+                        roots.Add(newNode);
+                    }
+                    else
+                    {
+                        string parentKey = string.Join(".", segments[..i]);
+                        nodeMap[parentKey].Children.Add(newNode);
+                    }
+                }
+            }
+
+            // Assign the file to its leaf node
+            nodeMap[typePath].File = file;
+        }
+
+        return roots;
+    }
+
+    private sealed class ModelTreeNode
+    {
+        public string Name { get; set; } = "";
+        public GeneratedFile? File { get; set; }
+        public List<ModelTreeNode> Children { get; } = [];
+    }
+}

@@ -78,6 +78,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .AppendHasPropertiesMethod()
                             .AppendHasPropertyMethods()
                             .AppendWithPropertyMethods(typeDeclaration)
+                            .AppendWithAppliedCompositionMethods(typeDeclaration)
                             .AppendTryGetPropertyMethods(typeDeclaration)
                             .AppendSetPropertyMethods(typeDeclaration)
                             .AppendRemovePropertyMethods(typeDeclaration)

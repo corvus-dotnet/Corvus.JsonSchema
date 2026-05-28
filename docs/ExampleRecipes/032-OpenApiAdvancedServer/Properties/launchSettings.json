@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "OpenApiAdvancedServer": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:50514;http://localhost:50516"
+    }
+  }
+}

@@ -17,6 +17,7 @@
     <AdditionalFiles Include="array-of-items-2020-12.json" />
     <AdditionalFiles Include="object-with-array-property-2020-12.json" />
     <AdditionalFiles Include="composition-any-of-2020-12.json" />
+    <AdditionalFiles Include="composition-with-any-2020-12.json" />
     <AdditionalFiles Include="composition-all-of-2020-12.json" />
     <AdditionalFiles Include="composition-one-of-2020-12.json" />
     <AdditionalFiles Include="if-then-else-2020-12.json" />

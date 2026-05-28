@@ -1,0 +1,56 @@
+<Project Sdk="MSTest.Sdk/4.2.2">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <Net10Only>true</Net10Only>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1504;IDE0065;IDE0290;IDE0079;IDE0130;CS1591;CS1572;CS1573</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+    <AsyncApiSpecFile>TestData\streetlights.json</AsyncApiSpecFile>
+    <AsyncApi26SpecFile>TestData\streetlights-26.json</AsyncApi26SpecFile>
+    <GeneratedCodeOutputPath>Generated</GeneratedCodeOutputPath>
+    <Generated26CodeOutputPath>Generated26</Generated26CodeOutputPath>
+    <!-- Exclude Generated/ from default compile globs; the IncludeGeneratedAsyncApiTypes target
+         adds them after the generation target runs. This avoids duplicates on incremental builds
+         and ensures the files are picked up even when Generated/ doesn't exist at evaluation time. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(GeneratedCodeOutputPath)\**;$(Generated26CodeOutputPath)\**</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Polly\Corvus.Text.Json.AsyncApi.Polly.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Testing\Corvus.Text.Json.AsyncApi.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <!-- Build-only dependency: ensures the CLI tool is compiled before our generation target runs.
+         ReferenceOutputAssembly=false means we don't reference it at runtime. -->
+    <ProjectReference Include="..\..\src\Corvus.Json.Cli\Corvus.Json.Cli.csproj"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Regenerate typed producers/consumers and schema types from the AsyncAPI spec before every
+       compilation. Uses - -no-build because the ProjectReference above guarantees the CLI tool
+       is already compiled. Generation itself takes <1s; no incremental skip needed. -->
+  <Target Name="GenerateAsyncApiTypes" Condition="'$(TargetFramework)' != 'net481'" BeforeTargets="BeforeCompile;CoreCompile">
+    <RemoveDir Directories="$(GeneratedCodeOutputPath)" />
+    <RemoveDir Directories="$(Generated26CodeOutputPath)" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.Cli\Corvus.Json.Cli.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- asyncapi-generate &quot;$(AsyncApiSpecFile)&quot; --rootNamespace Streetlights.Client --outputPath &quot;$(GeneratedCodeOutputPath)&quot;" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.Cli\Corvus.Json.Cli.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- asyncapi-generate &quot;$(AsyncApi26SpecFile)&quot; --rootNamespace Streetlights.Client.V26 --outputPath &quot;$(Generated26CodeOutputPath)&quot;" />
+  </Target>
+
+  <!-- Include the generated files after generation. Runs after GenerateAsyncApiTypes, picking up
+       whatever .cs files the generation produced. -->
+  <Target Name="IncludeGeneratedAsyncApiTypes" Condition="'$(TargetFramework)' != 'net481'" AfterTargets="GenerateAsyncApiTypes" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Include="$(GeneratedCodeOutputPath)\**\*.cs" />
+      <Compile Include="$(Generated26CodeOutputPath)\**\*.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

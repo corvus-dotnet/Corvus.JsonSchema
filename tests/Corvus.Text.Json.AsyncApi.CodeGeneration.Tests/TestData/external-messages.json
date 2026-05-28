@@ -1,0 +1,23 @@
+{
+  "components": {
+    "messages": {
+      "LightMeasured": {
+        "name": "LightMeasured",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "lumens": { "type": "integer" },
+            "sentAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "SensorId": {
+        "type": "string",
+        "description": "A unique sensor identifier"
+      }
+    }
+  }
+}

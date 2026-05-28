@@ -1,0 +1,54 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Static Reply Address Service",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "commands": {
+      "address": "service/commands",
+      "messages": {
+        "CommandRequest": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "commandId": { "type": "string" },
+              "action": { "type": "string" }
+            },
+            "required": ["commandId", "action"]
+          }
+        }
+      }
+    },
+    "commandResponses": {
+      "address": "service/command-responses",
+      "messages": {
+        "CommandResponse": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "commandId": { "type": "string" },
+              "status": { "type": "string" }
+            },
+            "required": ["commandId", "status"]
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "sendCommand": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/commands" },
+      "messages": [
+        { "$ref": "#/channels/commands/messages/CommandRequest" }
+      ],
+      "reply": {
+        "channel": { "$ref": "#/channels/commandResponses" },
+        "messages": [
+          { "$ref": "#/channels/commandResponses/messages/CommandResponse" }
+        ]
+      }
+    }
+  }
+}

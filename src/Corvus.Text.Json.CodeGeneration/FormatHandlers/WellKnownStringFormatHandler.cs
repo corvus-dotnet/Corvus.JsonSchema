@@ -488,7 +488,7 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                 {
                     generator
                     .AppendSeparatorLine()
-                    .AppendLineIndent("private Source(DateTimeOffset value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written)); _kind = Kind.StringSimpleType; }");
+                    .AppendLineIndent("private Source(DateTimeOffset value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written, 'O')); _kind = Kind.StringSimpleType; }");
                 }
 
                 return true;
@@ -607,6 +607,14 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                         .AppendSeparatorLine()
                     .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
                     .AppendLineIndent("public static implicit operator Source(NodaTime.OffsetDateTime value) => new (value);");
+                }
+
+                if (seenConversionOperators.Add("DateTimeOffset"))
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                        .AppendLineIndent("public static implicit operator Source(DateTimeOffset value) => new (value);");
                 }
 
                 return true;

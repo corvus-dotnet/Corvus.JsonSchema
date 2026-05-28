@@ -1,0 +1,141 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Naming Heuristic Test API",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "orders": {
+      "address": "orders/created",
+      "messages": {
+        "orderCreated": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "orderId": { "type": "string" },
+              "amount": { "type": "number" }
+            },
+            "required": ["orderId", "amount"]
+          },
+          "headers": {
+            "type": "object",
+            "properties": {
+              "correlationId": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            },
+            "required": ["correlationId"]
+          }
+        },
+        "orderUpdated": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "orderId": { "type": "string" },
+              "status": { "type": "string", "enum": ["pending", "shipped", "delivered"] }
+            },
+            "required": ["orderId", "status"]
+          }
+        }
+      }
+    },
+    "user-notifications": {
+      "address": "notifications/{userId}",
+      "messages": {
+        "alertSent": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "alertId": { "type": "string" },
+              "message": { "type": "string" },
+              "severity": { "type": "string", "enum": ["low", "medium", "high"] }
+            },
+            "required": ["alertId", "message"]
+          }
+        }
+      }
+    },
+    "events/v2": {
+      "address": "events/v2/stream",
+      "messages": {
+        "eventPublished": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "eventType": { "type": "string" },
+              "eventData": { "type": "object" }
+            },
+            "required": ["eventType"]
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Address": {
+        "type": "object",
+        "properties": {
+          "street": { "type": "string" },
+          "city": { "type": "string" },
+          "zipCode": { "type": "string" }
+        },
+        "required": ["street", "city"]
+      },
+      "customer-info": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" }
+        },
+        "required": ["customerId", "name"]
+      },
+      "data~format": {
+        "type": "object",
+        "properties": {
+          "encoding": { "type": "string" },
+          "compression": { "type": "string" }
+        },
+        "required": ["encoding"]
+      },
+      "v1/legacy": {
+        "type": "object",
+        "properties": {
+          "legacyId": { "type": "string" },
+          "migrated": { "type": "boolean" }
+        },
+        "required": ["legacyId"]
+      }
+    },
+    "messages": {
+      "PaymentReceived": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "paymentId": { "type": "string" },
+            "amount": { "type": "number" },
+            "currency": { "type": "string" }
+          },
+          "required": ["paymentId", "amount"]
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "transactionId": { "type": "string" },
+            "idempotencyKey": { "type": "string" }
+          },
+          "required": ["transactionId"]
+        }
+      }
+    }
+  },
+  "operations": {
+    "publishOrder": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/orders" },
+      "messages": [
+        { "$ref": "#/channels/orders/messages/orderCreated" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "openapi": "3.2.0",
+  "info": {
+    "title": "Event Subscription API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/subscriptions": {
+      "post": {
+        "operationId": "createSubscription",
+        "tags": [
+          "subscriptions"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "callbackUrl",
+                  "events"
+                ],
+                "properties": {
+                  "callbackUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "subscriptionId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "onEvent": {
+            "{$request.body#/callbackUrl}": {
+              "post": {
+                "operationId": "onEventCallback",
+                "tags": [
+                  "callbacks"
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "required": [
+                          "eventId",
+                          "eventType",
+                          "timestamp"
+                        ],
+                        "properties": {
+                          "eventId": {
+                            "type": "string"
+                          },
+                          "eventType": {
+                            "type": "string"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "payload": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Event received"
+                  },
+                  "400": {
+                    "description": "Invalid payload"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "systemAlert": {
+      "post": {
+        "operationId": "systemAlertWebhook",
+        "tags": [
+          "webhooks"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "alertId",
+                  "severity",
+                  "message"
+                ],
+                "properties": {
+                  "alertId": {
+                    "type": "string"
+                  },
+                  "severity": {
+                    "type": "string",
+                    "enum": [
+                      "info",
+                      "warning",
+                      "critical"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alert acknowledged"
+          }
+        }
+      }
+    }
+  }
+}

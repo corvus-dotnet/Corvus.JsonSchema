@@ -197,4 +197,21 @@ public readonly struct JsonProperty<TValue>
         Value.ParentDocument.WritePropertyName(Value.ParentDocumentIndex, writer);
         Value.ParentDocument.WriteElementTo(Value.ParentDocumentIndex, writer);
     }
+
+    /// <summary>
+    /// Converts this property to a <see cref="JsonProperty{TValue}"/> of <see cref="JsonElement"/>,
+    /// preserving the same property name and document position.
+    /// </summary>
+    /// <returns>A <see cref="JsonProperty{TValue}"/> with the value as a <see cref="JsonElement"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is a zero-allocation conversion. The returned property references the same
+    /// parent document and index as this property.
+    /// </para>
+    /// </remarks>
+    public JsonProperty<JsonElement> AsJsonElementProperty()
+    {
+        return new JsonProperty<JsonElement>(
+            new JsonElement(Value.ParentDocument, Value.ParentDocumentIndex));
+    }
 }

@@ -2824,6 +2824,96 @@ public ref struct ComplexValueBuilder
 #endif
 
     /// <summary>
+    /// Parses a JSON value from the given character span and adds it as an item
+    /// to the current array.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The parsed value is stored in a workspace-managed builder, so its lifetime
+    /// is tied to the workspace. No explicit disposal is required by the caller.
+    /// </para>
+    /// </remarks>
+    /// <param name="json">A span of characters containing a valid JSON value.</param>
+    /// <exception cref="JsonException">
+    /// <paramref name="json"/> does not represent a valid single JSON value.
+    /// </exception>
+    public void AddItemFromJson(ReadOnlySpan<char> json)
+    {
+        JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(_parentDocument.Workspace, json);
+        JsonElement element = builder.RootElement;
+        AddItem(element);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from the given UTF-8 byte span and adds it as an item
+    /// to the current array.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The parsed value is stored in a workspace-managed builder, so its lifetime
+    /// is tied to the workspace. No explicit disposal is required by the caller.
+    /// </para>
+    /// </remarks>
+    /// <param name="utf8Json">A span of UTF-8 encoded bytes containing a valid JSON value.</param>
+    /// <exception cref="JsonException">
+    /// <paramref name="utf8Json"/> does not represent a valid single JSON value.
+    /// </exception>
+    public void AddItemFromJson(ReadOnlySpan<byte> utf8Json)
+    {
+        JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(_parentDocument.Workspace, utf8Json);
+        JsonElement element = builder.RootElement;
+        AddItem(element);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from the given character span and adds it as a property value
+    /// to the current object.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The parsed value is stored in a workspace-managed builder, so its lifetime
+    /// is tied to the workspace. No explicit disposal is required by the caller.
+    /// </para>
+    /// </remarks>
+    /// <param name="propertyName">The property name as a UTF-8 byte span.</param>
+    /// <param name="json">A span of characters containing a valid JSON value.</param>
+    /// <exception cref="JsonException">
+    /// <paramref name="json"/> does not represent a valid single JSON value.
+    /// </exception>
+    public void AddPropertyValueFromJson(ReadOnlySpan<byte> propertyName, ReadOnlySpan<char> json)
+    {
+        JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(_parentDocument.Workspace, json);
+        JsonElement element = builder.RootElement;
+        AddProperty(propertyName, element);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from the given character span and adds it as a property value
+    /// to the current object.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The parsed value is stored in a workspace-managed builder, so its lifetime
+    /// is tied to the workspace. No explicit disposal is required by the caller.
+    /// </para>
+    /// </remarks>
+    /// <param name="propertyName">The property name as a character span.</param>
+    /// <param name="json">A span of characters containing a valid JSON value.</param>
+    /// <exception cref="JsonException">
+    /// <paramref name="json"/> does not represent a valid single JSON value.
+    /// </exception>
+    public void AddPropertyValueFromJson(ReadOnlySpan<char> propertyName, ReadOnlySpan<char> json)
+    {
+        JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(_parentDocument.Workspace, json);
+        JsonElement element = builder.RootElement;
+        AddProperty(propertyName, element);
+    }
+
+    /// <summary>
     /// Adds an array of <see cref="long"/> values as an item to the current array.
     /// </summary>
     /// <param name="array">The array of <see cref="long"/> values.</param>

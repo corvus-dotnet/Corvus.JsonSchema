@@ -45,17 +45,17 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 # Build the full solution
 dotnet build Corvus.Text.Json.slnx
 
-# Run the standard test suite — exclude the 'failing' and 'outerloop' categories
-dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
+# Run the standard test suite — exclude the 'failing', 'outerloop', and 'integration' categories
+dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 
 # Run a single test class
-dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 
 # Run a single test method
-dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 ```
 
-Always exclude `failing` and `outerloop` categories when running tests. Never run all tests without these filters.
+Always exclude `failing`, `outerloop`, and `integration` categories when running tests. Never run all tests without these filters. The `integration` category marks tests that require Docker (Testcontainers) for real broker containers (Kafka, NATS, MQTT, AMQP) — they run only in CI on ubuntu runners with Docker available.
 
 Always use `FullyQualifiedName~` (substring match) for test filters — not `ClassName=`. The `ClassName` filter does not work reliably in this repo.
 
@@ -113,6 +113,10 @@ These rules apply whenever investigating or fixing a problem. Do not skip them.
 - **Replicate the actual failure environment**: if a bug manifests on CI (cross-OS, specific TFM, specific runner), replicate those conditions locally before committing a fix. For cross-OS CI issues, use the WSL build → Windows test pattern documented in the `corvus-xplat-dynamic-compilation` skill. A fix that passes under different conditions proves nothing.
 - **Do not commit speculative fixes**: if you cannot reproduce the problem locally, say so. Do not push a change and hope CI validates it — CI runs are expensive (30+ minutes) and limited.
 - **Diagnose before acting**: when a CI job is slow or failing, read the logs and identify the specific slow step or error before proposing a fix. Do not guess at the root cause and implement a solution without evidence.
+
+### GitHub issue workflow
+
+When working from a GitHub issue, always read the full issue context before planning or changing code. This means the issue body, labels/tags/categories, linked sub-issues, and the complete comments thread, especially any implementation plan or revised implementation plan. Do not implement from the issue body alone; comments often contain corrections, safety invariants, and required patterns that supersede the summary.
 
 ## Architecture
 
@@ -221,6 +225,7 @@ finally
 - **`SR` alias** — `using SR = Resources.Strings;` (or the project-specific variant) is a global using. Use `SR.ExceptionMessageName` for all user-facing strings; define new strings in the `.resx` file.
 - **Disabled warnings** — `JSON001`, `CS8500`, `IDE0065`, `IDE0290` are suppressed project-wide; don't add `#pragma warning disable` for these.
 - **EditorConfig** — 4-space indentation, `csharp_new_line_before_open_brace = all`. Generated files must be marked `generated_code = true` in `.editorconfig` entries.
+- **No trailing newline in `.cs` files** — StyleCop SA1518 is enforced as an error (`TreatWarningsAsErrors=true`). Source files must end immediately after the final `;` or `}` with **no** trailing newline character. When creating new `.cs` files, ensure the content does not end with `\n`.
 - **JSON Schema test suite** — `JSON-Schema-Test-Suite/` is a git submodule. Run `.\update-json-schema-test-suite.ps1` to update the submodule and regenerate V5 test classes. See `docs/RunningTests.md` for manual regeneration details.
 - **`BigNumber`** — the custom arbitrary-precision decimal struct lives in `Corvus.Numerics`. Prefer it over `decimal` when the JSON value may have precision beyond 28 significant digits.
 - **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.

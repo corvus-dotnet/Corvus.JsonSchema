@@ -1,23 +1,41 @@
-The following example demonstrates common property access patterns on a `JsonElement`-based generated type.
+`JsonElement` is the general-purpose read-only JSON value type in Corvus.Text.Json. Parse through `ParsedJsonDocument<JsonElement>` so the document owns the pooled memory while you inspect the root element.
 
 ```csharp
-using ParsedJsonDocument<Person> doc =
-    ParsedJsonDocument<Person>.Parse(jsonString);
-Person person = doc.RootElement;
+using Corvus.Text.Json;
 
-// Explicit cast to a .NET type (throws if null or undefined)
-string familyName = (string)person.FamilyName;
+using ParsedJsonDocument<JsonElement> doc =
+    ParsedJsonDocument<JsonElement>.Parse(
+        """
+        {
+          "name": "Anne",
+          "age": 42,
+          "roles": ["admin", "editor"]
+        }
+        """);
 
-// TryGetValue for optional properties (does not throw)
-if (person.GivenName.TryGetValue(out string? givenName))
+JsonElement root = doc.RootElement;
+string? name = root.GetProperty("name"u8).GetString();
+int age = root.GetProperty("age"u8).GetInt32();
+
+if (root.TryGetProperty("roles"u8, out JsonElement roles))
 {
-    Console.WriteLine($"Given name: {givenName}");
+    foreach (JsonElement role in roles.EnumerateArray())
+    {
+        Console.WriteLine(role.GetString());
+    }
 }
+```
 
-// Check whether an optional property is present
-if (person.OtherNames.IsUndefined())
+### Inspecting value kinds
+
+Use `ValueKind` before reading a value when the shape is not guaranteed.
+
+```csharp
+JsonElement maybeName = root.GetProperty("name"u8);
+
+if (maybeName.ValueKind == JsonValueKind.String)
 {
-    Console.WriteLine("otherNames is not present.");
+    Console.WriteLine(maybeName.GetString());
 }
 ```
 
@@ -26,18 +44,16 @@ if (person.OtherNames.IsUndefined())
 Compare string values directly against UTF-8 or UTF-16 literals without allocating:
 
 ```csharp
-bool isAnne = person.GivenName.ValueEquals("Anne"u8);
+bool isAnne = root.GetProperty("name"u8).ValueEquals("Anne"u8);
 ```
 
-### Equality
+### Enumerating object properties
 
-Generated types support structural equality — two elements are equal if their underlying JSON is equivalent, regardless of which document they came from:
+Object enumeration exposes property names and values without converting the entire object to another model:
 
 ```csharp
-using ParsedJsonDocument<Person> doc1 =
-    ParsedJsonDocument<Person>.Parse(jsonString);
-using ParsedJsonDocument<Person> doc2 =
-    ParsedJsonDocument<Person>.Parse(jsonString);
-
-bool areEqual = doc1.RootElement == doc2.RootElement; // true
+foreach (JsonProperty<JsonElement> property in root.EnumerateObject())
+{
+    Console.WriteLine($"{property.Name}: {property.Value.ValueKind}");
+}
 ```

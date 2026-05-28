@@ -56,7 +56,6 @@ public sealed class StringPartial : ICodeFileBuilder
                             interfaces:
                                 [
                                     new(g => g.GenericTypeOf("IJsonString", typeDeclaration)),
-                                    new("ISpanFormattable", FrameworkType.Net80OrGreater),
                                 ])
                                 .AppendPublicStringConstructors(typeDeclaration)
                                 .AppendStringFormatConstructors(typeDeclaration)
@@ -75,7 +74,6 @@ public sealed class StringPartial : ICodeFileBuilder
                                 .AppendEqualsString()
                                 .AppendStringFormatPublicStaticMethods(typeDeclaration)
                                 .AppendStringFormatPublicMethods(typeDeclaration)
-                                .AppendNet80Formatting()
                                 .AppendStringFormatPrivateStaticMethods(typeDeclaration)
                                 .AppendStringFormatPrivateMethods(typeDeclaration)
                         .EndClassOrStructDeclaration()

@@ -1490,14 +1490,15 @@ internal static partial class CodeGeneratorExtensions
 
             string methodName = generator.GetMethodNameInScope("TryGetAs", suffix: t.DotnetTypeName());
             string typeName = t.FullyQualifiedDotnetTypeName();
+            string resultTypeName = forMutable ? $"{typeName}.Mutable" : typeName;
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("/// <summary>")
-                .AppendLineIndent("/// Gets the value as a <see cref=\"", typeName, "\" />.")
+                .AppendLineIndent("/// Gets the value as a <see cref=\"", resultTypeName, "\" />.")
                 .AppendLineIndent("/// </summary>")
                 .AppendLineIndent("/// <param name=\"result\">The result of the conversions.</param>")
                 .AppendLineIndent("/// <returns><see langword=\"true\" /> if the conversion was valid.</returns>")
-                .AppendLineIndent("public bool ", methodName, "(out ", typeName, " result)")
+                .AppendLineIndent("public bool ", methodName, "(out ", resultTypeName, " result)")
                 .AppendLineIndent("{")
                 .PushIndent();
 

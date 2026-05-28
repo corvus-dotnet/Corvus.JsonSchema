@@ -78,6 +78,28 @@ public class GeneratedComposedCreationTests
 
     #endregion
 
+    #region CompositionWithAny — allOf with built-in any type
+
+    [TestMethod]
+    public void AllOfWithAny_MutableTryGetAsJsonElement_ReturnsMutable()
+    {
+        using var doc =
+            ParsedJsonDocument<CompositionWithAny>.Parse("""{"kind":"anything"}""");
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<CompositionWithAny.Mutable> builderDoc =
+            doc.RootElement.CreateBuilder(workspace);
+
+        CompositionWithAny.Mutable root = builderDoc.RootElement;
+        Assert.IsTrue(root.TryGetAsJsonElement(out JsonElement.Mutable jsonElement));
+
+        jsonElement.SetProperty("kind"u8, "updated");
+
+        CompositionWithAny.Mutable updatedRoot = builderDoc.RootElement;
+        Assert.AreEqual("updated", updatedRoot["kind"u8].ToString());
+    }
+
+    #endregion
+
     #region AllOfObjectWithProperties — inline allOf object with local properties — Build + Create
 
     [TestMethod]
@@ -233,6 +255,42 @@ public class GeneratedComposedCreationTests
         Assert.IsTrue(doc.RootElement.TryGetAsBasePerson(out RefObjectWithProperties.BasePerson basePerson));
         Assert.AreEqual("Carol", basePerson.Name.ToString());
         Assert.AreEqual("45", basePerson.Age.ToString());
+    }
+
+    [TestMethod]
+    public void RefAllOfObject_MutableTryGetAsBasePerson_ReturnsMutable()
+    {
+        using var doc =
+            ParsedJsonDocument<RefObjectWithProperties>.Parse("""{"name":"Carol","age":45,"email":"carol@test.com"}""");
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<RefObjectWithProperties.Mutable> builderDoc =
+            doc.RootElement.CreateBuilder(workspace);
+
+        RefObjectWithProperties.Mutable root = builderDoc.RootElement;
+        Assert.IsTrue(root.TryGetAsBasePerson(out RefObjectWithProperties.BasePerson.Mutable basePerson));
+
+        basePerson.SetName("Caroline");
+        basePerson.SetAge(50);
+
+        RefObjectWithProperties.Mutable updatedRoot = builderDoc.RootElement;
+        Assert.AreEqual("Caroline", updatedRoot.Name.ToString());
+        Assert.AreEqual("50", updatedRoot.Age.ToString());
+        Assert.AreEqual("carol@test.com", updatedRoot.Email.ToString());
+    }
+
+    [TestMethod]
+    public void RefAllOfObject_MutableTryGetAsBasePerson_ReturnsFalseForInvalidValue()
+    {
+        using var doc =
+            ParsedJsonDocument<RefObjectWithProperties>.Parse("""{"email":"carol@test.com"}""");
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<RefObjectWithProperties.Mutable> builderDoc =
+            doc.RootElement.CreateBuilder(workspace);
+
+        RefObjectWithProperties.Mutable root = builderDoc.RootElement;
+
+        Assert.IsFalse(root.TryGetAsBasePerson(out RefObjectWithProperties.BasePerson.Mutable basePerson));
+        Assert.AreEqual(default, basePerson);
     }
 
     [TestMethod]
@@ -524,6 +582,26 @@ public class GeneratedComposedCreationTests
         Assert.IsTrue(doc.RootElement.TryGetAsBaseArray(out RefArrayWithItems.BaseArray baseArray));
         Assert.AreEqual(2, baseArray.GetArrayLength());
         Assert.AreEqual("hello", baseArray[0].ToString());
+    }
+
+    [TestMethod]
+    public void RefAllOfArray_MutableTryGetAsBaseArray_ReturnsMutable()
+    {
+        using var doc =
+            ParsedJsonDocument<RefArrayWithItems>.Parse("""["hello","world"]""");
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<RefArrayWithItems.Mutable> builderDoc =
+            doc.RootElement.CreateBuilder(workspace);
+
+        RefArrayWithItems.Mutable root = builderDoc.RootElement;
+        Assert.IsTrue(root.TryGetAsBaseArray(out RefArrayWithItems.BaseArray.Mutable baseArray));
+
+        baseArray.SetItem(0, "replaced");
+
+        RefArrayWithItems.Mutable updatedRoot = builderDoc.RootElement;
+        Assert.AreEqual(2, updatedRoot.GetArrayLength());
+        Assert.AreEqual("replaced", updatedRoot[0].ToString());
+        Assert.AreEqual("world", updatedRoot[1].ToString());
     }
 
     [TestMethod]

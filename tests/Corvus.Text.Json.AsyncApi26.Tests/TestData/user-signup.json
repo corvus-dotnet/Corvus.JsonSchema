@@ -1,0 +1,25 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "User Signup Service",
+    "version": "1.0.0",
+    "description": "Minimal user signup event API"
+  },
+  "channels": {
+    "user/signedup": {
+      "subscribe": {
+        "operationId": "onUserSignedUp",
+        "message": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "displayName": { "type": "string" },
+              "email": { "type": "string", "format": "email" }
+            },
+            "required": ["displayName", "email"]
+          }
+        }
+      }
+    }
+  }
+}

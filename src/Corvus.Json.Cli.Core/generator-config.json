@@ -25,6 +25,10 @@
             "type": "string",
             "description": "The path to which to write the generated code."
         },
+        "defaultAccessibility": {
+            "$ref": "#/$defs/typeAccessibility",
+            "description": "The default accessibility for generated top-level types."
+        },
         "disableOptionalNameHeuristics": {
             "type": "boolean",
             "default": false,
@@ -100,6 +104,10 @@
                 "dotnetNamespace": {
                     "type": "string",
                     "description": "The (optional) .NET namespace to use for the schema.\r\nThis will generate the type directly in the namespace, rather than as a child of its containing type."
+                },
+                "accessibility": {
+                    "$ref": "#/$defs/typeAccessibility",
+                    "description": "The accessibility to use for the named generated type."
                 }
             }
         },
@@ -134,6 +142,12 @@
             "default": "Draft202012",
             "description": "Well-known fallback draft schema."
         },
+        "typeAccessibility": {
+            "type": "string",
+            "enum": [ "Public", "Internal" ],
+            "default": "Public",
+            "description": "The accessibility to use for generated types."
+        },
         "generationSpecifications": {
             "type": "array",
             "items": { "$ref": "#/$defs/generationSpecification" },
@@ -160,6 +174,10 @@
                 "outputRootNamespace": {
                     "type": "string",
                     "description": "The name of the .NET namespace into which to emit the root type"
+                },
+                "outputRootAccessibility": {
+                    "$ref": "#/$defs/typeAccessibility",
+                    "description": "The accessibility to use for the generated root type when outputRootTypeName is specified."
                 },
                 "rebaseToRootPath": {
                     "type": "boolean",

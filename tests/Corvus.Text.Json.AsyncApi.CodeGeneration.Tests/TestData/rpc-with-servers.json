@@ -1,0 +1,128 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "RPC Service with Server Restrictions",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "production": {
+      "host": "broker.prod.example.com:9092",
+      "protocol": "kafka"
+    },
+    "staging": {
+      "host": "broker.staging.example.com:9092",
+      "protocol": "kafka"
+    }
+  },
+  "channels": {
+    "rpcRequests": {
+      "address": "rpc/{service}/requests",
+      "servers": [
+        { "$ref": "#/servers/production" }
+      ],
+      "parameters": {
+        "service": {
+          "description": "The target service name",
+          "default": "calculator"
+        }
+      },
+      "messages": {
+        "RpcRequest": { "$ref": "#/components/messages/RpcRequest" }
+      }
+    },
+    "rpcReplies": {
+      "address": "rpc/{service}/replies",
+      "parameters": {
+        "service": {
+          "description": "The service name for reply routing"
+        }
+      },
+      "messages": {
+        "RpcReply": { "$ref": "#/components/messages/RpcReply" }
+      }
+    },
+    "events": {
+      "address": "events/{category}",
+      "servers": [
+        { "$ref": "#/servers/production" },
+        { "$ref": "#/servers/staging" }
+      ],
+      "parameters": {
+        "category": {
+          "description": "The event category",
+          "enum": ["audit", "notification", "alert"]
+        }
+      },
+      "messages": {
+        "AuditEvent": { "$ref": "#/components/messages/AuditEvent" }
+      }
+    }
+  },
+  "operations": {
+    "sendRpcRequest": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/rpcRequests" },
+      "messages": [
+        { "$ref": "#/channels/rpcRequests/messages/RpcRequest" }
+      ],
+      "reply": {
+        "channel": { "$ref": "#/channels/rpcReplies" },
+        "messages": [
+          { "$ref": "#/channels/rpcReplies/messages/RpcReply" }
+        ],
+        "address": {
+          "location": "$message.header#/replyTo"
+        }
+      }
+    },
+    "receiveAuditEvent": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/events" },
+      "messages": [
+        { "$ref": "#/channels/events/messages/AuditEvent" }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "RpcRequest": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "method": { "type": "string" },
+            "args": { "type": "array", "items": { "type": "number" } }
+          },
+          "required": ["method", "args"]
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "replyTo": { "type": "string" },
+            "correlationId": { "type": "string" }
+          },
+          "required": ["replyTo", "correlationId"]
+        }
+      },
+      "RpcReply": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "result": { "type": "number" },
+            "error": { "type": "string" }
+          }
+        }
+      },
+      "AuditEvent": {
+        "payload": {
+          "type": "object",
+          "properties": {
+            "timestamp": { "type": "string", "format": "date-time" },
+            "action": { "type": "string" },
+            "userId": { "type": "string" }
+          },
+          "required": ["timestamp", "action"]
+        }
+      }
+    }
+  }
+}

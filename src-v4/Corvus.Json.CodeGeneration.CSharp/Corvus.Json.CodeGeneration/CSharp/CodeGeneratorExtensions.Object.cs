@@ -493,6 +493,8 @@ internal static partial class CodeGeneratorExtensions
 
         if (typeDeclaration.PatternProperties() is IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> patternProperties)
         {
+            List<PatternPropertyMethodInfo> patterns = [];
+
             foreach (IObjectPatternPropertyValidationKeyword keyword in patternProperties.Keys)
             {
                 if (generator.IsCancellationRequested)
@@ -519,6 +521,8 @@ internal static partial class CodeGeneratorExtensions
 
                     string matchesPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "MatchesPattern");
                     string tryAsPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "TryAsPattern");
+                    string visitPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "VisitPattern");
+                    patterns.Add(new(declaration, matchesPatternName, tryAsPatternName, visitPatternName));
 
                     generator
                         .AppendSeparatorLine()
@@ -552,9 +556,155 @@ internal static partial class CodeGeneratorExtensions
                     ++index;
                 }
             }
+
+            if (patterns.Count > 0)
+            {
+                generator
+                    .AppendPatternPropertyVisitorInterface(patterns)
+                    .AppendPatternPropertyDispatchMethod(patterns);
+            }
         }
 
         return generator;
+    }
+
+    private static CodeGenerator AppendPatternPropertyVisitorInterface(this CodeGenerator generator, IReadOnlyList<PatternPropertyMethodInfo> patterns)
+    {
+        generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Visits properties matched by generated pattern property helpers.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <typeparam name=\"TState\">The visitor state type.</typeparam>")
+            .AppendLineIndent("public interface IPatternPropertyVisitor<TState>")
+            .AppendLineIndent("{")
+            .PushIndent();
+
+        foreach (PatternPropertyMethodInfo pattern in patterns)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
+            generator
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Visits a property matching '", HttpUtility.HtmlEncode(pattern.Declaration.Pattern), "'.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent("bool ", pattern.VisitPatternName, "(in JsonPropertyName name, in ", pattern.Declaration.ReducedPatternPropertyType.FullyQualifiedDotnetTypeName(), " value, ref TState state);")
+                .AppendLine();
+        }
+
+        return generator
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Visits a property that did not match any generated pattern property.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("bool VisitUnmatched(in JsonPropertyName name, in JsonAny value, ref TState state);")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendPatternPropertyDispatchMethod(this CodeGenerator generator, IReadOnlyList<PatternPropertyMethodInfo> patterns)
+    {
+        generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Matches each property against the generated pattern properties and dispatches to a visitor.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <typeparam name=\"TState\">The visitor state type.</typeparam>")
+            .AppendLineIndent("/// <typeparam name=\"TVisitor\">The visitor type.</typeparam>")
+            .AppendLineIndent("/// <param name=\"state\">The visitor state.</param>")
+            .AppendLineIndent("/// <param name=\"visitor\">The visitor to call for each matched or unmatched property.</param>")
+            .AppendLineIndent("/// <param name=\"shortCircuit\">If <see langword=\"true\"/>, only the first matching pattern is visited for each property.</param>")
+            .AppendLineIndent("/// <returns><see langword=\"true\"/> if every visitor call returned <see langword=\"true\"/>, otherwise <see langword=\"false\"/>.</returns>")
+            .AppendLineIndent("public bool MatchPatternProperties<TState, TVisitor>(ref TState state, TVisitor visitor, bool shortCircuit = false)")
+            .PushIndent()
+                .AppendLineIndent("where TVisitor : IPatternPropertyVisitor<TState>")
+            .PopIndent()
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("foreach (JsonObjectProperty property in EnumerateObject())")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("JsonPropertyName propertyName = property.Name;")
+                    .AppendLineIndent("bool matched = false;");
+
+        foreach (PatternPropertyMethodInfo pattern in patterns)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
+            string patternTypeName = pattern.Declaration.ReducedPatternPropertyType.FullyQualifiedDotnetTypeName();
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (", pattern.MatchesPatternName, "(in property))")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("matched = true;")
+                    .AppendLineIndent(patternTypeName, " typedValue = property.Value.As<", patternTypeName, ">();")
+                    .AppendLineIndent("if (!visitor.", pattern.VisitPatternName, "(in propertyName, in typedValue, ref state))")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return false;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (shortCircuit)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("continue;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (!matched)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("JsonAny unmatchedValue = property.Value;")
+                        .AppendLineIndent("if (!visitor.VisitUnmatched(in propertyName, in unmatchedValue, ref state))")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("return false;")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("return true;")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private readonly struct PatternPropertyMethodInfo
+    {
+        public PatternPropertyMethodInfo(
+            PatternPropertyDeclaration declaration,
+            string matchesPatternName,
+            string tryAsPatternName,
+            string visitPatternName)
+        {
+            this.Declaration = declaration;
+            this.MatchesPatternName = matchesPatternName;
+            this.TryAsPatternName = tryAsPatternName;
+            this.VisitPatternName = visitPatternName;
+        }
+
+        public PatternPropertyDeclaration Declaration { get; }
+
+        public string MatchesPatternName { get; }
+
+        public string TryAsPatternName { get; }
+
+        public string VisitPatternName { get; }
     }
 
     /// <summary>
@@ -1180,6 +1330,112 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append the <c>WithApplied()</c> methods for object composition types.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration containing the composition types.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendWithAppliedCompositionMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        HashSet<TypeDeclaration> seenTypes = [];
+        string withAppliedMethodName = generator.GetUniqueMethodNameInScope("WithApplied");
+
+        generator = AppendCompositionTypes(generator, typeDeclaration, typeDeclaration.AllOfCompositionTypes()?.Values, seenTypes, withAppliedMethodName);
+        generator = AppendCompositionTypes(generator, typeDeclaration, typeDeclaration.AnyOfCompositionTypes()?.Values, seenTypes, withAppliedMethodName);
+        generator = AppendCompositionTypes(generator, typeDeclaration, typeDeclaration.OneOfCompositionTypes()?.Values, seenTypes, withAppliedMethodName);
+
+        return generator;
+
+        static CodeGenerator AppendCompositionTypes(
+            CodeGenerator generator,
+            TypeDeclaration declaringType,
+            IEnumerable<IReadOnlyCollection<TypeDeclaration>>? compositionTypes,
+            HashSet<TypeDeclaration> seenTypes,
+            string withAppliedMethodName)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
+            if (compositionTypes is null)
+            {
+                return generator;
+            }
+
+            foreach (TypeDeclaration? type in compositionTypes.SelectMany(t => t).Select(t => t.ReducedTypeDeclaration().ReducedType))
+            {
+                if (generator.IsCancellationRequested)
+                {
+                    return generator;
+                }
+
+                if (type is TypeDeclaration t && seenTypes.Add(t))
+                {
+                    AppendWithApplied(generator, declaringType, t, withAppliedMethodName);
+                }
+            }
+
+            return generator;
+        }
+
+        static CodeGenerator AppendWithApplied(CodeGenerator generator, TypeDeclaration declaringType, TypeDeclaration composedType, string withAppliedMethodName)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
+            if ((composedType.ImpliedCoreTypes() & CoreTypes.Object) == 0 || composedType.DoNotGenerate())
+            {
+                return generator;
+            }
+
+            return generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Applies a composed value.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent("/// <remarks>")
+                .AppendLineIndent("/// This returns a new instance with any property values provided by the <paramref name=\"value\"/> added or updated.")
+                .AppendLineIndent("/// </remarks>")
+                .AppendLineIndent("/// <param name=\"value\">The composed value to apply.</param>")
+                .AppendLineIndent("/// <returns>A new instance with the composed value applied.</returns>")
+                .AppendLineIndent("public ", declaringType.DotnetTypeName(), " ", withAppliedMethodName, "(in ", composedType.FullyQualifiedDotnetTypeName(), " value)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("if (!value.HasProperties())")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return this;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);")
+                    .AppendLineIndent("foreach (JsonObjectProperty property in value.EnumerateObject())")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("if (property.Value.IsNotUndefined())")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("builder.SetItem(property.Name, property.Value);")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return new(builder.ToImmutable());")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+    }
+
+    /// <summary>
     /// Append the <c>HasProperty()</c> methods.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -1323,6 +1579,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendGetPropertyBackingWithout(typeDeclaration.DotnetTypeName(), "ReadOnlySpan<char>")
                 .AppendGetPropertyBackingWithout(typeDeclaration.DotnetTypeName(), "ReadOnlySpan<byte>")
                 .AppendGetPropertyBackingWithout(typeDeclaration.DotnetTypeName(), "string")
+                .AppendGetPropertyBackingBuilder(typeDeclaration.DotnetTypeName())
                 .AppendGetPropertyBackingWith(typeDeclaration.DotnetTypeName(), "in JsonPropertyName")
             .PopIndent()
             .AppendLineIndent("}");
@@ -1528,6 +1785,41 @@ internal static partial class CodeGeneratorExtensions
                     "return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(",
                     "jsonElementBacking",
                     ", name).ToImmutable();",
+                    identifier: "that")
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendGetPropertyBackingBuilder(this CodeGenerator generator, string dotnetTypeName)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        return generator
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+            /// </summary>
+            /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            """)
+            .AppendIndent("public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in ")
+            .Append(dotnetTypeName)
+            .AppendLine(" that)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".ToBuilder();", identifier: "that")
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.JsonElement",
+                    "return PropertyBackingBuilders.GetPropertyBackingBuilder(",
+                    "jsonElementBacking",
+                    ");",
                     identifier: "that")
                 .AppendSeparatorLine()
                 .AppendLineIndent("throw new InvalidOperationException();")

@@ -1,0 +1,173 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Callback Test API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/subscriptions": {
+      "post": {
+        "operationId": "createSubscription",
+        "tags": ["subscriptions"],
+        "summary": "Subscribe to events",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["callbackUrl", "eventType"],
+                "properties": {
+                  "callbackUrl": { "type": "string", "format": "uri" },
+                  "eventType": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "subscriptionId": { "type": "string" },
+                    "status": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "onEvent": {
+            "{$request.body#/callbackUrl}": {
+              "post": {
+                "operationId": "onEventCallback",
+                "tags": ["callbacks"],
+                "summary": "Receive event notification",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "required": ["eventId", "eventType", "data"],
+                        "properties": {
+                          "eventId": { "type": "string" },
+                          "eventType": { "type": "string" },
+                          "data": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Event received"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "petAdopted": {
+      "post": {
+        "operationId": "petAdoptedWebhook",
+        "tags": ["webhooks"],
+        "summary": "Notification when a pet is adopted",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["petId", "adopterId"],
+                "properties": {
+                  "petId": { "type": "string" },
+                  "adopterId": { "type": "string" },
+                  "adoptedAt": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook received"
+          }
+        }
+      }
+    },
+    "inventoryUpdate": {
+      "put": {
+        "operationId": "inventoryUpdateWebhook",
+        "tags": ["webhooks"],
+        "parameters": [
+          {
+            "name": "X-Signature",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "summary": "Inventory level changed",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["itemId", "quantity"],
+                "properties": {
+                  "itemId": { "type": "string" },
+                  "quantity": { "type": "integer" },
+                  "warehouseId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update acknowledged"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "callbacks": {
+      "statusChange": {
+        "{$request.body#/callbackUrl}": {
+          "post": {
+            "operationId": "statusChangeCallback",
+            "tags": ["callbacks"],
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "newStatus": { "type": "string" },
+                      "previousStatus": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": { "description": "Status update acknowledged" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

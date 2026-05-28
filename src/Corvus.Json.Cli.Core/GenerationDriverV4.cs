@@ -8,6 +8,7 @@
 // </licensing>
 
 using System.Text.Json;
+using System.Diagnostics.CodeAnalysis;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.CSharp;
@@ -174,7 +175,15 @@ public static class GenerationDriverV4
 
             if (generatorSpecification.OutputRootTypeName is JsonString outputRootTypeName)
             {
-                namedTypes = namedTypes.Add(GeneratorConfig.NamedTypeSpecification.Create(outputRootTypeName, new JsonIriReference(rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location), generatorSpecification.OutputRootNamespace));
+                GeneratorConfig.NamedTypeSpecification rootNamedType =
+                    GeneratorConfig.NamedTypeSpecification.Create(outputRootTypeName, new JsonIriReference(rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location), generatorSpecification.OutputRootNamespace);
+
+                if (TryGetStringProperty(generatorSpecification, "outputRootAccessibility", out string? outputRootAccessibility))
+                {
+                    rootNamedType = rootNamedType.SetProperty("accessibility", new JsonString(outputRootAccessibility));
+                }
+
+                namedTypes = namedTypes.Add(rootNamedType);
             }
 
             typeBuilderTask.Increment(100);
@@ -211,9 +220,11 @@ public static class GenerationDriverV4
 
     private static CSharpLanguageProvider.Options MapGeneratorConfigToOptions(in GeneratorConfig generatorConfig, in GeneratorConfig.NamedTypeList namedTypes)
     {
+        GeneratedTypeAccessibility defaultAccessibility = GetDefaultAccessibility(generatorConfig);
+
         return new CSharpLanguageProvider.Options(
             (string)generatorConfig.RootNamespace,
-            namedTypes: namedTypes.Select(n => new CSharpLanguageProvider.NamedType(new((string)n.Reference), (string)n.DotnetTypeName, n.DotnetNamespace?.GetString())).ToArray(),
+            namedTypes: namedTypes.Select(n => new CSharpLanguageProvider.NamedType(new((string)n.Reference), (string)n.DotnetTypeName, n.DotnetNamespace?.GetString(), GetAccessibility(n) ?? defaultAccessibility)).ToArray(),
             namespaces: generatorConfig.Namespaces?.Select(n => new CSharpLanguageProvider.Namespace(new JsonReference((string)n.Key), (string)n.Value)).ToArray(),
             alwaysAssertFormat: generatorConfig.AssertFormat ?? true,
             useOptionalNameHeuristics: !(generatorConfig.DisableOptionalNameHeuristics ?? false),
@@ -221,7 +232,71 @@ public static class GenerationDriverV4
             disabledNamingHeuristics: generatorConfig.DisabledNamingHeuristics?.Select(n => (string)n).ToArray(),
             useImplicitOperatorString: generatorConfig.UseImplicitOperatorString ?? false,
             lineEndSequence: (generatorConfig.UseUnixLineEndings ?? false) ? "\n" : "\r\n",
-            addExplicitUsings: generatorConfig.AddExplicitUsings ?? false);
+            addExplicitUsings: generatorConfig.AddExplicitUsings ?? false,
+            defaultAccessibility: defaultAccessibility);
+    }
+
+    private static GeneratedTypeAccessibility GetDefaultAccessibility(in GeneratorConfig generatorConfig)
+    {
+        return TryGetStringProperty(generatorConfig, "defaultAccessibility", out string? accessibility)
+            ? ParseAccessibility(accessibility, "defaultAccessibility")
+            : GeneratedTypeAccessibility.Public;
+    }
+
+    private static GeneratedTypeAccessibility? GetAccessibility(in GeneratorConfig.NamedTypeSpecification namedType)
+    {
+        return TryGetStringProperty(namedType, "accessibility", out string? accessibility)
+            ? ParseAccessibility(accessibility, "namedTypes[].accessibility")
+            : null;
+    }
+
+    private static GeneratedTypeAccessibility ParseAccessibility(string accessibility, string propertyName)
+    {
+        return accessibility switch
+        {
+            "Public" or "public" => GeneratedTypeAccessibility.Public,
+            "Internal" or "internal" => GeneratedTypeAccessibility.Internal,
+            _ => throw new InvalidOperationException($"Invalid accessibility value for '{propertyName}': '{accessibility}'. Try 'Public' or 'Internal'."),
+        };
+    }
+
+    private static bool TryGetStringProperty(in GeneratorConfig generatorConfig, string propertyName, [NotNullWhen(true)] out string? value)
+    {
+        if (generatorConfig.TryGetProperty(propertyName, out JsonAny propertyValue) &&
+            !propertyValue.IsNullOrUndefined())
+        {
+            value = (string)propertyValue.As<JsonString>();
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static bool TryGetStringProperty(in GeneratorConfig.GenerationSpecification generatorSpecification, string propertyName, [NotNullWhen(true)] out string? value)
+    {
+        if (generatorSpecification.TryGetProperty(propertyName, out JsonAny propertyValue) &&
+            !propertyValue.IsNullOrUndefined())
+        {
+            value = (string)propertyValue.As<JsonString>();
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static bool TryGetStringProperty(in GeneratorConfig.NamedTypeSpecification namedType, string propertyName, [NotNullWhen(true)] out string? value)
+    {
+        if (namedType.TryGetProperty(propertyName, out JsonAny propertyValue) &&
+            !propertyValue.IsNullOrUndefined())
+        {
+            value = (string)propertyValue.As<JsonString>();
+            return true;
+        }
+
+        value = null;
+        return false;
     }
 
     private static async Task<string?> BeginMapFile(GeneratorConfig generatorConfig, string outputPath)

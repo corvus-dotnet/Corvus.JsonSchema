@@ -1,0 +1,527 @@
+{
+  "openapi": "3.2.0",
+  "info": {
+    "title": "Petstore Extended",
+    "version": "2.0.0",
+    "description": "An extended Petstore API with customer support chat (SSE streaming), photo attachments (binary upload/download), adoption applications (form-encoded), and session-based authentication (cookies)."
+  },
+  "servers": [
+    { "url": "https://petstore.example.com/v2" }
+  ],
+  "paths": {
+    "/pets": {
+      "get": {
+        "operationId": "listPets",
+        "summary": "List pets with advanced filtering",
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "format": "int32", "maximum": 100 }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "description": "Filter by one or more tags (e.g. ?tags=dog&tags=friendly)"
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "style": "deepObject",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": { "type": "string", "enum": ["available", "adopted", "pending"] },
+                "breed": { "type": "string" },
+                "minAge": { "type": "integer" },
+                "maxAge": { "type": "integer" }
+              }
+            },
+            "description": "Deep-object filter (e.g. ?filter[status]=available&filter[breed]=labrador)"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Correlation ID for distributed tracing"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of pets",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PetList" }
+              }
+            },
+            "headers": {
+              "x-total-count": {
+                "schema": { "type": "integer" },
+                "description": "Total number of matching pets"
+              },
+              "x-next": {
+                "schema": { "type": "string" },
+                "description": "Link to the next page"
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPet",
+        "summary": "Create a new pet listing",
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "session_token",
+            "in": "cookie",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Session authentication cookie"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/NewPet" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pet created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Pet" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — invalid or missing session",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pets/batch/{ids}": {
+      "get": {
+        "operationId": "getPetsBatch",
+        "summary": "Get multiple pets by IDs (path array parameter)",
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "array",
+              "items": { "type": "integer", "format": "int64" }
+            },
+            "description": "Comma-separated pet IDs in the path: /pets/batch/1,2,3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The matching pets",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PetList" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pets/{petId}": {
+      "get": {
+        "operationId": "showPetById",
+        "summary": "Get a specific pet",
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The pet",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Pet" }
+              }
+            }
+          },
+          "404": {
+            "description": "Pet not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pets/{petId}/photos": {
+      "post": {
+        "operationId": "uploadPetPhoto",
+        "summary": "Upload a photo for a pet (multipart with metadata)",
+        "tags": ["photos"],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "session_token",
+            "in": "cookie",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caption": { "type": "string" },
+                  "isPrimary": { "type": "boolean" },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Photo uploaded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PhotoMetadata" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/photos/{photoId}": {
+      "get": {
+        "operationId": "downloadPhoto",
+        "summary": "Download a pet photo (binary stream)",
+        "tags": ["photos"],
+        "parameters": [
+          {
+            "name": "photoId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The photo file",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Photo not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pets/{petId}/chat": {
+      "post": {
+        "operationId": "startVetChat",
+        "summary": "Start a vet support chat session (SSE streaming response)",
+        "tags": ["chat"],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "session_token",
+            "in": "cookie",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": { "type": "string" },
+                  "history": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "role": { "type": "string", "enum": ["owner", "vet"] },
+                        "content": { "type": "string" }
+                      },
+                      "required": ["role", "content"]
+                    }
+                  }
+                },
+                "required": ["message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Streaming vet response via Server-Sent Events",
+            "content": {
+              "text/event-stream": {
+                "schema": { "type": "string" },
+                "itemSchema": {
+                  "$ref": "#/components/schemas/ChatChunk"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pets/{petId}/activity": {
+      "get": {
+        "operationId": "streamPetActivity",
+        "summary": "Stream live activity updates for a pet (NDJSON)",
+        "tags": ["chat"],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Only return events after this timestamp"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streaming activity events as NDJSON",
+            "content": {
+              "application/x-ndjson": {
+                "schema": { "type": "string" },
+                "itemSchema": {
+                  "$ref": "#/components/schemas/ActivityEvent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/adoption/apply": {
+      "post": {
+        "operationId": "submitAdoptionApplication",
+        "summary": "Submit an adoption application (URL-encoded form)",
+        "tags": ["adoption"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "applicantName": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "phone": { "type": "string" },
+                  "petId": { "type": "string" },
+                  "housingType": { "type": "string", "enum": ["house", "apartment", "farm"] },
+                  "hasGarden": { "type": "boolean" },
+                  "experience": { "type": "string" }
+                },
+                "required": ["applicantName", "email", "petId", "housingType"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Application received",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applicationId": { "type": "string" },
+                    "status": { "type": "string", "enum": ["received", "reviewing", "approved", "rejected"] },
+                    "estimatedReviewDays": { "type": "integer" }
+                  },
+                  "required": ["applicationId", "status"]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Pet": {
+        "type": "object",
+        "required": ["id", "name", "status"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "breed": { "type": "string" },
+          "age": { "type": "integer" },
+          "status": { "type": "string", "enum": ["available", "adopted", "pending"] },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "photoIds": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "NewPet": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string" },
+          "breed": { "type": "string" },
+          "age": { "type": "integer" },
+          "status": { "type": "string", "enum": ["available", "adopted", "pending"] },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "PetList": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/Pet" }
+      },
+      "PhotoMetadata": {
+        "type": "object",
+        "required": ["photoId", "petId", "uploadedAt"],
+        "properties": {
+          "photoId": { "type": "string" },
+          "petId": { "type": "string" },
+          "caption": { "type": "string" },
+          "isPrimary": { "type": "boolean" },
+          "uploadedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ChatChunk": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string" },
+          "delta": { "type": "string" },
+          "done": { "type": "boolean" }
+        }
+      },
+      "ActivityEvent": {
+        "type": "object",
+        "required": ["eventId", "type", "timestamp"],
+        "properties": {
+          "eventId": { "type": "string" },
+          "type": { "type": "string", "enum": ["feeding", "walk", "vet_visit", "photo_added", "adoption_inquiry"] },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "description": { "type": "string" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "integer", "format": "int32" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}

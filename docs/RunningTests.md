@@ -5,11 +5,43 @@ This guide covers the test projects in the solution and how to run them.
 ## Quick start
 
 ```powershell
-# Run the standard test suite (excludes slow stress tests)
-dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
+# Run the standard test suite (excludes slow stress tests and integration tests)
+dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 ```
 
-Always exclude the `failing` and `outerloop` categories when running the full suite. The `outerloop` tests are long-running stress and thread-safety tests that are not suitable for routine development.
+Always exclude the `failing`, `outerloop`, and `integration` categories when running the full suite. The `outerloop` tests are long-running stress and thread-safety tests. The `integration` tests require Docker/Podman to run real broker containers.
+
+### Integration Tests (Docker/Podman Required)
+
+Integration tests for AsyncAPI transports require Docker or Podman to run real broker containers (NATS, Kafka, RabbitMQ, MQTT, Azure Service Bus).
+
+**Prerequisites:**
+- **Docker**: Works out of the box in CI (GitHub Actions ubuntu runners)
+- **Podman on Windows**: Requires environment variable normalization
+
+**Running integration tests locally with Podman:**
+
+Use the helper script (recommended):
+
+```powershell
+.\run-integration-tests.ps1
+```
+
+Or manually normalize the environment variable:
+
+```powershell
+# Normalize DOCKER_HOST for Podman compatibility
+$originalDockerHost = $env:DOCKER_HOST
+if ($originalDockerHost -and $originalDockerHost.StartsWith("npipe:////")) {
+    $env:DOCKER_HOST = "npipe://" + $originalDockerHost.Substring("npipe:////".Length)
+    Write-Host "Normalized DOCKER_HOST from '$originalDockerHost' to '$env:DOCKER_HOST'"
+}
+
+# Run integration tests
+dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory=integration&TestCategory!=failing"
+```
+
+**Why normalization is needed:** Podman on Windows uses `npipe:////./pipe/podman-machine-default` (4 slashes), but Docker.DotNet's NPipe handler expects `npipe://./pipe/name` (2 slashes). The normalization ensures compatibility with both Docker and Podman.
 
 ## Test projects
 

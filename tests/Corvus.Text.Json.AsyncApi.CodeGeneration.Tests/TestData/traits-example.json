@@ -1,0 +1,86 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Traits Example",
+    "version": "1.0.0"
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "events": {
+      "address": "app.events",
+      "messages": {
+        "userSignedUp": {
+          "$ref": "#/components/messages/userSignedUp"
+        }
+      }
+    }
+  },
+  "operations": {
+    "publishUserSignedUp": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/events" },
+      "summary": "Publishes a user-signed-up event",
+      "messages": [
+        { "$ref": "#/channels/events/messages/userSignedUp" }
+      ],
+      "traits": [
+        { "$ref": "#/components/operationTraits/logging" }
+      ]
+    },
+    "consumeUserSignedUp": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/events" },
+      "messages": [
+        { "$ref": "#/channels/events/messages/userSignedUp" }
+      ],
+      "traits": [
+        { "$ref": "#/components/operationTraits/logging" }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "userSignedUp": {
+        "name": "userSignedUp",
+        "payload": {
+          "$ref": "#/components/schemas/UserSignedUpPayload"
+        },
+        "traits": [
+          { "$ref": "#/components/messageTraits/commonHeaders" }
+        ]
+      }
+    },
+    "schemas": {
+      "UserSignedUpPayload": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "userId": { "type": "string" }
+        },
+        "required": ["email", "userId"]
+      },
+      "CommonHeaders": {
+        "type": "object",
+        "properties": {
+          "correlationId": { "type": "string", "format": "uuid" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "required": ["correlationId"]
+      }
+    },
+    "messageTraits": {
+      "commonHeaders": {
+        "headers": {
+          "$ref": "#/components/schemas/CommonHeaders"
+        },
+        "contentType": "application/json"
+      }
+    },
+    "operationTraits": {
+      "logging": {
+        "summary": "Logged operation",
+        "description": "Operation with logging enabled"
+      }
+    }
+  }
+}

@@ -1,0 +1,3 @@
+source: AsyncApi.md
+navTitle: "AsyncAPI Code Generation"
+description: "Generate strongly-typed producers, consumers, and handlers from AsyncAPI 2.6/3.0 specifications. Handles schema validation, typed headers, channel parameters, authentication providers, request/reply correlation, and error policies — all generated from a single spec."

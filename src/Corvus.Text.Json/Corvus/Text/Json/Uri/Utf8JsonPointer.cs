@@ -80,6 +80,23 @@ public readonly ref struct Utf8JsonPointer
     }
 
     /// <summary>
+    /// Encodes a single JSON Pointer segment, escaping <c>~</c> to <c>~0</c> and <c>/</c> to <c>~1</c>
+    /// as specified by RFC 6901.
+    /// </summary>
+    /// <param name="rawSegment">The unencoded pointer segment (without the leading <c>/</c>).</param>
+    /// <param name="encodedSegment">
+    /// The destination span to receive the encoded segment. Must be at least
+    /// <c>2 × <paramref name="rawSegment"/>.Length</c> bytes long in the worst case
+    /// (every byte requires escaping).
+    /// </param>
+    /// <param name="bytesWritten">When this method returns, contains the number of bytes written to <paramref name="encodedSegment"/>.</param>
+    /// <returns><see langword="true"/> if the segment was encoded successfully; <see langword="false"/> if the destination was too small.</returns>
+    public static bool TryEncodeSegment(ReadOnlySpan<byte> rawSegment, Span<byte> encodedSegment, out int bytesWritten)
+    {
+        return JsonReaderHelper.TryEncodePointer(rawSegment, encodedSegment, out bytesWritten);
+    }
+
+    /// <summary>
     /// Decodes a single JSON Pointer segment, unescaping <c>~1</c> to <c>/</c> and <c>~0</c> to <c>~</c>
     /// as specified by RFC 6901.
     /// </summary>

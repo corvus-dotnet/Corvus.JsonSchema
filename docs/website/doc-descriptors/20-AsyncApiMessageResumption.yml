@@ -1,0 +1,3 @@
+source: AsyncApiMessageResumption.md
+navTitle: "AsyncAPI Message Resumption"
+description: "Configure durable AsyncAPI consumers across Kafka, AMQP, MQTT, NATS JetStream, and Azure Service Bus. Covers acknowledgements, offsets, dead-letter behavior, and restart-safe processing."

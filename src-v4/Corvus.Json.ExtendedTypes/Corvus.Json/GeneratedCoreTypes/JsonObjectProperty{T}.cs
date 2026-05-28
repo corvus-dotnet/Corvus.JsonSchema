@@ -112,7 +112,7 @@ public readonly struct JsonObjectProperty<T>
         {
             if ((this.backing & Backing.JsonProperty) != 0)
             {
-                return new(this.jsonProperty.Name);
+                return new(this.jsonProperty);
             }
 
             if ((this.backing & Backing.NameValue) != 0)
@@ -206,7 +206,18 @@ public readonly struct JsonObjectProperty<T>
     /// </exception>
     public bool TryGetName<TState, TResult>(in Utf8Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
     {
-        return this.name.TryGetValue(parser, state, out value);
+        if ((this.backing & Backing.JsonProperty) != 0)
+        {
+            return JsonPropertyName.TryGetJsonPropertyNameUtf8Value(this.jsonProperty, parser, state, true, out value);
+        }
+
+        if ((this.backing & Backing.NameValue) != 0)
+        {
+            return this.name.TryGetValue(parser, state, out value);
+        }
+
+        value = default;
+        return false;
     }
 
     /// <summary>
@@ -231,11 +242,7 @@ public readonly struct JsonObjectProperty<T>
     {
         if ((this.backing & Backing.JsonProperty) != 0)
         {
-#if NET8_0_OR_GREATER
-            return parser(this.jsonProperty.Name, state, out value);
-#else
-            return parser(this.jsonProperty.Name.AsSpan(), state, out value);
-#endif
+            return JsonPropertyName.TryGetJsonPropertyNameValue(this.jsonProperty, parser, state, out value);
         }
 
         if ((this.backing & Backing.NameValue) != 0)

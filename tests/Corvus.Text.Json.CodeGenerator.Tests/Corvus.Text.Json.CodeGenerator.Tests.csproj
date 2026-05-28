@@ -13,6 +13,7 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <ProjectReference Include="..\..\src\Corvus.Json.Cli\Corvus.Json.Cli.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Json.Cli.Core\Corvus.Json.Cli.Core.csproj" />
   </ItemGroup>
   <ItemGroup>

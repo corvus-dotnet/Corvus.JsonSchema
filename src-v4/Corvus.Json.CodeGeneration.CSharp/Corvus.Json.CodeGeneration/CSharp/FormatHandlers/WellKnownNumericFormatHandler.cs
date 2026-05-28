@@ -191,6 +191,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                     ");");
                 return true;
             case "single":
+            case "float":
                 generator.AppendLineIndent(
                     returnFromMethod ? "return" : validationContextIdentifier,
                     returnFromMethod ? string.Empty : " = ",

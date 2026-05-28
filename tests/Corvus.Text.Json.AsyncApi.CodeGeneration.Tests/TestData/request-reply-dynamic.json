@@ -1,0 +1,53 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Dynamic Request Reply Service",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "rpc": {
+      "address": null,
+      "messages": {
+        "RpcRequest": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "method": { "type": "string" },
+              "params": { "type": "object" }
+            },
+            "required": ["method"]
+          }
+        }
+      }
+    },
+    "rpcResponses": {
+      "address": "rpc/responses",
+      "messages": {
+        "RpcResponse": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "result": { "type": "object" },
+              "error": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "invokeRpc": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/rpc" },
+      "messages": [
+        { "$ref": "#/channels/rpc/messages/RpcRequest" }
+      ],
+      "reply": {
+        "channel": { "$ref": "#/channels/rpcResponses" },
+        "messages": [
+          { "$ref": "#/channels/rpcResponses/messages/RpcResponse" }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+# 037 — AsyncAPI Consumer
+
+Demonstrates how to **receive and handle messages** using a generated AsyncAPI 3.0 consumer. The code generator produces `ReceiveLightMeasurementConsumer` and the `IReceiveLightMeasurementHandler` interface — you implement the handler, and the consumer manages subscription, deserialization, schema validation, and error routing.
+
+## What This Demonstrates
+
+| Feature | Where |
+|---------|-------|
+| Generated consumer with typed handler | `ReceiveLightMeasurementConsumer` + `IReceiveLightMeasurementHandler` |
+| Incoming payload schema validation | `ValidationMode.Basic` rejects invalid messages |
+| Custom error policy | `IMessageErrorPolicy` — skip, retry, or dead-letter |
+| Strongly-typed payload access | `payload.Lumens`, `payload.SentAt` |
+| Auto-delivery from in-memory transport | `InMemoryMessageTransport` acts like a real broker |
+
+## Prerequisites
+
+```bash
+dotnet tool install --global Corvus.Json.Cli
+```
+
+## Generating the Code
+
+```bash
+corvusjson asyncapi-generate streetlights.json \
+    --rootNamespace Streetlights.Client \
+    --outputPath Generated
+```
+
+This produces the same files as [036](../036-AsyncApiProducer/) — both producer and consumer are generated from the same spec.
+
+## How the Generated Code Helps
+
+### The Handler Pattern
+
+The generator produces an `IReceiveLightMeasurementHandler` interface with a single method:
+
+```csharp
+public interface IReceiveLightMeasurementHandler
+{
+    ValueTask HandleLightMeasuredAsync(
+        LightMeasuredPayload payload,
+        CancellationToken cancellationToken = default);
+}
+```
+
+Your handler receives a **strongly-typed, already-validated** payload. You never parse JSON or check schemas manually.
+
+### Validation and Error Policy
+
+The consumer validates incoming messages against the schema before calling your handler:
+
+```csharp
+LogAndSkipErrorPolicy errorPolicy = new();
+ReceiveLightMeasurementConsumer consumer = new(
+    transport,
+    handler,
+    validationMode: ValidationMode.Basic,
+    errorPolicy: errorPolicy);
+```
+
+If validation fails, the message is routed to your `IMessageErrorPolicy` — it never reaches the handler. The policy decides what to do:
+
+| Action | Behaviour |
+|--------|-----------|
+| `MessageErrorAction.Skip` | Discard the message and continue |
+| `MessageErrorAction.DeadLetter` | Move to dead-letter queue |
+
+### Consumer Lifecycle
+
+```csharp
+await consumer.StartAsync();    // Subscribe to the channel
+// ... messages are published and auto-delivered ...
+await consumer.StopAsync();     // Unsubscribe and clean up
+```
+
+### How InMemoryMessageTransport Works
+
+Unlike manual `DeliverAsync()` calls, `InMemoryMessageTransport.PublishAsync()` **automatically delivers** to active subscribers — just like a real broker (Kafka/NATS/MQTT). When you publish to a channel, any consumer subscribed to that channel immediately receives it.
+
+## Running
+
+```bash
+dotnet run -f net10.0
+```
+
+Expected output:
+
+```text
+Consumer started, waiting for messages...
+  Received: lumens=512, sentAt=2026-05-25T10:30:00Z
+Handler received 1 message(s)
+Last lumens: 512
+  Error on smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured: ...
+After invalid: handler still has 1 message(s)
+Errors logged: 1
+Consumer stopped
+```
+
+## Related Recipes
+
+- [036 — AsyncAPI Producer](../036-AsyncApiProducer/) — publishing messages
+- [038 — AsyncAPI End-to-End](../038-AsyncApiEndToEnd/) — full producer + consumer pipeline
+- [039 — AsyncAPI Authentication](../039-AsyncApiAuthentication/) — all supported auth patterns

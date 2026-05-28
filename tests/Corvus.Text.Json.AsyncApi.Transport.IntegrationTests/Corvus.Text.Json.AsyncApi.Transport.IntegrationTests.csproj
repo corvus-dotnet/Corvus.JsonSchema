@@ -1,0 +1,38 @@
+<Project Sdk="MSTest.Sdk/4.2.2">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <Net10Only>true</Net10Only>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1504;IDE0065;IDE0290;IDE0079;IDE0130;CS1591;CS1572;CS1573</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Nats\Corvus.Text.Json.AsyncApi.Nats.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Mqtt\Corvus.Text.Json.AsyncApi.Mqtt.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Amqp\Corvus.Text.Json.AsyncApi.Amqp.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Kafka\Corvus.Text.Json.AsyncApi.Kafka.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.WebSocket\Corvus.Text.Json.AsyncApi.WebSocket.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.AzureServiceBus\Corvus.Text.Json.AsyncApi.AzureServiceBus.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.Nats" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+    <PackageReference Include="Testcontainers.Kafka" />
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Testcontainers.ServiceBus" />
+  </ItemGroup>
+</Project>

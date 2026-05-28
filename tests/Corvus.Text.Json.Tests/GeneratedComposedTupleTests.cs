@@ -53,6 +53,24 @@ public class GeneratedComposedTupleTests
     }
 
     [TestMethod]
+    public void ClosedComposed_MutableTryGetAsAllOf0Array_ReturnsMutable()
+    {
+        using var doc =
+            ParsedJsonDocument<RefTupleWithContains>.Parse("""["hello",42]""");
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<RefTupleWithContains.Mutable> builderDoc =
+            doc.RootElement.CreateBuilder(workspace);
+
+        RefTupleWithContains.Mutable root = builderDoc.RootElement;
+        Assert.IsTrue(root.TryGetAsAllOf0Array(out RefTupleWithContains.AllOf0Array.Mutable allOf0));
+
+        JsonString.Mutable item0 = allOf0.Item1;
+        JsonInt32.Mutable item1 = allOf0.Item2;
+        Assert.AreEqual("hello", item0.ToString());
+        Assert.AreEqual("42", item1.ToString());
+    }
+
+    [TestMethod]
     public void ClosedComposed_EnumerateArray()
     {
         using var doc =

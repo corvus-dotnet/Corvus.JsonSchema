@@ -189,9 +189,10 @@ node tools/build-search-index.js --output .output/search-index.json
 
 Builds a site-wide Lunr search index. Per-version API search indices are generated in Step 2a/2b.
 
-### Step 9: Build and publish Playground (Blazor WASM)
+### Step 9: Build and publish playgrounds (Blazor WASM)
 
-Compiles the Blazor WASM playground application and publishes it to `.output/playground/`.
+Compiles the Blazor WASM playground applications and publishes them under `.output/`:
+`playground/`, `playground-jsonata/`, `playground-jmespath/`, `playground-yaml/`, `playground-jsonlogic/`, `playground-jsonpath/`, `playground-asyncapi/`, and `playground-openapi/`.
 
 ### Step 10: Rewrite root-relative paths
 
@@ -322,9 +323,23 @@ The `/api/index.html` landing page reads this localStorage value and redirects t
 
 ### Adding a new recipe
 
-1. Create a numbered directory in `docs/ExampleRecipes/` (e.g. `10-MyRecipe/`)
+1. Create a numbered directory in `docs/ExampleRecipes/` (e.g. `036-AsyncApiProducer/`)
 2. Add a `README.md` with a `# JSON Schema Patterns in .NET - My Recipe Title` heading
-3. Run `build.ps1` or Steps 3 + 6 + 7
+3. Add the project `.csproj` and source files
+4. Run `build.ps1` or Steps 3 + 6 + 7
+
+#### Linking to recipes from documentation pages
+
+When linking to an ExampleRecipe from a doc page (e.g. `docs/AsyncApi.md`, `docs/OpenApi.md`), use the `../ExampleRecipes/` prefix because doc sources live in `docs/` and recipes live in `docs/ExampleRecipes/`:
+
+```markdown
+[AsyncAPI Producer](../ExampleRecipes/036-AsyncApiProducer/) — description
+```
+
+The build pipeline (Step 5) rewrites these links to website URLs:
+- `../ExampleRecipes/036-AsyncApiProducer/` → `/examples/async-api-producer.html`
+
+**IMPORTANT:** Do **not** omit the `../` prefix. Links like `ExampleRecipes/036-Name/` (without `../`) will not be rewritten and will produce broken link errors in the lychee check (Step 10). The rewrite regex in `build.ps1` explicitly matches `../ExampleRecipes/` only.
 
 ### Modifying source link resolution
 

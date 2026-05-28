@@ -1,0 +1,45 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Inline Messages Service",
+    "version": "1.0.0"
+  },
+  "servers": {
+    "local": {
+      "host": "localhost:9092",
+      "protocol": "kafka"
+    }
+  },
+  "channels": {
+    "inlineChannel": {
+      "address": "inline/events",
+      "messages": {
+        "InlineEvent": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "eventId": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            },
+            "required": ["eventId"]
+          },
+          "headers": {
+            "type": "object",
+            "properties": {
+              "correlationId": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "publishInlineEvent": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/inlineChannel" },
+      "messages": [
+        { "$ref": "#/channels/inlineChannel/messages/InlineEvent" }
+      ]
+    }
+  }
+}

@@ -1,5 +1,35 @@
 # Version History
 
+## V5.1
+
+V5.1 expands Corvus.Text.Json beyond JSON Schema model generation into strongly-typed API generation, and closes a set of V4/V5 parity gaps that were identified during the 5.1 release wrap-up.
+
+### New features
+
+- **OpenAPI client generation** — `corvusjson openapi-client` generates strongly-typed HTTP clients for OpenAPI 3.0, 3.1, and 3.2 specifications, including typed parameters, request validation, response result types, headers, streaming, multipart forms, binary payloads, and `MatchResult()` response dispatch.
+- **OpenAPI server generation** — `corvusjson openapi-server` generates ASP.NET Core handler interfaces and endpoint registration for minimal APIs, using the same typed request/response models and schema validation as generated clients.
+- **AsyncAPI producer/consumer generation** — `corvusjson asyncapi-generate` generates strongly-typed producers, consumers, handlers, and request/reply flows for AsyncAPI 2.6 and 3.0 specifications.
+- **AsyncAPI transports** — Generated AsyncAPI applications can use runtime transport packages for NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus, and in-memory testing.
+- **OpenAPI and AsyncAPI document models** — Added strongly-typed V5 models for OpenAPI 3.0/3.1/3.2 and AsyncAPI 2.6/3.0 specifications.
+- **Pattern property helper APIs** — V5 generated types with `patternProperties` now include generated `MatchesPattern*`, `TryAsPattern*`, and `MatchPatternProperties()` visitor dispatch helpers. V4 now has the visitor dispatch helper alongside its existing per-pattern helpers.
+- **CLI accessibility configuration** — The `corvusjson` CLI and config file now support default and per-named-type generated accessibility (`Public`/`Internal`) for both V4 and V5 engines.
+- **V4 generated formatting APIs** — V4 generated types now implement `IFormattable`, and on supported TFMs `ISpanFormattable` and `IUtf8SpanFormattable`, including format-aware numeric and string-format paths.
+- **V4 functional composition apply** — V4 generated object composition types now emit `WithApplied(in ComposedType value)` methods for functional merging of `allOf`/`anyOf`/`oneOf` composition type properties.
+- **V4 generated debugger display** — V4 generated types now include `[DebuggerDisplay]` with a hidden debugger display property.
+
+### Breaking changes
+
+- **V4 multi-core union conversions are now explicit** — Generated V4 conversions from a multi-core union type to `bool` or the preferred numeric .NET type are now `explicit` instead of `implicit`. This fixes unsafe implicit conversions that could throw at runtime when the instance held a different branch. Code that relied on these implicit conversions must now use an explicit cast and handle invalid branch values appropriately.
+- **V5 mutable composition conversions now return mutable results** — Generated `TryGetAs___` methods on mutable V5 composition types now use `out Component.Mutable` instead of `out Component`. Existing callers that declare the old immutable out-variable type, rely on `out var` inferring the immutable type, or depend on generic/overload inference from the old result type must update the declaration or assign the returned mutable value to an immutable variable after the call.
+
+### Bug fixes
+
+- **V4 escaped property-name handling** — `JsonPropertyName`, `JsonObjectProperty`, and `JsonObjectProperty<T>` now use decoded/unescaped property names when backed by `JsonProperty`. This fixes comparisons and regex matching for escaped JSON property names while preserving zero-allocation callback paths.
+- **V4 WASM trim warnings** — Removed trim-unsafe `System.Text.Json.JsonSerializer` usage from V4 value serialization and Int128/UInt128 numeric fallbacks. WASM/trimming builds no longer report the related IL2026 warnings.
+- **API documentation signatures** — API documentation generation now preserves `in`/`out`/`ref` modifiers and nullable annotations when generating method signatures on Ubuntu.
+- **JsonElement API example** — The V5 `JsonElement` API example now demonstrates `JsonElement` directly instead of showing generated-model APIs.
+- **CLI package README** — The `Corvus.Json.Cli` NuGet package now has its own README, and the V4 engine is described as the immutable `Corvus.Json.ExtendedTypes` model rather than as legacy.
+
 ## V5.0
 
 V5 introduces the new **Corvus.Text.Json** engine — a brand new code generator and runtime library that uses the existing Corvus.Json.CodeGeneration framework, and builds on the patterns of `System.Text.Json` with pooled-memory parsing, mutable document building via `JsonWorkspace`, and familiar strongly-typed `readonly struct` wrappers generated from JSON Schema, with a streamlined API and substantial performance improvements.

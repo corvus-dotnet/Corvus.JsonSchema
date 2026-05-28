@@ -1,0 +1,44 @@
+asyncapi: "3.0.0"
+info:
+  title: Streetlights API
+  version: 1.0.0
+  description: A minimal streetlights API for testing YAML support.
+defaultContentType: application/json
+channels:
+  lightingMeasured:
+    address: smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured
+    messages:
+      lightMeasured:
+        $ref: "#/components/messages/lightMeasured"
+    parameters:
+      streetlightId:
+        description: The ID of the streetlight.
+operations:
+  receiveLightMeasurement:
+    action: receive
+    channel:
+      $ref: "#/channels/lightingMeasured"
+    summary: Receive light measurement data.
+    messages:
+      - $ref: "#/channels/lightingMeasured/messages/lightMeasured"
+components:
+  messages:
+    lightMeasured:
+      name: lightMeasured
+      title: Light measured
+      summary: Inform about environmental lighting conditions of a particular streetlight.
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/lightMeasuredPayload"
+  schemas:
+    lightMeasuredPayload:
+      type: object
+      properties:
+        lumens:
+          type: integer
+          minimum: 0
+          description: Light intensity measured in lumens.
+        sentAt:
+          type: string
+          format: date-time
+          description: Date and time when the message was sent.

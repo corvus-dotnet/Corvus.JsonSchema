@@ -1,0 +1,52 @@
+<Project Sdk="MSTest.Sdk/4.2.2">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <Net10Only>true</Net10Only>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1504;IDE0065;IDE0290;IDE0079;IDE0130;CS1591;CS1572;CS1573</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+    <OpenApiSpecFile>TestData\canonicalization-spec-3.0.json</OpenApiSpecFile>
+    <GeneratedCodeOutputPath>Generated</GeneratedCodeOutputPath>
+    <!-- Exclude Generated/ from default compile globs; the IncludeGeneratedOpenApiTypes target
+         adds them after the generation target runs. This avoids duplicates on incremental builds
+         and ensures the files are picked up even when Generated/ doesn't exist at evaluation time. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(GeneratedCodeOutputPath)\**</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <!-- Build-only dependency: ensures the CLI tool is compiled before our generation target runs.
+         ReferenceOutputAssembly=false means we don't reference it at runtime. -->
+    <ProjectReference Include="..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Regenerate typed request structs and schema types from the OpenAPI spec before every
+       compilation. Uses - -no-build because the ProjectReference above guarantees the CLI tool
+       is already compiled. Generation itself takes <1s; no incremental skip needed. -->
+  <Target Name="GenerateOpenApiTypes" Condition="'$(TargetFramework)' != 'net481'" BeforeTargets="BeforeCompile;CoreCompile">
+    <RemoveDir Directories="$(GeneratedCodeOutputPath)" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- openapi-client &quot;$(OpenApiSpecFile)&quot; --rootNamespace CanonTests30.Client --outputPath &quot;$(GeneratedCodeOutputPath)&quot;" />
+
+
+  </Target>
+
+  <!-- Include the generated files after generation. Runs after GenerateOpenApiTypes, picking up
+       whatever .cs files the generation produced. -->
+  <Target Name="IncludeGeneratedOpenApiTypes" Condition="'$(TargetFramework)' != 'net481'" AfterTargets="GenerateOpenApiTypes" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Include="$(GeneratedCodeOutputPath)\**\*.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

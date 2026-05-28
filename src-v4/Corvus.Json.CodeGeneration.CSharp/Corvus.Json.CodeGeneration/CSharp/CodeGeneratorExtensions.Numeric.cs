@@ -522,7 +522,8 @@ internal static partial class CodeGeneratorExtensions
                 return;
             }
 
-            string operatorKind = typeDeclaration.PreferredDotnetNumericTypeName() == numericType || allImplicit ? "implicit" : "explicit";
+            bool isMultiCore = typeDeclaration.ImpliedCoreTypes().CountTypes() > 1;
+            string operatorKind = !isMultiCore && (typeDeclaration.PreferredDotnetNumericTypeName() == numericType || allImplicit) ? "implicit" : "explicit";
 
             if (!fromOnly)
             {

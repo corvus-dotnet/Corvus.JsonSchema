@@ -1,0 +1,133 @@
+@using Corvus.Text.Json.AsyncApi.Playground.Models
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="operation-tree">
+    @if (Channels.Count == 0)
+    {
+        <p class="tree-empty">Click "List Channels" to parse your spec</p>
+    }
+    else
+    {
+        <div class="tree-toolbar">
+            <button @onclick="SelectAll">Select All</button>
+            <button @onclick="DeselectAll">Deselect All</button>
+        </div>
+
+        @foreach (ChannelNode group in Channels)
+        {
+            bool allChecked = group.Children.All(c => c.IsChecked);
+            bool someChecked = !allChecked && group.Children.Any(c => c.IsChecked);
+            <div class="tree-group">
+                <div class="tree-group-header">
+                    <input type="checkbox"
+                           checked="@allChecked"
+                           class="@(someChecked ? "indeterminate" : "")"
+                           @onchange="e => ToggleGroup(group, (bool)(e.Value ?? false))" />
+                    <span class="tree-group-toggle" @onclick="() => ToggleExpand(group)">
+                        @(group.IsExpanded ? "▼" : "▶")
+                    </span>
+                    <span class="tree-group-name" @onclick="() => ToggleExpand(group)">
+                        @group.GroupName
+                    </span>
+                    <span class="tree-group-count">(@group.Children.Count)</span>
+                </div>
+                @if (group.IsExpanded)
+                {
+                    @foreach (ChannelNode channel in group.Children)
+                    {
+                        <div class="tree-operation">
+                            <input type="checkbox" checked="@channel.IsChecked"
+                                   @onchange="e => OnChannelToggled(channel, (bool)(e.Value ?? false))" />
+                            <span class="tree-method tree-method-@channel.Action?.ToLowerInvariant()">@channel.Action</span>
+                            <span class="tree-op-path">@channel.Channel</span>
+                            @if (!string.IsNullOrWhiteSpace(channel.OperationId))
+                            {
+                                <span class="tree-op-id">@channel.OperationId</span>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<ChannelNode> Channels { get; set; } = [];
+
+    [Parameter]
+    public EventCallback OnSelectionChanged { get; set; }
+
+    private bool needsIndeterminateUpdate;
+
+    protected override void OnParametersSet()
+    {
+        needsIndeterminateUpdate = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (needsIndeterminateUpdate)
+        {
+            needsIndeterminateUpdate = false;
+            await JSRuntime.InvokeVoidAsync("updateIndeterminateCheckboxes");
+        }
+    }
+
+    private void ToggleExpand(ChannelNode node)
+    {
+        node.IsExpanded = !node.IsExpanded;
+    }
+
+    private async Task ToggleGroup(ChannelNode group, bool check)
+    {
+        foreach (ChannelNode channel in group.Children)
+        {
+            channel.IsChecked = check;
+        }
+
+        await OnSelectionChanged.InvokeAsync();
+        needsIndeterminateUpdate = true;
+    }
+
+    private async Task OnChannelToggled(ChannelNode channel, bool check)
+    {
+        channel.IsChecked = check;
+        await OnSelectionChanged.InvokeAsync();
+        needsIndeterminateUpdate = true;
+    }
+
+    private async Task SelectAll()
+    {
+        foreach (ChannelNode group in Channels)
+        {
+            foreach (ChannelNode channel in group.Children)
+            {
+                channel.IsChecked = true;
+            }
+        }
+
+        await OnSelectionChanged.InvokeAsync();
+        needsIndeterminateUpdate = true;
+    }
+
+    private async Task DeselectAll()
+    {
+        foreach (ChannelNode group in Channels)
+        {
+            foreach (ChannelNode channel in group.Children)
+            {
+                channel.IsChecked = false;
+            }
+        }
+
+        await OnSelectionChanged.InvokeAsync();
+        needsIndeterminateUpdate = true;
+    }
+
+    public void Dispose()
+    {
+    }
+}
