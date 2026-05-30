@@ -3,8 +3,8 @@
 // </copyright>
 
 using Corvus.Text.Json;
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
-using Corvus.Text.Json.OpenApi.HttpTransport;
 using Petstore.Extended;
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -22,8 +22,12 @@ using Petstore.Extended;
 //   8. Multipart form-data with file attachments
 //   9. URL-encoded form submissions
 
-HttpClient httpClient = new() { BaseAddress = new Uri("https://petstore.example.com/v2") };
-await using HttpClientTransport transport = new(httpClient, disposeClient: true);
+// Production code normally uses HttpClientTransport with a real base address.
+// This recipe uses an in-memory transport so `dotnet run` is self-contained and
+// does not depend on a fictional petstore.example.com server.
+await using DemoTransport transport = new();
+Console.WriteLine("Using in-memory demo transport. In production, replace it with HttpClientTransport.");
+Console.WriteLine();
 
 // The generator creates separate client classes per tag group.
 // Each client shares the same transport.
@@ -90,7 +94,7 @@ Console.WriteLine();
 // The path parameter is declared as style=simple, schema=array[int64].
 // The generated code serializes the array into the path: /pets/batch/1,2,3
 // using comma-separated (simple style) encoding.
-Console.WriteLine("2. Batch fetching pets by IDs...");
+Console.WriteLine("\n2. Batch fetching pets by IDs...");
 await using GetPetsBatchResponse batchResponse = await petsClient.GetPetsBatchAsync(
     ids: new GetPetsBatchByIdsIds.Source((ref GetPetsBatchByIdsIds.Builder b) =>
     {
@@ -119,7 +123,7 @@ Console.WriteLine();
 // The session_token cookie is declared as a required cookie parameter.
 // The generated code writes it into the Cookie header automatically.
 // The consumer just passes the token as a typed value.
-Console.WriteLine("3. Creating a pet (with session cookie)...");
+Console.WriteLine("\n3. Creating a pet (with session cookie)...");
 await using CreatePetResponse createResponse = await petsClient.CreatePetAsync(
     session_token: "sess_k7j2m9x4"u8,
     body: new NewPet.Source((ref NewPet.Builder b) =>
@@ -167,7 +171,7 @@ Console.WriteLine();
 //
 // Behind the scenes, the generated code builds the multipart boundary, writes
 // each field as a form part, and streams the binary content without buffering.
-Console.WriteLine("4. Uploading a pet photo...");
+Console.WriteLine("\n4. Uploading a pet photo...");
 byte[] photoBytes = [0x89, 0x50, 0x4E, 0x47]; // PNG header stub
 
 await using UploadPetPhotoResponse uploadResponse = await photosClient.UploadPetPhotoAsync(
@@ -176,7 +180,7 @@ await using UploadPetPhotoResponse uploadResponse = await photosClient.UploadPet
     body: new PostPetsByPetIdPhotosBody.Source((ref PostPetsByPetIdPhotosBody.Builder b) =>
     {
         b.Create(
-            file: default, // binary part handled separately
+            file: "bella-park.png"u8, // binary bytes are supplied by BinaryPartData below
             caption: "Bella at the park"u8,
             isPrimary: true);
     }),
@@ -223,7 +227,7 @@ Console.WriteLine();
 // response exposes the raw Stream directly — no JSON parsing overhead.
 // MatchResult<ValueTask> distinguishes between a successful stream and error
 // responses while allowing async I/O on the stream.
-Console.WriteLine("5. Downloading a pet photo...");
+Console.WriteLine("\n5. Downloading a pet photo...");
 await using DownloadPhotoResponse downloadResponse = await photosClient.DownloadPhotoAsync(
     photoId: "photo-001"u8);
 
@@ -256,7 +260,7 @@ Console.WriteLine();
 // exposes IAsyncEnumerable<ParsedJsonDocument<ChatChunk>> for streaming
 // consumption. Each chunk arrives as a strongly-typed, pooled document — you
 // process it and dispose automatically via await foreach.
-Console.WriteLine("6. Starting vet chat (SSE streaming)...");
+Console.WriteLine("\n6. Starting vet chat (SSE streaming)...");
 await using StartVetChatResponse chatResponse = await chatClient.StartVetChatAsync(
     petId: "pet-42"u8,
     session_token: "sess_k7j2m9x4"u8,
@@ -296,7 +300,7 @@ Console.WriteLine();
 // application/x-ndjson streams newline-delimited JSON objects. The generated
 // code provides the same IAsyncEnumerable interface as SSE, but each item is
 // parsed from a single line. No SSE envelope — just raw typed objects.
-Console.WriteLine("7. Streaming pet activity (NDJSON)...");
+Console.WriteLine("\n7. Streaming pet activity (NDJSON)...");
 await using StreamPetActivityResponse activityResponse = await chatClient.StreamPetActivityAsync(
     petId: "pet-42"u8);
 
@@ -321,7 +325,7 @@ Console.WriteLine();
 // The spec declares application/x-www-form-urlencoded. The generated code
 // serializes the typed body as key=value&key=value with proper URL-encoding.
 // No manual string concatenation — the builder mirrors the schema properties.
-Console.WriteLine("8. Submitting adoption application (form-encoded)...");
+Console.WriteLine("\n8. Submitting adoption application (form-encoded)...");
 await using SubmitAdoptionApplicationResponse adoptionResponse =
     await adoptionClient.SubmitAdoptionApplicationAsync(
         body: new PostAdoptionApplyBody.Source((ref PostAdoptionApplyBody.Builder b) =>
@@ -359,3 +363,153 @@ adoptionResponse.MatchResult(
 
 Console.WriteLine();
 Console.WriteLine("Done!");
+
+internal sealed class DemoTransport : IApiTransport
+{
+    private static readonly DemoHeaders ListPetsHeaders = new(
+        ("x-total-count", "42"),
+        ("x-next", "/pets?cursor=next"));
+
+    public ValueTask<TResponse> SendAsync<TRequest, TResponse>(
+        in TRequest request,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TResponse : struct, IApiResponse<TResponse> =>
+        CreateResponseAsync<TResponse>(cancellationToken);
+
+    public ValueTask<TResponse> SendAsync<TRequest, TBody, TResponse>(
+        in TRequest request,
+        in TBody body,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TBody : struct, IJsonElement<TBody>
+        where TResponse : struct, IApiResponse<TResponse> =>
+        CreateResponseAsync<TResponse>(cancellationToken);
+
+    public ValueTask<TResponse> SendAsync<TRequest, TResponse>(
+        in TRequest request,
+        Stream body,
+        string contentType,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TResponse : struct, IApiResponse<TResponse> =>
+        CreateResponseAsync<TResponse>(cancellationToken);
+
+    public ValueTask<TResponse> SendAsync<TRequest, TResponse>(
+        in TRequest request,
+        Func<Stream, CancellationToken, ValueTask> bodyWriter,
+        string contentType,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TResponse : struct, IApiResponse<TResponse> =>
+        CreateResponseAsync<TResponse>(cancellationToken);
+
+    public ValueTask DisposeAsync() => default;
+
+    private static ValueTask<TResponse> CreateResponseAsync<TResponse>(CancellationToken cancellationToken)
+        where TResponse : struct, IApiResponse<TResponse>
+    {
+        if (typeof(TResponse) == typeof(ListPetsResponse))
+        {
+            return TResponse.CreateAsync(
+                200,
+                CreateStream("""[{"id":1,"name":"Bella","breed":"labrador","age":2,"status":"available","tags":["dog","friendly"]},{"id":2,"name":"Misty","breed":"domestic short hair","age":4,"status":"available","tags":["cat"]}]"""),
+                "application/json",
+                ListPetsHeaders,
+                cancellationToken: cancellationToken);
+        }
+
+        if (typeof(TResponse) == typeof(GetPetsBatchResponse))
+        {
+            return TResponse.CreateAsync(
+                200,
+                CreateStream("""[{"id":1,"name":"Bella","status":"available"},{"id":2,"name":"Misty","status":"available"},{"id":3,"name":"Rex","status":"pending"}]"""),
+                "application/json",
+                cancellationToken: cancellationToken);
+        }
+
+        if (typeof(TResponse) == typeof(CreatePetResponse))
+        {
+            return TResponse.CreateAsync(
+                201,
+                CreateStream("""{"id":42,"name":"Bella","breed":"golden retriever","age":2,"status":"available","tags":["dog","friendly","trained"]}"""),
+                "application/json",
+                cancellationToken: cancellationToken);
+        }
+
+        if (typeof(TResponse) == typeof(UploadPetPhotoResponse))
+        {
+            return TResponse.CreateAsync(
+                201,
+                CreateStream("""{"photoId":"photo-001","petId":"pet-42","caption":"Bella at the park","isPrimary":true,"uploadedAt":"2026-01-02T12:34:56Z"}"""),
+                "application/json",
+                cancellationToken: cancellationToken);
+        }
+
+        if (typeof(TResponse) == typeof(DownloadPhotoResponse))
+        {
+            return TResponse.CreateAsync(
+                200,
+                new MemoryStream([0x89, 0x50, 0x4E, 0x47], writable: false),
+                "application/octet-stream",
+                cancellationToken: cancellationToken);
+        }
+
+        if (typeof(TResponse) == typeof(StartVetChatResponse))
+        {
+            return TResponse.CreateAsync(
+                200,
+                CreateStream(
+                    """
+                    data: {"id":"chunk-1","delta":"Keep Bella hydrated. ","done":false}
+
+                    data: {"id":"chunk-2","delta":"Call us if symptoms worsen.","done":false}
+
+                    data: {"id":"chunk-3","done":true}
+
+                    """),
+                "text/event-stream",
+                cancellationToken: cancellationToken);
+        }
+
+        if (typeof(TResponse) == typeof(StreamPetActivityResponse))
+        {
+            return TResponse.CreateAsync(
+                200,
+                CreateStream(
+                    """
+                    {"eventId":"evt-1","type":"feeding","timestamp":"2026-01-02T08:00:00Z","description":"Bella ate breakfast"}
+                    {"eventId":"evt-2","type":"walk","timestamp":"2026-01-02T09:30:00Z","description":"Morning walk completed"}
+                    {"eventId":"evt-3","type":"photo_added","timestamp":"2026-01-02T12:34:56Z","description":"New park photo uploaded"}
+
+                    """),
+                "application/x-ndjson",
+                cancellationToken: cancellationToken);
+        }
+
+        if (typeof(TResponse) == typeof(SubmitAdoptionApplicationResponse))
+        {
+            return TResponse.CreateAsync(
+                202,
+                CreateStream("""{"applicationId":"app-2026-001","status":"received","estimatedReviewDays":5}"""),
+                "application/json",
+                cancellationToken: cancellationToken);
+        }
+
+        throw new NotSupportedException($"The demo transport has no canned response for {typeof(TResponse).Name}.");
+    }
+
+    private static MemoryStream CreateStream(string content) =>
+        new(System.Text.Encoding.UTF8.GetBytes(content), writable: false);
+}
+
+internal sealed class DemoHeaders(params (string Name, string Value)[] values) : IResponseHeaders
+{
+    private readonly Dictionary<string, string> values = values.ToDictionary(
+        static item => item.Name,
+        static item => item.Value,
+        StringComparer.OrdinalIgnoreCase);
+
+    public bool TryGetValue(string headerName, out string? value) =>
+        this.values.TryGetValue(headerName, out value);
+}

@@ -57,7 +57,7 @@ public sealed class ApiPetsClient : IApiPetsClient
     public ValueTask<CreatePetResponse> CreatePetAsync(Petstore.Client.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.Client.NewPet bodyValue = Petstore.Client.NewPet.CreateBuilder(workspace, body, 0).RootElement;
+        Petstore.Client.NewPet bodyValue = Petstore.Client.NewPet.CreateBuilder(workspace, body, 30).RootElement;
         CreatePetRequest request = new();
 
         request.Validate(validationMode);

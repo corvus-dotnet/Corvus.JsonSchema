@@ -409,6 +409,7 @@ example-recipes:
       - {index: 5, language: csharp, lines: [175, 189], category: compilable, verified: false}
       - {index: 6, language: csharp, lines: [197, 201], category: compilable, verified: false}
       - {index: 7, language: csharp, lines: [207, 221], category: compilable, verified: false}
+      - {index: 8, language: bash, lines: [232, 235]}
   - path: "docs/ExampleRecipes/030-OpenApiServer/README.md"
     companion_project: "docs/ExampleRecipes/030-OpenApiServer/"
     blocks:
