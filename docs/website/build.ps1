@@ -115,6 +115,15 @@ if (-not $canonicalBranch) {
     Write-Warning "Could not detect branch — using default: $canonicalBranch"
 }
 
+# GitHub's /blob/{ref}/... route needs the ref as one URL path segment. Branch
+# names can contain characters such as '%' and '/', so prefer the commit SHA in
+# CI and URL-escape the fallback branch name for local builds.
+$canonicalBlobRef = $env:GITHUB_SHA
+if (-not $canonicalBlobRef) {
+    $canonicalBlobRef = $canonicalBranch
+}
+$canonicalBlobRef = [System.Uri]::EscapeDataString($canonicalBlobRef)
+
 # V5 paths
 $v5SrcDir = Join-Path $repoRoot "src"
 $v5ApiContentDir = Join-Path $siteDir "content\Api-v5"
@@ -554,7 +563,7 @@ foreach ($dir in $recipeDirs) {
         $body = $body -replace [regex]::Escape("../$($entry.Key)/"), "/examples/$($entry.Value).html"
         $body = $body -replace [regex]::Escape("../$($entry.Key)"), "/examples/$($entry.Value).html"
     }
-    $ghRecipeBase = "$canonicalRepoUrl/blob/$canonicalBranch/docs/ExampleRecipes/$($dir.Name)"
+    $ghRecipeBase = "$canonicalRepoUrl/blob/$canonicalBlobRef/docs/ExampleRecipes/$($dir.Name)"
     $body = $body -replace '\./Program\.cs', "$ghRecipeBase/Program.cs"
 
     # Extract first sentence as description
@@ -754,7 +763,7 @@ foreach ($descriptorFile in $descriptorFiles) {
 
     # Rewrite links to files that aren't website pages (e.g. copilot/ instructions)
     # Point them at the GitHub source
-    $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', "($canonicalRepoUrl/blob/$canonicalBranch/docs/copilot/`$1)"
+    $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', "($canonicalRepoUrl/blob/$canonicalBlobRef/docs/copilot/`$1)"
 
     # Rewrite links to ExampleRecipes from doc pages:
     #   ../ExampleRecipes/029-OpenApiClient/  -> /examples/open-api-client.html

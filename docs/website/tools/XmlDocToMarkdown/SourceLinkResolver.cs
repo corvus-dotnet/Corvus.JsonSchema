@@ -60,8 +60,8 @@ public sealed class SourceLinkResolver : IDisposable
     /// </summary>
     public SourceLinkResolver(string pdbPath, string assemblyPath, string repoUrl, string branch, string repoRoot)
     {
-        _branch = branch;
-        _repoBaseUrl = $"{repoUrl.TrimEnd('/')}/blob/{branch}/";
+        _branch = Uri.EscapeDataString(branch);
+        _repoBaseUrl = $"{repoUrl.TrimEnd('/')}/blob/{_branch}/";
         _localPathPrefix = repoRoot.TrimEnd('\\', '/').Replace('\\', '/') + "/";
 
         // Open PDB
