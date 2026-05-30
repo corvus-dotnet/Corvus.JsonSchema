@@ -139,6 +139,23 @@ public class JsonPropertyDocumentBuilderTests
     }
 
     [TestMethod]
+    [DataRow("conne\\u0063tionId", true)]
+    [DataRow("connectionId", false)]
+    [DataRow("My name is \\\"Ahson\\\"", true)]
+    public void JsonMarshal_IsPropertyNameEscaped_ReturnsEscapedState(string propertyName, bool expected)
+    {
+        string jsonString = $"{{ \"{propertyName}\" : \"itsValue\" }}";
+        using (var workspace = JsonWorkspace.Create())
+        using (var parsedDoc = ParsedJsonDocument<JsonElement>.Parse(jsonString))
+        using (JsonDocumentBuilder<JsonElement.Mutable> doc = parsedDoc.RootElement.CreateBuilder(workspace))
+        {
+            JsonElement.Mutable jElement = doc.RootElement;
+            JsonProperty<JsonElement.Mutable> property = jElement.EnumerateObject().First();
+            Assert.AreEqual(expected, JsonMarshal.IsPropertyNameEscaped(property));
+        }
+    }
+
+    [TestMethod]
     public void NameEquals_GivenPropertyAndValue_TrueForPropertyName()
     {
         string jsonString = $"{{ \"aPropertyName\" : \"itsValue\" }}";

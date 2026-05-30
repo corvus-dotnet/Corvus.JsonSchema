@@ -111,6 +111,8 @@
     <Project Path="tests/Corvus.Text.Json.SchemaTestSuite.Tests/Corvus.Text.Json.SchemaTestSuite.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.EvaluatorTestSuite.Tests/Corvus.Text.Json.EvaluatorTestSuite.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Validator.Tests/Corvus.Text.Json.Validator.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Toon.Tests/Corvus.Text.Json.Toon.Tests.csproj" />
+    <Project Path="tests/Corvus.Toon.SystemTextJson.Tests/Corvus.Toon.SystemTextJson.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Yaml.Tests/Corvus.Text.Json.Yaml.Tests.csproj" />
     <Project Path="tests/Corvus.Yaml.SystemTextJson.Tests/Corvus.Yaml.SystemTextJson.Tests.csproj" />
   </Folder>
@@ -140,9 +142,11 @@
     <Project Path="src/Corvus.Text.Json.Migration.Analyzers/Corvus.Text.Json.Migration.Analyzers.csproj" />
     <Project Path="src/Corvus.Text.Json.Patch/Corvus.Text.Json.Patch.csproj" />
     <Project Path="src/Corvus.Text.Json.SourceGenerator/Corvus.Text.Json.SourceGenerator.csproj" />
+    <Project Path="src/Corvus.Text.Json.Toon/Corvus.Text.Json.Toon.csproj" />
     <Project Path="src/Corvus.Text.Json.Validator/Corvus.Text.Json.Validator.csproj" />
     <Project Path="src/Corvus.Text.Json.Yaml/Corvus.Text.Json.Yaml.csproj" />
     <Project Path="src/Corvus.Text.Json/Corvus.Text.Json.csproj" />
+    <Project Path="src/Corvus.Toon.SystemTextJson/Corvus.Toon.SystemTextJson.csproj" />
     <Project Path="src/Corvus.Yaml.SystemTextJson/Corvus.Yaml.SystemTextJson.csproj" />
   </Folder>
   <Project Path="src/Corvus.Json.Cli.Core/Corvus.Json.Cli.Core.csproj" />

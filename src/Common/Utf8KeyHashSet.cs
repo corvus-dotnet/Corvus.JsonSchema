@@ -7,7 +7,9 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-#if STJ
+#if STJ && TOON
+namespace Corvus.Toon.Internal;
+#elif STJ
 namespace Corvus.Yaml.Internal;
 #else
 namespace Corvus.Text.Json.Internal;
@@ -108,7 +110,7 @@ internal ref struct Utf8KeyHashSet
     /// <param name="key">The UTF-8 key bytes.</param>
     /// <returns><see langword="true"/> if the key was added (not seen before);
     /// <see langword="false"/> if it already existed.</returns>
-    public bool AddIfNotExists(ReadOnlySpan<byte> key)
+    public bool AddIfNotExists(scoped ReadOnlySpan<byte> key)
     {
         ulong hashCode = Utf8Hash.GetHashCode(key);
         ref int bucket = ref _buckets[(int)(hashCode % (ulong)_size)];
@@ -163,6 +165,45 @@ internal ref struct Utf8KeyHashSet
         bucket = _count; // 1-based
 
         return true;
+    }
+
+    /// <summary>
+    /// Determines whether the set contains a UTF-8 key.
+    /// </summary>
+    /// <param name="key">The UTF-8 key bytes.</param>
+    /// <returns><see langword="true"/> if the key exists in the set; otherwise, <see langword="false"/>.</returns>
+    public readonly bool Contains(scoped ReadOnlySpan<byte> key)
+    {
+        ulong hashCode = Utf8Hash.GetHashCode(key);
+        int i = _buckets[(int)(hashCode % (ulong)_size)] - 1; // 1-based
+
+        uint collisionCount = 0;
+        while (true)
+        {
+            int offset = i * EntrySize;
+            if ((uint)offset >= (uint)_entries.Length)
+            {
+                return false;
+            }
+
+            ReadEntry(_entries.Slice(offset), out ulong entryHash, out int next, out int bufOffset, out int bufLen);
+
+            if (entryHash == hashCode &&
+                ((key.Length <= Utf8Hash.PerfectHashLength && (hashCode & Utf8Hash.HashMask) == 0) ||
+                 _keyBuffer.Slice(bufOffset, bufLen).SequenceEqual(key)))
+            {
+                return true;
+            }
+
+            i = next;
+            collisionCount++;
+
+            if (collisionCount > (uint)_count)
+            {
+                Debug.Fail("Possible infinite loop in Utf8KeyHashSet.Contains.");
+                return false;
+            }
+        }
     }
 
     /// <summary>

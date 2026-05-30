@@ -192,7 +192,7 @@ Builds a site-wide Lunr search index. Per-version API search indices are generat
 ### Step 9: Build and publish playgrounds (Blazor WASM)
 
 Compiles the Blazor WASM playground applications and publishes them under `.output/`:
-`playground/`, `playground-jsonata/`, `playground-jmespath/`, `playground-yaml/`, `playground-jsonlogic/`, `playground-jsonpath/`, `playground-asyncapi/`, and `playground-openapi/`.
+`playground/`, `playground-jsonata/`, `playground-jmespath/`, `playground-yaml/`, `playground-toon/`, `playground-jsonlogic/`, `playground-jsonpath/`, `playground-asyncapi/`, and `playground-openapi/`.
 
 ### Step 10: Rewrite root-relative paths
 

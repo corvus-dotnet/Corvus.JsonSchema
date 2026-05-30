@@ -1,0 +1,18 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <DefineConstants>$(DefineConstants);STJ;TOON</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup>
+    <CtjTestDir>..\Corvus.Text.Json.Toon.Tests\</CtjTestDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(CtjTestDir)ToonFixtureConformanceTests.cs" Link="ToonFixtureConformanceTests.cs" />
+    <Compile Include="$(CtjTestDir)ToonDocumentConversionTests.cs" Link="ToonDocumentConversionTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Toon.SystemTextJson\Corvus.Toon.SystemTextJson.csproj" />
+  </ItemGroup>
+</Project>

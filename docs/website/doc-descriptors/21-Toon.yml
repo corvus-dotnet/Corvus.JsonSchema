@@ -1,0 +1,3 @@
+source: Toon.md
+navTitle: "TOON Converter"
+description: "Convert between JSON and TOON (Token-Oriented Object Notation), an LLM-friendly JSON representation, with high-performance UTF-8-first converters for Corvus.Text.Json and System.Text.Json."

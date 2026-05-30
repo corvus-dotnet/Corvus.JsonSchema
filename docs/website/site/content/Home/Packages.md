@@ -69,3 +69,19 @@ Roslyn source generator for compile-time JSONPath code generation. Produces opti
   <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 </PackageReference>
 ```
+
+### Corvus.Text.Json.Toon
+
+TOON (Token-Oriented Object Notation) converter for the Corvus pooled document model. Parses compact, LLM-friendly TOON text into `ParsedJsonDocument<T>` and writes JSON values back to TOON. See the [TOON Converter](/docs/toon.html) guide, the [TOON playground](/playground-toon/), and the [TOON project site](https://toonformat.dev/).
+
+```bash
+dotnet add package Corvus.Text.Json.Toon
+```
+
+### Corvus.Toon.SystemTextJson
+
+TOON converter using only System.Text.Json. Parses compact, LLM-friendly TOON into `System.Text.Json.JsonDocument` and converts JSON back to TOON without depending on Corvus.Text.Json. See the [TOON Converter](/docs/toon.html) guide, the [TOON playground](/playground-toon/), and the [TOON project site](https://toonformat.dev/).
+
+```bash
+dotnet add package Corvus.Toon.SystemTextJson
+```

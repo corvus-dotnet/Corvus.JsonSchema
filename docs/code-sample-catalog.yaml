@@ -539,6 +539,21 @@ example-recipes:
       - {index: 5, language: csharp, lines: [103, 136], category: compilable, verified: true}
       - {index: 6, language: csharp, lines: [142, 144], category: fragment, verified: false}
       - {index: 7, language: bash, lines: [148, 151]}
+  - path: "docs/ExampleRecipes/041-Toon/README.md"
+    companion_project: "docs/ExampleRecipes/041-Toon/"
+    blocks:
+      - {index: 0, language: csharp, lines: [15, 29], category: compilable, verified: false}
+      - {index: 1, language: text, lines: [33, 37]}
+      - {index: 2, language: csharp, lines: [43, 52], category: compilable, verified: false}
+      - {index: 3, language: json, lines: [56, 58]}
+      - {index: 4, language: csharp, lines: [64, 68], category: compilable, verified: false}
+      - {index: 5, language: toon, lines: [72, 76]}
+      - {index: 6, language: csharp, lines: [82, 91], category: compilable, verified: false}
+      - {index: 7, language: json, lines: [95, 97]}
+      - {index: 8, language: csharp, lines: [103, 114], category: compilable, verified: false}
+      - {index: 9, language: toon, lines: [118, 121]}
+      - {index: 10, language: csharp, lines: [127, 134], category: compilable, verified: false}
+      - {index: 11, language: bash, lines: [140, 143]}
 
 main-docs:
   - path: "docs/AddingKeywords.md"
@@ -660,12 +675,12 @@ main-docs:
       - {index: 20, language: csharp, lines: [563, 587], category: compilable, verified: false}
   - path: "docs/BenchmarkGuide.md"
     blocks:
-      - {index: 0, language: , lines: [11, 30]}
-      - {index: 1, language: powershell, lines: [55, 69]}
-      - {index: 2, language: yaml, lines: [86, 93]}
-      - {index: 3, language: powershell, lines: [112, 117]}
-      - {index: 4, language: powershell, lines: [125, 136]}
-      - {index: 5, language: powershell, lines: [140, 149]}
+      - {index: 0, language: , lines: [11, 32]}
+      - {index: 1, language: powershell, lines: [57, 71]}
+      - {index: 2, language: yaml, lines: [88, 95]}
+      - {index: 3, language: powershell, lines: [114, 119]}
+      - {index: 4, language: powershell, lines: [127, 138]}
+      - {index: 5, language: powershell, lines: [142, 151]}
   - path: "docs/BowtiePrerequisites.md"
     blocks:
       - {index: 0, language: powershell, lines: [31, 33]}
@@ -1356,6 +1371,26 @@ main-docs:
       - {index: 10, language: , lines: [182, 188]}
       - {index: 11, language: , lines: [194, 198]}
       - {index: 12, language: csharp, lines: [204, 208], category: compilable, verified: false}
+  - path: "docs/Toon.md"
+    blocks:
+      - {index: 0, language: json, lines: [23, 25]}
+      - {index: 1, language: toon, lines: [29, 33]}
+      - {index: 2, language: bash, lines: [112, 118]}
+      - {index: 3, language: csharp, lines: [126, 141], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [145, 149], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [153, 158], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [162, 170], category: compilable, verified: false}
+      - {index: 7, language: toon, lines: [178, 183]}
+      - {index: 8, language: json, lines: [187, 189]}
+      - {index: 9, language: toon, lines: [195, 197]}
+      - {index: 10, language: json, lines: [201, 203]}
+      - {index: 11, language: toon, lines: [207, 209]}
+      - {index: 12, language: toon, lines: [215, 219]}
+      - {index: 13, language: json, lines: [223, 225]}
+      - {index: 14, language: csharp, lines: [233, 244], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [256, 269], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [282, 293], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [299, 303], category: compilable, verified: false}
   - path: "docs/UsingCopilotForMigration.md"
     blocks:
       - {index: 0, language: bash, lines: [19, 26]}

@@ -116,4 +116,7 @@
   <Folder Name="/040-PatternPropertyMatcher/">
     <Project Path="040-PatternPropertyMatcher\PatternPropertyMatcher.csproj" />
   </Folder>
+  <Folder Name="/041-Toon/">
+    <Project Path="041-Toon\Toon.csproj" />
+  </Folder>
 </Solution>

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cysharp ToonEncoder EncodeBenchmark Person array shape",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [ "Id", "Name", "Age" ],
+    "properties": {
+      "Id": { "type": "integer", "format": "int32" },
+      "Name": { "type": "string" },
+      "Age": { "type": "integer", "format": "int32" }
+    },
+    "unevaluatedProperties": false
+  }
+}

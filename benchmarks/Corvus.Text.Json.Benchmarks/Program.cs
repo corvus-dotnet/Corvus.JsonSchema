@@ -1,4 +1,4 @@
-﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
+// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
 using BenchmarkDotNet.Columns;
@@ -41,7 +41,7 @@ internal class Program
 
     private static void RunProfileHarness()
     {
-        Console.WriteLine($"PID: {Environment.ProcessId}");
+        Console.WriteLine($"PID: {GetProcessId()}");
         Console.WriteLine("Warming up...");
 
         for (int i = 0; i < 1000; i++)
@@ -60,8 +60,28 @@ internal class Program
             BuildOnly();
         }
 
-        double elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalSeconds;
+        double elapsed = GetElapsedTime(start).TotalSeconds;
         Console.WriteLine($"Done. {elapsed:F2}s ({10_000_000 / elapsed:F0} ops/sec, {elapsed / 10_000_000 * 1e9:F1} ns/op)");
+    }
+
+    private static int GetProcessId()
+    {
+#if NET
+        return Environment.ProcessId;
+#else
+        using System.Diagnostics.Process process = System.Diagnostics.Process.GetCurrentProcess();
+        return process.Id;
+#endif
+    }
+
+    private static TimeSpan GetElapsedTime(long startTimestamp)
+    {
+#if NET
+        return System.Diagnostics.Stopwatch.GetElapsedTime(startTimestamp);
+#else
+        long elapsedTicks = System.Diagnostics.Stopwatch.GetTimestamp() - startTimestamp;
+        return TimeSpan.FromSeconds(elapsedTicks / (double)System.Diagnostics.Stopwatch.Frequency);
+#endif
     }
 
     private static void BuildOnly()

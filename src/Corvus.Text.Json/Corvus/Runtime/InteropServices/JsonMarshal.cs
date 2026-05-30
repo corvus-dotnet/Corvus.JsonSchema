@@ -38,6 +38,36 @@ public static class JsonMarshal
     }
 
     /// <summary>
+    /// Gets a value indicating whether the raw UTF-8 property name contains escaped JSON text.
+    /// </summary>
+    /// <typeparam name="T">The type of the <see cref="IJsonElement"/>.</typeparam>
+    /// <param name="property">The JSON property to inspect.</param>
+    /// <returns><see langword="true"/> if the raw property name contains escaped JSON text; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ObjectDisposedException">The underlying <see cref="JsonDocument"/> has been disposed.</exception>
+    [CLSCompliant(false)]
+    public static bool IsPropertyNameEscaped<T>(JsonProperty<T> property)
+        where T : struct, IJsonElement<T>
+    {
+        property.Value.CheckValidInstance();
+        return property.NameIsEscaped;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the raw UTF-8 value contains escaped JSON text.
+    /// </summary>
+    /// <typeparam name="T">The type of the <see cref="IJsonElement"/>.</typeparam>
+    /// <param name="element">The JSON element to inspect.</param>
+    /// <returns><see langword="true"/> if the raw value contains escaped JSON text; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ObjectDisposedException">The underlying <see cref="JsonDocument"/> has been disposed.</exception>
+    [CLSCompliant(false)]
+    public static bool IsValueEscaped<T>(T element)
+        where T : struct, IJsonElement
+    {
+        element.CheckValidInstance();
+        return element.ParentDocument.ValueIsEscaped(element.ParentDocumentIndex, isPropertyName: false);
+    }
+
+    /// <summary>
     /// Gets a <see cref="ReadOnlySpan{T}"/> view over the raw JSON data of the given JSON element.
     /// </summary>
     /// <typeparam name="T">The type of the <see cref="IJsonElement"/>.</typeparam>

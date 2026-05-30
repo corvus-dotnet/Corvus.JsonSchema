@@ -92,6 +92,7 @@
     <PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
     <PackageVersion Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="18.6.37110.2" />
     <PackageVersion Include="Microsoft.VisualStudio.DiagnosticsHub.UserMarks" Version="18.6.37110.2" />
+    <PackageVersion Include="ToonEncoder" Version="2.0.0" />
     <!-- OpenAPI baseline comparisons (Kiota) -->
     <PackageVersion Include="Microsoft.Kiota.Bundle" Version="1.22.1" />
     <!-- JSON validation baseline comparisons -->

@@ -469,7 +469,7 @@ internal sealed class MockApiTransport : IApiTransport
 
     public ValueTask<TResponse> SendAsync<TRequest, TResponse>(
         in TRequest request,
-        Action<Stream> bodyWriter,
+        Func<Stream, CancellationToken, ValueTask> bodyWriter,
         string contentType,
         CancellationToken cancellationToken = default)
         where TRequest : struct, IApiRequest<TRequest>

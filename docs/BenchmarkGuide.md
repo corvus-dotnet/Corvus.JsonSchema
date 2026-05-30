@@ -19,6 +19,8 @@ benchmarks/
 │           ├── BenchmarkAnsibleMetaValidation.cs
 │           ├── BenchmarkGeoJsonValidation.cs
 │           └── ...
+├── Corvus.Text.Json.Toon.Benchmarks/          # TOON encode/decode and size benchmarks
+├── Corvus.Text.Json.Yaml.Benchmarks/          # YAML encode/decode benchmarks
 ├── Corvus.Text.Json.<Name>BenchmarkModels/     # Per-schema model projects
 │   ├── <name>-schema.json                       # Source JSON Schema
 │   ├── <name>-instances.jsonl                   # Test data (JSON Lines)
