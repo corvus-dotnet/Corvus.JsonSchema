@@ -1048,11 +1048,14 @@ Different transports handle header serialization differently:
 |-----------|-----------------|-------|
 | Kafka | Native message headers (`Message.Headers`) | Key-value byte pairs |
 | AMQP | Application properties | Native key-value map |
+| Azure Service Bus | Application properties (`ServiceBusMessage.ApplicationProperties`) | User metadata map; values are encoded as strings and reconstructed as typed JSON headers for generated handlers |
 | NATS | Base64-encoded JSON in message headers | Protocol has limited header support |
 | MQTT | User properties (MQTT 5) or base64 in topic | MQTT 3.1 has no header concept |
 | WebSocket | JSON envelope field | Framed alongside payload |
 
 The transport layer handles encoding/decoding transparently — your handler always receives the typed struct regardless of the wire format.
+
+Azure Service Bus deserves one extra note because it has both broker system properties and user application properties. Corvus writes AsyncAPI message headers to `ApplicationProperties`; it does not use them for broker control fields such as `CorrelationId`, `ReplyTo`, or `SessionId`. Request/reply support uses those native Service Bus fields separately, while your AsyncAPI header schema remains in the application-property map and is passed to generated handlers as the same typed header struct used by other transports.
 
 ## Request/Reply
 
