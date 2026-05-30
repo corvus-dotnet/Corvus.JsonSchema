@@ -463,7 +463,8 @@ example-recipes:
       - {index: 6, language: csharp, lines: [124, 138], category: compilable, verified: false}
       - {index: 7, language: csharp, lines: [146, 150], category: compilable, verified: false}
       - {index: 8, language: bash, lines: [154, 157]}
-      - {index: 9, language: , lines: [163, 178]}
+      - {index: 9, language: bash, lines: [163, 165]}
+      - {index: 10, language: , lines: [171, 186]}
   - path: "docs/ExampleRecipes/033-OpenApiEndToEnd/README.md"
     companion_project: "docs/ExampleRecipes/033-OpenApiEndToEnd/"
     blocks:

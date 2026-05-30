@@ -34,7 +34,8 @@ app.Lifetime.ApplicationStarted.Register(() =>
     Console.WriteLine($"Base URL: {baseUrl}");
     Console.WriteLine();
     Console.WriteLine("Try these requests from another terminal:");
-    Console.WriteLine($"  curl \"{baseUrl}/pets?limit=2&filter[status]=available&tags=dog\" -H \"x-request-id: demo-request-1\"");
+    Console.WriteLine("  # --globoff stops curl from treating filter[status] as URL range/glob syntax.");
+    Console.WriteLine($"  curl --globoff \"{baseUrl}/pets?limit=2&filter[status]=available&tags=dog\" -H \"x-request-id: demo-request-1\"");
     Console.WriteLine($"  curl -N \"{baseUrl}/pets/1/activity\" -H \"Accept: application/x-ndjson\"");
     Console.WriteLine($"  curl -N -X POST \"{baseUrl}/pets/1/chat\" -H \"Accept: text/event-stream\" -H \"Content-Type: application/json\" -H \"Cookie: session_token=admin-token-123\" -d \"{{\\\"message\\\":\\\"Bella is coughing. What should I do?\\\"}}\"");
     Console.WriteLine();

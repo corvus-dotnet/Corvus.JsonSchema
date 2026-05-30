@@ -158,6 +158,14 @@ dotnet run
 
 The launch profile does not open a browser. The server writes its actual base URL, sample `curl` commands, request summaries, and handler activity to the console. Pair with [031-OpenApiAdvancedClient](../031-OpenApiAdvancedClient/) to exercise the full flow.
 
+For deep-object query examples such as `filter[status]=available`, pass `--globoff` to curl:
+
+```bash
+curl --globoff "http://localhost:50516/pets?limit=2&filter[status]=available&tags=dog" -H "x-request-id: demo-request-1"
+```
+
+curl treats square brackets in URLs as range/glob syntax unless globbing is disabled. Encoding the brackets as `filter%5Bstatus%5D=available` is also valid, but `--globoff` keeps the OpenAPI deep-object parameter shape visible in the sample.
+
 ## Project Structure
 
 ```
