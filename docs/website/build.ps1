@@ -1068,8 +1068,39 @@ $yamlSize = (Get-ChildItem $yamlOutputDir -Recurse -File | Measure-Object -Prope
 Write-Host "  YAML Playground: $([math]::Round($yamlSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "YAML Playground build" $sw
 
-# -- Step 9e: Build JSON Logic Playground (Blazor WASM) -------------------------
-Write-Host "`n[9e/10] Building JSON Logic Playground..." -ForegroundColor Cyan
+# -- Step 9e: Build TOON Playground (Blazor WASM) ------------------------------
+Write-Host "`n[9e/10] Building TOON Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$toonProject = Join-Path $repoRoot "docs\playground-toon\src\Corvus.Text.Json.Toon.Playground\Corvus.Text.Json.Toon.Playground.csproj"
+$toonPublishDir = Join-Path $here ".playground-toon-publish"
+$toonOutputDir = Join-Path $outputDir "playground-toon"
+
+& dotnet publish $toonProject -c Release -o $toonPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "TOON Playground publish failed" }
+
+$toonWwwroot = Join-Path $toonPublishDir "wwwroot"
+if (!(Test-Path $toonWwwroot)) {
+    throw "TOON Playground wwwroot not found at $toonWwwroot"
+}
+Copy-Item -Path $toonWwwroot -Destination $toonOutputDir -Recurse -Force
+
+$toonIndex = Join-Path $toonOutputDir "index.html"
+if (Test-Path $toonIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($toonIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-toon/`" />"
+    [System.IO.File]::WriteAllText($toonIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-toon/" -ForegroundColor Gray
+}
+
+Remove-Item $toonPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$toonSize = (Get-ChildItem $toonOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  TOON Playground: $([math]::Round($toonSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "TOON Playground build" $sw
+
+# -- Step 9f: Build JSON Logic Playground (Blazor WASM) -------------------------
+Write-Host "`n[9f/10] Building JSON Logic Playground..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 $jsonlogicProject = Join-Path $repoRoot "docs\playground-jsonlogic\src\Corvus.Text.Json.JsonLogic.Playground\Corvus.Text.Json.JsonLogic.Playground.csproj"
@@ -1099,8 +1130,8 @@ $jsonlogicSize = (Get-ChildItem $jsonlogicOutputDir -Recurse -File | Measure-Obj
 Write-Host "  JSON Logic Playground: $([math]::Round($jsonlogicSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "JSON Logic Playground build" $sw
 
-# -- Step 9f: Build JSONPath Playground (Blazor WASM) ---------------------------
-Write-Host "`n[9f/10] Building JSONPath Playground..." -ForegroundColor Cyan
+# -- Step 9g: Build JSONPath Playground (Blazor WASM) ---------------------------
+Write-Host "`n[9g/10] Building JSONPath Playground..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 # Bundle monaco-jsonpath (npm)
@@ -1141,8 +1172,8 @@ $jsonpathSize = (Get-ChildItem $jsonpathOutputDir -Recurse -File | Measure-Objec
 Write-Host "  JSONPath Playground: $([math]::Round($jsonpathSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "JSONPath Playground build" $sw
 
-# -- Step 9g: Build AsyncAPI Playground (Blazor WASM) ---------------------------
-Write-Host "`n[9g/10] Building AsyncAPI Playground..." -ForegroundColor Cyan
+# -- Step 9h: Build AsyncAPI Playground (Blazor WASM) ---------------------------
+Write-Host "`n[9h/10] Building AsyncAPI Playground..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 $asyncapiProject = Join-Path $repoRoot "docs\playground-asyncapi\src\Corvus.Text.Json.AsyncApi.Playground\Corvus.Text.Json.AsyncApi.Playground.csproj"
@@ -1172,8 +1203,8 @@ $asyncapiSize = (Get-ChildItem $asyncapiOutputDir -Recurse -File | Measure-Objec
 Write-Host "  AsyncAPI Playground: $([math]::Round($asyncapiSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "AsyncAPI Playground build" $sw
 
-# -- Step 9h: Build OpenAPI Playground (Blazor WASM) ----------------------------
-Write-Host "`n[9h/10] Building OpenAPI Playground..." -ForegroundColor Cyan
+# -- Step 9i: Build OpenAPI Playground (Blazor WASM) ----------------------------
+Write-Host "`n[9i/10] Building OpenAPI Playground..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 $openapiProject = Join-Path $repoRoot "docs\playground-openapi\src\Corvus.Text.Json.OpenApi.Playground\Corvus.Text.Json.OpenApi.Playground.csproj"
@@ -1260,6 +1291,7 @@ $lycheeArgs = @(
     "--exclude-path", "playground-jsonlogic"
     "--exclude-path", "playground-jsonpath"
     "--exclude-path", "playground-yaml"
+    "--exclude-path", "playground-toon"
     "--exclude-path", "playground-asyncapi"
     "--exclude-path", "playground-openapi"
     "."
@@ -1286,7 +1318,7 @@ if ($BasePathPrefix) {
     # Rewrite HTML files (excluding playgrounds which use <base href>)
     # Use -notmatch with [/\\] separators for cross-platform compatibility (Linux uses /, Windows uses \)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' }
+        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
@@ -1310,7 +1342,7 @@ if ($BasePathPrefix) {
         $original = $content
 
         # Rewrite string literals containing root-relative paths: '/api/', '/search-index.json', etc.
-        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath|playground-jsonlogic|playground-jsonpath|playground-yaml|playground-asyncapi|playground-openapi))", "`$1$BasePathPrefix`$2"
+        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath|playground-jsonlogic|playground-jsonpath|playground-yaml|playground-toon|playground-asyncapi|playground-openapi))", "`$1$BasePathPrefix`$2"
 
         if ($content -ne $original) {
             [System.IO.File]::WriteAllText($jsFile.FullName, $content)
@@ -1352,7 +1384,7 @@ $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' }
+        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' }
     $ghRewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)

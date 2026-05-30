@@ -1,0 +1,741 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@page "/"
+@inject ConversionService ConvertService
+@inject IJSRuntime JSRuntime
+
+<div class="playground-toolbar">
+    <h1>TOON &harr; JSON Playground</h1>
+    <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
+    <select class="toolbar-select" @bind="selectedDirection" @bind:after="OnDirectionChanged" title="Conversion direction">
+        <option value="@ConversionDirection.ToonToJson">TOON → JSON</option>
+        <option value="@ConversionDirection.JsonToToon">JSON → TOON</option>
+    </select>
+    <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
+        @if (activeSampleId is null)
+        {
+            <option value="" disabled>— Custom —</option>
+        }
+        @foreach (var sample in ActiveSamples)
+        {
+            <option value="@sample.Id">@sample.DisplayName</option>
+        }
+    </select>
+    <div class="spacer"></div>
+    <div class="toolbar-options">
+        <label>Indent:
+            <select @bind="selectedIndentSize" @bind:after="OnOptionChanged">
+                <option value="2">2</option>
+                <option value="4">4</option>
+            </select>
+        </label>
+        @if (selectedDirection == ConversionDirection.ToonToJson)
+        {
+            <label>Strict:
+                <select @bind="selectedStrict" @bind:after="OnOptionChanged">
+                    <option value="true">True</option>
+                    <option value="false">False</option>
+                </select>
+            </label>
+            <label>Paths:
+                <select @bind="selectedPathExpansion" @bind:after="OnOptionChanged">
+                    <option value="@ToonPathExpansion.Off">Off</option>
+                    <option value="@ToonPathExpansion.Safe">Safe</option>
+                </select>
+            </label>
+        }
+        else
+        {
+            <label>Delimiter:
+                <select @bind="selectedDelimiter" @bind:after="OnOptionChanged">
+                    <option value="@ToonDelimiter.Comma">Comma</option>
+                    <option value="@ToonDelimiter.Pipe">Pipe</option>
+                    <option value="@ToonDelimiter.Tab">Tab</option>
+                </select>
+            </label>
+            <label>Key folding:
+                <select @bind="selectedKeyFolding" @bind:after="OnOptionChanged">
+                    <option value="@ToonKeyFolding.Off">Off</option>
+                    <option value="@ToonKeyFolding.Safe">Safe</option>
+                </select>
+            </label>
+            <label>Flatten:
+                <select @bind="selectedFlattenDepth" @bind:after="OnOptionChanged">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="4">4</option>
+                    <option value="@int.MaxValue">All</option>
+                </select>
+            </label>
+        }
+    </div>
+    <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
+</div>
+
+@if (activeSample is not null)
+{
+    <div class="sample-description">@activeSample.Description</div>
+}
+
+<div class="toon-grid @(maximizedPanel is not null ? "has-maximized" : "")">
+    <div class="playground-panel panel-toon @(GetPanelClass("input"))">
+        <div class="panel-header">
+            @InputLabel
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyInput" title="Copy @InputLabel">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("input")' title="@(maximizedPanel == "input" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "input" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="inputEditor"
+                                  Id="input-editor"
+                                  ConstructionOptions="InputEditorOptions"
+                                  OnDidChangeModelContent="OnInputChanged" />
+        </div>
+    </div>
+
+    <div class="playground-panel panel-output @(GetPanelClass("output"))">
+        <div class="panel-header">
+            @OutputLabel
+            <div class="spacer"></div>
+            @if (lastResult is not null)
+            {
+                <span style="font-weight:normal;text-transform:none;">
+                    @(lastResult.Success ? "✓" : "✗")
+                    @($"{lastResult.ElapsedMs:F1}ms")
+                </span>
+            }
+            <button class="panel-copy-btn" @onclick="CopyResult" title="Copy @OutputLabel">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "output" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="outputEditor"
+                                  Id="output-editor"
+                                  ConstructionOptions="OutputEditorOptions" />
+        </div>
+        @if (lastResult is not null && !lastResult.Success)
+        {
+            <div class="panel-body">
+                <div class="error-output">@lastResult.ErrorMessage</div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (showDirtyConfirmation)
+{
+    <div class="modal-overlay" @onclick="CancelDirtyConfirmation">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <h3>Unsaved Changes</h3>
+            <p>Your input has been modified. Do you want to discard these changes?</p>
+            <div class="modal-actions">
+                <button class="toolbar-btn secondary" @onclick="CancelDirtyConfirmation">Cancel</button>
+                <button class="toolbar-btn primary" @onclick="ConfirmDirtyAction">Discard Changes</button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="status-bar @(lastResult is not null && !lastResult.Success ? "error" : "")">
+    <span>Corvus.Toon.SystemTextJson — @DirectionLabel</span>
+    <div class="spacer"></div>
+    @if (isConverting)
+    {
+        <span>Converting…</span>
+    }
+    else if (lastResult is not null)
+    {
+        <span>@(lastResult.Success ? "OK" : "Error") — @($"{lastResult.ElapsedMs:F1}ms")</span>
+    }
+    else
+    {
+        <span>Ready</span>
+    }
+</div>
+
+@code {
+    private StandaloneCodeEditor inputEditor = null!;
+    private StandaloneCodeEditor outputEditor = null!;
+
+    private string? activeSampleId;
+    private Sample? activeSample;
+    private ConversionResult? lastResult;
+    private bool isConverting;
+    private bool isInitializing = true;
+    private bool isLoadingSample;
+    private string? maximizedPanel;
+
+    private ConversionDirection selectedDirection = ConversionDirection.ToonToJson;
+    private int selectedIndentSize = 2;
+    private bool selectedStrict = true;
+    private ToonPathExpansion selectedPathExpansion = ToonPathExpansion.Off;
+    private ToonDelimiter selectedDelimiter = ToonDelimiter.Comma;
+    private ToonKeyFolding selectedKeyFolding = ToonKeyFolding.Off;
+    private int selectedFlattenDepth = int.MaxValue;
+
+    private bool showDirtyConfirmation;
+    private Func<Task>? pendingDirtyAction;
+    private string cleanInput = "";
+
+    private string themePref = "auto";
+    private string resolvedTheme = "dark";
+    private string themeIcon = "🌙";
+    private string themeTooltip = "Toggle theme";
+    private DotNetObjectReference<MainLayout>? dotNetRef;
+
+    private CancellationTokenSource? convertDebounce;
+    private CancellationTokenSource? saveDebounce;
+
+    private const string InputStorageKey = "toon-playground-input";
+    private const string DirectionStorageKey = "toon-playground-direction";
+    private const string IndentStorageKey = "toon-playground-indent";
+    private const string StrictStorageKey = "toon-playground-strict";
+    private const string PathStorageKey = "toon-playground-paths";
+    private const string DelimiterStorageKey = "toon-playground-delimiter";
+    private const string KeyFoldingStorageKey = "toon-playground-keyfolding";
+    private const string FlattenDepthStorageKey = "toon-playground-flatten";
+    private const string ThemeStorageKey = "toon-playground-theme";
+
+    private IReadOnlyList<Sample> ActiveSamples =>
+        selectedDirection == ConversionDirection.ToonToJson
+            ? SampleRegistry.ToonSamples
+            : SampleRegistry.JsonSamples;
+
+    private string InputLabel =>
+        selectedDirection == ConversionDirection.ToonToJson ? "TOON Input" : "JSON Input";
+
+    private string OutputLabel =>
+        selectedDirection == ConversionDirection.ToonToJson ? "JSON Output" : "TOON Output";
+
+    private string DirectionLabel =>
+        selectedDirection == ConversionDirection.ToonToJson ? "TOON → JSON" : "JSON → TOON";
+
+    private string InputLanguage =>
+        selectedDirection == ConversionDirection.ToonToJson ? "plaintext" : "json";
+
+    private string OutputLanguage =>
+        selectedDirection == ConversionDirection.ToonToJson ? "json" : "plaintext";
+
+    private string initialInput = SampleRegistry.ToonSamples[0].Content;
+
+    private StandaloneEditorConstructionOptions InputEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = InputLanguage,
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = initialInput,
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ScrollBeyondLastLine = false,
+    };
+
+    private StandaloneEditorConstructionOptions OutputEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = OutputLanguage,
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = "",
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ReadOnly = true,
+        ScrollBeyondLastLine = false,
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        dotNetRef = DotNetObjectReference.Create(this);
+        await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", dotNetRef);
+        await JSRuntime.InvokeVoidAsync("onSystemThemeChange", dotNetRef);
+        await LoadSettingsAsync();
+
+        string? savedInput = await GetLocalStorage(InputStorageKey);
+        if (!string.IsNullOrEmpty(savedInput))
+        {
+            activeSampleId = null;
+            activeSample = null;
+            await inputEditor.SetValue(savedInput);
+        }
+        else
+        {
+            Sample sample = ActiveSamples[0];
+            activeSampleId = sample.Id;
+            activeSample = sample;
+            await inputEditor.SetValue(sample.Content);
+        }
+
+        await SetEditorLanguages();
+        StateHasChanged();
+
+        isInitializing = false;
+        cleanInput = await inputEditor.GetValue();
+        await ConvertAsync();
+    }
+
+    private async Task LoadSettingsAsync()
+    {
+        string? savedTheme = await GetLocalStorage(ThemeStorageKey);
+        if (!string.IsNullOrEmpty(savedTheme))
+        {
+            themePref = savedTheme;
+        }
+
+        resolvedTheme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
+        UpdateThemeIcon();
+
+        string? savedDirection = await GetLocalStorage(DirectionStorageKey);
+        if (!string.IsNullOrEmpty(savedDirection) && Enum.TryParse(savedDirection, out ConversionDirection direction))
+        {
+            selectedDirection = direction;
+        }
+
+        string? savedIndent = await GetLocalStorage(IndentStorageKey);
+        if (!string.IsNullOrEmpty(savedIndent) && int.TryParse(savedIndent, out int indent))
+        {
+            selectedIndentSize = Math.Clamp(indent, 1, 8);
+        }
+
+        string? savedStrict = await GetLocalStorage(StrictStorageKey);
+        if (!string.IsNullOrEmpty(savedStrict) && bool.TryParse(savedStrict, out bool strict))
+        {
+            selectedStrict = strict;
+        }
+
+        string? savedPathExpansion = await GetLocalStorage(PathStorageKey);
+        if (!string.IsNullOrEmpty(savedPathExpansion) && Enum.TryParse(savedPathExpansion, out ToonPathExpansion pathExpansion))
+        {
+            selectedPathExpansion = pathExpansion;
+        }
+
+        string? savedDelimiter = await GetLocalStorage(DelimiterStorageKey);
+        if (!string.IsNullOrEmpty(savedDelimiter) && Enum.TryParse(savedDelimiter, out ToonDelimiter delimiter))
+        {
+            selectedDelimiter = delimiter;
+        }
+
+        string? savedKeyFolding = await GetLocalStorage(KeyFoldingStorageKey);
+        if (!string.IsNullOrEmpty(savedKeyFolding) && Enum.TryParse(savedKeyFolding, out ToonKeyFolding keyFolding))
+        {
+            selectedKeyFolding = keyFolding;
+        }
+
+        string? savedFlattenDepth = await GetLocalStorage(FlattenDepthStorageKey);
+        if (!string.IsNullOrEmpty(savedFlattenDepth) && int.TryParse(savedFlattenDepth, out int flattenDepth))
+        {
+            selectedFlattenDepth = flattenDepth;
+        }
+    }
+
+    private void OnInputChanged(ModelContentChangedEvent _)
+    {
+        if (isInitializing || isLoadingSample)
+        {
+            return;
+        }
+
+        activeSampleId = null;
+        activeSample = null;
+        DebounceConvert();
+        DebounceSave();
+    }
+
+    private async Task OnOptionChanged()
+    {
+        if (isInitializing)
+        {
+            return;
+        }
+
+        await SaveOptions();
+        await ConvertAsync();
+    }
+
+    private async Task OnDirectionChanged()
+    {
+        if (isInitializing)
+        {
+            return;
+        }
+
+        await SetLocalStorage(DirectionStorageKey, selectedDirection.ToString());
+        await LoadFirstSampleForDirectionAsync();
+        cleanInput = await inputEditor.GetValue();
+        await ClearLocalStorage(inputOnly: true);
+        await ClearInputMarkers();
+        await SetEditorLanguages();
+
+        lastResult = null;
+        if (outputEditor is not null)
+        {
+            await outputEditor.SetValue("");
+        }
+
+        StateHasChanged();
+        await ConvertAsync();
+    }
+
+    private async Task OnSampleChanged(ChangeEventArgs e)
+    {
+        string? sampleId = e.Value?.ToString();
+        Sample? sample = ActiveSamples.FirstOrDefault(s => s.Id == sampleId);
+        if (sample is null)
+        {
+            return;
+        }
+
+        await CheckDirtyAndConfirm(async () => await LoadSample(sample));
+    }
+
+    private async Task NewProjectAsync()
+    {
+        await CheckDirtyAndConfirm(async () =>
+        {
+            isLoadingSample = true;
+            try
+            {
+                activeSampleId = null;
+                activeSample = null;
+                string placeholder = selectedDirection == ConversionDirection.ToonToJson
+                    ? "# Enter your TOON here"
+                    : "{\n  \n}";
+                await inputEditor.SetValue(placeholder);
+            }
+            finally
+            {
+                isLoadingSample = false;
+            }
+
+            cleanInput = await inputEditor.GetValue();
+            await ClearLocalStorage(inputOnly: true);
+            await ClearInputMarkers();
+            lastResult = null;
+            if (outputEditor is not null)
+            {
+                await outputEditor.SetValue("");
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadFirstSampleForDirectionAsync()
+    {
+        Sample sample = ActiveSamples[0];
+        await LoadSample(sample);
+    }
+
+    private async Task LoadSample(Sample sample)
+    {
+        isLoadingSample = true;
+        try
+        {
+            activeSampleId = sample.Id;
+            activeSample = sample;
+            ApplySampleOptions(sample);
+            await inputEditor.SetValue(sample.Content);
+        }
+        finally
+        {
+            isLoadingSample = false;
+        }
+
+        cleanInput = await inputEditor.GetValue();
+        await ClearLocalStorage(inputOnly: true);
+        await ClearInputMarkers();
+        await SaveOptions();
+        await ConvertAsync();
+    }
+
+    private void ApplySampleOptions(Sample sample)
+    {
+        selectedIndentSize = 2;
+        selectedStrict = true;
+        selectedPathExpansion = sample.Id == "path-expansion" ? ToonPathExpansion.Safe : ToonPathExpansion.Off;
+        selectedDelimiter = ToonDelimiter.Comma;
+        selectedKeyFolding = sample.Id == "key-folding" ? ToonKeyFolding.Safe : ToonKeyFolding.Off;
+        selectedFlattenDepth = int.MaxValue;
+    }
+
+    private async Task CheckDirtyAndConfirm(Func<Task> action)
+    {
+        string currentInput = await inputEditor.GetValue();
+        if (currentInput == cleanInput)
+        {
+            await action();
+            return;
+        }
+
+        pendingDirtyAction = action;
+        showDirtyConfirmation = true;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmDirtyAction()
+    {
+        showDirtyConfirmation = false;
+        Func<Task>? action = pendingDirtyAction;
+        pendingDirtyAction = null;
+
+        if (action is not null)
+        {
+            await action();
+        }
+    }
+
+    private async Task CancelDirtyConfirmation()
+    {
+        showDirtyConfirmation = false;
+        pendingDirtyAction = null;
+        await JSRuntime.InvokeVoidAsync("resetSampleSelect", activeSampleId ?? "");
+    }
+
+    private async Task CopyInput()
+    {
+        string text = await inputEditor.GetValue();
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyResult()
+    {
+        if (lastResult is not null && !lastResult.Success)
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", lastResult.ErrorMessage ?? "");
+        }
+        else if (outputEditor is not null)
+        {
+            string text = await outputEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnConvertShortcut()
+    {
+        await ConvertAsync();
+    }
+
+    [JSInvokable]
+    public void OnSystemThemeChanged(string systemTheme)
+    {
+        if (themePref == "auto")
+        {
+            resolvedTheme = systemTheme;
+            UpdateThemeIcon();
+            _ = JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+            StateHasChanged();
+        }
+    }
+
+    private async Task ConvertAsync()
+    {
+        if (isConverting)
+        {
+            return;
+        }
+
+        isConverting = true;
+        StateHasChanged();
+
+        try
+        {
+            string input = await inputEditor.GetValue();
+            lastResult = selectedDirection == ConversionDirection.ToonToJson
+                ? await ConvertService.ConvertToonToJsonAsync(input, selectedStrict, selectedIndentSize, selectedPathExpansion)
+                : await ConvertService.ConvertJsonToToonAsync(input, selectedIndentSize, selectedDelimiter, selectedKeyFolding, selectedFlattenDepth);
+
+            if (lastResult.Success)
+            {
+                await ClearInputMarkers();
+                if (outputEditor is not null)
+                {
+                    await outputEditor.SetValue(lastResult.ResultText ?? "");
+                }
+            }
+            else if (lastResult.ErrorLine.HasValue)
+            {
+                await SetInputMarkers(lastResult);
+            }
+        }
+        catch (Exception ex)
+        {
+            lastResult = new ConversionResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message,
+                ElapsedMs = 0,
+            };
+        }
+        finally
+        {
+            isConverting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SetEditorLanguages()
+    {
+        await JSRuntime.InvokeVoidAsync("setEditorLanguage", "input-editor", InputLanguage);
+        await JSRuntime.InvokeVoidAsync("setEditorLanguage", "output-editor", OutputLanguage);
+    }
+
+    private void DebounceConvert()
+    {
+        convertDebounce?.Cancel();
+        convertDebounce = new CancellationTokenSource();
+        CancellationToken token = convertDebounce.Token;
+        _ = Task.Delay(300, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(ConvertAsync);
+            }
+        }, token);
+    }
+
+    private void DebounceSave()
+    {
+        saveDebounce?.Cancel();
+        saveDebounce = new CancellationTokenSource();
+        CancellationToken token = saveDebounce.Token;
+        _ = Task.Delay(1000, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(async () =>
+                {
+                    string text = await inputEditor.GetValue();
+                    await SetLocalStorage(InputStorageKey, text);
+                });
+            }
+        }, token);
+    }
+
+    private async Task SetInputMarkers(ConversionResult result)
+    {
+        if (result.ErrorLine is int line && result.ErrorColumn is int col)
+        {
+            await JSRuntime.InvokeVoidAsync("setEditorMarkers", "input-editor",
+                result.ErrorMessage ?? "Error", line, col, line, col + 1);
+        }
+    }
+
+    private async Task ClearInputMarkers()
+    {
+        await JSRuntime.InvokeVoidAsync("clearEditorMarkers", "input-editor");
+    }
+
+    private async Task CycleTheme()
+    {
+        themePref = themePref switch
+        {
+            "auto" => "dark",
+            "dark" => "light",
+            "light" => "auto",
+            _ => "auto",
+        };
+
+        resolvedTheme = themePref == "auto"
+            ? await JSRuntime.InvokeAsync<string>("getSystemTheme")
+            : themePref;
+
+        UpdateThemeIcon();
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+        await SetLocalStorage(ThemeStorageKey, themePref);
+        StateHasChanged();
+    }
+
+    private void UpdateThemeIcon()
+    {
+        (themeIcon, themeTooltip) = themePref switch
+        {
+            "auto" => ("🖥️", "Theme: system (click for dark)"),
+            "dark" => ("🌙", "Theme: dark (click for light)"),
+            "light" => ("☀️", "Theme: light (click for system)"),
+            _ => ("🖥️", "Toggle theme"),
+        };
+    }
+
+    private void ToggleMaximize(string panel)
+    {
+        maximizedPanel = maximizedPanel == panel ? null : panel;
+    }
+
+    private string GetPanelClass(string panel)
+    {
+        if (maximizedPanel is null)
+        {
+            return "";
+        }
+
+        return maximizedPanel == panel ? "maximized" : "minimized";
+    }
+
+    private async Task<string?> GetLocalStorage(string key)
+    {
+        try
+        {
+            return await JSRuntime.InvokeAsync<string?>("localStorage.getItem", key);
+        }
+        catch (JSException)
+        {
+            return null;
+        }
+    }
+
+    private async Task SetLocalStorage(string key, string value)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    private async Task ClearLocalStorage(bool inputOnly = false)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", InputStorageKey);
+            if (!inputOnly)
+            {
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", IndentStorageKey);
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", StrictStorageKey);
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", PathStorageKey);
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DelimiterStorageKey);
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", KeyFoldingStorageKey);
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", FlattenDepthStorageKey);
+            }
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    private async Task SaveOptions()
+    {
+        await SetLocalStorage(IndentStorageKey, selectedIndentSize.ToString());
+        await SetLocalStorage(StrictStorageKey, selectedStrict.ToString());
+        await SetLocalStorage(PathStorageKey, selectedPathExpansion.ToString());
+        await SetLocalStorage(DelimiterStorageKey, selectedDelimiter.ToString());
+        await SetLocalStorage(KeyFoldingStorageKey, selectedKeyFolding.ToString());
+        await SetLocalStorage(FlattenDepthStorageKey, selectedFlattenDepth.ToString());
+    }
+
+    public void Dispose()
+    {
+        convertDebounce?.Dispose();
+        saveDebounce?.Dispose();
+        dotNetRef?.Dispose();
+    }
+}

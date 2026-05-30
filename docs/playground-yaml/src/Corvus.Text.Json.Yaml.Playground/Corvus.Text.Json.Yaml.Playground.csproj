@@ -6,6 +6,8 @@
     <LangVersion>14</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <!-- Local WasmAppHost returns an empty dotnet.js response for generated gzip build assets. -->
+    <DisableBuildCompression>true</DisableBuildCompression>
     <!-- Disable the Endjin analyzers for this standalone tool -->
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>

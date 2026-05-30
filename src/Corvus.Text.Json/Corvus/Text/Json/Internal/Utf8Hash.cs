@@ -5,7 +5,9 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-#if STJ
+#if STJ && TOON
+namespace Corvus.Toon.Internal;
+#elif STJ
 namespace Corvus.Yaml.Internal;
 #else
 namespace Corvus.Text.Json.Internal;
@@ -21,7 +23,9 @@ namespace Corvus.Text.Json.Internal;
 /// For longer keys, the hash mixes the first 8 bytes with the length and last byte.
 /// </para>
 /// </remarks>
+#if !(STJ && TOON)
 [CLSCompliant(false)]
+#endif
 #if STJ
 internal static class Utf8Hash
 #else

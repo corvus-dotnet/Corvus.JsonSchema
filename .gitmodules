@@ -16,3 +16,6 @@
 [submodule "jsonpath-compliance-test-suite"]
 	path = jsonpath-compliance-test-suite
 	url = https://github.com/jsonpath-standard/jsonpath-compliance-test-suite.git
+[submodule "toon-format-spec"]
+	path = toon-format-spec
+	url = https://github.com/toon-format/spec.git

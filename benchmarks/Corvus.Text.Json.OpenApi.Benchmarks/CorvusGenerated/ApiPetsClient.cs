@@ -122,7 +122,11 @@ public sealed class ApiPetsClient : IApiPetsClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyWriterAsyncCore<UpdatePetRequest, UpdatePetResponse>(workspace, request, stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<UpdatePetRequest, UpdatePetResponse>(workspace, request, (stream, _) =>
+        {
+            FormUrlEncodedSerializer.Serialize(bodyValue, stream);
+            return ValueTask.CompletedTask;
+        }, "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -176,7 +180,7 @@ public sealed class ApiPetsClient : IApiPetsClient
         {
             ["photo"] = photo,
         };
-        return SendWithBodyWriterAsyncCore<UploadPetPhotoRequest, UploadPetPhotoResponse>(workspace, request, stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, null, binaryParts), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<UploadPetPhotoRequest, UploadPetPhotoResponse>(workspace, request, (stream, ct) => MultipartFormDataSerializer.SerializeAsync(bodyValue, stream, boundary, null, binaryParts, ct), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -227,7 +231,7 @@ public sealed class ApiPetsClient : IApiPetsClient
     private async ValueTask<TResponse> SendWithBodyWriterAsyncCore<TRequest, TResponse>(
         JsonWorkspace workspace,
         TRequest request,
-        Action<Stream> bodyWriter,
+        Func<Stream, CancellationToken, ValueTask> bodyWriter,
         string contentType,
         ValidationMode responseValidationMode,
         CancellationToken cancellationToken)

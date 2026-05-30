@@ -58,6 +58,26 @@ public class JsonElementParseTests
     }
 
     [TestMethod]
+    public void JsonMarshal_IsValueEscaped_InvalidInstance_Throws()
+    {
+        JsonElement element = default;
+        Assert.ThrowsExactly<InvalidOperationException>(() => JsonMarshal.IsValueEscaped(element));
+    }
+
+    [TestMethod]
+    [DataRow("\"plain\"", false)]
+    [DataRow("\"na\\u006de\"", true)]
+    [DataRow("\"Alice \\\"A\\\"\"", true)]
+    [DataRow("42", false)]
+    public void JsonMarshal_IsValueEscaped_ReturnsEscapedState(string json, bool expected)
+    {
+        using var jDoc = ParsedJsonDocument<JsonElement>.Parse(json);
+        JsonElement element = jDoc.RootElement;
+
+        Assert.AreEqual(expected, JsonMarshal.IsValueEscaped(element));
+    }
+
+    [TestMethod]
     public void JsonMarshal_GetRawUtf8Value_NestedValues_ReturnsExpectedValue()
     {
         const string json = """

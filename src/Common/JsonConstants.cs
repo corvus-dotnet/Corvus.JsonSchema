@@ -1,6 +1,8 @@
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-#if STJ
+#if STJ && TOON
+namespace Corvus.Toon.Internal;
+#elif STJ
 namespace Corvus.Yaml.Internal;
 #else
 namespace Corvus.Text.Json;

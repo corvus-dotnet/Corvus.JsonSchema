@@ -21,6 +21,8 @@
         <ModulePath>.*Corvus\.Text\.Json\.JsonPath\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.JsonPath\.CodeGeneration\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.Patch\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Toon\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Toon\.SystemTextJson\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.Yaml\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Yaml\.SystemTextJson\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.dll$</ModulePath>

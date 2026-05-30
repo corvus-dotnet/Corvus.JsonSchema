@@ -9,6 +9,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <AdditionalFiles Include="cysharp-person-schema.json" />
     <AdditionalFiles Include="person-schema.json" />
   </ItemGroup>
   <ItemGroup>

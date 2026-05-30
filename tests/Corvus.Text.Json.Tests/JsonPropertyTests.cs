@@ -115,6 +115,14 @@ public class JsonPropertyTests
     }
 
     [TestMethod]
+    public void JsonMarshal_IsPropertyNameEscaped_InvalidInstance_Throws()
+    {
+        string ErrorMessage = new InvalidOperationException().Message;
+        JsonProperty<JsonElement> prop = default;
+        Assert.ThrowsExactly<InvalidOperationException>(() => JsonMarshal.IsPropertyNameEscaped(prop), ErrorMessage);
+    }
+
+    [TestMethod]
     [DataRow("conne\\u0063tionId", "connectionId")]
     [DataRow("connectionId", "connectionId")]
     [DataRow("123", "123")]
@@ -147,6 +155,21 @@ public class JsonPropertyTests
             JsonProperty<JsonElement> property = jElement.EnumerateObject().First();
             byte[] expectedGetBytes = Encoding.UTF8.GetBytes(otherText);
             Assert.IsTrue(JsonMarshal.GetRawUtf8PropertyName(property).SequenceEqual(expectedGetBytes));
+        }
+    }
+
+    [TestMethod]
+    [DataRow("conne\\u0063tionId", true)]
+    [DataRow("connectionId", false)]
+    [DataRow("My name is \\\"Ahson\\\"", true)]
+    public void JsonMarshal_IsPropertyNameEscaped_ReturnsEscapedState(string propertyName, bool expected)
+    {
+        string jsonString = $"{{ \"{propertyName}\" : \"itsValue\" }}";
+        using (var doc = ParsedJsonDocument<JsonElement>.Parse(jsonString))
+        {
+            JsonElement jElement = doc.RootElement;
+            JsonProperty<JsonElement> property = jElement.EnumerateObject().First();
+            Assert.AreEqual(expected, JsonMarshal.IsPropertyNameEscaped(property));
         }
     }
 

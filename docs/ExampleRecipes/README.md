@@ -65,6 +65,7 @@ dotnet run
 | [038](038-AsyncApiEndToEnd/) | AsyncAPI End to End | Producer + consumer pipeline, in-memory transport, validation, dead-letter handling |
 | [039](039-AsyncApiAuthentication/) | AsyncAPI Authentication | Azure Identity, OAuth2, Bearer, API Key, mTLS, composite auth patterns |
 | [040](040-PatternPropertyMatcher/) | Pattern Property Matcher | `patternProperties`, generated `MatchesPattern*`, `TryAsPattern*`, visitor dispatch |
+| [041](041-Toon/) | TOON | Parse TOON to JSON, convert JSON to TOON, path expansion, key folding, UTF-8 output |
 
 ## Related documentation
 
@@ -75,5 +76,6 @@ dotnet run
 - [JSON Patch](../JsonPatch.md)
 - [JSON Canonicalization](../JsonCanonicalization.md)
 - [JSONPath](../JsonPath.md)
+- [TOON](../Toon.md)
 - [OpenAPI](../OpenApi.md)
 - [AsyncAPI](../AsyncApi.md)
