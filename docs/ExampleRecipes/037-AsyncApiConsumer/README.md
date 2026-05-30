@@ -77,6 +77,10 @@ await consumer.StopAsync();     // Unsubscribe and clean up
 
 Unlike manual `DeliverAsync()` calls, `InMemoryMessageTransport.PublishAsync()` **automatically delivers** to active subscribers — just like a real broker (Kafka/NATS/MQTT). When you publish to a channel, any consumer subscribed to that channel immediately receives it.
 
+In a production consumer, your application would not normally publish directly to the same transport it consumes from. The physical streetlight, or a telemetry gateway representing it, would publish the measurement to the broker. This recipe writes to `InMemoryMessageTransport` only to simulate that external telemetry source in a self-contained console app.
+
+The AsyncAPI document defines the receive channel as the address template `smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured`. The `{streetlightId}` segment is a template parameter, not a literal broker channel. A real device would publish to a concrete channel such as `smartylighting.streetlights.1.0.action.lamp-42.lighting.measured`; the generated consumer subscribes using the template, and the in-memory testing transport uses exact string matching, so the sample publishes to that same template key to trigger the generated subscriber.
+
 ## Running
 
 ```bash
@@ -87,12 +91,13 @@ Expected output:
 
 ```text
 Consumer started, waiting for messages...
+Simulating telemetry from lamp-42 on smartylighting.streetlights.1.0.action.lamp-42.lighting.measured
   Received: lumens=512, sentAt=2026-05-25T10:30:00Z
 Handler received 1 message(s)
 Last lumens: 512
-  Error on smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured: ...
-After invalid: handler still has 1 message(s)
-Errors logged: 1
+  Received: lumens=2048, sentAt=2026-05-25T10:31:00Z
+Handler received 2 total message(s)
+Last lumens: 2048
 Consumer stopped
 ```
 
