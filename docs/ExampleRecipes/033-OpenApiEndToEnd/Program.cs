@@ -491,7 +491,14 @@ internal sealed class PetstoreHandler
     public ValueTask<StreamPetActivityResult> HandleStreamPetActivityAsync(
         StreamPetActivityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken)
     {
-        return new(StreamPetActivityResult.Ok());
+        return new(StreamPetActivityResult.Ok(static async (stream, cancellationToken) =>
+        {
+            Petstore.EndToEnd.Server.ActivityEvent checkIn = Petstore.EndToEnd.Server.ActivityEvent.ParseValue("""{"eventId":"evt-1","timestamp":"2026-05-30T18:00:00Z","type":"check-in","description":"Bella checked in at reception"}"""u8);
+            await stream.AppendActivityEvent(checkIn, cancellationToken).ConfigureAwait(false);
+
+            Petstore.EndToEnd.Server.ActivityEvent exam = Petstore.EndToEnd.Server.ActivityEvent.ParseValue("""{"eventId":"evt-2","timestamp":"2026-05-30T18:05:00Z","type":"exam","description":"Initial examination started"}"""u8);
+            await stream.AppendActivityEvent(exam, cancellationToken).ConfigureAwait(false);
+        }));
     }
 
     // ─── Adoption ───────────────────────────────────────────────────

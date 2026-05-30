@@ -678,7 +678,23 @@ public static class ApiEndpointRegistration
                 }
 
                 context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
+                if (result.HasStreamingBody)
+                {
+                    context.Response.ContentType = result.ContentType!;
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        JsonStreamWriter streamWriter = new(context.Response.BodyWriter, writer, result.ContentType!);
+                        await result.WriteStreamAsync(streamWriter, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+                else if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
                     Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
@@ -763,7 +779,23 @@ public static class ApiEndpointRegistration
                 }
 
                 context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
+                if (result.HasStreamingBody)
+                {
+                    context.Response.ContentType = result.ContentType!;
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        JsonStreamWriter streamWriter = new(context.Response.BodyWriter, writer, result.ContentType!);
+                        await result.WriteStreamAsync(streamWriter, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+                else if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
                     Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);

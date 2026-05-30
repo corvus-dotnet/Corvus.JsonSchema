@@ -160,10 +160,24 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
         => new(PurgeResourceResult.NoContent());
 
     public ValueTask<MoveResourceResult> HandleMoveResourceAsync(MoveResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(MoveResourceResult.Ok());
+        => new(MoveResourceResult.Ok(static async (stream, cancellationToken) =>
+        {
+            ItemSchema started = ItemSchema.ParseValue("""{"progress":0,"status":"started"}"""u8);
+            await stream.AppendItemSchema(started, cancellationToken).ConfigureAwait(false);
+
+            ItemSchema completed = ItemSchema.ParseValue("""{"progress":100,"status":"completed"}"""u8);
+            await stream.AppendItemSchema(completed, cancellationToken).ConfigureAwait(false);
+        }));
 
     public ValueTask<StreamEventsResult> HandleStreamEventsAsync(StreamEventsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(StreamEventsResult.Ok());
+        => new(StreamEventsResult.Ok(static async (stream, cancellationToken) =>
+        {
+            ItemSchema1 created = ItemSchema1.ParseValue("""{"eventId":"evt-1","eventType":"created","data":{"id":1}}"""u8);
+            await stream.AppendItemSchema1(created, cancellationToken).ConfigureAwait(false);
+
+            ItemSchema1 updated = ItemSchema1.ParseValue("""{"eventId":"evt-2","eventType":"updated","data":{"id":2}}"""u8);
+            await stream.AppendItemSchema1(updated, cancellationToken).ConfigureAwait(false);
+        }));
 
     public ValueTask<SearchWithQuerystringResult> HandleSearchWithQuerystringAsync(SearchWithQuerystringParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {

@@ -1,5 +1,17 @@
 # Version History
 
+## V5.1.1
+
+V5.1.1 adds TOON conversion support and fixes OpenAPI 3.2 server streaming responses generated from `itemSchema` response content.
+
+### New features
+
+- **TOON conversion** — Added bidirectional TOON (Token-Oriented Object Notation) conversion for JSON-shaped data, with `Corvus.Text.Json.Toon` for the Corvus pooled document model and `Corvus.Toon.SystemTextJson` for `System.Text.Json`-only applications. The converters support TOON to JSON, JSON to TOON, parsed documents, UTF-8 buffer APIs, tabular object arrays, dotted-path expansion, key folding, documentation, examples, benchmarks, and a browser playground.
+
+### Bug fixes
+
+- **OpenAPI 3.2 server streaming responses** — Generated ASP.NET Core server stubs now emit response bodies for `itemSchema` streaming responses. Streaming result factories use generated push-writer callbacks, frame `text/event-stream` responses as SSE (`data: ...\n\n`), frame `application/x-ndjson` and other streaming media as newline-delimited JSON, and complete the HTTP stream when the callback returns.
+
 ## V5.1
 
 V5.1 expands Corvus.Text.Json beyond JSON Schema model generation into strongly-typed API generation, and closes a set of V4/V5 parity gaps that were identified during the 5.1 release wrap-up.

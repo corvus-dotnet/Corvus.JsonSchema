@@ -557,7 +557,12 @@ public class GeneratedServerEndToEndTests
     {
         HttpRequestMessage request = new(new HttpMethod("MOVE"), "/resources/res-1?destination=https://example.com/new");
         HttpResponseMessage response = await client!.SendAsync(request);
+
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("application/x-ndjson", response.Content.Headers.ContentType?.MediaType);
+
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual("{\"progress\":0,\"status\":\"started\"}\n{\"progress\":100,\"status\":\"completed\"}\n", body);
     }
 
     [TestMethod]
@@ -644,6 +649,10 @@ public class GeneratedServerEndToEndTests
     {
         HttpResponseMessage response = await client!.GetAsync("/events/stream");
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("application/x-ndjson", response.Content.Headers.ContentType?.MediaType);
+
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual("{\"eventId\":\"evt-1\",\"eventType\":\"created\",\"data\":{\"id\":1}}\n{\"eventId\":\"evt-2\",\"eventType\":\"updated\",\"data\":{\"id\":2}}\n", body);
     }
 
     // =====================================================================

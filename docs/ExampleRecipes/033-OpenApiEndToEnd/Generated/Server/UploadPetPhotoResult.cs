@@ -41,7 +41,7 @@ public readonly struct UploadPetPhotoResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="UploadPetPhotoResult"/> with status 201.</returns>
-    public static UploadPetPhotoResult Created(Petstore.EndToEnd.Server.PhotoMetadata.Source body, JsonWorkspace workspace) => new(201, Petstore.EndToEnd.Server.PhotoMetadata.CreateBuilder(workspace, body).RootElement, "application/json");
+    public static UploadPetPhotoResult Created(Petstore.EndToEnd.Server.PhotoMetadata.Source body, JsonWorkspace workspace) => new(201, Petstore.EndToEnd.Server.PhotoMetadata.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 401 Unauthorized result.
@@ -49,7 +49,7 @@ public readonly struct UploadPetPhotoResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="UploadPetPhotoResult"/> with status 401.</returns>
-    public static UploadPetPhotoResult Unauthorized(Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body).RootElement, "application/json");
+    public static UploadPetPhotoResult Unauthorized(Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

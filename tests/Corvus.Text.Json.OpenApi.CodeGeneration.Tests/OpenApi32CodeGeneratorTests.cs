@@ -1024,6 +1024,32 @@ public class OpenApi32CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_StreamingResultStruct_HasPushWriterFactory()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile streamEventsResult = files.First(f => f.FileName == "StreamEventsResult.cs");
+
+        Assert.IsTrue(
+            streamEventsResult.Content.Contains("public static StreamEventsResult Ok(StreamEventsStreamWriter writer)"),
+            "Expected Ok factory to accept a stream writer callback");
+        Assert.IsTrue(
+            streamEventsResult.Content.Contains("public static StreamEventsResult Ok<TContext>(TContext context, StreamEventsStreamWriter<TContext> writer)"),
+            "Expected context overload for static stream writer callbacks");
+        Assert.IsTrue(
+            streamEventsResult.Content.Contains("public ValueTask AppendStreamEventItem(in CovTest.Client.StreamEventItem.Source item, CancellationToken cancellationToken = default)"),
+            "Expected generated stream type to append item sources");
+        Assert.IsTrue(
+            streamEventsResult.Content.Contains("public bool HasStreamingBody => this.streamWriter is not null;"),
+            "Expected streaming result marker");
+        Assert.IsFalse(
+            streamEventsResult.Content.Contains("public static StreamEventsResult Ok() =>"),
+            "Did not expect parameterless Ok() for itemSchema streaming responses");
+    }
+
+    [TestMethod]
     public void GenerateServer_ProducesEndpointRegistration()
     {
         Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();

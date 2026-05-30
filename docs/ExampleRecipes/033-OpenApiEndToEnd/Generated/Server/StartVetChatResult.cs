@@ -19,12 +19,17 @@ namespace Petstore.EndToEnd.Server;
 /// </summary>
 public readonly struct StartVetChatResult
 {
-    private StartVetChatResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private StartVetChatResult(int statusCode, JsonElement body = default, string? contentType = null, StartVetChatStreamWriterInvoker? streamWriter = null, object? streamWriterContext = null)
     {
         this.StatusCode = statusCode;
         this.Body = body;
         this.ContentType = contentType;
+        this.streamWriter = streamWriter;
+        this.streamWriterContext = streamWriterContext;
     }
+
+    private readonly StartVetChatStreamWriterInvoker? streamWriter;
+    private readonly object? streamWriterContext;
 
     /// <summary>Gets the HTTP status code.</summary>
     public int StatusCode { get; }
@@ -35,11 +40,26 @@ public readonly struct StartVetChatResult
     /// <summary>Gets the content type for the response body.</summary>
     public string? ContentType { get; }
 
+    /// <summary>Gets a value indicating whether this result has a streaming response body.</summary>
+    public bool HasStreamingBody => this.streamWriter is not null;
+
     /// <summary>
     /// Creates a 200 Ok result.
     /// </summary>
+    /// <param name="writer">The callback that appends items to the <see cref="StartVetChatStream"/>.</param>
     /// <returns>A <see cref="StartVetChatResult"/> with status 200.</returns>
-    public static StartVetChatResult Ok() => new(200, default, null);
+    public static StartVetChatResult Ok(StartVetChatStreamWriter writer) => new(200, default, "text/event-stream", streamWriter: static (jsonStreamWriter, context, cancellationToken) => ((StartVetChatStreamWriter)context!)(new StartVetChatStream(jsonStreamWriter), cancellationToken), streamWriterContext: writer);
+
+    /// <typeparam name="TContext">The callback context type.</typeparam>
+    /// <param name="context">The callback context.</param>
+    /// <param name="writer">The callback that appends items to the <see cref="StartVetChatStream"/>.</param>
+    /// <returns>A <see cref="StartVetChatResult"/> with status 200.</returns>
+    public static StartVetChatResult Ok<TContext>(TContext context, StartVetChatStreamWriter<TContext> writer) => new(200, default, "text/event-stream", streamWriter: static (jsonStreamWriter, context, cancellationToken) =>
+        {
+            var wrapper = (StartVetChatStreamWriterContext<TContext>)context!;
+            return wrapper.Writer(new StartVetChatStream(jsonStreamWriter), wrapper.Context, cancellationToken);
+        },
+        streamWriterContext: new StartVetChatStreamWriterContext<TContext>(context, writer));
 
     /// <summary>
     /// Creates a 401 Unauthorized result.
@@ -47,7 +67,7 @@ public readonly struct StartVetChatResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="StartVetChatResult"/> with status 401.</returns>
-    public static StartVetChatResult Unauthorized(Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body).RootElement, "application/json");
+    public static StartVetChatResult Unauthorized(Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -74,4 +94,87 @@ public readonly struct StartVetChatResult
             this.Body.WriteTo(writer);
         }
     }
+
+    /// <summary>
+    /// Writes the streaming response body.
+    /// </summary>
+    /// <param name="writer">The stream writer.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A value task that completes when the stream has been written.</returns>
+    public ValueTask WriteStreamAsync(JsonStreamWriter writer, CancellationToken cancellationToken = default)
+    {
+        return this.streamWriter is null
+            ? ValueTask.CompletedTask
+            : this.streamWriter(writer, this.streamWriterContext, cancellationToken);
+    }
+
+    private delegate ValueTask StartVetChatStreamWriterInvoker(JsonStreamWriter writer, object? context, CancellationToken cancellationToken);
+
+    private sealed class StartVetChatStreamWriterContext<TContext>
+    {
+        public StartVetChatStreamWriterContext(TContext context, StartVetChatStreamWriter<TContext> writer)
+        {
+            this.Context = context;
+            this.Writer = writer;
+        }
+
+        public TContext Context { get; }
+
+        public StartVetChatStreamWriter<TContext> Writer { get; }
+    }
 }
+
+/// <summary>
+/// Writes items for the StartVetChat streaming response.
+/// </summary>
+public readonly struct StartVetChatStream
+{
+    private readonly JsonStreamWriter writer;
+
+    internal StartVetChatStream(JsonStreamWriter writer)
+    {
+        this.writer = writer;
+    }
+
+    /// <summary>
+    /// Appends a <see cref="Petstore.EndToEnd.Server.ChatChunk"/> item to the response stream.
+    /// </summary>
+    /// <param name="item">The item to append.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A value task that completes when the item has been flushed.</returns>
+    public ValueTask AppendChatChunk(in Petstore.EndToEnd.Server.ChatChunk.Source item, CancellationToken cancellationToken = default)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<Petstore.EndToEnd.Server.ChatChunk.Mutable> builder = Petstore.EndToEnd.Server.ChatChunk.CreateBuilder(workspace, item);
+        return this.writer.WriteItemAsync(builder.RootElement, cancellationToken);
+    }
+
+    /// <summary>
+    /// Appends a <see cref="Petstore.EndToEnd.Server.ChatChunk"/> item to the response stream.
+    /// </summary>
+    /// <param name="item">The item to append.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A value task that completes when the item has been flushed.</returns>
+    public ValueTask AppendChatChunk(Petstore.EndToEnd.Server.ChatChunk item, CancellationToken cancellationToken = default)
+    {
+        return this.writer.WriteItemAsync(item, cancellationToken);
+    }
+}
+
+/// <summary>
+/// Callback used to write a StartVetChatStream response.
+/// </summary>
+/// <param name="stream">The StartVetChatStream writer.</param>
+/// <param name="cancellationToken">The cancellation token.</param>
+/// <returns>A value task that completes when the stream has been written.</returns>
+public delegate ValueTask StartVetChatStreamWriter(StartVetChatStream stream, CancellationToken cancellationToken);
+
+/// <summary>
+/// Callback used to write a StartVetChatStream response with a context value.
+/// </summary>
+/// <typeparam name="TContext">The callback context type.</typeparam>
+/// <param name="stream">The StartVetChatStream writer.</param>
+/// <param name="context">The callback context.</param>
+/// <param name="cancellationToken">The cancellation token.</param>
+/// <returns>A value task that completes when the stream has been written.</returns>
+public delegate ValueTask StartVetChatStreamWriter<TContext>(StartVetChatStream stream, TContext context, CancellationToken cancellationToken);

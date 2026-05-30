@@ -19,12 +19,17 @@ namespace Petstore.Extended.Server;
 /// </summary>
 public readonly struct StreamPetActivityResult
 {
-    private StreamPetActivityResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private StreamPetActivityResult(int statusCode, JsonElement body = default, string? contentType = null, StreamPetActivityStreamWriterInvoker? streamWriter = null, object? streamWriterContext = null)
     {
         this.StatusCode = statusCode;
         this.Body = body;
         this.ContentType = contentType;
+        this.streamWriter = streamWriter;
+        this.streamWriterContext = streamWriterContext;
     }
+
+    private readonly StreamPetActivityStreamWriterInvoker? streamWriter;
+    private readonly object? streamWriterContext;
 
     /// <summary>Gets the HTTP status code.</summary>
     public int StatusCode { get; }
@@ -35,11 +40,26 @@ public readonly struct StreamPetActivityResult
     /// <summary>Gets the content type for the response body.</summary>
     public string? ContentType { get; }
 
+    /// <summary>Gets a value indicating whether this result has a streaming response body.</summary>
+    public bool HasStreamingBody => this.streamWriter is not null;
+
     /// <summary>
     /// Creates a 200 Ok result.
     /// </summary>
+    /// <param name="writer">The callback that appends items to the <see cref="StreamPetActivityStream"/>.</param>
     /// <returns>A <see cref="StreamPetActivityResult"/> with status 200.</returns>
-    public static StreamPetActivityResult Ok() => new(200, default, null);
+    public static StreamPetActivityResult Ok(StreamPetActivityStreamWriter writer) => new(200, default, "application/x-ndjson", streamWriter: static (jsonStreamWriter, context, cancellationToken) => ((StreamPetActivityStreamWriter)context!)(new StreamPetActivityStream(jsonStreamWriter), cancellationToken), streamWriterContext: writer);
+
+    /// <typeparam name="TContext">The callback context type.</typeparam>
+    /// <param name="context">The callback context.</param>
+    /// <param name="writer">The callback that appends items to the <see cref="StreamPetActivityStream"/>.</param>
+    /// <returns>A <see cref="StreamPetActivityResult"/> with status 200.</returns>
+    public static StreamPetActivityResult Ok<TContext>(TContext context, StreamPetActivityStreamWriter<TContext> writer) => new(200, default, "application/x-ndjson", streamWriter: static (jsonStreamWriter, context, cancellationToken) =>
+        {
+            var wrapper = (StreamPetActivityStreamWriterContext<TContext>)context!;
+            return wrapper.Writer(new StreamPetActivityStream(jsonStreamWriter), wrapper.Context, cancellationToken);
+        },
+        streamWriterContext: new StreamPetActivityStreamWriterContext<TContext>(context, writer));
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -62,4 +82,87 @@ public readonly struct StreamPetActivityResult
             this.Body.WriteTo(writer);
         }
     }
+
+    /// <summary>
+    /// Writes the streaming response body.
+    /// </summary>
+    /// <param name="writer">The stream writer.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A value task that completes when the stream has been written.</returns>
+    public ValueTask WriteStreamAsync(JsonStreamWriter writer, CancellationToken cancellationToken = default)
+    {
+        return this.streamWriter is null
+            ? ValueTask.CompletedTask
+            : this.streamWriter(writer, this.streamWriterContext, cancellationToken);
+    }
+
+    private delegate ValueTask StreamPetActivityStreamWriterInvoker(JsonStreamWriter writer, object? context, CancellationToken cancellationToken);
+
+    private sealed class StreamPetActivityStreamWriterContext<TContext>
+    {
+        public StreamPetActivityStreamWriterContext(TContext context, StreamPetActivityStreamWriter<TContext> writer)
+        {
+            this.Context = context;
+            this.Writer = writer;
+        }
+
+        public TContext Context { get; }
+
+        public StreamPetActivityStreamWriter<TContext> Writer { get; }
+    }
 }
+
+/// <summary>
+/// Writes items for the StreamPetActivity streaming response.
+/// </summary>
+public readonly struct StreamPetActivityStream
+{
+    private readonly JsonStreamWriter writer;
+
+    internal StreamPetActivityStream(JsonStreamWriter writer)
+    {
+        this.writer = writer;
+    }
+
+    /// <summary>
+    /// Appends a <see cref="Petstore.Extended.Server.ActivityEvent"/> item to the response stream.
+    /// </summary>
+    /// <param name="item">The item to append.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A value task that completes when the item has been flushed.</returns>
+    public ValueTask AppendActivityEvent(in Petstore.Extended.Server.ActivityEvent.Source item, CancellationToken cancellationToken = default)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<Petstore.Extended.Server.ActivityEvent.Mutable> builder = Petstore.Extended.Server.ActivityEvent.CreateBuilder(workspace, item);
+        return this.writer.WriteItemAsync(builder.RootElement, cancellationToken);
+    }
+
+    /// <summary>
+    /// Appends a <see cref="Petstore.Extended.Server.ActivityEvent"/> item to the response stream.
+    /// </summary>
+    /// <param name="item">The item to append.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A value task that completes when the item has been flushed.</returns>
+    public ValueTask AppendActivityEvent(Petstore.Extended.Server.ActivityEvent item, CancellationToken cancellationToken = default)
+    {
+        return this.writer.WriteItemAsync(item, cancellationToken);
+    }
+}
+
+/// <summary>
+/// Callback used to write a StreamPetActivityStream response.
+/// </summary>
+/// <param name="stream">The StreamPetActivityStream writer.</param>
+/// <param name="cancellationToken">The cancellation token.</param>
+/// <returns>A value task that completes when the stream has been written.</returns>
+public delegate ValueTask StreamPetActivityStreamWriter(StreamPetActivityStream stream, CancellationToken cancellationToken);
+
+/// <summary>
+/// Callback used to write a StreamPetActivityStream response with a context value.
+/// </summary>
+/// <typeparam name="TContext">The callback context type.</typeparam>
+/// <param name="stream">The StreamPetActivityStream writer.</param>
+/// <param name="context">The callback context.</param>
+/// <param name="cancellationToken">The cancellation token.</param>
+/// <returns>A value task that completes when the stream has been written.</returns>
+public delegate ValueTask StreamPetActivityStreamWriter<TContext>(StreamPetActivityStream stream, TContext context, CancellationToken cancellationToken);

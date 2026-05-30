@@ -119,15 +119,25 @@ return ListPetsResult.Ok(
 
 ### Streaming Responses (SSE/NDJSON)
 
-For streaming operations, return `Ok()` to signal success. The endpoint registration handles the streaming envelope:
+For streaming operations, return `Ok(...)` with a generated writer callback. The endpoint registration keeps the HTTP response body open while the callback runs and applies the media framing for each item:
 
 ```csharp
-// SSE: generated code writes "data: {...}\n\n" for each item
-return ValueTask.FromResult(StartVetChatResult.Ok());
+// SSE: generated code writes "data: {...}\n\n" for each appended item
+return new(StartVetChatResult.Ok(static async (stream, cancellationToken) =>
+{
+    ChatChunk chunk = ChatChunk.ParseValue("""{"delta":"Hello!","done":true}"""u8);
+    await stream.AppendChatChunk(chunk, cancellationToken);
+}));
 
-// NDJSON: generated code writes "{...}\n" for each item
-return ValueTask.FromResult(StreamPetActivityResult.Ok());
+// NDJSON: generated code writes "{...}\n" for each appended item
+return new(StreamPetActivityResult.Ok(static async (stream, cancellationToken) =>
+{
+    ActivityEvent activity = ActivityEvent.ParseValue("""{"eventId":"evt-1","timestamp":"2026-05-30T18:00:00Z","type":"check-in","description":"Bella checked in"}"""u8);
+    await stream.AppendActivityEvent(activity, cancellationToken);
+}));
 ```
+
+SSE completion is implicit. When the callback returns, the generated endpoint flushes and completes the HTTP response; no `End*` call is generated or needed.
 
 ### Form Body Access
 
@@ -175,5 +185,5 @@ The server starts on the default Kestrel port. Pair with [031-OpenApiAdvancedCli
 | You write | Call methods, handle responses | Implement interfaces, return results |
 | Parameters | You build Sources with typed builders | You read typed properties from Params |
 | Responses | Use `MatchResult()` exhaustively | Return factory methods (Ok, Created, etc.) |
-| Streaming | `await foreach` over `EnumerateOkItems()` | Return `Ok()`, infrastructure streams |
+| Streaming | `await foreach` over `EnumerateOkItems()` | Return `Ok(...)` with a writer callback |
 | Auth | Pass cookie as a parameter | Read cookie from Params, validate |

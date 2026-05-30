@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Runtime.CompilerServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Petstore.Extended.Server;
@@ -15,7 +14,7 @@ using Petstore.Extended.Server;
 // how to handle:
 //   - Deep-object/array query parameters (already deserialized into typed params)
 //   - Cookie-based authentication (session token validation)
-//   - Streaming responses (SSE and NDJSON via IAsyncEnumerable)
+//   - Streaming responses (SSE and NDJSON via generated push writers)
 //   - File upload/download (multipart form body, binary streams)
 //   - Form-encoded request bodies (typed property access)
 //   - Response header emission (pagination headers)
@@ -333,9 +332,8 @@ internal sealed class PhotosHandler : IApiPhotosHandler
 
 /// <summary>
 /// Implements SSE streaming (vet chat) and NDJSON streaming (activity feed).
-/// For streaming operations, the handler returns Ok() to signal success, and
-/// the endpoint registration streams typed items to the client using
-/// IAsyncEnumerable.
+/// Streaming operations return a result with a writer callback. The generated
+/// endpoint registration invokes the callback while the response body is open.
 /// </summary>
 internal sealed class ChatHandler : IApiChatHandler
 {
@@ -359,10 +357,14 @@ internal sealed class ChatHandler : IApiChatHandler
         string message = (string)parameters.Body.Message;
         Console.WriteLine($"[Chat] Pet {parameters.PetId}: {message}");
 
-        // For SSE streaming, return Ok() to signal the response should stream.
-        // The generated endpoint registration handles writing the SSE envelope
-        // and serializing each ChatChunk item.
-        return ValueTask.FromResult(StartVetChatResult.Ok());
+        return new(StartVetChatResult.Ok(static async (stream, cancellationToken) =>
+        {
+            ChatChunk greeting = ChatChunk.ParseValue("""{"id":"chunk-1","delta":"Hello! ","done":false}"""u8);
+            await stream.AppendChatChunk(greeting, cancellationToken).ConfigureAwait(false);
+
+            ChatChunk advice = ChatChunk.ParseValue("""{"id":"chunk-2","delta":"A vet will review Bella's symptoms and respond shortly.","done":true}"""u8);
+            await stream.AppendChatChunk(advice, cancellationToken).ConfigureAwait(false);
+        }));
     }
 
     public ValueTask<StreamPetActivityResult> HandleStreamPetActivityAsync(
@@ -372,10 +374,17 @@ internal sealed class ChatHandler : IApiChatHandler
     {
         Console.WriteLine($"[Activity] Starting stream for pet {parameters.PetId}");
 
-        // For NDJSON streaming, return Ok() to signal success.
-        // The generated endpoint registration writes each ActivityEvent as a
-        // newline-delimited JSON line.
-        return ValueTask.FromResult(StreamPetActivityResult.Ok());
+        return new(StreamPetActivityResult.Ok(static async (stream, cancellationToken) =>
+        {
+            ActivityEvent checkIn = ActivityEvent.ParseValue("""{"eventId":"evt-1","timestamp":"2026-05-30T18:00:00Z","type":"check-in","description":"Bella checked in at reception"}"""u8);
+            await stream.AppendActivityEvent(checkIn, cancellationToken).ConfigureAwait(false);
+
+            ActivityEvent exam = ActivityEvent.ParseValue("""{"eventId":"evt-2","timestamp":"2026-05-30T18:05:00Z","type":"exam","description":"Initial examination started"}"""u8);
+            await stream.AppendActivityEvent(exam, cancellationToken).ConfigureAwait(false);
+
+            ActivityEvent complete = ActivityEvent.ParseValue("""{"eventId":"evt-3","timestamp":"2026-05-30T18:20:00Z","type":"complete","description":"Examination completed"}"""u8);
+            await stream.AppendActivityEvent(complete, cancellationToken).ConfigureAwait(false);
+        }));
     }
 }
 

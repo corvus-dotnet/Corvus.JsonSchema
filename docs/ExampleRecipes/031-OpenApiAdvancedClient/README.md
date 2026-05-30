@@ -64,7 +64,7 @@ await petsClient.ListPetsAsync(
 
 ### Streaming Responses
 
-For SSE and NDJSON streams, the generated response exposes `IAsyncEnumerable<ParsedJsonDocument<T>>`. Each item arrives as a strongly-typed, pooled document:
+For SSE and NDJSON streams, the generated response exposes `IAsyncEnumerable<ParsedJsonDocument<T>>`. Each item arrives as a strongly-typed, pooled document. SSE responses also expose `EnumerateOkSseItems()` when you need event metadata:
 
 ```csharp
 await foreach (ParsedJsonDocument<ChatChunk> chunk in chatResponse.EnumerateOkItems())
