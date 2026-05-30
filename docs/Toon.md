@@ -58,7 +58,7 @@ Both packages use the same converter implementation via conditional compilation.
 
 ## Corvus and Cysharp
 
-Cysharp's [`ToonEncoder`](https://github.com/Cysharp/Toon) is the established .NET package for encoding `System.Text.Json` values to TOON, particularly when you want serializer/POCO integration. Corvus takes a different approach: it is a bidirectional JSON-shaped data converter, with UTF-8-first APIs and separate packages for the Corvus document model and plain `System.Text.Json`.
+Cysharp's [`ToonEncoder`](https://github.com/Cysharp/ToonEncoder) is the established .NET package for encoding `System.Text.Json` values to TOON, particularly when you want serializer/POCO integration. Corvus takes a different approach: it is a bidirectional JSON-shaped data converter, with UTF-8-first APIs and separate packages for the Corvus document model and plain `System.Text.Json`.
 
 The key distinction is that Cysharp is an encoder, while the Corvus packages are converters. If you need to consume TOON and get JSON back out, use Corvus. If you only need to serialize POCOs or `System.Text.Json.JsonElement` values to TOON, Cysharp may be the simpler fit.
 
