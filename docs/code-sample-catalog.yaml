@@ -466,10 +466,10 @@ example-recipes:
   - path: "docs/ExampleRecipes/033-OpenApiEndToEnd/README.md"
     companion_project: "docs/ExampleRecipes/033-OpenApiEndToEnd/"
     blocks:
-      - {index: 0, language: bash, lines: [21, 23]}
-      - {index: 1, language: csharp, lines: [43, 45], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [57, 66], category: compilable, verified: false}
-      - {index: 3, language: bash, lines: [82, 92]}
+      - {index: 0, language: bash, lines: [22, 24]}
+      - {index: 1, language: csharp, lines: [44, 46], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [58, 67], category: compilable, verified: false}
+      - {index: 3, language: bash, lines: [84, 94]}
   - path: "docs/ExampleRecipes/034-OpenApiCallbackServer/README.md"
     companion_project: "docs/ExampleRecipes/034-OpenApiCallbackServer/"
     blocks:
