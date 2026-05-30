@@ -23,6 +23,30 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 WebApplication app = builder.Build();
 
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    string baseUrl = app.Urls.FirstOrDefault(static url => url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+        ?? app.Urls.FirstOrDefault()
+        ?? "http://localhost:50516";
+
+    Console.WriteLine();
+    Console.WriteLine("OpenAPI Advanced Server example is running.");
+    Console.WriteLine($"Base URL: {baseUrl}");
+    Console.WriteLine();
+    Console.WriteLine("Try these requests from another terminal:");
+    Console.WriteLine($"  curl \"{baseUrl}/pets?limit=2&filter[status]=available&tags=dog\" -H \"x-request-id: demo-request-1\"");
+    Console.WriteLine($"  curl -N \"{baseUrl}/pets/1/activity\" -H \"Accept: application/x-ndjson\"");
+    Console.WriteLine($"  curl -N -X POST \"{baseUrl}/pets/1/chat\" -H \"Accept: text/event-stream\" -H \"Content-Type: application/json\" -H \"Cookie: session_token=admin-token-123\" -d \"{{\\\"message\\\":\\\"Bella is coughing. What should I do?\\\"}}\"");
+    Console.WriteLine();
+});
+
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"--> {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
+    await next(context);
+    Console.WriteLine($"<-- {context.Response.StatusCode} {context.Response.ContentType ?? "(no content type)"}");
+});
+
 // The generated ApiEndpointRegistration wires all routes to your handler implementations.
 // Each handler interface covers one tag group from the spec.
 PetsHandler petsHandler = new();

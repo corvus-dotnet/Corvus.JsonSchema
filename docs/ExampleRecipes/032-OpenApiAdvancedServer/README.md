@@ -156,7 +156,7 @@ dotnet build
 dotnet run
 ```
 
-The server starts on the default Kestrel port. Pair with [031-OpenApiAdvancedClient](../031-OpenApiAdvancedClient/) to exercise the full flow.
+The launch profile does not open a browser. The server writes its actual base URL, sample `curl` commands, request summaries, and handler activity to the console. Pair with [031-OpenApiAdvancedClient](../031-OpenApiAdvancedClient/) to exercise the full flow.
 
 ## Project Structure
 
