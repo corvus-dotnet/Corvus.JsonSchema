@@ -7,6 +7,10 @@ using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
 
+const string StreetlightId = "lamp-42";
+const string TelemetryChannelTemplate = "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured";
+string exampleBrokerChannel = $"smartylighting.streetlights.1.0.action.{StreetlightId}.lighting.measured";
+
 // ── Setting up the transport ─────────────────────────────────────────────────
 await using InMemoryMessageTransport transport = new();
 
@@ -32,14 +36,29 @@ ReceiveLightMeasurementConsumer consumer = new(
 await consumer.StartAsync();
 Console.WriteLine("Consumer started, waiting for messages...");
 
-// ── Publishing a message ─────────────────────────────────────────────────────
-// InMemoryMessageTransport automatically delivers published messages to active
-// subscribers — just like a real broker (Kafka/NATS/MQTT). No manual delivery needed.
+// ── Simulating telemetry arriving from a streetlight ─────────────────────────
+// A real consumer would not write directly to its transport. The streetlight
+// device, or a telemetry gateway in front of it, would publish to a concrete
+// broker channel such as:
+Console.WriteLine($"Simulating telemetry from {StreetlightId} on {exampleBrokerChannel}");
+//
+// In this recipe there is no external Kafka/NATS/MQTT broker, so the
+// InMemoryMessageTransport acts as the broker and test harness. Publishing to it
+// simulates the external telemetry arriving and automatically delivers the
+// message to active subscribers.
+//
+// The generated consumer subscribes to the AsyncAPI channel address template:
+//   smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured
+// The {streetlightId} segment is a template parameter from the AsyncAPI
+// document. It is not the literal channel a physical streetlight would publish
+// to; the concrete broker channel would contain an actual ID such as lamp-42.
+// The in-memory testing transport uses exact string matching, so this sample
+// publishes to the same template key the generated consumer subscribed to.
 using ParsedJsonDocument<LightMeasuredPayload> measurement = ParsedJsonDocument<LightMeasuredPayload>.Parse(
     """{"lumens":512,"sentAt":"2026-05-25T10:30:00Z"}"""u8.ToArray());
 
 await transport.PublishAsync(
-    System.Text.Encoding.UTF8.GetBytes("smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured"),
+    System.Text.Encoding.UTF8.GetBytes(TelemetryChannelTemplate),
     measurement.RootElement);
 
 Console.WriteLine($"Handler received {handler.ReceivedCount} message(s)");
@@ -50,7 +69,7 @@ using ParsedJsonDocument<LightMeasuredPayload> measurement2 = ParsedJsonDocument
     """{"lumens":2048,"sentAt":"2026-05-25T10:31:00Z"}"""u8.ToArray());
 
 await transport.PublishAsync(
-    System.Text.Encoding.UTF8.GetBytes("smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured"),
+    System.Text.Encoding.UTF8.GetBytes(TelemetryChannelTemplate),
     measurement2.RootElement);
 
 Console.WriteLine($"Handler received {handler.ReceivedCount} total message(s)");

@@ -502,7 +502,7 @@ cd docs/ExampleRecipes/030-OpenApiServer
 dotnet run
 ```
 
-The server starts on `http://localhost:5000` (or a random port if 5000 is in use).
+The launch profile does not open a browser. The server writes its actual base URL, sample `curl` commands, request summaries, and handler activity to the console.
 
 ### Testing with curl:
 

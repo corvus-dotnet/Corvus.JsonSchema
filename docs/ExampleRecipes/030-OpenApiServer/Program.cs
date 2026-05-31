@@ -23,6 +23,30 @@ using Petstore.Server;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 WebApplication app = builder.Build();
 
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    string baseUrl = app.Urls.FirstOrDefault(static url => url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+        ?? app.Urls.FirstOrDefault()
+        ?? "http://localhost:50515";
+
+    Console.WriteLine();
+    Console.WriteLine("OpenAPI Server example is running.");
+    Console.WriteLine($"Base URL: {baseUrl}");
+    Console.WriteLine();
+    Console.WriteLine("Try these requests from another terminal:");
+    Console.WriteLine($"  curl \"{baseUrl}/pets?limit=2\"");
+    Console.WriteLine($"  curl -X POST \"{baseUrl}/pets\" -H \"Content-Type: application/json\" -d \"{{\\\"name\\\":\\\"Fido\\\",\\\"tag\\\":\\\"dog\\\"}}\"");
+    Console.WriteLine($"  curl \"{baseUrl}/pets/1\"");
+    Console.WriteLine();
+});
+
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"--> {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
+    await next(context);
+    Console.WriteLine($"<-- {context.Response.StatusCode} {context.Response.ContentType ?? "(no content type)"}");
+});
+
 // Register a single handler instance — in production, use DI registration
 PetsHandler handler = new();
 app.MapApiEndpoints(handler);
@@ -72,6 +96,7 @@ internal sealed class PetsHandler : IApiPetsHandler
             : 20;
 
         var petsToReturn = this.pets.Take(limit).ToList();
+        Console.WriteLine($"    [Pets] Returning {petsToReturn.Count} pet(s), limit={limit}");
 
         // Build the response using the typed Result factory.
         // Ok() accepts a Pets.Source (array builder) and the workspace.
@@ -122,6 +147,7 @@ internal sealed class PetsHandler : IApiPetsHandler
         string? tag = body.Tag.IsNotUndefined() ? (string)body.Tag : null;
 
         this.pets.Add((id, name, tag));
+        Console.WriteLine($"    [Pets] Created pet {id}: {name} ({tag ?? "no tag"})");
 
         // Return 201 Created with the full Pet (including the generated ID)
         CreatePetResult result = CreatePetResult.Created(
@@ -161,6 +187,8 @@ internal sealed class PetsHandler : IApiPetsHandler
             (long Id, string Name, string? Tag) found = this.pets.FirstOrDefault(p => p.Id == id);
             if (found != default)
             {
+                Console.WriteLine($"    [Pets] Found pet {found.Id}: {found.Name}");
+
                 return ValueTask.FromResult(ShowPetByIdResult.Ok(
                     body: new Pet.Source((ref Pet.Builder b) =>
                     {
@@ -178,6 +206,7 @@ internal sealed class PetsHandler : IApiPetsHandler
         }
 
         // Return a default error response for "not found"
+        Console.WriteLine($"    [Pets] Pet '{petId}' was not found");
         return ValueTask.FromResult(ShowPetByIdResult.Default(
             statusCode: 404,
             body: new Error.Source((ref Error.Builder b) =>

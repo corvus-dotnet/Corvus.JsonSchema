@@ -119,15 +119,25 @@ return ListPetsResult.Ok(
 
 ### Streaming Responses (SSE/NDJSON)
 
-For streaming operations, return `Ok()` to signal success. The endpoint registration handles the streaming envelope:
+For streaming operations, return `Ok(...)` with a generated writer callback. The endpoint registration keeps the HTTP response body open while the callback runs and applies the media framing for each item:
 
 ```csharp
-// SSE: generated code writes "data: {...}\n\n" for each item
-return ValueTask.FromResult(StartVetChatResult.Ok());
+// SSE: generated code writes "data: {...}\n\n" for each appended item
+return new(StartVetChatResult.Ok(static async (stream, cancellationToken) =>
+{
+    ChatChunk chunk = ChatChunk.ParseValue("""{"delta":"Hello!","done":true}"""u8);
+    await stream.AppendChatChunk(chunk, cancellationToken);
+}));
 
-// NDJSON: generated code writes "{...}\n" for each item
-return ValueTask.FromResult(StreamPetActivityResult.Ok());
+// NDJSON: generated code writes "{...}\n" for each appended item
+return new(StreamPetActivityResult.Ok(static async (stream, cancellationToken) =>
+{
+    ActivityEvent activity = ActivityEvent.ParseValue("""{"eventId":"evt-1","timestamp":"2026-05-30T18:00:00Z","type":"check-in","description":"Bella checked in"}"""u8);
+    await stream.AppendActivityEvent(activity, cancellationToken);
+}));
 ```
+
+SSE completion is implicit. When the callback returns, the generated endpoint flushes and completes the HTTP response; no `End*` call is generated or needed.
 
 ### Form Body Access
 
@@ -146,7 +156,15 @@ dotnet build
 dotnet run
 ```
 
-The server starts on the default Kestrel port. Pair with [031-OpenApiAdvancedClient](../031-OpenApiAdvancedClient/) to exercise the full flow.
+The launch profile does not open a browser. The server writes its actual base URL, sample `curl` commands, request summaries, and handler activity to the console. Pair with [031-OpenApiAdvancedClient](../031-OpenApiAdvancedClient/) to exercise the full flow.
+
+For deep-object query examples such as `filter[status]=available`, pass `--globoff` to curl:
+
+```bash
+curl --globoff "http://localhost:50516/pets?limit=2&filter[status]=available&tags=dog" -H "x-request-id: demo-request-1"
+```
+
+curl treats square brackets in URLs as range/glob syntax unless globbing is disabled. Encoding the brackets as `filter%5Bstatus%5D=available` is also valid, but `--globoff` keeps the OpenAPI deep-object parameter shape visible in the sample.
 
 ## Project Structure
 
@@ -175,5 +193,5 @@ The server starts on the default Kestrel port. Pair with [031-OpenApiAdvancedCli
 | You write | Call methods, handle responses | Implement interfaces, return results |
 | Parameters | You build Sources with typed builders | You read typed properties from Params |
 | Responses | Use `MatchResult()` exhaustively | Return factory methods (Ok, Created, etc.) |
-| Streaming | `await foreach` over `EnumerateOkItems()` | Return `Ok()`, infrastructure streams |
+| Streaming | `await foreach` over `EnumerateOkItems()` | Return `Ok(...)` with a writer callback |
 | Auth | Pass cookie as a parameter | Read cookie from Params, validate |

@@ -55,7 +55,7 @@ public readonly struct ListPetsResult
     /// <param name="xTotalCount">The value for the <c>x-total-count</c> response header.</param>
     /// <param name="xNext">The value for the <c>x-next</c> response header.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status 200.</returns>
-    public static ListPetsResult Ok(Petstore.EndToEnd.Server.PetList.Source body, JsonWorkspace workspace, Petstore.EndToEnd.Server.JsonInteger xTotalCount = default, Petstore.EndToEnd.Server.JsonString xNext = default) => new(200, Petstore.EndToEnd.Server.PetList.CreateBuilder(workspace, body).RootElement, "application/json", xTotalCount: xTotalCount, xNext: xNext);
+    public static ListPetsResult Ok(Petstore.EndToEnd.Server.PetList.Source body, JsonWorkspace workspace, Petstore.EndToEnd.Server.JsonInteger xTotalCount = default, Petstore.EndToEnd.Server.JsonString xNext = default) => new(200, Petstore.EndToEnd.Server.PetList.CreateBuilder(workspace, body, 30).RootElement, "application/json", xTotalCount: xTotalCount, xNext: xNext);
 
     /// <summary>
     /// Creates a default error result.
@@ -64,7 +64,7 @@ public readonly struct ListPetsResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status default.</returns>
-    public static ListPetsResult Default(int statusCode, Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body).RootElement, "application/json");
+    public static ListPetsResult Default(int statusCode, Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

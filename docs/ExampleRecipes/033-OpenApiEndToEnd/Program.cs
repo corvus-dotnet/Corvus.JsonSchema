@@ -58,6 +58,7 @@ using HttpClient httpClient = new() { BaseAddress = new Uri(serverUrl) };
 await using HttpClientTransport transport = new(httpClient);
 await using ApiPetsClient petsClient = new(transport);
 await using ApiAdoptionClient adoptionClient = new(transport);
+await using ApiChatClient chatClient = new(transport);
 
 // ════════════════════════════════════════════════════════════════════
 // SCENARIO 1: Create a pet (with cookie authentication)
@@ -252,13 +253,87 @@ await using (SubmitAdoptionApplicationResponse adoptionResponse = await adoption
 Console.WriteLine();
 
 // ════════════════════════════════════════════════════════════════════
-// SCENARIO 6: Validation failure — missing required header
+// SCENARIO 6: Streaming responses — SSE and NDJSON
+// ════════════════════════════════════════════════════════════════════
+// Demonstrates both streaming media types generated from OpenAPI
+// itemSchema responses. The SSE response is read item-by-item by the
+// generated client, and the NDJSON response is read line-by-line.
+
+Console.WriteLine("━━━ Scenario 6: Streaming responses (SSE + NDJSON) ━━━");
+Console.WriteLine("  → POST /pets/pet-1/chat  (Accept: text/event-stream)");
+
+await using (StartVetChatResponse chatResponse = await chatClient.StartVetChatAsync(
+    petId: "pet-1"u8,
+    session_token: "admin-token-123"u8,
+    body: new Petstore.EndToEnd.Client.PostPetsByPetIdChatBody.Source(
+        static (ref Petstore.EndToEnd.Client.PostPetsByPetIdChatBody.Builder b) =>
+            b.Create(message: "Bella has been coughing since this morning. What should I do?"u8))))
+{
+    Console.WriteLine($"  ← {chatResponse.StatusCode} text/event-stream");
+
+    if (chatResponse.StatusCode == 200)
+    {
+        int chunkNumber = 0;
+        await foreach (ParsedJsonDocument<Petstore.EndToEnd.Client.ChatChunk> chunkDocument in chatResponse.EnumerateOkItems())
+        {
+            using (chunkDocument)
+            {
+                Petstore.EndToEnd.Client.ChatChunk chunk = chunkDocument.RootElement;
+                Console.WriteLine($"     SSE chunk {++chunkNumber}: id={chunk.Id}, delta={chunk.Delta}, done={chunk.Done}");
+            }
+        }
+    }
+    else
+    {
+        chatResponse.MatchResult<bool>(
+            matchUnauthorized: static (error) =>
+            {
+                Console.WriteLine($"     Unauthorized: {error}");
+                return false;
+            },
+            matchDefault: static (statusCode) =>
+            {
+                Console.WriteLine($"     Unexpected status: {statusCode}");
+                return false;
+            });
+    }
+}
+
+Console.WriteLine("  → GET /pets/pet-1/activity  (Accept: application/x-ndjson)");
+
+await using (StreamPetActivityResponse activityResponse = await chatClient.StreamPetActivityAsync(
+    petId: "pet-1"u8))
+{
+    Console.WriteLine($"  ← {activityResponse.StatusCode} application/x-ndjson");
+
+    if (activityResponse.StatusCode == 200)
+    {
+        int eventNumber = 0;
+        await foreach (ParsedJsonDocument<Petstore.EndToEnd.Client.ActivityEvent> activityDocument in activityResponse.EnumerateOkItems())
+        {
+            using (activityDocument)
+            {
+                Petstore.EndToEnd.Client.ActivityEvent activity = activityDocument.RootElement;
+                Console.WriteLine($"     NDJSON event {++eventNumber}: {activity.EventId} [{activity.Type}] {activity.Description} at {activity.Timestamp}");
+            }
+        }
+    }
+    else
+    {
+        Console.WriteLine($"     Unexpected status: {activityResponse.StatusCode}");
+    }
+}
+
+Console.WriteLine();
+
+// ════════════════════════════════════════════════════════════════════
+// SCENARIO 7: Validation failure — missing required header
 // ════════════════════════════════════════════════════════════════════
 // The generated server validates that x-request-id is required.
 // Calling without it triggers a 400 with a ProblemDetails body.
 // We bypass the client validation to demonstrate server-side enforcement.
 
-Console.WriteLine("━━━ Scenario 6: Server-side validation (missing required header) ━━━");
+Console.WriteLine("━━━ Scenario 7: Server-side validation (missing required header) ━━━");
 Console.WriteLine("  → GET /pets  (no x-request-id header)");
 
 // Use raw HttpClient to bypass client-side validation
@@ -272,11 +347,11 @@ using (HttpResponseMessage rawResponse = await httpClient.GetAsync("/pets"))
 Console.WriteLine();
 
 // ════════════════════════════════════════════════════════════════════
-// SCENARIO 7: Create without cookie (server rejects)
+// SCENARIO 8: Create without cookie (server rejects)
 // ════════════════════════════════════════════════════════════════════
 // The server validates that session_token cookie is required.
 
-Console.WriteLine("━━━ Scenario 7: Server-side validation (missing cookie) ━━━");
+Console.WriteLine("━━━ Scenario 8: Server-side validation (missing cookie) ━━━");
 Console.WriteLine("  → POST /pets  (no session_token cookie)");
 
 using (HttpRequestMessage postRequest = new(HttpMethod.Post, "/pets"))
@@ -481,17 +556,39 @@ internal sealed class PetstoreHandler
     public ValueTask<StartVetChatResult> HandleStartVetChatAsync(
         StartVetChatParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken)
     {
-        return new(StartVetChatResult.Unauthorized(
-            body: new Petstore.EndToEnd.Server.Error.Source(
-                static (ref Petstore.EndToEnd.Server.Error.Builder eb) =>
-                    eb.Create(code: 401, message: "Authentication required"u8)),
-            workspace: workspace));
+        Console.WriteLine("       [Server] HandleStartVetChatAsync called");
+        Console.WriteLine($"       [Server]   petId = {parameters.PetId}");
+        Console.WriteLine($"       [Server]   session_token = {parameters.SessionToken}");
+        Console.WriteLine($"       [Server]   body = {parameters.Body}");
+
+        return new(StartVetChatResult.Ok(static async (stream, cancellationToken) =>
+        {
+            Console.WriteLine("       [Server]   → streaming 2 SSE chat chunks");
+
+            Petstore.EndToEnd.Server.ChatChunk greeting = Petstore.EndToEnd.Server.ChatChunk.ParseValue("""{"id":"chunk-1","delta":"Thanks for the update about Bella. ","done":false}"""u8);
+            await stream.AppendChatChunk(greeting, cancellationToken).ConfigureAwait(false);
+
+            Petstore.EndToEnd.Server.ChatChunk advice = Petstore.EndToEnd.Server.ChatChunk.ParseValue("""{"id":"chunk-2","delta":"Please keep her calm and call the clinic if breathing becomes laboured.","done":true}"""u8);
+            await stream.AppendChatChunk(advice, cancellationToken).ConfigureAwait(false);
+        }));
     }
 
     public ValueTask<StreamPetActivityResult> HandleStreamPetActivityAsync(
         StreamPetActivityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken)
     {
-        return new(StreamPetActivityResult.Ok());
+        Console.WriteLine("       [Server] HandleStreamPetActivityAsync called");
+        Console.WriteLine($"       [Server]   petId = {parameters.PetId}");
+
+        return new(StreamPetActivityResult.Ok(static async (stream, cancellationToken) =>
+        {
+            Console.WriteLine("       [Server]   → streaming 2 NDJSON activity events");
+
+            Petstore.EndToEnd.Server.ActivityEvent checkIn = Petstore.EndToEnd.Server.ActivityEvent.ParseValue("""{"eventId":"evt-1","timestamp":"2026-05-30T18:00:00Z","type":"check-in","description":"Bella checked in at reception"}"""u8);
+            await stream.AppendActivityEvent(checkIn, cancellationToken).ConfigureAwait(false);
+
+            Petstore.EndToEnd.Server.ActivityEvent exam = Petstore.EndToEnd.Server.ActivityEvent.ParseValue("""{"eventId":"evt-2","timestamp":"2026-05-30T18:05:00Z","type":"exam","description":"Initial examination started"}"""u8);
+            await stream.AppendActivityEvent(exam, cancellationToken).ConfigureAwait(false);
+        }));
     }
 
     // ─── Adoption ───────────────────────────────────────────────────

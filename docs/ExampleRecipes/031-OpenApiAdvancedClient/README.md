@@ -64,7 +64,7 @@ await petsClient.ListPetsAsync(
 
 ### Streaming Responses
 
-For SSE and NDJSON streams, the generated response exposes `IAsyncEnumerable<ParsedJsonDocument<T>>`. Each item arrives as a strongly-typed, pooled document:
+For SSE and NDJSON streams, the generated response exposes `IAsyncEnumerable<ParsedJsonDocument<T>>`. Each item arrives as a strongly-typed, pooled document. SSE responses also expose `EnumerateOkSseItems()` when you need event metadata:
 
 ```csharp
 await foreach (ParsedJsonDocument<ChatChunk> chunk in chatResponse.EnumerateOkItems())
@@ -128,7 +128,7 @@ dotnet build
 dotnet run
 ```
 
-> **Note:** This example calls a fictional API. You'll need a running Petstore-compatible server (see [030-OpenApiServer](../030-OpenApiServer/) for how to build one).
+The runnable recipe uses an in-memory `IApiTransport` so it produces deterministic console output for filtering, uploads, downloads, SSE, NDJSON, and form submission without needing the fictional `petstore.example.com` host to exist. In production code, replace the demo transport with `HttpClientTransport` configured with your API server's base address.
 
 ## Project Structure
 

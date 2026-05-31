@@ -212,7 +212,7 @@ try
         limit: 200,
         validationMode: ValidationMode.Detailed);
 }
-catch (InvalidOperationException ex)
+catch (ArgumentException ex)
 {
     // Detailed mode includes JSON Schema validation output showing exactly
     // which constraint was violated
@@ -226,6 +226,15 @@ Validation modes:
 | `ValidationMode.Basic` | Validates parameters and bodies; throws on failure with a brief message |
 | `ValidationMode.Detailed` | Same validation but includes full JSON Schema evaluation output in the exception |
 | `ValidationMode.None` | Skips all validation — use for trusted inputs in performance-critical paths |
+
+## Running
+
+```bash
+dotnet build
+dotnet run
+```
+
+The runnable recipe uses an in-memory `IApiTransport` so it produces deterministic console output without needing the fictional `petstore.example.com` host to exist. In production code, replace the demo transport with `HttpClientTransport` configured with your API server's base address, as shown in the transport setup section above.
 
 ## Best Practices
 

@@ -14,7 +14,8 @@ generated from the same OpenAPI specification.
 | Client-side request building and serialization | Generated `ApiPetsClient`, `ApiAdoptionClient` |
 | Client-side typed response parsing with `MatchResult()` | Response dispatch |
 | Form URL-encoded request/response round-trip | Scenario 5 |
-| ProblemDetails error responses for validation failures | Scenarios 6–7 |
+| Streaming SSE and NDJSON responses | Scenario 6 |
+| ProblemDetails error responses for validation failures | Scenarios 7–8 |
 
 ## Running It
 
@@ -22,7 +23,7 @@ generated from the same OpenAPI specification.
 dotnet run --project docs/ExampleRecipes/033-OpenApiEndToEnd
 ```
 
-The application starts an ASP.NET server on a random port, runs 7 scenarios, and exits.
+The application starts an ASP.NET server on a random port, runs 8 scenarios, writes the generated client/server round-trip to the console, and exits. The launch profile is configured not to open a browser because the sample is a console-driven walkthrough.
 
 ## How It Works
 
@@ -72,8 +73,9 @@ response.MatchResult<string>(
 3. **Show pet by ID** — GET with path parameter → 200
 4. **Show non-existent pet** — GET → 404 typed error
 5. **Submit adoption** — POST with `application/x-www-form-urlencoded` → 202 JSON response
-6. **Missing required header** — Raw GET without `x-request-id` → 400 ProblemDetails
-7. **Missing cookie** — Raw POST without `session_token` → 400 ProblemDetails
+6. **Streaming responses** — Generated client reads SSE chat chunks and NDJSON activity events
+7. **Missing required header** — Raw GET without `x-request-id` → 400 ProblemDetails
+8. **Missing cookie** — Raw POST without `session_token` → 400 ProblemDetails
 
 ## Regenerating
 

@@ -8,6 +8,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Text.Json.OpenApi32;
@@ -3098,6 +3099,50 @@ public sealed class OpenApi32CodeGenerator
         }
 
         return null;
+    }
+
+    private static List<ContentInfo> GetStreamingContent(ResponseInfo response)
+    {
+        List<ContentInfo> streamingContent = [];
+
+        foreach (ContentInfo content in response.Content)
+        {
+            if (content.ItemSchemaPointer is not null)
+            {
+                streamingContent.Add(content);
+            }
+        }
+
+        return streamingContent;
+    }
+
+    private static string GetStreamingFactoryName(string baseName, string mediaType, bool includeMediaTypeSuffix)
+    {
+        if (!includeMediaTypeSuffix)
+        {
+            return baseName;
+        }
+
+        if (mediaType.StartsWith("text/event-stream", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{baseName}Sse";
+        }
+
+        if (mediaType.StartsWith("application/x-ndjson", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{baseName}Ndjson";
+        }
+
+        return $"{baseName}{CodeEmitHelpers.SanitizeIdentifier(mediaType)}";
+    }
+
+    private static string GetSimpleTypeIdentifier(string typeName)
+    {
+        int dotIndex = typeName.LastIndexOf('.');
+        string simpleName = dotIndex >= 0 ? typeName[(dotIndex + 1)..] : typeName;
+        int genericIndex = simpleName.IndexOf('<');
+
+        return genericIndex >= 0 ? simpleName[..genericIndex] : simpleName;
     }
 
     /// <summary>
@@ -6722,6 +6767,10 @@ public sealed class OpenApi32CodeGenerator
         }
 
         bool hasHeaders = allHeaders.Count > 0;
+        bool hasStreamingResponses = op.Responses.Any(r => GetStreamingContent(r).Count > 0);
+        string streamTypeName = $"{op.MethodName}Stream";
+        string streamWriterDelegateName = $"{op.MethodName}StreamWriter";
+        string streamWriterInvokerName = $"{op.MethodName}StreamWriterInvoker";
 
         w.WriteLine("/// <summary>");
         w.WriteLine($"/// Result type for the {op.MethodName} operation.");
@@ -6733,6 +6782,11 @@ public sealed class OpenApi32CodeGenerator
         if (hasHeaders)
         {
             w.Write($"private {structName}(int statusCode, JsonElement body, string? contentType");
+            if (hasStreamingResponses)
+            {
+                w.Write($", {streamWriterInvokerName}? streamWriter = null, object? streamWriterContext = null");
+            }
+
             foreach (var (_, typeName, fieldName, _) in allHeaders)
             {
                 w.Write($", {typeName} {fieldName} = default");
@@ -6743,6 +6797,12 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("this.StatusCode = statusCode;");
             w.WriteLine("this.Body = body;");
             w.WriteLine("this.ContentType = contentType;");
+            if (hasStreamingResponses)
+            {
+                w.WriteLine("this.streamWriter = streamWriter;");
+                w.WriteLine("this.streamWriterContext = streamWriterContext;");
+            }
+
             foreach (var (_, _, fieldName, propertyName) in allHeaders)
             {
                 w.WriteLine($"this.{propertyName} = {fieldName};");
@@ -6752,15 +6812,34 @@ public sealed class OpenApi32CodeGenerator
         }
         else
         {
-            w.WriteLine($"private {structName}(int statusCode, JsonElement body = default, string? contentType = null)");
+            w.Write($"private {structName}(int statusCode, JsonElement body = default, string? contentType = null");
+            if (hasStreamingResponses)
+            {
+                w.Write($", {streamWriterInvokerName}? streamWriter = null, object? streamWriterContext = null");
+            }
+
+            w.WriteLine(")");
             w.OpenBrace();
             w.WriteLine("this.StatusCode = statusCode;");
             w.WriteLine("this.Body = body;");
             w.WriteLine("this.ContentType = contentType;");
+            if (hasStreamingResponses)
+            {
+                w.WriteLine("this.streamWriter = streamWriter;");
+                w.WriteLine("this.streamWriterContext = streamWriterContext;");
+            }
+
             w.CloseBrace();
         }
 
         w.WriteLine();
+        if (hasStreamingResponses)
+        {
+            w.WriteLine($"private readonly {streamWriterInvokerName}? streamWriter;");
+            w.WriteLine("private readonly object? streamWriterContext;");
+            w.WriteLine();
+        }
+
         w.WriteLine("/// <summary>Gets the HTTP status code.</summary>");
         w.WriteLine("public int StatusCode { get; }");
         w.WriteLine();
@@ -6769,6 +6848,13 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the content type for the response body.</summary>");
         w.WriteLine("public string? ContentType { get; }");
+
+        if (hasStreamingResponses)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>Gets a value indicating whether this result has a streaming response body.</summary>");
+            w.WriteLine("public bool HasStreamingBody => this.streamWriter is not null;");
+        }
 
         // Header properties
         foreach (var (header, typeName, _, propertyName) in allHeaders)
@@ -6804,7 +6890,7 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(defaultDesc)}");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders, streamTypeName, streamWriterDelegateName);
             }
             else
             {
@@ -6814,7 +6900,7 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(desc)}");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders, streamTypeName, streamWriterDelegateName);
             }
         }
 
@@ -6903,9 +6989,139 @@ public sealed class OpenApi32CodeGenerator
             w.CloseBrace();
         }
 
+        if (hasStreamingResponses)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// Writes the streaming response body.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"writer\">The stream writer.</param>");
+            w.WriteLine("/// <param name=\"cancellationToken\">The cancellation token.</param>");
+            w.WriteLine("/// <returns>A value task that completes when the stream has been written.</returns>");
+            w.WriteLine("public ValueTask WriteStreamAsync(JsonStreamWriter writer, CancellationToken cancellationToken = default)");
+            w.OpenBrace();
+            w.WriteLine("return this.streamWriter is null");
+            w.PushIndent();
+            w.WriteLine("? ValueTask.CompletedTask");
+            w.WriteLine(": this.streamWriter(writer, this.streamWriterContext, cancellationToken);");
+            w.PopIndent();
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"private delegate ValueTask {streamWriterInvokerName}(JsonStreamWriter writer, object? context, CancellationToken cancellationToken);");
+            w.WriteLine();
+            w.WriteLine($"private sealed class {streamWriterDelegateName}Context<TContext>");
+            w.OpenBrace();
+            w.WriteLine($"public {streamWriterDelegateName}Context(TContext context, {streamWriterDelegateName}<TContext> writer)");
+            w.OpenBrace();
+            w.WriteLine("this.Context = context;");
+            w.WriteLine("this.Writer = writer;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine("public TContext Context { get; }");
+            w.WriteLine();
+            w.WriteLine($"public {streamWriterDelegateName}<TContext> Writer {{ get; }}");
+            w.CloseBrace();
+        }
+
         w.CloseBrace();
 
+        if (hasStreamingResponses)
+        {
+            this.EmitServerStreamingTypes(w, op, streamTypeName, streamWriterDelegateName);
+        }
+
         return new GeneratedFile($"{structName}.cs", w.ToString());
+    }
+
+    private void EmitServerStreamingTypes(
+        IndentedWriter w,
+        OperationInfo op,
+        string streamTypeName,
+        string streamWriterDelegateName)
+    {
+        List<string> itemTypeNames = [];
+        foreach (ResponseInfo response in op.Responses)
+        {
+            foreach (ContentInfo content in GetStreamingContent(response))
+            {
+                if (content.ItemSchemaPointer is not null)
+                {
+                    string typeName = this.ResolveSchemaTypeName(content.ItemSchemaPointer);
+                    if (!itemTypeNames.Contains(typeName))
+                    {
+                        itemTypeNames.Add(typeName);
+                    }
+                }
+            }
+        }
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Writes items for the {op.MethodName} streaming response.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public readonly struct {streamTypeName}");
+        w.OpenBrace();
+        w.WriteLine("private readonly JsonStreamWriter writer;");
+        w.WriteLine();
+        w.WriteLine($"internal {streamTypeName}(JsonStreamWriter writer)");
+        w.OpenBrace();
+        w.WriteLine("this.writer = writer;");
+        w.CloseBrace();
+
+        HashSet<string> emittedMethodNames = [];
+        foreach (string itemTypeName in itemTypeNames)
+        {
+            string methodName = $"Append{GetSimpleTypeIdentifier(itemTypeName)}";
+            if (!emittedMethodNames.Add(methodName))
+            {
+                methodName = $"Append{CodeEmitHelpers.SanitizeIdentifier(itemTypeName)}";
+            }
+
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Appends a <see cref=\"{itemTypeName}\"/> item to the response stream.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"item\">The item to append.</param>");
+            w.WriteLine("/// <param name=\"cancellationToken\">The cancellation token.</param>");
+            w.WriteLine("/// <returns>A value task that completes when the item has been flushed.</returns>");
+            w.WriteLine($"public ValueTask {methodName}(in {itemTypeName}.Source item, CancellationToken cancellationToken = default)");
+            w.OpenBrace();
+            w.WriteLine("using JsonWorkspace workspace = JsonWorkspace.Create();");
+            w.WriteLine($"using JsonDocumentBuilder<{itemTypeName}.Mutable> builder = {itemTypeName}.CreateBuilder(workspace, item);");
+            w.WriteLine("return this.writer.WriteItemAsync(builder.RootElement, cancellationToken);");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Appends a <see cref=\"{itemTypeName}\"/> item to the response stream.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"item\">The item to append.</param>");
+            w.WriteLine("/// <param name=\"cancellationToken\">The cancellation token.</param>");
+            w.WriteLine("/// <returns>A value task that completes when the item has been flushed.</returns>");
+            w.WriteLine($"public ValueTask {methodName}({itemTypeName} item, CancellationToken cancellationToken = default)");
+            w.OpenBrace();
+            w.WriteLine("return this.writer.WriteItemAsync(item, cancellationToken);");
+            w.CloseBrace();
+        }
+
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Callback used to write a {streamTypeName} response.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"/// <param name=\"stream\">The {streamTypeName} writer.</param>");
+        w.WriteLine("/// <param name=\"cancellationToken\">The cancellation token.</param>");
+        w.WriteLine("/// <returns>A value task that completes when the stream has been written.</returns>");
+        w.WriteLine($"public delegate ValueTask {streamWriterDelegateName}({streamTypeName} stream, CancellationToken cancellationToken);");
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Callback used to write a {streamTypeName} response with a context value.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <typeparam name=\"TContext\">The callback context type.</typeparam>");
+        w.WriteLine($"/// <param name=\"stream\">The {streamTypeName} writer.</param>");
+        w.WriteLine("/// <param name=\"context\">The callback context.</param>");
+        w.WriteLine("/// <param name=\"cancellationToken\">The cancellation token.</param>");
+        w.WriteLine("/// <returns>A value task that completes when the stream has been written.</returns>");
+        w.WriteLine($"public delegate ValueTask {streamWriterDelegateName}<TContext>({streamTypeName} stream, TContext context, CancellationToken cancellationToken);");
     }
 
     private void EmitServerResultFactory(
@@ -6913,13 +7129,32 @@ public sealed class OpenApi32CodeGenerator
         string structName,
         string factoryName,
         string? bodyTypeName,
+        ResponseInfo response,
         List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
         string statusCode,
-        bool structHasHeaders)
+        bool structHasHeaders,
+        string streamTypeName,
+        string streamWriterDelegateName)
     {
         bool isDefault = statusCode == "default";
-        bool hasBody = bodyTypeName is not null;
+        List<ContentInfo> streamingContent = GetStreamingContent(response);
+        bool hasStreamingBody = streamingContent.Count > 0;
+        bool hasBody = bodyTypeName is not null && !hasStreamingBody;
         bool hasRespHeaders = respHeaders.Count > 0;
+
+        if (hasStreamingBody)
+        {
+            this.EmitServerStreamingResultFactories(
+                w,
+                structName,
+                factoryName,
+                streamingContent,
+                respHeaders,
+                statusCode,
+                streamTypeName,
+                streamWriterDelegateName);
+            return;
+        }
 
         // Parameters
         StringBuilder paramList = new();
@@ -6990,6 +7225,107 @@ public sealed class OpenApi32CodeGenerator
         else
         {
             w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({statusExpr}, {bodyExpr}, {contentTypeExpr});");
+        }
+    }
+
+    private void EmitServerStreamingResultFactories(
+        IndentedWriter w,
+        string structName,
+        string factoryName,
+        List<ContentInfo> streamingContent,
+        List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
+        string statusCode,
+        string streamTypeName,
+        string streamWriterDelegateName)
+    {
+        bool isDefault = statusCode == "default";
+        bool includeMediaTypeSuffix = streamingContent.Count > 1;
+        string statusExpr = isDefault ? "statusCode" : statusCode;
+
+        foreach (ContentInfo content in streamingContent)
+        {
+            string methodName = GetStreamingFactoryName(factoryName, content.MediaType, includeMediaTypeSuffix);
+            string contentTypeExpr = SymbolDisplay.FormatLiteral(content.MediaType, quote: true);
+            string writerParam = $"{streamWriterDelegateName} writer";
+            string contextWriterParam = $"{streamWriterDelegateName}<TContext> writer";
+
+            StringBuilder commonParams = new();
+            if (isDefault)
+            {
+                commonParams.Append("int statusCode, ");
+            }
+
+            commonParams.Append(writerParam);
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
+            {
+                commonParams.Append($", {typeName} {fieldName} = default");
+            }
+
+            StringBuilder contextParams = new();
+            if (isDefault)
+            {
+                contextParams.Append("int statusCode, ");
+            }
+
+            contextParams.Append($"TContext context, {contextWriterParam}");
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
+            {
+                contextParams.Append($", {typeName} {fieldName} = default");
+            }
+
+            if (isDefault)
+            {
+                w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+            }
+
+            w.WriteLine($"/// <param name=\"writer\">The callback that appends items to the <see cref=\"{streamTypeName}\"/>.</param>");
+            foreach (var (header, _, fieldName, _) in respHeaders)
+            {
+                w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
+            }
+
+            w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
+            StringBuilder ctorArgs = new();
+            ctorArgs.Append($"{statusExpr}, default, {contentTypeExpr}, streamWriter: static (jsonStreamWriter, context, cancellationToken) => (({streamWriterDelegateName})context!)(new {streamTypeName}(jsonStreamWriter), cancellationToken), streamWriterContext: writer");
+            foreach (var (_, _, fieldName, _) in respHeaders)
+            {
+                ctorArgs.Append($", {fieldName}: {fieldName}");
+            }
+
+            w.WriteLine($"public static {structName} {methodName}({commonParams}) => new({ctorArgs});");
+            w.WriteLine();
+            w.WriteLine($"/// <typeparam name=\"TContext\">The callback context type.</typeparam>");
+            if (isDefault)
+            {
+                w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+            }
+
+            w.WriteLine($"/// <param name=\"context\">The callback context.</param>");
+            w.WriteLine($"/// <param name=\"writer\">The callback that appends items to the <see cref=\"{streamTypeName}\"/>.</param>");
+            foreach (var (header, _, fieldName, _) in respHeaders)
+            {
+                w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
+            }
+
+            w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
+            StringBuilder contextCtorArgs = new();
+            contextCtorArgs.Append($"{statusExpr}, default, {contentTypeExpr}, streamWriter: static (jsonStreamWriter, context, cancellationToken) =>");
+            w.WriteLine($"public static {structName} {methodName}<TContext>({contextParams}) => new({contextCtorArgs}");
+            w.PushIndent();
+            w.WriteLine("{");
+            w.PushIndent();
+            w.WriteLine($"var wrapper = ({streamWriterDelegateName}Context<TContext>)context!;");
+            w.WriteLine($"return wrapper.Writer(new {streamTypeName}(jsonStreamWriter), wrapper.Context, cancellationToken);");
+            w.PopIndent();
+            w.WriteLine("},");
+            w.Write($"streamWriterContext: new {streamWriterDelegateName}Context<TContext>(context, writer)");
+            foreach (var (_, _, fieldName, _) in respHeaders)
+            {
+                w.Write($", {fieldName}: {fieldName}");
+            }
+
+            w.WriteLine(");");
+            w.PopIndent();
         }
     }
 
@@ -7077,6 +7413,7 @@ public sealed class OpenApi32CodeGenerator
                 string paramsName = $"{op.MethodName}Params";
                 string resultName = $"{op.MethodName}Result";
                 bool hasBody = op.RequestBody is not null;
+                bool opHasStreamingResponses = op.Responses.Any(r => GetStreamingContent(r).Count > 0);
 
                 w.WriteLine();
 
@@ -7288,7 +7625,31 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine();
                 }
 
-                w.WriteLine("if (!result.Body.IsUndefined())");
+                if (opHasStreamingResponses)
+                {
+                    w.WriteLine("if (result.HasStreamingBody)");
+                    w.OpenBrace();
+                    w.WriteLine("context.Response.ContentType = result.ContentType!;");
+                    w.WriteLine("Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);");
+                    w.WriteLine("try");
+                    w.OpenBrace();
+                    w.WriteLine("JsonStreamWriter streamWriter = new(context.Response.BodyWriter, writer, result.ContentType!);");
+                    w.WriteLine("await result.WriteStreamAsync(streamWriter, context.RequestAborted).ConfigureAwait(false);");
+                    w.CloseBrace();
+                    w.WriteLine("finally");
+                    w.OpenBrace();
+                    w.WriteLine("workspace.ReturnWriter(writer);");
+                    w.CloseBrace();
+                    w.WriteLine();
+                    w.WriteLine("await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);");
+                    w.CloseBrace();
+                    w.WriteLine("else if (!result.Body.IsUndefined())");
+                }
+                else
+                {
+                    w.WriteLine("if (!result.Body.IsUndefined())");
+                }
+
                 w.OpenBrace();
                 w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
                 w.WriteLine("Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);");

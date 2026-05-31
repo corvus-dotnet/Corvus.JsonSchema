@@ -48,7 +48,7 @@ public readonly struct ListPetsResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="xNext">The value for the <c>x-next</c> response header.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status 200.</returns>
-    public static ListPetsResult Ok(Petstore.Server.Pets.Source body, JsonWorkspace workspace, Petstore.Server.JsonString xNext = default) => new(200, Petstore.Server.Pets.CreateBuilder(workspace, body, 0).RootElement, "application/json", xNext: xNext);
+    public static ListPetsResult Ok(Petstore.Server.Pets.Source body, JsonWorkspace workspace, Petstore.Server.JsonString xNext = default) => new(200, Petstore.Server.Pets.CreateBuilder(workspace, body, 30).RootElement, "application/json", xNext: xNext);
 
     /// <summary>
     /// Creates a default error result.
@@ -57,7 +57,7 @@ public readonly struct ListPetsResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status default.</returns>
-    public static ListPetsResult Default(int statusCode, Petstore.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.Server.Error.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static ListPetsResult Default(int statusCode, Petstore.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

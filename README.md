@@ -22,6 +22,7 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 - **JSON Patch, Merge Patch & Diff** — RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff with zero-allocation operations on `JsonElement`.
 - **JSON Canonicalization** — RFC 8785 JSON Canonicalization Scheme (JCS) for deterministic serialization. Zero heap allocation.
 - **[YAML](#yaml)** — High-performance YAML 1.2 to JSON converter with 100% yaml-test-suite conformance. Zero-allocation `ref struct` tokenizer.
+- **[TOON](#toon)** — Bidirectional TOON (Token-Oriented Object Notation) conversion for compact JSON-shaped LLM prompts, with Corvus and System.Text.Json packages.
 
 ## Quick Start
 
@@ -110,6 +111,8 @@ Most applications need `Corvus.Text.Json` plus either the source generator or th
 | JSON Patch | **Corvus.Text.Json.Patch** | RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff. |
 | YAML | **Corvus.Text.Json.Yaml** | YAML 1.2 to JSON converter with Corvus document model integration. |
 | YAML | **Corvus.Yaml.SystemTextJson** | YAML 1.2 to JSON converter using only System.Text.Json. |
+| TOON | **Corvus.Text.Json.Toon** | TOON to JSON and JSON to TOON converter with Corvus document model integration. |
+| TOON | **Corvus.Toon.SystemTextJson** | TOON to JSON and JSON to TOON converter using only System.Text.Json. |
 
 ### Install
 
@@ -171,6 +174,7 @@ Then open http://localhost:5000.
 - [JSON Patch, Merge Patch & Diff](docs/JsonPatch.md)
 - [JSON Canonicalization (RFC 8785)](docs/JsonCanonicalization.md)
 - [YAML to JSON Converter](docs/Yaml.md)
+- [TOON Converter](docs/Toon.md)
 - [Migrating from V4](docs/MigratingFromV4ToV5.md)
 
 ## Building
@@ -336,6 +340,16 @@ Console.WriteLine(doc.RootElement.GetProperty("name").GetString()); // "Alice"
 ```
 
 See [YAML documentation](docs/Yaml.md) for the full API, configuration options, and supported YAML features. **[Try the YAML Playground](docs/playground-yaml/)** to convert between YAML and JSON in your browser.
+
+## TOON
+
+TOON (Token-Oriented Object Notation) is a compact text representation for JSON-shaped data, especially useful at LLM prompt boundaries. It keeps the JSON data model while reducing repeated punctuation and object member names; uniform arrays of objects can be represented as table-style rows.
+
+- **Bidirectional conversion** — convert TOON to JSON, JSON to TOON, TOON to parsed documents, and JSON elements to TOON.
+- **Two packages**: `Corvus.Text.Json.Toon` (full Corvus integration) and `Corvus.Toon.SystemTextJson` (System.Text.Json only).
+- **UTF-8-first APIs** — write JSON or TOON directly to caller-provided UTF-8 buffers for hot paths and streaming boundaries.
+
+See [TOON documentation](docs/Toon.md) for the full API, configuration options, examples, and benchmarks. **[Try the TOON Playground](docs/playground-toon/)** to convert between TOON and JSON in your browser.
 
 ## Supported platforms
 

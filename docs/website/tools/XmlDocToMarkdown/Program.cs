@@ -395,8 +395,9 @@ if (File.Exists(pdbPath))
     if (!string.IsNullOrEmpty(repoRoot) && !string.IsNullOrEmpty(repoUrl))
     {
         Console.WriteLine($"  Repo URL: {repoUrl}");
-        Console.WriteLine($"  Branch: {branch}");
-        sourceResolver = new SourceLinkResolver(pdbPath, Path.GetFullPath(assemblyPaths[0]), repoUrl, branch, repoRoot);
+        string sourceRef = Environment.GetEnvironmentVariable("GITHUB_SHA") ?? branch;
+        Console.WriteLine($"  Source ref: {sourceRef}");
+        sourceResolver = new SourceLinkResolver(pdbPath, Path.GetFullPath(assemblyPaths[0]), repoUrl, sourceRef, repoRoot);
         sourceResolver.Build();
     }
     else
