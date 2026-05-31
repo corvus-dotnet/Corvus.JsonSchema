@@ -436,6 +436,7 @@
 <pre><code class="language-csharp">using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Petstore.Client;
+using Petstore.Client.Models;
 
 HttpClient httpClient = new() { BaseAddress = new Uri(&quot;https://petstore.example.com/v1&quot;) };
 await using HttpClientTransport transport = new(httpClient, disposeClient: true);

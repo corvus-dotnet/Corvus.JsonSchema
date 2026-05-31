@@ -340,6 +340,7 @@ dotnet add package Corvus.Text.Json.AsyncApi.AzureServiceBus
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 // InMemoryMessageTransport for testing; in production, use NatsMessageTransport,
 // KafkaMessageTransport, etc. — the API is identical.
@@ -371,6 +372,7 @@ Console.WriteLine($&quot;Payload: {Encoding.UTF8.GetString(msg.PayloadBytes)}&qu
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -457,6 +459,21 @@ await consumer.StopAsync();
 </table>
 <h3 id="both-mode-both-the-default">Both (<code>--mode both</code>, the default)</h3>
 <p>Generates producers for <code>send</code> operations and consumers for <code>receive</code> operations in a single pass.</p>
+<h3 id="namespace-layout">Namespace Layout</h3>
+<p>The generator places request/response infrastructure (producers, consumers, handler interfaces, message types) in the <strong>root namespace</strong> you specify, and JSON Schema model types in a <code>.Models</code> sub-namespace:</p>
+<pre><code>Streetlights.Client/              ← root namespace (--rootNamespace)
+├── TurnOnProducer                ← producer class
+├── ReceiveLightMeasurementConsumer  ← consumer class
+├── IReceiveLightMeasurementHandler  ← handler interface
+├── TurnOnTurnOnOffMessage        ← message type
+└── Models/                       ← model sub-namespace
+    ├── TurnOnOffPayload          ← JSON Schema model
+    └── LightMeasuredPayload      ← JSON Schema model
+</code></pre>
+<p>Consumer code typically imports both namespaces:</p>
+<pre><code class="language-csharp">using Streetlights.Client;         // producers, consumers, handlers
+using Streetlights.Client.Models;  // payload model types
+</code></pre>
 <h2 id="generated-code-architecture">Generated Code Architecture</h2>
 <h3 id="producer-flow">Producer Flow</h3>
 <pre><code>Your Code → Producer.PublishAsync(payload, channelParams...)
@@ -905,6 +922,7 @@ using Azure.Identity;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -967,6 +985,7 @@ TokenCredential deviceCode = new DeviceCodeCredential(
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -990,6 +1009,7 @@ await producer.PublishTurnOnOffAsync(
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -1008,6 +1028,7 @@ await producer.PublishTurnOnOffAsync(
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 LightMeasuredHandler handler = new();
@@ -1031,6 +1052,7 @@ internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 LightMeasuredHandler handler = new();
@@ -1060,6 +1082,7 @@ internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -1083,6 +1106,7 @@ using System.Security.Cryptography.X509Certificates;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -1104,6 +1128,7 @@ TurnOnProducer producer = new(transport, authProvider: auth);
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -1131,6 +1156,7 @@ await producer.PublishTurnOnOffAsync(
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 

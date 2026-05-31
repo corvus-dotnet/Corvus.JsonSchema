@@ -332,6 +332,7 @@ dotnet tool install Corvus.Json.Cli
 <pre><code class="language-csharp">using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Petstore.Client;
+using Petstore.Client.Models;
 
 using HttpClient httpClient = new() { BaseAddress = new Uri(&quot;https://petstore.example.com/v1&quot;) };
 await using HttpClientTransport transport = new(httpClient);
@@ -365,6 +366,7 @@ response.MatchResult(
 <p>Wire up with ASP.NET Core minimal APIs:</p>
 <pre><code class="language-csharp">using Corvus.Text.Json;
 using Petstore.Server;
+using Petstore.Server.Models;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 WebApplication app = builder.Build();
@@ -421,7 +423,7 @@ app.Run();
 <td>Parses response body into typed models; <code>MatchResult</code> for exhaustive status code handling</td>
 </tr>
 <tr>
-<td><strong>Model types</strong></td>
+<td><strong>Model types</strong> (in <code>.Models</code> sub-namespace)</td>
 <td>Strongly-typed JSON Schema models with validation, zero-allocation access, and builder patterns</td>
 </tr>
 <tr>
@@ -456,11 +458,35 @@ app.Run();
 <td>Factory methods for each response status code with typed body builders</td>
 </tr>
 <tr>
-<td><strong>Model types</strong></td>
+<td><strong>Model types</strong> (in <code>.Models</code> sub-namespace)</td>
 <td>Same models as client generation</td>
 </tr>
 </tbody>
 </table>
+<h3 id="namespace-layout">Namespace Layout</h3>
+<p>The generator places types into two namespaces to avoid name collisions:</p>
+<table>
+<thead>
+<tr>
+<th>Namespace</th>
+<th>Contains</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{rootNamespace}</code></td>
+<td>Client/server classes, request, response, params, result types</td>
+<td><code>Petstore.Client.ApiPetsClient</code>, <code>Petstore.Client.ListPetsResponse</code></td>
+</tr>
+<tr>
+<td><code>{rootNamespace}.Models</code></td>
+<td>JSON Schema model types (from inline schemas and <code>#/components/schemas</code>)</td>
+<td><code>Petstore.Client.Models.Pet</code>, <code>Petstore.Client.Models.Error</code></td>
+</tr>
+</tbody>
+</table>
+<p>Model types are generated into a <code>Models/</code> subdirectory of the output path and use the <code>.Models</code> sub-namespace. This prevents collisions when a schema name (e.g., <code>CreateUserRequest</code>) matches a generated request type name.</p>
 <h2 id="generated-code-architecture">Generated Code Architecture</h2>
 <h3 id="client-flow">Client Flow</h3>
 <pre><code>Your Code → Client.MethodAsync(params...)
