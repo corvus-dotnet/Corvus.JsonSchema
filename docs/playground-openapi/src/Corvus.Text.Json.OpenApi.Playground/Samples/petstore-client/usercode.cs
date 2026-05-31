@@ -3,6 +3,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Playground;
+using Playground.Models;
 
 // ── Setting up the client ────────────────────────────────────────────────────
 HttpClient httpClient = new(new PlaygroundHttpMessageHandler()) { BaseAddress = new Uri("https://petstore.example.com/v1") };

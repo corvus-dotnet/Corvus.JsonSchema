@@ -4,6 +4,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Playground;
+using Playground.Models;
 
 // This example demonstrates the full publish → transport → consume pipeline
 // using InMemoryMessageTransport for testing without a real broker.

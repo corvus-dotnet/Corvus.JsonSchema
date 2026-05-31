@@ -3,6 +3,7 @@ using System.Text;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Playground;
+using Playground.Models;
 
 // ── Setting up the transport ─────────────────────────────────────────────────
 // In production, you would use a real transport (NATS, Kafka, AMQP, etc.).
