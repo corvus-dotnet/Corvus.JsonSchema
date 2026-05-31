@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="Demonstrates a complete AsyncAPI workflow with producer and consumer components using `InMemoryMessageTransport` for testing." />
+    <meta name="description" content="Demonstrates a complete AsyncAPI workflow with generated producer and consumer components using `InMemoryMessageTransport` for testing." />
     <meta name="keywords" content="recipe, JSON Schema, C#, async, api, end, ToString" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="Demonstrates a complete AsyncAPI workflow with producer and consumer components using `InMemoryMessageTransport` for testing." />
+    <meta name="twitter:description" content="Demonstrates a complete AsyncAPI workflow with generated producer and consumer components using `InMemoryMessageTransport` for testing." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Async Api End To End - Corvus.Text.Json Examples" />
     <meta property="article:tag" content="recipe" />
@@ -17,7 +17,7 @@
     <meta property="article:tag" content="api" />
     <meta property="article:tag" content="end" />
     <meta property="article:tag" content="ToString" />
-    <meta property="og:description" content="Demonstrates a complete AsyncAPI workflow with producer and consumer components using `InMemoryMessageTransport` for testing." />
+    <meta property="og:description" content="Demonstrates a complete AsyncAPI workflow with generated producer and consumer components using `InMemoryMessageTransport` for testing." />
     <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
     <meta property="og:title" content="Async Api End To End - Corvus.Text.Json Examples" />
     <meta property="og:type" content="website" />
@@ -159,6 +159,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -289,6 +292,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -307,7 +313,7 @@
                         <span class="card__tag">end</span>
                         <span class="card__tag">ToString</span>
                 </div>
-<p>Demonstrates a complete AsyncAPI workflow with producer and consumer components using <code>InMemoryMessageTransport</code> for testing.</p>
+<p>Demonstrates a complete AsyncAPI workflow with generated producer and consumer components using <code>InMemoryMessageTransport</code> for testing.</p>
 <h2 id="what-youll-learn">What You'll Learn</h2>
 <table>
 <thead>
@@ -331,7 +337,7 @@
 <tr>
 <td>Testing without a broker</td>
 <td><code>InMemoryMessageTransport</code></td>
-<td>Fast, reliable tests with automatic message routing</td>
+<td>Fast, reliable tests for producer capture and broker-style delivery</td>
 </tr>
 <tr>
 <td>Schema validation</td>
@@ -341,28 +347,28 @@
 </tbody>
 </table>
 <h2 id="the-pattern">The Pattern</h2>
-<p><code>InMemoryMessageTransport</code> simulates a real message broker:</p>
+<p><code>InMemoryMessageTransport</code> lets a test exercise both sides of an AsyncAPI application without Kafka, NATS, MQTT, or another broker:</p>
 <ol>
-<li><strong>Subscribe</strong> — consumer registers a handler for a channel</li>
-<li><strong>Publish</strong> — producer sends a message to a channel</li>
-<li><strong>Auto-deliver</strong> — transport automatically delivers to matching subscribers</li>
-<li><strong>Validate</strong> — schema validation happens before delivery</li>
+<li><strong>Start the consumer</strong> - the generated consumer subscribes and forwards valid messages to your handler.</li>
+<li><strong>Publish with the generated producer</strong> - the generated producer validates, serializes, resolves channel parameters, and writes to the transport.</li>
+<li><strong>Deliver broker input</strong> - <code>DeliverAsync&lt;T&gt;()</code> simulates raw bytes arriving from a real broker for a subscribed consumer channel.</li>
+<li><strong>Validate before handling</strong> - schema validation runs before your handler sees the typed payload.</li>
 </ol>
-<p>This matches how real brokers (Kafka, NATS, MQTT) work: publish to a channel, and all subscribers receive it.</p>
+<p>The command producer and measurement consumer are intentionally different operations. The producer sends a command to a streetlight (<code>...lamp-42.turn.on</code>). The consumer receives telemetry from a streetlight (<code>...{streetlightId}.lighting.measured</code>). In a real deployment, the telemetry would come from the streetlight or a gateway, not from the command producer. The recipe uses <code>DeliverAsync</code> to simulate the broker delivering that incoming telemetry.</p>
 <h2 id="quick-start">Quick Start</h2>
 <pre><code class="language-bash">cd docs/ExampleRecipes/038-AsyncApiEndToEnd
 dotnet run
 </code></pre>
 <p><strong>Output:</strong></p>
-<pre><code>Command published. Transport captured: 1 messages
-  [Handler] Received: lumens=1024, sentAt=2026-05-25T12:00:00+00:00
-Measurement published and delivered, handler received: 1
+<pre><code>Published command; measurement handler received: 0
+  [Handler] lumens=1024, sentAt=2026-05-25T12:00:00+00:00
+Delivered sensor reading; measurement handler received: 1
 Last measurement: 1024 lumens
-Validation prevented invalid publish: ...
-After invalid attempt: handler still has 1 valid messages
+After bad data: handler still has 1 valid message(s)
 
 Transport state:
-  Published messages: 2
+  Published messages: 1
+  Dead-lettered: 1
 Consumer stopped. End-to-end demo complete.
 </code></pre>
 <h2 id="step-by-step-walkthrough">Step-by-Step Walkthrough</h2>
@@ -398,47 +404,54 @@ await consumer.StartAsync();
 }
 </code></pre>
 <h3 id="publish-messages">3. Publish messages</h3>
-<pre><code class="language-csharp">// Publish to the subscribed channel
-await transport.PublishAsync(
-    channelUtf8: Encoding.UTF8.GetBytes(&quot;smartylighting.streetlights.1.0.action.lamp-42.lighting.measured&quot;),
-    payload: new LightMeasuredPayload.Source((ref LightMeasuredPayload.Builder b) =&gt;
+<pre><code class="language-csharp">TurnOnProducer producer = new(transport, ValidationMode.Basic);
+
+await producer.PublishTurnOnOffAsync(
+    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
     {
-        b.Create(lumens: 1024, sentAt: DateTimeOffset.UtcNow);
-    }));
+        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
+    }),
+    streetlightId: &quot;lamp-42&quot;);
 </code></pre>
-<p>The transport:</p>
+<p>The generated producer:</p>
 <ol>
 <li>Serializes the payload to JSON</li>
-<li>Adds it to <code>PublishedMessages</code> (for test assertions)</li>
-<li><strong>Automatically delivers</strong> to the consumer's subscription</li>
-<li>Consumer validates the schema</li>
-<li>Handler receives the typed payload</li>
+<li>Validates the payload before publishing</li>
+<li>Resolves <code>{streetlightId}</code> to the concrete command channel</li>
+<li>Adds the message to <code>PublishedMessages</code> for assertions</li>
 </ol>
-<h3 id="schema-validation-protects-you">4. Schema validation protects you</h3>
-<pre><code class="language-csharp">// This throws InvalidOperationException before publishing
-await transport.PublishAsync(
-    channelUtf8: Encoding.UTF8.GetBytes(&quot;smartylighting.streetlights.1.0.action.lamp-42.lighting.measured&quot;),
-    payload: new LightMeasuredPayload.Source((ref LightMeasuredPayload.Builder b) =&gt;
-    {
-        b.Create(lumens: -5, sentAt: DateTimeOffset.UtcNow); // ❌ lumens must be &gt;= 0
-    }));
+<p>This command is outbound. It is not delivered to the measurement consumer because that consumer is subscribed to the telemetry channel, not the command channel.</p>
+<h3 id="deliver-telemetry-from-the-broker">4. Deliver telemetry from the broker</h3>
+<pre><code class="language-csharp">ReadOnlyMemory&lt;byte&gt; sensorReading =
+    &quot;&quot;&quot;{&quot;lumens&quot;:1024,&quot;sentAt&quot;:&quot;2026-05-25T12:00:00Z&quot;}&quot;&quot;&quot;u8.ToArray();
+
+await transport.DeliverAsync&lt;LightMeasuredPayload&gt;(
+    &quot;smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured&quot;,
+    sensorReading);
 </code></pre>
-<p>Invalid data never reaches the transport or your handler — it's caught at build time.</p>
+<p><code>DeliverAsync&lt;T&gt;()</code> simulates the broker delivering raw JSON bytes to the subscribed consumer. This is the right model for incoming telemetry: the consumer did not create the message, it receives bytes from the broker and lets generated code parse, validate, and dispatch to the handler.</p>
+<p>The generated consumer currently subscribes using the AsyncAPI channel template key. A real broker topic would normally contain a concrete value such as <code>smartylighting.streetlights.1.0.action.lamp-42.lighting.measured</code>; this in-memory sample uses the template string because the testing transport matches subscriptions by exact string.</p>
+<h3 id="schema-validation-protects-consumers">5. Schema validation protects consumers</h3>
+<pre><code class="language-csharp">ReadOnlyMemory&lt;byte&gt; badData =
+    &quot;&quot;&quot;{&quot;lumens&quot;:-5,&quot;sentAt&quot;:&quot;2026-05-25T12:01:00Z&quot;}&quot;&quot;&quot;u8.ToArray();
+
+await transport.DeliverAsync&lt;LightMeasuredPayload&gt;(
+    &quot;smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured&quot;,
+    badData);
+</code></pre>
+<p>Invalid data is parsed and routed to the generated consumer, but schema validation fails before your handler is called. The default error policy dead-letters the message, so <code>handler.ReceivedCount</code> stays unchanged and <code>transport.DeadLetteredMessages.Count</code> increases.</p>
 <h2 id="testing-patterns">Testing Patterns</h2>
 <h3 id="pattern-1-verify-message-delivery">Pattern 1: Verify message delivery</h3>
 <pre><code class="language-csharp">int beforeCount = handler.ReceivedCount;
 
-await transport.PublishAsync(...);
+await transport.DeliverAsync&lt;LightMeasuredPayload&gt;(...);
 
 Assert.AreEqual(beforeCount + 1, handler.ReceivedCount);
 Assert.AreEqual(1024, handler.LastLumens);
 </code></pre>
 <h3 id="pattern-2-verify-published-message-capture">Pattern 2: Verify published message capture</h3>
-<pre><code class="language-csharp">int beforeCount = transport.PublishedMessages.Count;
+<pre><code class="language-csharp">await producer.PublishTurnOnOffAsync(...);
 
-await producer.PublishTurnOnOffAsync(...);
-
-Assert.AreEqual(beforeCount + 1, transport.PublishedMessages.Count);
 PublishedMessage msg = transport.PublishedMessages[^1];
 Assert.AreEqual(&quot;smartylighting.streetlights.1.0.action.lamp-42.turn.on&quot;, msg.Channel);
 </code></pre>

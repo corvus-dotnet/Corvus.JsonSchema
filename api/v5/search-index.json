@@ -382,7 +382,7 @@
     "Title": "JsonMarshal",
     "Description": "An unsafe class that provides a set of methods to access the underlying data representations of JSON types.",
     "Keywords": "JsonMarshal class Corvus.Runtime.InteropServices",
-    "Body": "An unsafe class that provides a set of methods to access the underlying data representations of JSON types.\nGetRawUtf8PropertyName: Gets a [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) view over the raw JSON data of the given `JsonProperty` name.\nGetRawUtf8Value: Gets a [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) view over the raw JSON data of the given JSON element."
+    "Body": "An unsafe class that provides a set of methods to access the underlying data representations of JSON types.\nGetRawUtf8PropertyName: Gets a [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) view over the raw JSON data of the given `JsonProperty` name.\nIsPropertyNameEscaped: Gets a value indicating whether the raw UTF-8 property name contains escaped JSON text.\nIsValueEscaped: Gets a value indicating whether the raw UTF-8 value contains escaped JSON text.\nGetRawUtf8Value: Gets a [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) view over the raw JSON data of the given JSON element."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-runtime-interopservices-jsonmarshal.getrawutf8propertyname.html",
@@ -390,6 +390,20 @@
     "Description": "Gets a [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) view over the raw JSON data of the given `JsonProperty` name.",
     "Keywords": "JsonMarshal GetRawUtf8PropertyName method Corvus.Runtime.InteropServices",
     "Body": "Gets a [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) view over the raw JSON data of the given `JsonProperty` name."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-runtime-interopservices-jsonmarshal.ispropertynameescaped.html",
+    "Title": "JsonMarshal.IsPropertyNameEscaped",
+    "Description": "Gets a value indicating whether the raw UTF-8 property name contains escaped JSON text.",
+    "Keywords": "JsonMarshal IsPropertyNameEscaped method Corvus.Runtime.InteropServices",
+    "Body": "Gets a value indicating whether the raw UTF-8 property name contains escaped JSON text."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-runtime-interopservices-jsonmarshal.isvalueescaped.html",
+    "Title": "JsonMarshal.IsValueEscaped",
+    "Description": "Gets a value indicating whether the raw UTF-8 value contains escaped JSON text.",
+    "Keywords": "JsonMarshal IsValueEscaped method Corvus.Runtime.InteropServices",
+    "Body": "Gets a value indicating whether the raw UTF-8 value contains escaped JSON text."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-runtime-interopservices-jsonmarshal.getrawutf8value.html",

@@ -154,6 +154,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -283,6 +286,9 @@
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
                             </li>
                 </ul>
             </div>
@@ -1327,6 +1333,11 @@ private static void ValidateHeaders&lt;THeaders&gt;(THeaders headers, Validation
 <td>Native key-value map</td>
 </tr>
 <tr>
+<td>Azure Service Bus</td>
+<td>Application properties (<code>ServiceBusMessage.ApplicationProperties</code>)</td>
+<td>User metadata map; values are encoded as strings and reconstructed as typed JSON headers for generated handlers</td>
+</tr>
+<tr>
 <td>NATS</td>
 <td>Base64-encoded JSON in message headers</td>
 <td>Protocol has limited header support</td>
@@ -1344,6 +1355,7 @@ private static void ValidateHeaders&lt;THeaders&gt;(THeaders headers, Validation
 </tbody>
 </table>
 <p>The transport layer handles encoding/decoding transparently — your handler always receives the typed struct regardless of the wire format.</p>
+<p>Azure Service Bus deserves one extra note because it has both broker system properties and user application properties. Corvus writes AsyncAPI message headers to <code>ApplicationProperties</code>; it does not use them for broker control fields such as <code>CorrelationId</code>, <code>ReplyTo</code>, or <code>SessionId</code>. Request/reply support uses those native Service Bus fields separately, while your AsyncAPI header schema remains in the application-property map and is passed to generated handlers as the same typed header struct used by other transports.</p>
 <h2 id="requestreply">Request/Reply</h2>
 <p>AsyncAPI operations can model request/reply patterns. The generator produces methods that send a request and await a correlated response:</p>
 <pre><code class="language-csharp">// Generated request/reply method

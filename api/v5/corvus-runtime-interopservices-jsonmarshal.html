@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Runtime.InteropServices<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/src/Corvus.Text.Json/Corvus/Runtime/InteropServices/JsonMarshal.cs#L17">JsonMarshal.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/d12081e86e627e501e9ce4716c01a20d4ccc0c41/src/Corvus.Text.Json/Corvus/Runtime/InteropServices/JsonMarshal.cs#L17">JsonMarshal.cs</a></p>
 <p>An unsafe class that provides a set of methods to access the underlying data representations of JSON types.</p>
 <pre><code class="language-csharp">public static class JsonMarshal
 </code></pre>
@@ -120,6 +120,14 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-runtime-interopservices-jsonmarshal.getrawutf8value.html#getrawutf8value-t">GetRawUtf8Value(T)</a> <code>static</code></td>
 <td>Gets a <a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan</code></a> view over the raw JSON data of the given JSON element.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-runtime-interopservices-jsonmarshal.ispropertynameescaped.html#ispropertynameescaped-jsonproperty-t">IsPropertyNameEscaped(JsonProperty&lt;T&gt;)</a> <code>static</code></td>
+<td>Gets a value indicating whether the raw UTF-8 property name contains escaped JSON text.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-runtime-interopservices-jsonmarshal.isvalueescaped.html#isvalueescaped-t">IsValueEscaped(T)</a> <code>static</code></td>
+<td>Gets a value indicating whether the raw UTF-8 value contains escaped JSON text.</td>
 </tr>
 </tbody>
 </table>

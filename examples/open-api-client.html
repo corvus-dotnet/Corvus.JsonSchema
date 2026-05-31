@@ -165,6 +165,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -294,6 +297,9 @@
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
                             </li>
                 </ul>
             </div>
@@ -521,7 +527,7 @@ showResponse.MatchResult(
         limit: 200,
         validationMode: ValidationMode.Detailed);
 }
-catch (InvalidOperationException ex)
+catch (ArgumentException ex)
 {
     // Detailed mode includes JSON Schema validation output showing exactly
     // which constraint was violated
@@ -551,6 +557,11 @@ catch (InvalidOperationException ex)
 </tr>
 </tbody>
 </table>
+<h2 id="running">Running</h2>
+<pre><code class="language-bash">dotnet build
+dotnet run
+</code></pre>
+<p>The runnable recipe uses an in-memory <code>IApiTransport</code> so it produces deterministic console output without needing the fictional <code>petstore.example.com</code> host to exist. In production code, replace the demo transport with <code>HttpClientTransport</code> configured with your API server's base address, as shown in the transport setup section above.</p>
 <h2 id="best-practices">Best Practices</h2>
 <ol>
 <li><strong>Use <code>u8</code> literals for scalar parameters</strong> — <code>petId: &quot;abc&quot;u8</code>, <code>name: &quot;Fido&quot;u8</code>. The implicit conversions handle encoding and avoid UTF-16→UTF-8 transcoding.</li>

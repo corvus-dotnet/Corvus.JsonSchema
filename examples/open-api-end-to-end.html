@@ -158,6 +158,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -288,6 +291,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -342,15 +348,19 @@ generated from the same OpenAPI specification.</p>
 <td>Scenario 5</td>
 </tr>
 <tr>
+<td>Streaming SSE and NDJSON responses</td>
+<td>Scenario 6</td>
+</tr>
+<tr>
 <td>ProblemDetails error responses for validation failures</td>
-<td>Scenarios 6–7</td>
+<td>Scenarios 7–8</td>
 </tr>
 </tbody>
 </table>
 <h2 id="running-it">Running It</h2>
 <pre><code class="language-bash">dotnet run --project docs/ExampleRecipes/033-OpenApiEndToEnd
 </code></pre>
-<p>The application starts an ASP.NET server on a random port, runs 7 scenarios, and exits.</p>
+<p>The application starts an ASP.NET server on a random port, runs 8 scenarios, writes the generated client/server round-trip to the console, and exits. The launch profile is configured not to open a browser because the sample is a console-driven walkthrough.</p>
 <h2 id="how-it-works">How It Works</h2>
 <h3 id="server-side">Server Side</h3>
 <p>The code generator produces:</p>
@@ -393,6 +403,7 @@ response.MatchResult&lt;string&gt;(
 <li><strong>Show pet by ID</strong> — GET with path parameter → 200</li>
 <li><strong>Show non-existent pet</strong> — GET → 404 typed error</li>
 <li><strong>Submit adoption</strong> — POST with <code>application/x-www-form-urlencoded</code> → 202 JSON response</li>
+<li><strong>Streaming responses</strong> — Generated client reads SSE chat chunks and NDJSON activity events</li>
 <li><strong>Missing required header</strong> — Raw GET without <code>x-request-id</code> → 400 ProblemDetails</li>
 <li><strong>Missing cookie</strong> — Raw POST without <code>session_token</code> → 400 ProblemDetails</li>
 </ol>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
     <meta name="description" content="Demonstrates the server-side implementation of the extended Petstore API, showing how the generated code handles parameter deserialization, cookie extraction, streaming, file uploads, and form-encoded bodies &#x2014; so your handler logic stays focused on business rules." />
-    <meta name="keywords" content="recipe, JSON Schema, C#, open, api, advanced, server" />
+    <meta name="keywords" content="recipe, JSON Schema, C#, open, api, advanced, server, type" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:description" content="Demonstrates the server-side implementation of the extended Petstore API, showing how the generated code handles parameter deserialization, cookie extraction, streaming, file uploads, and form-encoded bodies &#x2014; so your handler logic stays focused on business rules." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
@@ -17,6 +17,7 @@
     <meta property="article:tag" content="api" />
     <meta property="article:tag" content="advanced" />
     <meta property="article:tag" content="server" />
+    <meta property="article:tag" content="type" />
     <meta property="og:description" content="Demonstrates the server-side implementation of the extended Petstore API, showing how the generated code handles parameter deserialization, cookie extraction, streaming, file uploads, and form-encoded bodies &#x2014; so your handler logic stays focused on business rules." />
     <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
     <meta property="og:title" content="Open Api Advanced Server - Corvus.Text.Json Examples" />
@@ -159,6 +160,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -289,6 +293,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -306,6 +313,7 @@
                         <span class="card__tag">api</span>
                         <span class="card__tag">advanced</span>
                         <span class="card__tag">server</span>
+                        <span class="card__tag">type</span>
                 </div>
 <p>Demonstrates the server-side implementation of the extended Petstore API, showing how the generated code handles parameter deserialization, cookie extraction, streaming, file uploads, and form-encoded bodies — so your handler logic stays focused on business rules.</p>
 <h2 id="what-this-demonstrates">What This Demonstrates</h2>
@@ -448,13 +456,22 @@ string token = (string)parameters.SessionToken;
     xNext: JsonString.ParseValue(&quot;\&quot;/pets?offset=10\&quot;&quot;));  // x-next: /pets?offset=10
 </code></pre>
 <h3 id="streaming-responses-ssendjson">Streaming Responses (SSE/NDJSON)</h3>
-<p>For streaming operations, return <code>Ok()</code> to signal success. The endpoint registration handles the streaming envelope:</p>
-<pre><code class="language-csharp">// SSE: generated code writes &quot;data: {...}\n\n&quot; for each item
-return ValueTask.FromResult(StartVetChatResult.Ok());
+<p>For streaming operations, return <code>Ok(...)</code> with a generated writer callback. The endpoint registration keeps the HTTP response body open while the callback runs and applies the media framing for each item:</p>
+<pre><code class="language-csharp">// SSE: generated code writes &quot;data: {...}\n\n&quot; for each appended item
+return new(StartVetChatResult.Ok(static async (stream, cancellationToken) =&gt;
+{
+    ChatChunk chunk = ChatChunk.ParseValue(&quot;&quot;&quot;{&quot;delta&quot;:&quot;Hello!&quot;,&quot;done&quot;:true}&quot;&quot;&quot;u8);
+    await stream.AppendChatChunk(chunk, cancellationToken);
+}));
 
-// NDJSON: generated code writes &quot;{...}\n&quot; for each item
-return ValueTask.FromResult(StreamPetActivityResult.Ok());
+// NDJSON: generated code writes &quot;{...}\n&quot; for each appended item
+return new(StreamPetActivityResult.Ok(static async (stream, cancellationToken) =&gt;
+{
+    ActivityEvent activity = ActivityEvent.ParseValue(&quot;&quot;&quot;{&quot;eventId&quot;:&quot;evt-1&quot;,&quot;timestamp&quot;:&quot;2026-05-30T18:00:00Z&quot;,&quot;type&quot;:&quot;check-in&quot;,&quot;description&quot;:&quot;Bella checked in&quot;}&quot;&quot;&quot;u8);
+    await stream.AppendActivityEvent(activity, cancellationToken);
+}));
 </code></pre>
+<p>SSE completion is implicit. When the callback returns, the generated endpoint flushes and completes the HTTP response; no <code>End*</code> call is generated or needed.</p>
 <h3 id="form-body-access">Form Body Access</h3>
 <p>URL-encoded form fields are typed properties on the body:</p>
 <pre><code class="language-csharp">PostAdoptionApplyBody body = parameters.Body;
@@ -465,7 +482,11 @@ string email = (string)body.Email;                  // URL-decoded
 <pre><code class="language-bash">dotnet build
 dotnet run
 </code></pre>
-<p>The server starts on the default Kestrel port. Pair with <a href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">031-OpenApiAdvancedClient</a> to exercise the full flow.</p>
+<p>The launch profile does not open a browser. The server writes its actual base URL, sample <code>curl</code> commands, request summaries, and handler activity to the console. Pair with <a href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">031-OpenApiAdvancedClient</a> to exercise the full flow.</p>
+<p>For deep-object query examples such as <code>filter[status]=available</code>, pass <code>--globoff</code> to curl:</p>
+<pre><code class="language-bash">curl --globoff &quot;http://localhost:50516/pets?limit=2&amp;filter[status]=available&amp;tags=dog&quot; -H &quot;x-request-id: demo-request-1&quot;
+</code></pre>
+<p>curl treats square brackets in URLs as range/glob syntax unless globbing is disabled. Encoding the brackets as <code>filter%5Bstatus%5D=available</code> is also valid, but <code>--globoff</code> keeps the OpenAPI deep-object parameter shape visible in the sample.</p>
 <h2 id="project-structure">Project Structure</h2>
 <pre><code>032-OpenApiAdvancedServer/
 ├── petstore-extended.json         # Same spec as the client recipe
@@ -515,7 +536,7 @@ dotnet run
 <tr>
 <td>Streaming</td>
 <td><code>await foreach</code> over <code>EnumerateOkItems()</code></td>
-<td>Return <code>Ok()</code>, infrastructure streams</td>
+<td>Return <code>Ok(...)</code> with a writer callback</td>
 </tr>
 <tr>
 <td>Auth</td>

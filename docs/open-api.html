@@ -154,6 +154,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -283,6 +286,9 @@
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
                             </li>
                 </ul>
             </div>
@@ -642,24 +648,24 @@ JsonString nextPage = response.XNextHeader;
 </code></pre>
 <h2 id="streaming">Streaming</h2>
 <h3 id="server-sent-events-sse">Server-Sent Events (SSE)</h3>
-<p>For <code>text/event-stream</code> responses, the generated code wraps each item you yield in the SSE envelope format (<code>data: {...}\n\n</code>):</p>
-<pre><code class="language-csharp">public async ValueTask&lt;StartVetChatResult&gt; HandleStartVetChatAsync(
+<p>For server <code>text/event-stream</code> responses with an OpenAPI <code>itemSchema</code>, the generated result factory accepts a writer callback. Append typed items to the generated stream; the endpoint registration serializes each item as compact JSON and applies the SSE frame (<code>data: {...}\n\n</code>):</p>
+<pre><code class="language-csharp">public ValueTask&lt;StartVetChatResult&gt; HandleStartVetChatAsync(
     StartVetChatParams parameters, JsonWorkspace workspace, CancellationToken ct)
 {
-    return StartVetChatResult.Ok(StreamChunks(ct));
-
-    async IAsyncEnumerable&lt;ChatChunk.Source&gt; StreamChunks(
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken token)
+    return new(StartVetChatResult.Ok(static async (stream, cancellationToken) =&gt;
     {
-        yield return new ChatChunk.Source((ref ChatChunk.Builder b) =&gt;
-            b.Create(delta: &quot;Hello! &quot;u8, done: false));
+        ChatChunk greeting = ChatChunk.ParseValue(
+            &quot;&quot;&quot;{&quot;delta&quot;:&quot;Hello! &quot;,&quot;done&quot;:false}&quot;&quot;&quot;u8);
+        await stream.AppendChatChunk(greeting, cancellationToken);
 
-        yield return new ChatChunk.Source((ref ChatChunk.Builder b) =&gt;
-            b.Create(delta: &quot;How can I help?&quot;u8, done: true));
-    }
+        ChatChunk answer = ChatChunk.ParseValue(
+            &quot;&quot;&quot;{&quot;delta&quot;:&quot;How can I help?&quot;,&quot;done&quot;:true}&quot;&quot;&quot;u8);
+        await stream.AppendChatChunk(answer, cancellationToken);
+    }));
 }
 </code></pre>
-<p>On the client, streaming responses expose <code>IAsyncEnumerable</code>:</p>
+<p>There is no generated <code>End*</code> method. For SSE, stream completion is the HTTP response completing: when the callback returns, the endpoint flushes the response and closes the response body. If the client disconnects, the callback receives cancellation through the provided token.</p>
+<p>On the client, streaming responses expose <code>IAsyncEnumerable</code>. Use <code>EnumerateOkItems()</code> when you only need JSON payloads, or <code>EnumerateOkSseItems()</code> when you also need SSE metadata such as <code>id</code> or <code>event</code>:</p>
 <pre><code class="language-csharp">await foreach (ParsedJsonDocument&lt;ChatChunk&gt; chunk in chatResponse.EnumerateOkItems())
 {
     using (chunk)
@@ -669,12 +675,24 @@ JsonString nextPage = response.XNextHeader;
 }
 </code></pre>
 <h3 id="ndjson-newline-delimited-json">NDJSON (Newline-Delimited JSON)</h3>
-<p>For <code>application/x-ndjson</code> responses, each item is written as a JSON line:</p>
+<p>For server <code>application/x-ndjson</code> responses, the same generated writer callback is used. Each appended item is written as one JSON line (<code>{...}\n</code>):</p>
+<pre><code class="language-csharp">public ValueTask&lt;StreamPetActivityResult&gt; HandleStreamPetActivityAsync(
+    StreamPetActivityParams parameters, JsonWorkspace workspace, CancellationToken ct)
+{
+    return new(StreamPetActivityResult.Ok(static async (stream, cancellationToken) =&gt;
+    {
+        ActivityEvent checkIn = ActivityEvent.ParseValue(
+            &quot;&quot;&quot;{&quot;eventId&quot;:&quot;evt-1&quot;,&quot;timestamp&quot;:&quot;2026-05-30T18:00:00Z&quot;,&quot;type&quot;:&quot;check-in&quot;,&quot;description&quot;:&quot;Bella checked in&quot;}&quot;&quot;&quot;u8);
+        await stream.AppendActivityEvent(checkIn, cancellationToken);
+    }));
+}
+</code></pre>
+<p>The client reads each JSON line as a pooled typed document:</p>
 <pre><code class="language-csharp">await foreach (ParsedJsonDocument&lt;ActivityEvent&gt; doc in activityResponse.EnumerateOkItems())
 {
     using (doc)
     {
-        Console.WriteLine($&quot;[{doc.RootElement.Timestamp}] {doc.RootElement.Event}&quot;);
+        Console.WriteLine($&quot;[{doc.RootElement.Timestamp}] {doc.RootElement.Type}: {doc.RootElement.Description}&quot;);
     }
 }
 </code></pre>
