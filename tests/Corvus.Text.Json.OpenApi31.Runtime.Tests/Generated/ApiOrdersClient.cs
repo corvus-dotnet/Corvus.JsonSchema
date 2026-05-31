@@ -37,14 +37,14 @@ public sealed class ApiOrdersClient : IApiOrdersClient
     /// <param name="xTraceId">The X-Trace-Id parameter.</param>
     /// <param name="fields">The fields parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetOrderResponse> GetOrderAsync(CanonTests31.Client.JsonUuid.Source orderId, CanonTests31.Client.JsonString.Source xTraceId = default, CanonTests31.Client.JsonString.Source fields = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetOrderResponse> GetOrderAsync(CanonTests31.Client.Models.JsonUuid.Source orderId, CanonTests31.Client.Models.JsonString.Source xTraceId = default, CanonTests31.Client.Models.JsonString.Source fields = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests31.Client.JsonUuid OrderIdValue = CanonTests31.Client.JsonUuid.CreateBuilder(workspace, orderId, 30).RootElement;
+        CanonTests31.Client.Models.JsonUuid OrderIdValue = CanonTests31.Client.Models.JsonUuid.CreateBuilder(workspace, orderId, 30).RootElement;
         GetOrderRequest request = new(OrderIdValue)
         {
-            XTraceId = xTraceId.IsUndefined ? default : (CanonTests31.Client.JsonString)CanonTests31.Client.JsonString.CreateBuilder(workspace, xTraceId, 30).RootElement,
-            Fields = fields.IsUndefined ? default : (CanonTests31.Client.JsonString)CanonTests31.Client.JsonString.CreateBuilder(workspace, fields, 30).RootElement,
+            XTraceId = xTraceId.IsUndefined ? default : (CanonTests31.Client.Models.JsonString)CanonTests31.Client.Models.JsonString.CreateBuilder(workspace, xTraceId, 30).RootElement,
+            Fields = fields.IsUndefined ? default : (CanonTests31.Client.Models.JsonString)CanonTests31.Client.Models.JsonString.CreateBuilder(workspace, fields, 30).RootElement,
         }
         ;
 
@@ -60,12 +60,12 @@ public sealed class ApiOrdersClient : IApiOrdersClient
     /// <param name="xTraceId">The X-Trace-Id parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<UpdateOrderResponse> UpdateOrderAsync(CanonTests31.Client.JsonUuid.Source orderId, CanonTests31.Client.JsonUuid.Source xTraceId, CanonTests31.Client.PutOrdersByOrderIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<UpdateOrderResponse> UpdateOrderAsync(CanonTests31.Client.Models.JsonUuid.Source orderId, CanonTests31.Client.Models.JsonUuid.Source xTraceId, CanonTests31.Client.Models.PutOrdersByOrderIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests31.Client.PutOrdersByOrderIdBody bodyValue = CanonTests31.Client.PutOrdersByOrderIdBody.CreateBuilder(workspace, body, 30).RootElement;
-        CanonTests31.Client.JsonUuid OrderIdValue = CanonTests31.Client.JsonUuid.CreateBuilder(workspace, orderId, 30).RootElement;
-        CanonTests31.Client.JsonUuid XTraceIdValue = CanonTests31.Client.JsonUuid.CreateBuilder(workspace, xTraceId, 30).RootElement;
+        CanonTests31.Client.Models.PutOrdersByOrderIdBody bodyValue = CanonTests31.Client.Models.PutOrdersByOrderIdBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests31.Client.Models.JsonUuid OrderIdValue = CanonTests31.Client.Models.JsonUuid.CreateBuilder(workspace, orderId, 30).RootElement;
+        CanonTests31.Client.Models.JsonUuid XTraceIdValue = CanonTests31.Client.Models.JsonUuid.CreateBuilder(workspace, xTraceId, 30).RootElement;
         UpdateOrderRequest request = new(OrderIdValue, XTraceIdValue);
 
         request.Validate(validationMode);
@@ -83,7 +83,7 @@ public sealed class ApiOrdersClient : IApiOrdersClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyAsyncCore<UpdateOrderRequest, CanonTests31.Client.PutOrdersByOrderIdBody, UpdateOrderResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendWithBodyAsyncCore<UpdateOrderRequest, CanonTests31.Client.Models.PutOrdersByOrderIdBody, UpdateOrderResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>

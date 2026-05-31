@@ -31,7 +31,7 @@ public struct SearchWithQuerystringResponse : IApiResponse<SearchWithQuerystring
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests32.Client.GetSearchWithQuerystringOk OkBody { get; private set; }
+    public CanonTests32.Client.Models.GetSearchWithQuerystringOk OkBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<SearchWithQuerystringResponse> CreateAsync(
@@ -49,7 +49,7 @@ public struct SearchWithQuerystringResponse : IApiResponse<SearchWithQuerystring
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<CanonTests32.Client.GetSearchWithQuerystringOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<CanonTests32.Client.Models.GetSearchWithQuerystringOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -63,7 +63,7 @@ public struct SearchWithQuerystringResponse : IApiResponse<SearchWithQuerystring
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests32.Client.GetSearchWithQuerystringOk result)
+    public bool TryGetOk(out CanonTests32.Client.Models.GetSearchWithQuerystringOk result)
     {
         if (this.StatusCode == 200)
         {
@@ -84,7 +84,7 @@ public struct SearchWithQuerystringResponse : IApiResponse<SearchWithQuerystring
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests32.Client.GetSearchWithQuerystringOk, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.GetSearchWithQuerystringOk, TResult> matchOk,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -107,7 +107,7 @@ public struct SearchWithQuerystringResponse : IApiResponse<SearchWithQuerystring
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests32.Client.GetSearchWithQuerystringOk, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.GetSearchWithQuerystringOk, TContext, TResult> matchOk,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

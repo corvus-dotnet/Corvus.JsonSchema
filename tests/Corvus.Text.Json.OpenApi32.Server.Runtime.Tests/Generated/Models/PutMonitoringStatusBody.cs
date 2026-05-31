@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct PutMonitoringStatusBody
     /// <summary>
     /// Gets the (optional) <c>enabled</c> property.
     /// </summary>
-    public CanonTests32.Server.JsonBoolean Enabled
+    public CanonTests32.Server.Models.JsonBoolean Enabled
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnabledUtf8, out CanonTests32.Server.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnabledUtf8, out CanonTests32.Server.Models.JsonBoolean value))
             {
                 return value;
             }

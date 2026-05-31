@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Streetlights.Client;
+namespace Streetlights.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -34,14 +34,14 @@ public readonly partial struct TurnOnOffPayload
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Streetlights.Client.TurnOnOffPayload.WhetherToTurnOnOrOffTheLight.JsonSchema.PushChildContextUnescaped(
+                Streetlights.Client.Models.TurnOnOffPayload.WhetherToTurnOnOrOffTheLight.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.CommandUtf8,
                     evaluationPath: CommandSchemaEvaluationPath);
 
-            Streetlights.Client.TurnOnOffPayload.WhetherToTurnOnOrOffTheLight.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Streetlights.Client.Models.TurnOnOffPayload.WhetherToTurnOnOrOffTheLight.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
@@ -49,32 +49,32 @@ public readonly partial struct TurnOnOffPayload
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Streetlights.Client.JsonDateTime.JsonSchema.PushChildContextUnescaped(
+                Streetlights.Client.Models.JsonDateTime.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.SentAtUtf8,
                     evaluationPath: SentAtSchemaEvaluationPath);
 
-            Streetlights.Client.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            Streetlights.Client.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static PropertySchemaMatchers<Streetlights.Client.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        private static PropertySchemaMatchers<Streetlights.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<Streetlights.Client.PropertiesValidationHandler_NamedPropertyValidator>([
+            return new PropertySchemaMatchers<Streetlights.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.CommandUtf8, MatchCommand),
                 (static () => JsonPropertyNames.SentAtUtf8, MatchSentAt),
             ]);
         }
 
-        private static PropertySchemaMatchers<Streetlights.Client.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<Streetlights.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out Streetlights.Client.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out Streetlights.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -131,7 +131,7 @@ public readonly partial struct TurnOnOffPayload
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Streetlights.Client.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Streetlights.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
                         validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
 

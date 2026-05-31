@@ -6,6 +6,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using EventSubscription.CallbackClient;
+using EventSubscription.CallbackClient.Models;
 
 // The callback-client generator also emits ApiCallbacksClient for the per-subscription
 // callback operation. This sample uses the top-level webhook sender to demonstrate the

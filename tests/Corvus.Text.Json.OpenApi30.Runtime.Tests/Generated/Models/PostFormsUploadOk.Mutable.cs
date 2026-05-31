@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PostFormsUploadOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests30.Client.JsonBoolean.Mutable Uploaded
+        public CanonTests30.Client.Models.JsonBoolean.Mutable Uploaded
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UploadedUtf8, out CanonTests30.Client.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UploadedUtf8, out CanonTests30.Client.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -324,7 +324,7 @@ public readonly partial struct PostFormsUploadOk
         /// Set the <c>uploaded</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUploaded(in CanonTests30.Client.JsonBoolean.Source value)
+        public void SetUploaded(in CanonTests30.Client.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -692,7 +692,7 @@ public readonly partial struct PostFormsUploadOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests30.Client.PostFormsUploadOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests30.Client.Models.PostFormsUploadOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostFormsUploadOk instance) => new(JsonElement.From(instance));
 
@@ -813,7 +813,7 @@ public readonly partial struct PostFormsUploadOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests30.Client.PostFormsUploadOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests30.Client.Models.PostFormsUploadOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -927,7 +927,7 @@ public readonly partial struct PostFormsUploadOk
         /// <summary>
         /// Creates an instance of a <see cref="PostFormsUploadOk"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests30.Client.JsonBoolean.Source uploaded)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests30.Client.Models.JsonBoolean.Source uploaded)
         {
             uploaded.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Uploaded, ref builder);
         }
@@ -935,7 +935,7 @@ public readonly partial struct PostFormsUploadOk
         /// <summary>
         /// Creates an instance of a <see cref="PostFormsUploadOk"/>.
         /// </summary>
-        public void Create(in CanonTests30.Client.JsonBoolean.Source uploaded)
+        public void Create(in CanonTests30.Client.Models.JsonBoolean.Source uploaded)
         {
             Create(ref _builder, uploaded);
         }
@@ -1096,7 +1096,7 @@ public readonly partial struct PostFormsUploadOk
     /// <param name="uploaded">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.JsonBoolean.Source uploaded, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.Models.JsonBoolean.Source uploaded, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

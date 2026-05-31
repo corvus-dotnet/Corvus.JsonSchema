@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -274,11 +274,11 @@ public readonly partial struct Schema3
             /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
             /// </remarks>
-            public CanonTests32.Server.JsonString.Mutable Action
+            public CanonTests32.Server.Models.JsonString.Mutable Action
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActionUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActionUtf8, out CanonTests32.Server.Models.JsonString.Mutable value))
                     {
                         return value;
                     }
@@ -290,11 +290,11 @@ public readonly partial struct Schema3
             /// <summary>
             /// Gets the (optional) <c>target</c> property.
             /// </summary>
-            public CanonTests32.Server.JsonString.Mutable Target
+            public CanonTests32.Server.Models.JsonString.Mutable Target
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TargetUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TargetUtf8, out CanonTests32.Server.Models.JsonString.Mutable value))
                     {
                         return value;
                     }
@@ -346,7 +346,7 @@ public readonly partial struct Schema3
             /// Set the <c>action</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAction(in CanonTests32.Server.JsonString.Source value)
+            public void SetAction(in CanonTests32.Server.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -377,7 +377,7 @@ public readonly partial struct Schema3
             /// Set the <c>target</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTarget(in CanonTests32.Server.JsonString.Source value)
+            public void SetTarget(in CanonTests32.Server.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -759,7 +759,7 @@ public readonly partial struct Schema3
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(CanonTests32.Server.Schema3.RequiredAction.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(CanonTests32.Server.Models.Schema3.RequiredAction.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(RequiredAction instance) => new(JsonElement.From(instance));
 
@@ -880,7 +880,7 @@ public readonly partial struct Schema3
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, CanonTests32.Server.Schema3.RequiredAction.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, CanonTests32.Server.Models.Schema3.RequiredAction.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -996,8 +996,8 @@ public readonly partial struct Schema3
             /// </summary>
             internal static void Create(
                 ref ComplexValueBuilder builder,
-                in CanonTests32.Server.JsonString.Source action,
-                in CanonTests32.Server.JsonString.Source target = default)
+                in CanonTests32.Server.Models.JsonString.Source action,
+                in CanonTests32.Server.Models.JsonString.Source target = default)
             {
                 action.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Action, ref builder);
                 target.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Target, ref builder);
@@ -1006,7 +1006,7 @@ public readonly partial struct Schema3
             /// <summary>
             /// Creates an instance of a <see cref="RequiredAction"/>.
             /// </summary>
-            public void Create(in CanonTests32.Server.JsonString.Source action, in CanonTests32.Server.JsonString.Source target = default)
+            public void Create(in CanonTests32.Server.Models.JsonString.Source action, in CanonTests32.Server.Models.JsonString.Source target = default)
             {
                 Create(ref _builder, action, target);
             }
@@ -1168,7 +1168,7 @@ public readonly partial struct Schema3
         /// <param name="target">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonString.Source action, in CanonTests32.Server.JsonString.Source target = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.Models.JsonString.Source action, in CanonTests32.Server.Models.JsonString.Source target = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

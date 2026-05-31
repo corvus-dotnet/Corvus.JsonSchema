@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Client;
+namespace CanonTests31.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -269,11 +269,11 @@ public readonly partial struct PostFormsEncodedContactBody
             /// <summary>
             /// Gets the (optional) <c>city</c> property.
             /// </summary>
-            public CanonTests31.Client.JsonString.Mutable City
+            public CanonTests31.Client.Models.JsonString.Mutable City
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CityUtf8, out CanonTests31.Client.JsonString.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CityUtf8, out CanonTests31.Client.Models.JsonString.Mutable value))
                     {
                         return value;
                     }
@@ -285,11 +285,11 @@ public readonly partial struct PostFormsEncodedContactBody
             /// <summary>
             /// Gets the (optional) <c>street</c> property.
             /// </summary>
-            public CanonTests31.Client.JsonString.Mutable Street
+            public CanonTests31.Client.Models.JsonString.Mutable Street
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetUtf8, out CanonTests31.Client.JsonString.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetUtf8, out CanonTests31.Client.Models.JsonString.Mutable value))
                     {
                         return value;
                     }
@@ -341,7 +341,7 @@ public readonly partial struct PostFormsEncodedContactBody
             /// Set the <c>city</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCity(in CanonTests31.Client.JsonString.Source value)
+            public void SetCity(in CanonTests31.Client.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -386,7 +386,7 @@ public readonly partial struct PostFormsEncodedContactBody
             /// Set the <c>street</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStreet(in CanonTests31.Client.JsonString.Source value)
+            public void SetStreet(in CanonTests31.Client.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -768,7 +768,7 @@ public readonly partial struct PostFormsEncodedContactBody
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(CanonTests31.Client.PostFormsEncodedContactBody.AddressEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(CanonTests31.Client.Models.PostFormsEncodedContactBody.AddressEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(AddressEntity instance) => new(JsonElement.From(instance));
 
@@ -889,7 +889,7 @@ public readonly partial struct PostFormsEncodedContactBody
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, CanonTests31.Client.PostFormsEncodedContactBody.AddressEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, CanonTests31.Client.Models.PostFormsEncodedContactBody.AddressEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1005,8 +1005,8 @@ public readonly partial struct PostFormsEncodedContactBody
             /// </summary>
             internal static void Create(
                 ref ComplexValueBuilder builder,
-                in CanonTests31.Client.JsonString.Source city = default,
-                in CanonTests31.Client.JsonString.Source street = default)
+                in CanonTests31.Client.Models.JsonString.Source city = default,
+                in CanonTests31.Client.Models.JsonString.Source street = default)
             {
                 city.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.City, ref builder);
                 street.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Street, ref builder);
@@ -1015,7 +1015,7 @@ public readonly partial struct PostFormsEncodedContactBody
             /// <summary>
             /// Creates an instance of a <see cref="AddressEntity"/>.
             /// </summary>
-            public void Create(in CanonTests31.Client.JsonString.Source city = default, in CanonTests31.Client.JsonString.Source street = default)
+            public void Create(in CanonTests31.Client.Models.JsonString.Source city = default, in CanonTests31.Client.Models.JsonString.Source street = default)
             {
                 Create(ref _builder, city, street);
             }
@@ -1177,7 +1177,7 @@ public readonly partial struct PostFormsEncodedContactBody
         /// <param name="street">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Client.JsonString.Source city = default, in CanonTests31.Client.JsonString.Source street = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Client.Models.JsonString.Source city = default, in CanonTests31.Client.Models.JsonString.Source street = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

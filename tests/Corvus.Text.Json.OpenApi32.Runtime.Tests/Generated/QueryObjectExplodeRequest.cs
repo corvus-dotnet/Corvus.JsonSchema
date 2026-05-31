@@ -24,13 +24,13 @@ public readonly struct QueryObjectExplodeRequest : IApiRequest<QueryObjectExplod
     /// <summary>
     /// Gets the dims parameter.
     /// </summary>
-    public CanonTests32.Client.GetComplexQueryObjectExplodeDims Dims { get; init; }
+    public CanonTests32.Client.Models.GetComplexQueryObjectExplodeDims Dims { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QueryObjectExplodeRequest"/> struct.
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
-    public QueryObjectExplodeRequest(CanonTests32.Client.GetComplexQueryObjectExplodeDims dims)
+    public QueryObjectExplodeRequest(CanonTests32.Client.Models.GetComplexQueryObjectExplodeDims dims)
     {
         this.Dims = dims;
     }

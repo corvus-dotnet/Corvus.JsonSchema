@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PostFormsMultipartTypesBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonBoolean Active
+    public CanonTests32.Client.Models.JsonBoolean Active
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests32.Client.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests32.Client.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -182,11 +182,11 @@ public readonly partial struct PostFormsMultipartTypesBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonInteger Count
+    public CanonTests32.Client.Models.JsonInteger Count
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.Models.JsonInteger value))
             {
                 return value;
             }
@@ -198,11 +198,11 @@ public readonly partial struct PostFormsMultipartTypesBody
     /// <summary>
     /// Gets the (optional) <c>file</c> property.
     /// </summary>
-    public CanonTests32.Client.JsonBinary File
+    public CanonTests32.Client.Models.JsonBinary File
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests32.Client.JsonBinary value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests32.Client.Models.JsonBinary value))
             {
                 return value;
             }
@@ -214,11 +214,11 @@ public readonly partial struct PostFormsMultipartTypesBody
     /// <summary>
     /// Gets the (optional) <c>note</c> property.
     /// </summary>
-    public CanonTests32.Client.PostFormsMultipartTypesBody.NoteEntity Note
+    public CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity Note
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoteUtf8, out CanonTests32.Client.PostFormsMultipartTypesBody.NoteEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoteUtf8, out CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity value))
             {
                 return value;
             }
@@ -235,11 +235,11 @@ public readonly partial struct PostFormsMultipartTypesBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonString Title
+    public CanonTests32.Client.Models.JsonString Title
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests32.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests32.Client.Models.JsonString value))
             {
                 return value;
             }

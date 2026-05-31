@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Client;
+namespace Petstore.EndToEnd.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PostAdoptionApplyBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.EndToEnd.Client.JsonString ApplicantName
+    public Petstore.EndToEnd.Client.Models.JsonString ApplicantName
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicantNameUtf8, out Petstore.EndToEnd.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicantNameUtf8, out Petstore.EndToEnd.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -182,11 +182,11 @@ public readonly partial struct PostAdoptionApplyBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.EndToEnd.Client.JsonEmail Email
+    public Petstore.EndToEnd.Client.Models.JsonEmail Email
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out Petstore.EndToEnd.Client.JsonEmail value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out Petstore.EndToEnd.Client.Models.JsonEmail value))
             {
                 return value;
             }
@@ -198,11 +198,11 @@ public readonly partial struct PostAdoptionApplyBody
     /// <summary>
     /// Gets the (optional) <c>experience</c> property.
     /// </summary>
-    public Petstore.EndToEnd.Client.JsonString Experience
+    public Petstore.EndToEnd.Client.Models.JsonString Experience
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperienceUtf8, out Petstore.EndToEnd.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperienceUtf8, out Petstore.EndToEnd.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -214,11 +214,11 @@ public readonly partial struct PostAdoptionApplyBody
     /// <summary>
     /// Gets the (optional) <c>hasGarden</c> property.
     /// </summary>
-    public Petstore.EndToEnd.Client.JsonBoolean HasGarden
+    public Petstore.EndToEnd.Client.Models.JsonBoolean HasGarden
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HasGardenUtf8, out Petstore.EndToEnd.Client.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HasGardenUtf8, out Petstore.EndToEnd.Client.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -235,11 +235,11 @@ public readonly partial struct PostAdoptionApplyBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.EndToEnd.Client.PostAdoptionApplyBody.HousingTypeEntity HousingType
+    public Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.HousingTypeEntity HousingType
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HousingTypeUtf8, out Petstore.EndToEnd.Client.PostAdoptionApplyBody.HousingTypeEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HousingTypeUtf8, out Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.HousingTypeEntity value))
             {
                 return value;
             }
@@ -256,11 +256,11 @@ public readonly partial struct PostAdoptionApplyBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.EndToEnd.Client.JsonString PetId
+    public Petstore.EndToEnd.Client.Models.JsonString PetId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PetIdUtf8, out Petstore.EndToEnd.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PetIdUtf8, out Petstore.EndToEnd.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -272,11 +272,11 @@ public readonly partial struct PostAdoptionApplyBody
     /// <summary>
     /// Gets the (optional) <c>phone</c> property.
     /// </summary>
-    public Petstore.EndToEnd.Client.JsonString Phone
+    public Petstore.EndToEnd.Client.Models.JsonString Phone
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhoneUtf8, out Petstore.EndToEnd.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhoneUtf8, out Petstore.EndToEnd.Client.Models.JsonString value))
             {
                 return value;
             }

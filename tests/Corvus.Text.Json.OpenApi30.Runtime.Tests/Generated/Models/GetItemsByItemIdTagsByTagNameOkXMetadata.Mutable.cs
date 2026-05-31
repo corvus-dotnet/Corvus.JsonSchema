@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
         /// <summary>
         /// Gets the (optional) <c>region</c> property.
         /// </summary>
-        public CanonTests30.Client.JsonString.Mutable Region
+        public CanonTests30.Client.Models.JsonString.Mutable Region
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RegionUtf8, out CanonTests30.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RegionUtf8, out CanonTests30.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
         /// <summary>
         /// Gets the (optional) <c>version</c> property.
         /// </summary>
-        public CanonTests30.Client.JsonString.Mutable Version
+        public CanonTests30.Client.Models.JsonString.Mutable Version
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out CanonTests30.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out CanonTests30.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -335,7 +335,7 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
         /// Set the <c>region</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRegion(in CanonTests30.Client.JsonString.Source value)
+        public void SetRegion(in CanonTests30.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -380,7 +380,7 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
         /// Set the <c>version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersion(in CanonTests30.Client.JsonString.Source value)
+        public void SetVersion(in CanonTests30.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -762,7 +762,7 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests30.Client.GetItemsByItemIdTagsByTagNameOkXMetadata.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests30.Client.Models.GetItemsByItemIdTagsByTagNameOkXMetadata.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetItemsByItemIdTagsByTagNameOkXMetadata instance) => new(JsonElement.From(instance));
 
@@ -883,7 +883,7 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests30.Client.GetItemsByItemIdTagsByTagNameOkXMetadata.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests30.Client.Models.GetItemsByItemIdTagsByTagNameOkXMetadata.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -999,8 +999,8 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests30.Client.JsonString.Source region = default,
-            in CanonTests30.Client.JsonString.Source version = default)
+            in CanonTests30.Client.Models.JsonString.Source region = default,
+            in CanonTests30.Client.Models.JsonString.Source version = default)
         {
             region.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Region, ref builder);
             version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
@@ -1009,7 +1009,7 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
         /// <summary>
         /// Creates an instance of a <see cref="GetItemsByItemIdTagsByTagNameOkXMetadata"/>.
         /// </summary>
-        public void Create(in CanonTests30.Client.JsonString.Source region = default, in CanonTests30.Client.JsonString.Source version = default)
+        public void Create(in CanonTests30.Client.Models.JsonString.Source region = default, in CanonTests30.Client.Models.JsonString.Source version = default)
         {
             Create(ref _builder, region, version);
         }
@@ -1171,7 +1171,7 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
     /// <param name="version">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.JsonString.Source region = default, in CanonTests30.Client.JsonString.Source version = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.Models.JsonString.Source region = default, in CanonTests30.Client.Models.JsonString.Source version = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

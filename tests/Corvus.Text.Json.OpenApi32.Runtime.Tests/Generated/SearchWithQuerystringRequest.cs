@@ -24,13 +24,13 @@ public readonly struct SearchWithQuerystringRequest : IApiRequest<SearchWithQuer
     /// <summary>
     /// Gets the qs parameter.
     /// </summary>
-    public CanonTests32.Client.GetSearchWithQuerystringQs Qs { get; init; }
+    public CanonTests32.Client.Models.GetSearchWithQuerystringQs Qs { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SearchWithQuerystringRequest"/> struct.
     /// </summary>
     /// <param name="qs">The qs parameter.</param>
-    public SearchWithQuerystringRequest(CanonTests32.Client.GetSearchWithQuerystringQs qs)
+    public SearchWithQuerystringRequest(CanonTests32.Client.Models.GetSearchWithQuerystringQs qs)
     {
         this.Qs = qs;
     }

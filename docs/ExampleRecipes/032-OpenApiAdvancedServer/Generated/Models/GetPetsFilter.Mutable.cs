@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended.Server;
+namespace Petstore.Extended.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct GetPetsFilter
         /// <summary>
         /// Gets the (optional) <c>breed</c> property.
         /// </summary>
-        public Petstore.Extended.Server.JsonString.Mutable Breed
+        public Petstore.Extended.Server.Models.JsonString.Mutable Breed
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct GetPetsFilter
         /// <summary>
         /// Gets the (optional) <c>maxAge</c> property.
         /// </summary>
-        public Petstore.Extended.Server.JsonInteger.Mutable MaxAge
+        public Petstore.Extended.Server.Models.JsonInteger.Mutable MaxAge
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxAgeUtf8, out Petstore.Extended.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxAgeUtf8, out Petstore.Extended.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -295,11 +295,11 @@ public readonly partial struct GetPetsFilter
         /// <summary>
         /// Gets the (optional) <c>minAge</c> property.
         /// </summary>
-        public Petstore.Extended.Server.JsonInteger.Mutable MinAge
+        public Petstore.Extended.Server.Models.JsonInteger.Mutable MinAge
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MinAgeUtf8, out Petstore.Extended.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MinAgeUtf8, out Petstore.Extended.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -311,11 +311,11 @@ public readonly partial struct GetPetsFilter
         /// <summary>
         /// Gets the (optional) <c>status</c> property.
         /// </summary>
-        public Petstore.Extended.Server.GetPetsFilter.StatusEntity.Mutable Status
+        public Petstore.Extended.Server.Models.GetPetsFilter.StatusEntity.Mutable Status
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Server.GetPetsFilter.StatusEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Server.Models.GetPetsFilter.StatusEntity.Mutable value))
                 {
                     return value;
                 }
@@ -367,7 +367,7 @@ public readonly partial struct GetPetsFilter
         /// Set the <c>breed</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreed(in Petstore.Extended.Server.JsonString.Source value)
+        public void SetBreed(in Petstore.Extended.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -412,7 +412,7 @@ public readonly partial struct GetPetsFilter
         /// Set the <c>maxAge</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxAge(in Petstore.Extended.Server.JsonInteger.Source value)
+        public void SetMaxAge(in Petstore.Extended.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -457,7 +457,7 @@ public readonly partial struct GetPetsFilter
         /// Set the <c>minAge</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMinAge(in Petstore.Extended.Server.JsonInteger.Source value)
+        public void SetMinAge(in Petstore.Extended.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -502,7 +502,7 @@ public readonly partial struct GetPetsFilter
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in Petstore.Extended.Server.GetPetsFilter.StatusEntity.Source value)
+        public void SetStatus(in Petstore.Extended.Server.Models.GetPetsFilter.StatusEntity.Source value)
         {
             CheckValidInstance();
 
@@ -884,7 +884,7 @@ public readonly partial struct GetPetsFilter
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Petstore.Extended.Server.GetPetsFilter.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Petstore.Extended.Server.Models.GetPetsFilter.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetPetsFilter instance) => new(JsonElement.From(instance));
 
@@ -1005,7 +1005,7 @@ public readonly partial struct GetPetsFilter
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Petstore.Extended.Server.GetPetsFilter.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Petstore.Extended.Server.Models.GetPetsFilter.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1121,10 +1121,10 @@ public readonly partial struct GetPetsFilter
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Petstore.Extended.Server.JsonString.Source breed = default,
-            in Petstore.Extended.Server.JsonInteger.Source maxAge = default,
-            in Petstore.Extended.Server.JsonInteger.Source minAge = default,
-            in Petstore.Extended.Server.GetPetsFilter.StatusEntity.Source status = default)
+            in Petstore.Extended.Server.Models.JsonString.Source breed = default,
+            in Petstore.Extended.Server.Models.JsonInteger.Source maxAge = default,
+            in Petstore.Extended.Server.Models.JsonInteger.Source minAge = default,
+            in Petstore.Extended.Server.Models.GetPetsFilter.StatusEntity.Source status = default)
         {
             breed.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Breed, ref builder);
             maxAge.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxAge, ref builder);
@@ -1136,10 +1136,10 @@ public readonly partial struct GetPetsFilter
         /// Creates an instance of a <see cref="GetPetsFilter"/>.
         /// </summary>
         public void Create(
-            in Petstore.Extended.Server.JsonString.Source breed = default,
-            in Petstore.Extended.Server.JsonInteger.Source maxAge = default,
-            in Petstore.Extended.Server.JsonInteger.Source minAge = default,
-            in Petstore.Extended.Server.GetPetsFilter.StatusEntity.Source status = default)
+            in Petstore.Extended.Server.Models.JsonString.Source breed = default,
+            in Petstore.Extended.Server.Models.JsonInteger.Source maxAge = default,
+            in Petstore.Extended.Server.Models.JsonInteger.Source minAge = default,
+            in Petstore.Extended.Server.Models.GetPetsFilter.StatusEntity.Source status = default)
         {
             Create(ref _builder, breed, maxAge, minAge, status);
         }
@@ -1303,7 +1303,7 @@ public readonly partial struct GetPetsFilter
     /// <param name="status">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.Server.JsonString.Source breed = default, in Petstore.Extended.Server.JsonInteger.Source maxAge = default, in Petstore.Extended.Server.JsonInteger.Source minAge = default, in Petstore.Extended.Server.GetPetsFilter.StatusEntity.Source status = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.Server.Models.JsonString.Source breed = default, in Petstore.Extended.Server.Models.JsonInteger.Source maxAge = default, in Petstore.Extended.Server.Models.JsonInteger.Source minAge = default, in Petstore.Extended.Server.Models.GetPetsFilter.StatusEntity.Source status = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

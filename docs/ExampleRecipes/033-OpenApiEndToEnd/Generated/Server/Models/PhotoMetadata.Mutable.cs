@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Server;
+namespace Petstore.EndToEnd.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PhotoMetadata
         /// <summary>
         /// Gets the (optional) <c>caption</c> property.
         /// </summary>
-        public Petstore.EndToEnd.Server.JsonString.Mutable Caption
+        public Petstore.EndToEnd.Server.Models.JsonString.Mutable Caption
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaptionUtf8, out Petstore.EndToEnd.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaptionUtf8, out Petstore.EndToEnd.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct PhotoMetadata
         /// <summary>
         /// Gets the (optional) <c>isPrimary</c> property.
         /// </summary>
-        public Petstore.EndToEnd.Server.JsonBoolean.Mutable IsPrimary
+        public Petstore.EndToEnd.Server.Models.JsonBoolean.Mutable IsPrimary
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsPrimaryUtf8, out Petstore.EndToEnd.Server.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsPrimaryUtf8, out Petstore.EndToEnd.Server.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -300,11 +300,11 @@ public readonly partial struct PhotoMetadata
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.EndToEnd.Server.JsonString.Mutable PetId
+        public Petstore.EndToEnd.Server.Models.JsonString.Mutable PetId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PetIdUtf8, out Petstore.EndToEnd.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PetIdUtf8, out Petstore.EndToEnd.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -321,11 +321,11 @@ public readonly partial struct PhotoMetadata
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.EndToEnd.Server.JsonString.Mutable PhotoId
+        public Petstore.EndToEnd.Server.Models.JsonString.Mutable PhotoId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhotoIdUtf8, out Petstore.EndToEnd.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhotoIdUtf8, out Petstore.EndToEnd.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -342,11 +342,11 @@ public readonly partial struct PhotoMetadata
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.EndToEnd.Server.JsonDateTime.Mutable UploadedAt
+        public Petstore.EndToEnd.Server.Models.JsonDateTime.Mutable UploadedAt
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UploadedAtUtf8, out Petstore.EndToEnd.Server.JsonDateTime.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UploadedAtUtf8, out Petstore.EndToEnd.Server.Models.JsonDateTime.Mutable value))
                 {
                     return value;
                 }
@@ -398,7 +398,7 @@ public readonly partial struct PhotoMetadata
         /// Set the <c>caption</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCaption(in Petstore.EndToEnd.Server.JsonString.Source value)
+        public void SetCaption(in Petstore.EndToEnd.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -443,7 +443,7 @@ public readonly partial struct PhotoMetadata
         /// Set the <c>isPrimary</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsPrimary(in Petstore.EndToEnd.Server.JsonBoolean.Source value)
+        public void SetIsPrimary(in Petstore.EndToEnd.Server.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -488,7 +488,7 @@ public readonly partial struct PhotoMetadata
         /// Set the <c>petId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPetId(in Petstore.EndToEnd.Server.JsonString.Source value)
+        public void SetPetId(in Petstore.EndToEnd.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -519,7 +519,7 @@ public readonly partial struct PhotoMetadata
         /// Set the <c>photoId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPhotoId(in Petstore.EndToEnd.Server.JsonString.Source value)
+        public void SetPhotoId(in Petstore.EndToEnd.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -550,7 +550,7 @@ public readonly partial struct PhotoMetadata
         /// Set the <c>uploadedAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUploadedAt(in Petstore.EndToEnd.Server.JsonDateTime.Source value)
+        public void SetUploadedAt(in Petstore.EndToEnd.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -918,7 +918,7 @@ public readonly partial struct PhotoMetadata
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Petstore.EndToEnd.Server.PhotoMetadata.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Petstore.EndToEnd.Server.Models.PhotoMetadata.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PhotoMetadata instance) => new(JsonElement.From(instance));
 
@@ -1039,7 +1039,7 @@ public readonly partial struct PhotoMetadata
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Petstore.EndToEnd.Server.PhotoMetadata.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Petstore.EndToEnd.Server.Models.PhotoMetadata.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1155,11 +1155,11 @@ public readonly partial struct PhotoMetadata
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Petstore.EndToEnd.Server.JsonString.Source petId,
-            in Petstore.EndToEnd.Server.JsonString.Source photoId,
-            in Petstore.EndToEnd.Server.JsonDateTime.Source uploadedAt,
-            in Petstore.EndToEnd.Server.JsonString.Source caption = default,
-            in Petstore.EndToEnd.Server.JsonBoolean.Source isPrimary = default)
+            in Petstore.EndToEnd.Server.Models.JsonString.Source petId,
+            in Petstore.EndToEnd.Server.Models.JsonString.Source photoId,
+            in Petstore.EndToEnd.Server.Models.JsonDateTime.Source uploadedAt,
+            in Petstore.EndToEnd.Server.Models.JsonString.Source caption = default,
+            in Petstore.EndToEnd.Server.Models.JsonBoolean.Source isPrimary = default)
         {
             petId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PetId, ref builder);
             photoId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PhotoId, ref builder);
@@ -1172,11 +1172,11 @@ public readonly partial struct PhotoMetadata
         /// Creates an instance of a <see cref="PhotoMetadata"/>.
         /// </summary>
         public void Create(
-            in Petstore.EndToEnd.Server.JsonString.Source petId,
-            in Petstore.EndToEnd.Server.JsonString.Source photoId,
-            in Petstore.EndToEnd.Server.JsonDateTime.Source uploadedAt,
-            in Petstore.EndToEnd.Server.JsonString.Source caption = default,
-            in Petstore.EndToEnd.Server.JsonBoolean.Source isPrimary = default)
+            in Petstore.EndToEnd.Server.Models.JsonString.Source petId,
+            in Petstore.EndToEnd.Server.Models.JsonString.Source photoId,
+            in Petstore.EndToEnd.Server.Models.JsonDateTime.Source uploadedAt,
+            in Petstore.EndToEnd.Server.Models.JsonString.Source caption = default,
+            in Petstore.EndToEnd.Server.Models.JsonBoolean.Source isPrimary = default)
         {
             Create(ref _builder, petId, photoId, uploadedAt, caption, isPrimary);
         }
@@ -1341,7 +1341,7 @@ public readonly partial struct PhotoMetadata
     /// <param name="isPrimary">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.EndToEnd.Server.JsonString.Source petId, in Petstore.EndToEnd.Server.JsonString.Source photoId, in Petstore.EndToEnd.Server.JsonDateTime.Source uploadedAt, in Petstore.EndToEnd.Server.JsonString.Source caption = default, in Petstore.EndToEnd.Server.JsonBoolean.Source isPrimary = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.EndToEnd.Server.Models.JsonString.Source petId, in Petstore.EndToEnd.Server.Models.JsonString.Source photoId, in Petstore.EndToEnd.Server.Models.JsonDateTime.Source uploadedAt, in Petstore.EndToEnd.Server.Models.JsonString.Source caption = default, in Petstore.EndToEnd.Server.Models.JsonBoolean.Source isPrimary = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

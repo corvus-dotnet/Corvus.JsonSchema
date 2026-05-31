@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Client;
+namespace CanonTests31.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PostFormsContactOk
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests31.Client.JsonBoolean Received
+    public CanonTests31.Client.Models.JsonBoolean Received
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReceivedUtf8, out CanonTests31.Client.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReceivedUtf8, out CanonTests31.Client.Models.JsonBoolean value))
             {
                 return value;
             }

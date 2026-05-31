@@ -1,6 +1,6 @@
 {
   "excludeChannels": [],
-  "generatedAt": "2026-05-26T06:36:35.1074471\u002B00:00",
+  "generatedAt": "2026-05-31T08:36:34.5581591\u002B00:00",
   "generatedFiles": [
     "TurnOnProducer.cs",
     "IReceiveLightMeasurementHandler.cs",
@@ -24,7 +24,7 @@
     "Models\\TurnOnOffPayload.WhetherToTurnOnOrOffTheLight.JsonSchema.cs",
     "Models\\Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B1648fe139dead700ab54a31a73d7653f5a90ac78",
+  "generatorVersion": "1.0.0\u002Bd12081e86e627e501e9ce4716c01a20d4ccc0c41",
   "includeChannels": [],
   "mode": "both",
   "rootNamespace": "Streetlights.Client",

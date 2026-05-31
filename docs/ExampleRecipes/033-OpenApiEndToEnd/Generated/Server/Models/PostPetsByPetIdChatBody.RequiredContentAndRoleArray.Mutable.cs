@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Server;
+namespace Petstore.EndToEnd.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -174,12 +174,12 @@ public readonly partial struct PostPetsByPetIdChatBody
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Mutable this[int index]
+            public Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Mutable>(_idx, index);
                 }
             }
 
@@ -197,10 +197,10 @@ public readonly partial struct PostPetsByPetIdChatBody
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Mutable> EnumerateArray()
+            public ArrayEnumerator<Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -329,7 +329,7 @@ public readonly partial struct PostPetsByPetIdChatBody
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
+            public void SetItem(int itemIndex, in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
             {
                 CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct PostPetsByPetIdChatBody
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
+            public void InsertItem(int itemIndex, in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct PostPetsByPetIdChatBody
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
+            public void AddItem(in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -572,10 +572,10 @@ public readonly partial struct PostPetsByPetIdChatBody
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole item)
+            public bool Remove(in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(this, in item))
                 {
                     return false;
                 }
@@ -609,10 +609,10 @@ public readonly partial struct PostPetsByPetIdChatBody
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole> predicate)
+            public void RemoveWhere(JsonPredicate<Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -629,7 +629,7 @@ public readonly partial struct PostPetsByPetIdChatBody
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole oldItem, in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source newItem)
+            public bool Replace(in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole oldItem, in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source newItem)
             {
                 CheckValidInstance();
 
@@ -638,11 +638,11 @@ public readonly partial struct PostPetsByPetIdChatBody
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole current = enumerator.Current;
+                    Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -739,7 +739,7 @@ public readonly partial struct PostPetsByPetIdChatBody
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(RequiredContentAndRoleArray instance) => new(JsonElement.From(instance));
 
@@ -860,7 +860,7 @@ public readonly partial struct PostPetsByPetIdChatBody
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -974,7 +974,7 @@ public readonly partial struct PostPetsByPetIdChatBody
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
+            public void AddItem(in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
             {
                 value.AddAsItem(ref _builder);
             }

@@ -23,7 +23,7 @@ public readonly struct UpdateItemFormParams
     /// <summary>
     /// Gets the 'itemId' path parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString ItemId { get; init; }
+    public CanonTests32.Server.Models.JsonString ItemId { get; init; }
 
     /// <summary>
     /// Gets the request body.

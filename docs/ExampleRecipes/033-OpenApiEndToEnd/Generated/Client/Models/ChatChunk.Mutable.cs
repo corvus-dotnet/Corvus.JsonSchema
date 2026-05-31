@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Client;
+namespace Petstore.EndToEnd.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct ChatChunk
         /// <summary>
         /// Gets the (optional) <c>delta</c> property.
         /// </summary>
-        public Petstore.EndToEnd.Client.JsonString.Mutable Delta
+        public Petstore.EndToEnd.Client.Models.JsonString.Mutable Delta
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeltaUtf8, out Petstore.EndToEnd.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeltaUtf8, out Petstore.EndToEnd.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct ChatChunk
         /// <summary>
         /// Gets the (optional) <c>done</c> property.
         /// </summary>
-        public Petstore.EndToEnd.Client.JsonBoolean.Mutable Done
+        public Petstore.EndToEnd.Client.Models.JsonBoolean.Mutable Done
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DoneUtf8, out Petstore.EndToEnd.Client.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DoneUtf8, out Petstore.EndToEnd.Client.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -300,11 +300,11 @@ public readonly partial struct ChatChunk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.EndToEnd.Client.JsonString.Mutable Id
+        public Petstore.EndToEnd.Client.Models.JsonString.Mutable Id
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.EndToEnd.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.EndToEnd.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -356,7 +356,7 @@ public readonly partial struct ChatChunk
         /// Set the <c>delta</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDelta(in Petstore.EndToEnd.Client.JsonString.Source value)
+        public void SetDelta(in Petstore.EndToEnd.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -401,7 +401,7 @@ public readonly partial struct ChatChunk
         /// Set the <c>done</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDone(in Petstore.EndToEnd.Client.JsonBoolean.Source value)
+        public void SetDone(in Petstore.EndToEnd.Client.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -446,7 +446,7 @@ public readonly partial struct ChatChunk
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Petstore.EndToEnd.Client.JsonString.Source value)
+        public void SetId(in Petstore.EndToEnd.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -814,7 +814,7 @@ public readonly partial struct ChatChunk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Petstore.EndToEnd.Client.ChatChunk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Petstore.EndToEnd.Client.Models.ChatChunk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(ChatChunk instance) => new(JsonElement.From(instance));
 
@@ -935,7 +935,7 @@ public readonly partial struct ChatChunk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Petstore.EndToEnd.Client.ChatChunk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Petstore.EndToEnd.Client.Models.ChatChunk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1051,9 +1051,9 @@ public readonly partial struct ChatChunk
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Petstore.EndToEnd.Client.JsonString.Source id,
-            in Petstore.EndToEnd.Client.JsonString.Source delta = default,
-            in Petstore.EndToEnd.Client.JsonBoolean.Source done = default)
+            in Petstore.EndToEnd.Client.Models.JsonString.Source id,
+            in Petstore.EndToEnd.Client.Models.JsonString.Source delta = default,
+            in Petstore.EndToEnd.Client.Models.JsonBoolean.Source done = default)
         {
             id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
             delta.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Delta, ref builder);
@@ -1064,9 +1064,9 @@ public readonly partial struct ChatChunk
         /// Creates an instance of a <see cref="ChatChunk"/>.
         /// </summary>
         public void Create(
-            in Petstore.EndToEnd.Client.JsonString.Source id,
-            in Petstore.EndToEnd.Client.JsonString.Source delta = default,
-            in Petstore.EndToEnd.Client.JsonBoolean.Source done = default)
+            in Petstore.EndToEnd.Client.Models.JsonString.Source id,
+            in Petstore.EndToEnd.Client.Models.JsonString.Source delta = default,
+            in Petstore.EndToEnd.Client.Models.JsonBoolean.Source done = default)
         {
             Create(ref _builder, id, delta, done);
         }
@@ -1229,7 +1229,7 @@ public readonly partial struct ChatChunk
     /// <param name="done">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.EndToEnd.Client.JsonString.Source id, in Petstore.EndToEnd.Client.JsonString.Source delta = default, in Petstore.EndToEnd.Client.JsonBoolean.Source done = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.EndToEnd.Client.Models.JsonString.Source id, in Petstore.EndToEnd.Client.Models.JsonString.Source delta = default, in Petstore.EndToEnd.Client.Models.JsonBoolean.Source done = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

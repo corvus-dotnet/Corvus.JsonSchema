@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -174,12 +174,12 @@ public readonly partial struct Schema2
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Mutable this[int index]
+            public CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Mutable>(_idx, index);
                 }
             }
 
@@ -197,10 +197,10 @@ public readonly partial struct Schema2
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Mutable> EnumerateArray()
+            public ArrayEnumerator<CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -329,7 +329,7 @@ public readonly partial struct Schema2
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source value)
+            public void SetItem(int itemIndex, in CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source value)
             {
                 CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct Schema2
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source value)
+            public void InsertItem(int itemIndex, in CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct Schema2
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source value)
+            public void AddItem(in CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -572,10 +572,10 @@ public readonly partial struct Schema2
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle item)
+            public bool Remove(in CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle>(this, in item))
                 {
                     return false;
                 }
@@ -609,10 +609,10 @@ public readonly partial struct Schema2
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle> predicate)
+            public void RemoveWhere(JsonPredicate<CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -629,7 +629,7 @@ public readonly partial struct Schema2
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle oldItem, in CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source newItem)
+            public bool Replace(in CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle oldItem, in CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source newItem)
             {
                 CheckValidInstance();
 
@@ -638,11 +638,11 @@ public readonly partial struct Schema2
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle current = enumerator.Current;
+                    CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -739,7 +739,7 @@ public readonly partial struct Schema2
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(CanonTests32.Client.Schema2.RequiredIdAndTitleArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(RequiredIdAndTitleArray instance) => new(JsonElement.From(instance));
 
@@ -860,7 +860,7 @@ public readonly partial struct Schema2
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, CanonTests32.Client.Schema2.RequiredIdAndTitleArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -974,7 +974,7 @@ public readonly partial struct Schema2
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in CanonTests32.Client.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source value)
+            public void AddItem(in CanonTests32.Client.Models.Schema2.RequiredIdAndTitleArray.RequiredIdAndTitle.Source value)
             {
                 value.AddAsItem(ref _builder);
             }

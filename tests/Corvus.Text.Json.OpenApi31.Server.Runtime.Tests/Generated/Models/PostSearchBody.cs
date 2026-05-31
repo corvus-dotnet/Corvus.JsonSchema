@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct PostSearchBody
     /// <summary>
     /// Gets the (optional) <c>limit</c> property.
     /// </summary>
-    public CanonTests31.Server.JsonInteger Limit
+    public CanonTests31.Server.Models.JsonInteger Limit
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LimitUtf8, out CanonTests31.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LimitUtf8, out CanonTests31.Server.Models.JsonInteger value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct PostSearchBody
     /// <summary>
     /// Gets the (optional) <c>query</c> property.
     /// </summary>
-    public CanonTests31.Server.JsonString Query
+    public CanonTests31.Server.Models.JsonString Query
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QueryUtf8, out CanonTests31.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QueryUtf8, out CanonTests31.Server.Models.JsonString value))
             {
                 return value;
             }

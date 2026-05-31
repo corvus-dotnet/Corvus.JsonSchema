@@ -298,7 +298,7 @@ public class CodeGenerationService
         await Task.Yield();
 
         CSharpLanguageProvider.Options options = new(
-            rootNamespace,
+            rootNamespace + ".Models",
             useOptionalNameHeuristics: true,
             alwaysAssertFormat: true,
             disabledNamingHeuristics: [.. DefaultDisabledNamingHeuristics],

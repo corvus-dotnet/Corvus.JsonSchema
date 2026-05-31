@@ -23,5 +23,5 @@ public readonly struct GetResourceVersionParams
     /// <summary>
     /// Gets the 'version' query parameter.
     /// </summary>
-    public CanonTests32.Server.JsonInteger Version { get; init; }
+    public CanonTests32.Server.Models.JsonInteger Version { get; init; }
 }

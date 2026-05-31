@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -162,11 +162,11 @@ public readonly partial struct PostItemsBody
         /// <summary>
         /// Gets the (optional) <c>source</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonString SourceValue
+        public CanonTests31.Server.Models.JsonString SourceValue
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourceValueUtf8, out CanonTests31.Server.JsonString value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourceValueUtf8, out CanonTests31.Server.Models.JsonString value))
                 {
                     return value;
                 }

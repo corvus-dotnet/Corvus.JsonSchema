@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct Pet
     /// <summary>
     /// Gets the (optional) <c>age</c> property.
     /// </summary>
-    public Petstore.Extended.JsonInteger Age
+    public Petstore.Extended.Models.JsonInteger Age
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AgeUtf8, out Petstore.Extended.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AgeUtf8, out Petstore.Extended.Models.JsonInteger value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct Pet
     /// <summary>
     /// Gets the (optional) <c>breed</c> property.
     /// </summary>
-    public Petstore.Extended.JsonString Breed
+    public Petstore.Extended.Models.JsonString Breed
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.Models.JsonString value))
             {
                 return value;
             }
@@ -193,11 +193,11 @@ public readonly partial struct Pet
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.JsonInt64 Id
+    public Petstore.Extended.Models.JsonInt64 Id
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.Extended.JsonInt64 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.Extended.Models.JsonInt64 value))
             {
                 return value;
             }
@@ -214,11 +214,11 @@ public readonly partial struct Pet
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.JsonString Name
+    public Petstore.Extended.Models.JsonString Name
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Extended.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Extended.Models.JsonString value))
             {
                 return value;
             }
@@ -230,11 +230,11 @@ public readonly partial struct Pet
     /// <summary>
     /// Gets the (optional) <c>photoIds</c> property.
     /// </summary>
-    public Petstore.Extended.Pet.JsonStringArray PhotoIds
+    public Petstore.Extended.Models.Pet.JsonStringArray PhotoIds
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhotoIdsUtf8, out Petstore.Extended.Pet.JsonStringArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhotoIdsUtf8, out Petstore.Extended.Models.Pet.JsonStringArray value))
             {
                 return value;
             }
@@ -251,11 +251,11 @@ public readonly partial struct Pet
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.Pet.StatusEntity Status
+    public Petstore.Extended.Models.Pet.StatusEntity Status
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Pet.StatusEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Models.Pet.StatusEntity value))
             {
                 return value;
             }
@@ -267,11 +267,11 @@ public readonly partial struct Pet
     /// <summary>
     /// Gets the (optional) <c>tags</c> property.
     /// </summary>
-    public Petstore.Extended.Pet.TagsJsonStArray Tags
+    public Petstore.Extended.Models.Pet.TagsJsonStArray Tags
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Petstore.Extended.Pet.TagsJsonStArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Petstore.Extended.Models.Pet.TagsJsonStArray value))
             {
                 return value;
             }

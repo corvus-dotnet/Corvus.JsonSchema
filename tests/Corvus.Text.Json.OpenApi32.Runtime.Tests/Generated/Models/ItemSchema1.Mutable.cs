@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct ItemSchema1
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Mutable Choices
+        public CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Mutable Choices
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChoicesUtf8, out CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChoicesUtf8, out CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct ItemSchema1
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Id
+        public CanonTests32.Client.Models.JsonString.Mutable Id
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -305,11 +305,11 @@ public readonly partial struct ItemSchema1
         /// <summary>
         /// Gets the (optional) <c>object</c> property.
         /// </summary>
-        public CanonTests32.Client.JsonString.Mutable ObjectValue
+        public CanonTests32.Client.Models.JsonString.Mutable ObjectValue
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ObjectValueUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ObjectValueUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -361,7 +361,7 @@ public readonly partial struct ItemSchema1
         /// Set the <c>choices</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetChoices(in CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Source value)
+        public void SetChoices(in CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Source value)
         {
             CheckValidInstance();
 
@@ -392,7 +392,7 @@ public readonly partial struct ItemSchema1
         /// Set the <c>choices</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetChoices<TContext>(in CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Source<TContext> value)
+        public void SetChoices<TContext>(in CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -426,7 +426,7 @@ public readonly partial struct ItemSchema1
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in CanonTests32.Client.JsonString.Source value)
+        public void SetId(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -457,7 +457,7 @@ public readonly partial struct ItemSchema1
         /// Set the <c>object</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetObjectValue(in CanonTests32.Client.JsonString.Source value)
+        public void SetObjectValue(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -839,7 +839,7 @@ public readonly partial struct ItemSchema1
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.ItemSchema1.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.ItemSchema1.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(ItemSchema1 instance) => new(JsonElement.From(instance));
 
@@ -960,7 +960,7 @@ public readonly partial struct ItemSchema1
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.ItemSchema1.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.ItemSchema1.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1076,9 +1076,9 @@ public readonly partial struct ItemSchema1
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Source choices,
-            in CanonTests32.Client.JsonString.Source id,
-            in CanonTests32.Client.JsonString.Source objectValue = default)
+            in CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Source choices,
+            in CanonTests32.Client.Models.JsonString.Source id,
+            in CanonTests32.Client.Models.JsonString.Source objectValue = default)
         {
             choices.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Choices, ref builder);
             id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
@@ -1089,9 +1089,9 @@ public readonly partial struct ItemSchema1
         /// Creates an instance of a <see cref="ItemSchema1"/>.
         /// </summary>
         public void Create(
-            in CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Source choices,
-            in CanonTests32.Client.JsonString.Source id,
-            in CanonTests32.Client.JsonString.Source objectValue = default)
+            in CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Source choices,
+            in CanonTests32.Client.Models.JsonString.Source id,
+            in CanonTests32.Client.Models.JsonString.Source objectValue = default)
         {
             Create(ref _builder, choices, id, objectValue);
         }
@@ -1102,9 +1102,9 @@ public readonly partial struct ItemSchema1
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Source<TContext> choices,
-            in CanonTests32.Client.JsonString.Source id,
-            in CanonTests32.Client.JsonString.Source objectValue = default)
+            in CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Source<TContext> choices,
+            in CanonTests32.Client.Models.JsonString.Source id,
+            in CanonTests32.Client.Models.JsonString.Source objectValue = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1119,9 +1119,9 @@ public readonly partial struct ItemSchema1
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Source<TContext> choices,
-            in CanonTests32.Client.JsonString.Source id,
-            in CanonTests32.Client.JsonString.Source objectValue = default)
+            in CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Source<TContext> choices,
+            in CanonTests32.Client.Models.JsonString.Source id,
+            in CanonTests32.Client.Models.JsonString.Source objectValue = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1287,7 +1287,7 @@ public readonly partial struct ItemSchema1
     /// <param name="objectValue">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Source choices, in CanonTests32.Client.JsonString.Source id, in CanonTests32.Client.JsonString.Source objectValue = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Source choices, in CanonTests32.Client.Models.JsonString.Source id, in CanonTests32.Client.Models.JsonString.Source objectValue = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1311,7 +1311,7 @@ public readonly partial struct ItemSchema1
     /// <param name="objectValue">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.Source<TContext> choices, in CanonTests32.Client.JsonString.Source id, in CanonTests32.Client.JsonString.Source objectValue = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.Source<TContext> choices, in CanonTests32.Client.Models.JsonString.Source id, in CanonTests32.Client.Models.JsonString.Source objectValue = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

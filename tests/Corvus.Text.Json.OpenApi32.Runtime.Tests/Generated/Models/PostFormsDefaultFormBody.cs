@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct PostFormsDefaultFormBody
     /// <summary>
     /// Gets the (optional) <c>active</c> property.
     /// </summary>
-    public CanonTests32.Client.JsonBoolean Active
+    public CanonTests32.Client.Models.JsonBoolean Active
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests32.Client.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests32.Client.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct PostFormsDefaultFormBody
     /// <summary>
     /// Gets the (optional) <c>count</c> property.
     /// </summary>
-    public CanonTests32.Client.JsonInteger Count
+    public CanonTests32.Client.Models.JsonInteger Count
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.Models.JsonInteger value))
             {
                 return value;
             }
@@ -188,11 +188,11 @@ public readonly partial struct PostFormsDefaultFormBody
     /// <summary>
     /// Gets the (optional) <c>extra</c> property.
     /// </summary>
-    public CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity Extra
+    public CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity Extra
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraUtf8, out CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraUtf8, out CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity value))
             {
                 return value;
             }
@@ -204,11 +204,11 @@ public readonly partial struct PostFormsDefaultFormBody
     /// <summary>
     /// Gets the (optional) <c>info</c> property.
     /// </summary>
-    public CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity Info
+    public CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity Info
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InfoUtf8, out CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InfoUtf8, out CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity value))
             {
                 return value;
             }
@@ -225,11 +225,11 @@ public readonly partial struct PostFormsDefaultFormBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonString Name
+    public CanonTests32.Client.Models.JsonString Name
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests32.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests32.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -241,11 +241,11 @@ public readonly partial struct PostFormsDefaultFormBody
     /// <summary>
     /// Gets the (optional) <c>tags</c> property.
     /// </summary>
-    public CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray Tags
+    public CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray Tags
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray value))
             {
                 return value;
             }

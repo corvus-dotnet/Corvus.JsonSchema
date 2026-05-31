@@ -30,19 +30,19 @@ public interface IApiPetsClient : IAsyncDisposable
     /// </summary>
     /// <param name="limit">The limit parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListPetsResponse> ListPetsAsync(Petstore.Client.GetPetsLimit.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListPetsResponse> ListPetsAsync(Petstore.Client.Models.GetPetsLimit.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Create a pet
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CreatePetResponse> CreatePetAsync(Petstore.Client.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CreatePetResponse> CreatePetAsync(Petstore.Client.Models.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Info for a specific pet
     /// </summary>
     /// <param name="petId">The petId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ShowPetByIdResponse> ShowPetByIdAsync(Petstore.Client.JsonString.Source petId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ShowPetByIdResponse> ShowPetByIdAsync(Petstore.Client.Models.JsonString.Source petId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

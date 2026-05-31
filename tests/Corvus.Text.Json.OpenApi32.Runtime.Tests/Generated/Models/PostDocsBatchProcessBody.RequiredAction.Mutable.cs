@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -274,11 +274,11 @@ public readonly partial struct PostDocsBatchProcessBody
             /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
             /// </remarks>
-            public CanonTests32.Client.JsonString.Mutable Action
+            public CanonTests32.Client.Models.JsonString.Mutable Action
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActionUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActionUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                     {
                         return value;
                     }
@@ -290,11 +290,11 @@ public readonly partial struct PostDocsBatchProcessBody
             /// <summary>
             /// Gets the (optional) <c>payload</c> property.
             /// </summary>
-            public CanonTests32.Client.JsonObject.Mutable Payload
+            public CanonTests32.Client.Models.JsonObject.Mutable Payload
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PayloadUtf8, out CanonTests32.Client.JsonObject.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PayloadUtf8, out CanonTests32.Client.Models.JsonObject.Mutable value))
                     {
                         return value;
                     }
@@ -346,7 +346,7 @@ public readonly partial struct PostDocsBatchProcessBody
             /// Set the <c>action</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAction(in CanonTests32.Client.JsonString.Source value)
+            public void SetAction(in CanonTests32.Client.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -377,7 +377,7 @@ public readonly partial struct PostDocsBatchProcessBody
             /// Set the <c>payload</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPayload(in CanonTests32.Client.JsonObject.Source value)
+            public void SetPayload(in CanonTests32.Client.Models.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -410,7 +410,7 @@ public readonly partial struct PostDocsBatchProcessBody
             /// Set the <c>payload</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPayload<TContext>(in CanonTests32.Client.JsonObject.Source<TContext> value)
+            public void SetPayload<TContext>(in CanonTests32.Client.Models.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -795,7 +795,7 @@ public readonly partial struct PostDocsBatchProcessBody
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(RequiredAction instance) => new(JsonElement.From(instance));
 
@@ -916,7 +916,7 @@ public readonly partial struct PostDocsBatchProcessBody
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1032,8 +1032,8 @@ public readonly partial struct PostDocsBatchProcessBody
             /// </summary>
             internal static void Create(
                 ref ComplexValueBuilder builder,
-                in CanonTests32.Client.JsonString.Source action,
-                in CanonTests32.Client.JsonObject.Source payload = default)
+                in CanonTests32.Client.Models.JsonString.Source action,
+                in CanonTests32.Client.Models.JsonObject.Source payload = default)
             {
                 action.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Action, ref builder);
                 payload.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Payload, ref builder);
@@ -1042,7 +1042,7 @@ public readonly partial struct PostDocsBatchProcessBody
             /// <summary>
             /// Creates an instance of a <see cref="RequiredAction"/>.
             /// </summary>
-            public void Create(in CanonTests32.Client.JsonString.Source action, in CanonTests32.Client.JsonObject.Source payload = default)
+            public void Create(in CanonTests32.Client.Models.JsonString.Source action, in CanonTests32.Client.Models.JsonObject.Source payload = default)
             {
                 Create(ref _builder, action, payload);
             }
@@ -1053,8 +1053,8 @@ public readonly partial struct PostDocsBatchProcessBody
             internal static void Create<TContext>(
                 in TContext context,
                 ref ComplexValueBuilder builder,
-                in CanonTests32.Client.JsonString.Source action,
-                in CanonTests32.Client.JsonObject.Source<TContext> payload = default)
+                in CanonTests32.Client.Models.JsonString.Source action,
+                in CanonTests32.Client.Models.JsonObject.Source<TContext> payload = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1068,8 +1068,8 @@ public readonly partial struct PostDocsBatchProcessBody
             /// </summary>
             public void Create<TContext>(
                 in TContext context,
-                in CanonTests32.Client.JsonString.Source action,
-                in CanonTests32.Client.JsonObject.Source<TContext> payload = default)
+                in CanonTests32.Client.Models.JsonString.Source action,
+                in CanonTests32.Client.Models.JsonObject.Source<TContext> payload = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1234,7 +1234,7 @@ public readonly partial struct PostDocsBatchProcessBody
         /// <param name="payload">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source action, in CanonTests32.Client.JsonObject.Source payload = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source action, in CanonTests32.Client.Models.JsonObject.Source payload = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1257,7 +1257,7 @@ public readonly partial struct PostDocsBatchProcessBody
         /// <param name="payload">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.JsonString.Source action, in CanonTests32.Client.JsonObject.Source<TContext> payload = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.Models.JsonString.Source action, in CanonTests32.Client.Models.JsonObject.Source<TContext> payload = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

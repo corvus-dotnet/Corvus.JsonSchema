@@ -34,5 +34,5 @@ public interface IApiFlagsClient : IAsyncDisposable
     /// <param name="xDebug">The X-Debug parameter.</param>
     /// <param name="xScore">The X-Score parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetByFlagResponse> GetByFlagAsync(CanonTests30.Client.JsonBoolean.Source active, CanonTests30.Client.JsonString.Source xTraceId, CanonTests30.Client.JsonInt32.Source xRequestCount, CanonTests30.Client.JsonBoolean.Source xDebug = default, CanonTests30.Client.JsonDouble.Source xScore = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetByFlagResponse> GetByFlagAsync(CanonTests30.Client.Models.JsonBoolean.Source active, CanonTests30.Client.Models.JsonString.Source xTraceId, CanonTests30.Client.Models.JsonInt32.Source xRequestCount, CanonTests30.Client.Models.JsonBoolean.Source xDebug = default, CanonTests30.Client.Models.JsonDouble.Source xScore = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

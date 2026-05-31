@@ -41,7 +41,7 @@ public readonly struct UploadPetPhotoResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="UploadPetPhotoResult"/> with status 201.</returns>
-    public static UploadPetPhotoResult Created(Petstore.Extended.Server.PhotoMetadata.Source body, JsonWorkspace workspace) => new(201, Petstore.Extended.Server.PhotoMetadata.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static UploadPetPhotoResult Created(Petstore.Extended.Server.Models.PhotoMetadata.Source body, JsonWorkspace workspace) => new(201, Petstore.Extended.Server.Models.PhotoMetadata.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 401 Unauthorized result.
@@ -49,7 +49,7 @@ public readonly struct UploadPetPhotoResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="UploadPetPhotoResult"/> with status 401.</returns>
-    public static UploadPetPhotoResult Unauthorized(Petstore.Extended.Server.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.Extended.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static UploadPetPhotoResult Unauthorized(Petstore.Extended.Server.Models.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.Extended.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -60,8 +60,8 @@ public readonly struct UploadPetPhotoResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            201 => Petstore.Extended.Server.PhotoMetadata.From(this.Body).EvaluateSchema(),
-            401 => Petstore.Extended.Server.Error.From(this.Body).EvaluateSchema(),
+            201 => Petstore.Extended.Server.Models.PhotoMetadata.From(this.Body).EvaluateSchema(),
+            401 => Petstore.Extended.Server.Models.Error.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

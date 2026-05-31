@@ -31,12 +31,12 @@ public struct SubmitAdoptionApplicationResponse : IApiResponse<SubmitAdoptionApp
     /// <summary>
     /// Gets the 202 response body.
     /// </summary>
-    public Petstore.Extended.PostAdoptionApplyAccepted AcceptedBody { get; private set; }
+    public Petstore.Extended.Models.PostAdoptionApplyAccepted AcceptedBody { get; private set; }
 
     /// <summary>
     /// Gets the default response body.
     /// </summary>
-    public Petstore.Extended.Error DefaultBody { get; private set; }
+    public Petstore.Extended.Models.Error DefaultBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<SubmitAdoptionApplicationResponse> CreateAsync(
@@ -54,13 +54,13 @@ public struct SubmitAdoptionApplicationResponse : IApiResponse<SubmitAdoptionApp
 
         if (statusCode == 202)
         {
-            var acceptedDoc = await ParsedJsonDocument<Petstore.Extended.PostAdoptionApplyAccepted>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var acceptedDoc = await ParsedJsonDocument<Petstore.Extended.Models.PostAdoptionApplyAccepted>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = acceptedDoc;
             response.AcceptedBody = acceptedDoc.RootElement;
             return response;
         }
 
-        var defaultDoc = await ParsedJsonDocument<Petstore.Extended.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+        var defaultDoc = await ParsedJsonDocument<Petstore.Extended.Models.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
         response.parsedDocument = defaultDoc;
         response.DefaultBody = defaultDoc.RootElement;
         return response;
@@ -71,7 +71,7 @@ public struct SubmitAdoptionApplicationResponse : IApiResponse<SubmitAdoptionApp
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 202.</returns>
-    public bool TryGetAccepted(out Petstore.Extended.PostAdoptionApplyAccepted result)
+    public bool TryGetAccepted(out Petstore.Extended.Models.PostAdoptionApplyAccepted result)
     {
         if (this.StatusCode == 202)
         {
@@ -88,7 +88,7 @@ public struct SubmitAdoptionApplicationResponse : IApiResponse<SubmitAdoptionApp
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code does not match any specific response.</returns>
-    public bool TryGetDefault(out Petstore.Extended.Error result)
+    public bool TryGetDefault(out Petstore.Extended.Models.Error result)
     {
         if (this.StatusCode != 202)
         {
@@ -109,8 +109,8 @@ public struct SubmitAdoptionApplicationResponse : IApiResponse<SubmitAdoptionApp
     /// <param name="matchDefault">Handler for a default response.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<Petstore.Extended.PostAdoptionApplyAccepted, TResult> matchAccepted,
-        ResponseMatcher<Petstore.Extended.Error, TResult> matchDefault)
+        ResponseMatcher<Petstore.Extended.Models.PostAdoptionApplyAccepted, TResult> matchAccepted,
+        ResponseMatcher<Petstore.Extended.Models.Error, TResult> matchDefault)
     {
         if (this.StatusCode == 202)
         {
@@ -132,8 +132,8 @@ public struct SubmitAdoptionApplicationResponse : IApiResponse<SubmitAdoptionApp
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<Petstore.Extended.PostAdoptionApplyAccepted, TContext, TResult> matchAccepted,
-        ResponseMatcher<Petstore.Extended.Error, TContext, TResult> matchDefault)
+        ResponseMatcher<Petstore.Extended.Models.PostAdoptionApplyAccepted, TContext, TResult> matchAccepted,
+        ResponseMatcher<Petstore.Extended.Models.Error, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
         if (this.StatusCode == 202)

@@ -24,13 +24,13 @@ public readonly struct QueryObjectDeepRequest : IApiRequest<QueryObjectDeepReque
     /// <summary>
     /// Gets the dims parameter.
     /// </summary>
-    public CanonTests30.Client.GetComplexQueryObjectDeepDims Dims { get; init; }
+    public CanonTests30.Client.Models.GetComplexQueryObjectDeepDims Dims { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QueryObjectDeepRequest"/> struct.
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
-    public QueryObjectDeepRequest(CanonTests30.Client.GetComplexQueryObjectDeepDims dims)
+    public QueryObjectDeepRequest(CanonTests30.Client.Models.GetComplexQueryObjectDeepDims dims)
     {
         this.Dims = dims;
     }

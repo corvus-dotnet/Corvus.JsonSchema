@@ -23,10 +23,10 @@ public readonly struct UpdateDocumentParams
     /// <summary>
     /// Gets the 'documentId' path parameter.
     /// </summary>
-    public CanonTests32.Server.JsonUuid DocumentId { get; init; }
+    public CanonTests32.Server.Models.JsonUuid DocumentId { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.Schema6 Body { get; init; }
+    public CanonTests32.Server.Models.Schema6 Body { get; init; }
 }

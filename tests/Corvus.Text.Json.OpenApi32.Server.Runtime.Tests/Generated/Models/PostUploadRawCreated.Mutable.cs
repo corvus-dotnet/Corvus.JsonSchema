@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostUploadRawCreated
         /// <summary>
         /// Gets the (optional) <c>fileId</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonString.Mutable FileId
+        public CanonTests32.Server.Models.JsonString.Mutable FileId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileIdUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileIdUtf8, out CanonTests32.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct PostUploadRawCreated
         /// <summary>
         /// Gets the (optional) <c>size</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonInteger.Mutable Size
+        public CanonTests32.Server.Models.JsonInteger.Mutable Size
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SizeUtf8, out CanonTests32.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SizeUtf8, out CanonTests32.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -335,7 +335,7 @@ public readonly partial struct PostUploadRawCreated
         /// Set the <c>fileId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFileId(in CanonTests32.Server.JsonString.Source value)
+        public void SetFileId(in CanonTests32.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -380,7 +380,7 @@ public readonly partial struct PostUploadRawCreated
         /// Set the <c>size</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSize(in CanonTests32.Server.JsonInteger.Source value)
+        public void SetSize(in CanonTests32.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -762,7 +762,7 @@ public readonly partial struct PostUploadRawCreated
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.PostUploadRawCreated.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Server.Models.PostUploadRawCreated.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostUploadRawCreated instance) => new(JsonElement.From(instance));
 
@@ -883,7 +883,7 @@ public readonly partial struct PostUploadRawCreated
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.PostUploadRawCreated.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.PostUploadRawCreated.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -999,8 +999,8 @@ public readonly partial struct PostUploadRawCreated
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Server.JsonString.Source fileId = default,
-            in CanonTests32.Server.JsonInteger.Source size = default)
+            in CanonTests32.Server.Models.JsonString.Source fileId = default,
+            in CanonTests32.Server.Models.JsonInteger.Source size = default)
         {
             fileId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileId, ref builder);
             size.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Size, ref builder);
@@ -1009,7 +1009,7 @@ public readonly partial struct PostUploadRawCreated
         /// <summary>
         /// Creates an instance of a <see cref="PostUploadRawCreated"/>.
         /// </summary>
-        public void Create(in CanonTests32.Server.JsonString.Source fileId = default, in CanonTests32.Server.JsonInteger.Source size = default)
+        public void Create(in CanonTests32.Server.Models.JsonString.Source fileId = default, in CanonTests32.Server.Models.JsonInteger.Source size = default)
         {
             Create(ref _builder, fileId, size);
         }
@@ -1171,7 +1171,7 @@ public readonly partial struct PostUploadRawCreated
     /// <param name="size">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonString.Source fileId = default, in CanonTests32.Server.JsonInteger.Source size = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.Models.JsonString.Source fileId = default, in CanonTests32.Server.Models.JsonInteger.Source size = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

@@ -23,25 +23,25 @@ public readonly struct GetAdvancedStylesParams
     /// <summary>
     /// Gets the 'ids' path parameter.
     /// </summary>
-    public CanonTests32.Server.AdvancedStylesByIdsIds Ids { get; init; }
+    public CanonTests32.Server.Models.AdvancedStylesByIdsIds Ids { get; init; }
 
     /// <summary>
     /// Gets the 'matrixTags' query parameter.
     /// </summary>
-    public CanonTests32.Server.GetAdvancedStylesByIdsMatrixTags MatrixTags { get; init; }
+    public CanonTests32.Server.Models.GetAdvancedStylesByIdsMatrixTags MatrixTags { get; init; }
 
     /// <summary>
     /// Gets the 'limit' query parameter.
     /// </summary>
-    public CanonTests32.Server.JsonInt64 Limit { get; init; }
+    public CanonTests32.Server.Models.JsonInt64 Limit { get; init; }
 
     /// <summary>
     /// Gets the 'weight' query parameter.
     /// </summary>
-    public CanonTests32.Server.JsonSingle Weight { get; init; }
+    public CanonTests32.Server.Models.JsonSingle Weight { get; init; }
 
     /// <summary>
     /// Gets the 'score' query parameter.
     /// </summary>
-    public CanonTests32.Server.JsonDouble Score { get; init; }
+    public CanonTests32.Server.Models.JsonDouble Score { get; init; }
 }

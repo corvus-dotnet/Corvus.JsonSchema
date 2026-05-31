@@ -41,7 +41,7 @@ public readonly struct CreatePetResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="CreatePetResult"/> with status 201.</returns>
-    public static CreatePetResult Created(Petstore.Server.Pet.Source body, JsonWorkspace workspace) => new(201, Petstore.Server.Pet.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static CreatePetResult Created(Petstore.Server.Models.Pet.Source body, JsonWorkspace workspace) => new(201, Petstore.Server.Models.Pet.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a default error result.
@@ -50,7 +50,7 @@ public readonly struct CreatePetResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="CreatePetResult"/> with status default.</returns>
-    public static CreatePetResult Default(int statusCode, Petstore.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static CreatePetResult Default(int statusCode, Petstore.Server.Models.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -61,7 +61,7 @@ public readonly struct CreatePetResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            201 => Petstore.Server.Pet.From(this.Body).EvaluateSchema(),
+            201 => Petstore.Server.Models.Pet.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

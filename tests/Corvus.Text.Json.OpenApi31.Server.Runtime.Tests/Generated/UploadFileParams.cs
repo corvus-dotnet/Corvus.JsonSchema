@@ -24,7 +24,7 @@ public readonly struct UploadFileParams
     /// <summary>
     /// Gets the 'X-File-Name' header parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString XFileName { get; init; }
+    public CanonTests31.Server.Models.JsonString XFileName { get; init; }
 
     /// <summary>
     /// Gets the request body.

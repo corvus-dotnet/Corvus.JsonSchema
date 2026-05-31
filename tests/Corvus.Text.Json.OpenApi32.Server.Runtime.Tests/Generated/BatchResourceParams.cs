@@ -23,7 +23,7 @@ public readonly struct BatchResourceParams
     /// <summary>
     /// Gets the 'resourceId' path parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString ResourceId { get; init; }
+    public CanonTests32.Server.Models.JsonString ResourceId { get; init; }
 
     /// <summary>
     /// Gets the request body.

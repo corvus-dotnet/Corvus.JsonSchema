@@ -6,6 +6,7 @@ using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 namespace Corvus.Text.Json.AsyncApi.Runtime.Tests;
 

@@ -24,10 +24,10 @@ public readonly struct UploadAttachmentEncodedParams
     /// <summary>
     /// Gets the 'X-Batch-Id' header parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString XBatchId { get; init; }
+    public CanonTests32.Server.Models.JsonString XBatchId { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.PostAttachmentsEncodedBody Body { get; init; }
+    public CanonTests32.Server.Models.PostAttachmentsEncodedBody Body { get; init; }
 }

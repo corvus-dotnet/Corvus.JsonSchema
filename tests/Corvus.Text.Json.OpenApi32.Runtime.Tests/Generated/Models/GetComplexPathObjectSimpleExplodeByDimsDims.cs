@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetComplexPathObjectSimpleExplodeByDimsDims
     /// <summary>
     /// Gets the (optional) <c>height</c> property.
     /// </summary>
-    public CanonTests32.Client.JsonInt32 Height
+    public CanonTests32.Client.Models.JsonInt32 Height
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeightUtf8, out CanonTests32.Client.JsonInt32 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeightUtf8, out CanonTests32.Client.Models.JsonInt32 value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct GetComplexPathObjectSimpleExplodeByDimsDims
     /// <summary>
     /// Gets the (optional) <c>width</c> property.
     /// </summary>
-    public CanonTests32.Client.JsonInt32 Width
+    public CanonTests32.Client.Models.JsonInt32 Width
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WidthUtf8, out CanonTests32.Client.JsonInt32 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WidthUtf8, out CanonTests32.Client.Models.JsonInt32 value))
             {
                 return value;
             }

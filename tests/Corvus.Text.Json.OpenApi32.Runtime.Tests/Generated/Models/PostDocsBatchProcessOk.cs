@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PostDocsBatchProcessOk
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonInteger Failed
+    public CanonTests32.Client.Models.JsonInteger Failed
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FailedUtf8, out CanonTests32.Client.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FailedUtf8, out CanonTests32.Client.Models.JsonInteger value))
             {
                 return value;
             }
@@ -182,11 +182,11 @@ public readonly partial struct PostDocsBatchProcessOk
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonInteger Processed
+    public CanonTests32.Client.Models.JsonInteger Processed
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProcessedUtf8, out CanonTests32.Client.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProcessedUtf8, out CanonTests32.Client.Models.JsonInteger value))
             {
                 return value;
             }

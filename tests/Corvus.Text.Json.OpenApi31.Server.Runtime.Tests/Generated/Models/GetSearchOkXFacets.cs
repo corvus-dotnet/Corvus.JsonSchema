@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetSearchOkXFacets
     /// <summary>
     /// Gets the (optional) <c>category</c> property.
     /// </summary>
-    public CanonTests31.Server.JsonString Category
+    public CanonTests31.Server.Models.JsonString Category
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CategoryUtf8, out CanonTests31.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CategoryUtf8, out CanonTests31.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct GetSearchOkXFacets
     /// <summary>
     /// Gets the (optional) <c>status</c> property.
     /// </summary>
-    public CanonTests31.Server.JsonString Status
+    public CanonTests31.Server.Models.JsonString Status
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests31.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests31.Server.Models.JsonString value))
             {
                 return value;
             }

@@ -24,5 +24,5 @@ public readonly struct CreatePetParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public Petstore.Server.NewPet Body { get; init; }
+    public Petstore.Server.Models.NewPet Body { get; init; }
 }

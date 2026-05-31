@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Net;
 using System.Text;
 using CanonTests30.Client;
+using CanonTests30.Client.Models;
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;

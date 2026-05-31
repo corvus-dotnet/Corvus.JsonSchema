@@ -41,7 +41,7 @@ public readonly struct SearchItemsAdvancedResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="SearchItemsAdvancedResult"/> with status 200.</returns>
-    public static SearchItemsAdvancedResult Ok(CanonTests32.Server.PostSearchOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.PostSearchOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static SearchItemsAdvancedResult Ok(CanonTests32.Server.Models.PostSearchOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Models.PostSearchOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct SearchItemsAdvancedResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests32.Server.PostSearchOk.From(this.Body).EvaluateSchema(),
+            200 => CanonTests32.Server.Models.PostSearchOk.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

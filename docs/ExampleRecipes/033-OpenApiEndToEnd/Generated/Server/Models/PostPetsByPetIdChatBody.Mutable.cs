@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Server;
+namespace Petstore.EndToEnd.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// <summary>
         /// Gets the (optional) <c>history</c> property.
         /// </summary>
-        public Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Mutable History
+        public Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Mutable History
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HistoryUtf8, out Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HistoryUtf8, out Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.EndToEnd.Server.JsonString.Mutable Message
+        public Petstore.EndToEnd.Server.Models.JsonString.Mutable Message
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out Petstore.EndToEnd.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out Petstore.EndToEnd.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -340,7 +340,7 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// Set the <c>history</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHistory(in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source value)
+        public void SetHistory(in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source value)
         {
             CheckValidInstance();
 
@@ -373,7 +373,7 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// Set the <c>history</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHistory<TContext>(in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source<TContext> value)
+        public void SetHistory<TContext>(in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -421,7 +421,7 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// Set the <c>message</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMessage(in Petstore.EndToEnd.Server.JsonString.Source value)
+        public void SetMessage(in Petstore.EndToEnd.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -789,7 +789,7 @@ public readonly partial struct PostPetsByPetIdChatBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostPetsByPetIdChatBody instance) => new(JsonElement.From(instance));
 
@@ -910,7 +910,7 @@ public readonly partial struct PostPetsByPetIdChatBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1026,8 +1026,8 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Petstore.EndToEnd.Server.JsonString.Source message,
-            in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source history = default)
+            in Petstore.EndToEnd.Server.Models.JsonString.Source message,
+            in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source history = default)
         {
             message.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Message, ref builder);
             history.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.History, ref builder);
@@ -1036,7 +1036,7 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// <summary>
         /// Creates an instance of a <see cref="PostPetsByPetIdChatBody"/>.
         /// </summary>
-        public void Create(in Petstore.EndToEnd.Server.JsonString.Source message, in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source history = default)
+        public void Create(in Petstore.EndToEnd.Server.Models.JsonString.Source message, in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source history = default)
         {
             Create(ref _builder, message, history);
         }
@@ -1047,8 +1047,8 @@ public readonly partial struct PostPetsByPetIdChatBody
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Petstore.EndToEnd.Server.JsonString.Source message,
-            in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source<TContext> history = default)
+            in Petstore.EndToEnd.Server.Models.JsonString.Source message,
+            in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source<TContext> history = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1062,8 +1062,8 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in Petstore.EndToEnd.Server.JsonString.Source message,
-            in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source<TContext> history = default)
+            in Petstore.EndToEnd.Server.Models.JsonString.Source message,
+            in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source<TContext> history = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1228,7 +1228,7 @@ public readonly partial struct PostPetsByPetIdChatBody
     /// <param name="history">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.EndToEnd.Server.JsonString.Source message, in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source history = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.EndToEnd.Server.Models.JsonString.Source message, in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source history = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1251,7 +1251,7 @@ public readonly partial struct PostPetsByPetIdChatBody
     /// <param name="history">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Petstore.EndToEnd.Server.JsonString.Source message, in Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source<TContext> history = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Petstore.EndToEnd.Server.Models.JsonString.Source message, in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source<TContext> history = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

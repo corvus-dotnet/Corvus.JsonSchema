@@ -23,35 +23,35 @@ public readonly struct SearchItemsParams
     /// <summary>
     /// Gets the 'q' query parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString Q { get; init; }
+    public CanonTests31.Server.Models.JsonString Q { get; init; }
 
     /// <summary>
     /// Gets the 'tags' query parameter.
     /// </summary>
-    public CanonTests31.Server.GetSearchTags Tags { get; init; }
+    public CanonTests31.Server.Models.GetSearchTags Tags { get; init; }
 
     /// <summary>
     /// Gets the 'coords' query parameter.
     /// </summary>
-    public CanonTests31.Server.GetSearchCoords Coords { get; init; }
+    public CanonTests31.Server.Models.GetSearchCoords Coords { get; init; }
 
     /// <summary>
     /// Gets the 'filter' query parameter.
     /// </summary>
-    public CanonTests31.Server.GetSearchFilter Filter { get; init; }
+    public CanonTests31.Server.Models.GetSearchFilter Filter { get; init; }
 
     /// <summary>
     /// Gets the 'session' cookie parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString Session { get; init; }
+    public CanonTests31.Server.Models.JsonString Session { get; init; }
 
     /// <summary>
     /// Gets the 'prefs' cookie parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString Prefs { get; init; }
+    public CanonTests31.Server.Models.JsonString Prefs { get; init; }
 
     /// <summary>
     /// Gets the 'X-Correlation-Id' header parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString XCorrelationId { get; init; }
+    public CanonTests31.Server.Models.JsonString XCorrelationId { get; init; }
 }

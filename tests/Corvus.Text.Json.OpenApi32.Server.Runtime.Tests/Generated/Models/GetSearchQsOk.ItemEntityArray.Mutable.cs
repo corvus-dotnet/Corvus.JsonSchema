@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -174,12 +174,12 @@ public readonly partial struct GetSearchQsOk
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public CanonTests32.Server.ItemEntity.Mutable this[int index]
+            public CanonTests32.Server.Models.ItemEntity.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<CanonTests32.Server.ItemEntity.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<CanonTests32.Server.Models.ItemEntity.Mutable>(_idx, index);
                 }
             }
 
@@ -197,10 +197,10 @@ public readonly partial struct GetSearchQsOk
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<CanonTests32.Server.ItemEntity.Mutable> EnumerateArray()
+            public ArrayEnumerator<CanonTests32.Server.Models.ItemEntity.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Server.ItemEntity.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Server.Models.ItemEntity.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -329,7 +329,7 @@ public readonly partial struct GetSearchQsOk
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in CanonTests32.Server.ItemEntity.Source value)
+            public void SetItem(int itemIndex, in CanonTests32.Server.Models.ItemEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct GetSearchQsOk
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in CanonTests32.Server.ItemEntity.Source value)
+            public void InsertItem(int itemIndex, in CanonTests32.Server.Models.ItemEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct GetSearchQsOk
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in CanonTests32.Server.ItemEntity.Source value)
+            public void AddItem(in CanonTests32.Server.Models.ItemEntity.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -572,10 +572,10 @@ public readonly partial struct GetSearchQsOk
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in CanonTests32.Server.ItemEntity item)
+            public bool Remove(in CanonTests32.Server.Models.ItemEntity item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Server.ItemEntity>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Server.Models.ItemEntity>(this, in item))
                 {
                     return false;
                 }
@@ -609,10 +609,10 @@ public readonly partial struct GetSearchQsOk
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<CanonTests32.Server.ItemEntity> predicate)
+            public void RemoveWhere(JsonPredicate<CanonTests32.Server.Models.ItemEntity> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Server.ItemEntity>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Server.Models.ItemEntity>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -629,7 +629,7 @@ public readonly partial struct GetSearchQsOk
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in CanonTests32.Server.ItemEntity oldItem, in CanonTests32.Server.ItemEntity.Source newItem)
+            public bool Replace(in CanonTests32.Server.Models.ItemEntity oldItem, in CanonTests32.Server.Models.ItemEntity.Source newItem)
             {
                 CheckValidInstance();
 
@@ -638,11 +638,11 @@ public readonly partial struct GetSearchQsOk
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Server.ItemEntity>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Server.Models.ItemEntity>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    CanonTests32.Server.ItemEntity current = enumerator.Current;
+                    CanonTests32.Server.Models.ItemEntity current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -739,7 +739,7 @@ public readonly partial struct GetSearchQsOk
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(CanonTests32.Server.GetSearchQsOk.ItemEntityArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(CanonTests32.Server.Models.GetSearchQsOk.ItemEntityArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(ItemEntityArray instance) => new(JsonElement.From(instance));
 
@@ -860,7 +860,7 @@ public readonly partial struct GetSearchQsOk
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, CanonTests32.Server.GetSearchQsOk.ItemEntityArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, CanonTests32.Server.Models.GetSearchQsOk.ItemEntityArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -974,7 +974,7 @@ public readonly partial struct GetSearchQsOk
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in CanonTests32.Server.ItemEntity.Source value)
+            public void AddItem(in CanonTests32.Server.Models.ItemEntity.Source value)
             {
                 value.AddAsItem(ref _builder);
             }

@@ -156,5 +156,5 @@ public interface IApiPreferencesClient : IAsyncDisposable
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="theme">The theme parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetPreferencesResponse> GetPreferencesAsync(CanonTests32.Client.JsonString.Source session_token, CanonTests32.Client.JsonString.Source theme = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetPreferencesResponse> GetPreferencesAsync(CanonTests32.Client.Models.JsonString.Source session_token, CanonTests32.Client.Models.JsonString.Source theme = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

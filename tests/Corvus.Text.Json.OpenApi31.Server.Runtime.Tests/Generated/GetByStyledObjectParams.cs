@@ -23,5 +23,5 @@ public readonly struct GetByStyledObjectParams
     /// <summary>
     /// Gets the 'obj' path parameter.
     /// </summary>
-    public CanonTests31.Server.GetStyledObjectByObjObj Obj { get; init; }
+    public CanonTests31.Server.Models.GetStyledObjectByObjObj Obj { get; init; }
 }

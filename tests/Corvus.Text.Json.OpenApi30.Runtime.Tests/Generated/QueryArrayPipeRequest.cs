@@ -24,13 +24,13 @@ public readonly struct QueryArrayPipeRequest : IApiRequest<QueryArrayPipeRequest
     /// <summary>
     /// Gets the colors parameter.
     /// </summary>
-    public CanonTests30.Client.GetComplexQueryArrayPipeColors Colors { get; init; }
+    public CanonTests30.Client.Models.GetComplexQueryArrayPipeColors Colors { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QueryArrayPipeRequest"/> struct.
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
-    public QueryArrayPipeRequest(CanonTests30.Client.GetComplexQueryArrayPipeColors colors)
+    public QueryArrayPipeRequest(CanonTests30.Client.Models.GetComplexQueryArrayPipeColors colors)
     {
         this.Colors = colors;
     }

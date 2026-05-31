@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct Pet
         /// <summary>
         /// Gets the (optional) <c>age</c> property.
         /// </summary>
-        public Petstore.Extended.JsonInteger.Mutable Age
+        public Petstore.Extended.Models.JsonInteger.Mutable Age
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AgeUtf8, out Petstore.Extended.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AgeUtf8, out Petstore.Extended.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct Pet
         /// <summary>
         /// Gets the (optional) <c>breed</c> property.
         /// </summary>
-        public Petstore.Extended.JsonString.Mutable Breed
+        public Petstore.Extended.Models.JsonString.Mutable Breed
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -300,11 +300,11 @@ public readonly partial struct Pet
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.Extended.JsonInt64.Mutable Id
+        public Petstore.Extended.Models.JsonInt64.Mutable Id
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.Extended.JsonInt64.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.Extended.Models.JsonInt64.Mutable value))
                 {
                     return value;
                 }
@@ -321,11 +321,11 @@ public readonly partial struct Pet
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.Extended.JsonString.Mutable Name
+        public Petstore.Extended.Models.JsonString.Mutable Name
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Extended.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Extended.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -337,11 +337,11 @@ public readonly partial struct Pet
         /// <summary>
         /// Gets the (optional) <c>photoIds</c> property.
         /// </summary>
-        public Petstore.Extended.Pet.JsonStringArray.Mutable PhotoIds
+        public Petstore.Extended.Models.Pet.JsonStringArray.Mutable PhotoIds
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhotoIdsUtf8, out Petstore.Extended.Pet.JsonStringArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhotoIdsUtf8, out Petstore.Extended.Models.Pet.JsonStringArray.Mutable value))
                 {
                     return value;
                 }
@@ -358,11 +358,11 @@ public readonly partial struct Pet
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.Extended.Pet.StatusEntity.Mutable Status
+        public Petstore.Extended.Models.Pet.StatusEntity.Mutable Status
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Pet.StatusEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Models.Pet.StatusEntity.Mutable value))
                 {
                     return value;
                 }
@@ -374,11 +374,11 @@ public readonly partial struct Pet
         /// <summary>
         /// Gets the (optional) <c>tags</c> property.
         /// </summary>
-        public Petstore.Extended.Pet.TagsJsonStArray.Mutable Tags
+        public Petstore.Extended.Models.Pet.TagsJsonStArray.Mutable Tags
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Petstore.Extended.Pet.TagsJsonStArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Petstore.Extended.Models.Pet.TagsJsonStArray.Mutable value))
                 {
                     return value;
                 }
@@ -430,7 +430,7 @@ public readonly partial struct Pet
         /// Set the <c>age</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAge(in Petstore.Extended.JsonInteger.Source value)
+        public void SetAge(in Petstore.Extended.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -475,7 +475,7 @@ public readonly partial struct Pet
         /// Set the <c>breed</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreed(in Petstore.Extended.JsonString.Source value)
+        public void SetBreed(in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -520,7 +520,7 @@ public readonly partial struct Pet
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Petstore.Extended.JsonInt64.Source value)
+        public void SetId(in Petstore.Extended.Models.JsonInt64.Source value)
         {
             CheckValidInstance();
 
@@ -551,7 +551,7 @@ public readonly partial struct Pet
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Petstore.Extended.JsonString.Source value)
+        public void SetName(in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -582,7 +582,7 @@ public readonly partial struct Pet
         /// Set the <c>photoIds</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPhotoIds(in Petstore.Extended.Pet.JsonStringArray.Source value)
+        public void SetPhotoIds(in Petstore.Extended.Models.Pet.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -615,7 +615,7 @@ public readonly partial struct Pet
         /// Set the <c>photoIds</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPhotoIds<TContext>(in Petstore.Extended.Pet.JsonStringArray.Source<TContext> value)
+        public void SetPhotoIds<TContext>(in Petstore.Extended.Models.Pet.JsonStringArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -663,7 +663,7 @@ public readonly partial struct Pet
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in Petstore.Extended.Pet.StatusEntity.Source value)
+        public void SetStatus(in Petstore.Extended.Models.Pet.StatusEntity.Source value)
         {
             CheckValidInstance();
 
@@ -694,7 +694,7 @@ public readonly partial struct Pet
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in Petstore.Extended.Pet.TagsJsonStArray.Source value)
+        public void SetTags(in Petstore.Extended.Models.Pet.TagsJsonStArray.Source value)
         {
             CheckValidInstance();
 
@@ -727,7 +727,7 @@ public readonly partial struct Pet
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags<TContext>(in Petstore.Extended.Pet.TagsJsonStArray.Source<TContext> value)
+        public void SetTags<TContext>(in Petstore.Extended.Models.Pet.TagsJsonStArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1112,7 +1112,7 @@ public readonly partial struct Pet
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Petstore.Extended.Pet.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Petstore.Extended.Models.Pet.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(Pet instance) => new(JsonElement.From(instance));
 
@@ -1233,7 +1233,7 @@ public readonly partial struct Pet
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Petstore.Extended.Pet.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Petstore.Extended.Models.Pet.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1349,13 +1349,13 @@ public readonly partial struct Pet
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Petstore.Extended.JsonInt64.Source id,
-            in Petstore.Extended.JsonString.Source name,
-            in Petstore.Extended.Pet.StatusEntity.Source status,
-            in Petstore.Extended.JsonInteger.Source age = default,
-            in Petstore.Extended.JsonString.Source breed = default,
-            in Petstore.Extended.Pet.JsonStringArray.Source photoIds = default,
-            in Petstore.Extended.Pet.TagsJsonStArray.Source tags = default)
+            in Petstore.Extended.Models.JsonInt64.Source id,
+            in Petstore.Extended.Models.JsonString.Source name,
+            in Petstore.Extended.Models.Pet.StatusEntity.Source status,
+            in Petstore.Extended.Models.JsonInteger.Source age = default,
+            in Petstore.Extended.Models.JsonString.Source breed = default,
+            in Petstore.Extended.Models.Pet.JsonStringArray.Source photoIds = default,
+            in Petstore.Extended.Models.Pet.TagsJsonStArray.Source tags = default)
         {
             id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
             name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
@@ -1370,13 +1370,13 @@ public readonly partial struct Pet
         /// Creates an instance of a <see cref="Pet"/>.
         /// </summary>
         public void Create(
-            in Petstore.Extended.JsonInt64.Source id,
-            in Petstore.Extended.JsonString.Source name,
-            in Petstore.Extended.Pet.StatusEntity.Source status,
-            in Petstore.Extended.JsonInteger.Source age = default,
-            in Petstore.Extended.JsonString.Source breed = default,
-            in Petstore.Extended.Pet.JsonStringArray.Source photoIds = default,
-            in Petstore.Extended.Pet.TagsJsonStArray.Source tags = default)
+            in Petstore.Extended.Models.JsonInt64.Source id,
+            in Petstore.Extended.Models.JsonString.Source name,
+            in Petstore.Extended.Models.Pet.StatusEntity.Source status,
+            in Petstore.Extended.Models.JsonInteger.Source age = default,
+            in Petstore.Extended.Models.JsonString.Source breed = default,
+            in Petstore.Extended.Models.Pet.JsonStringArray.Source photoIds = default,
+            in Petstore.Extended.Models.Pet.TagsJsonStArray.Source tags = default)
         {
             Create(ref _builder, id, name, status, age, breed, photoIds, tags);
         }
@@ -1387,13 +1387,13 @@ public readonly partial struct Pet
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Petstore.Extended.JsonInt64.Source id,
-            in Petstore.Extended.JsonString.Source name,
-            in Petstore.Extended.Pet.StatusEntity.Source status,
-            in Petstore.Extended.JsonInteger.Source age = default,
-            in Petstore.Extended.JsonString.Source breed = default,
-            in Petstore.Extended.Pet.JsonStringArray.Source<TContext> photoIds = default,
-            in Petstore.Extended.Pet.TagsJsonStArray.Source<TContext> tags = default)
+            in Petstore.Extended.Models.JsonInt64.Source id,
+            in Petstore.Extended.Models.JsonString.Source name,
+            in Petstore.Extended.Models.Pet.StatusEntity.Source status,
+            in Petstore.Extended.Models.JsonInteger.Source age = default,
+            in Petstore.Extended.Models.JsonString.Source breed = default,
+            in Petstore.Extended.Models.Pet.JsonStringArray.Source<TContext> photoIds = default,
+            in Petstore.Extended.Models.Pet.TagsJsonStArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1412,13 +1412,13 @@ public readonly partial struct Pet
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in Petstore.Extended.JsonInt64.Source id,
-            in Petstore.Extended.JsonString.Source name,
-            in Petstore.Extended.Pet.StatusEntity.Source status,
-            in Petstore.Extended.JsonInteger.Source age = default,
-            in Petstore.Extended.JsonString.Source breed = default,
-            in Petstore.Extended.Pet.JsonStringArray.Source<TContext> photoIds = default,
-            in Petstore.Extended.Pet.TagsJsonStArray.Source<TContext> tags = default)
+            in Petstore.Extended.Models.JsonInt64.Source id,
+            in Petstore.Extended.Models.JsonString.Source name,
+            in Petstore.Extended.Models.Pet.StatusEntity.Source status,
+            in Petstore.Extended.Models.JsonInteger.Source age = default,
+            in Petstore.Extended.Models.JsonString.Source breed = default,
+            in Petstore.Extended.Models.Pet.JsonStringArray.Source<TContext> photoIds = default,
+            in Petstore.Extended.Models.Pet.TagsJsonStArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1588,7 +1588,7 @@ public readonly partial struct Pet
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.JsonInt64.Source id, in Petstore.Extended.JsonString.Source name, in Petstore.Extended.Pet.StatusEntity.Source status, in Petstore.Extended.JsonInteger.Source age = default, in Petstore.Extended.JsonString.Source breed = default, in Petstore.Extended.Pet.JsonStringArray.Source photoIds = default, in Petstore.Extended.Pet.TagsJsonStArray.Source tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.Models.JsonInt64.Source id, in Petstore.Extended.Models.JsonString.Source name, in Petstore.Extended.Models.Pet.StatusEntity.Source status, in Petstore.Extended.Models.JsonInteger.Source age = default, in Petstore.Extended.Models.JsonString.Source breed = default, in Petstore.Extended.Models.Pet.JsonStringArray.Source photoIds = default, in Petstore.Extended.Models.Pet.TagsJsonStArray.Source tags = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1616,7 +1616,7 @@ public readonly partial struct Pet
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Petstore.Extended.JsonInt64.Source id, in Petstore.Extended.JsonString.Source name, in Petstore.Extended.Pet.StatusEntity.Source status, in Petstore.Extended.JsonInteger.Source age = default, in Petstore.Extended.JsonString.Source breed = default, in Petstore.Extended.Pet.JsonStringArray.Source<TContext> photoIds = default, in Petstore.Extended.Pet.TagsJsonStArray.Source<TContext> tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Petstore.Extended.Models.JsonInt64.Source id, in Petstore.Extended.Models.JsonString.Source name, in Petstore.Extended.Models.Pet.StatusEntity.Source status, in Petstore.Extended.Models.JsonInteger.Source age = default, in Petstore.Extended.Models.JsonString.Source breed = default, in Petstore.Extended.Models.Pet.JsonStringArray.Source<TContext> photoIds = default, in Petstore.Extended.Models.Pet.TagsJsonStArray.Source<TContext> tags = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

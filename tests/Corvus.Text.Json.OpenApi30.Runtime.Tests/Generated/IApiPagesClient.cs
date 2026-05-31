@@ -31,5 +31,5 @@ public interface IApiPagesClient : IAsyncDisposable
     /// <param name="pageNum">The pageNum parameter.</param>
     /// <param name="offset">The offset parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetPageResponse> GetPageAsync(CanonTests30.Client.JsonInt32.Source pageNum, CanonTests30.Client.JsonInteger.Source offset = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetPageResponse> GetPageAsync(CanonTests30.Client.Models.JsonInt32.Source pageNum, CanonTests30.Client.Models.JsonInteger.Source offset = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

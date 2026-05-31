@@ -5,6 +5,7 @@
 using System.Net;
 using System.Text;
 using CanonTests30.Server;
+using CanonTests30.Server.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;

@@ -166,5 +166,5 @@ public interface IApiStreamingClient : IAsyncDisposable
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ChatCompletionsResponse> ChatCompletionsAsync(CanonTests32.Client.PostChatCompletionsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ChatCompletionsResponse> ChatCompletionsAsync(CanonTests32.Client.Models.PostChatCompletionsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

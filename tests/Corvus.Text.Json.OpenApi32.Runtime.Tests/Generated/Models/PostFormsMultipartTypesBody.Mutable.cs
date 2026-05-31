@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonBoolean.Mutable Active
+        public CanonTests32.Client.Models.JsonBoolean.Mutable Active
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests32.Client.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests32.Client.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonInteger.Mutable Count
+        public CanonTests32.Client.Models.JsonInteger.Mutable Count
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -305,11 +305,11 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// <summary>
         /// Gets the (optional) <c>file</c> property.
         /// </summary>
-        public CanonTests32.Client.JsonBinary.Mutable File
+        public CanonTests32.Client.Models.JsonBinary.Mutable File
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests32.Client.JsonBinary.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests32.Client.Models.JsonBinary.Mutable value))
                 {
                     return value;
                 }
@@ -321,11 +321,11 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// <summary>
         /// Gets the (optional) <c>note</c> property.
         /// </summary>
-        public CanonTests32.Client.PostFormsMultipartTypesBody.NoteEntity.Mutable Note
+        public CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Mutable Note
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoteUtf8, out CanonTests32.Client.PostFormsMultipartTypesBody.NoteEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoteUtf8, out CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Mutable value))
                 {
                     return value;
                 }
@@ -342,11 +342,11 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Title
+        public CanonTests32.Client.Models.JsonString.Mutable Title
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -398,7 +398,7 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// Set the <c>active</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetActive(in CanonTests32.Client.JsonBoolean.Source value)
+        public void SetActive(in CanonTests32.Client.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -429,7 +429,7 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// Set the <c>count</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCount(in CanonTests32.Client.JsonInteger.Source value)
+        public void SetCount(in CanonTests32.Client.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -460,7 +460,7 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// Set the <c>file</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFile(in CanonTests32.Client.JsonBinary.Source value)
+        public void SetFile(in CanonTests32.Client.Models.JsonBinary.Source value)
         {
             CheckValidInstance();
 
@@ -505,7 +505,7 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// Set the <c>note</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNote(in CanonTests32.Client.PostFormsMultipartTypesBody.NoteEntity.Source value)
+        public void SetNote(in CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Source value)
         {
             CheckValidInstance();
 
@@ -550,7 +550,7 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// Set the <c>title</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTitle(in CanonTests32.Client.JsonString.Source value)
+        public void SetTitle(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -918,7 +918,7 @@ public readonly partial struct PostFormsMultipartTypesBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PostFormsMultipartTypesBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PostFormsMultipartTypesBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostFormsMultipartTypesBody instance) => new(JsonElement.From(instance));
 
@@ -1039,7 +1039,7 @@ public readonly partial struct PostFormsMultipartTypesBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PostFormsMultipartTypesBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PostFormsMultipartTypesBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1155,11 +1155,11 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonBoolean.Source active,
-            in CanonTests32.Client.JsonInteger.Source count,
-            in CanonTests32.Client.JsonString.Source title,
-            in CanonTests32.Client.JsonBinary.Source file = default,
-            in CanonTests32.Client.PostFormsMultipartTypesBody.NoteEntity.Source note = default)
+            in CanonTests32.Client.Models.JsonBoolean.Source active,
+            in CanonTests32.Client.Models.JsonInteger.Source count,
+            in CanonTests32.Client.Models.JsonString.Source title,
+            in CanonTests32.Client.Models.JsonBinary.Source file = default,
+            in CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Source note = default)
         {
             active.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Active, ref builder);
             count.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Count, ref builder);
@@ -1172,11 +1172,11 @@ public readonly partial struct PostFormsMultipartTypesBody
         /// Creates an instance of a <see cref="PostFormsMultipartTypesBody"/>.
         /// </summary>
         public void Create(
-            in CanonTests32.Client.JsonBoolean.Source active,
-            in CanonTests32.Client.JsonInteger.Source count,
-            in CanonTests32.Client.JsonString.Source title,
-            in CanonTests32.Client.JsonBinary.Source file = default,
-            in CanonTests32.Client.PostFormsMultipartTypesBody.NoteEntity.Source note = default)
+            in CanonTests32.Client.Models.JsonBoolean.Source active,
+            in CanonTests32.Client.Models.JsonInteger.Source count,
+            in CanonTests32.Client.Models.JsonString.Source title,
+            in CanonTests32.Client.Models.JsonBinary.Source file = default,
+            in CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Source note = default)
         {
             Create(ref _builder, active, count, title, file, note);
         }
@@ -1341,7 +1341,7 @@ public readonly partial struct PostFormsMultipartTypesBody
     /// <param name="note">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonBoolean.Source active, in CanonTests32.Client.JsonInteger.Source count, in CanonTests32.Client.JsonString.Source title, in CanonTests32.Client.JsonBinary.Source file = default, in CanonTests32.Client.PostFormsMultipartTypesBody.NoteEntity.Source note = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonBoolean.Source active, in CanonTests32.Client.Models.JsonInteger.Source count, in CanonTests32.Client.Models.JsonString.Source title, in CanonTests32.Client.Models.JsonBinary.Source file = default, in CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Source note = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

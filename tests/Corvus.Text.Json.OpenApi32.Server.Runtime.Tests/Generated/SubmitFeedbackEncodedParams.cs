@@ -24,7 +24,7 @@ public readonly struct SubmitFeedbackEncodedParams
     /// <summary>
     /// Gets the 'X-Session-Id' header parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString XSessionId { get; init; }
+    public CanonTests32.Server.Models.JsonString XSessionId { get; init; }
 
     /// <summary>
     /// Gets the request body.

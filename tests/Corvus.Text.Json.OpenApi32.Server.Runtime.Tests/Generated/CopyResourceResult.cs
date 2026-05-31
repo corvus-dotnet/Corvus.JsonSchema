@@ -19,7 +19,7 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct CopyResourceResult
 {
-    private CopyResourceResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.JsonUri location = default)
+    private CopyResourceResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.Models.JsonUri location = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -39,7 +39,7 @@ public readonly struct CopyResourceResult
     /// <summary>
     /// Gets the value of the <c>Location</c> response header.
     /// </summary>
-    public CanonTests32.Server.JsonUri Location { get; }
+    public CanonTests32.Server.Models.JsonUri Location { get; }
 
     /// <summary>
     /// Creates a 201 Created result.
@@ -48,7 +48,7 @@ public readonly struct CopyResourceResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="location">The value for the <c>Location</c> response header.</param>
     /// <returns>A <see cref="CopyResourceResult"/> with status 201.</returns>
-    public static CopyResourceResult Created(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonUri location = default) => new(201, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json", location: location);
+    public static CopyResourceResult Created(CanonTests32.Server.Models.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.Models.JsonUri location = default) => new(201, CanonTests32.Server.Models.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json", location: location);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -59,7 +59,7 @@ public readonly struct CopyResourceResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            201 => CanonTests32.Server.ItemEntity.From(this.Body).EvaluateSchema(),
+            201 => CanonTests32.Server.Models.ItemEntity.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

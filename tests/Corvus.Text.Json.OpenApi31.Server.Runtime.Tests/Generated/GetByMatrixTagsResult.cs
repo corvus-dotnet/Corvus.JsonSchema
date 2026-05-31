@@ -41,7 +41,7 @@ public readonly struct GetByMatrixTagsResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetByMatrixTagsResult"/> with status 200.</returns>
-    public static GetByMatrixTagsResult Ok(CanonTests31.Server.GetMatrixNoExplodeByTagsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests31.Server.GetMatrixNoExplodeByTagsOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static GetByMatrixTagsResult Ok(CanonTests31.Server.Models.GetMatrixNoExplodeByTagsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests31.Server.Models.GetMatrixNoExplodeByTagsOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct GetByMatrixTagsResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests31.Server.GetMatrixNoExplodeByTagsOk.From(this.Body).EvaluateSchema(),
+            200 => CanonTests31.Server.Models.GetMatrixNoExplodeByTagsOk.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -33,14 +33,14 @@ public readonly partial struct PostFilesUploadCreated
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                CanonTests30.Client.JsonString.JsonSchema.PushChildContextUnescaped(
+                CanonTests30.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.IdUtf8,
                     evaluationPath: IdSchemaEvaluationPath);
 
-            CanonTests30.Client.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            CanonTests30.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
@@ -48,7 +48,7 @@ public readonly partial struct PostFilesUploadCreated
 #if NET
         [NotNullWhen(true)]
 #endif
-        out CanonTests30.Client.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out CanonTests30.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             if (span.SequenceEqual(JsonPropertyNames.IdUtf8))
             {
@@ -112,7 +112,7 @@ public readonly partial struct PostFilesUploadCreated
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out CanonTests30.Client.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out CanonTests30.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
                         validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
 

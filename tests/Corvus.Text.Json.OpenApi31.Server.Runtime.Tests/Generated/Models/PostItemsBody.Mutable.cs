@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostItemsBody
         /// <summary>
         /// Gets the (optional) <c>metadata</c> property.
         /// </summary>
-        public CanonTests31.Server.PostItemsBody.MetadataEntity.Mutable Metadata
+        public CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Mutable Metadata
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests31.Server.PostItemsBody.MetadataEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct PostItemsBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests31.Server.JsonString.Mutable Name
+        public CanonTests31.Server.Models.JsonString.Mutable Name
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests31.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests31.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -300,11 +300,11 @@ public readonly partial struct PostItemsBody
         /// <summary>
         /// Gets the (optional) <c>tag</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonString.Mutable Tag
+        public CanonTests31.Server.Models.JsonString.Mutable Tag
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagUtf8, out CanonTests31.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagUtf8, out CanonTests31.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -356,7 +356,7 @@ public readonly partial struct PostItemsBody
         /// Set the <c>metadata</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMetadata(in CanonTests31.Server.PostItemsBody.MetadataEntity.Source value)
+        public void SetMetadata(in CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Source value)
         {
             CheckValidInstance();
 
@@ -389,7 +389,7 @@ public readonly partial struct PostItemsBody
         /// Set the <c>metadata</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMetadata<TContext>(in CanonTests31.Server.PostItemsBody.MetadataEntity.Source<TContext> value)
+        public void SetMetadata<TContext>(in CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -437,7 +437,7 @@ public readonly partial struct PostItemsBody
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in CanonTests31.Server.JsonString.Source value)
+        public void SetName(in CanonTests31.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -468,7 +468,7 @@ public readonly partial struct PostItemsBody
         /// Set the <c>tag</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTag(in CanonTests31.Server.JsonString.Source value)
+        public void SetTag(in CanonTests31.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -850,7 +850,7 @@ public readonly partial struct PostItemsBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests31.Server.PostItemsBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests31.Server.Models.PostItemsBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostItemsBody instance) => new(JsonElement.From(instance));
 
@@ -971,7 +971,7 @@ public readonly partial struct PostItemsBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests31.Server.PostItemsBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests31.Server.Models.PostItemsBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1087,9 +1087,9 @@ public readonly partial struct PostItemsBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests31.Server.JsonString.Source name,
-            in CanonTests31.Server.PostItemsBody.MetadataEntity.Source metadata = default,
-            in CanonTests31.Server.JsonString.Source tag = default)
+            in CanonTests31.Server.Models.JsonString.Source name,
+            in CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Source metadata = default,
+            in CanonTests31.Server.Models.JsonString.Source tag = default)
         {
             name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
             metadata.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Metadata, ref builder);
@@ -1100,9 +1100,9 @@ public readonly partial struct PostItemsBody
         /// Creates an instance of a <see cref="PostItemsBody"/>.
         /// </summary>
         public void Create(
-            in CanonTests31.Server.JsonString.Source name,
-            in CanonTests31.Server.PostItemsBody.MetadataEntity.Source metadata = default,
-            in CanonTests31.Server.JsonString.Source tag = default)
+            in CanonTests31.Server.Models.JsonString.Source name,
+            in CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Source metadata = default,
+            in CanonTests31.Server.Models.JsonString.Source tag = default)
         {
             Create(ref _builder, name, metadata, tag);
         }
@@ -1113,9 +1113,9 @@ public readonly partial struct PostItemsBody
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests31.Server.JsonString.Source name,
-            in CanonTests31.Server.PostItemsBody.MetadataEntity.Source<TContext> metadata = default,
-            in CanonTests31.Server.JsonString.Source tag = default)
+            in CanonTests31.Server.Models.JsonString.Source name,
+            in CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Source<TContext> metadata = default,
+            in CanonTests31.Server.Models.JsonString.Source tag = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1130,9 +1130,9 @@ public readonly partial struct PostItemsBody
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests31.Server.JsonString.Source name,
-            in CanonTests31.Server.PostItemsBody.MetadataEntity.Source<TContext> metadata = default,
-            in CanonTests31.Server.JsonString.Source tag = default)
+            in CanonTests31.Server.Models.JsonString.Source name,
+            in CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Source<TContext> metadata = default,
+            in CanonTests31.Server.Models.JsonString.Source tag = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1298,7 +1298,7 @@ public readonly partial struct PostItemsBody
     /// <param name="tag">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.JsonString.Source name, in CanonTests31.Server.PostItemsBody.MetadataEntity.Source metadata = default, in CanonTests31.Server.JsonString.Source tag = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.Models.JsonString.Source name, in CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Source metadata = default, in CanonTests31.Server.Models.JsonString.Source tag = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1322,7 +1322,7 @@ public readonly partial struct PostItemsBody
     /// <param name="tag">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests31.Server.JsonString.Source name, in CanonTests31.Server.PostItemsBody.MetadataEntity.Source<TContext> metadata = default, in CanonTests31.Server.JsonString.Source tag = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests31.Server.Models.JsonString.Source name, in CanonTests31.Server.Models.PostItemsBody.MetadataEntity.Source<TContext> metadata = default, in CanonTests31.Server.Models.JsonString.Source tag = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

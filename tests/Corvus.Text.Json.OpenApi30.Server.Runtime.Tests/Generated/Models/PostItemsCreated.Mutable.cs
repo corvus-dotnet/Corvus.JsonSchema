@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Server;
+namespace CanonTests30.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PostItemsCreated
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests30.Server.JsonString.Mutable Id
+        public CanonTests30.Server.Models.JsonString.Mutable Id
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests30.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests30.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct PostItemsCreated
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests30.Server.JsonString.Mutable Name
+        public CanonTests30.Server.Models.JsonString.Mutable Name
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests30.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests30.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -305,11 +305,11 @@ public readonly partial struct PostItemsCreated
         /// <summary>
         /// Gets the (optional) <c>tag</c> property.
         /// </summary>
-        public CanonTests30.Server.JsonString.Mutable Tag
+        public CanonTests30.Server.Models.JsonString.Mutable Tag
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagUtf8, out CanonTests30.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagUtf8, out CanonTests30.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -361,7 +361,7 @@ public readonly partial struct PostItemsCreated
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in CanonTests30.Server.JsonString.Source value)
+        public void SetId(in CanonTests30.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -392,7 +392,7 @@ public readonly partial struct PostItemsCreated
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in CanonTests30.Server.JsonString.Source value)
+        public void SetName(in CanonTests30.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -423,7 +423,7 @@ public readonly partial struct PostItemsCreated
         /// Set the <c>tag</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTag(in CanonTests30.Server.JsonString.Source value)
+        public void SetTag(in CanonTests30.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -805,7 +805,7 @@ public readonly partial struct PostItemsCreated
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests30.Server.PostItemsCreated.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests30.Server.Models.PostItemsCreated.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostItemsCreated instance) => new(JsonElement.From(instance));
 
@@ -926,7 +926,7 @@ public readonly partial struct PostItemsCreated
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests30.Server.PostItemsCreated.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests30.Server.Models.PostItemsCreated.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1042,9 +1042,9 @@ public readonly partial struct PostItemsCreated
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests30.Server.JsonString.Source id,
-            in CanonTests30.Server.JsonString.Source name,
-            in CanonTests30.Server.JsonString.Source tag = default)
+            in CanonTests30.Server.Models.JsonString.Source id,
+            in CanonTests30.Server.Models.JsonString.Source name,
+            in CanonTests30.Server.Models.JsonString.Source tag = default)
         {
             id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
             name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
@@ -1055,9 +1055,9 @@ public readonly partial struct PostItemsCreated
         /// Creates an instance of a <see cref="PostItemsCreated"/>.
         /// </summary>
         public void Create(
-            in CanonTests30.Server.JsonString.Source id,
-            in CanonTests30.Server.JsonString.Source name,
-            in CanonTests30.Server.JsonString.Source tag = default)
+            in CanonTests30.Server.Models.JsonString.Source id,
+            in CanonTests30.Server.Models.JsonString.Source name,
+            in CanonTests30.Server.Models.JsonString.Source tag = default)
         {
             Create(ref _builder, id, name, tag);
         }
@@ -1220,7 +1220,7 @@ public readonly partial struct PostItemsCreated
     /// <param name="tag">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Server.JsonString.Source id, in CanonTests30.Server.JsonString.Source name, in CanonTests30.Server.JsonString.Source tag = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Server.Models.JsonString.Source id, in CanonTests30.Server.Models.JsonString.Source name, in CanonTests30.Server.Models.JsonString.Source tag = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

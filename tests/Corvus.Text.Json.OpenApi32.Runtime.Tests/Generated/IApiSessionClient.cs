@@ -158,5 +158,5 @@ public interface IApiSessionClient : IAsyncDisposable
     /// <param name="debug">The debug parameter.</param>
     /// <param name="max_age">The max_age parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetSessionProfileResponse> GetSessionProfileAsync(CanonTests32.Client.JsonString.Source session_id, CanonTests32.Client.JsonString.Source theme = default, CanonTests32.Client.JsonBoolean.Source debug = default, CanonTests32.Client.JsonInt32.Source max_age = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetSessionProfileResponse> GetSessionProfileAsync(CanonTests32.Client.Models.JsonString.Source session_id, CanonTests32.Client.Models.JsonString.Source theme = default, CanonTests32.Client.Models.JsonBoolean.Source debug = default, CanonTests32.Client.Models.JsonInt32.Source max_age = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

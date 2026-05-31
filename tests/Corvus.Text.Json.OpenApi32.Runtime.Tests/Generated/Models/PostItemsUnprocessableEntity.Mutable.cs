@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PostItemsUnprocessableEntity
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Mutable Errors
+        public CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Mutable Errors
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorsUtf8, out CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorsUtf8, out CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Mutable value))
                 {
                     return value;
                 }
@@ -324,7 +324,7 @@ public readonly partial struct PostItemsUnprocessableEntity
         /// Set the <c>errors</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetErrors(in CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Source value)
+        public void SetErrors(in CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -355,7 +355,7 @@ public readonly partial struct PostItemsUnprocessableEntity
         /// Set the <c>errors</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetErrors<TContext>(in CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Source<TContext> value)
+        public void SetErrors<TContext>(in CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -726,7 +726,7 @@ public readonly partial struct PostItemsUnprocessableEntity
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PostItemsUnprocessableEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PostItemsUnprocessableEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostItemsUnprocessableEntity instance) => new(JsonElement.From(instance));
 
@@ -847,7 +847,7 @@ public readonly partial struct PostItemsUnprocessableEntity
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PostItemsUnprocessableEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PostItemsUnprocessableEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -961,7 +961,7 @@ public readonly partial struct PostItemsUnprocessableEntity
         /// <summary>
         /// Creates an instance of a <see cref="PostItemsUnprocessableEntity"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Source errors)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Source errors)
         {
             errors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Errors, ref builder);
         }
@@ -969,7 +969,7 @@ public readonly partial struct PostItemsUnprocessableEntity
         /// <summary>
         /// Creates an instance of a <see cref="PostItemsUnprocessableEntity"/>.
         /// </summary>
-        public void Create(in CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Source errors)
+        public void Create(in CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Source errors)
         {
             Create(ref _builder, errors);
         }
@@ -980,7 +980,7 @@ public readonly partial struct PostItemsUnprocessableEntity
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Source<TContext> errors)
+            in CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Source<TContext> errors)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -991,7 +991,7 @@ public readonly partial struct PostItemsUnprocessableEntity
         /// <summary>
         /// Creates an instance of a <see cref="PostItemsUnprocessableEntity"/>.
         /// </summary>
-        public void Create<TContext>(in TContext context, in CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Source<TContext> errors)
+        public void Create<TContext>(in TContext context, in CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Source<TContext> errors)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1155,7 +1155,7 @@ public readonly partial struct PostItemsUnprocessableEntity
     /// <param name="errors">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Source errors, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Source errors, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1177,7 +1177,7 @@ public readonly partial struct PostItemsUnprocessableEntity
     /// <param name="errors">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.PostItemsUnprocessableEntity.JsonStringArray.Source<TContext> errors, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.Models.PostItemsUnprocessableEntity.JsonStringArray.Source<TContext> errors, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

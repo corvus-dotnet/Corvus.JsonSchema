@@ -31,12 +31,12 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public Petstore.Client.Pet OkBody { get; private set; }
+    public Petstore.Client.Models.Pet OkBody { get; private set; }
 
     /// <summary>
     /// Gets the default response body.
     /// </summary>
-    public Petstore.Client.Error DefaultBody { get; private set; }
+    public Petstore.Client.Models.Error DefaultBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<ShowPetByIdResponse> CreateAsync(
@@ -54,13 +54,13 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<Petstore.Client.Pet>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<Petstore.Client.Models.Pet>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
         }
 
-        var defaultDoc = await ParsedJsonDocument<Petstore.Client.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+        var defaultDoc = await ParsedJsonDocument<Petstore.Client.Models.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
         response.parsedDocument = defaultDoc;
         response.DefaultBody = defaultDoc.RootElement;
         return response;
@@ -71,7 +71,7 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out Petstore.Client.Pet result)
+    public bool TryGetOk(out Petstore.Client.Models.Pet result)
     {
         if (this.StatusCode == 200)
         {
@@ -88,7 +88,7 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code does not match any specific response.</returns>
-    public bool TryGetDefault(out Petstore.Client.Error result)
+    public bool TryGetDefault(out Petstore.Client.Models.Error result)
     {
         if (this.StatusCode != 200)
         {
@@ -109,8 +109,8 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// <param name="matchDefault">Handler for a default response.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<Petstore.Client.Pet, TResult> matchOk,
-        ResponseMatcher<Petstore.Client.Error, TResult> matchDefault)
+        ResponseMatcher<Petstore.Client.Models.Pet, TResult> matchOk,
+        ResponseMatcher<Petstore.Client.Models.Error, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
         {
@@ -132,8 +132,8 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<Petstore.Client.Pet, TContext, TResult> matchOk,
-        ResponseMatcher<Petstore.Client.Error, TContext, TResult> matchDefault)
+        ResponseMatcher<Petstore.Client.Models.Pet, TContext, TResult> matchOk,
+        ResponseMatcher<Petstore.Client.Models.Error, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
         if (this.StatusCode == 200)

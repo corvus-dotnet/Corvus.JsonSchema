@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct ItemEntity
     /// <summary>
     /// Gets the (optional) <c>active</c> property.
     /// </summary>
-    public CanonTests31.Server.JsonBoolean Active
+    public CanonTests31.Server.Models.JsonBoolean Active
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests31.Server.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests31.Server.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct ItemEntity
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests31.Server.JsonInt64 Id
+    public CanonTests31.Server.Models.JsonInt64 Id
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests31.Server.JsonInt64 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests31.Server.Models.JsonInt64 value))
             {
                 return value;
             }
@@ -198,11 +198,11 @@ public readonly partial struct ItemEntity
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests31.Server.JsonString Name
+    public CanonTests31.Server.Models.JsonString Name
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests31.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests31.Server.Models.JsonString value))
             {
                 return value;
             }

@@ -24,13 +24,13 @@ public readonly struct QueryArraySpaceRequest : IApiRequest<QueryArraySpaceReque
     /// <summary>
     /// Gets the colors parameter.
     /// </summary>
-    public CanonTests32.Client.GetComplexQueryArraySpaceColors Colors { get; init; }
+    public CanonTests32.Client.Models.GetComplexQueryArraySpaceColors Colors { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QueryArraySpaceRequest"/> struct.
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
-    public QueryArraySpaceRequest(CanonTests32.Client.GetComplexQueryArraySpaceColors colors)
+    public QueryArraySpaceRequest(CanonTests32.Client.Models.GetComplexQueryArraySpaceColors colors)
     {
         this.Colors = colors;
     }

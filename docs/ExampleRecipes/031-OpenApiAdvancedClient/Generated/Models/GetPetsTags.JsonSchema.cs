@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -80,14 +80,14 @@ public readonly partial struct GetPetsTags
                 {
                     int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                    JsonSchemaContext childContext = Petstore.Extended.JsonString.JsonSchema.PushChildContext(
+                    JsonSchemaContext childContext = Petstore.Extended.Models.JsonString.JsonSchema.PushChildContext(
                         parentDocument,
                         arrayValidation_currentIndex,
                         ref context,
                         itemIndex: arrayValidation_itemCount,
                         evaluationPath: ItemsSchemaEvaluationPath);
 
-                    Petstore.Extended.JsonString.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                    Petstore.Extended.Models.JsonString.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                     if (!childContext.IsMatch)
                     {
                         context.CommitChildContext(false, ref childContext);

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Server;
+namespace Petstore.EndToEnd.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct PhotoMetadata
     /// <summary>
     /// Gets the (optional) <c>caption</c> property.
     /// </summary>
-    public Petstore.EndToEnd.Server.JsonString Caption
+    public Petstore.EndToEnd.Server.Models.JsonString Caption
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaptionUtf8, out Petstore.EndToEnd.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaptionUtf8, out Petstore.EndToEnd.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct PhotoMetadata
     /// <summary>
     /// Gets the (optional) <c>isPrimary</c> property.
     /// </summary>
-    public Petstore.EndToEnd.Server.JsonBoolean IsPrimary
+    public Petstore.EndToEnd.Server.Models.JsonBoolean IsPrimary
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsPrimaryUtf8, out Petstore.EndToEnd.Server.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsPrimaryUtf8, out Petstore.EndToEnd.Server.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -193,11 +193,11 @@ public readonly partial struct PhotoMetadata
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.EndToEnd.Server.JsonString PetId
+    public Petstore.EndToEnd.Server.Models.JsonString PetId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PetIdUtf8, out Petstore.EndToEnd.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PetIdUtf8, out Petstore.EndToEnd.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -214,11 +214,11 @@ public readonly partial struct PhotoMetadata
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.EndToEnd.Server.JsonString PhotoId
+    public Petstore.EndToEnd.Server.Models.JsonString PhotoId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhotoIdUtf8, out Petstore.EndToEnd.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhotoIdUtf8, out Petstore.EndToEnd.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -235,11 +235,11 @@ public readonly partial struct PhotoMetadata
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.EndToEnd.Server.JsonDateTime UploadedAt
+    public Petstore.EndToEnd.Server.Models.JsonDateTime UploadedAt
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UploadedAtUtf8, out Petstore.EndToEnd.Server.JsonDateTime value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UploadedAtUtf8, out Petstore.EndToEnd.Server.Models.JsonDateTime value))
             {
                 return value;
             }

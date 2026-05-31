@@ -41,7 +41,7 @@ public readonly struct GetEmptyServersResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetEmptyServersResult"/> with status 200.</returns>
-    public static GetEmptyServersResult Ok(CanonTests31.Server.GetEmptyServersOk.Source body, JsonWorkspace workspace) => new(200, CanonTests31.Server.GetEmptyServersOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static GetEmptyServersResult Ok(CanonTests31.Server.Models.GetEmptyServersOk.Source body, JsonWorkspace workspace) => new(200, CanonTests31.Server.Models.GetEmptyServersOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct GetEmptyServersResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests31.Server.GetEmptyServersOk.From(this.Body).EvaluateSchema(),
+            200 => CanonTests31.Server.Models.GetEmptyServersOk.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

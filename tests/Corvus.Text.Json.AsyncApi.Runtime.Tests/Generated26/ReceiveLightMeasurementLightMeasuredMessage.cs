@@ -14,7 +14,7 @@ public readonly struct ReceiveLightMeasurementLightMeasuredMessage
     public const string MessageContentType = "application/json";
 
     /// <summary>Gets the message payload.</summary>
-    public Streetlights.Client.V26.LightMeasuredPayload Payload { get; init; }
+    public Streetlights.Client.V26.Models.LightMeasuredPayload Payload { get; init; }
 
     /// <summary>
     /// Validates the message payload and headers against their schemas.

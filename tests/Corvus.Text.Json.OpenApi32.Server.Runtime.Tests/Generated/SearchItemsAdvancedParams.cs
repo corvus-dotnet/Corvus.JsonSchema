@@ -23,10 +23,10 @@ public readonly struct SearchItemsAdvancedParams
     /// <summary>
     /// Gets the 'session' cookie parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString Session { get; init; }
+    public CanonTests32.Server.Models.JsonString Session { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.PostSearchBody Body { get; init; }
+    public CanonTests32.Server.Models.PostSearchBody Body { get; init; }
 }

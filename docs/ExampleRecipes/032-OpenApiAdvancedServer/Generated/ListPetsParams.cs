@@ -24,20 +24,20 @@ public readonly struct ListPetsParams
     /// <summary>
     /// Gets the 'limit' query parameter.
     /// </summary>
-    public Petstore.Extended.Server.GetPetsLimit Limit { get; init; }
+    public Petstore.Extended.Server.Models.GetPetsLimit Limit { get; init; }
 
     /// <summary>
     /// Gets the 'tags' query parameter.
     /// </summary>
-    public Petstore.Extended.Server.GetPetsTags Tags { get; init; }
+    public Petstore.Extended.Server.Models.GetPetsTags Tags { get; init; }
 
     /// <summary>
     /// Gets the 'filter' query parameter.
     /// </summary>
-    public Petstore.Extended.Server.GetPetsFilter Filter { get; init; }
+    public Petstore.Extended.Server.Models.GetPetsFilter Filter { get; init; }
 
     /// <summary>
     /// Gets the 'x-request-id' header parameter.
     /// </summary>
-    public Petstore.Extended.Server.JsonString XRequestId { get; init; }
+    public Petstore.Extended.Server.Models.JsonString XRequestId { get; init; }
 }

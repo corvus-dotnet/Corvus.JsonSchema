@@ -31,7 +31,7 @@ public struct UpdateItemResponse : IApiResponse<UpdateItemResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests32.Client.PutItemsOk OkBody { get; private set; }
+    public CanonTests32.Client.Models.PutItemsOk OkBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<UpdateItemResponse> CreateAsync(
@@ -49,7 +49,7 @@ public struct UpdateItemResponse : IApiResponse<UpdateItemResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<CanonTests32.Client.PutItemsOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<CanonTests32.Client.Models.PutItemsOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -63,7 +63,7 @@ public struct UpdateItemResponse : IApiResponse<UpdateItemResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests32.Client.PutItemsOk result)
+    public bool TryGetOk(out CanonTests32.Client.Models.PutItemsOk result)
     {
         if (this.StatusCode == 200)
         {
@@ -84,7 +84,7 @@ public struct UpdateItemResponse : IApiResponse<UpdateItemResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests32.Client.PutItemsOk, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.PutItemsOk, TResult> matchOk,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -107,7 +107,7 @@ public struct UpdateItemResponse : IApiResponse<UpdateItemResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests32.Client.PutItemsOk, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.PutItemsOk, TContext, TResult> matchOk,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

@@ -24,10 +24,10 @@ public readonly struct UploadAttachmentParams
     /// <summary>
     /// Gets the 'X-Upload-Token' header parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString XUploadToken { get; init; }
+    public CanonTests32.Server.Models.JsonString XUploadToken { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.PostAttachmentsBody Body { get; init; }
+    public CanonTests32.Server.Models.PostAttachmentsBody Body { get; init; }
 }

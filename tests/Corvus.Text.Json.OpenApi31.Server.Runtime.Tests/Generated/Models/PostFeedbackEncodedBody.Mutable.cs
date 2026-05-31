@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostFeedbackEncodedBody
         /// <summary>
         /// Gets the (optional) <c>comment</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonString.Mutable Comment
+        public CanonTests31.Server.Models.JsonString.Mutable Comment
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommentUtf8, out CanonTests31.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommentUtf8, out CanonTests31.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct PostFeedbackEncodedBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Mutable Tags
+        public CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Mutable Tags
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Mutable value))
                 {
                     return value;
                 }
@@ -340,7 +340,7 @@ public readonly partial struct PostFeedbackEncodedBody
         /// Set the <c>comment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetComment(in CanonTests31.Server.JsonString.Source value)
+        public void SetComment(in CanonTests31.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -385,7 +385,7 @@ public readonly partial struct PostFeedbackEncodedBody
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Source value)
+        public void SetTags(in CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -416,7 +416,7 @@ public readonly partial struct PostFeedbackEncodedBody
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags<TContext>(in CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Source<TContext> value)
+        public void SetTags<TContext>(in CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -787,7 +787,7 @@ public readonly partial struct PostFeedbackEncodedBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests31.Server.PostFeedbackEncodedBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests31.Server.Models.PostFeedbackEncodedBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostFeedbackEncodedBody instance) => new(JsonElement.From(instance));
 
@@ -908,7 +908,7 @@ public readonly partial struct PostFeedbackEncodedBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests31.Server.PostFeedbackEncodedBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests31.Server.Models.PostFeedbackEncodedBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1024,8 +1024,8 @@ public readonly partial struct PostFeedbackEncodedBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Source tags,
-            in CanonTests31.Server.JsonString.Source comment = default)
+            in CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Source tags,
+            in CanonTests31.Server.Models.JsonString.Source comment = default)
         {
             tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref builder);
             comment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Comment, ref builder);
@@ -1034,7 +1034,7 @@ public readonly partial struct PostFeedbackEncodedBody
         /// <summary>
         /// Creates an instance of a <see cref="PostFeedbackEncodedBody"/>.
         /// </summary>
-        public void Create(in CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Source tags, in CanonTests31.Server.JsonString.Source comment = default)
+        public void Create(in CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Source tags, in CanonTests31.Server.Models.JsonString.Source comment = default)
         {
             Create(ref _builder, tags, comment);
         }
@@ -1045,8 +1045,8 @@ public readonly partial struct PostFeedbackEncodedBody
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Source<TContext> tags,
-            in CanonTests31.Server.JsonString.Source comment = default)
+            in CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Source<TContext> tags,
+            in CanonTests31.Server.Models.JsonString.Source comment = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1060,8 +1060,8 @@ public readonly partial struct PostFeedbackEncodedBody
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Source<TContext> tags,
-            in CanonTests31.Server.JsonString.Source comment = default)
+            in CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Source<TContext> tags,
+            in CanonTests31.Server.Models.JsonString.Source comment = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1226,7 +1226,7 @@ public readonly partial struct PostFeedbackEncodedBody
     /// <param name="comment">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Source tags, in CanonTests31.Server.JsonString.Source comment = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Source tags, in CanonTests31.Server.Models.JsonString.Source comment = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1249,7 +1249,7 @@ public readonly partial struct PostFeedbackEncodedBody
     /// <param name="comment">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests31.Server.PostFeedbackEncodedBody.JsonStringArray.Source<TContext> tags, in CanonTests31.Server.JsonString.Source comment = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests31.Server.Models.PostFeedbackEncodedBody.JsonStringArray.Source<TContext> tags, in CanonTests31.Server.Models.JsonString.Source comment = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

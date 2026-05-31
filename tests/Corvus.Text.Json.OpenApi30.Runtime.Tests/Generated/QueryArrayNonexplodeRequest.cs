@@ -24,13 +24,13 @@ public readonly struct QueryArrayNonexplodeRequest : IApiRequest<QueryArrayNonex
     /// <summary>
     /// Gets the colors parameter.
     /// </summary>
-    public CanonTests30.Client.GetComplexQueryArrayNonexplodeColors Colors { get; init; }
+    public CanonTests30.Client.Models.GetComplexQueryArrayNonexplodeColors Colors { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QueryArrayNonexplodeRequest"/> struct.
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
-    public QueryArrayNonexplodeRequest(CanonTests30.Client.GetComplexQueryArrayNonexplodeColors colors)
+    public QueryArrayNonexplodeRequest(CanonTests30.Client.Models.GetComplexQueryArrayNonexplodeColors colors)
     {
         this.Colors = colors;
     }

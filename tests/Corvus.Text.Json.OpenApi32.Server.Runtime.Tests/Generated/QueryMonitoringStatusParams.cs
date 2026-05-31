@@ -24,5 +24,5 @@ public readonly struct QueryMonitoringStatusParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.Schema8 Body { get; init; }
+    public CanonTests32.Server.Models.Schema8 Body { get; init; }
 }

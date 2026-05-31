@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -167,11 +167,11 @@ public readonly partial struct Schema3
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Server.JsonString Action
+        public CanonTests32.Server.Models.JsonString Action
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActionUtf8, out CanonTests32.Server.JsonString value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActionUtf8, out CanonTests32.Server.Models.JsonString value))
                 {
                     return value;
                 }
@@ -183,11 +183,11 @@ public readonly partial struct Schema3
         /// <summary>
         /// Gets the (optional) <c>target</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonString Target
+        public CanonTests32.Server.Models.JsonString Target
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TargetUtf8, out CanonTests32.Server.JsonString value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TargetUtf8, out CanonTests32.Server.Models.JsonString value))
                 {
                     return value;
                 }

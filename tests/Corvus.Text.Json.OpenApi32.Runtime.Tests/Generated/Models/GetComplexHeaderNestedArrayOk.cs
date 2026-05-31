@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetComplexHeaderNestedArrayOk
     /// <summary>
     /// Gets the (optional) <c>ok</c> property.
     /// </summary>
-    public CanonTests32.Client.JsonBoolean Ok
+    public CanonTests32.Client.Models.JsonBoolean Ok
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OkUtf8, out CanonTests32.Client.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OkUtf8, out CanonTests32.Client.Models.JsonBoolean value))
             {
                 return value;
             }

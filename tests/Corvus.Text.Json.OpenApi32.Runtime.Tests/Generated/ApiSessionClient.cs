@@ -38,15 +38,15 @@ public sealed class ApiSessionClient : IApiSessionClient
     /// <param name="debug">The debug parameter.</param>
     /// <param name="max_age">The max_age parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetSessionProfileResponse> GetSessionProfileAsync(CanonTests32.Client.JsonString.Source session_id, CanonTests32.Client.JsonString.Source theme = default, CanonTests32.Client.JsonBoolean.Source debug = default, CanonTests32.Client.JsonInt32.Source max_age = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetSessionProfileResponse> GetSessionProfileAsync(CanonTests32.Client.Models.JsonString.Source session_id, CanonTests32.Client.Models.JsonString.Source theme = default, CanonTests32.Client.Models.JsonBoolean.Source debug = default, CanonTests32.Client.Models.JsonInt32.Source max_age = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.JsonString SessionIdValue = CanonTests32.Client.JsonString.CreateBuilder(workspace, session_id, 30).RootElement;
+        CanonTests32.Client.Models.JsonString SessionIdValue = CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, session_id, 30).RootElement;
         GetSessionProfileRequest request = new(SessionIdValue)
         {
-            Theme = theme.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, theme, 30).RootElement,
-            Debug = debug.IsUndefined ? default : (CanonTests32.Client.JsonBoolean)CanonTests32.Client.JsonBoolean.CreateBuilder(workspace, debug, 30).RootElement,
-            MaxAge = max_age.IsUndefined ? default : (CanonTests32.Client.JsonInt32)CanonTests32.Client.JsonInt32.CreateBuilder(workspace, max_age, 30).RootElement,
+            Theme = theme.IsUndefined ? default : (CanonTests32.Client.Models.JsonString)CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, theme, 30).RootElement,
+            Debug = debug.IsUndefined ? default : (CanonTests32.Client.Models.JsonBoolean)CanonTests32.Client.Models.JsonBoolean.CreateBuilder(workspace, debug, 30).RootElement,
+            MaxAge = max_age.IsUndefined ? default : (CanonTests32.Client.Models.JsonInt32)CanonTests32.Client.Models.JsonInt32.CreateBuilder(workspace, max_age, 30).RootElement,
         }
         ;
 

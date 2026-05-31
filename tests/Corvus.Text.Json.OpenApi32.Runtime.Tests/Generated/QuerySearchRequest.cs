@@ -24,7 +24,7 @@ public readonly struct QuerySearchRequest : IApiRequest<QuerySearchRequest>
     /// <summary>
     /// Gets the limit parameter.
     /// </summary>
-    public CanonTests32.Client.JsonInt32 Limit { get; init; }
+    public CanonTests32.Client.Models.JsonInt32 Limit { get; init; }
 
     /// <inheritdoc/>
     public static ReadOnlySpan<byte> PathTemplateUtf8 => "/query-search"u8;

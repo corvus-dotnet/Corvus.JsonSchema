@@ -34,17 +34,17 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests31.Client.GetItemsByItemIdOk OkBody { get; private set; }
+    public CanonTests31.Client.Models.GetItemsByItemIdOk OkBody { get; private set; }
 
     /// <summary>
     /// Gets the 404 response body.
     /// </summary>
-    public CanonTests31.Client.GetItemsByItemIdNotFound NotFoundBody { get; private set; }
+    public CanonTests31.Client.Models.GetItemsByItemIdNotFound NotFoundBody { get; private set; }
 
     /// <summary>
     /// Gets the default response body.
     /// </summary>
-    public CanonTests31.Client.GetItemsByItemIdDefault DefaultBody { get; private set; }
+    public CanonTests31.Client.Models.GetItemsByItemIdDefault DefaultBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<GetItemResponse> CreateAsync(
@@ -63,7 +63,7 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<CanonTests31.Client.GetItemsByItemIdOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<CanonTests31.Client.Models.GetItemsByItemIdOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -71,13 +71,13 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
 
         if (statusCode == 404)
         {
-            var notFoundDoc = await ParsedJsonDocument<CanonTests31.Client.GetItemsByItemIdNotFound>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var notFoundDoc = await ParsedJsonDocument<CanonTests31.Client.Models.GetItemsByItemIdNotFound>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = notFoundDoc;
             response.NotFoundBody = notFoundDoc.RootElement;
             return response;
         }
 
-        var defaultDoc = await ParsedJsonDocument<CanonTests31.Client.GetItemsByItemIdDefault>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+        var defaultDoc = await ParsedJsonDocument<CanonTests31.Client.Models.GetItemsByItemIdDefault>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
         response.parsedDocument = defaultDoc;
         response.DefaultBody = defaultDoc.RootElement;
         return response;
@@ -88,7 +88,7 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests31.Client.GetItemsByItemIdOk result)
+    public bool TryGetOk(out CanonTests31.Client.Models.GetItemsByItemIdOk result)
     {
         if (this.StatusCode == 200)
         {
@@ -105,7 +105,7 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 404.</returns>
-    public bool TryGetNotFound(out CanonTests31.Client.GetItemsByItemIdNotFound result)
+    public bool TryGetNotFound(out CanonTests31.Client.Models.GetItemsByItemIdNotFound result)
     {
         if (this.StatusCode == 404)
         {
@@ -122,7 +122,7 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code does not match any specific response.</returns>
-    public bool TryGetDefault(out CanonTests31.Client.GetItemsByItemIdDefault result)
+    public bool TryGetDefault(out CanonTests31.Client.Models.GetItemsByItemIdDefault result)
     {
         if (this.StatusCode != 200 && this.StatusCode != 404)
         {
@@ -144,9 +144,9 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
     /// <param name="matchDefault">Handler for a default response.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests31.Client.GetItemsByItemIdOk, TResult> matchOk,
-        ResponseMatcher<CanonTests31.Client.GetItemsByItemIdNotFound, TResult> matchNotFound,
-        ResponseMatcher<CanonTests31.Client.GetItemsByItemIdDefault, TResult> matchDefault)
+        ResponseMatcher<CanonTests31.Client.Models.GetItemsByItemIdOk, TResult> matchOk,
+        ResponseMatcher<CanonTests31.Client.Models.GetItemsByItemIdNotFound, TResult> matchNotFound,
+        ResponseMatcher<CanonTests31.Client.Models.GetItemsByItemIdDefault, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
         {
@@ -174,9 +174,9 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests31.Client.GetItemsByItemIdOk, TContext, TResult> matchOk,
-        ResponseMatcher<CanonTests31.Client.GetItemsByItemIdNotFound, TContext, TResult> matchNotFound,
-        ResponseMatcher<CanonTests31.Client.GetItemsByItemIdDefault, TContext, TResult> matchDefault)
+        ResponseMatcher<CanonTests31.Client.Models.GetItemsByItemIdOk, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests31.Client.Models.GetItemsByItemIdNotFound, TContext, TResult> matchNotFound,
+        ResponseMatcher<CanonTests31.Client.Models.GetItemsByItemIdDefault, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
         if (this.StatusCode == 200)
@@ -283,16 +283,16 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
         /// <summary>
         /// Re-fetch this item using the original path parameter
         /// </summary>
-        public ValueTask<GetItemResponse> RefreshItemAsync(CanonTests31.Client.JsonString.Source filter = default, CanonTests31.Client.JsonInt32.Source limit = default, CanonTests31.Client.JsonBoolean.Source verbose = default, CanonTests31.Client.JsonString.Source xRequestId = default, CancellationToken cancellationToken = default)
+        public ValueTask<GetItemResponse> RefreshItemAsync(CanonTests31.Client.Models.JsonString.Source filter = default, CanonTests31.Client.Models.JsonInt32.Source limit = default, CanonTests31.Client.Models.JsonBoolean.Source verbose = default, CanonTests31.Client.Models.JsonString.Source xRequestId = default, CancellationToken cancellationToken = default)
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             GetItemRequest request = new()
             {
-                ItemId = CanonTests31.Client.JsonString.From(this.response.sourceRequest.ItemId),
-                Filter = filter.IsUndefined ? default : (CanonTests31.Client.JsonString)CanonTests31.Client.JsonString.CreateBuilder(workspace, filter, 30).RootElement,
-                Limit = limit.IsUndefined ? default : (CanonTests31.Client.JsonInt32)CanonTests31.Client.JsonInt32.CreateBuilder(workspace, limit, 30).RootElement,
-                Verbose = verbose.IsUndefined ? default : (CanonTests31.Client.JsonBoolean)CanonTests31.Client.JsonBoolean.CreateBuilder(workspace, verbose, 30).RootElement,
-                XRequestId = xRequestId.IsUndefined ? default : (CanonTests31.Client.JsonString)CanonTests31.Client.JsonString.CreateBuilder(workspace, xRequestId, 30).RootElement,
+                ItemId = CanonTests31.Client.Models.JsonString.From(this.response.sourceRequest.ItemId),
+                Filter = filter.IsUndefined ? default : (CanonTests31.Client.Models.JsonString)CanonTests31.Client.Models.JsonString.CreateBuilder(workspace, filter, 30).RootElement,
+                Limit = limit.IsUndefined ? default : (CanonTests31.Client.Models.JsonInt32)CanonTests31.Client.Models.JsonInt32.CreateBuilder(workspace, limit, 30).RootElement,
+                Verbose = verbose.IsUndefined ? default : (CanonTests31.Client.Models.JsonBoolean)CanonTests31.Client.Models.JsonBoolean.CreateBuilder(workspace, verbose, 30).RootElement,
+                XRequestId = xRequestId.IsUndefined ? default : (CanonTests31.Client.Models.JsonString)CanonTests31.Client.Models.JsonString.CreateBuilder(workspace, xRequestId, 30).RootElement,
             };
 
             return this.response.transport!.SendAsync<GetItemRequest, GetItemResponse>(in request, cancellationToken);

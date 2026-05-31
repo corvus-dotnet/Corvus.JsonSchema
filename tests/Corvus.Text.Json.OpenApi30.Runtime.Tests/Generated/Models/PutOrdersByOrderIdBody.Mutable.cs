@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PutOrdersByOrderIdBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests30.Client.JsonString.Mutable Status
+        public CanonTests30.Client.Models.JsonString.Mutable Status
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests30.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests30.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct PutOrdersByOrderIdBody
         /// <summary>
         /// Gets the (optional) <c>total</c> property.
         /// </summary>
-        public CanonTests30.Client.JsonNumber.Mutable Total
+        public CanonTests30.Client.Models.JsonNumber.Mutable Total
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests30.Client.JsonNumber.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests30.Client.Models.JsonNumber.Mutable value))
                 {
                     return value;
                 }
@@ -340,7 +340,7 @@ public readonly partial struct PutOrdersByOrderIdBody
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in CanonTests30.Client.JsonString.Source value)
+        public void SetStatus(in CanonTests30.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -371,7 +371,7 @@ public readonly partial struct PutOrdersByOrderIdBody
         /// Set the <c>total</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTotal(in CanonTests30.Client.JsonNumber.Source value)
+        public void SetTotal(in CanonTests30.Client.Models.JsonNumber.Source value)
         {
             CheckValidInstance();
 
@@ -753,7 +753,7 @@ public readonly partial struct PutOrdersByOrderIdBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests30.Client.PutOrdersByOrderIdBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests30.Client.Models.PutOrdersByOrderIdBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PutOrdersByOrderIdBody instance) => new(JsonElement.From(instance));
 
@@ -874,7 +874,7 @@ public readonly partial struct PutOrdersByOrderIdBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests30.Client.PutOrdersByOrderIdBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests30.Client.Models.PutOrdersByOrderIdBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -990,8 +990,8 @@ public readonly partial struct PutOrdersByOrderIdBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests30.Client.JsonString.Source status,
-            in CanonTests30.Client.JsonNumber.Source total = default)
+            in CanonTests30.Client.Models.JsonString.Source status,
+            in CanonTests30.Client.Models.JsonNumber.Source total = default)
         {
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
             total.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Total, ref builder);
@@ -1000,7 +1000,7 @@ public readonly partial struct PutOrdersByOrderIdBody
         /// <summary>
         /// Creates an instance of a <see cref="PutOrdersByOrderIdBody"/>.
         /// </summary>
-        public void Create(in CanonTests30.Client.JsonString.Source status, in CanonTests30.Client.JsonNumber.Source total = default)
+        public void Create(in CanonTests30.Client.Models.JsonString.Source status, in CanonTests30.Client.Models.JsonNumber.Source total = default)
         {
             Create(ref _builder, status, total);
         }
@@ -1162,7 +1162,7 @@ public readonly partial struct PutOrdersByOrderIdBody
     /// <param name="total">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.JsonString.Source status, in CanonTests30.Client.JsonNumber.Source total = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.Models.JsonString.Source status, in CanonTests30.Client.Models.JsonNumber.Source total = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

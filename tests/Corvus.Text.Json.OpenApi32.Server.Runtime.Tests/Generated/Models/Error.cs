@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct Error
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Server.JsonInt32 Code
+    public CanonTests32.Server.Models.JsonInt32 Code
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CodeUtf8, out CanonTests32.Server.JsonInt32 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CodeUtf8, out CanonTests32.Server.Models.JsonInt32 value))
             {
                 return value;
             }
@@ -182,11 +182,11 @@ public readonly partial struct Error
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Server.JsonString Message
+    public CanonTests32.Server.Models.JsonString Message
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out CanonTests32.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out CanonTests32.Server.Models.JsonString value))
             {
                 return value;
             }

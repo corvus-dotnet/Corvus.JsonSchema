@@ -24,18 +24,18 @@ public readonly struct TrackEventRequest : IApiRequest<TrackEventRequest>
     /// <summary>
     /// Gets the tracker_id parameter.
     /// </summary>
-    public CanonTests32.Client.JsonString TrackerId { get; init; }
+    public CanonTests32.Client.Models.JsonString TrackerId { get; init; }
 
     /// <summary>
     /// Gets the ref_url parameter.
     /// </summary>
-    public CanonTests32.Client.JsonString RefUrl { get; init; }
+    public CanonTests32.Client.Models.JsonString RefUrl { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TrackEventRequest"/> struct.
     /// </summary>
     /// <param name="tracker_id">The tracker_id parameter.</param>
-    public TrackEventRequest(CanonTests32.Client.JsonString tracker_id)
+    public TrackEventRequest(CanonTests32.Client.Models.JsonString tracker_id)
     {
         this.TrackerId = tracker_id;
     }

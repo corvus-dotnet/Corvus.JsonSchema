@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Streetlights.Client.V26;
+namespace Streetlights.Client.V26.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct TurnOnOffPayload
     /// <summary>
     /// Gets the (optional) <c>command</c> property.
     /// </summary>
-    public Streetlights.Client.V26.TurnOnOffPayload.CommandEntity Command
+    public Streetlights.Client.V26.Models.TurnOnOffPayload.CommandEntity Command
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommandUtf8, out Streetlights.Client.V26.TurnOnOffPayload.CommandEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommandUtf8, out Streetlights.Client.V26.Models.TurnOnOffPayload.CommandEntity value))
             {
                 return value;
             }

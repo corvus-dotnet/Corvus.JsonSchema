@@ -24,5 +24,5 @@ public readonly struct UploadAttachmentEncodedParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests30.Server.PostAttachmentsEncodedBody Body { get; init; }
+    public CanonTests30.Server.Models.PostAttachmentsEncodedBody Body { get; init; }
 }

@@ -24,13 +24,13 @@ public readonly struct TraceItemRequest : IApiRequest<TraceItemRequest>
     /// <summary>
     /// Gets the itemId parameter.
     /// </summary>
-    public CanonTests30.Client.JsonString ItemId { get; init; }
+    public CanonTests30.Client.Models.JsonString ItemId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TraceItemRequest"/> struct.
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
-    public TraceItemRequest(CanonTests30.Client.JsonString itemId)
+    public TraceItemRequest(CanonTests30.Client.Models.JsonString itemId)
     {
         this.ItemId = itemId;
     }

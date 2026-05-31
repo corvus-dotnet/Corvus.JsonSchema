@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct GetComplexHeaderNestedArrayOk
         /// <summary>
         /// Gets the (optional) <c>ok</c> property.
         /// </summary>
-        public CanonTests32.Client.JsonBoolean.Mutable Ok
+        public CanonTests32.Client.Models.JsonBoolean.Mutable Ok
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OkUtf8, out CanonTests32.Client.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OkUtf8, out CanonTests32.Client.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -319,7 +319,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOk
         /// Set the <c>ok</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOk(in CanonTests32.Client.JsonBoolean.Source value)
+        public void SetOk(in CanonTests32.Client.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.GetComplexHeaderNestedArrayOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.GetComplexHeaderNestedArrayOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetComplexHeaderNestedArrayOk instance) => new(JsonElement.From(instance));
 
@@ -822,7 +822,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.GetComplexHeaderNestedArrayOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.GetComplexHeaderNestedArrayOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -936,7 +936,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOk
         /// <summary>
         /// Creates an instance of a <see cref="GetComplexHeaderNestedArrayOk"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Client.JsonBoolean.Source ok = default)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Client.Models.JsonBoolean.Source ok = default)
         {
             ok.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ok, ref builder);
         }
@@ -944,7 +944,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOk
         /// <summary>
         /// Creates an instance of a <see cref="GetComplexHeaderNestedArrayOk"/>.
         /// </summary>
-        public void Create(in CanonTests32.Client.JsonBoolean.Source ok = default)
+        public void Create(in CanonTests32.Client.Models.JsonBoolean.Source ok = default)
         {
             Create(ref _builder, ok);
         }
@@ -1123,7 +1123,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOk
     /// <param name="ok">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonBoolean.Source ok = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonBoolean.Source ok = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

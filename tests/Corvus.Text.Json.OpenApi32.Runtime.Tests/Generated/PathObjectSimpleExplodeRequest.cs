@@ -24,13 +24,13 @@ public readonly struct PathObjectSimpleExplodeRequest : IApiRequest<PathObjectSi
     /// <summary>
     /// Gets the dims parameter.
     /// </summary>
-    public CanonTests32.Client.GetComplexPathObjectSimpleExplodeByDimsDims Dims { get; init; }
+    public CanonTests32.Client.Models.GetComplexPathObjectSimpleExplodeByDimsDims Dims { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PathObjectSimpleExplodeRequest"/> struct.
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
-    public PathObjectSimpleExplodeRequest(CanonTests32.Client.GetComplexPathObjectSimpleExplodeByDimsDims dims)
+    public PathObjectSimpleExplodeRequest(CanonTests32.Client.Models.GetComplexPathObjectSimpleExplodeByDimsDims dims)
     {
         this.Dims = dims;
     }

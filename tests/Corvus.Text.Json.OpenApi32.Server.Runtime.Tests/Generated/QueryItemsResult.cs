@@ -41,7 +41,7 @@ public readonly struct QueryItemsResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="QueryItemsResult"/> with status 200.</returns>
-    public static QueryItemsResult Ok(CanonTests32.Server.Schema1.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Schema1.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static QueryItemsResult Ok(CanonTests32.Server.Models.Schema1.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Models.Schema1.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct QueryItemsResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests32.Server.Schema1.From(this.Body).EvaluateSchema(),
+            200 => CanonTests32.Server.Models.Schema1.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

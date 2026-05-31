@@ -24,19 +24,19 @@ public readonly struct StartVetChatRequest : IApiRequest<StartVetChatRequest>
     /// <summary>
     /// Gets the petId parameter.
     /// </summary>
-    public Petstore.Extended.JsonString PetId { get; init; }
+    public Petstore.Extended.Models.JsonString PetId { get; init; }
 
     /// <summary>
     /// Gets the session_token parameter.
     /// </summary>
-    public Petstore.Extended.JsonString SessionToken { get; init; }
+    public Petstore.Extended.Models.JsonString SessionToken { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StartVetChatRequest"/> struct.
     /// </summary>
     /// <param name="petId">The petId parameter.</param>
     /// <param name="session_token">The session_token parameter.</param>
-    public StartVetChatRequest(Petstore.Extended.JsonString petId, Petstore.Extended.JsonString session_token)
+    public StartVetChatRequest(Petstore.Extended.Models.JsonString petId, Petstore.Extended.Models.JsonString session_token)
     {
         this.PetId = petId;
         this.SessionToken = session_token;

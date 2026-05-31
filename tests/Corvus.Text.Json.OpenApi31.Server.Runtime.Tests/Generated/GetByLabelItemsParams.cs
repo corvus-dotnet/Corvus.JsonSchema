@@ -23,5 +23,5 @@ public readonly struct GetByLabelItemsParams
     /// <summary>
     /// Gets the 'items' path parameter.
     /// </summary>
-    public CanonTests31.Server.GetLabelNoExplodeByItemsItems Items { get; init; }
+    public CanonTests31.Server.Models.GetLabelNoExplodeByItemsItems Items { get; init; }
 }

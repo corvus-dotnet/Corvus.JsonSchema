@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Client;
+namespace CanonTests31.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -269,11 +269,11 @@ public readonly partial struct PostFormsEncodedUploadBody
             /// <summary>
             /// Gets the (optional) <c>author</c> property.
             /// </summary>
-            public CanonTests31.Client.JsonString.Mutable Author
+            public CanonTests31.Client.Models.JsonString.Mutable Author
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorUtf8, out CanonTests31.Client.JsonString.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorUtf8, out CanonTests31.Client.Models.JsonString.Mutable value))
                     {
                         return value;
                     }
@@ -285,11 +285,11 @@ public readonly partial struct PostFormsEncodedUploadBody
             /// <summary>
             /// Gets the (optional) <c>version</c> property.
             /// </summary>
-            public CanonTests31.Client.JsonInteger.Mutable Version
+            public CanonTests31.Client.Models.JsonInteger.Mutable Version
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out CanonTests31.Client.JsonInteger.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out CanonTests31.Client.Models.JsonInteger.Mutable value))
                     {
                         return value;
                     }
@@ -341,7 +341,7 @@ public readonly partial struct PostFormsEncodedUploadBody
             /// Set the <c>author</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAuthor(in CanonTests31.Client.JsonString.Source value)
+            public void SetAuthor(in CanonTests31.Client.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -386,7 +386,7 @@ public readonly partial struct PostFormsEncodedUploadBody
             /// Set the <c>version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in CanonTests31.Client.JsonInteger.Source value)
+            public void SetVersion(in CanonTests31.Client.Models.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -768,7 +768,7 @@ public readonly partial struct PostFormsEncodedUploadBody
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(CanonTests31.Client.PostFormsEncodedUploadBody.MetadataEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(CanonTests31.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(MetadataEntity instance) => new(JsonElement.From(instance));
 
@@ -889,7 +889,7 @@ public readonly partial struct PostFormsEncodedUploadBody
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, CanonTests31.Client.PostFormsEncodedUploadBody.MetadataEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, CanonTests31.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1005,8 +1005,8 @@ public readonly partial struct PostFormsEncodedUploadBody
             /// </summary>
             internal static void Create(
                 ref ComplexValueBuilder builder,
-                in CanonTests31.Client.JsonString.Source author = default,
-                in CanonTests31.Client.JsonInteger.Source version = default)
+                in CanonTests31.Client.Models.JsonString.Source author = default,
+                in CanonTests31.Client.Models.JsonInteger.Source version = default)
             {
                 author.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Author, ref builder);
                 version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
@@ -1015,7 +1015,7 @@ public readonly partial struct PostFormsEncodedUploadBody
             /// <summary>
             /// Creates an instance of a <see cref="MetadataEntity"/>.
             /// </summary>
-            public void Create(in CanonTests31.Client.JsonString.Source author = default, in CanonTests31.Client.JsonInteger.Source version = default)
+            public void Create(in CanonTests31.Client.Models.JsonString.Source author = default, in CanonTests31.Client.Models.JsonInteger.Source version = default)
             {
                 Create(ref _builder, author, version);
             }
@@ -1177,7 +1177,7 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// <param name="version">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Client.JsonString.Source author = default, in CanonTests31.Client.JsonInteger.Source version = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Client.Models.JsonString.Source author = default, in CanonTests31.Client.Models.JsonInteger.Source version = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

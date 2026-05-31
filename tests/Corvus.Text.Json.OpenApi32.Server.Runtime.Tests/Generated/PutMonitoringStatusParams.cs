@@ -24,5 +24,5 @@ public readonly struct PutMonitoringStatusParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.PutMonitoringStatusBody Body { get; init; }
+    public CanonTests32.Server.Models.PutMonitoringStatusBody Body { get; init; }
 }

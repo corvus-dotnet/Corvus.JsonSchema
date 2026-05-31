@@ -24,10 +24,10 @@ public readonly struct CreatePetParams
     /// <summary>
     /// Gets the 'session_token' cookie parameter.
     /// </summary>
-    public Petstore.Extended.Server.JsonString SessionToken { get; init; }
+    public Petstore.Extended.Server.Models.JsonString SessionToken { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public Petstore.Extended.Server.NewPet Body { get; init; }
+    public Petstore.Extended.Server.Models.NewPet Body { get; init; }
 }

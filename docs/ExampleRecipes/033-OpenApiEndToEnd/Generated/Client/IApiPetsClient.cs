@@ -33,7 +33,7 @@ public interface IApiPetsClient : IAsyncDisposable
     /// <param name="filter">The filter parameter.</param>
     /// <param name="xRequestId">The x-request-id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListPetsResponse> ListPetsAsync(Petstore.EndToEnd.Client.JsonString.Source xRequestId, Petstore.EndToEnd.Client.GetPetsLimit.Source limit = default, Petstore.EndToEnd.Client.GetPetsTags.Source tags = default, Petstore.EndToEnd.Client.GetPetsFilter.Source filter = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListPetsResponse> ListPetsAsync(Petstore.EndToEnd.Client.Models.JsonString.Source xRequestId, Petstore.EndToEnd.Client.Models.GetPetsLimit.Source limit = default, Petstore.EndToEnd.Client.Models.GetPetsTags.Source tags = default, Petstore.EndToEnd.Client.Models.GetPetsFilter.Source filter = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Create a new pet listing
@@ -41,19 +41,19 @@ public interface IApiPetsClient : IAsyncDisposable
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CreatePetResponse> CreatePetAsync(Petstore.EndToEnd.Client.JsonString.Source session_token, Petstore.EndToEnd.Client.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CreatePetResponse> CreatePetAsync(Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Get multiple pets by IDs (path array parameter)
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetPetsBatchResponse> GetPetsBatchAsync(Petstore.EndToEnd.Client.GetPetsBatchByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetPetsBatchResponse> GetPetsBatchAsync(Petstore.EndToEnd.Client.Models.GetPetsBatchByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Get a specific pet
     /// </summary>
     /// <param name="petId">The petId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ShowPetByIdResponse> ShowPetByIdAsync(Petstore.EndToEnd.Client.JsonString.Source petId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ShowPetByIdResponse> ShowPetByIdAsync(Petstore.EndToEnd.Client.Models.JsonString.Source petId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

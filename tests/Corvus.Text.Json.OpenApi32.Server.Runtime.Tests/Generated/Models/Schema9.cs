@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct Schema9
     /// <summary>
     /// Gets the (optional) <c>results</c> property.
     /// </summary>
-    public CanonTests32.Server.Schema9.JsonObjectArray Results
+    public CanonTests32.Server.Models.Schema9.JsonObjectArray Results
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out CanonTests32.Server.Schema9.JsonObjectArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out CanonTests32.Server.Models.Schema9.JsonObjectArray value))
             {
                 return value;
             }

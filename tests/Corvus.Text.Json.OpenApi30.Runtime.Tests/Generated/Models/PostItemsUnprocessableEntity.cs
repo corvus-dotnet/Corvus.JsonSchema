@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PostItemsUnprocessableEntity
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests30.Client.PostItemsUnprocessableEntity.JsonStringArray Errors
+    public CanonTests30.Client.Models.PostItemsUnprocessableEntity.JsonStringArray Errors
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorsUtf8, out CanonTests30.Client.PostItemsUnprocessableEntity.JsonStringArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorsUtf8, out CanonTests30.Client.Models.PostItemsUnprocessableEntity.JsonStringArray value))
             {
                 return value;
             }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct GetDocumentsByDocPathOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Content
+        public CanonTests32.Client.Models.JsonString.Mutable Content
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct GetDocumentsByDocPathOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Path
+        public CanonTests32.Client.Models.JsonString.Mutable Path
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PathUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PathUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -345,7 +345,7 @@ public readonly partial struct GetDocumentsByDocPathOk
         /// Set the <c>content</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetContent(in CanonTests32.Client.JsonString.Source value)
+        public void SetContent(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct GetDocumentsByDocPathOk
         /// Set the <c>path</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPath(in CanonTests32.Client.JsonString.Source value)
+        public void SetPath(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -744,7 +744,7 @@ public readonly partial struct GetDocumentsByDocPathOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.GetDocumentsByDocPathOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.GetDocumentsByDocPathOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetDocumentsByDocPathOk instance) => new(JsonElement.From(instance));
 
@@ -865,7 +865,7 @@ public readonly partial struct GetDocumentsByDocPathOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.GetDocumentsByDocPathOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.GetDocumentsByDocPathOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -981,8 +981,8 @@ public readonly partial struct GetDocumentsByDocPathOk
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonString.Source content,
-            in CanonTests32.Client.JsonString.Source path)
+            in CanonTests32.Client.Models.JsonString.Source content,
+            in CanonTests32.Client.Models.JsonString.Source path)
         {
             content.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Content, ref builder);
             path.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Path, ref builder);
@@ -991,7 +991,7 @@ public readonly partial struct GetDocumentsByDocPathOk
         /// <summary>
         /// Creates an instance of a <see cref="GetDocumentsByDocPathOk"/>.
         /// </summary>
-        public void Create(in CanonTests32.Client.JsonString.Source content, in CanonTests32.Client.JsonString.Source path)
+        public void Create(in CanonTests32.Client.Models.JsonString.Source content, in CanonTests32.Client.Models.JsonString.Source path)
         {
             Create(ref _builder, content, path);
         }
@@ -1153,7 +1153,7 @@ public readonly partial struct GetDocumentsByDocPathOk
     /// <param name="path">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source content, in CanonTests32.Client.JsonString.Source path, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source content, in CanonTests32.Client.Models.JsonString.Source path, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

@@ -6,6 +6,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 const string StreetlightId = "lamp-42";
 const string TelemetryChannelTemplate = "smartylighting.streetlights.1.0.action.{streetlightId}.lighting.measured";

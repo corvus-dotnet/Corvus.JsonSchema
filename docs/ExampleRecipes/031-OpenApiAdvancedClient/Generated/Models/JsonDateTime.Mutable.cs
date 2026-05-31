@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -499,7 +499,7 @@ public readonly partial struct JsonDateTime
 
         private Source(NodaTime.OffsetDateTime value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => JsonElementHelpers.TryFormatOffsetDateTime(v, buffer, out written)); _kind = Kind.StringSimpleType; }
 
-        private Source(DateTimeOffset value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written)); _kind = Kind.StringSimpleType; }
+        private Source(DateTimeOffset value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written, 'O')); _kind = Kind.StringSimpleType; }
 
         public static implicit operator Source(JsonDateTime instance) => new(JsonElement.From(instance));
 
@@ -514,6 +514,9 @@ public readonly partial struct JsonDateTime
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(NodaTime.OffsetDateTime value) => new (value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(DateTimeOffset value) => new (value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

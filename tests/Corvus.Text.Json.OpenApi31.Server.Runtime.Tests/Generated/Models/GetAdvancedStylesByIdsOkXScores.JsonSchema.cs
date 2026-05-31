@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -80,14 +80,14 @@ public readonly partial struct GetAdvancedStylesByIdsOkXScores
                 {
                     int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                    JsonSchemaContext childContext = CanonTests31.Server.JsonDouble.JsonSchema.PushChildContext(
+                    JsonSchemaContext childContext = CanonTests31.Server.Models.JsonDouble.JsonSchema.PushChildContext(
                         parentDocument,
                         arrayValidation_currentIndex,
                         ref context,
                         itemIndex: arrayValidation_itemCount,
                         evaluationPath: ItemsSchemaEvaluationPath);
 
-                    CanonTests31.Server.JsonDouble.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                    CanonTests31.Server.Models.JsonDouble.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                     if (!childContext.IsMatch)
                     {
                         context.CommitChildContext(false, ref childContext);

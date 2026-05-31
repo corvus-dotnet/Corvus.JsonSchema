@@ -54,6 +54,7 @@ Use it with just a few lines:
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Petstore.Client;
+using Petstore.Client.Models;
 
 using HttpClient httpClient = new() { BaseAddress = new Uri("https://petstore.example.com/v1") };
 await using HttpClientTransport transport = new(httpClient);
@@ -94,6 +95,7 @@ Wire up with ASP.NET Core minimal APIs:
 ```csharp
 using Corvus.Text.Json;
 using Petstore.Server;
+using Petstore.Server.Models;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 WebApplication app = builder.Build();
@@ -140,7 +142,7 @@ internal sealed class PetsHandler : IApiPetsHandler
 | **Client class** (e.g., `ApiPetsClient`) | Orchestrates request lifecycle: builds parameters, validates against JSON Schema, sends via transport, parses response |
 | **Request structs** | Serializes path/query/header/cookie parameters into correct wire format |
 | **Response structs** | Parses response body into typed models; `MatchResult` for exhaustive status code handling |
-| **Model types** | Strongly-typed JSON Schema models with validation, zero-allocation access, and builder patterns |
+| **Model types** (in `.Models` sub-namespace) | Strongly-typed JSON Schema models with validation, zero-allocation access, and builder patterns |
 | **Client interface** | Contract for dependency injection and testing |
 
 ### Server Generation (`openapi-server`)
@@ -151,7 +153,18 @@ internal sealed class PetsHandler : IApiPetsHandler
 | **Endpoint registration** (`ApiEndpointRegistration`) | Maps all routes with correct HTTP methods and path templates |
 | **Params structs** | Strongly-typed, schema-validated request parameters and bodies |
 | **Result structs** | Factory methods for each response status code with typed body builders |
-| **Model types** | Same models as client generation |
+| **Model types** (in `.Models` sub-namespace) | Same models as client generation |
+
+### Namespace Layout
+
+The generator places types into two namespaces to avoid name collisions:
+
+| Namespace | Contains | Example |
+|---|---|---|
+| `{rootNamespace}` | Client/server classes, request, response, params, result types | `Petstore.Client.ApiPetsClient`, `Petstore.Client.ListPetsResponse` |
+| `{rootNamespace}.Models` | JSON Schema model types (from inline schemas and `#/components/schemas`) | `Petstore.Client.Models.Pet`, `Petstore.Client.Models.Error` |
+
+Model types are generated into a `Models/` subdirectory of the output path and use the `.Models` sub-namespace. This prevents collisions when a schema name (e.g., `CreateUserRequest`) matches a generated request type name.
 
 ## Generated Code Architecture
 

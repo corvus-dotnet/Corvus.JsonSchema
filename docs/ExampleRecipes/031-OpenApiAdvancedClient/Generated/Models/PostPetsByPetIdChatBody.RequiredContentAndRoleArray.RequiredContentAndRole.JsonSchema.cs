@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -59,14 +59,14 @@ public readonly partial struct PostPetsByPetIdChatBody
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
-                        Petstore.Extended.JsonString.JsonSchema.PushChildContextUnescaped(
+                        Petstore.Extended.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.ContentUtf8,
                             evaluationPath: ContentSchemaEvaluationPath);
 
-                    Petstore.Extended.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                    Petstore.Extended.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
 
                     if (!context.HasCollector && !context.IsMatch)
@@ -81,14 +81,14 @@ public readonly partial struct PostPetsByPetIdChatBody
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
-                        Petstore.Extended.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.JsonSchema.PushChildContextUnescaped(
+                        Petstore.Extended.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.RoleUtf8,
                             evaluationPath: RoleSchemaEvaluationPath);
 
-                    Petstore.Extended.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                    Petstore.Extended.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
                     if (!context.HasCollector && !context.IsMatch)
@@ -99,21 +99,21 @@ public readonly partial struct PostPetsByPetIdChatBody
                     requiredBitBuffer[RequiredOffsetForRole] |= RequiredBitForRole;
                 }
 
-                private static PropertySchemaMatchers<Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+                private static PropertySchemaMatchers<Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
                 {
-                    return new PropertySchemaMatchers<Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator>([
+                    return new PropertySchemaMatchers<Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                         (static () => JsonPropertyNames.ContentUtf8, MatchContent),
                         (static () => JsonPropertyNames.RoleUtf8, MatchRole),
                     ]);
                 }
 
-                private static PropertySchemaMatchers<Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+                private static PropertySchemaMatchers<Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
                 private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
                 [NotNullWhen(true)]
 #endif
-                out Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+                out Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
                 {
                     return Matchers.TryGetNamedMatcher(span, out matcher);
                 }
@@ -172,7 +172,7 @@ public readonly partial struct PostPetsByPetIdChatBody
                             int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                             using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                            if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                            if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                             {
                                 validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 

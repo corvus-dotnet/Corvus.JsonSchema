@@ -32,21 +32,21 @@ public struct StreamPetActivityResponse : IApiResponse<StreamPetActivityResponse
     /// Enumerates the streaming items from the 200 response.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>An async enumerable of parsed documents containing <see cref="Petstore.EndToEnd.Client.ActivityEvent"/> items. Each document must be disposed by the caller.</returns>
+    /// <returns>An async enumerable of parsed documents containing <see cref="Petstore.EndToEnd.Client.Models.ActivityEvent"/> items. Each document must be disposed by the caller.</returns>
     /// <remarks>
     /// <para>The response stream is read line-by-line. Supports NDJSON and SSE formats.</para>
     /// <para>For SSE streams, use <see cref="EnumerateOkSseItems"/> to access event metadata.</para>
     /// <para>The response must not be disposed until enumeration is complete.
     /// Each yielded document must be disposed when no longer needed.</para>
     /// </remarks>
-    public IAsyncEnumerable<ParsedJsonDocument<Petstore.EndToEnd.Client.ActivityEvent>> EnumerateOkItems(CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ParsedJsonDocument<Petstore.EndToEnd.Client.Models.ActivityEvent>> EnumerateOkItems(CancellationToken cancellationToken = default)
     {
         if (this.itemStream is null)
         {
             throw new InvalidOperationException("No streaming content is available.");
         }
 
-        return JsonStreamReader.ReadItemsAsync<Petstore.EndToEnd.Client.ActivityEvent>(this.itemStream, cancellationToken: cancellationToken);
+        return JsonStreamReader.ReadItemsAsync<Petstore.EndToEnd.Client.Models.ActivityEvent>(this.itemStream, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -54,21 +54,21 @@ public struct StreamPetActivityResponse : IApiResponse<StreamPetActivityResponse
     /// including event metadata (event type, id, retry).
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>An async enumerable of SSE events wrapping <see cref="Petstore.EndToEnd.Client.ActivityEvent"/> items. Each event must be disposed by the caller.</returns>
+    /// <returns>An async enumerable of SSE events wrapping <see cref="Petstore.EndToEnd.Client.Models.ActivityEvent"/> items. Each event must be disposed by the caller.</returns>
     /// <remarks>
     /// <para>Use this method when consuming Server-Sent Events and you need access to
     /// the event type, id, or retry metadata fields.</para>
     /// <para>The response must not be disposed until enumeration is complete.
     /// Each yielded event must be disposed when no longer needed.</para>
     /// </remarks>
-    public IAsyncEnumerable<SseEvent<Petstore.EndToEnd.Client.ActivityEvent>> EnumerateOkSseItems(CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<SseEvent<Petstore.EndToEnd.Client.Models.ActivityEvent>> EnumerateOkSseItems(CancellationToken cancellationToken = default)
     {
         if (this.itemStream is null)
         {
             throw new InvalidOperationException("No streaming content is available.");
         }
 
-        return JsonStreamReader.ReadSseItemsAsync<Petstore.EndToEnd.Client.ActivityEvent>(this.itemStream, cancellationToken: cancellationToken);
+        return JsonStreamReader.ReadSseItemsAsync<Petstore.EndToEnd.Client.Models.ActivityEvent>(this.itemStream, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>

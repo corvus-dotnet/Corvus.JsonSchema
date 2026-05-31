@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PostDocsUploadMixedCreated
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonString DocumentId
+    public CanonTests32.Client.Models.JsonString DocumentId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentIdUtf8, out CanonTests32.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentIdUtf8, out CanonTests32.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -182,11 +182,11 @@ public readonly partial struct PostDocsUploadMixedCreated
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonUri Url
+    public CanonTests32.Client.Models.JsonUri Url
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UrlUtf8, out CanonTests32.Client.JsonUri value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UrlUtf8, out CanonTests32.Client.Models.JsonUri value))
             {
                 return value;
             }

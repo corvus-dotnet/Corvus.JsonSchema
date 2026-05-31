@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using CanonTests32.Client;
+using CanonTests32.Client.Models;
 using Corvus.Text.Json.OpenApi;
 
 namespace Corvus.Text.Json.OpenApi32.Runtime.Tests;

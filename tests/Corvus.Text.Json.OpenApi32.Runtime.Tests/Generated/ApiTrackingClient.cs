@@ -37,14 +37,14 @@ public sealed class ApiTrackingClient : IApiTrackingClient
     /// <param name="ref_url">The ref_url parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<TrackEventResponse> TrackEventAsync(CanonTests32.Client.JsonString.Source tracker_id, CanonTests32.Client.PostTrackingBody.Source body, CanonTests32.Client.JsonString.Source ref_url = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<TrackEventResponse> TrackEventAsync(CanonTests32.Client.Models.JsonString.Source tracker_id, CanonTests32.Client.Models.PostTrackingBody.Source body, CanonTests32.Client.Models.JsonString.Source ref_url = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostTrackingBody bodyValue = CanonTests32.Client.PostTrackingBody.CreateBuilder(workspace, body, 30).RootElement;
-        CanonTests32.Client.JsonString TrackerIdValue = CanonTests32.Client.JsonString.CreateBuilder(workspace, tracker_id, 30).RootElement;
+        CanonTests32.Client.Models.PostTrackingBody bodyValue = CanonTests32.Client.Models.PostTrackingBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests32.Client.Models.JsonString TrackerIdValue = CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, tracker_id, 30).RootElement;
         TrackEventRequest request = new(TrackerIdValue)
         {
-            RefUrl = ref_url.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, ref_url, 30).RootElement,
+            RefUrl = ref_url.IsUndefined ? default : (CanonTests32.Client.Models.JsonString)CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, ref_url, 30).RootElement,
         }
         ;
 
@@ -63,7 +63,7 @@ public sealed class ApiTrackingClient : IApiTrackingClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyAsyncCore<TrackEventRequest, CanonTests32.Client.PostTrackingBody, TrackEventResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendWithBodyAsyncCore<TrackEventRequest, CanonTests32.Client.Models.PostTrackingBody, TrackEventResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>

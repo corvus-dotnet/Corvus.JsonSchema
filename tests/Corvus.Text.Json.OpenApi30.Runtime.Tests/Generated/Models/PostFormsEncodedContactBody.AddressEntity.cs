@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -162,11 +162,11 @@ public readonly partial struct PostFormsEncodedContactBody
         /// <summary>
         /// Gets the (optional) <c>city</c> property.
         /// </summary>
-        public CanonTests30.Client.JsonString City
+        public CanonTests30.Client.Models.JsonString City
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CityUtf8, out CanonTests30.Client.JsonString value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CityUtf8, out CanonTests30.Client.Models.JsonString value))
                 {
                     return value;
                 }
@@ -178,11 +178,11 @@ public readonly partial struct PostFormsEncodedContactBody
         /// <summary>
         /// Gets the (optional) <c>street</c> property.
         /// </summary>
-        public CanonTests30.Client.JsonString Street
+        public CanonTests30.Client.Models.JsonString Street
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetUtf8, out CanonTests30.Client.JsonString value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreetUtf8, out CanonTests30.Client.Models.JsonString value))
                 {
                     return value;
                 }

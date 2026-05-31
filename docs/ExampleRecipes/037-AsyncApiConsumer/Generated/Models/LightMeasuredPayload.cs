@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Streetlights.Client;
+namespace Streetlights.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct LightMeasuredPayload
     /// Light intensity measured in lumens.
     /// </para>
     /// </remarks>
-    public Streetlights.Client.LightMeasuredPayload.LightIntensityMeasuredInLumens Lumens
+    public Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens Lumens
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out Streetlights.Client.LightMeasuredPayload.LightIntensityMeasuredInLumens value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens value))
             {
                 return value;
             }
@@ -182,11 +182,11 @@ public readonly partial struct LightMeasuredPayload
     /// Date and time when the message was sent.
     /// </para>
     /// </remarks>
-    public Streetlights.Client.JsonDateTime SentAt
+    public Streetlights.Client.Models.JsonDateTime SentAt
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out Streetlights.Client.JsonDateTime value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out Streetlights.Client.Models.JsonDateTime value))
             {
                 return value;
             }

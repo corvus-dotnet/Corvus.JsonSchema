@@ -24,13 +24,13 @@ public readonly struct PathObjectMatrixExplodeRequest : IApiRequest<PathObjectMa
     /// <summary>
     /// Gets the dims parameter.
     /// </summary>
-    public CanonTests30.Client.GetComplexPathObjectMatrixExplodeByDimsDims Dims { get; init; }
+    public CanonTests30.Client.Models.GetComplexPathObjectMatrixExplodeByDimsDims Dims { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PathObjectMatrixExplodeRequest"/> struct.
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
-    public PathObjectMatrixExplodeRequest(CanonTests30.Client.GetComplexPathObjectMatrixExplodeByDimsDims dims)
+    public PathObjectMatrixExplodeRequest(CanonTests30.Client.Models.GetComplexPathObjectMatrixExplodeByDimsDims dims)
     {
         this.Dims = dims;
     }

@@ -5,6 +5,7 @@
 using System.Net;
 using System.Text;
 using CanonTests30.Client;
+using CanonTests30.Client.Models;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

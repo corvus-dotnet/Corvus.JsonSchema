@@ -38,12 +38,12 @@ public sealed class ApiPhotosClient : IApiPhotosClient
     /// <param name="body">The request body..</param>
     /// <param name="file">Binary data for the 'file' part.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<UploadPetPhotoResponse> UploadPetPhotoAsync(Petstore.Extended.JsonString.Source petId, Petstore.Extended.JsonString.Source session_token, Petstore.Extended.PostPetsByPetIdPhotosBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<UploadPetPhotoResponse> UploadPetPhotoAsync(Petstore.Extended.Models.JsonString.Source petId, Petstore.Extended.Models.JsonString.Source session_token, Petstore.Extended.Models.PostPetsByPetIdPhotosBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.Extended.PostPetsByPetIdPhotosBody bodyValue = Petstore.Extended.PostPetsByPetIdPhotosBody.CreateBuilder(workspace, body, 30).RootElement;
-        Petstore.Extended.JsonString PetIdValue = Petstore.Extended.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
-        Petstore.Extended.JsonString SessionTokenValue = Petstore.Extended.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
+        Petstore.Extended.Models.PostPetsByPetIdPhotosBody bodyValue = Petstore.Extended.Models.PostPetsByPetIdPhotosBody.CreateBuilder(workspace, body, 30).RootElement;
+        Petstore.Extended.Models.JsonString PetIdValue = Petstore.Extended.Models.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
+        Petstore.Extended.Models.JsonString SessionTokenValue = Petstore.Extended.Models.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
         UploadPetPhotoRequest request = new(PetIdValue, SessionTokenValue);
 
         request.Validate(validationMode);
@@ -74,10 +74,10 @@ public sealed class ApiPhotosClient : IApiPhotosClient
     /// </summary>
     /// <param name="photoId">The photoId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<DownloadPhotoResponse> DownloadPhotoAsync(Petstore.Extended.JsonString.Source photoId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<DownloadPhotoResponse> DownloadPhotoAsync(Petstore.Extended.Models.JsonString.Source photoId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.Extended.JsonString PhotoIdValue = Petstore.Extended.JsonString.CreateBuilder(workspace, photoId, 30).RootElement;
+        Petstore.Extended.Models.JsonString PhotoIdValue = Petstore.Extended.Models.JsonString.CreateBuilder(workspace, photoId, 30).RootElement;
         DownloadPhotoRequest request = new(PhotoIdValue);
 
         request.Validate(validationMode);

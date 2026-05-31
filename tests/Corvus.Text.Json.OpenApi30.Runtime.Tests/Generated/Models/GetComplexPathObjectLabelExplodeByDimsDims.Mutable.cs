@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct GetComplexPathObjectLabelExplodeByDimsDims
         /// <summary>
         /// Gets the (optional) <c>height</c> property.
         /// </summary>
-        public CanonTests30.Client.JsonInt32.Mutable Height
+        public CanonTests30.Client.Models.JsonInt32.Mutable Height
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeightUtf8, out CanonTests30.Client.JsonInt32.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeightUtf8, out CanonTests30.Client.Models.JsonInt32.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct GetComplexPathObjectLabelExplodeByDimsDims
         /// <summary>
         /// Gets the (optional) <c>width</c> property.
         /// </summary>
-        public CanonTests30.Client.JsonInt32.Mutable Width
+        public CanonTests30.Client.Models.JsonInt32.Mutable Width
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WidthUtf8, out CanonTests30.Client.JsonInt32.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WidthUtf8, out CanonTests30.Client.Models.JsonInt32.Mutable value))
                 {
                     return value;
                 }
@@ -335,7 +335,7 @@ public readonly partial struct GetComplexPathObjectLabelExplodeByDimsDims
         /// Set the <c>height</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHeight(in CanonTests30.Client.JsonInt32.Source value)
+        public void SetHeight(in CanonTests30.Client.Models.JsonInt32.Source value)
         {
             CheckValidInstance();
 
@@ -380,7 +380,7 @@ public readonly partial struct GetComplexPathObjectLabelExplodeByDimsDims
         /// Set the <c>width</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWidth(in CanonTests30.Client.JsonInt32.Source value)
+        public void SetWidth(in CanonTests30.Client.Models.JsonInt32.Source value)
         {
             CheckValidInstance();
 
@@ -762,7 +762,7 @@ public readonly partial struct GetComplexPathObjectLabelExplodeByDimsDims
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests30.Client.GetComplexPathObjectLabelExplodeByDimsDims.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests30.Client.Models.GetComplexPathObjectLabelExplodeByDimsDims.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetComplexPathObjectLabelExplodeByDimsDims instance) => new(JsonElement.From(instance));
 
@@ -883,7 +883,7 @@ public readonly partial struct GetComplexPathObjectLabelExplodeByDimsDims
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests30.Client.GetComplexPathObjectLabelExplodeByDimsDims.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests30.Client.Models.GetComplexPathObjectLabelExplodeByDimsDims.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -999,8 +999,8 @@ public readonly partial struct GetComplexPathObjectLabelExplodeByDimsDims
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests30.Client.JsonInt32.Source height = default,
-            in CanonTests30.Client.JsonInt32.Source width = default)
+            in CanonTests30.Client.Models.JsonInt32.Source height = default,
+            in CanonTests30.Client.Models.JsonInt32.Source width = default)
         {
             height.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Height, ref builder);
             width.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Width, ref builder);
@@ -1009,7 +1009,7 @@ public readonly partial struct GetComplexPathObjectLabelExplodeByDimsDims
         /// <summary>
         /// Creates an instance of a <see cref="GetComplexPathObjectLabelExplodeByDimsDims"/>.
         /// </summary>
-        public void Create(in CanonTests30.Client.JsonInt32.Source height = default, in CanonTests30.Client.JsonInt32.Source width = default)
+        public void Create(in CanonTests30.Client.Models.JsonInt32.Source height = default, in CanonTests30.Client.Models.JsonInt32.Source width = default)
         {
             Create(ref _builder, height, width);
         }
@@ -1171,7 +1171,7 @@ public readonly partial struct GetComplexPathObjectLabelExplodeByDimsDims
     /// <param name="width">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.JsonInt32.Source height = default, in CanonTests30.Client.JsonInt32.Source width = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.Models.JsonInt32.Source height = default, in CanonTests30.Client.Models.JsonInt32.Source width = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

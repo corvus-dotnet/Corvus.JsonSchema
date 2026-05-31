@@ -24,13 +24,13 @@ public readonly struct CreatePetRequest : IApiRequest<CreatePetRequest>
     /// <summary>
     /// Gets the session_token parameter.
     /// </summary>
-    public Petstore.EndToEnd.Client.JsonString SessionToken { get; init; }
+    public Petstore.EndToEnd.Client.Models.JsonString SessionToken { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CreatePetRequest"/> struct.
     /// </summary>
     /// <param name="session_token">The session_token parameter.</param>
-    public CreatePetRequest(Petstore.EndToEnd.Client.JsonString session_token)
+    public CreatePetRequest(Petstore.EndToEnd.Client.Models.JsonString session_token)
     {
         this.SessionToken = session_token;
     }

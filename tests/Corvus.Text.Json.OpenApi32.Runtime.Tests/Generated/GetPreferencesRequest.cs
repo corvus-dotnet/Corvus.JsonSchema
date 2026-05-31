@@ -24,18 +24,18 @@ public readonly struct GetPreferencesRequest : IApiRequest<GetPreferencesRequest
     /// <summary>
     /// Gets the session_token parameter.
     /// </summary>
-    public CanonTests32.Client.JsonString SessionToken { get; init; }
+    public CanonTests32.Client.Models.JsonString SessionToken { get; init; }
 
     /// <summary>
     /// Gets the theme parameter.
     /// </summary>
-    public CanonTests32.Client.JsonString Theme { get; init; }
+    public CanonTests32.Client.Models.JsonString Theme { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetPreferencesRequest"/> struct.
     /// </summary>
     /// <param name="session_token">The session_token parameter.</param>
-    public GetPreferencesRequest(CanonTests32.Client.JsonString session_token)
+    public GetPreferencesRequest(CanonTests32.Client.Models.JsonString session_token)
     {
         this.SessionToken = session_token;
     }

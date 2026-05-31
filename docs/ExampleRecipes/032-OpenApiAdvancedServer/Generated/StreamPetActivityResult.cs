@@ -125,25 +125,25 @@ public readonly struct StreamPetActivityStream
     }
 
     /// <summary>
-    /// Appends a <see cref="Petstore.Extended.Server.ActivityEvent"/> item to the response stream.
+    /// Appends a <see cref="Petstore.Extended.Server.Models.ActivityEvent"/> item to the response stream.
     /// </summary>
     /// <param name="item">The item to append.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A value task that completes when the item has been flushed.</returns>
-    public ValueTask AppendActivityEvent(in Petstore.Extended.Server.ActivityEvent.Source item, CancellationToken cancellationToken = default)
+    public ValueTask AppendActivityEvent(in Petstore.Extended.Server.Models.ActivityEvent.Source item, CancellationToken cancellationToken = default)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Petstore.Extended.Server.ActivityEvent.Mutable> builder = Petstore.Extended.Server.ActivityEvent.CreateBuilder(workspace, item);
+        using JsonDocumentBuilder<Petstore.Extended.Server.Models.ActivityEvent.Mutable> builder = Petstore.Extended.Server.Models.ActivityEvent.CreateBuilder(workspace, item);
         return this.writer.WriteItemAsync(builder.RootElement, cancellationToken);
     }
 
     /// <summary>
-    /// Appends a <see cref="Petstore.Extended.Server.ActivityEvent"/> item to the response stream.
+    /// Appends a <see cref="Petstore.Extended.Server.Models.ActivityEvent"/> item to the response stream.
     /// </summary>
     /// <param name="item">The item to append.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A value task that completes when the item has been flushed.</returns>
-    public ValueTask AppendActivityEvent(Petstore.Extended.Server.ActivityEvent item, CancellationToken cancellationToken = default)
+    public ValueTask AppendActivityEvent(Petstore.Extended.Server.Models.ActivityEvent item, CancellationToken cancellationToken = default)
     {
         return this.writer.WriteItemAsync(item, cancellationToken);
     }

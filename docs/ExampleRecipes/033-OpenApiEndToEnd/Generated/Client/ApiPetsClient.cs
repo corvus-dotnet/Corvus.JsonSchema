@@ -38,15 +38,15 @@ public sealed class ApiPetsClient : IApiPetsClient
     /// <param name="filter">The filter parameter.</param>
     /// <param name="xRequestId">The x-request-id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ListPetsResponse> ListPetsAsync(Petstore.EndToEnd.Client.JsonString.Source xRequestId, Petstore.EndToEnd.Client.GetPetsLimit.Source limit = default, Petstore.EndToEnd.Client.GetPetsTags.Source tags = default, Petstore.EndToEnd.Client.GetPetsFilter.Source filter = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ListPetsResponse> ListPetsAsync(Petstore.EndToEnd.Client.Models.JsonString.Source xRequestId, Petstore.EndToEnd.Client.Models.GetPetsLimit.Source limit = default, Petstore.EndToEnd.Client.Models.GetPetsTags.Source tags = default, Petstore.EndToEnd.Client.Models.GetPetsFilter.Source filter = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.EndToEnd.Client.JsonString XRequestIdValue = Petstore.EndToEnd.Client.JsonString.CreateBuilder(workspace, xRequestId, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.JsonString XRequestIdValue = Petstore.EndToEnd.Client.Models.JsonString.CreateBuilder(workspace, xRequestId, 30).RootElement;
         ListPetsRequest request = new(XRequestIdValue)
         {
-            Limit = limit.IsUndefined ? default : (Petstore.EndToEnd.Client.GetPetsLimit)Petstore.EndToEnd.Client.GetPetsLimit.CreateBuilder(workspace, limit, 30).RootElement,
-            Tags = tags.IsUndefined ? default : (Petstore.EndToEnd.Client.GetPetsTags)Petstore.EndToEnd.Client.GetPetsTags.CreateBuilder(workspace, tags, 30).RootElement,
-            Filter = filter.IsUndefined ? default : (Petstore.EndToEnd.Client.GetPetsFilter)Petstore.EndToEnd.Client.GetPetsFilter.CreateBuilder(workspace, filter, 30).RootElement,
+            Limit = limit.IsUndefined ? default : (Petstore.EndToEnd.Client.Models.GetPetsLimit)Petstore.EndToEnd.Client.Models.GetPetsLimit.CreateBuilder(workspace, limit, 30).RootElement,
+            Tags = tags.IsUndefined ? default : (Petstore.EndToEnd.Client.Models.GetPetsTags)Petstore.EndToEnd.Client.Models.GetPetsTags.CreateBuilder(workspace, tags, 30).RootElement,
+            Filter = filter.IsUndefined ? default : (Petstore.EndToEnd.Client.Models.GetPetsFilter)Petstore.EndToEnd.Client.Models.GetPetsFilter.CreateBuilder(workspace, filter, 30).RootElement,
         }
         ;
 
@@ -61,11 +61,11 @@ public sealed class ApiPetsClient : IApiPetsClient
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<CreatePetResponse> CreatePetAsync(Petstore.EndToEnd.Client.JsonString.Source session_token, Petstore.EndToEnd.Client.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<CreatePetResponse> CreatePetAsync(Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.NewPet.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.EndToEnd.Client.NewPet bodyValue = Petstore.EndToEnd.Client.NewPet.CreateBuilder(workspace, body, 30).RootElement;
-        Petstore.EndToEnd.Client.JsonString SessionTokenValue = Petstore.EndToEnd.Client.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.NewPet bodyValue = Petstore.EndToEnd.Client.Models.NewPet.CreateBuilder(workspace, body, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.JsonString SessionTokenValue = Petstore.EndToEnd.Client.Models.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
         CreatePetRequest request = new(SessionTokenValue);
 
         request.Validate(validationMode);
@@ -83,7 +83,7 @@ public sealed class ApiPetsClient : IApiPetsClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyAsyncCore<CreatePetRequest, Petstore.EndToEnd.Client.NewPet, CreatePetResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendWithBodyAsyncCore<CreatePetRequest, Petstore.EndToEnd.Client.Models.NewPet, CreatePetResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -91,10 +91,10 @@ public sealed class ApiPetsClient : IApiPetsClient
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetPetsBatchResponse> GetPetsBatchAsync(Petstore.EndToEnd.Client.GetPetsBatchByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetPetsBatchResponse> GetPetsBatchAsync(Petstore.EndToEnd.Client.Models.GetPetsBatchByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.EndToEnd.Client.GetPetsBatchByIdsIds IdsValue = Petstore.EndToEnd.Client.GetPetsBatchByIdsIds.CreateBuilder(workspace, ids, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.GetPetsBatchByIdsIds IdsValue = Petstore.EndToEnd.Client.Models.GetPetsBatchByIdsIds.CreateBuilder(workspace, ids, 30).RootElement;
         GetPetsBatchRequest request = new(IdsValue);
 
         request.Validate(validationMode);
@@ -107,10 +107,10 @@ public sealed class ApiPetsClient : IApiPetsClient
     /// </summary>
     /// <param name="petId">The petId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ShowPetByIdResponse> ShowPetByIdAsync(Petstore.EndToEnd.Client.JsonString.Source petId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ShowPetByIdResponse> ShowPetByIdAsync(Petstore.EndToEnd.Client.Models.JsonString.Source petId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.EndToEnd.Client.JsonString PetIdValue = Petstore.EndToEnd.Client.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.JsonString PetIdValue = Petstore.EndToEnd.Client.Models.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
         ShowPetByIdRequest request = new(PetIdValue);
 
         request.Validate(validationMode);

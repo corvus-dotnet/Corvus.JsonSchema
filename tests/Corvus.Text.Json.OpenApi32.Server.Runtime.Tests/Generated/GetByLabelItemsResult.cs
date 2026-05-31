@@ -41,7 +41,7 @@ public readonly struct GetByLabelItemsResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetByLabelItemsResult"/> with status 200.</returns>
-    public static GetByLabelItemsResult Ok(CanonTests32.Server.GetLabelNoExplodeByItemsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.GetLabelNoExplodeByItemsOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static GetByLabelItemsResult Ok(CanonTests32.Server.Models.GetLabelNoExplodeByItemsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Models.GetLabelNoExplodeByItemsOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct GetByLabelItemsResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests32.Server.GetLabelNoExplodeByItemsOk.From(this.Body).EvaluateSchema(),
+            200 => CanonTests32.Server.Models.GetLabelNoExplodeByItemsOk.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

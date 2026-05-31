@@ -24,13 +24,13 @@ public readonly struct DeleteItemRequest : IApiRequest<DeleteItemRequest>
     /// <summary>
     /// Gets the itemId parameter.
     /// </summary>
-    public CanonTests32.Client.JsonString ItemId { get; init; }
+    public CanonTests32.Client.Models.JsonString ItemId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DeleteItemRequest"/> struct.
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
-    public DeleteItemRequest(CanonTests32.Client.JsonString itemId)
+    public DeleteItemRequest(CanonTests32.Client.Models.JsonString itemId)
     {
         this.ItemId = itemId;
     }

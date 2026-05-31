@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -84,14 +84,14 @@ public readonly partial struct PostDocsUploadMixedBody
                     {
                         case 0:
                         {
-                            JsonSchemaContext childContext = CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.JsonSchema.PushChildContext(
+                            JsonSchemaContext childContext = CanonTests32.Client.Models.PostDocsUploadMixedBody.RequiredTitle.JsonSchema.PushChildContext(
                                 parentDocument,
                                 arrayValidation_currentIndex,
                                 ref context,
                                 itemIndex: arrayValidation_itemCount,
                                 evaluationPath: PrefixItemsSchemaEvaluationPath);
 
-                            CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                            CanonTests32.Client.Models.PostDocsUploadMixedBody.RequiredTitle.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                             if (!childContext.IsMatch)
                             {
                                 context.CommitChildContext(false, ref childContext);
@@ -112,14 +112,14 @@ public readonly partial struct PostDocsUploadMixedBody
 
                         case 1:
                         {
-                            JsonSchemaContext childContext1 = CanonTests32.Client.JsonBinary.JsonSchema.PushChildContext(
+                            JsonSchemaContext childContext1 = CanonTests32.Client.Models.JsonBinary.JsonSchema.PushChildContext(
                                 parentDocument,
                                 arrayValidation_currentIndex,
                                 ref context,
                                 itemIndex: arrayValidation_itemCount,
                                 evaluationPath: PrefixItemsSchemaEvaluationPath);
 
-                            CanonTests32.Client.JsonBinary.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext1);
+                            CanonTests32.Client.Models.JsonBinary.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext1);
                             if (!childContext1.IsMatch)
                             {
                                 context.CommitChildContext(false, ref childContext1);

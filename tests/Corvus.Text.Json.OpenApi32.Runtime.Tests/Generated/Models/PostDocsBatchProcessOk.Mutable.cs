@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PostDocsBatchProcessOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonInteger.Mutable Failed
+        public CanonTests32.Client.Models.JsonInteger.Mutable Failed
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FailedUtf8, out CanonTests32.Client.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FailedUtf8, out CanonTests32.Client.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct PostDocsBatchProcessOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonInteger.Mutable Processed
+        public CanonTests32.Client.Models.JsonInteger.Mutable Processed
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProcessedUtf8, out CanonTests32.Client.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProcessedUtf8, out CanonTests32.Client.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -345,7 +345,7 @@ public readonly partial struct PostDocsBatchProcessOk
         /// Set the <c>failed</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFailed(in CanonTests32.Client.JsonInteger.Source value)
+        public void SetFailed(in CanonTests32.Client.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct PostDocsBatchProcessOk
         /// Set the <c>processed</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetProcessed(in CanonTests32.Client.JsonInteger.Source value)
+        public void SetProcessed(in CanonTests32.Client.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -744,7 +744,7 @@ public readonly partial struct PostDocsBatchProcessOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PostDocsBatchProcessOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PostDocsBatchProcessOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostDocsBatchProcessOk instance) => new(JsonElement.From(instance));
 
@@ -865,7 +865,7 @@ public readonly partial struct PostDocsBatchProcessOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PostDocsBatchProcessOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PostDocsBatchProcessOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -981,8 +981,8 @@ public readonly partial struct PostDocsBatchProcessOk
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonInteger.Source failed,
-            in CanonTests32.Client.JsonInteger.Source processed)
+            in CanonTests32.Client.Models.JsonInteger.Source failed,
+            in CanonTests32.Client.Models.JsonInteger.Source processed)
         {
             failed.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Failed, ref builder);
             processed.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Processed, ref builder);
@@ -991,7 +991,7 @@ public readonly partial struct PostDocsBatchProcessOk
         /// <summary>
         /// Creates an instance of a <see cref="PostDocsBatchProcessOk"/>.
         /// </summary>
-        public void Create(in CanonTests32.Client.JsonInteger.Source failed, in CanonTests32.Client.JsonInteger.Source processed)
+        public void Create(in CanonTests32.Client.Models.JsonInteger.Source failed, in CanonTests32.Client.Models.JsonInteger.Source processed)
         {
             Create(ref _builder, failed, processed);
         }
@@ -1153,7 +1153,7 @@ public readonly partial struct PostDocsBatchProcessOk
     /// <param name="processed">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonInteger.Source failed, in CanonTests32.Client.JsonInteger.Source processed, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonInteger.Source failed, in CanonTests32.Client.Models.JsonInteger.Source processed, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

@@ -23,10 +23,10 @@ public readonly struct MoveResourceParams
     /// <summary>
     /// Gets the 'resourceId' path parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString ResourceId { get; init; }
+    public CanonTests32.Server.Models.JsonString ResourceId { get; init; }
 
     /// <summary>
     /// Gets the 'options' querystring parameter.
     /// </summary>
-    public CanonTests32.Server.ResourcesByResourceIdAdditionalOperationsMoveOptions Options { get; init; }
+    public CanonTests32.Server.Models.ResourcesByResourceIdAdditionalOperationsMoveOptions Options { get; init; }
 }

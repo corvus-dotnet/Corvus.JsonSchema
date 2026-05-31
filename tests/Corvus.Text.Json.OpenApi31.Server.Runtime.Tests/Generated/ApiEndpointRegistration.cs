@@ -37,35 +37,35 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.GetItemsActive ActiveValue = default;
+                CanonTests31.Server.Models.GetItemsActive ActiveValue = default;
                 if (context.Request.Query.TryGetValue("active", out var ActiveQueryVal) && ActiveQueryVal.Count > 0)
                 {
                     string ActiveRaw = ActiveQueryVal[0]!;
-                    ActiveValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<CanonTests31.Server.GetItemsActive>(ActiveRaw, workspace);
+                    ActiveValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<CanonTests31.Server.Models.GetItemsActive>(ActiveRaw, workspace);
                 }
-                CanonTests31.Server.GetItemsCategory CategoryValue = default;
+                CanonTests31.Server.Models.GetItemsCategory CategoryValue = default;
                 if (context.Request.Query.TryGetValue("category", out var CategoryQueryVal) && CategoryQueryVal.Count > 0)
                 {
                     string CategoryRaw = CategoryQueryVal[0]!;
-                    CategoryValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.GetItemsCategory>(CategoryRaw, workspace);
+                    CategoryValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.GetItemsCategory>(CategoryRaw, workspace);
                 }
-                CanonTests31.Server.GetItemsPage PageValue = default;
+                CanonTests31.Server.Models.GetItemsPage PageValue = default;
                 if (context.Request.Query.TryGetValue("page", out var PageQueryVal) && PageQueryVal.Count > 0)
                 {
                     string PageRaw = PageQueryVal[0]!;
-                    PageValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests31.Server.GetItemsPage>(PageRaw, workspace);
+                    PageValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests31.Server.Models.GetItemsPage>(PageRaw, workspace);
                 }
-                CanonTests31.Server.GetItemsSort SortValue = default;
+                CanonTests31.Server.Models.GetItemsSort SortValue = default;
                 if (context.Request.Query.TryGetValue("sort", out var SortQueryVal) && SortQueryVal.Count > 0)
                 {
                     string SortRaw = SortQueryVal[0]!;
-                    SortValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.GetItemsSort>(SortRaw, workspace);
+                    SortValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.GetItemsSort>(SortRaw, workspace);
                 }
-                CanonTests31.Server.GetItemsVerbose VerboseValue = default;
+                CanonTests31.Server.Models.GetItemsVerbose VerboseValue = default;
                 if (context.Request.Query.TryGetValue("verbose", out var VerboseQueryVal) && VerboseQueryVal.Count > 0)
                 {
                     string VerboseRaw = VerboseQueryVal[0]!;
-                    VerboseValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<CanonTests31.Server.GetItemsVerbose>(VerboseRaw, workspace);
+                    VerboseValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<CanonTests31.Server.Models.GetItemsVerbose>(VerboseRaw, workspace);
                 }
 
                 if (!ActiveValue.IsUndefined() && !ActiveValue.EvaluateSchema())
@@ -157,14 +157,14 @@ public static class ApiEndpointRegistration
         app.MapPost("/items", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests31.Server.PostItemsBody>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests31.Server.Models.PostItemsBody>? bodyDoc = null;
             try
             {
-                CanonTests31.Server.JsonString XCorrelationIdValue = default;
+                CanonTests31.Server.Models.JsonString XCorrelationIdValue = default;
                 if (context.Request.Headers.TryGetValue("X-Correlation-Id", out var XCorrelationIdHeaderVal) && XCorrelationIdHeaderVal.Count > 0)
                 {
                     string XCorrelationIdRaw = XCorrelationIdHeaderVal[0]!;
-                    XCorrelationIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(XCorrelationIdRaw, workspace);
+                    XCorrelationIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(XCorrelationIdRaw, workspace);
                 }
 
                 if (!XCorrelationIdValue.IsUndefined() && !XCorrelationIdValue.EvaluateSchema())
@@ -178,7 +178,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<CanonTests31.Server.PostItemsBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<CanonTests31.Server.Models.PostItemsBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -245,10 +245,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.JsonString ItemIdValue = default;
+                CanonTests31.Server.Models.JsonString ItemIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRaw)
                 {
-                    ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(ItemIdRaw, workspace);
+                    ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(ItemIdRaw, workspace);
                 }
 
                 if (ItemIdValue.IsUndefined())
@@ -316,13 +316,13 @@ public static class ApiEndpointRegistration
         app.MapPost("/items/{itemId}/form", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests31.Server.PostItemsByItemIdFormBody>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests31.Server.Models.PostItemsByItemIdFormBody>? bodyDoc = null;
             try
             {
-                CanonTests31.Server.JsonString ItemIdValue = default;
+                CanonTests31.Server.Models.JsonString ItemIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRaw)
                 {
-                    ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(ItemIdRaw, workspace);
+                    ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(ItemIdRaw, workspace);
                 }
 
                 if (ItemIdValue.IsUndefined())
@@ -344,7 +344,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests31.Server.PostItemsByItemIdFormBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests31.Server.Models.PostItemsByItemIdFormBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -409,13 +409,13 @@ public static class ApiEndpointRegistration
         app.MapPost("/items/{itemId}/upload", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests31.Server.PostItemsByItemIdUploadBody>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests31.Server.Models.PostItemsByItemIdUploadBody>? bodyDoc = null;
             try
             {
-                CanonTests31.Server.JsonString ItemIdValue = default;
+                CanonTests31.Server.Models.JsonString ItemIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRaw)
                 {
-                    ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(ItemIdRaw, workspace);
+                    ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(ItemIdRaw, workspace);
                 }
 
                 if (ItemIdValue.IsUndefined())
@@ -437,7 +437,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests31.Server.PostItemsByItemIdUploadBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests31.Server.Models.PostItemsByItemIdUploadBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -538,16 +538,16 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.JsonString QidValue = default;
+                CanonTests31.Server.Models.JsonString QidValue = default;
                 if (context.Request.RouteValues.TryGetValue("qid", out object? QidRouteVal) && QidRouteVal is string QidRaw)
                 {
-                    QidValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(QidRaw, workspace);
+                    QidValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(QidRaw, workspace);
                 }
-                CanonTests31.Server.JsonString WeirdLocValue = default;
+                CanonTests31.Server.Models.JsonString WeirdLocValue = default;
                 if (context.Request.Query.TryGetValue("weirdLoc", out var WeirdLocQueryVal) && WeirdLocQueryVal.Count > 0)
                 {
                     string WeirdLocRaw = WeirdLocQueryVal[0]!;
-                    WeirdLocValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(WeirdLocRaw, workspace);
+                    WeirdLocValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(WeirdLocRaw, workspace);
                 }
 
                 if (!QidValue.IsUndefined() && !QidValue.EvaluateSchema())
@@ -614,16 +614,16 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.JsonString SidValue = default;
+                CanonTests31.Server.Models.JsonString SidValue = default;
                 if (context.Request.RouteValues.TryGetValue("sid", out object? SidRouteVal) && SidRouteVal is string SidRaw)
                 {
-                    SidValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(SidRaw, workspace);
+                    SidValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(SidRaw, workspace);
                 }
-                CanonTests31.Server.JsonString BadQueryStyleValue = default;
+                CanonTests31.Server.Models.JsonString BadQueryStyleValue = default;
                 if (context.Request.Query.TryGetValue("badQueryStyle", out var BadQueryStyleQueryVal) && BadQueryStyleQueryVal.Count > 0)
                 {
                     string BadQueryStyleRaw = BadQueryStyleQueryVal[0]!;
-                    BadQueryStyleValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(BadQueryStyleRaw, workspace);
+                    BadQueryStyleValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(BadQueryStyleRaw, workspace);
                 }
 
                 if (SidValue.IsUndefined())
@@ -784,17 +784,17 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.JsonBoolean VerboseValue = default;
+                CanonTests31.Server.Models.JsonBoolean VerboseValue = default;
                 if (context.Request.Query.TryGetValue("verbose", out var VerboseQueryVal) && VerboseQueryVal.Count > 0)
                 {
                     string VerboseRaw = VerboseQueryVal[0]!;
-                    VerboseValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<CanonTests31.Server.JsonBoolean>(VerboseRaw, workspace);
+                    VerboseValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<CanonTests31.Server.Models.JsonBoolean>(VerboseRaw, workspace);
                 }
-                CanonTests31.Server.JsonString XCheckTokenValue = default;
+                CanonTests31.Server.Models.JsonString XCheckTokenValue = default;
                 if (context.Request.Headers.TryGetValue("X-Check-Token", out var XCheckTokenHeaderVal) && XCheckTokenHeaderVal.Count > 0)
                 {
                     string XCheckTokenRaw = XCheckTokenHeaderVal[0]!;
-                    XCheckTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(XCheckTokenRaw, workspace);
+                    XCheckTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(XCheckTokenRaw, workspace);
                 }
 
                 if (!VerboseValue.IsUndefined() && !VerboseValue.EvaluateSchema())
@@ -861,14 +861,14 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.AdvancedStylesByIdsIds IdsValue = default;
+                CanonTests31.Server.Models.AdvancedStylesByIdsIds IdsValue = default;
                 if (context.Request.RouteValues.TryGetValue("ids", out object? IdsRouteVal) && IdsRouteVal is string IdsRaw)
                 {
                     if (IdsRaw.StartsWith("."))
                     {
                         IdsRaw = IdsRaw.Substring(1);
                     }
-                    IdsValue = CanonTests31.Server.AdvancedStylesByIdsIds.CreateBuilder<string>(workspace, IdsRaw, static (in string ctx, ref CanonTests31.Server.AdvancedStylesByIdsIds.Builder arrayBuilder) =>
+                    IdsValue = CanonTests31.Server.Models.AdvancedStylesByIdsIds.CreateBuilder<string>(workspace, IdsRaw, static (in string ctx, ref CanonTests31.Server.Models.AdvancedStylesByIdsIds.Builder arrayBuilder) =>
                     {
                         System.ReadOnlySpan<char> remaining = ctx;
                         while (!remaining.IsEmpty)
@@ -880,10 +880,10 @@ public static class ApiEndpointRegistration
                         }
                     }).RootElement;
                 }
-                CanonTests31.Server.GetAdvancedStylesByIdsMatrixTags MatrixTagsValue = default;
+                CanonTests31.Server.Models.GetAdvancedStylesByIdsMatrixTags MatrixTagsValue = default;
                 if (context.Request.Query.TryGetValue("matrixTags", out var MatrixTagsQueryValues) && MatrixTagsQueryValues.Count > 0)
                 {
-                    MatrixTagsValue = CanonTests31.Server.GetAdvancedStylesByIdsMatrixTags.CreateBuilder<Microsoft.Extensions.Primitives.StringValues>(workspace, MatrixTagsQueryValues, static (in Microsoft.Extensions.Primitives.StringValues ctx, ref CanonTests31.Server.GetAdvancedStylesByIdsMatrixTags.Builder arrayBuilder) =>
+                    MatrixTagsValue = CanonTests31.Server.Models.GetAdvancedStylesByIdsMatrixTags.CreateBuilder<Microsoft.Extensions.Primitives.StringValues>(workspace, MatrixTagsQueryValues, static (in Microsoft.Extensions.Primitives.StringValues ctx, ref CanonTests31.Server.Models.GetAdvancedStylesByIdsMatrixTags.Builder arrayBuilder) =>
                     {
                         for (int i = 0; i < ctx.Count; i++)
                         {
@@ -893,23 +893,23 @@ public static class ApiEndpointRegistration
                         }
                     }).RootElement;
                 }
-                CanonTests31.Server.JsonInt64 LimitValue = default;
+                CanonTests31.Server.Models.JsonInt64 LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
                 {
                     string LimitRaw = LimitQueryVal[0]!;
-                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests31.Server.JsonInt64>(LimitRaw, workspace);
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests31.Server.Models.JsonInt64>(LimitRaw, workspace);
                 }
-                CanonTests31.Server.JsonSingle WeightValue = default;
+                CanonTests31.Server.Models.JsonSingle WeightValue = default;
                 if (context.Request.Query.TryGetValue("weight", out var WeightQueryVal) && WeightQueryVal.Count > 0)
                 {
                     string WeightRaw = WeightQueryVal[0]!;
-                    WeightValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests31.Server.JsonSingle>(WeightRaw, workspace);
+                    WeightValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests31.Server.Models.JsonSingle>(WeightRaw, workspace);
                 }
-                CanonTests31.Server.JsonDouble ScoreValue = default;
+                CanonTests31.Server.Models.JsonDouble ScoreValue = default;
                 if (context.Request.Query.TryGetValue("score", out var ScoreQueryVal) && ScoreQueryVal.Count > 0)
                 {
                     string ScoreRaw = ScoreQueryVal[0]!;
-                    ScoreValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests31.Server.JsonDouble>(ScoreRaw, workspace);
+                    ScoreValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests31.Server.Models.JsonDouble>(ScoreRaw, workspace);
                 }
 
                 if (IdsValue.IsUndefined())
@@ -1015,14 +1015,14 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.GetMatrixTestByCodesCodes CodesValue = default;
+                CanonTests31.Server.Models.GetMatrixTestByCodesCodes CodesValue = default;
                 if (context.Request.RouteValues.TryGetValue("codes", out object? CodesRouteVal) && CodesRouteVal is string CodesRaw)
                 {
                     if (CodesRaw.StartsWith(";"))
                     {
                         CodesRaw = CodesRaw.Substring(1);
                     }
-                    CodesValue = CanonTests31.Server.GetMatrixTestByCodesCodes.CreateBuilder<string>(workspace, CodesRaw, static (in string ctx, ref CanonTests31.Server.GetMatrixTestByCodesCodes.Builder arrayBuilder) =>
+                    CodesValue = CanonTests31.Server.Models.GetMatrixTestByCodesCodes.CreateBuilder<string>(workspace, CodesRaw, static (in string ctx, ref CanonTests31.Server.Models.GetMatrixTestByCodesCodes.Builder arrayBuilder) =>
                     {
                         System.ReadOnlySpan<char> remaining = ctx;
                         while (!remaining.IsEmpty)
@@ -1098,7 +1098,7 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.GetMatrixNoExplodeByTagsTags TagsValue = default;
+                CanonTests31.Server.Models.GetMatrixNoExplodeByTagsTags TagsValue = default;
                 if (context.Request.RouteValues.TryGetValue("tags", out object? TagsRouteVal) && TagsRouteVal is string TagsRaw)
                 {
                     if (TagsRaw.StartsWith(";"))
@@ -1106,7 +1106,7 @@ public static class ApiEndpointRegistration
                         int eqIdx = TagsRaw.IndexOf('=');
                         TagsRaw = eqIdx >= 0 ? TagsRaw.Substring(eqIdx + 1) : TagsRaw.Substring(1);
                     }
-                    TagsValue = CanonTests31.Server.GetMatrixNoExplodeByTagsTags.CreateBuilder<string>(workspace, TagsRaw, static (in string ctx, ref CanonTests31.Server.GetMatrixNoExplodeByTagsTags.Builder arrayBuilder) =>
+                    TagsValue = CanonTests31.Server.Models.GetMatrixNoExplodeByTagsTags.CreateBuilder<string>(workspace, TagsRaw, static (in string ctx, ref CanonTests31.Server.Models.GetMatrixNoExplodeByTagsTags.Builder arrayBuilder) =>
                     {
                         System.ReadOnlySpan<char> remaining = ctx;
                         while (!remaining.IsEmpty)
@@ -1182,14 +1182,14 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.GetLabelNoExplodeByItemsItems ItemsValue = default;
+                CanonTests31.Server.Models.GetLabelNoExplodeByItemsItems ItemsValue = default;
                 if (context.Request.RouteValues.TryGetValue("items", out object? ItemsRouteVal) && ItemsRouteVal is string ItemsRaw)
                 {
                     if (ItemsRaw.StartsWith("."))
                     {
                         ItemsRaw = ItemsRaw.Substring(1);
                     }
-                    ItemsValue = CanonTests31.Server.GetLabelNoExplodeByItemsItems.CreateBuilder<string>(workspace, ItemsRaw, static (in string ctx, ref CanonTests31.Server.GetLabelNoExplodeByItemsItems.Builder arrayBuilder) =>
+                    ItemsValue = CanonTests31.Server.Models.GetLabelNoExplodeByItemsItems.CreateBuilder<string>(workspace, ItemsRaw, static (in string ctx, ref CanonTests31.Server.Models.GetLabelNoExplodeByItemsItems.Builder arrayBuilder) =>
                     {
                         System.ReadOnlySpan<char> remaining = ctx;
                         while (!remaining.IsEmpty)
@@ -1265,14 +1265,14 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.GetStyledObjectByObjObj ObjValue = default;
+                CanonTests31.Server.Models.GetStyledObjectByObjObj ObjValue = default;
                 if (context.Request.RouteValues.TryGetValue("obj", out object? ObjRouteVal) && ObjRouteVal is string ObjRaw)
                 {
                     if (ObjRaw.StartsWith(";"))
                     {
                         ObjRaw = ObjRaw.Substring(1);
                     }
-                    ObjValue = CanonTests31.Server.GetStyledObjectByObjObj.CreateBuilder<string>(workspace, ObjRaw, static (in string ctx, ref CanonTests31.Server.GetStyledObjectByObjObj.Builder objectBuilder) =>
+                    ObjValue = CanonTests31.Server.Models.GetStyledObjectByObjObj.CreateBuilder<string>(workspace, ObjRaw, static (in string ctx, ref CanonTests31.Server.Models.GetStyledObjectByObjObj.Builder objectBuilder) =>
                     {
                         System.ReadOnlySpan<char> remaining = ctx;
                         while (!remaining.IsEmpty)
@@ -1354,17 +1354,17 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.JsonString QValue = default;
+                CanonTests31.Server.Models.JsonString QValue = default;
                 if (context.Request.Query.TryGetValue("q", out var QQueryVal) && QQueryVal.Count > 0)
                 {
                     string QRaw = QQueryVal[0]!;
-                    QValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(QRaw, workspace);
+                    QValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(QRaw, workspace);
                 }
-                CanonTests31.Server.GetSearchTags TagsValue = default;
+                CanonTests31.Server.Models.GetSearchTags TagsValue = default;
                 if (context.Request.Query.TryGetValue("tags", out var TagsQueryVal) && TagsQueryVal.Count > 0)
                 {
                     string TagsRaw = TagsQueryVal[0]!;
-                    TagsValue = CanonTests31.Server.GetSearchTags.CreateBuilder<string>(workspace, TagsRaw, static (in string ctx, ref CanonTests31.Server.GetSearchTags.Builder arrayBuilder) =>
+                    TagsValue = CanonTests31.Server.Models.GetSearchTags.CreateBuilder<string>(workspace, TagsRaw, static (in string ctx, ref CanonTests31.Server.Models.GetSearchTags.Builder arrayBuilder) =>
                     {
                         System.ReadOnlySpan<char> remaining = ctx;
                         while (!remaining.IsEmpty)
@@ -1376,11 +1376,11 @@ public static class ApiEndpointRegistration
                         }
                     }).RootElement;
                 }
-                CanonTests31.Server.GetSearchCoords CoordsValue = default;
+                CanonTests31.Server.Models.GetSearchCoords CoordsValue = default;
                 if (context.Request.Query.TryGetValue("coords", out var CoordsQueryVal) && CoordsQueryVal.Count > 0)
                 {
                     string CoordsRaw = CoordsQueryVal[0]!;
-                    CoordsValue = CanonTests31.Server.GetSearchCoords.CreateBuilder<string>(workspace, CoordsRaw, static (in string ctx, ref CanonTests31.Server.GetSearchCoords.Builder arrayBuilder) =>
+                    CoordsValue = CanonTests31.Server.Models.GetSearchCoords.CreateBuilder<string>(workspace, CoordsRaw, static (in string ctx, ref CanonTests31.Server.Models.GetSearchCoords.Builder arrayBuilder) =>
                     {
                         System.ReadOnlySpan<char> remaining = ctx;
                         while (!remaining.IsEmpty)
@@ -1392,9 +1392,9 @@ public static class ApiEndpointRegistration
                         }
                     }).RootElement;
                 }
-                CanonTests31.Server.GetSearchFilter FilterValue = default;
+                CanonTests31.Server.Models.GetSearchFilter FilterValue = default;
                 string FilterPrefix = "filter[";
-                FilterValue = CanonTests31.Server.GetSearchFilter.CreateBuilder<(string prefix, Microsoft.AspNetCore.Http.IQueryCollection query)>(workspace, (FilterPrefix, context.Request.Query), static (in (string prefix, Microsoft.AspNetCore.Http.IQueryCollection query) ctx, ref CanonTests31.Server.GetSearchFilter.Builder objectBuilder) =>
+                FilterValue = CanonTests31.Server.Models.GetSearchFilter.CreateBuilder<(string prefix, Microsoft.AspNetCore.Http.IQueryCollection query)>(workspace, (FilterPrefix, context.Request.Query), static (in (string prefix, Microsoft.AspNetCore.Http.IQueryCollection query) ctx, ref CanonTests31.Server.Models.GetSearchFilter.Builder objectBuilder) =>
                 {
                     foreach (string queryKey in ctx.query.Keys)
                     {
@@ -1408,23 +1408,23 @@ public static class ApiEndpointRegistration
                         }
                     }
                 }).RootElement;
-                CanonTests31.Server.JsonString SessionValue = default;
+                CanonTests31.Server.Models.JsonString SessionValue = default;
                 if (context.Request.Cookies.TryGetValue("session", out string? SessionCookieVal) && SessionCookieVal is not null)
                 {
                     string SessionRaw = SessionCookieVal;
-                    SessionValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(SessionRaw, workspace);
+                    SessionValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(SessionRaw, workspace);
                 }
-                CanonTests31.Server.JsonString PrefsValue = default;
+                CanonTests31.Server.Models.JsonString PrefsValue = default;
                 if (context.Request.Cookies.TryGetValue("prefs", out string? PrefsCookieVal) && PrefsCookieVal is not null)
                 {
                     string PrefsRaw = PrefsCookieVal;
-                    PrefsValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(PrefsRaw, workspace);
+                    PrefsValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(PrefsRaw, workspace);
                 }
-                CanonTests31.Server.JsonString XCorrelationIdValue = default;
+                CanonTests31.Server.Models.JsonString XCorrelationIdValue = default;
                 if (context.Request.Headers.TryGetValue("X-Correlation-Id", out var XCorrelationIdHeaderVal) && XCorrelationIdHeaderVal.Count > 0)
                 {
                     string XCorrelationIdRaw = XCorrelationIdHeaderVal[0]!;
-                    XCorrelationIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(XCorrelationIdRaw, workspace);
+                    XCorrelationIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(XCorrelationIdRaw, workspace);
                 }
 
                 if (QValue.IsUndefined())
@@ -1564,11 +1564,11 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                CanonTests31.Server.JsonString XFileNameValue = default;
+                CanonTests31.Server.Models.JsonString XFileNameValue = default;
                 if (context.Request.Headers.TryGetValue("X-File-Name", out var XFileNameHeaderVal) && XFileNameHeaderVal.Count > 0)
                 {
                     string XFileNameRaw = XFileNameHeaderVal[0]!;
-                    XFileNameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(XFileNameRaw, workspace);
+                    XFileNameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(XFileNameRaw, workspace);
                 }
 
                 if (XFileNameValue.IsUndefined())
@@ -1634,14 +1634,14 @@ public static class ApiEndpointRegistration
         app.MapPost("/feedback", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests31.Server.PostFeedbackBody>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests31.Server.Models.PostFeedbackBody>? bodyDoc = null;
             try
             {
-                CanonTests31.Server.JsonString SourceValue = default;
+                CanonTests31.Server.Models.JsonString SourceValue = default;
                 if (context.Request.Query.TryGetValue("source", out var SourceQueryVal) && SourceQueryVal.Count > 0)
                 {
                     string SourceRaw = SourceQueryVal[0]!;
-                    SourceValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(SourceRaw, workspace);
+                    SourceValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(SourceRaw, workspace);
                 }
 
                 if (!SourceValue.IsUndefined() && !SourceValue.EvaluateSchema())
@@ -1655,7 +1655,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests31.Server.PostFeedbackBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests31.Server.Models.PostFeedbackBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -1720,14 +1720,14 @@ public static class ApiEndpointRegistration
         app.MapPost("/attachments", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests31.Server.PostAttachmentsBody>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests31.Server.Models.PostAttachmentsBody>? bodyDoc = null;
             try
             {
-                CanonTests31.Server.JsonString XUploadTokenValue = default;
+                CanonTests31.Server.Models.JsonString XUploadTokenValue = default;
                 if (context.Request.Headers.TryGetValue("X-Upload-Token", out var XUploadTokenHeaderVal) && XUploadTokenHeaderVal.Count > 0)
                 {
                     string XUploadTokenRaw = XUploadTokenHeaderVal[0]!;
-                    XUploadTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(XUploadTokenRaw, workspace);
+                    XUploadTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(XUploadTokenRaw, workspace);
                 }
 
                 if (XUploadTokenValue.IsUndefined())
@@ -1749,7 +1749,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests31.Server.PostAttachmentsBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests31.Server.Models.PostAttachmentsBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -1805,14 +1805,14 @@ public static class ApiEndpointRegistration
         app.MapPost("/feedback-encoded", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests31.Server.PostFeedbackEncodedBody>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests31.Server.Models.PostFeedbackEncodedBody>? bodyDoc = null;
             try
             {
-                CanonTests31.Server.JsonString XSessionIdValue = default;
+                CanonTests31.Server.Models.JsonString XSessionIdValue = default;
                 if (context.Request.Headers.TryGetValue("X-Session-Id", out var XSessionIdHeaderVal) && XSessionIdHeaderVal.Count > 0)
                 {
                     string XSessionIdRaw = XSessionIdHeaderVal[0]!;
-                    XSessionIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(XSessionIdRaw, workspace);
+                    XSessionIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(XSessionIdRaw, workspace);
                 }
 
                 if (!XSessionIdValue.IsUndefined() && !XSessionIdValue.EvaluateSchema())
@@ -1826,7 +1826,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests31.Server.PostFeedbackEncodedBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests31.Server.Models.PostFeedbackEncodedBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -1891,14 +1891,14 @@ public static class ApiEndpointRegistration
         app.MapPost("/attachments-encoded", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests31.Server.PostAttachmentsEncodedBody>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests31.Server.Models.PostAttachmentsEncodedBody>? bodyDoc = null;
             try
             {
-                CanonTests31.Server.JsonString XBatchIdValue = default;
+                CanonTests31.Server.Models.JsonString XBatchIdValue = default;
                 if (context.Request.Headers.TryGetValue("X-Batch-Id", out var XBatchIdHeaderVal) && XBatchIdHeaderVal.Count > 0)
                 {
                     string XBatchIdRaw = XBatchIdHeaderVal[0]!;
-                    XBatchIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(XBatchIdRaw, workspace);
+                    XBatchIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(XBatchIdRaw, workspace);
                 }
 
                 if (!XBatchIdValue.IsUndefined() && !XBatchIdValue.EvaluateSchema())
@@ -1912,7 +1912,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests31.Server.PostAttachmentsEncodedBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests31.Server.Models.PostAttachmentsEncodedBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -1968,14 +1968,14 @@ public static class ApiEndpointRegistration
         app.MapPost("/search", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests31.Server.PostSearchBody>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests31.Server.Models.PostSearchBody>? bodyDoc = null;
             try
             {
-                CanonTests31.Server.JsonString SessionValue = default;
+                CanonTests31.Server.Models.JsonString SessionValue = default;
                 if (context.Request.Cookies.TryGetValue("session", out string? SessionCookieVal) && SessionCookieVal is not null)
                 {
                     string SessionRaw = SessionCookieVal;
-                    SessionValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.JsonString>(SessionRaw, workspace);
+                    SessionValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests31.Server.Models.JsonString>(SessionRaw, workspace);
                 }
 
                 if (SessionValue.IsUndefined())
@@ -1997,7 +1997,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<CanonTests31.Server.PostSearchBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<CanonTests31.Server.Models.PostSearchBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {

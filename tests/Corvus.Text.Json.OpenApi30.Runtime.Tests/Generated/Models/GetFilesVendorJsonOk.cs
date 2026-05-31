@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetFilesVendorJsonOk
     /// <summary>
     /// Gets the (optional) <c>data</c> property.
     /// </summary>
-    public CanonTests30.Client.JsonString Data
+    public CanonTests30.Client.Models.JsonString Data
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataUtf8, out CanonTests30.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataUtf8, out CanonTests30.Client.Models.JsonString value))
             {
                 return value;
             }

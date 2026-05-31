@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct Schema1
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonString Query
+    public CanonTests32.Client.Models.JsonString Query
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QueryUtf8, out CanonTests32.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QueryUtf8, out CanonTests32.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct Schema1
     /// <summary>
     /// Gets the (optional) <c>tags</c> property.
     /// </summary>
-    public CanonTests32.Client.Schema1.JsonStringArray Tags
+    public CanonTests32.Client.Models.Schema1.JsonStringArray Tags
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.Schema1.JsonStringArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.Models.Schema1.JsonStringArray value))
             {
                 return value;
             }

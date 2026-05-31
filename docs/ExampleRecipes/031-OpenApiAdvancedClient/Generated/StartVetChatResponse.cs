@@ -32,27 +32,27 @@ public struct StartVetChatResponse : IApiResponse<StartVetChatResponse>
     /// <summary>
     /// Gets the 401 response body.
     /// </summary>
-    public Petstore.Extended.Error UnauthorizedBody { get; private set; }
+    public Petstore.Extended.Models.Error UnauthorizedBody { get; private set; }
 
     /// <summary>
     /// Enumerates the streaming items from the 200 response.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>An async enumerable of parsed documents containing <see cref="Petstore.Extended.ChatChunk"/> items. Each document must be disposed by the caller.</returns>
+    /// <returns>An async enumerable of parsed documents containing <see cref="Petstore.Extended.Models.ChatChunk"/> items. Each document must be disposed by the caller.</returns>
     /// <remarks>
     /// <para>The response stream is read line-by-line. Supports NDJSON and SSE formats.</para>
     /// <para>For SSE streams, use <see cref="EnumerateOkSseItems"/> to access event metadata.</para>
     /// <para>The response must not be disposed until enumeration is complete.
     /// Each yielded document must be disposed when no longer needed.</para>
     /// </remarks>
-    public IAsyncEnumerable<ParsedJsonDocument<Petstore.Extended.ChatChunk>> EnumerateOkItems(CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ParsedJsonDocument<Petstore.Extended.Models.ChatChunk>> EnumerateOkItems(CancellationToken cancellationToken = default)
     {
         if (this.itemStream is null)
         {
             throw new InvalidOperationException("No streaming content is available.");
         }
 
-        return JsonStreamReader.ReadItemsAsync<Petstore.Extended.ChatChunk>(this.itemStream, cancellationToken: cancellationToken);
+        return JsonStreamReader.ReadItemsAsync<Petstore.Extended.Models.ChatChunk>(this.itemStream, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -60,21 +60,21 @@ public struct StartVetChatResponse : IApiResponse<StartVetChatResponse>
     /// including event metadata (event type, id, retry).
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>An async enumerable of SSE events wrapping <see cref="Petstore.Extended.ChatChunk"/> items. Each event must be disposed by the caller.</returns>
+    /// <returns>An async enumerable of SSE events wrapping <see cref="Petstore.Extended.Models.ChatChunk"/> items. Each event must be disposed by the caller.</returns>
     /// <remarks>
     /// <para>Use this method when consuming Server-Sent Events and you need access to
     /// the event type, id, or retry metadata fields.</para>
     /// <para>The response must not be disposed until enumeration is complete.
     /// Each yielded event must be disposed when no longer needed.</para>
     /// </remarks>
-    public IAsyncEnumerable<SseEvent<Petstore.Extended.ChatChunk>> EnumerateOkSseItems(CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<SseEvent<Petstore.Extended.Models.ChatChunk>> EnumerateOkSseItems(CancellationToken cancellationToken = default)
     {
         if (this.itemStream is null)
         {
             throw new InvalidOperationException("No streaming content is available.");
         }
 
-        return JsonStreamReader.ReadSseItemsAsync<Petstore.Extended.ChatChunk>(this.itemStream, cancellationToken: cancellationToken);
+        return JsonStreamReader.ReadSseItemsAsync<Petstore.Extended.Models.ChatChunk>(this.itemStream, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -99,7 +99,7 @@ public struct StartVetChatResponse : IApiResponse<StartVetChatResponse>
 
         if (statusCode == 401)
         {
-            var unauthorizedDoc = await ParsedJsonDocument<Petstore.Extended.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var unauthorizedDoc = await ParsedJsonDocument<Petstore.Extended.Models.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = unauthorizedDoc;
             response.UnauthorizedBody = unauthorizedDoc.RootElement;
             return response;
@@ -113,7 +113,7 @@ public struct StartVetChatResponse : IApiResponse<StartVetChatResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 401.</returns>
-    public bool TryGetUnauthorized(out Petstore.Extended.Error result)
+    public bool TryGetUnauthorized(out Petstore.Extended.Models.Error result)
     {
         if (this.StatusCode == 401)
         {
@@ -134,7 +134,7 @@ public struct StartVetChatResponse : IApiResponse<StartVetChatResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<Petstore.Extended.Error, TResult> matchUnauthorized,
+        ResponseMatcher<Petstore.Extended.Models.Error, TResult> matchUnauthorized,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 401)
@@ -157,7 +157,7 @@ public struct StartVetChatResponse : IApiResponse<StartVetChatResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<Petstore.Extended.Error, TContext, TResult> matchUnauthorized,
+        ResponseMatcher<Petstore.Extended.Models.Error, TContext, TResult> matchUnauthorized,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

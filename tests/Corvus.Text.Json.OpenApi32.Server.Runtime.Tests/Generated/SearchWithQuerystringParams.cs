@@ -24,15 +24,15 @@ public readonly struct SearchWithQuerystringParams
     /// <summary>
     /// Gets the 'qs' querystring parameter.
     /// </summary>
-    public CanonTests32.Server.GetSearchQsQs Qs { get; init; }
+    public CanonTests32.Server.Models.GetSearchQsQs Qs { get; init; }
 
     /// <summary>
     /// Gets the 'session_id' cookie parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString SessionId { get; init; }
+    public CanonTests32.Server.Models.JsonString SessionId { get; init; }
 
     /// <summary>
     /// Gets the 'preferences' cookie parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString Preferences { get; init; }
+    public CanonTests32.Server.Models.JsonString Preferences { get; init; }
 }

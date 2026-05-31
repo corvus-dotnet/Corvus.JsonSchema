@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Server;
+namespace CanonTests30.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetStyledObjectByObjObj
     /// <summary>
     /// Gets the (optional) <c>color</c> property.
     /// </summary>
-    public CanonTests30.Server.JsonString Color
+    public CanonTests30.Server.Models.JsonString Color
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ColorUtf8, out CanonTests30.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ColorUtf8, out CanonTests30.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct GetStyledObjectByObjObj
     /// <summary>
     /// Gets the (optional) <c>size</c> property.
     /// </summary>
-    public CanonTests30.Server.JsonInteger Size
+    public CanonTests30.Server.Models.JsonInteger Size
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SizeUtf8, out CanonTests30.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SizeUtf8, out CanonTests30.Server.Models.JsonInteger value))
             {
                 return value;
             }

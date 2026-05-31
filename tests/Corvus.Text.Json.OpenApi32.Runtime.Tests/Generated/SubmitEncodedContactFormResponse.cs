@@ -31,7 +31,7 @@ public struct SubmitEncodedContactFormResponse : IApiResponse<SubmitEncodedConta
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests32.Client.PostFormsEncodedContactOk OkBody { get; private set; }
+    public CanonTests32.Client.Models.PostFormsEncodedContactOk OkBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<SubmitEncodedContactFormResponse> CreateAsync(
@@ -49,7 +49,7 @@ public struct SubmitEncodedContactFormResponse : IApiResponse<SubmitEncodedConta
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<CanonTests32.Client.PostFormsEncodedContactOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<CanonTests32.Client.Models.PostFormsEncodedContactOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -63,7 +63,7 @@ public struct SubmitEncodedContactFormResponse : IApiResponse<SubmitEncodedConta
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests32.Client.PostFormsEncodedContactOk result)
+    public bool TryGetOk(out CanonTests32.Client.Models.PostFormsEncodedContactOk result)
     {
         if (this.StatusCode == 200)
         {
@@ -84,7 +84,7 @@ public struct SubmitEncodedContactFormResponse : IApiResponse<SubmitEncodedConta
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests32.Client.PostFormsEncodedContactOk, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.PostFormsEncodedContactOk, TResult> matchOk,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -107,7 +107,7 @@ public struct SubmitEncodedContactFormResponse : IApiResponse<SubmitEncodedConta
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests32.Client.PostFormsEncodedContactOk, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.PostFormsEncodedContactOk, TContext, TResult> matchOk,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

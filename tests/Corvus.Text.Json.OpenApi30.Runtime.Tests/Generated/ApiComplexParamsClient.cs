@@ -35,10 +35,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PathArraySimpleResponse> PathArraySimpleAsync(CanonTests30.Client.GetComplexPathArraySimpleByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PathArraySimpleResponse> PathArraySimpleAsync(CanonTests30.Client.Models.GetComplexPathArraySimpleByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexPathArraySimpleByIdsIds IdsValue = CanonTests30.Client.GetComplexPathArraySimpleByIdsIds.CreateBuilder(workspace, ids, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexPathArraySimpleByIdsIds IdsValue = CanonTests30.Client.Models.GetComplexPathArraySimpleByIdsIds.CreateBuilder(workspace, ids, 30).RootElement;
         PathArraySimpleRequest request = new(IdsValue);
 
         request.Validate(validationMode);
@@ -51,10 +51,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PathArrayLabelResponse> PathArrayLabelAsync(CanonTests30.Client.GetComplexPathArrayLabelByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PathArrayLabelResponse> PathArrayLabelAsync(CanonTests30.Client.Models.GetComplexPathArrayLabelByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexPathArrayLabelByIdsIds IdsValue = CanonTests30.Client.GetComplexPathArrayLabelByIdsIds.CreateBuilder(workspace, ids, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexPathArrayLabelByIdsIds IdsValue = CanonTests30.Client.Models.GetComplexPathArrayLabelByIdsIds.CreateBuilder(workspace, ids, 30).RootElement;
         PathArrayLabelRequest request = new(IdsValue);
 
         request.Validate(validationMode);
@@ -67,10 +67,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PathArrayMatrixResponse> PathArrayMatrixAsync(CanonTests30.Client.GetComplexPathArrayMatrixByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PathArrayMatrixResponse> PathArrayMatrixAsync(CanonTests30.Client.Models.GetComplexPathArrayMatrixByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexPathArrayMatrixByIdsIds IdsValue = CanonTests30.Client.GetComplexPathArrayMatrixByIdsIds.CreateBuilder(workspace, ids, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexPathArrayMatrixByIdsIds IdsValue = CanonTests30.Client.Models.GetComplexPathArrayMatrixByIdsIds.CreateBuilder(workspace, ids, 30).RootElement;
         PathArrayMatrixRequest request = new(IdsValue);
 
         request.Validate(validationMode);
@@ -83,10 +83,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PathObjectSimpleResponse> PathObjectSimpleAsync(CanonTests30.Client.GetComplexPathObjectSimpleByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PathObjectSimpleResponse> PathObjectSimpleAsync(CanonTests30.Client.Models.GetComplexPathObjectSimpleByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexPathObjectSimpleByDimsDims DimsValue = CanonTests30.Client.GetComplexPathObjectSimpleByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexPathObjectSimpleByDimsDims DimsValue = CanonTests30.Client.Models.GetComplexPathObjectSimpleByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
         PathObjectSimpleRequest request = new(DimsValue);
 
         request.Validate(validationMode);
@@ -99,10 +99,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PathObjectSimpleExplodeResponse> PathObjectSimpleExplodeAsync(CanonTests30.Client.GetComplexPathObjectSimpleExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PathObjectSimpleExplodeResponse> PathObjectSimpleExplodeAsync(CanonTests30.Client.Models.GetComplexPathObjectSimpleExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexPathObjectSimpleExplodeByDimsDims DimsValue = CanonTests30.Client.GetComplexPathObjectSimpleExplodeByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexPathObjectSimpleExplodeByDimsDims DimsValue = CanonTests30.Client.Models.GetComplexPathObjectSimpleExplodeByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
         PathObjectSimpleExplodeRequest request = new(DimsValue);
 
         request.Validate(validationMode);
@@ -115,10 +115,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PathObjectLabelResponse> PathObjectLabelAsync(CanonTests30.Client.GetComplexPathObjectLabelByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PathObjectLabelResponse> PathObjectLabelAsync(CanonTests30.Client.Models.GetComplexPathObjectLabelByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexPathObjectLabelByDimsDims DimsValue = CanonTests30.Client.GetComplexPathObjectLabelByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexPathObjectLabelByDimsDims DimsValue = CanonTests30.Client.Models.GetComplexPathObjectLabelByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
         PathObjectLabelRequest request = new(DimsValue);
 
         request.Validate(validationMode);
@@ -131,10 +131,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PathObjectLabelExplodeResponse> PathObjectLabelExplodeAsync(CanonTests30.Client.GetComplexPathObjectLabelExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PathObjectLabelExplodeResponse> PathObjectLabelExplodeAsync(CanonTests30.Client.Models.GetComplexPathObjectLabelExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexPathObjectLabelExplodeByDimsDims DimsValue = CanonTests30.Client.GetComplexPathObjectLabelExplodeByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexPathObjectLabelExplodeByDimsDims DimsValue = CanonTests30.Client.Models.GetComplexPathObjectLabelExplodeByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
         PathObjectLabelExplodeRequest request = new(DimsValue);
 
         request.Validate(validationMode);
@@ -147,10 +147,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PathObjectMatrixResponse> PathObjectMatrixAsync(CanonTests30.Client.GetComplexPathObjectMatrixByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PathObjectMatrixResponse> PathObjectMatrixAsync(CanonTests30.Client.Models.GetComplexPathObjectMatrixByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexPathObjectMatrixByDimsDims DimsValue = CanonTests30.Client.GetComplexPathObjectMatrixByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexPathObjectMatrixByDimsDims DimsValue = CanonTests30.Client.Models.GetComplexPathObjectMatrixByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
         PathObjectMatrixRequest request = new(DimsValue);
 
         request.Validate(validationMode);
@@ -163,10 +163,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<PathObjectMatrixExplodeResponse> PathObjectMatrixExplodeAsync(CanonTests30.Client.GetComplexPathObjectMatrixExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<PathObjectMatrixExplodeResponse> PathObjectMatrixExplodeAsync(CanonTests30.Client.Models.GetComplexPathObjectMatrixExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexPathObjectMatrixExplodeByDimsDims DimsValue = CanonTests30.Client.GetComplexPathObjectMatrixExplodeByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexPathObjectMatrixExplodeByDimsDims DimsValue = CanonTests30.Client.Models.GetComplexPathObjectMatrixExplodeByDimsDims.CreateBuilder(workspace, dims, 30).RootElement;
         PathObjectMatrixExplodeRequest request = new(DimsValue);
 
         request.Validate(validationMode);
@@ -179,10 +179,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<QueryArrayExplodeResponse> QueryArrayExplodeAsync(CanonTests30.Client.GetComplexQueryArrayExplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<QueryArrayExplodeResponse> QueryArrayExplodeAsync(CanonTests30.Client.Models.GetComplexQueryArrayExplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexQueryArrayExplodeColors ColorsValue = CanonTests30.Client.GetComplexQueryArrayExplodeColors.CreateBuilder(workspace, colors, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexQueryArrayExplodeColors ColorsValue = CanonTests30.Client.Models.GetComplexQueryArrayExplodeColors.CreateBuilder(workspace, colors, 30).RootElement;
         QueryArrayExplodeRequest request = new(ColorsValue);
 
         request.Validate(validationMode);
@@ -195,10 +195,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<QueryArrayNonexplodeResponse> QueryArrayNonexplodeAsync(CanonTests30.Client.GetComplexQueryArrayNonexplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<QueryArrayNonexplodeResponse> QueryArrayNonexplodeAsync(CanonTests30.Client.Models.GetComplexQueryArrayNonexplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexQueryArrayNonexplodeColors ColorsValue = CanonTests30.Client.GetComplexQueryArrayNonexplodeColors.CreateBuilder(workspace, colors, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexQueryArrayNonexplodeColors ColorsValue = CanonTests30.Client.Models.GetComplexQueryArrayNonexplodeColors.CreateBuilder(workspace, colors, 30).RootElement;
         QueryArrayNonexplodeRequest request = new(ColorsValue);
 
         request.Validate(validationMode);
@@ -211,10 +211,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<QueryArraySpaceResponse> QueryArraySpaceAsync(CanonTests30.Client.GetComplexQueryArraySpaceColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<QueryArraySpaceResponse> QueryArraySpaceAsync(CanonTests30.Client.Models.GetComplexQueryArraySpaceColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexQueryArraySpaceColors ColorsValue = CanonTests30.Client.GetComplexQueryArraySpaceColors.CreateBuilder(workspace, colors, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexQueryArraySpaceColors ColorsValue = CanonTests30.Client.Models.GetComplexQueryArraySpaceColors.CreateBuilder(workspace, colors, 30).RootElement;
         QueryArraySpaceRequest request = new(ColorsValue);
 
         request.Validate(validationMode);
@@ -227,10 +227,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<QueryArrayPipeResponse> QueryArrayPipeAsync(CanonTests30.Client.GetComplexQueryArrayPipeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<QueryArrayPipeResponse> QueryArrayPipeAsync(CanonTests30.Client.Models.GetComplexQueryArrayPipeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexQueryArrayPipeColors ColorsValue = CanonTests30.Client.GetComplexQueryArrayPipeColors.CreateBuilder(workspace, colors, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexQueryArrayPipeColors ColorsValue = CanonTests30.Client.Models.GetComplexQueryArrayPipeColors.CreateBuilder(workspace, colors, 30).RootElement;
         QueryArrayPipeRequest request = new(ColorsValue);
 
         request.Validate(validationMode);
@@ -243,10 +243,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<QueryObjectExplodeResponse> QueryObjectExplodeAsync(CanonTests30.Client.GetComplexQueryObjectExplodeDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<QueryObjectExplodeResponse> QueryObjectExplodeAsync(CanonTests30.Client.Models.GetComplexQueryObjectExplodeDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexQueryObjectExplodeDims DimsValue = CanonTests30.Client.GetComplexQueryObjectExplodeDims.CreateBuilder(workspace, dims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexQueryObjectExplodeDims DimsValue = CanonTests30.Client.Models.GetComplexQueryObjectExplodeDims.CreateBuilder(workspace, dims, 30).RootElement;
         QueryObjectExplodeRequest request = new(DimsValue);
 
         request.Validate(validationMode);
@@ -259,10 +259,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<QueryObjectNonexplodeResponse> QueryObjectNonexplodeAsync(CanonTests30.Client.GetComplexQueryObjectNonexplodeDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<QueryObjectNonexplodeResponse> QueryObjectNonexplodeAsync(CanonTests30.Client.Models.GetComplexQueryObjectNonexplodeDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexQueryObjectNonexplodeDims DimsValue = CanonTests30.Client.GetComplexQueryObjectNonexplodeDims.CreateBuilder(workspace, dims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexQueryObjectNonexplodeDims DimsValue = CanonTests30.Client.Models.GetComplexQueryObjectNonexplodeDims.CreateBuilder(workspace, dims, 30).RootElement;
         QueryObjectNonexplodeRequest request = new(DimsValue);
 
         request.Validate(validationMode);
@@ -275,10 +275,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<QueryObjectDeepResponse> QueryObjectDeepAsync(CanonTests30.Client.GetComplexQueryObjectDeepDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<QueryObjectDeepResponse> QueryObjectDeepAsync(CanonTests30.Client.Models.GetComplexQueryObjectDeepDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexQueryObjectDeepDims DimsValue = CanonTests30.Client.GetComplexQueryObjectDeepDims.CreateBuilder(workspace, dims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexQueryObjectDeepDims DimsValue = CanonTests30.Client.Models.GetComplexQueryObjectDeepDims.CreateBuilder(workspace, dims, 30).RootElement;
         QueryObjectDeepRequest request = new(DimsValue);
 
         request.Validate(validationMode);
@@ -291,10 +291,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="xTags">The X-Tags parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<HeaderArrayResponse> HeaderArrayAsync(CanonTests30.Client.GetComplexHeaderArrayXTags.Source xTags, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<HeaderArrayResponse> HeaderArrayAsync(CanonTests30.Client.Models.GetComplexHeaderArrayXTags.Source xTags, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexHeaderArrayXTags XTagsValue = CanonTests30.Client.GetComplexHeaderArrayXTags.CreateBuilder(workspace, xTags, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexHeaderArrayXTags XTagsValue = CanonTests30.Client.Models.GetComplexHeaderArrayXTags.CreateBuilder(workspace, xTags, 30).RootElement;
         HeaderArrayRequest request = new(XTagsValue);
 
         request.Validate(validationMode);
@@ -307,10 +307,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="xDims">The X-Dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<HeaderObjectResponse> HeaderObjectAsync(CanonTests30.Client.GetComplexHeaderObjectXDims.Source xDims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<HeaderObjectResponse> HeaderObjectAsync(CanonTests30.Client.Models.GetComplexHeaderObjectXDims.Source xDims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexHeaderObjectXDims XDimsValue = CanonTests30.Client.GetComplexHeaderObjectXDims.CreateBuilder(workspace, xDims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexHeaderObjectXDims XDimsValue = CanonTests30.Client.Models.GetComplexHeaderObjectXDims.CreateBuilder(workspace, xDims, 30).RootElement;
         HeaderObjectRequest request = new(XDimsValue);
 
         request.Validate(validationMode);
@@ -323,10 +323,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="xDims">The X-Dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<HeaderObjectExplodeResponse> HeaderObjectExplodeAsync(CanonTests30.Client.GetComplexHeaderObjectExplodeXDims.Source xDims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<HeaderObjectExplodeResponse> HeaderObjectExplodeAsync(CanonTests30.Client.Models.GetComplexHeaderObjectExplodeXDims.Source xDims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexHeaderObjectExplodeXDims XDimsValue = CanonTests30.Client.GetComplexHeaderObjectExplodeXDims.CreateBuilder(workspace, xDims, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexHeaderObjectExplodeXDims XDimsValue = CanonTests30.Client.Models.GetComplexHeaderObjectExplodeXDims.CreateBuilder(workspace, xDims, 30).RootElement;
         HeaderObjectExplodeRequest request = new(XDimsValue);
 
         request.Validate(validationMode);
@@ -339,10 +339,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<CookieArrayResponse> CookieArrayAsync(CanonTests30.Client.GetComplexCookieArrayColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<CookieArrayResponse> CookieArrayAsync(CanonTests30.Client.Models.GetComplexCookieArrayColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexCookieArrayColors ColorsValue = CanonTests30.Client.GetComplexCookieArrayColors.CreateBuilder(workspace, colors, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexCookieArrayColors ColorsValue = CanonTests30.Client.Models.GetComplexCookieArrayColors.CreateBuilder(workspace, colors, 30).RootElement;
         CookieArrayRequest request = new(ColorsValue);
 
         request.Validate(validationMode);
@@ -355,10 +355,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<CookieArrayNonexplodeResponse> CookieArrayNonexplodeAsync(CanonTests30.Client.GetComplexCookieArrayNonexplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<CookieArrayNonexplodeResponse> CookieArrayNonexplodeAsync(CanonTests30.Client.Models.GetComplexCookieArrayNonexplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexCookieArrayNonexplodeColors ColorsValue = CanonTests30.Client.GetComplexCookieArrayNonexplodeColors.CreateBuilder(workspace, colors, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexCookieArrayNonexplodeColors ColorsValue = CanonTests30.Client.Models.GetComplexCookieArrayNonexplodeColors.CreateBuilder(workspace, colors, 30).RootElement;
         CookieArrayNonexplodeRequest request = new(ColorsValue);
 
         request.Validate(validationMode);
@@ -371,10 +371,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="prefs">The prefs parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<CookieObjectResponse> CookieObjectAsync(CanonTests30.Client.GetComplexCookieObjectPrefs.Source prefs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<CookieObjectResponse> CookieObjectAsync(CanonTests30.Client.Models.GetComplexCookieObjectPrefs.Source prefs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexCookieObjectPrefs PrefsValue = CanonTests30.Client.GetComplexCookieObjectPrefs.CreateBuilder(workspace, prefs, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexCookieObjectPrefs PrefsValue = CanonTests30.Client.Models.GetComplexCookieObjectPrefs.CreateBuilder(workspace, prefs, 30).RootElement;
         CookieObjectRequest request = new(PrefsValue);
 
         request.Validate(validationMode);
@@ -387,10 +387,10 @@ public sealed class ApiComplexParamsClient : IApiComplexParamsClient
     /// </summary>
     /// <param name="prefs">The prefs parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<CookieObjectNonexplodeResponse> CookieObjectNonexplodeAsync(CanonTests30.Client.GetComplexCookieObjectNonexplodePrefs.Source prefs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<CookieObjectNonexplodeResponse> CookieObjectNonexplodeAsync(CanonTests30.Client.Models.GetComplexCookieObjectNonexplodePrefs.Source prefs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.GetComplexCookieObjectNonexplodePrefs PrefsValue = CanonTests30.Client.GetComplexCookieObjectNonexplodePrefs.CreateBuilder(workspace, prefs, 30).RootElement;
+        CanonTests30.Client.Models.GetComplexCookieObjectNonexplodePrefs PrefsValue = CanonTests30.Client.Models.GetComplexCookieObjectNonexplodePrefs.CreateBuilder(workspace, prefs, 30).RootElement;
         CookieObjectNonexplodeRequest request = new(PrefsValue);
 
         request.Validate(validationMode);

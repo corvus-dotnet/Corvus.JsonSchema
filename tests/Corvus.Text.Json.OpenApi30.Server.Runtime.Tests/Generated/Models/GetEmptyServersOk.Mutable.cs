@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Server;
+namespace CanonTests30.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct GetEmptyServersOk
         /// <summary>
         /// Gets the (optional) <c>ok</c> property.
         /// </summary>
-        public CanonTests30.Server.JsonBoolean.Mutable Ok
+        public CanonTests30.Server.Models.JsonBoolean.Mutable Ok
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OkUtf8, out CanonTests30.Server.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OkUtf8, out CanonTests30.Server.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -319,7 +319,7 @@ public readonly partial struct GetEmptyServersOk
         /// Set the <c>ok</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOk(in CanonTests30.Server.JsonBoolean.Source value)
+        public void SetOk(in CanonTests30.Server.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct GetEmptyServersOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests30.Server.GetEmptyServersOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests30.Server.Models.GetEmptyServersOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetEmptyServersOk instance) => new(JsonElement.From(instance));
 
@@ -822,7 +822,7 @@ public readonly partial struct GetEmptyServersOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests30.Server.GetEmptyServersOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests30.Server.Models.GetEmptyServersOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -936,7 +936,7 @@ public readonly partial struct GetEmptyServersOk
         /// <summary>
         /// Creates an instance of a <see cref="GetEmptyServersOk"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests30.Server.JsonBoolean.Source ok = default)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests30.Server.Models.JsonBoolean.Source ok = default)
         {
             ok.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ok, ref builder);
         }
@@ -944,7 +944,7 @@ public readonly partial struct GetEmptyServersOk
         /// <summary>
         /// Creates an instance of a <see cref="GetEmptyServersOk"/>.
         /// </summary>
-        public void Create(in CanonTests30.Server.JsonBoolean.Source ok = default)
+        public void Create(in CanonTests30.Server.Models.JsonBoolean.Source ok = default)
         {
             Create(ref _builder, ok);
         }
@@ -1123,7 +1123,7 @@ public readonly partial struct GetEmptyServersOk
     /// <param name="ok">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Server.JsonBoolean.Source ok = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Server.Models.JsonBoolean.Source ok = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

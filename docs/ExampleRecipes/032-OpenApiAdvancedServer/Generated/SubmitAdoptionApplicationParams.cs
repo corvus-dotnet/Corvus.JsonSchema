@@ -24,5 +24,5 @@ public readonly struct SubmitAdoptionApplicationParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public Petstore.Extended.Server.PostAdoptionApplyBody Body { get; init; }
+    public Petstore.Extended.Server.Models.PostAdoptionApplyBody Body { get; init; }
 }

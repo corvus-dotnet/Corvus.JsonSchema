@@ -19,7 +19,7 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct SearchItemsResult
 {
-    private SearchItemsResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.GetSearchOkXFacets xFacets = default)
+    private SearchItemsResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.Models.GetSearchOkXFacets xFacets = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -39,7 +39,7 @@ public readonly struct SearchItemsResult
     /// <summary>
     /// Gets the value of the <c>X-Facets</c> response header.
     /// </summary>
-    public CanonTests32.Server.GetSearchOkXFacets XFacets { get; }
+    public CanonTests32.Server.Models.GetSearchOkXFacets XFacets { get; }
 
     /// <summary>
     /// Creates a 200 Ok result.
@@ -48,7 +48,7 @@ public readonly struct SearchItemsResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="xFacets">The value for the <c>X-Facets</c> response header.</param>
     /// <returns>A <see cref="SearchItemsResult"/> with status 200.</returns>
-    public static SearchItemsResult Ok(CanonTests32.Server.GetSearchOk.Source body, JsonWorkspace workspace, CanonTests32.Server.GetSearchOkXFacets xFacets = default) => new(200, CanonTests32.Server.GetSearchOk.CreateBuilder(workspace, body, 30).RootElement, "application/json", xFacets: xFacets);
+    public static SearchItemsResult Ok(CanonTests32.Server.Models.GetSearchOk.Source body, JsonWorkspace workspace, CanonTests32.Server.Models.GetSearchOkXFacets xFacets = default) => new(200, CanonTests32.Server.Models.GetSearchOk.CreateBuilder(workspace, body, 30).RootElement, "application/json", xFacets: xFacets);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -59,7 +59,7 @@ public readonly struct SearchItemsResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests32.Server.GetSearchOk.From(this.Body).EvaluateSchema(),
+            200 => CanonTests32.Server.Models.GetSearchOk.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

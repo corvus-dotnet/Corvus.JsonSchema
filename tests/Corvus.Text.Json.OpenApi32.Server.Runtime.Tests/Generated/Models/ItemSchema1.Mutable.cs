@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -284,11 +284,11 @@ public readonly partial struct ItemSchema1
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Server.JsonString.Mutable EventId
+        public CanonTests32.Server.Models.JsonString.Mutable EventId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventIdUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventIdUtf8, out CanonTests32.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -305,11 +305,11 @@ public readonly partial struct ItemSchema1
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Server.JsonString.Mutable EventType
+        public CanonTests32.Server.Models.JsonString.Mutable EventType
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventTypeUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventTypeUtf8, out CanonTests32.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -442,7 +442,7 @@ public readonly partial struct ItemSchema1
         /// Set the <c>eventId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEventId(in CanonTests32.Server.JsonString.Source value)
+        public void SetEventId(in CanonTests32.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -473,7 +473,7 @@ public readonly partial struct ItemSchema1
         /// Set the <c>eventType</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEventType(in CanonTests32.Server.JsonString.Source value)
+        public void SetEventType(in CanonTests32.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -841,7 +841,7 @@ public readonly partial struct ItemSchema1
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.ItemSchema1.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Server.Models.ItemSchema1.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(ItemSchema1 instance) => new(JsonElement.From(instance));
 
@@ -962,7 +962,7 @@ public readonly partial struct ItemSchema1
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.ItemSchema1.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.ItemSchema1.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1078,8 +1078,8 @@ public readonly partial struct ItemSchema1
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Server.JsonString.Source eventId,
-            in CanonTests32.Server.JsonString.Source eventType,
+            in CanonTests32.Server.Models.JsonString.Source eventId,
+            in CanonTests32.Server.Models.JsonString.Source eventType,
             in Corvus.Text.Json.JsonElement.Source data = default)
         {
             eventId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EventId, ref builder);
@@ -1091,8 +1091,8 @@ public readonly partial struct ItemSchema1
         /// Creates an instance of a <see cref="ItemSchema1"/>.
         /// </summary>
         public void Create(
-            in CanonTests32.Server.JsonString.Source eventId,
-            in CanonTests32.Server.JsonString.Source eventType,
+            in CanonTests32.Server.Models.JsonString.Source eventId,
+            in CanonTests32.Server.Models.JsonString.Source eventType,
             in Corvus.Text.Json.JsonElement.Source data = default)
         {
             Create(ref _builder, eventId, eventType, data);
@@ -1104,8 +1104,8 @@ public readonly partial struct ItemSchema1
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests32.Server.JsonString.Source eventId,
-            in CanonTests32.Server.JsonString.Source eventType,
+            in CanonTests32.Server.Models.JsonString.Source eventId,
+            in CanonTests32.Server.Models.JsonString.Source eventType,
             in Corvus.Text.Json.JsonElement.Source<TContext> data = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -1121,8 +1121,8 @@ public readonly partial struct ItemSchema1
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests32.Server.JsonString.Source eventId,
-            in CanonTests32.Server.JsonString.Source eventType,
+            in CanonTests32.Server.Models.JsonString.Source eventId,
+            in CanonTests32.Server.Models.JsonString.Source eventType,
             in Corvus.Text.Json.JsonElement.Source<TContext> data = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -1289,7 +1289,7 @@ public readonly partial struct ItemSchema1
     /// <param name="data">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonString.Source eventId, in CanonTests32.Server.JsonString.Source eventType, in Corvus.Text.Json.JsonElement.Source data = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.Models.JsonString.Source eventId, in CanonTests32.Server.Models.JsonString.Source eventType, in Corvus.Text.Json.JsonElement.Source data = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1313,7 +1313,7 @@ public readonly partial struct ItemSchema1
     /// <param name="data">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Server.JsonString.Source eventId, in CanonTests32.Server.JsonString.Source eventType, in Corvus.Text.Json.JsonElement.Source<TContext> data = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Server.Models.JsonString.Source eventId, in CanonTests32.Server.Models.JsonString.Source eventType, in Corvus.Text.Json.JsonElement.Source<TContext> data = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

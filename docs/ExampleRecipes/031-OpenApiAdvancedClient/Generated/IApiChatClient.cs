@@ -32,7 +32,7 @@ public interface IApiChatClient : IAsyncDisposable
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<StartVetChatResponse> StartVetChatAsync(Petstore.Extended.JsonString.Source petId, Petstore.Extended.JsonString.Source session_token, Petstore.Extended.PostPetsByPetIdChatBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<StartVetChatResponse> StartVetChatAsync(Petstore.Extended.Models.JsonString.Source petId, Petstore.Extended.Models.JsonString.Source session_token, Petstore.Extended.Models.PostPetsByPetIdChatBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Stream live activity updates for a pet (NDJSON)
@@ -40,5 +40,5 @@ public interface IApiChatClient : IAsyncDisposable
     /// <param name="petId">The petId parameter.</param>
     /// <param name="since">The since parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<StreamPetActivityResponse> StreamPetActivityAsync(Petstore.Extended.JsonString.Source petId, Petstore.Extended.JsonDateTime.Source since = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<StreamPetActivityResponse> StreamPetActivityAsync(Petstore.Extended.Models.JsonString.Source petId, Petstore.Extended.Models.JsonDateTime.Source since = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct PostFormsEncodedUploadBody
     /// <summary>
     /// Gets the (optional) <c>metadata</c> property.
     /// </summary>
-    public CanonTests30.Client.PostFormsEncodedUploadBody.MetadataEntity Metadata
+    public CanonTests30.Client.Models.PostFormsEncodedUploadBody.MetadataEntity Metadata
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests30.Client.PostFormsEncodedUploadBody.MetadataEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests30.Client.Models.PostFormsEncodedUploadBody.MetadataEntity value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct PostFormsEncodedUploadBody
     /// <summary>
     /// Gets the (optional) <c>tags</c> property.
     /// </summary>
-    public CanonTests30.Client.PostFormsEncodedUploadBody.JsonStringArray Tags
+    public CanonTests30.Client.Models.PostFormsEncodedUploadBody.JsonStringArray Tags
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests30.Client.PostFormsEncodedUploadBody.JsonStringArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests30.Client.Models.PostFormsEncodedUploadBody.JsonStringArray value))
             {
                 return value;
             }
@@ -193,11 +193,11 @@ public readonly partial struct PostFormsEncodedUploadBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests30.Client.JsonString Title
+    public CanonTests30.Client.Models.JsonString Title
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests30.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests30.Client.Models.JsonString value))
             {
                 return value;
             }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -279,11 +279,11 @@ public readonly partial struct PostChatCompletionsBody
                 /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                 /// </para>
                 /// </remarks>
-                public CanonTests32.Client.JsonString.Mutable Content
+                public CanonTests32.Client.Models.JsonString.Mutable Content
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                         {
                             return value;
                         }
@@ -300,11 +300,11 @@ public readonly partial struct PostChatCompletionsBody
                 /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                 /// </para>
                 /// </remarks>
-                public CanonTests32.Client.JsonString.Mutable Role
+                public CanonTests32.Client.Models.JsonString.Mutable Role
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RoleUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RoleUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                         {
                             return value;
                         }
@@ -356,7 +356,7 @@ public readonly partial struct PostChatCompletionsBody
                 /// Set the <c>content</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetContent(in CanonTests32.Client.JsonString.Source value)
+                public void SetContent(in CanonTests32.Client.Models.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -387,7 +387,7 @@ public readonly partial struct PostChatCompletionsBody
                 /// Set the <c>role</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRole(in CanonTests32.Client.JsonString.Source value)
+                public void SetRole(in CanonTests32.Client.Models.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -755,7 +755,7 @@ public readonly partial struct PostChatCompletionsBody
                     _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
                 }
 
-                internal Source(CanonTests32.Client.PostChatCompletionsBody.RequiredContentAndRoleArray.RequiredContentAndRole.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+                internal Source(CanonTests32.Client.Models.PostChatCompletionsBody.RequiredContentAndRoleArray.RequiredContentAndRole.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
                 public static implicit operator Source(RequiredContentAndRole instance) => new(JsonElement.From(instance));
 
@@ -876,7 +876,7 @@ public readonly partial struct PostChatCompletionsBody
 
                 public static implicit operator Source<TContext>(Source source) => new (source);
 
-                internal Source(scoped in TContext context, CanonTests32.Client.PostChatCompletionsBody.RequiredContentAndRoleArray.RequiredContentAndRole.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+                internal Source(scoped in TContext context, CanonTests32.Client.Models.PostChatCompletionsBody.RequiredContentAndRoleArray.RequiredContentAndRole.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -992,8 +992,8 @@ public readonly partial struct PostChatCompletionsBody
                 /// </summary>
                 internal static void Create(
                     ref ComplexValueBuilder builder,
-                    in CanonTests32.Client.JsonString.Source content,
-                    in CanonTests32.Client.JsonString.Source role)
+                    in CanonTests32.Client.Models.JsonString.Source content,
+                    in CanonTests32.Client.Models.JsonString.Source role)
                 {
                     content.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Content, ref builder);
                     role.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Role, ref builder);
@@ -1002,7 +1002,7 @@ public readonly partial struct PostChatCompletionsBody
                 /// <summary>
                 /// Creates an instance of a <see cref="RequiredContentAndRole"/>.
                 /// </summary>
-                public void Create(in CanonTests32.Client.JsonString.Source content, in CanonTests32.Client.JsonString.Source role)
+                public void Create(in CanonTests32.Client.Models.JsonString.Source content, in CanonTests32.Client.Models.JsonString.Source role)
                 {
                     Create(ref _builder, content, role);
                 }
@@ -1164,7 +1164,7 @@ public readonly partial struct PostChatCompletionsBody
             /// <param name="role">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source content, in CanonTests32.Client.JsonString.Source role, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source content, in CanonTests32.Client.Models.JsonString.Source role, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

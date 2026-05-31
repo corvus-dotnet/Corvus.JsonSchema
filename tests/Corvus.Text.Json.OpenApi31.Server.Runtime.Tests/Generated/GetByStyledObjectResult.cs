@@ -41,7 +41,7 @@ public readonly struct GetByStyledObjectResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetByStyledObjectResult"/> with status 200.</returns>
-    public static GetByStyledObjectResult Ok(CanonTests31.Server.GetStyledObjectByObjOk.Source body, JsonWorkspace workspace) => new(200, CanonTests31.Server.GetStyledObjectByObjOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static GetByStyledObjectResult Ok(CanonTests31.Server.Models.GetStyledObjectByObjOk.Source body, JsonWorkspace workspace) => new(200, CanonTests31.Server.Models.GetStyledObjectByObjOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct GetByStyledObjectResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests31.Server.GetStyledObjectByObjOk.From(this.Body).EvaluateSchema(),
+            200 => CanonTests31.Server.Models.GetStyledObjectByObjOk.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

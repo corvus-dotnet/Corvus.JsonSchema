@@ -155,5 +155,5 @@ public interface IApiDocumentsClient : IAsyncDisposable
     /// </summary>
     /// <param name="docPath">The docPath parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetDocumentResponse> GetDocumentAsync(CanonTests32.Client.JsonString.Source docPath, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetDocumentResponse> GetDocumentAsync(CanonTests32.Client.Models.JsonString.Source docPath, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

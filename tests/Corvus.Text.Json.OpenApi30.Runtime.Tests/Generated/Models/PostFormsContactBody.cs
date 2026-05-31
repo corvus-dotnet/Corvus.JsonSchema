@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PostFormsContactBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests30.Client.JsonEmail Email
+    public CanonTests30.Client.Models.JsonEmail Email
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out CanonTests30.Client.JsonEmail value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out CanonTests30.Client.Models.JsonEmail value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct PostFormsContactBody
     /// <summary>
     /// Gets the (optional) <c>message</c> property.
     /// </summary>
-    public CanonTests30.Client.JsonString Message
+    public CanonTests30.Client.Models.JsonString Message
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out CanonTests30.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out CanonTests30.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -198,11 +198,11 @@ public readonly partial struct PostFormsContactBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests30.Client.JsonString Name
+    public CanonTests30.Client.Models.JsonString Name
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests30.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests30.Client.Models.JsonString value))
             {
                 return value;
             }

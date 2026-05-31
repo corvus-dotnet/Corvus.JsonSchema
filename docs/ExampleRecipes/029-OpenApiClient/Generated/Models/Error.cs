@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Client;
+namespace Petstore.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct Error
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Client.JsonInt32 Code
+    public Petstore.Client.Models.JsonInt32 Code
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CodeUtf8, out Petstore.Client.JsonInt32 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CodeUtf8, out Petstore.Client.Models.JsonInt32 value))
             {
                 return value;
             }
@@ -182,11 +182,11 @@ public readonly partial struct Error
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Client.JsonString Message
+    public Petstore.Client.Models.JsonString Message
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out Petstore.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out Petstore.Client.Models.JsonString value))
             {
                 return value;
             }

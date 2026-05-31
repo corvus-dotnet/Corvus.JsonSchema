@@ -55,7 +55,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
             await this.authProvider.AuthenticateAsync(SaslScramAuthContext, cancellationToken).ConfigureAwait(false);
         }
 
-        await this.transport.SubscribeAsync<Streetlights.Client.LightMeasuredPayload>(ChannelAddressUtf8, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);
+        await this.transport.SubscribeAsync<Streetlights.Client.Models.LightMeasuredPayload>(ChannelAddressUtf8, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ public sealed class ReceiveLightMeasurementConsumer : IAsyncDisposable
         return this.transport.UnsubscribeAsync(ChannelAddressUtf8, cancellationToken);
     }
 
-    private async ValueTask HandleMessageAsync(Streetlights.Client.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
+    private async ValueTask HandleMessageAsync(Streetlights.Client.Models.LightMeasuredPayload payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)
     {
         try
         {

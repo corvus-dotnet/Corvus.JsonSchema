@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Server;
+namespace CanonTests30.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -69,7 +69,7 @@ public readonly partial struct GetSearchCoords
     {
         CheckValidInstance();
         written = 0;
-        foreach (CanonTests30.Server.JsonNumber item in EnumerateArray())
+        foreach (CanonTests30.Server.Models.JsonNumber item in EnumerateArray())
         {
             if (written >= items.Length)
             {
@@ -94,12 +94,12 @@ public readonly partial struct GetSearchCoords
     /// <returns>The item at the given index.</returns>
     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public CanonTests30.Server.JsonNumber this[int index]
+    public CanonTests30.Server.Models.JsonNumber this[int index]
     {
         get
         {
             CheckValidInstance();
-            return _parent.GetArrayIndexElement<CanonTests30.Server.JsonNumber>(_idx, index);
+            return _parent.GetArrayIndexElement<CanonTests30.Server.Models.JsonNumber>(_idx, index);
         }
     }
 
@@ -117,10 +117,10 @@ public readonly partial struct GetSearchCoords
     /// Enumerates the array.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public ArrayEnumerator<CanonTests30.Server.JsonNumber> EnumerateArray()
+    public ArrayEnumerator<CanonTests30.Server.Models.JsonNumber> EnumerateArray()
     {
         CheckValidInstance();
-        return EnumeratorCreator.CreateArrayEnumerator<CanonTests30.Server.JsonNumber>(_parent, _idx);
+        return EnumeratorCreator.CreateArrayEnumerator<CanonTests30.Server.Models.JsonNumber>(_parent, _idx);
     }
 
     /// <inheritdoc/>

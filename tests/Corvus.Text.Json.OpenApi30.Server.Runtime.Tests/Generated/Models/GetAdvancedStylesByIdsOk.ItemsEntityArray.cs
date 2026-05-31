@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Server;
+namespace CanonTests30.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -72,12 +72,12 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public CanonTests30.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.ItemsEntity this[int index]
+        public CanonTests30.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.ItemsEntity this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<CanonTests30.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.ItemsEntity>(_idx, index);
+                return _parent.GetArrayIndexElement<CanonTests30.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.ItemsEntity>(_idx, index);
             }
         }
 
@@ -95,10 +95,10 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<CanonTests30.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.ItemsEntity> EnumerateArray()
+        public ArrayEnumerator<CanonTests30.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.ItemsEntity> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<CanonTests30.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.ItemsEntity>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<CanonTests30.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.ItemsEntity>(_parent, _idx);
         }
 
         /// <inheritdoc/>

@@ -24,18 +24,18 @@ public readonly struct GetPageRequest : IApiRequest<GetPageRequest>
     /// <summary>
     /// Gets the pageNum parameter.
     /// </summary>
-    public CanonTests30.Client.JsonInt32 PageNum { get; init; }
+    public CanonTests30.Client.Models.JsonInt32 PageNum { get; init; }
 
     /// <summary>
     /// Gets the offset parameter.
     /// </summary>
-    public CanonTests30.Client.JsonInteger Offset { get; init; }
+    public CanonTests30.Client.Models.JsonInteger Offset { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetPageRequest"/> struct.
     /// </summary>
     /// <param name="pageNum">The pageNum parameter.</param>
-    public GetPageRequest(CanonTests30.Client.JsonInt32 pageNum)
+    public GetPageRequest(CanonTests30.Client.Models.JsonInt32 pageNum)
     {
         this.PageNum = pageNum;
     }

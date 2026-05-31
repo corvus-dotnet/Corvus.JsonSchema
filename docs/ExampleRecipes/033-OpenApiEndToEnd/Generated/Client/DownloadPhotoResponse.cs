@@ -36,7 +36,7 @@ public struct DownloadPhotoResponse : IApiResponse<DownloadPhotoResponse>
     /// <summary>
     /// Gets the 404 response body.
     /// </summary>
-    public Petstore.EndToEnd.Client.Error NotFoundBody { get; private set; }
+    public Petstore.EndToEnd.Client.Models.Error NotFoundBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<DownloadPhotoResponse> CreateAsync(
@@ -60,7 +60,7 @@ public struct DownloadPhotoResponse : IApiResponse<DownloadPhotoResponse>
 
         if (statusCode == 404)
         {
-            var notFoundDoc = await ParsedJsonDocument<Petstore.EndToEnd.Client.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var notFoundDoc = await ParsedJsonDocument<Petstore.EndToEnd.Client.Models.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = notFoundDoc;
             response.NotFoundBody = notFoundDoc.RootElement;
             return response;
@@ -91,7 +91,7 @@ public struct DownloadPhotoResponse : IApiResponse<DownloadPhotoResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 404.</returns>
-    public bool TryGetNotFound(out Petstore.EndToEnd.Client.Error result)
+    public bool TryGetNotFound(out Petstore.EndToEnd.Client.Models.Error result)
     {
         if (this.StatusCode == 404)
         {
@@ -114,7 +114,7 @@ public struct DownloadPhotoResponse : IApiResponse<DownloadPhotoResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
         ResponseMatcher<Stream?, TResult> matchOkStream,
-        ResponseMatcher<Petstore.EndToEnd.Client.Error, TResult> matchNotFound,
+        ResponseMatcher<Petstore.EndToEnd.Client.Models.Error, TResult> matchNotFound,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -144,7 +144,7 @@ public struct DownloadPhotoResponse : IApiResponse<DownloadPhotoResponse>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
         ResponseMatcher<Stream?, TContext, TResult> matchOkStream,
-        ResponseMatcher<Petstore.EndToEnd.Client.Error, TContext, TResult> matchNotFound,
+        ResponseMatcher<Petstore.EndToEnd.Client.Models.Error, TContext, TResult> matchNotFound,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

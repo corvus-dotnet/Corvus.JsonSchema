@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -182,12 +182,12 @@ public readonly partial struct Schema3
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public CanonTests32.Server.Schema3.RequiredAction.Mutable Item1
+        public CanonTests32.Server.Models.Schema3.RequiredAction.Mutable Item1
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<CanonTests32.Server.Schema3.RequiredAction.Mutable>(_idx, 0);
+                return _parent.GetArrayIndexElement<CanonTests32.Server.Models.Schema3.RequiredAction.Mutable>(_idx, 0);
             }
         }
 
@@ -196,12 +196,12 @@ public readonly partial struct Schema3
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public CanonTests32.Server.JsonBinary.Mutable Item2
+        public CanonTests32.Server.Models.JsonBinary.Mutable Item2
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<CanonTests32.Server.JsonBinary.Mutable>(_idx, 1);
+                return _parent.GetArrayIndexElement<CanonTests32.Server.Models.JsonBinary.Mutable>(_idx, 1);
             }
         }
 
@@ -761,7 +761,7 @@ public readonly partial struct Schema3
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.Schema3.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Server.Models.Schema3.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(Schema3 instance) => new(JsonElement.From(instance));
 
@@ -882,7 +882,7 @@ public readonly partial struct Schema3
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.Schema3.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.Schema3.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -995,7 +995,7 @@ public readonly partial struct Schema3
 
         private bool _addedPrefixItems = false;
 
-        public void CreateTuple(in CanonTests32.Server.Schema3.RequiredAction.Source item1, in CanonTests32.Server.JsonBinary.Source item2)
+        public void CreateTuple(in CanonTests32.Server.Models.Schema3.RequiredAction.Source item1, in CanonTests32.Server.Models.JsonBinary.Source item2)
         {
             item1.AddAsItem(ref _builder);
             item2.AddAsItem(ref _builder);

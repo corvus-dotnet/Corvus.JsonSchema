@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended.Server;
+namespace Petstore.Extended.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// <summary>
         /// Gets the (optional) <c>caption</c> property.
         /// </summary>
-        public Petstore.Extended.Server.JsonString.Mutable Caption
+        public Petstore.Extended.Server.Models.JsonString.Mutable Caption
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaptionUtf8, out Petstore.Extended.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaptionUtf8, out Petstore.Extended.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.Extended.Server.JsonBinary.Mutable File
+        public Petstore.Extended.Server.Models.JsonBinary.Mutable File
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out Petstore.Extended.Server.JsonBinary.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out Petstore.Extended.Server.Models.JsonBinary.Mutable value))
                 {
                     return value;
                 }
@@ -300,11 +300,11 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// <summary>
         /// Gets the (optional) <c>isPrimary</c> property.
         /// </summary>
-        public Petstore.Extended.Server.JsonBoolean.Mutable IsPrimary
+        public Petstore.Extended.Server.Models.JsonBoolean.Mutable IsPrimary
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsPrimaryUtf8, out Petstore.Extended.Server.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsPrimaryUtf8, out Petstore.Extended.Server.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -356,7 +356,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// Set the <c>caption</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCaption(in Petstore.Extended.Server.JsonString.Source value)
+        public void SetCaption(in Petstore.Extended.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -401,7 +401,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// Set the <c>file</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFile(in Petstore.Extended.Server.JsonBinary.Source value)
+        public void SetFile(in Petstore.Extended.Server.Models.JsonBinary.Source value)
         {
             CheckValidInstance();
 
@@ -432,7 +432,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// Set the <c>isPrimary</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsPrimary(in Petstore.Extended.Server.JsonBoolean.Source value)
+        public void SetIsPrimary(in Petstore.Extended.Server.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -814,7 +814,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Petstore.Extended.Server.PostPetsByPetIdPhotosBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Petstore.Extended.Server.Models.PostPetsByPetIdPhotosBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostPetsByPetIdPhotosBody instance) => new(JsonElement.From(instance));
 
@@ -935,7 +935,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Petstore.Extended.Server.PostPetsByPetIdPhotosBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Petstore.Extended.Server.Models.PostPetsByPetIdPhotosBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1051,9 +1051,9 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Petstore.Extended.Server.JsonBinary.Source file,
-            in Petstore.Extended.Server.JsonString.Source caption = default,
-            in Petstore.Extended.Server.JsonBoolean.Source isPrimary = default)
+            in Petstore.Extended.Server.Models.JsonBinary.Source file,
+            in Petstore.Extended.Server.Models.JsonString.Source caption = default,
+            in Petstore.Extended.Server.Models.JsonBoolean.Source isPrimary = default)
         {
             file.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.File, ref builder);
             caption.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Caption, ref builder);
@@ -1064,9 +1064,9 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// Creates an instance of a <see cref="PostPetsByPetIdPhotosBody"/>.
         /// </summary>
         public void Create(
-            in Petstore.Extended.Server.JsonBinary.Source file,
-            in Petstore.Extended.Server.JsonString.Source caption = default,
-            in Petstore.Extended.Server.JsonBoolean.Source isPrimary = default)
+            in Petstore.Extended.Server.Models.JsonBinary.Source file,
+            in Petstore.Extended.Server.Models.JsonString.Source caption = default,
+            in Petstore.Extended.Server.Models.JsonBoolean.Source isPrimary = default)
         {
             Create(ref _builder, file, caption, isPrimary);
         }
@@ -1229,7 +1229,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
     /// <param name="isPrimary">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.Server.JsonBinary.Source file, in Petstore.Extended.Server.JsonString.Source caption = default, in Petstore.Extended.Server.JsonBoolean.Source isPrimary = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.Server.Models.JsonBinary.Source file, in Petstore.Extended.Server.Models.JsonString.Source caption = default, in Petstore.Extended.Server.Models.JsonBoolean.Source isPrimary = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

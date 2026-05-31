@@ -23,5 +23,5 @@ public readonly struct GetByMatrixCodesParams
     /// <summary>
     /// Gets the 'codes' path parameter.
     /// </summary>
-    public CanonTests31.Server.GetMatrixTestByCodesCodes Codes { get; init; }
+    public CanonTests31.Server.Models.GetMatrixTestByCodesCodes Codes { get; init; }
 }

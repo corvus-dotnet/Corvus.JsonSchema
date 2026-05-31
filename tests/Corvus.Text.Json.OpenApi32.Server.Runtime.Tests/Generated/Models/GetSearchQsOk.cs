@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetSearchQsOk
     /// <summary>
     /// Gets the (optional) <c>results</c> property.
     /// </summary>
-    public CanonTests32.Server.GetSearchQsOk.ItemEntityArray Results
+    public CanonTests32.Server.Models.GetSearchQsOk.ItemEntityArray Results
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out CanonTests32.Server.GetSearchQsOk.ItemEntityArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out CanonTests32.Server.Models.GetSearchQsOk.ItemEntityArray value))
             {
                 return value;
             }

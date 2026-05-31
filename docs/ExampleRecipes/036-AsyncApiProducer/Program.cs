@@ -6,6 +6,7 @@ using System.Text;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 // ── Setting up the transport ─────────────────────────────────────────────────
 // In production, you would use a real transport (NATS, Kafka, AMQP, etc.).

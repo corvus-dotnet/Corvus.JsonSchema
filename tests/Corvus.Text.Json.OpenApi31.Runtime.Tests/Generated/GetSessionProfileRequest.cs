@@ -24,28 +24,28 @@ public readonly struct GetSessionProfileRequest : IApiRequest<GetSessionProfileR
     /// <summary>
     /// Gets the session_id parameter.
     /// </summary>
-    public CanonTests31.Client.JsonString SessionId { get; init; }
+    public CanonTests31.Client.Models.JsonString SessionId { get; init; }
 
     /// <summary>
     /// Gets the theme parameter.
     /// </summary>
-    public CanonTests31.Client.JsonString Theme { get; init; }
+    public CanonTests31.Client.Models.JsonString Theme { get; init; }
 
     /// <summary>
     /// Gets the debug parameter.
     /// </summary>
-    public CanonTests31.Client.JsonBoolean Debug { get; init; }
+    public CanonTests31.Client.Models.JsonBoolean Debug { get; init; }
 
     /// <summary>
     /// Gets the max_age parameter.
     /// </summary>
-    public CanonTests31.Client.JsonInt32 MaxAge { get; init; }
+    public CanonTests31.Client.Models.JsonInt32 MaxAge { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetSessionProfileRequest"/> struct.
     /// </summary>
     /// <param name="session_id">The session_id parameter.</param>
-    public GetSessionProfileRequest(CanonTests31.Client.JsonString session_id)
+    public GetSessionProfileRequest(CanonTests31.Client.Models.JsonString session_id)
     {
         this.SessionId = session_id;
     }

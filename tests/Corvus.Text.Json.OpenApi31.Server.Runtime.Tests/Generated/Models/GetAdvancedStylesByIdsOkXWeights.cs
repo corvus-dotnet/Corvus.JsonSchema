@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -69,7 +69,7 @@ public readonly partial struct GetAdvancedStylesByIdsOkXWeights
     {
         CheckValidInstance();
         written = 0;
-        foreach (CanonTests31.Server.JsonSingle item in EnumerateArray())
+        foreach (CanonTests31.Server.Models.JsonSingle item in EnumerateArray())
         {
             if (written >= items.Length)
             {
@@ -94,12 +94,12 @@ public readonly partial struct GetAdvancedStylesByIdsOkXWeights
     /// <returns>The item at the given index.</returns>
     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public CanonTests31.Server.JsonSingle this[int index]
+    public CanonTests31.Server.Models.JsonSingle this[int index]
     {
         get
         {
             CheckValidInstance();
-            return _parent.GetArrayIndexElement<CanonTests31.Server.JsonSingle>(_idx, index);
+            return _parent.GetArrayIndexElement<CanonTests31.Server.Models.JsonSingle>(_idx, index);
         }
     }
 
@@ -117,10 +117,10 @@ public readonly partial struct GetAdvancedStylesByIdsOkXWeights
     /// Enumerates the array.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public ArrayEnumerator<CanonTests31.Server.JsonSingle> EnumerateArray()
+    public ArrayEnumerator<CanonTests31.Server.Models.JsonSingle> EnumerateArray()
     {
         CheckValidInstance();
-        return EnumeratorCreator.CreateArrayEnumerator<CanonTests31.Server.JsonSingle>(_parent, _idx);
+        return EnumeratorCreator.CreateArrayEnumerator<CanonTests31.Server.Models.JsonSingle>(_parent, _idx);
     }
 
     /// <inheritdoc/>

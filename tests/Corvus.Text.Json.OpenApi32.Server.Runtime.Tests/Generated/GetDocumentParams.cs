@@ -23,5 +23,5 @@ public readonly struct GetDocumentParams
     /// <summary>
     /// Gets the 'documentId' path parameter.
     /// </summary>
-    public CanonTests32.Server.JsonUuid DocumentId { get; init; }
+    public CanonTests32.Server.Models.JsonUuid DocumentId { get; init; }
 }

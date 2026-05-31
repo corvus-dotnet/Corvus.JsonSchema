@@ -31,7 +31,7 @@ public struct GetOrderResponse : IApiResponse<GetOrderResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests30.Client.GetOrdersByOrderIdOk OkBody { get; private set; }
+    public CanonTests30.Client.Models.GetOrdersByOrderIdOk OkBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<GetOrderResponse> CreateAsync(
@@ -49,7 +49,7 @@ public struct GetOrderResponse : IApiResponse<GetOrderResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<CanonTests30.Client.GetOrdersByOrderIdOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<CanonTests30.Client.Models.GetOrdersByOrderIdOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -63,7 +63,7 @@ public struct GetOrderResponse : IApiResponse<GetOrderResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests30.Client.GetOrdersByOrderIdOk result)
+    public bool TryGetOk(out CanonTests30.Client.Models.GetOrdersByOrderIdOk result)
     {
         if (this.StatusCode == 200)
         {
@@ -84,7 +84,7 @@ public struct GetOrderResponse : IApiResponse<GetOrderResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests30.Client.GetOrdersByOrderIdOk, TResult> matchOk,
+        ResponseMatcher<CanonTests30.Client.Models.GetOrdersByOrderIdOk, TResult> matchOk,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -107,7 +107,7 @@ public struct GetOrderResponse : IApiResponse<GetOrderResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests30.Client.GetOrdersByOrderIdOk, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests30.Client.Models.GetOrdersByOrderIdOk, TContext, TResult> matchOk,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

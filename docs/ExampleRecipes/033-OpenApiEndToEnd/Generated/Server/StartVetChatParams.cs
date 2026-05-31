@@ -24,15 +24,15 @@ public readonly struct StartVetChatParams
     /// <summary>
     /// Gets the 'petId' path parameter.
     /// </summary>
-    public Petstore.EndToEnd.Server.JsonString PetId { get; init; }
+    public Petstore.EndToEnd.Server.Models.JsonString PetId { get; init; }
 
     /// <summary>
     /// Gets the 'session_token' cookie parameter.
     /// </summary>
-    public Petstore.EndToEnd.Server.JsonString SessionToken { get; init; }
+    public Petstore.EndToEnd.Server.Models.JsonString SessionToken { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public Petstore.EndToEnd.Server.PostPetsByPetIdChatBody Body { get; init; }
+    public Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody Body { get; init; }
 }

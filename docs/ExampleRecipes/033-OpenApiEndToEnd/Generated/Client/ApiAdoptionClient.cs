@@ -35,10 +35,10 @@ public sealed class ApiAdoptionClient : IApiAdoptionClient
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SubmitAdoptionApplicationResponse> SubmitAdoptionApplicationAsync(Petstore.EndToEnd.Client.PostAdoptionApplyBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<SubmitAdoptionApplicationResponse> SubmitAdoptionApplicationAsync(Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.EndToEnd.Client.PostAdoptionApplyBody bodyValue = Petstore.EndToEnd.Client.PostAdoptionApplyBody.CreateBuilder(workspace, body, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody bodyValue = Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.CreateBuilder(workspace, body, 30).RootElement;
         SubmitAdoptionApplicationRequest request = new();
 
         request.Validate(validationMode);

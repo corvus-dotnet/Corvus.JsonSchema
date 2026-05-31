@@ -24,7 +24,7 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
     private IApiTransport? transport;
     internal CreateItemRequest sourceRequest;
     internal JsonWorkspace sourceWorkspace;
-    internal CanonTests32.Client.PostItemsBody sourceBody;
+    internal CanonTests32.Client.Models.PostItemsBody sourceBody;
 
     /// <inheritdoc/>
     public int StatusCode { get; private set; }
@@ -35,12 +35,12 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
     /// <summary>
     /// Gets the 201 response body.
     /// </summary>
-    public CanonTests32.Client.PostItemsCreated CreatedBody { get; private set; }
+    public CanonTests32.Client.Models.PostItemsCreated CreatedBody { get; private set; }
 
     /// <summary>
     /// Gets the 422 response body.
     /// </summary>
-    public CanonTests32.Client.PostItemsUnprocessableEntity UnprocessableEntityBody { get; private set; }
+    public CanonTests32.Client.Models.PostItemsUnprocessableEntity UnprocessableEntityBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<CreateItemResponse> CreateAsync(
@@ -59,7 +59,7 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
 
         if (statusCode == 201)
         {
-            var createdDoc = await ParsedJsonDocument<CanonTests32.Client.PostItemsCreated>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var createdDoc = await ParsedJsonDocument<CanonTests32.Client.Models.PostItemsCreated>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = createdDoc;
             response.CreatedBody = createdDoc.RootElement;
             return response;
@@ -67,7 +67,7 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
 
         if (statusCode == 422)
         {
-            var unprocessableEntityDoc = await ParsedJsonDocument<CanonTests32.Client.PostItemsUnprocessableEntity>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var unprocessableEntityDoc = await ParsedJsonDocument<CanonTests32.Client.Models.PostItemsUnprocessableEntity>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = unprocessableEntityDoc;
             response.UnprocessableEntityBody = unprocessableEntityDoc.RootElement;
             return response;
@@ -81,7 +81,7 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 201.</returns>
-    public bool TryGetCreated(out CanonTests32.Client.PostItemsCreated result)
+    public bool TryGetCreated(out CanonTests32.Client.Models.PostItemsCreated result)
     {
         if (this.StatusCode == 201)
         {
@@ -98,7 +98,7 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 422.</returns>
-    public bool TryGetUnprocessableEntity(out CanonTests32.Client.PostItemsUnprocessableEntity result)
+    public bool TryGetUnprocessableEntity(out CanonTests32.Client.Models.PostItemsUnprocessableEntity result)
     {
         if (this.StatusCode == 422)
         {
@@ -120,8 +120,8 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests32.Client.PostItemsCreated, TResult> matchCreated,
-        ResponseMatcher<CanonTests32.Client.PostItemsUnprocessableEntity, TResult> matchUnprocessableEntity,
+        ResponseMatcher<CanonTests32.Client.Models.PostItemsCreated, TResult> matchCreated,
+        ResponseMatcher<CanonTests32.Client.Models.PostItemsUnprocessableEntity, TResult> matchUnprocessableEntity,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 201)
@@ -150,8 +150,8 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests32.Client.PostItemsCreated, TContext, TResult> matchCreated,
-        ResponseMatcher<CanonTests32.Client.PostItemsUnprocessableEntity, TContext, TResult> matchUnprocessableEntity,
+        ResponseMatcher<CanonTests32.Client.Models.PostItemsCreated, TContext, TResult> matchCreated,
+        ResponseMatcher<CanonTests32.Client.Models.PostItemsUnprocessableEntity, TContext, TResult> matchUnprocessableEntity,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
@@ -244,16 +244,16 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
         /// <summary>
         /// Fetch the newly created item by its generated ID
         /// </summary>
-        public ValueTask<GetItemResponse> GetCreatedItemAsync(CanonTests32.Client.JsonString.Source filter = default, CanonTests32.Client.JsonInt32.Source limit = default, CanonTests32.Client.JsonBoolean.Source verbose = default, CanonTests32.Client.JsonString.Source xRequestId = default, CancellationToken cancellationToken = default)
+        public ValueTask<GetItemResponse> GetCreatedItemAsync(CanonTests32.Client.Models.JsonString.Source filter = default, CanonTests32.Client.Models.JsonInt32.Source limit = default, CanonTests32.Client.Models.JsonBoolean.Source verbose = default, CanonTests32.Client.Models.JsonString.Source xRequestId = default, CancellationToken cancellationToken = default)
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             GetItemRequest request = new()
             {
-                ItemId = CanonTests32.Client.JsonString.From(this.response.CreatedBody.Id),
-                Filter = filter.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, filter, 30).RootElement,
-                Limit = limit.IsUndefined ? default : (CanonTests32.Client.JsonInt32)CanonTests32.Client.JsonInt32.CreateBuilder(workspace, limit, 30).RootElement,
-                Verbose = verbose.IsUndefined ? default : (CanonTests32.Client.JsonBoolean)CanonTests32.Client.JsonBoolean.CreateBuilder(workspace, verbose, 30).RootElement,
-                XRequestId = xRequestId.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, xRequestId, 30).RootElement,
+                ItemId = CanonTests32.Client.Models.JsonString.From(this.response.CreatedBody.Id),
+                Filter = filter.IsUndefined ? default : (CanonTests32.Client.Models.JsonString)CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, filter, 30).RootElement,
+                Limit = limit.IsUndefined ? default : (CanonTests32.Client.Models.JsonInt32)CanonTests32.Client.Models.JsonInt32.CreateBuilder(workspace, limit, 30).RootElement,
+                Verbose = verbose.IsUndefined ? default : (CanonTests32.Client.Models.JsonBoolean)CanonTests32.Client.Models.JsonBoolean.CreateBuilder(workspace, verbose, 30).RootElement,
+                XRequestId = xRequestId.IsUndefined ? default : (CanonTests32.Client.Models.JsonString)CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, xRequestId, 30).RootElement,
             };
 
             return this.response.transport!.SendAsync<GetItemRequest, GetItemResponse>(in request, cancellationToken);
@@ -262,14 +262,14 @@ public struct CreateItemResponse : IApiResponse<CreateItemResponse>
         /// <summary>
         /// Search for items using the name from the creation request body
         /// </summary>
-        public ValueTask<SearchResponse> SearchByNameAsync(CanonTests32.Client.JsonInt32.Source page = default, CanonTests32.Client.JsonSingle.Source rating = default, CancellationToken cancellationToken = default)
+        public ValueTask<SearchResponse> SearchByNameAsync(CanonTests32.Client.Models.JsonInt32.Source page = default, CanonTests32.Client.Models.JsonSingle.Source rating = default, CancellationToken cancellationToken = default)
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             SearchRequest request = new()
             {
-                Q = CanonTests32.Client.JsonString.From(this.response.sourceBody.Name),
-                Page = page.IsUndefined ? default : (CanonTests32.Client.JsonInt32)CanonTests32.Client.JsonInt32.CreateBuilder(workspace, page, 30).RootElement,
-                Rating = rating.IsUndefined ? default : (CanonTests32.Client.JsonSingle)CanonTests32.Client.JsonSingle.CreateBuilder(workspace, rating, 30).RootElement,
+                Q = CanonTests32.Client.Models.JsonString.From(this.response.sourceBody.Name),
+                Page = page.IsUndefined ? default : (CanonTests32.Client.Models.JsonInt32)CanonTests32.Client.Models.JsonInt32.CreateBuilder(workspace, page, 30).RootElement,
+                Rating = rating.IsUndefined ? default : (CanonTests32.Client.Models.JsonSingle)CanonTests32.Client.Models.JsonSingle.CreateBuilder(workspace, rating, 30).RootElement,
             };
 
             return this.response.transport!.SendAsync<SearchRequest, SearchResponse>(in request, cancellationToken);

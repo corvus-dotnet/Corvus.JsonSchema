@@ -185,42 +185,42 @@ public interface IApiFormsClient : IAsyncDisposable
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SubmitContactFormResponse> SubmitContactFormAsync(CanonTests32.Client.PostFormsContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SubmitContactFormResponse> SubmitContactFormAsync(CanonTests32.Client.Models.PostFormsContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Upload a document with metadata
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UploadDocumentResponse> UploadDocumentAsync(CanonTests32.Client.PostFormsUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<UploadDocumentResponse> UploadDocumentAsync(CanonTests32.Client.Models.PostFormsUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Submit a contact form with encoding overrides
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SubmitEncodedContactFormResponse> SubmitEncodedContactFormAsync(CanonTests32.Client.PostFormsEncodedContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SubmitEncodedContactFormResponse> SubmitEncodedContactFormAsync(CanonTests32.Client.Models.PostFormsEncodedContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Upload a document with encoding overrides
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UploadEncodedDocumentResponse> UploadEncodedDocumentAsync(CanonTests32.Client.PostFormsEncodedUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<UploadEncodedDocumentResponse> UploadEncodedDocumentAsync(CanonTests32.Client.Models.PostFormsEncodedUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Submit form with default encoding (explode=true for arrays and objects)
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SubmitDefaultFormResponse> SubmitDefaultFormAsync(CanonTests32.Client.PostFormsDefaultFormBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SubmitDefaultFormResponse> SubmitDefaultFormAsync(CanonTests32.Client.Models.PostFormsDefaultFormBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Submit form with non-exploded object and spaceDelimited array
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SubmitNonexplodedFormResponse> SubmitNonexplodedFormAsync(CanonTests32.Client.PostFormsNonexplodedFormBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SubmitNonexplodedFormResponse> SubmitNonexplodedFormAsync(CanonTests32.Client.Models.PostFormsNonexplodedFormBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Submit multipart form with various value types
@@ -228,5 +228,5 @@ public interface IApiFormsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="file">Binary data for the 'file' part.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SubmitMultipartTypesResponse> SubmitMultipartTypesAsync(CanonTests32.Client.PostFormsMultipartTypesBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SubmitMultipartTypesResponse> SubmitMultipartTypesAsync(CanonTests32.Client.Models.PostFormsMultipartTypesBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

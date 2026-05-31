@@ -39,16 +39,16 @@ public sealed class ApiFlagsClient : IApiFlagsClient
     /// <param name="xDebug">The X-Debug parameter.</param>
     /// <param name="xScore">The X-Score parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetByFlagResponse> GetByFlagAsync(CanonTests30.Client.JsonBoolean.Source active, CanonTests30.Client.JsonString.Source xTraceId, CanonTests30.Client.JsonInt32.Source xRequestCount, CanonTests30.Client.JsonBoolean.Source xDebug = default, CanonTests30.Client.JsonDouble.Source xScore = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetByFlagResponse> GetByFlagAsync(CanonTests30.Client.Models.JsonBoolean.Source active, CanonTests30.Client.Models.JsonString.Source xTraceId, CanonTests30.Client.Models.JsonInt32.Source xRequestCount, CanonTests30.Client.Models.JsonBoolean.Source xDebug = default, CanonTests30.Client.Models.JsonDouble.Source xScore = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonBoolean ActiveValue = CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, active, 30).RootElement;
-        CanonTests30.Client.JsonString XTraceIdValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, xTraceId, 30).RootElement;
-        CanonTests30.Client.JsonInt32 XRequestCountValue = CanonTests30.Client.JsonInt32.CreateBuilder(workspace, xRequestCount, 30).RootElement;
+        CanonTests30.Client.Models.JsonBoolean ActiveValue = CanonTests30.Client.Models.JsonBoolean.CreateBuilder(workspace, active, 30).RootElement;
+        CanonTests30.Client.Models.JsonString XTraceIdValue = CanonTests30.Client.Models.JsonString.CreateBuilder(workspace, xTraceId, 30).RootElement;
+        CanonTests30.Client.Models.JsonInt32 XRequestCountValue = CanonTests30.Client.Models.JsonInt32.CreateBuilder(workspace, xRequestCount, 30).RootElement;
         GetByFlagRequest request = new(ActiveValue, XTraceIdValue, XRequestCountValue)
         {
-            XDebug = xDebug.IsUndefined ? default : (CanonTests30.Client.JsonBoolean)CanonTests30.Client.JsonBoolean.CreateBuilder(workspace, xDebug, 30).RootElement,
-            XScore = xScore.IsUndefined ? default : (CanonTests30.Client.JsonDouble)CanonTests30.Client.JsonDouble.CreateBuilder(workspace, xScore, 30).RootElement,
+            XDebug = xDebug.IsUndefined ? default : (CanonTests30.Client.Models.JsonBoolean)CanonTests30.Client.Models.JsonBoolean.CreateBuilder(workspace, xDebug, 30).RootElement,
+            XScore = xScore.IsUndefined ? default : (CanonTests30.Client.Models.JsonDouble)CanonTests30.Client.Models.JsonDouble.CreateBuilder(workspace, xScore, 30).RootElement,
         }
         ;
 

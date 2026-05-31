@@ -5,6 +5,7 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using EventSubscription.CallbackServer;
+using EventSubscription.CallbackServer.Models;
 
 // ── Hosting a generated callback server ───────────────────────────────────────
 // The openapi-callback-server generator walks OpenAPI callbacks and webhooks and

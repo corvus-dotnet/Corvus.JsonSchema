@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PostAdoptionApplyAccepted
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.JsonString ApplicationId
+    public Petstore.Extended.Models.JsonString ApplicationId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicationIdUtf8, out Petstore.Extended.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicationIdUtf8, out Petstore.Extended.Models.JsonString value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct PostAdoptionApplyAccepted
     /// <summary>
     /// Gets the (optional) <c>estimatedReviewDays</c> property.
     /// </summary>
-    public Petstore.Extended.JsonInteger EstimatedReviewDays
+    public Petstore.Extended.Models.JsonInteger EstimatedReviewDays
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EstimatedReviewDaysUtf8, out Petstore.Extended.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EstimatedReviewDaysUtf8, out Petstore.Extended.Models.JsonInteger value))
             {
                 return value;
             }
@@ -198,11 +198,11 @@ public readonly partial struct PostAdoptionApplyAccepted
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.PostAdoptionApplyAccepted.StatusEntity Status
+    public Petstore.Extended.Models.PostAdoptionApplyAccepted.StatusEntity Status
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.PostAdoptionApplyAccepted.StatusEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Models.PostAdoptionApplyAccepted.StatusEntity value))
             {
                 return value;
             }

@@ -37,14 +37,14 @@ public sealed class ApiSearchClient : IApiSearchClient
     /// <param name="page">The page parameter.</param>
     /// <param name="rating">The rating parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SearchResponse> SearchAsync(CanonTests32.Client.JsonString.Source q, CanonTests32.Client.JsonInt32.Source page = default, CanonTests32.Client.JsonSingle.Source rating = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<SearchResponse> SearchAsync(CanonTests32.Client.Models.JsonString.Source q, CanonTests32.Client.Models.JsonInt32.Source page = default, CanonTests32.Client.Models.JsonSingle.Source rating = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.JsonString QValue = CanonTests32.Client.JsonString.CreateBuilder(workspace, q, 30).RootElement;
+        CanonTests32.Client.Models.JsonString QValue = CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, q, 30).RootElement;
         SearchRequest request = new(QValue)
         {
-            Page = page.IsUndefined ? default : (CanonTests32.Client.JsonInt32)CanonTests32.Client.JsonInt32.CreateBuilder(workspace, page, 30).RootElement,
-            Rating = rating.IsUndefined ? default : (CanonTests32.Client.JsonSingle)CanonTests32.Client.JsonSingle.CreateBuilder(workspace, rating, 30).RootElement,
+            Page = page.IsUndefined ? default : (CanonTests32.Client.Models.JsonInt32)CanonTests32.Client.Models.JsonInt32.CreateBuilder(workspace, page, 30).RootElement,
+            Rating = rating.IsUndefined ? default : (CanonTests32.Client.Models.JsonSingle)CanonTests32.Client.Models.JsonSingle.CreateBuilder(workspace, rating, 30).RootElement,
         }
         ;
 
@@ -59,13 +59,13 @@ public sealed class ApiSearchClient : IApiSearchClient
     /// <param name="limit">The limit parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<QuerySearchResponse> QuerySearchAsync(CanonTests32.Client.Schema1.Source body, CanonTests32.Client.JsonInt32.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<QuerySearchResponse> QuerySearchAsync(CanonTests32.Client.Models.Schema1.Source body, CanonTests32.Client.Models.JsonInt32.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.Schema1 bodyValue = CanonTests32.Client.Schema1.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests32.Client.Models.Schema1 bodyValue = CanonTests32.Client.Models.Schema1.CreateBuilder(workspace, body, 30).RootElement;
         QuerySearchRequest request = new()
         {
-            Limit = limit.IsUndefined ? default : (CanonTests32.Client.JsonInt32)CanonTests32.Client.JsonInt32.CreateBuilder(workspace, limit, 30).RootElement,
+            Limit = limit.IsUndefined ? default : (CanonTests32.Client.Models.JsonInt32)CanonTests32.Client.Models.JsonInt32.CreateBuilder(workspace, limit, 30).RootElement,
         }
         ;
 
@@ -84,7 +84,7 @@ public sealed class ApiSearchClient : IApiSearchClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyAsyncCore<QuerySearchRequest, CanonTests32.Client.Schema1, QuerySearchResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendWithBodyAsyncCore<QuerySearchRequest, CanonTests32.Client.Models.Schema1, QuerySearchResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -92,10 +92,10 @@ public sealed class ApiSearchClient : IApiSearchClient
     /// </summary>
     /// <param name="qs">The qs parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SearchWithQuerystringResponse> SearchWithQuerystringAsync(CanonTests32.Client.GetSearchWithQuerystringQs.Source qs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<SearchWithQuerystringResponse> SearchWithQuerystringAsync(CanonTests32.Client.Models.GetSearchWithQuerystringQs.Source qs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.GetSearchWithQuerystringQs QsValue = CanonTests32.Client.GetSearchWithQuerystringQs.CreateBuilder(workspace, qs, 30).RootElement;
+        CanonTests32.Client.Models.GetSearchWithQuerystringQs QsValue = CanonTests32.Client.Models.GetSearchWithQuerystringQs.CreateBuilder(workspace, qs, 30).RootElement;
         SearchWithQuerystringRequest request = new(QsValue);
 
         request.Validate(validationMode);

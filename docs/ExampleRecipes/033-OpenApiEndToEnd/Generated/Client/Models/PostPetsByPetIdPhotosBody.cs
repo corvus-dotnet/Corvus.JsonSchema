@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Client;
+namespace Petstore.EndToEnd.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct PostPetsByPetIdPhotosBody
     /// <summary>
     /// Gets the (optional) <c>caption</c> property.
     /// </summary>
-    public Petstore.EndToEnd.Client.JsonString Caption
+    public Petstore.EndToEnd.Client.Models.JsonString Caption
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaptionUtf8, out Petstore.EndToEnd.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaptionUtf8, out Petstore.EndToEnd.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct PostPetsByPetIdPhotosBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.EndToEnd.Client.JsonBinary File
+    public Petstore.EndToEnd.Client.Models.JsonBinary File
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out Petstore.EndToEnd.Client.JsonBinary value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out Petstore.EndToEnd.Client.Models.JsonBinary value))
             {
                 return value;
             }
@@ -193,11 +193,11 @@ public readonly partial struct PostPetsByPetIdPhotosBody
     /// <summary>
     /// Gets the (optional) <c>isPrimary</c> property.
     /// </summary>
-    public Petstore.EndToEnd.Client.JsonBoolean IsPrimary
+    public Petstore.EndToEnd.Client.Models.JsonBoolean IsPrimary
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsPrimaryUtf8, out Petstore.EndToEnd.Client.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsPrimaryUtf8, out Petstore.EndToEnd.Client.Models.JsonBoolean value))
             {
                 return value;
             }

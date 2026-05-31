@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct Schema2
         /// <summary>
         /// Gets the (optional) <c>overwrite</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonBoolean.Mutable Overwrite
+        public CanonTests32.Server.Models.JsonBoolean.Mutable Overwrite
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OverwriteUtf8, out CanonTests32.Server.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OverwriteUtf8, out CanonTests32.Server.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -319,7 +319,7 @@ public readonly partial struct Schema2
         /// Set the <c>overwrite</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOverwrite(in CanonTests32.Server.JsonBoolean.Source value)
+        public void SetOverwrite(in CanonTests32.Server.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct Schema2
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.Schema2.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Server.Models.Schema2.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(Schema2 instance) => new(JsonElement.From(instance));
 
@@ -822,7 +822,7 @@ public readonly partial struct Schema2
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.Schema2.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.Schema2.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -936,7 +936,7 @@ public readonly partial struct Schema2
         /// <summary>
         /// Creates an instance of a <see cref="Schema2"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.JsonBoolean.Source overwrite = default)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.Models.JsonBoolean.Source overwrite = default)
         {
             overwrite.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Overwrite, ref builder);
         }
@@ -944,7 +944,7 @@ public readonly partial struct Schema2
         /// <summary>
         /// Creates an instance of a <see cref="Schema2"/>.
         /// </summary>
-        public void Create(in CanonTests32.Server.JsonBoolean.Source overwrite = default)
+        public void Create(in CanonTests32.Server.Models.JsonBoolean.Source overwrite = default)
         {
             Create(ref _builder, overwrite);
         }
@@ -1123,7 +1123,7 @@ public readonly partial struct Schema2
     /// <param name="overwrite">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonBoolean.Source overwrite = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.Models.JsonBoolean.Source overwrite = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

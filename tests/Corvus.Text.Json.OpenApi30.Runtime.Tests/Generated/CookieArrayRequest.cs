@@ -24,13 +24,13 @@ public readonly struct CookieArrayRequest : IApiRequest<CookieArrayRequest>
     /// <summary>
     /// Gets the colors parameter.
     /// </summary>
-    public CanonTests30.Client.GetComplexCookieArrayColors Colors { get; init; }
+    public CanonTests30.Client.Models.GetComplexCookieArrayColors Colors { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CookieArrayRequest"/> struct.
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
-    public CookieArrayRequest(CanonTests30.Client.GetComplexCookieArrayColors colors)
+    public CookieArrayRequest(CanonTests30.Client.Models.GetComplexCookieArrayColors colors)
     {
         this.Colors = colors;
     }

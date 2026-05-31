@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -162,11 +162,11 @@ public readonly partial struct PostFormsDefaultFormBody
         /// <summary>
         /// Gets the (optional) <c>key</c> property.
         /// </summary>
-        public CanonTests32.Client.JsonString Key
+        public CanonTests32.Client.Models.JsonString Key
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyUtf8, out CanonTests32.Client.JsonString value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyUtf8, out CanonTests32.Client.Models.JsonString value))
                 {
                     return value;
                 }
@@ -178,11 +178,11 @@ public readonly partial struct PostFormsDefaultFormBody
         /// <summary>
         /// Gets the (optional) <c>value</c> property.
         /// </summary>
-        public CanonTests32.Client.JsonString Value
+        public CanonTests32.Client.Models.JsonString Value
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out CanonTests32.Client.JsonString value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out CanonTests32.Client.Models.JsonString value))
                 {
                     return value;
                 }

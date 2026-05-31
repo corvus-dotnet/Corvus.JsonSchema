@@ -38,16 +38,16 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Petstore.EndToEnd.Server.GetPetsLimit LimitValue = default;
+                Petstore.EndToEnd.Server.Models.GetPetsLimit LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
                 {
                     string LimitRaw = LimitQueryVal[0]!;
-                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Petstore.EndToEnd.Server.GetPetsLimit>(LimitRaw, workspace);
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Petstore.EndToEnd.Server.Models.GetPetsLimit>(LimitRaw, workspace);
                 }
-                Petstore.EndToEnd.Server.GetPetsTags TagsValue = default;
+                Petstore.EndToEnd.Server.Models.GetPetsTags TagsValue = default;
                 if (context.Request.Query.TryGetValue("tags", out var TagsQueryValues) && TagsQueryValues.Count > 0)
                 {
-                    TagsValue = Petstore.EndToEnd.Server.GetPetsTags.CreateBuilder<Microsoft.Extensions.Primitives.StringValues>(workspace, TagsQueryValues, static (in Microsoft.Extensions.Primitives.StringValues ctx, ref Petstore.EndToEnd.Server.GetPetsTags.Builder arrayBuilder) =>
+                    TagsValue = Petstore.EndToEnd.Server.Models.GetPetsTags.CreateBuilder<Microsoft.Extensions.Primitives.StringValues>(workspace, TagsQueryValues, static (in Microsoft.Extensions.Primitives.StringValues ctx, ref Petstore.EndToEnd.Server.Models.GetPetsTags.Builder arrayBuilder) =>
                     {
                         for (int i = 0; i < ctx.Count; i++)
                         {
@@ -57,9 +57,9 @@ public static class ApiEndpointRegistration
                         }
                     }).RootElement;
                 }
-                Petstore.EndToEnd.Server.GetPetsFilter FilterValue = default;
+                Petstore.EndToEnd.Server.Models.GetPetsFilter FilterValue = default;
                 string FilterPrefix = "filter[";
-                FilterValue = Petstore.EndToEnd.Server.GetPetsFilter.CreateBuilder<(string prefix, Microsoft.AspNetCore.Http.IQueryCollection query)>(workspace, (FilterPrefix, context.Request.Query), static (in (string prefix, Microsoft.AspNetCore.Http.IQueryCollection query) ctx, ref Petstore.EndToEnd.Server.GetPetsFilter.Builder objectBuilder) =>
+                FilterValue = Petstore.EndToEnd.Server.Models.GetPetsFilter.CreateBuilder<(string prefix, Microsoft.AspNetCore.Http.IQueryCollection query)>(workspace, (FilterPrefix, context.Request.Query), static (in (string prefix, Microsoft.AspNetCore.Http.IQueryCollection query) ctx, ref Petstore.EndToEnd.Server.Models.GetPetsFilter.Builder objectBuilder) =>
                 {
                     foreach (string queryKey in ctx.query.Keys)
                     {
@@ -73,11 +73,11 @@ public static class ApiEndpointRegistration
                         }
                     }
                 }).RootElement;
-                Petstore.EndToEnd.Server.JsonString XRequestIdValue = default;
+                Petstore.EndToEnd.Server.Models.JsonString XRequestIdValue = default;
                 if (context.Request.Headers.TryGetValue("x-request-id", out var XRequestIdHeaderVal) && XRequestIdHeaderVal.Count > 0)
                 {
                     string XRequestIdRaw = XRequestIdHeaderVal[0]!;
-                    XRequestIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonString>(XRequestIdRaw, workspace);
+                    XRequestIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonString>(XRequestIdRaw, workspace);
                 }
 
                 if (XRequestIdValue.IsUndefined())
@@ -172,14 +172,14 @@ public static class ApiEndpointRegistration
         app.MapPost("/pets", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Petstore.EndToEnd.Server.NewPet>? bodyDoc = null;
+            ParsedJsonDocument<Petstore.EndToEnd.Server.Models.NewPet>? bodyDoc = null;
             try
             {
-                Petstore.EndToEnd.Server.JsonString SessionTokenValue = default;
+                Petstore.EndToEnd.Server.Models.JsonString SessionTokenValue = default;
                 if (context.Request.Cookies.TryGetValue("session_token", out string? SessionTokenCookieVal) && SessionTokenCookieVal is not null)
                 {
                     string SessionTokenRaw = SessionTokenCookieVal;
-                    SessionTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonString>(SessionTokenRaw, workspace);
+                    SessionTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonString>(SessionTokenRaw, workspace);
                 }
 
                 if (SessionTokenValue.IsUndefined())
@@ -201,7 +201,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<Petstore.EndToEnd.Server.NewPet>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<Petstore.EndToEnd.Server.Models.NewPet>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -268,10 +268,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Petstore.EndToEnd.Server.GetPetsBatchByIdsIds IdsValue = default;
+                Petstore.EndToEnd.Server.Models.GetPetsBatchByIdsIds IdsValue = default;
                 if (context.Request.RouteValues.TryGetValue("ids", out object? IdsRouteVal) && IdsRouteVal is string IdsRaw)
                 {
-                    IdsValue = Petstore.EndToEnd.Server.GetPetsBatchByIdsIds.CreateBuilder<string>(workspace, IdsRaw, static (in string ctx, ref Petstore.EndToEnd.Server.GetPetsBatchByIdsIds.Builder arrayBuilder) =>
+                    IdsValue = Petstore.EndToEnd.Server.Models.GetPetsBatchByIdsIds.CreateBuilder<string>(workspace, IdsRaw, static (in string ctx, ref Petstore.EndToEnd.Server.Models.GetPetsBatchByIdsIds.Builder arrayBuilder) =>
                     {
                         System.ReadOnlySpan<char> remaining = ctx;
                         while (!remaining.IsEmpty)
@@ -347,10 +347,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Petstore.EndToEnd.Server.JsonString PetIdValue = default;
+                Petstore.EndToEnd.Server.Models.JsonString PetIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("petId", out object? PetIdRouteVal) && PetIdRouteVal is string PetIdRaw)
                 {
-                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonString>(PetIdRaw, workspace);
+                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonString>(PetIdRaw, workspace);
                 }
 
                 if (PetIdValue.IsUndefined())
@@ -414,19 +414,19 @@ public static class ApiEndpointRegistration
         app.MapPost("/pets/{petId}/photos", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Petstore.EndToEnd.Server.PostPetsByPetIdPhotosBody>? bodyDoc = null;
+            ParsedJsonDocument<Petstore.EndToEnd.Server.Models.PostPetsByPetIdPhotosBody>? bodyDoc = null;
             try
             {
-                Petstore.EndToEnd.Server.JsonString PetIdValue = default;
+                Petstore.EndToEnd.Server.Models.JsonString PetIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("petId", out object? PetIdRouteVal) && PetIdRouteVal is string PetIdRaw)
                 {
-                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonString>(PetIdRaw, workspace);
+                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonString>(PetIdRaw, workspace);
                 }
-                Petstore.EndToEnd.Server.JsonString SessionTokenValue = default;
+                Petstore.EndToEnd.Server.Models.JsonString SessionTokenValue = default;
                 if (context.Request.Cookies.TryGetValue("session_token", out string? SessionTokenCookieVal) && SessionTokenCookieVal is not null)
                 {
                     string SessionTokenRaw = SessionTokenCookieVal;
-                    SessionTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonString>(SessionTokenRaw, workspace);
+                    SessionTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonString>(SessionTokenRaw, workspace);
                 }
 
                 if (PetIdValue.IsUndefined())
@@ -464,7 +464,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<Petstore.EndToEnd.Server.PostPetsByPetIdPhotosBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<Petstore.EndToEnd.Server.Models.PostPetsByPetIdPhotosBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -523,10 +523,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Petstore.EndToEnd.Server.JsonString PhotoIdValue = default;
+                Petstore.EndToEnd.Server.Models.JsonString PhotoIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("photoId", out object? PhotoIdRouteVal) && PhotoIdRouteVal is string PhotoIdRaw)
                 {
-                    PhotoIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonString>(PhotoIdRaw, workspace);
+                    PhotoIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonString>(PhotoIdRaw, workspace);
                 }
 
                 if (PhotoIdValue.IsUndefined())
@@ -590,19 +590,19 @@ public static class ApiEndpointRegistration
         app.MapPost("/pets/{petId}/chat", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Petstore.EndToEnd.Server.PostPetsByPetIdChatBody>? bodyDoc = null;
+            ParsedJsonDocument<Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody>? bodyDoc = null;
             try
             {
-                Petstore.EndToEnd.Server.JsonString PetIdValue = default;
+                Petstore.EndToEnd.Server.Models.JsonString PetIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("petId", out object? PetIdRouteVal) && PetIdRouteVal is string PetIdRaw)
                 {
-                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonString>(PetIdRaw, workspace);
+                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonString>(PetIdRaw, workspace);
                 }
-                Petstore.EndToEnd.Server.JsonString SessionTokenValue = default;
+                Petstore.EndToEnd.Server.Models.JsonString SessionTokenValue = default;
                 if (context.Request.Cookies.TryGetValue("session_token", out string? SessionTokenCookieVal) && SessionTokenCookieVal is not null)
                 {
                     string SessionTokenRaw = SessionTokenCookieVal;
-                    SessionTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonString>(SessionTokenRaw, workspace);
+                    SessionTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonString>(SessionTokenRaw, workspace);
                 }
 
                 if (PetIdValue.IsUndefined())
@@ -640,7 +640,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<Petstore.EndToEnd.Server.PostPetsByPetIdChatBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -724,16 +724,16 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Petstore.EndToEnd.Server.JsonString PetIdValue = default;
+                Petstore.EndToEnd.Server.Models.JsonString PetIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("petId", out object? PetIdRouteVal) && PetIdRouteVal is string PetIdRaw)
                 {
-                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonString>(PetIdRaw, workspace);
+                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonString>(PetIdRaw, workspace);
                 }
-                Petstore.EndToEnd.Server.JsonDateTime SinceValue = default;
+                Petstore.EndToEnd.Server.Models.JsonDateTime SinceValue = default;
                 if (context.Request.Query.TryGetValue("since", out var SinceQueryVal) && SinceQueryVal.Count > 0)
                 {
                     string SinceRaw = SinceQueryVal[0]!;
-                    SinceValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.JsonDateTime>(SinceRaw, workspace);
+                    SinceValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.EndToEnd.Server.Models.JsonDateTime>(SinceRaw, workspace);
                 }
 
                 if (PetIdValue.IsUndefined())
@@ -822,12 +822,12 @@ public static class ApiEndpointRegistration
         app.MapPost("/adoption/apply", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Petstore.EndToEnd.Server.PostAdoptionApplyBody>? bodyDoc = null;
+            ParsedJsonDocument<Petstore.EndToEnd.Server.Models.PostAdoptionApplyBody>? bodyDoc = null;
             try
             {
                 try
                 {
-                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<Petstore.EndToEnd.Server.PostAdoptionApplyBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<Petstore.EndToEnd.Server.Models.PostAdoptionApplyBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {

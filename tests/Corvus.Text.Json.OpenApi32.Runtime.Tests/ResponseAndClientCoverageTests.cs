@@ -5,6 +5,7 @@
 using System.Net;
 using System.Text;
 using CanonTests32.Client;
+using CanonTests32.Client.Models;
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
@@ -1899,8 +1900,8 @@ public class ResponseAndClientCoverageTests
         await using ApiOrdersClient client = new(harness.Transport);
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
             async () => await client.UpdateOrderAsync(
-                CanonTests32.Client.JsonUuid.ParseValue("\"550e8400-e29b-41d4-a716-446655440000\""u8),
-                CanonTests32.Client.JsonUuid.ParseValue("\"550e8400-e29b-41d4-a716-446655440001\""u8),
+                CanonTests32.Client.Models.JsonUuid.ParseValue("\"550e8400-e29b-41d4-a716-446655440000\""u8),
+                CanonTests32.Client.Models.JsonUuid.ParseValue("\"550e8400-e29b-41d4-a716-446655440001\""u8),
                 PutOrdersByOrderIdBody.ParseValue("42"u8),
                 validationMode: ValidationMode.Basic));
     }
@@ -1923,7 +1924,7 @@ public class ResponseAndClientCoverageTests
         await using ApiTrackingClient client = new(harness.Transport);
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
             async () => await client.TrackEventAsync(
-                CanonTests32.Client.JsonString.ParseValue("\"session-123\""u8),
+                CanonTests32.Client.Models.JsonString.ParseValue("\"session-123\""u8),
                 PostTrackingBody.ParseValue("42"u8),
                 validationMode: ValidationMode.Basic));
     }
@@ -1935,7 +1936,7 @@ public class ResponseAndClientCoverageTests
         await using ApiItemsClient client = new(harness.Transport);
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
             async () => await client.PatchItemAsync(
-                CanonTests32.Client.JsonString.ParseValue("\"item-1\""u8),
+                CanonTests32.Client.Models.JsonString.ParseValue("\"item-1\""u8),
                 PatchItemsByItemIdBody.ParseValue("42"u8),
                 validationMode: ValidationMode.Basic));
     }
@@ -1980,8 +1981,8 @@ public class ResponseAndClientCoverageTests
         using ClientTestHarness harness = new(HttpStatusCode.OK, """{}""");
         await using ApiOrdersClient client = new(harness.Transport);
         await using UpdateOrderResponse response = await client.UpdateOrderAsync(
-            CanonTests32.Client.JsonUuid.ParseValue("\"550e8400-e29b-41d4-a716-446655440000\""u8),
-            CanonTests32.Client.JsonUuid.ParseValue("\"550e8400-e29b-41d4-a716-446655440001\""u8),
+            CanonTests32.Client.Models.JsonUuid.ParseValue("\"550e8400-e29b-41d4-a716-446655440000\""u8),
+            CanonTests32.Client.Models.JsonUuid.ParseValue("\"550e8400-e29b-41d4-a716-446655440001\""u8),
             PutOrdersByOrderIdBody.ParseValue("""{"status":"confirmed"}"""u8),
             validationMode: ValidationMode.Detailed);
         Assert.AreEqual(200, response.StatusCode);
@@ -2004,7 +2005,7 @@ public class ResponseAndClientCoverageTests
         using ClientTestHarness harness = new(HttpStatusCode.OK, """{}""");
         await using ApiTrackingClient client = new(harness.Transport);
         await using TrackEventResponse response = await client.TrackEventAsync(
-            CanonTests32.Client.JsonString.ParseValue("\"session-123\""u8),
+            CanonTests32.Client.Models.JsonString.ParseValue("\"session-123\""u8),
             PostTrackingBody.ParseValue("""{"event":"click"}"""u8),
             validationMode: ValidationMode.Detailed);
         Assert.AreEqual(200, response.StatusCode);
@@ -2016,7 +2017,7 @@ public class ResponseAndClientCoverageTests
         using ClientTestHarness harness = new(HttpStatusCode.OK, """{}""");
         await using ApiItemsClient client = new(harness.Transport);
         await using PatchItemResponse response = await client.PatchItemAsync(
-            CanonTests32.Client.JsonString.ParseValue("\"item-1\""u8),
+            CanonTests32.Client.Models.JsonString.ParseValue("\"item-1\""u8),
             PatchItemsByItemIdBody.ParseValue("""{"name":"patched"}"""u8),
             validationMode: ValidationMode.Detailed);
         Assert.AreEqual(200, response.StatusCode);

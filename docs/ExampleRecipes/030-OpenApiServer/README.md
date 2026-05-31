@@ -48,6 +48,7 @@ A single extension method wires all routes:
 
 ```csharp
 using Petstore.Server;
+using Petstore.Server.Models;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 WebApplication app = builder.Build();

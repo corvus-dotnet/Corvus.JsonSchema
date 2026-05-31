@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct PostPetsByPetIdChatBody
     /// <summary>
     /// Gets the (optional) <c>history</c> property.
     /// </summary>
-    public Petstore.Extended.PostPetsByPetIdChatBody.RequiredContentAndRoleArray History
+    public Petstore.Extended.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray History
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HistoryUtf8, out Petstore.Extended.PostPetsByPetIdChatBody.RequiredContentAndRoleArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HistoryUtf8, out Petstore.Extended.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct PostPetsByPetIdChatBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.JsonString Message
+    public Petstore.Extended.Models.JsonString Message
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out Petstore.Extended.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out Petstore.Extended.Models.JsonString value))
             {
                 return value;
             }

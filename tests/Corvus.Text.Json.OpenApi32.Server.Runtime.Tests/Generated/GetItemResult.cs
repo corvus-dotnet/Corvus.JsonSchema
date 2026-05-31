@@ -19,7 +19,7 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct GetItemResult
 {
-    private GetItemResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.JsonInt32 xRateLimit = default, CanonTests32.Server.JsonBoolean xActive = default, JsonElement xRequestId = default, CanonTests32.Server.GetItemsByItemIdOkXTags xTags = default, CanonTests32.Server.GetItemsByItemIdOkXPageSizes xPageSizes = default, CanonTests32.Server.GetItemsByItemIdOkXFlags xFlags = default)
+    private GetItemResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.Models.JsonInt32 xRateLimit = default, CanonTests32.Server.Models.JsonBoolean xActive = default, JsonElement xRequestId = default, CanonTests32.Server.Models.GetItemsByItemIdOkXTags xTags = default, CanonTests32.Server.Models.GetItemsByItemIdOkXPageSizes xPageSizes = default, CanonTests32.Server.Models.GetItemsByItemIdOkXFlags xFlags = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -44,12 +44,12 @@ public readonly struct GetItemResult
     /// <summary>
     /// Gets the value of the <c>X-Rate-Limit</c> response header.
     /// </summary>
-    public CanonTests32.Server.JsonInt32 XRateLimit { get; }
+    public CanonTests32.Server.Models.JsonInt32 XRateLimit { get; }
 
     /// <summary>
     /// Gets the value of the <c>X-Active</c> response header.
     /// </summary>
-    public CanonTests32.Server.JsonBoolean XActive { get; }
+    public CanonTests32.Server.Models.JsonBoolean XActive { get; }
 
     /// <summary>
     /// Gets the value of the <c>X-Request-Id</c> response header.
@@ -59,17 +59,17 @@ public readonly struct GetItemResult
     /// <summary>
     /// Gets the value of the <c>X-Tags</c> response header.
     /// </summary>
-    public CanonTests32.Server.GetItemsByItemIdOkXTags XTags { get; }
+    public CanonTests32.Server.Models.GetItemsByItemIdOkXTags XTags { get; }
 
     /// <summary>
     /// Gets the value of the <c>X-Page-Sizes</c> response header.
     /// </summary>
-    public CanonTests32.Server.GetItemsByItemIdOkXPageSizes XPageSizes { get; }
+    public CanonTests32.Server.Models.GetItemsByItemIdOkXPageSizes XPageSizes { get; }
 
     /// <summary>
     /// Gets the value of the <c>X-Flags</c> response header.
     /// </summary>
-    public CanonTests32.Server.GetItemsByItemIdOkXFlags XFlags { get; }
+    public CanonTests32.Server.Models.GetItemsByItemIdOkXFlags XFlags { get; }
 
     /// <summary>
     /// Creates a 200 Ok result.
@@ -83,7 +83,7 @@ public readonly struct GetItemResult
     /// <param name="xPageSizes">The value for the <c>X-Page-Sizes</c> response header.</param>
     /// <param name="xFlags">The value for the <c>X-Flags</c> response header.</param>
     /// <returns>A <see cref="GetItemResult"/> with status 200.</returns>
-    public static GetItemResult Ok(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xRateLimit = default, CanonTests32.Server.JsonBoolean xActive = default, JsonElement xRequestId = default, CanonTests32.Server.GetItemsByItemIdOkXTags xTags = default, CanonTests32.Server.GetItemsByItemIdOkXPageSizes xPageSizes = default, CanonTests32.Server.GetItemsByItemIdOkXFlags xFlags = default) => new(200, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json", xRateLimit: xRateLimit, xActive: xActive, xRequestId: xRequestId, xTags: xTags, xPageSizes: xPageSizes, xFlags: xFlags);
+    public static GetItemResult Ok(CanonTests32.Server.Models.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.Models.JsonInt32 xRateLimit = default, CanonTests32.Server.Models.JsonBoolean xActive = default, JsonElement xRequestId = default, CanonTests32.Server.Models.GetItemsByItemIdOkXTags xTags = default, CanonTests32.Server.Models.GetItemsByItemIdOkXPageSizes xPageSizes = default, CanonTests32.Server.Models.GetItemsByItemIdOkXFlags xFlags = default) => new(200, CanonTests32.Server.Models.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json", xRateLimit: xRateLimit, xActive: xActive, xRequestId: xRequestId, xTags: xTags, xPageSizes: xPageSizes, xFlags: xFlags);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -94,7 +94,7 @@ public readonly struct GetItemResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests32.Server.ItemEntity.From(this.Body).EvaluateSchema(),
+            200 => CanonTests32.Server.Models.ItemEntity.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

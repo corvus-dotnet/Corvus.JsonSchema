@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -168,12 +168,12 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public CanonTests32.Server.JsonString.Mutable this[int index]
+        public CanonTests32.Server.Models.JsonString.Mutable this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<CanonTests32.Server.JsonString.Mutable>(_idx, index);
+                return _parent.GetArrayIndexElement<CanonTests32.Server.Models.JsonString.Mutable>(_idx, index);
             }
         }
 
@@ -191,10 +191,10 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<CanonTests32.Server.JsonString.Mutable> EnumerateArray()
+        public ArrayEnumerator<CanonTests32.Server.Models.JsonString.Mutable> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Server.JsonString.Mutable>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Server.Models.JsonString.Mutable>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -323,7 +323,7 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetItem(int itemIndex, in CanonTests32.Server.JsonString.Source value)
+        public void SetItem(int itemIndex, in CanonTests32.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -370,7 +370,7 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InsertItem(int itemIndex, in CanonTests32.Server.JsonString.Source value)
+        public void InsertItem(int itemIndex, in CanonTests32.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -396,7 +396,7 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
         ///   The parent <see cref="JsonDocument"/> has been disposed.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddItem(in CanonTests32.Server.JsonString.Source value)
+        public void AddItem(in CanonTests32.Server.Models.JsonString.Source value)
         {
             InsertItem(GetArrayLength(), in value);
         }
@@ -566,10 +566,10 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
         /// <exception cref="ObjectDisposedException">
         ///   The parent <see cref="JsonDocument"/> has been disposed.
         /// </exception>
-        public bool Remove(in CanonTests32.Server.JsonString item)
+        public bool Remove(in CanonTests32.Server.Models.JsonString item)
         {
             CheckValidInstance();
-            if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Server.JsonString>(this, in item))
+            if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Server.Models.JsonString>(this, in item))
             {
                 return false;
             }
@@ -603,10 +603,10 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RemoveWhere(JsonPredicate<CanonTests32.Server.JsonString> predicate)
+        public void RemoveWhere(JsonPredicate<CanonTests32.Server.Models.JsonString> predicate)
         {
             CheckValidInstance();
-            JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Server.JsonString>(this, predicate);
+            JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Server.Models.JsonString>(this, predicate);
             _documentVersion = _parent.Version;
         }
 
@@ -623,7 +623,7 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
         /// <exception cref="ObjectDisposedException">
         ///   The parent <see cref="JsonDocument"/> has been disposed.
         /// </exception>
-        public bool Replace(in CanonTests32.Server.JsonString oldItem, in CanonTests32.Server.JsonString.Source newItem)
+        public bool Replace(in CanonTests32.Server.Models.JsonString oldItem, in CanonTests32.Server.Models.JsonString.Source newItem)
         {
             CheckValidInstance();
 
@@ -632,11 +632,11 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
                 return Remove(in oldItem);
             }
 
-            var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Server.JsonString>(_parent, _idx);
+            var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Server.Models.JsonString>(_parent, _idx);
 
             while (enumerator.MoveNext())
             {
-                CanonTests32.Server.JsonString current = enumerator.Current;
+                CanonTests32.Server.Models.JsonString current = enumerator.Current;
                 if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                 {
                     ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -733,7 +733,7 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.GetAdvancedStylesByIdsMatrixTags.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Server.Models.GetAdvancedStylesByIdsMatrixTags.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetAdvancedStylesByIdsMatrixTags instance) => new(JsonElement.From(instance));
 
@@ -854,7 +854,7 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.GetAdvancedStylesByIdsMatrixTags.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.GetAdvancedStylesByIdsMatrixTags.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -968,7 +968,7 @@ public readonly partial struct GetAdvancedStylesByIdsMatrixTags
         /// <summary>
         /// Add an item to the array.
         /// </summary>
-        public void AddItem(in CanonTests32.Server.JsonString.Source value)
+        public void AddItem(in CanonTests32.Server.Models.JsonString.Source value)
         {
             value.AddAsItem(ref _builder);
         }

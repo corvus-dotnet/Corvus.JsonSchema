@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct GetStyledObjectByObjOk
         /// <summary>
         /// Gets the (optional) <c>found</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonBoolean.Mutable Found
+        public CanonTests31.Server.Models.JsonBoolean.Mutable Found
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FoundUtf8, out CanonTests31.Server.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FoundUtf8, out CanonTests31.Server.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -319,7 +319,7 @@ public readonly partial struct GetStyledObjectByObjOk
         /// Set the <c>found</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFound(in CanonTests31.Server.JsonBoolean.Source value)
+        public void SetFound(in CanonTests31.Server.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct GetStyledObjectByObjOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests31.Server.GetStyledObjectByObjOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests31.Server.Models.GetStyledObjectByObjOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetStyledObjectByObjOk instance) => new(JsonElement.From(instance));
 
@@ -822,7 +822,7 @@ public readonly partial struct GetStyledObjectByObjOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests31.Server.GetStyledObjectByObjOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests31.Server.Models.GetStyledObjectByObjOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -936,7 +936,7 @@ public readonly partial struct GetStyledObjectByObjOk
         /// <summary>
         /// Creates an instance of a <see cref="GetStyledObjectByObjOk"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests31.Server.JsonBoolean.Source found = default)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests31.Server.Models.JsonBoolean.Source found = default)
         {
             found.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Found, ref builder);
         }
@@ -944,7 +944,7 @@ public readonly partial struct GetStyledObjectByObjOk
         /// <summary>
         /// Creates an instance of a <see cref="GetStyledObjectByObjOk"/>.
         /// </summary>
-        public void Create(in CanonTests31.Server.JsonBoolean.Source found = default)
+        public void Create(in CanonTests31.Server.Models.JsonBoolean.Source found = default)
         {
             Create(ref _builder, found);
         }
@@ -1123,7 +1123,7 @@ public readonly partial struct GetStyledObjectByObjOk
     /// <param name="found">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.JsonBoolean.Source found = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.Models.JsonBoolean.Source found = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

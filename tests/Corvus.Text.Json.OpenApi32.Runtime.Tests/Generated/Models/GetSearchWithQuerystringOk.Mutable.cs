@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct GetSearchWithQuerystringOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonInt32.Mutable Count
+        public CanonTests32.Client.Models.JsonInt32.Mutable Count
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.JsonInt32.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.Models.JsonInt32.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct GetSearchWithQuerystringOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Mutable Results
+        public CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Mutable Results
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Mutable value))
                 {
                     return value;
                 }
@@ -345,7 +345,7 @@ public readonly partial struct GetSearchWithQuerystringOk
         /// Set the <c>count</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCount(in CanonTests32.Client.JsonInt32.Source value)
+        public void SetCount(in CanonTests32.Client.Models.JsonInt32.Source value)
         {
             CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct GetSearchWithQuerystringOk
         /// Set the <c>results</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetResults(in CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source value)
+        public void SetResults(in CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source value)
         {
             CheckValidInstance();
 
@@ -407,7 +407,7 @@ public readonly partial struct GetSearchWithQuerystringOk
         /// Set the <c>results</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetResults<TContext>(in CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source<TContext> value)
+        public void SetResults<TContext>(in CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -778,7 +778,7 @@ public readonly partial struct GetSearchWithQuerystringOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.GetSearchWithQuerystringOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.GetSearchWithQuerystringOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetSearchWithQuerystringOk instance) => new(JsonElement.From(instance));
 
@@ -899,7 +899,7 @@ public readonly partial struct GetSearchWithQuerystringOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.GetSearchWithQuerystringOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.GetSearchWithQuerystringOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1015,8 +1015,8 @@ public readonly partial struct GetSearchWithQuerystringOk
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonInt32.Source count,
-            in CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source results)
+            in CanonTests32.Client.Models.JsonInt32.Source count,
+            in CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source results)
         {
             count.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Count, ref builder);
             results.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Results, ref builder);
@@ -1025,7 +1025,7 @@ public readonly partial struct GetSearchWithQuerystringOk
         /// <summary>
         /// Creates an instance of a <see cref="GetSearchWithQuerystringOk"/>.
         /// </summary>
-        public void Create(in CanonTests32.Client.JsonInt32.Source count, in CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source results)
+        public void Create(in CanonTests32.Client.Models.JsonInt32.Source count, in CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source results)
         {
             Create(ref _builder, count, results);
         }
@@ -1036,8 +1036,8 @@ public readonly partial struct GetSearchWithQuerystringOk
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonInt32.Source count,
-            in CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source<TContext> results)
+            in CanonTests32.Client.Models.JsonInt32.Source count,
+            in CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source<TContext> results)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1051,8 +1051,8 @@ public readonly partial struct GetSearchWithQuerystringOk
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests32.Client.JsonInt32.Source count,
-            in CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source<TContext> results)
+            in CanonTests32.Client.Models.JsonInt32.Source count,
+            in CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source<TContext> results)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1217,7 +1217,7 @@ public readonly partial struct GetSearchWithQuerystringOk
     /// <param name="results">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonInt32.Source count, in CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source results, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonInt32.Source count, in CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source results, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1240,7 +1240,7 @@ public readonly partial struct GetSearchWithQuerystringOk
     /// <param name="results">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.JsonInt32.Source count, in CanonTests32.Client.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source<TContext> results, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.Models.JsonInt32.Source count, in CanonTests32.Client.Models.GetSearchWithQuerystringOk.RequiredIdAndTitleArray.Source<TContext> results, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

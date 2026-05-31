@@ -41,7 +41,7 @@ public readonly struct ShowPetByIdResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ShowPetByIdResult"/> with status 200.</returns>
-    public static ShowPetByIdResult Ok(Petstore.EndToEnd.Server.Pet.Source body, JsonWorkspace workspace) => new(200, Petstore.EndToEnd.Server.Pet.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static ShowPetByIdResult Ok(Petstore.EndToEnd.Server.Models.Pet.Source body, JsonWorkspace workspace) => new(200, Petstore.EndToEnd.Server.Models.Pet.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 404 NotFound result.
@@ -49,7 +49,7 @@ public readonly struct ShowPetByIdResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ShowPetByIdResult"/> with status 404.</returns>
-    public static ShowPetByIdResult NotFound(Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(404, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static ShowPetByIdResult NotFound(Petstore.EndToEnd.Server.Models.Error.Source body, JsonWorkspace workspace) => new(404, Petstore.EndToEnd.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -60,8 +60,8 @@ public readonly struct ShowPetByIdResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => Petstore.EndToEnd.Server.Pet.From(this.Body).EvaluateSchema(),
-            404 => Petstore.EndToEnd.Server.Error.From(this.Body).EvaluateSchema(),
+            200 => Petstore.EndToEnd.Server.Models.Pet.From(this.Body).EvaluateSchema(),
+            404 => Petstore.EndToEnd.Server.Models.Error.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

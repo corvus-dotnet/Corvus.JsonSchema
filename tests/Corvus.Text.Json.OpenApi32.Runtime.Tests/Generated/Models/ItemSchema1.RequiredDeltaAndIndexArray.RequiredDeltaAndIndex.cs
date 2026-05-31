@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -172,11 +172,11 @@ public readonly partial struct ItemSchema1
             /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
             /// </remarks>
-            public CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.RequiredDeltaAndIndex.DeltaEntity Delta
+            public CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.RequiredDeltaAndIndex.DeltaEntity Delta
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeltaUtf8, out CanonTests32.Client.ItemSchema1.RequiredDeltaAndIndexArray.RequiredDeltaAndIndex.DeltaEntity value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeltaUtf8, out CanonTests32.Client.Models.ItemSchema1.RequiredDeltaAndIndexArray.RequiredDeltaAndIndex.DeltaEntity value))
                     {
                         return value;
                     }
@@ -188,11 +188,11 @@ public readonly partial struct ItemSchema1
             /// <summary>
             /// Gets the (optional) <c>finishReason</c> property.
             /// </summary>
-            public CanonTests32.Client.JsonString FinishReason
+            public CanonTests32.Client.Models.JsonString FinishReason
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FinishReasonUtf8, out CanonTests32.Client.JsonString value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FinishReasonUtf8, out CanonTests32.Client.Models.JsonString value))
                     {
                         return value;
                     }
@@ -209,11 +209,11 @@ public readonly partial struct ItemSchema1
             /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
             /// </remarks>
-            public CanonTests32.Client.JsonInt32 Index
+            public CanonTests32.Client.Models.JsonInt32 Index
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndexUtf8, out CanonTests32.Client.JsonInt32 value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndexUtf8, out CanonTests32.Client.Models.JsonInt32 value))
                     {
                         return value;
                     }

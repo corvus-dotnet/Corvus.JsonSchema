@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -269,11 +269,11 @@ public readonly partial struct PostFormsDefaultFormBody
             /// <summary>
             /// Gets the (optional) <c>key</c> property.
             /// </summary>
-            public CanonTests32.Client.JsonString.Mutable Key
+            public CanonTests32.Client.Models.JsonString.Mutable Key
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                     {
                         return value;
                     }
@@ -285,11 +285,11 @@ public readonly partial struct PostFormsDefaultFormBody
             /// <summary>
             /// Gets the (optional) <c>value</c> property.
             /// </summary>
-            public CanonTests32.Client.JsonString.Mutable Value
+            public CanonTests32.Client.Models.JsonString.Mutable Value
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                     {
                         return value;
                     }
@@ -341,7 +341,7 @@ public readonly partial struct PostFormsDefaultFormBody
             /// Set the <c>key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetKey(in CanonTests32.Client.JsonString.Source value)
+            public void SetKey(in CanonTests32.Client.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -386,7 +386,7 @@ public readonly partial struct PostFormsDefaultFormBody
             /// Set the <c>value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValue(in CanonTests32.Client.JsonString.Source value)
+            public void SetValue(in CanonTests32.Client.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -768,7 +768,7 @@ public readonly partial struct PostFormsDefaultFormBody
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(InfoEntity instance) => new(JsonElement.From(instance));
 
@@ -889,7 +889,7 @@ public readonly partial struct PostFormsDefaultFormBody
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1005,8 +1005,8 @@ public readonly partial struct PostFormsDefaultFormBody
             /// </summary>
             internal static void Create(
                 ref ComplexValueBuilder builder,
-                in CanonTests32.Client.JsonString.Source key = default,
-                in CanonTests32.Client.JsonString.Source value = default)
+                in CanonTests32.Client.Models.JsonString.Source key = default,
+                in CanonTests32.Client.Models.JsonString.Source value = default)
             {
                 key.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Key, ref builder);
                 value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
@@ -1015,7 +1015,7 @@ public readonly partial struct PostFormsDefaultFormBody
             /// <summary>
             /// Creates an instance of a <see cref="InfoEntity"/>.
             /// </summary>
-            public void Create(in CanonTests32.Client.JsonString.Source key = default, in CanonTests32.Client.JsonString.Source value = default)
+            public void Create(in CanonTests32.Client.Models.JsonString.Source key = default, in CanonTests32.Client.Models.JsonString.Source value = default)
             {
                 Create(ref _builder, key, value);
             }
@@ -1177,7 +1177,7 @@ public readonly partial struct PostFormsDefaultFormBody
         /// <param name="value">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source key = default, in CanonTests32.Client.JsonString.Source value = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source key = default, in CanonTests32.Client.Models.JsonString.Source value = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
