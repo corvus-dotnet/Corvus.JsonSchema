@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Streetlights.Client.V26;
+namespace Streetlights.Client.V26.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct TurnOnOffPayload
         /// <summary>
         /// Gets the (optional) <c>command</c> property.
         /// </summary>
-        public Streetlights.Client.V26.TurnOnOffPayload.CommandEntity.Mutable Command
+        public Streetlights.Client.V26.Models.TurnOnOffPayload.CommandEntity.Mutable Command
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommandUtf8, out Streetlights.Client.V26.TurnOnOffPayload.CommandEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommandUtf8, out Streetlights.Client.V26.Models.TurnOnOffPayload.CommandEntity.Mutable value))
                 {
                     return value;
                 }
@@ -319,7 +319,7 @@ public readonly partial struct TurnOnOffPayload
         /// Set the <c>command</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCommand(in Streetlights.Client.V26.TurnOnOffPayload.CommandEntity.Source value)
+        public void SetCommand(in Streetlights.Client.V26.Models.TurnOnOffPayload.CommandEntity.Source value)
         {
             CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct TurnOnOffPayload
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Streetlights.Client.V26.TurnOnOffPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Streetlights.Client.V26.Models.TurnOnOffPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(TurnOnOffPayload instance) => new(JsonElement.From(instance));
 
@@ -822,7 +822,7 @@ public readonly partial struct TurnOnOffPayload
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Streetlights.Client.V26.TurnOnOffPayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Streetlights.Client.V26.Models.TurnOnOffPayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -936,7 +936,7 @@ public readonly partial struct TurnOnOffPayload
         /// <summary>
         /// Creates an instance of a <see cref="TurnOnOffPayload"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in Streetlights.Client.V26.TurnOnOffPayload.CommandEntity.Source command = default)
+        internal static void Create(ref ComplexValueBuilder builder, in Streetlights.Client.V26.Models.TurnOnOffPayload.CommandEntity.Source command = default)
         {
             command.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Command, ref builder);
         }
@@ -944,7 +944,7 @@ public readonly partial struct TurnOnOffPayload
         /// <summary>
         /// Creates an instance of a <see cref="TurnOnOffPayload"/>.
         /// </summary>
-        public void Create(in Streetlights.Client.V26.TurnOnOffPayload.CommandEntity.Source command = default)
+        public void Create(in Streetlights.Client.V26.Models.TurnOnOffPayload.CommandEntity.Source command = default)
         {
             Create(ref _builder, command);
         }
@@ -1123,7 +1123,7 @@ public readonly partial struct TurnOnOffPayload
     /// <param name="command">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Streetlights.Client.V26.TurnOnOffPayload.CommandEntity.Source command = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Streetlights.Client.V26.Models.TurnOnOffPayload.CommandEntity.Source command = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

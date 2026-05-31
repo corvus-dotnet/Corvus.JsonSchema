@@ -23,15 +23,15 @@ public readonly struct CopyResourceParams
     /// <summary>
     /// Gets the 'resourceId' path parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString ResourceId { get; init; }
+    public CanonTests32.Server.Models.JsonString ResourceId { get; init; }
 
     /// <summary>
     /// Gets the 'Destination' header parameter.
     /// </summary>
-    public CanonTests32.Server.JsonUri Destination { get; init; }
+    public CanonTests32.Server.Models.JsonUri Destination { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.Schema2 Body { get; init; }
+    public CanonTests32.Server.Models.Schema2 Body { get; init; }
 }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Server;
+namespace Petstore.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct Pet
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Server.JsonInt64 Id
+    public Petstore.Server.Models.JsonInt64 Id
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.Server.JsonInt64 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.Server.Models.JsonInt64 value))
             {
                 return value;
             }
@@ -182,11 +182,11 @@ public readonly partial struct Pet
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Server.JsonString Name
+    public Petstore.Server.Models.JsonString Name
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -198,11 +198,11 @@ public readonly partial struct Pet
     /// <summary>
     /// Gets the (optional) <c>tag</c> property.
     /// </summary>
-    public Petstore.Server.JsonString Tag
+    public Petstore.Server.Models.JsonString Tag
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagUtf8, out Petstore.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagUtf8, out Petstore.Server.Models.JsonString value))
             {
                 return value;
             }

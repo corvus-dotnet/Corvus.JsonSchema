@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PutOrdersByOrderIdOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonUuid.Mutable OrderId
+        public CanonTests32.Client.Models.JsonUuid.Mutable OrderId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OrderIdUtf8, out CanonTests32.Client.JsonUuid.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OrderIdUtf8, out CanonTests32.Client.Models.JsonUuid.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct PutOrdersByOrderIdOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Status
+        public CanonTests32.Client.Models.JsonString.Mutable Status
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -310,11 +310,11 @@ public readonly partial struct PutOrdersByOrderIdOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonNumber.Mutable Total
+        public CanonTests32.Client.Models.JsonNumber.Mutable Total
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests32.Client.JsonNumber.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests32.Client.Models.JsonNumber.Mutable value))
                 {
                     return value;
                 }
@@ -366,7 +366,7 @@ public readonly partial struct PutOrdersByOrderIdOk
         /// Set the <c>orderId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOrderId(in CanonTests32.Client.JsonUuid.Source value)
+        public void SetOrderId(in CanonTests32.Client.Models.JsonUuid.Source value)
         {
             CheckValidInstance();
 
@@ -397,7 +397,7 @@ public readonly partial struct PutOrdersByOrderIdOk
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in CanonTests32.Client.JsonString.Source value)
+        public void SetStatus(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -428,7 +428,7 @@ public readonly partial struct PutOrdersByOrderIdOk
         /// Set the <c>total</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTotal(in CanonTests32.Client.JsonNumber.Source value)
+        public void SetTotal(in CanonTests32.Client.Models.JsonNumber.Source value)
         {
             CheckValidInstance();
 
@@ -796,7 +796,7 @@ public readonly partial struct PutOrdersByOrderIdOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PutOrdersByOrderIdOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PutOrdersByOrderIdOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PutOrdersByOrderIdOk instance) => new(JsonElement.From(instance));
 
@@ -917,7 +917,7 @@ public readonly partial struct PutOrdersByOrderIdOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PutOrdersByOrderIdOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PutOrdersByOrderIdOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1033,9 +1033,9 @@ public readonly partial struct PutOrdersByOrderIdOk
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonUuid.Source orderId,
-            in CanonTests32.Client.JsonString.Source status,
-            in CanonTests32.Client.JsonNumber.Source total)
+            in CanonTests32.Client.Models.JsonUuid.Source orderId,
+            in CanonTests32.Client.Models.JsonString.Source status,
+            in CanonTests32.Client.Models.JsonNumber.Source total)
         {
             orderId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OrderId, ref builder);
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
@@ -1046,9 +1046,9 @@ public readonly partial struct PutOrdersByOrderIdOk
         /// Creates an instance of a <see cref="PutOrdersByOrderIdOk"/>.
         /// </summary>
         public void Create(
-            in CanonTests32.Client.JsonUuid.Source orderId,
-            in CanonTests32.Client.JsonString.Source status,
-            in CanonTests32.Client.JsonNumber.Source total)
+            in CanonTests32.Client.Models.JsonUuid.Source orderId,
+            in CanonTests32.Client.Models.JsonString.Source status,
+            in CanonTests32.Client.Models.JsonNumber.Source total)
         {
             Create(ref _builder, orderId, status, total);
         }
@@ -1211,7 +1211,7 @@ public readonly partial struct PutOrdersByOrderIdOk
     /// <param name="total">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonUuid.Source orderId, in CanonTests32.Client.JsonString.Source status, in CanonTests32.Client.JsonNumber.Source total, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonUuid.Source orderId, in CanonTests32.Client.Models.JsonString.Source status, in CanonTests32.Client.Models.JsonNumber.Source total, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

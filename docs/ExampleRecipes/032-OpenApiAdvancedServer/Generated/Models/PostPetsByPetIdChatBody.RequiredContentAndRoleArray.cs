@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended.Server;
+namespace Petstore.Extended.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -72,12 +72,12 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole this[int index]
+        public Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(_idx, index);
+                return _parent.GetArrayIndexElement<Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(_idx, index);
             }
         }
 
@@ -95,10 +95,10 @@ public readonly partial struct PostPetsByPetIdChatBody
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole> EnumerateArray()
+        public ArrayEnumerator<Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole>(_parent, _idx);
         }
 
         /// <inheritdoc/>

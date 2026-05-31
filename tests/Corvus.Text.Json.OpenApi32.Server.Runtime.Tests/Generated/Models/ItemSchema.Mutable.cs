@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct ItemSchema
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Server.JsonInteger.Mutable Progress
+        public CanonTests32.Server.Models.JsonInteger.Mutable Progress
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProgressUtf8, out CanonTests32.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProgressUtf8, out CanonTests32.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct ItemSchema
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Server.JsonString.Mutable Status
+        public CanonTests32.Server.Models.JsonString.Mutable Status
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests32.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -345,7 +345,7 @@ public readonly partial struct ItemSchema
         /// Set the <c>progress</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetProgress(in CanonTests32.Server.JsonInteger.Source value)
+        public void SetProgress(in CanonTests32.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct ItemSchema
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in CanonTests32.Server.JsonString.Source value)
+        public void SetStatus(in CanonTests32.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -744,7 +744,7 @@ public readonly partial struct ItemSchema
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.ItemSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Server.Models.ItemSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(ItemSchema instance) => new(JsonElement.From(instance));
 
@@ -865,7 +865,7 @@ public readonly partial struct ItemSchema
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.ItemSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.ItemSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -981,8 +981,8 @@ public readonly partial struct ItemSchema
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Server.JsonInteger.Source progress,
-            in CanonTests32.Server.JsonString.Source status)
+            in CanonTests32.Server.Models.JsonInteger.Source progress,
+            in CanonTests32.Server.Models.JsonString.Source status)
         {
             progress.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Progress, ref builder);
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
@@ -991,7 +991,7 @@ public readonly partial struct ItemSchema
         /// <summary>
         /// Creates an instance of a <see cref="ItemSchema"/>.
         /// </summary>
-        public void Create(in CanonTests32.Server.JsonInteger.Source progress, in CanonTests32.Server.JsonString.Source status)
+        public void Create(in CanonTests32.Server.Models.JsonInteger.Source progress, in CanonTests32.Server.Models.JsonString.Source status)
         {
             Create(ref _builder, progress, status);
         }
@@ -1153,7 +1153,7 @@ public readonly partial struct ItemSchema
     /// <param name="status">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonInteger.Source progress, in CanonTests32.Server.JsonString.Source status, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.Models.JsonInteger.Source progress, in CanonTests32.Server.Models.JsonString.Source status, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

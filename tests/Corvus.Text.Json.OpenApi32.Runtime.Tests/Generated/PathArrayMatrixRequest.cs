@@ -24,13 +24,13 @@ public readonly struct PathArrayMatrixRequest : IApiRequest<PathArrayMatrixReque
     /// <summary>
     /// Gets the ids parameter.
     /// </summary>
-    public CanonTests32.Client.GetComplexPathArrayMatrixByIdsIds Ids { get; init; }
+    public CanonTests32.Client.Models.GetComplexPathArrayMatrixByIdsIds Ids { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PathArrayMatrixRequest"/> struct.
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
-    public PathArrayMatrixRequest(CanonTests32.Client.GetComplexPathArrayMatrixByIdsIds ids)
+    public PathArrayMatrixRequest(CanonTests32.Client.Models.GetComplexPathArrayMatrixByIdsIds ids)
     {
         this.Ids = ids;
     }

@@ -31,7 +31,7 @@ public struct UploadFileResponse : IApiResponse<UploadFileResponse>
     /// <summary>
     /// Gets the 201 response body.
     /// </summary>
-    public CanonTests32.Client.PostFilesUploadCreated CreatedBody { get; private set; }
+    public CanonTests32.Client.Models.PostFilesUploadCreated CreatedBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<UploadFileResponse> CreateAsync(
@@ -49,7 +49,7 @@ public struct UploadFileResponse : IApiResponse<UploadFileResponse>
 
         if (statusCode == 201)
         {
-            var createdDoc = await ParsedJsonDocument<CanonTests32.Client.PostFilesUploadCreated>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var createdDoc = await ParsedJsonDocument<CanonTests32.Client.Models.PostFilesUploadCreated>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = createdDoc;
             response.CreatedBody = createdDoc.RootElement;
             return response;
@@ -63,7 +63,7 @@ public struct UploadFileResponse : IApiResponse<UploadFileResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 201.</returns>
-    public bool TryGetCreated(out CanonTests32.Client.PostFilesUploadCreated result)
+    public bool TryGetCreated(out CanonTests32.Client.Models.PostFilesUploadCreated result)
     {
         if (this.StatusCode == 201)
         {
@@ -84,7 +84,7 @@ public struct UploadFileResponse : IApiResponse<UploadFileResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests32.Client.PostFilesUploadCreated, TResult> matchCreated,
+        ResponseMatcher<CanonTests32.Client.Models.PostFilesUploadCreated, TResult> matchCreated,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 201)
@@ -107,7 +107,7 @@ public struct UploadFileResponse : IApiResponse<UploadFileResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests32.Client.PostFilesUploadCreated, TContext, TResult> matchCreated,
+        ResponseMatcher<CanonTests32.Client.Models.PostFilesUploadCreated, TContext, TResult> matchCreated,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

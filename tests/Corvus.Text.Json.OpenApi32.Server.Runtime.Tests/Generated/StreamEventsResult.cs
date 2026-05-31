@@ -125,25 +125,25 @@ public readonly struct StreamEventsStream
     }
 
     /// <summary>
-    /// Appends a <see cref="CanonTests32.Server.ItemSchema1"/> item to the response stream.
+    /// Appends a <see cref="CanonTests32.Server.Models.ItemSchema1"/> item to the response stream.
     /// </summary>
     /// <param name="item">The item to append.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A value task that completes when the item has been flushed.</returns>
-    public ValueTask AppendItemSchema1(in CanonTests32.Server.ItemSchema1.Source item, CancellationToken cancellationToken = default)
+    public ValueTask AppendItemSchema1(in CanonTests32.Server.Models.ItemSchema1.Source item, CancellationToken cancellationToken = default)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<CanonTests32.Server.ItemSchema1.Mutable> builder = CanonTests32.Server.ItemSchema1.CreateBuilder(workspace, item);
+        using JsonDocumentBuilder<CanonTests32.Server.Models.ItemSchema1.Mutable> builder = CanonTests32.Server.Models.ItemSchema1.CreateBuilder(workspace, item);
         return this.writer.WriteItemAsync(builder.RootElement, cancellationToken);
     }
 
     /// <summary>
-    /// Appends a <see cref="CanonTests32.Server.ItemSchema1"/> item to the response stream.
+    /// Appends a <see cref="CanonTests32.Server.Models.ItemSchema1"/> item to the response stream.
     /// </summary>
     /// <param name="item">The item to append.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A value task that completes when the item has been flushed.</returns>
-    public ValueTask AppendItemSchema1(CanonTests32.Server.ItemSchema1 item, CancellationToken cancellationToken = default)
+    public ValueTask AppendItemSchema1(CanonTests32.Server.Models.ItemSchema1 item, CancellationToken cancellationToken = default)
     {
         return this.writer.WriteItemAsync(item, cancellationToken);
     }

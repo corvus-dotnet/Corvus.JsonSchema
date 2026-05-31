@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// <summary>
         /// Gets the (optional) <c>metadata</c> property.
         /// </summary>
-        public CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Mutable Metadata
+        public CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Mutable Metadata
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// <summary>
         /// Gets the (optional) <c>tags</c> property.
         /// </summary>
-        public CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Mutable Tags
+        public CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Mutable Tags
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Mutable value))
                 {
                     return value;
                 }
@@ -300,11 +300,11 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Title
+        public CanonTests32.Client.Models.JsonString.Mutable Title
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -356,7 +356,7 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// Set the <c>metadata</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMetadata(in CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Source value)
+        public void SetMetadata(in CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Source value)
         {
             CheckValidInstance();
 
@@ -389,7 +389,7 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// Set the <c>metadata</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMetadata<TContext>(in CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Source<TContext> value)
+        public void SetMetadata<TContext>(in CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -437,7 +437,7 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Source value)
+        public void SetTags(in CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -470,7 +470,7 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags<TContext>(in CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Source<TContext> value)
+        public void SetTags<TContext>(in CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -518,7 +518,7 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// Set the <c>title</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTitle(in CanonTests32.Client.JsonString.Source value)
+        public void SetTitle(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -886,7 +886,7 @@ public readonly partial struct PostFormsEncodedUploadBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PostFormsEncodedUploadBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PostFormsEncodedUploadBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostFormsEncodedUploadBody instance) => new(JsonElement.From(instance));
 
@@ -1007,7 +1007,7 @@ public readonly partial struct PostFormsEncodedUploadBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PostFormsEncodedUploadBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PostFormsEncodedUploadBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1123,9 +1123,9 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonString.Source title,
-            in CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Source metadata = default,
-            in CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Source tags = default)
+            in CanonTests32.Client.Models.JsonString.Source title,
+            in CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Source metadata = default,
+            in CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Source tags = default)
         {
             title.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref builder);
             metadata.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Metadata, ref builder);
@@ -1136,9 +1136,9 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// Creates an instance of a <see cref="PostFormsEncodedUploadBody"/>.
         /// </summary>
         public void Create(
-            in CanonTests32.Client.JsonString.Source title,
-            in CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Source metadata = default,
-            in CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Source tags = default)
+            in CanonTests32.Client.Models.JsonString.Source title,
+            in CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Source metadata = default,
+            in CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Source tags = default)
         {
             Create(ref _builder, title, metadata, tags);
         }
@@ -1149,9 +1149,9 @@ public readonly partial struct PostFormsEncodedUploadBody
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonString.Source title,
-            in CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Source<TContext> metadata = default,
-            in CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Source<TContext> tags = default)
+            in CanonTests32.Client.Models.JsonString.Source title,
+            in CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Source<TContext> metadata = default,
+            in CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1166,9 +1166,9 @@ public readonly partial struct PostFormsEncodedUploadBody
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests32.Client.JsonString.Source title,
-            in CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Source<TContext> metadata = default,
-            in CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Source<TContext> tags = default)
+            in CanonTests32.Client.Models.JsonString.Source title,
+            in CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Source<TContext> metadata = default,
+            in CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1334,7 +1334,7 @@ public readonly partial struct PostFormsEncodedUploadBody
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source title, in CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Source metadata = default, in CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Source tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source title, in CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Source metadata = default, in CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Source tags = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1358,7 +1358,7 @@ public readonly partial struct PostFormsEncodedUploadBody
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.JsonString.Source title, in CanonTests32.Client.PostFormsEncodedUploadBody.MetadataEntity.Source<TContext> metadata = default, in CanonTests32.Client.PostFormsEncodedUploadBody.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.Models.JsonString.Source title, in CanonTests32.Client.Models.PostFormsEncodedUploadBody.MetadataEntity.Source<TContext> metadata = default, in CanonTests32.Client.Models.PostFormsEncodedUploadBody.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

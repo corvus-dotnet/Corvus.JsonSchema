@@ -157,5 +157,5 @@ public interface IApiTrackingClient : IAsyncDisposable
     /// <param name="ref_url">The ref_url parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<TrackEventResponse> TrackEventAsync(CanonTests32.Client.JsonString.Source tracker_id, CanonTests32.Client.PostTrackingBody.Source body, CanonTests32.Client.JsonString.Source ref_url = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<TrackEventResponse> TrackEventAsync(CanonTests32.Client.Models.JsonString.Source tracker_id, CanonTests32.Client.Models.PostTrackingBody.Source body, CanonTests32.Client.Models.JsonString.Source ref_url = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

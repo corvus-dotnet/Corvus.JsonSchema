@@ -62,6 +62,7 @@ using System.Text;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 // InMemoryMessageTransport for testing; in production, use NatsMessageTransport,
 // KafkaMessageTransport, etc. — the API is identical.
@@ -100,6 +101,7 @@ Implement your message handler and start consuming:
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -156,6 +158,28 @@ internal sealed class LightMeasuredHandler : IReceiveLightMeasurementHandler
 ### Both (`--mode both`, the default)
 
 Generates producers for `send` operations and consumers for `receive` operations in a single pass.
+
+### Namespace Layout
+
+The generator places request/response infrastructure (producers, consumers, handler interfaces, message types) in the **root namespace** you specify, and JSON Schema model types in a `.Models` sub-namespace:
+
+```
+Streetlights.Client/              ← root namespace (--rootNamespace)
+├── TurnOnProducer                ← producer class
+├── ReceiveLightMeasurementConsumer  ← consumer class
+├── IReceiveLightMeasurementHandler  ← handler interface
+├── TurnOnTurnOnOffMessage        ← message type
+└── Models/                       ← model sub-namespace
+    ├── TurnOnOffPayload          ← JSON Schema model
+    └── LightMeasuredPayload      ← JSON Schema model
+```
+
+Consumer code typically imports both namespaces:
+
+```csharp
+using Streetlights.Client;         // producers, consumers, handlers
+using Streetlights.Client.Models;  // payload model types
+```
 
 ## Generated Code Architecture
 
@@ -563,6 +587,7 @@ using Azure.Identity;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -633,6 +658,7 @@ For short-lived scripts, testing, or pre-acquired tokens:
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -661,6 +687,7 @@ For brokers that accept a static JWT or pre-acquired bearer token:
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -682,6 +709,7 @@ With dynamic token refresh:
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 LightMeasuredHandler handler = new();
@@ -709,6 +737,7 @@ For brokers or gateways that authenticate via API keys:
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 LightMeasuredHandler handler = new();
@@ -742,6 +771,7 @@ For Kafka SASL PLAIN, AMQP PLAIN, or MQTT username/password authentication:
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -769,6 +799,7 @@ using System.Security.Cryptography.X509Certificates;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -794,6 +825,7 @@ When your AsyncAPI spec declares multiple security schemes on a server (e.g., bo
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 
@@ -825,6 +857,7 @@ For protocols with non-standard auth requirements, implement `IMessageAuthentica
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 await using InMemoryMessageTransport transport = new();
 

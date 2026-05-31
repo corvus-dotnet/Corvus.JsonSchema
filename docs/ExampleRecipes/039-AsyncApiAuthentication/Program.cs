@@ -9,6 +9,7 @@ using Azure.Identity;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.AsyncApi.Testing;
 using Streetlights.Client;
+using Streetlights.Client.Models;
 
 // All examples use InMemoryMessageTransport for testability.
 // In production, substitute any IMessageTransport (NATS, Kafka, AMQP, etc.).

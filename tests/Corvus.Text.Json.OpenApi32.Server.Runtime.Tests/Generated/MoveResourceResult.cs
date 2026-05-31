@@ -125,25 +125,25 @@ public readonly struct MoveResourceStream
     }
 
     /// <summary>
-    /// Appends a <see cref="CanonTests32.Server.ItemSchema"/> item to the response stream.
+    /// Appends a <see cref="CanonTests32.Server.Models.ItemSchema"/> item to the response stream.
     /// </summary>
     /// <param name="item">The item to append.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A value task that completes when the item has been flushed.</returns>
-    public ValueTask AppendItemSchema(in CanonTests32.Server.ItemSchema.Source item, CancellationToken cancellationToken = default)
+    public ValueTask AppendItemSchema(in CanonTests32.Server.Models.ItemSchema.Source item, CancellationToken cancellationToken = default)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<CanonTests32.Server.ItemSchema.Mutable> builder = CanonTests32.Server.ItemSchema.CreateBuilder(workspace, item);
+        using JsonDocumentBuilder<CanonTests32.Server.Models.ItemSchema.Mutable> builder = CanonTests32.Server.Models.ItemSchema.CreateBuilder(workspace, item);
         return this.writer.WriteItemAsync(builder.RootElement, cancellationToken);
     }
 
     /// <summary>
-    /// Appends a <see cref="CanonTests32.Server.ItemSchema"/> item to the response stream.
+    /// Appends a <see cref="CanonTests32.Server.Models.ItemSchema"/> item to the response stream.
     /// </summary>
     /// <param name="item">The item to append.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A value task that completes when the item has been flushed.</returns>
-    public ValueTask AppendItemSchema(CanonTests32.Server.ItemSchema item, CancellationToken cancellationToken = default)
+    public ValueTask AppendItemSchema(CanonTests32.Server.Models.ItemSchema item, CancellationToken cancellationToken = default)
     {
         return this.writer.WriteItemAsync(item, cancellationToken);
     }

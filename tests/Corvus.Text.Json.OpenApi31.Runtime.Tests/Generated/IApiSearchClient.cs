@@ -32,5 +32,5 @@ public interface IApiSearchClient : IAsyncDisposable
     /// <param name="page">The page parameter.</param>
     /// <param name="rating">The rating parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SearchResponse> SearchAsync(CanonTests31.Client.JsonString.Source q, CanonTests31.Client.JsonInt32.Source page = default, CanonTests31.Client.JsonSingle.Source rating = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SearchResponse> SearchAsync(CanonTests31.Client.Models.JsonString.Source q, CanonTests31.Client.Models.JsonInt32.Source page = default, CanonTests31.Client.Models.JsonSingle.Source rating = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

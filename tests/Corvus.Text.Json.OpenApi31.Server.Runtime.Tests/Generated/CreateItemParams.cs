@@ -24,10 +24,10 @@ public readonly struct CreateItemParams
     /// <summary>
     /// Gets the 'X-Correlation-Id' header parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString XCorrelationId { get; init; }
+    public CanonTests31.Server.Models.JsonString XCorrelationId { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests31.Server.PostItemsBody Body { get; init; }
+    public CanonTests31.Server.Models.PostItemsBody Body { get; init; }
 }

@@ -41,7 +41,7 @@ public readonly struct HealthCheckResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="HealthCheckResult"/> with status 200.</returns>
-    public static HealthCheckResult Ok(CanonTests30.Server.GetHealthOk.Source body, JsonWorkspace workspace) => new(200, CanonTests30.Server.GetHealthOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static HealthCheckResult Ok(CanonTests30.Server.Models.GetHealthOk.Source body, JsonWorkspace workspace) => new(200, CanonTests30.Server.Models.GetHealthOk.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct HealthCheckResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests30.Server.GetHealthOk.From(this.Body).EvaluateSchema(),
+            200 => CanonTests30.Server.Models.GetHealthOk.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

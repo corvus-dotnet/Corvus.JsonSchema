@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -86,14 +86,14 @@ public readonly partial struct PostItemsByItemIdFormBody
                     {
                         int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                        JsonSchemaContext childContext = CanonTests31.Server.JsonString.JsonSchema.PushChildContext(
+                        JsonSchemaContext childContext = CanonTests31.Server.Models.JsonString.JsonSchema.PushChildContext(
                             parentDocument,
                             arrayValidation_currentIndex,
                             ref context,
                             itemIndex: arrayValidation_itemCount,
                             evaluationPath: ItemsSchemaEvaluationPath);
 
-                        CanonTests31.Server.JsonString.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                        CanonTests31.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                         if (!childContext.IsMatch)
                         {
                             context.CommitChildContext(false, ref childContext);

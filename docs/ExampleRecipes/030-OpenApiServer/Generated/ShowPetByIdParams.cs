@@ -24,5 +24,5 @@ public readonly struct ShowPetByIdParams
     /// <summary>
     /// Gets the 'petId' path parameter.
     /// </summary>
-    public Petstore.Server.JsonString PetId { get; init; }
+    public Petstore.Server.Models.JsonString PetId { get; init; }
 }

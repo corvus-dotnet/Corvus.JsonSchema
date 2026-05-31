@@ -33,12 +33,12 @@ public interface IApiPhotosClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="file">Binary data for the 'file' part.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UploadPetPhotoResponse> UploadPetPhotoAsync(Petstore.EndToEnd.Client.JsonString.Source petId, Petstore.EndToEnd.Client.JsonString.Source session_token, Petstore.EndToEnd.Client.PostPetsByPetIdPhotosBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<UploadPetPhotoResponse> UploadPetPhotoAsync(Petstore.EndToEnd.Client.Models.JsonString.Source petId, Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.PostPetsByPetIdPhotosBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Download a pet photo (binary stream)
     /// </summary>
     /// <param name="photoId">The photoId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<DownloadPhotoResponse> DownloadPhotoAsync(Petstore.EndToEnd.Client.JsonString.Source photoId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<DownloadPhotoResponse> DownloadPhotoAsync(Petstore.EndToEnd.Client.Models.JsonString.Source photoId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

@@ -5,6 +5,7 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Petstore.Server;
+using Petstore.Server.Models;
 
 // ── Building a minimal API server from an OpenAPI spec ───────────────────────
 // The generated code provides:

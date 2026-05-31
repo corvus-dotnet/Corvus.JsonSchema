@@ -24,19 +24,19 @@ public readonly struct UploadPetPhotoRequest : IApiRequest<UploadPetPhotoRequest
     /// <summary>
     /// Gets the petId parameter.
     /// </summary>
-    public Petstore.EndToEnd.Client.JsonString PetId { get; init; }
+    public Petstore.EndToEnd.Client.Models.JsonString PetId { get; init; }
 
     /// <summary>
     /// Gets the session_token parameter.
     /// </summary>
-    public Petstore.EndToEnd.Client.JsonString SessionToken { get; init; }
+    public Petstore.EndToEnd.Client.Models.JsonString SessionToken { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UploadPetPhotoRequest"/> struct.
     /// </summary>
     /// <param name="petId">The petId parameter.</param>
     /// <param name="session_token">The session_token parameter.</param>
-    public UploadPetPhotoRequest(Petstore.EndToEnd.Client.JsonString petId, Petstore.EndToEnd.Client.JsonString session_token)
+    public UploadPetPhotoRequest(Petstore.EndToEnd.Client.Models.JsonString petId, Petstore.EndToEnd.Client.Models.JsonString session_token)
     {
         this.PetId = petId;
         this.SessionToken = session_token;

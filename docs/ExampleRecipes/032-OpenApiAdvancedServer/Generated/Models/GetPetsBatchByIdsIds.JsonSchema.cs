@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended.Server;
+namespace Petstore.Extended.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -80,14 +80,14 @@ public readonly partial struct GetPetsBatchByIdsIds
                 {
                     int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                    JsonSchemaContext childContext = Petstore.Extended.Server.JsonInt64.JsonSchema.PushChildContext(
+                    JsonSchemaContext childContext = Petstore.Extended.Server.Models.JsonInt64.JsonSchema.PushChildContext(
                         parentDocument,
                         arrayValidation_currentIndex,
                         ref context,
                         itemIndex: arrayValidation_itemCount,
                         evaluationPath: ItemsSchemaEvaluationPath);
 
-                    Petstore.Extended.Server.JsonInt64.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                    Petstore.Extended.Server.Models.JsonInt64.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                     if (!childContext.IsMatch)
                     {
                         context.CommitChildContext(false, ref childContext);

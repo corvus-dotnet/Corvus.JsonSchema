@@ -33,18 +33,18 @@ public struct ListPetsResponse : IApiResponse<ListPetsResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public Petstore.Client.Pets OkBody { get; private set; }
+    public Petstore.Client.Models.Pets OkBody { get; private set; }
 
     /// <summary>
     /// Gets the default response body.
     /// </summary>
-    public Petstore.Client.Error DefaultBody { get; private set; }
+    public Petstore.Client.Models.Error DefaultBody { get; private set; }
 
     /// <summary>
     /// Gets the value of the <c>x-next</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private Petstore.Client.JsonString xNextHeaderValue;
+    private Petstore.Client.Models.JsonString xNextHeaderValue;
     private bool xNextHeaderParsed;
 
     /// <summary>
@@ -52,7 +52,7 @@ public struct ListPetsResponse : IApiResponse<ListPetsResponse>
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public Petstore.Client.JsonString XNextHeader
+    public Petstore.Client.Models.JsonString XNextHeader
     {
         get
         {
@@ -67,7 +67,7 @@ public struct ListPetsResponse : IApiResponse<ListPetsResponse>
                 && this.responseHeaders.TryGetValue("x-next", out string? rawValue)
                 && rawValue is not null)
             {
-                this.xNextHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.Client.JsonString>(rawValue, this.workspace);
+                this.xNextHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.Client.Models.JsonString>(rawValue, this.workspace);
             }
 
             return this.xNextHeaderValue;
@@ -93,13 +93,13 @@ public struct ListPetsResponse : IApiResponse<ListPetsResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<Petstore.Client.Pets>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<Petstore.Client.Models.Pets>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
         }
 
-        var defaultDoc = await ParsedJsonDocument<Petstore.Client.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+        var defaultDoc = await ParsedJsonDocument<Petstore.Client.Models.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
         response.parsedDocument = defaultDoc;
         response.DefaultBody = defaultDoc.RootElement;
         return response;
@@ -110,7 +110,7 @@ public struct ListPetsResponse : IApiResponse<ListPetsResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out Petstore.Client.Pets result)
+    public bool TryGetOk(out Petstore.Client.Models.Pets result)
     {
         if (this.StatusCode == 200)
         {
@@ -127,7 +127,7 @@ public struct ListPetsResponse : IApiResponse<ListPetsResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code does not match any specific response.</returns>
-    public bool TryGetDefault(out Petstore.Client.Error result)
+    public bool TryGetDefault(out Petstore.Client.Models.Error result)
     {
         if (this.StatusCode != 200)
         {
@@ -148,8 +148,8 @@ public struct ListPetsResponse : IApiResponse<ListPetsResponse>
     /// <param name="matchDefault">Handler for a default response.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<Petstore.Client.Pets, TResult> matchOk,
-        ResponseMatcher<Petstore.Client.Error, TResult> matchDefault)
+        ResponseMatcher<Petstore.Client.Models.Pets, TResult> matchOk,
+        ResponseMatcher<Petstore.Client.Models.Error, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
         {
@@ -171,8 +171,8 @@ public struct ListPetsResponse : IApiResponse<ListPetsResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<Petstore.Client.Pets, TContext, TResult> matchOk,
-        ResponseMatcher<Petstore.Client.Error, TContext, TResult> matchDefault)
+        ResponseMatcher<Petstore.Client.Models.Pets, TContext, TResult> matchOk,
+        ResponseMatcher<Petstore.Client.Models.Error, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
         if (this.StatusCode == 200)

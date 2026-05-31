@@ -274,7 +274,7 @@ internal sealed class OpenApiCallbackClientCommand : AsyncCommand<OpenApiGenerat
 
         AnsiConsole.MarkupLine($"[yellow]Registered {typesToGenerate.Count} type declarations, generating code...[/]");
 
-        CSharpLanguageProvider.Options options = new(rootNamespace);
+        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models");
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         languageProvider.RegisterNameHeuristics(new OpenApiSchemaNameHeuristic(parameterNames));
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =

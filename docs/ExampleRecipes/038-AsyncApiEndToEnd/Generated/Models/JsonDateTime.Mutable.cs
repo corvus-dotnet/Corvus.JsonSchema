@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Streetlights.Client;
+namespace Streetlights.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct ChatChunk
     /// <summary>
     /// Gets the (optional) <c>delta</c> property.
     /// </summary>
-    public Petstore.Extended.JsonString Delta
+    public Petstore.Extended.Models.JsonString Delta
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeltaUtf8, out Petstore.Extended.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeltaUtf8, out Petstore.Extended.Models.JsonString value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct ChatChunk
     /// <summary>
     /// Gets the (optional) <c>done</c> property.
     /// </summary>
-    public Petstore.Extended.JsonBoolean Done
+    public Petstore.Extended.Models.JsonBoolean Done
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DoneUtf8, out Petstore.Extended.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DoneUtf8, out Petstore.Extended.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -193,11 +193,11 @@ public readonly partial struct ChatChunk
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.JsonString Id
+    public Petstore.Extended.Models.JsonString Id
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.Extended.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.Extended.Models.JsonString value))
             {
                 return value;
             }

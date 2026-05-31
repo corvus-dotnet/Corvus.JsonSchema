@@ -41,7 +41,7 @@ public readonly struct CreatePetResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="CreatePetResult"/> with status 201.</returns>
-    public static CreatePetResult Created(Petstore.EndToEnd.Server.Pet.Source body, JsonWorkspace workspace) => new(201, Petstore.EndToEnd.Server.Pet.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static CreatePetResult Created(Petstore.EndToEnd.Server.Models.Pet.Source body, JsonWorkspace workspace) => new(201, Petstore.EndToEnd.Server.Models.Pet.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a 401 Unauthorized result.
@@ -49,7 +49,7 @@ public readonly struct CreatePetResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="CreatePetResult"/> with status 401.</returns>
-    public static CreatePetResult Unauthorized(Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static CreatePetResult Unauthorized(Petstore.EndToEnd.Server.Models.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.EndToEnd.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a default error result.
@@ -58,7 +58,7 @@ public readonly struct CreatePetResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="CreatePetResult"/> with status default.</returns>
-    public static CreatePetResult Default(int statusCode, Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static CreatePetResult Default(int statusCode, Petstore.EndToEnd.Server.Models.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.EndToEnd.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -69,8 +69,8 @@ public readonly struct CreatePetResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            201 => Petstore.EndToEnd.Server.Pet.From(this.Body).EvaluateSchema(),
-            401 => Petstore.EndToEnd.Server.Error.From(this.Body).EvaluateSchema(),
+            201 => Petstore.EndToEnd.Server.Models.Pet.From(this.Body).EvaluateSchema(),
+            401 => Petstore.EndToEnd.Server.Models.Error.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

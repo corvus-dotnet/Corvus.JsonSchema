@@ -23,10 +23,10 @@ public readonly struct GetStyledQuirkyParams
     /// <summary>
     /// Gets the 'sid' path parameter.
     /// </summary>
-    public CanonTests30.Server.JsonString Sid { get; init; }
+    public CanonTests30.Server.Models.JsonString Sid { get; init; }
 
     /// <summary>
     /// Gets the 'badQueryStyle' query parameter.
     /// </summary>
-    public CanonTests30.Server.JsonString BadQueryStyle { get; init; }
+    public CanonTests30.Server.Models.JsonString BadQueryStyle { get; init; }
 }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct Schema
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Id
+        public CanonTests32.Client.Models.JsonString.Mutable Id
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct Schema
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Location
+        public CanonTests32.Client.Models.JsonString.Mutable Location
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LocationUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LocationUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -345,7 +345,7 @@ public readonly partial struct Schema
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in CanonTests32.Client.JsonString.Source value)
+        public void SetId(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct Schema
         /// Set the <c>location</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLocation(in CanonTests32.Client.JsonString.Source value)
+        public void SetLocation(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -744,7 +744,7 @@ public readonly partial struct Schema
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.Schema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.Schema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(Schema instance) => new(JsonElement.From(instance));
 
@@ -865,7 +865,7 @@ public readonly partial struct Schema
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.Schema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.Schema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -981,8 +981,8 @@ public readonly partial struct Schema
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonString.Source id,
-            in CanonTests32.Client.JsonString.Source location)
+            in CanonTests32.Client.Models.JsonString.Source id,
+            in CanonTests32.Client.Models.JsonString.Source location)
         {
             id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
             location.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Location, ref builder);
@@ -991,7 +991,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Creates an instance of a <see cref="Schema"/>.
         /// </summary>
-        public void Create(in CanonTests32.Client.JsonString.Source id, in CanonTests32.Client.JsonString.Source location)
+        public void Create(in CanonTests32.Client.Models.JsonString.Source id, in CanonTests32.Client.Models.JsonString.Source location)
         {
             Create(ref _builder, id, location);
         }
@@ -1153,7 +1153,7 @@ public readonly partial struct Schema
     /// <param name="location">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source id, in CanonTests32.Client.JsonString.Source location, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source id, in CanonTests32.Client.Models.JsonString.Source location, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

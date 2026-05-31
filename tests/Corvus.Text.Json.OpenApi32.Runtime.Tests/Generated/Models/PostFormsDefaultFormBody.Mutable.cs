@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostFormsDefaultFormBody
         /// <summary>
         /// Gets the (optional) <c>active</c> property.
         /// </summary>
-        public CanonTests32.Client.JsonBoolean.Mutable Active
+        public CanonTests32.Client.Models.JsonBoolean.Mutable Active
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests32.Client.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActiveUtf8, out CanonTests32.Client.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct PostFormsDefaultFormBody
         /// <summary>
         /// Gets the (optional) <c>count</c> property.
         /// </summary>
-        public CanonTests32.Client.JsonInteger.Mutable Count
+        public CanonTests32.Client.Models.JsonInteger.Mutable Count
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CountUtf8, out CanonTests32.Client.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -295,11 +295,11 @@ public readonly partial struct PostFormsDefaultFormBody
         /// <summary>
         /// Gets the (optional) <c>extra</c> property.
         /// </summary>
-        public CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity.Mutable Extra
+        public CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity.Mutable Extra
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraUtf8, out CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraUtf8, out CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity.Mutable value))
                 {
                     return value;
                 }
@@ -311,11 +311,11 @@ public readonly partial struct PostFormsDefaultFormBody
         /// <summary>
         /// Gets the (optional) <c>info</c> property.
         /// </summary>
-        public CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Mutable Info
+        public CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Mutable Info
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InfoUtf8, out CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InfoUtf8, out CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Mutable value))
                 {
                     return value;
                 }
@@ -332,11 +332,11 @@ public readonly partial struct PostFormsDefaultFormBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Name
+        public CanonTests32.Client.Models.JsonString.Mutable Name
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -348,11 +348,11 @@ public readonly partial struct PostFormsDefaultFormBody
         /// <summary>
         /// Gets the (optional) <c>tags</c> property.
         /// </summary>
-        public CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Mutable Tags
+        public CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Mutable Tags
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Mutable value))
                 {
                     return value;
                 }
@@ -404,7 +404,7 @@ public readonly partial struct PostFormsDefaultFormBody
         /// Set the <c>active</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetActive(in CanonTests32.Client.JsonBoolean.Source value)
+        public void SetActive(in CanonTests32.Client.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -449,7 +449,7 @@ public readonly partial struct PostFormsDefaultFormBody
         /// Set the <c>count</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCount(in CanonTests32.Client.JsonInteger.Source value)
+        public void SetCount(in CanonTests32.Client.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -494,7 +494,7 @@ public readonly partial struct PostFormsDefaultFormBody
         /// Set the <c>extra</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExtra(in CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity.Source value)
+        public void SetExtra(in CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity.Source value)
         {
             CheckValidInstance();
 
@@ -539,7 +539,7 @@ public readonly partial struct PostFormsDefaultFormBody
         /// Set the <c>info</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInfo(in CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Source value)
+        public void SetInfo(in CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Source value)
         {
             CheckValidInstance();
 
@@ -572,7 +572,7 @@ public readonly partial struct PostFormsDefaultFormBody
         /// Set the <c>info</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInfo<TContext>(in CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Source<TContext> value)
+        public void SetInfo<TContext>(in CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -620,7 +620,7 @@ public readonly partial struct PostFormsDefaultFormBody
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in CanonTests32.Client.JsonString.Source value)
+        public void SetName(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -651,7 +651,7 @@ public readonly partial struct PostFormsDefaultFormBody
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Source value)
+        public void SetTags(in CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -684,7 +684,7 @@ public readonly partial struct PostFormsDefaultFormBody
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags<TContext>(in CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Source<TContext> value)
+        public void SetTags<TContext>(in CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1069,7 +1069,7 @@ public readonly partial struct PostFormsDefaultFormBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PostFormsDefaultFormBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PostFormsDefaultFormBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostFormsDefaultFormBody instance) => new(JsonElement.From(instance));
 
@@ -1190,7 +1190,7 @@ public readonly partial struct PostFormsDefaultFormBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PostFormsDefaultFormBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PostFormsDefaultFormBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1306,12 +1306,12 @@ public readonly partial struct PostFormsDefaultFormBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonString.Source name,
-            in CanonTests32.Client.JsonBoolean.Source active = default,
-            in CanonTests32.Client.JsonInteger.Source count = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity.Source extra = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Source info = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Source tags = default)
+            in CanonTests32.Client.Models.JsonString.Source name,
+            in CanonTests32.Client.Models.JsonBoolean.Source active = default,
+            in CanonTests32.Client.Models.JsonInteger.Source count = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity.Source extra = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Source info = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Source tags = default)
         {
             name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
             active.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Active, ref builder);
@@ -1325,12 +1325,12 @@ public readonly partial struct PostFormsDefaultFormBody
         /// Creates an instance of a <see cref="PostFormsDefaultFormBody"/>.
         /// </summary>
         public void Create(
-            in CanonTests32.Client.JsonString.Source name,
-            in CanonTests32.Client.JsonBoolean.Source active = default,
-            in CanonTests32.Client.JsonInteger.Source count = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity.Source extra = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Source info = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Source tags = default)
+            in CanonTests32.Client.Models.JsonString.Source name,
+            in CanonTests32.Client.Models.JsonBoolean.Source active = default,
+            in CanonTests32.Client.Models.JsonInteger.Source count = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity.Source extra = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Source info = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Source tags = default)
         {
             Create(ref _builder, name, active, count, extra, info, tags);
         }
@@ -1341,12 +1341,12 @@ public readonly partial struct PostFormsDefaultFormBody
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonString.Source name,
-            in CanonTests32.Client.JsonBoolean.Source active = default,
-            in CanonTests32.Client.JsonInteger.Source count = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity.Source extra = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Source<TContext> info = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Source<TContext> tags = default)
+            in CanonTests32.Client.Models.JsonString.Source name,
+            in CanonTests32.Client.Models.JsonBoolean.Source active = default,
+            in CanonTests32.Client.Models.JsonInteger.Source count = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity.Source extra = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Source<TContext> info = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1364,12 +1364,12 @@ public readonly partial struct PostFormsDefaultFormBody
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests32.Client.JsonString.Source name,
-            in CanonTests32.Client.JsonBoolean.Source active = default,
-            in CanonTests32.Client.JsonInteger.Source count = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity.Source extra = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Source<TContext> info = default,
-            in CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Source<TContext> tags = default)
+            in CanonTests32.Client.Models.JsonString.Source name,
+            in CanonTests32.Client.Models.JsonBoolean.Source active = default,
+            in CanonTests32.Client.Models.JsonInteger.Source count = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity.Source extra = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Source<TContext> info = default,
+            in CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1538,7 +1538,7 @@ public readonly partial struct PostFormsDefaultFormBody
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source name, in CanonTests32.Client.JsonBoolean.Source active = default, in CanonTests32.Client.JsonInteger.Source count = default, in CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity.Source extra = default, in CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Source info = default, in CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Source tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source name, in CanonTests32.Client.Models.JsonBoolean.Source active = default, in CanonTests32.Client.Models.JsonInteger.Source count = default, in CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity.Source extra = default, in CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Source info = default, in CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Source tags = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1565,7 +1565,7 @@ public readonly partial struct PostFormsDefaultFormBody
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.JsonString.Source name, in CanonTests32.Client.JsonBoolean.Source active = default, in CanonTests32.Client.JsonInteger.Source count = default, in CanonTests32.Client.PostFormsDefaultFormBody.ExtraEntity.Source extra = default, in CanonTests32.Client.PostFormsDefaultFormBody.InfoEntity.Source<TContext> info = default, in CanonTests32.Client.PostFormsDefaultFormBody.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.Models.JsonString.Source name, in CanonTests32.Client.Models.JsonBoolean.Source active = default, in CanonTests32.Client.Models.JsonInteger.Source count = default, in CanonTests32.Client.Models.PostFormsDefaultFormBody.ExtraEntity.Source extra = default, in CanonTests32.Client.Models.PostFormsDefaultFormBody.InfoEntity.Source<TContext> info = default, in CanonTests32.Client.Models.PostFormsDefaultFormBody.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

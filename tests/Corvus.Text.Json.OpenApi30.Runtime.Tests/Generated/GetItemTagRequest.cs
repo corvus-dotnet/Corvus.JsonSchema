@@ -24,24 +24,24 @@ public readonly struct GetItemTagRequest : IApiRequest<GetItemTagRequest>
     /// <summary>
     /// Gets the itemId parameter.
     /// </summary>
-    public CanonTests30.Client.JsonInt64 ItemId { get; init; }
+    public CanonTests30.Client.Models.JsonInt64 ItemId { get; init; }
 
     /// <summary>
     /// Gets the tagName parameter.
     /// </summary>
-    public CanonTests30.Client.JsonString TagName { get; init; }
+    public CanonTests30.Client.Models.JsonString TagName { get; init; }
 
     /// <summary>
     /// Gets the score parameter.
     /// </summary>
-    public CanonTests30.Client.JsonDouble Score { get; init; }
+    public CanonTests30.Client.Models.JsonDouble Score { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetItemTagRequest"/> struct.
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
     /// <param name="tagName">The tagName parameter.</param>
-    public GetItemTagRequest(CanonTests30.Client.JsonInt64 itemId, CanonTests30.Client.JsonString tagName)
+    public GetItemTagRequest(CanonTests30.Client.Models.JsonInt64 itemId, CanonTests30.Client.Models.JsonString tagName)
     {
         this.ItemId = itemId;
         this.TagName = tagName;

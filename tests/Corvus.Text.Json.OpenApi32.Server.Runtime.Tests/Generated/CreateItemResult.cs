@@ -41,7 +41,7 @@ public readonly struct CreateItemResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="CreateItemResult"/> with status 201.</returns>
-    public static CreateItemResult Created(CanonTests32.Server.PostItemsCreated.Source body, JsonWorkspace workspace) => new(201, CanonTests32.Server.PostItemsCreated.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static CreateItemResult Created(CanonTests32.Server.Models.PostItemsCreated.Source body, JsonWorkspace workspace) => new(201, CanonTests32.Server.Models.PostItemsCreated.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct CreateItemResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            201 => CanonTests32.Server.PostItemsCreated.From(this.Body).EvaluateSchema(),
+            201 => CanonTests32.Server.Models.PostItemsCreated.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

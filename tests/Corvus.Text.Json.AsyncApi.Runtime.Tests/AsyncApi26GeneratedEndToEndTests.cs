@@ -4,6 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.AsyncApi;
+using Streetlights.Client.V26.Models;
 using Streetlights26 = Streetlights.Client.V26;
 
 namespace Corvus.Text.Json.AsyncApi.Runtime.Tests;
@@ -23,7 +24,7 @@ public class AsyncApi26GeneratedEndToEndTests
         await using InMemoryMessageTransport transport = new();
         Streetlights26.TurnOnProducer producer = new(transport, ValidationMode.None);
 
-        Streetlights26.TurnOnOffPayload payload = Streetlights26.TurnOnOffPayload.ParseValue("""{"command":"on"}"""u8);
+        TurnOnOffPayload payload = TurnOnOffPayload.ParseValue("""{"command":"on"}"""u8);
 
         await producer.PublishTurnOnOffAsync(payload, "lamp-26");
 
@@ -47,7 +48,7 @@ public class AsyncApi26GeneratedEndToEndTests
 
         await consumer.StartAsync();
 
-        await transport.DeliverAsync<Streetlights26.LightMeasuredPayload>(
+        await transport.DeliverAsync<LightMeasuredPayload>(
             LightMeasurementChannel,
             """{"lumens":150}"""u8.ToArray());
 
@@ -56,9 +57,9 @@ public class AsyncApi26GeneratedEndToEndTests
 
     private sealed class MockLightMeasurementHandler : Streetlights26.IReceiveLightMeasurementHandler
     {
-        public List<Streetlights26.LightMeasuredPayload> ReceivedPayloads { get; } = [];
+        public List<LightMeasuredPayload> ReceivedPayloads { get; } = [];
 
-        public ValueTask HandleLightMeasuredAsync(Streetlights26.LightMeasuredPayload payload, CancellationToken cancellationToken = default)
+        public ValueTask HandleLightMeasuredAsync(LightMeasuredPayload payload, CancellationToken cancellationToken = default)
         {
             this.ReceivedPayloads.Add(payload);
             return ValueTask.CompletedTask;

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Server;
+namespace Petstore.EndToEnd.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PostAdoptionApplyAccepted
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.EndToEnd.Server.JsonString.Mutable ApplicationId
+        public Petstore.EndToEnd.Server.Models.JsonString.Mutable ApplicationId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicationIdUtf8, out Petstore.EndToEnd.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicationIdUtf8, out Petstore.EndToEnd.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct PostAdoptionApplyAccepted
         /// <summary>
         /// Gets the (optional) <c>estimatedReviewDays</c> property.
         /// </summary>
-        public Petstore.EndToEnd.Server.JsonInteger.Mutable EstimatedReviewDays
+        public Petstore.EndToEnd.Server.Models.JsonInteger.Mutable EstimatedReviewDays
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EstimatedReviewDaysUtf8, out Petstore.EndToEnd.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EstimatedReviewDaysUtf8, out Petstore.EndToEnd.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -305,11 +305,11 @@ public readonly partial struct PostAdoptionApplyAccepted
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.EndToEnd.Server.PostAdoptionApplyAccepted.StatusEntity.Mutable Status
+        public Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.StatusEntity.Mutable Status
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.EndToEnd.Server.PostAdoptionApplyAccepted.StatusEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.StatusEntity.Mutable value))
                 {
                     return value;
                 }
@@ -361,7 +361,7 @@ public readonly partial struct PostAdoptionApplyAccepted
         /// Set the <c>applicationId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetApplicationId(in Petstore.EndToEnd.Server.JsonString.Source value)
+        public void SetApplicationId(in Petstore.EndToEnd.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -392,7 +392,7 @@ public readonly partial struct PostAdoptionApplyAccepted
         /// Set the <c>estimatedReviewDays</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEstimatedReviewDays(in Petstore.EndToEnd.Server.JsonInteger.Source value)
+        public void SetEstimatedReviewDays(in Petstore.EndToEnd.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -437,7 +437,7 @@ public readonly partial struct PostAdoptionApplyAccepted
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in Petstore.EndToEnd.Server.PostAdoptionApplyAccepted.StatusEntity.Source value)
+        public void SetStatus(in Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.StatusEntity.Source value)
         {
             CheckValidInstance();
 
@@ -805,7 +805,7 @@ public readonly partial struct PostAdoptionApplyAccepted
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Petstore.EndToEnd.Server.PostAdoptionApplyAccepted.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostAdoptionApplyAccepted instance) => new(JsonElement.From(instance));
 
@@ -926,7 +926,7 @@ public readonly partial struct PostAdoptionApplyAccepted
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Petstore.EndToEnd.Server.PostAdoptionApplyAccepted.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1042,9 +1042,9 @@ public readonly partial struct PostAdoptionApplyAccepted
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Petstore.EndToEnd.Server.JsonString.Source applicationId,
-            in Petstore.EndToEnd.Server.PostAdoptionApplyAccepted.StatusEntity.Source status,
-            in Petstore.EndToEnd.Server.JsonInteger.Source estimatedReviewDays = default)
+            in Petstore.EndToEnd.Server.Models.JsonString.Source applicationId,
+            in Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.StatusEntity.Source status,
+            in Petstore.EndToEnd.Server.Models.JsonInteger.Source estimatedReviewDays = default)
         {
             applicationId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ApplicationId, ref builder);
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
@@ -1055,9 +1055,9 @@ public readonly partial struct PostAdoptionApplyAccepted
         /// Creates an instance of a <see cref="PostAdoptionApplyAccepted"/>.
         /// </summary>
         public void Create(
-            in Petstore.EndToEnd.Server.JsonString.Source applicationId,
-            in Petstore.EndToEnd.Server.PostAdoptionApplyAccepted.StatusEntity.Source status,
-            in Petstore.EndToEnd.Server.JsonInteger.Source estimatedReviewDays = default)
+            in Petstore.EndToEnd.Server.Models.JsonString.Source applicationId,
+            in Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.StatusEntity.Source status,
+            in Petstore.EndToEnd.Server.Models.JsonInteger.Source estimatedReviewDays = default)
         {
             Create(ref _builder, applicationId, status, estimatedReviewDays);
         }
@@ -1220,7 +1220,7 @@ public readonly partial struct PostAdoptionApplyAccepted
     /// <param name="estimatedReviewDays">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.EndToEnd.Server.JsonString.Source applicationId, in Petstore.EndToEnd.Server.PostAdoptionApplyAccepted.StatusEntity.Source status, in Petstore.EndToEnd.Server.JsonInteger.Source estimatedReviewDays = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.EndToEnd.Server.Models.JsonString.Source applicationId, in Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.StatusEntity.Source status, in Petstore.EndToEnd.Server.Models.JsonInteger.Source estimatedReviewDays = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct GetSearchOkXFacets
         /// <summary>
         /// Gets the (optional) <c>category</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonString.Mutable Category
+        public CanonTests31.Server.Models.JsonString.Mutable Category
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CategoryUtf8, out CanonTests31.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CategoryUtf8, out CanonTests31.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct GetSearchOkXFacets
         /// <summary>
         /// Gets the (optional) <c>status</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonString.Mutable Status
+        public CanonTests31.Server.Models.JsonString.Mutable Status
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests31.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests31.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -335,7 +335,7 @@ public readonly partial struct GetSearchOkXFacets
         /// Set the <c>category</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCategory(in CanonTests31.Server.JsonString.Source value)
+        public void SetCategory(in CanonTests31.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -380,7 +380,7 @@ public readonly partial struct GetSearchOkXFacets
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in CanonTests31.Server.JsonString.Source value)
+        public void SetStatus(in CanonTests31.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -762,7 +762,7 @@ public readonly partial struct GetSearchOkXFacets
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests31.Server.GetSearchOkXFacets.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests31.Server.Models.GetSearchOkXFacets.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetSearchOkXFacets instance) => new(JsonElement.From(instance));
 
@@ -883,7 +883,7 @@ public readonly partial struct GetSearchOkXFacets
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests31.Server.GetSearchOkXFacets.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests31.Server.Models.GetSearchOkXFacets.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -999,8 +999,8 @@ public readonly partial struct GetSearchOkXFacets
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests31.Server.JsonString.Source category = default,
-            in CanonTests31.Server.JsonString.Source status = default)
+            in CanonTests31.Server.Models.JsonString.Source category = default,
+            in CanonTests31.Server.Models.JsonString.Source status = default)
         {
             category.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref builder);
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
@@ -1009,7 +1009,7 @@ public readonly partial struct GetSearchOkXFacets
         /// <summary>
         /// Creates an instance of a <see cref="GetSearchOkXFacets"/>.
         /// </summary>
-        public void Create(in CanonTests31.Server.JsonString.Source category = default, in CanonTests31.Server.JsonString.Source status = default)
+        public void Create(in CanonTests31.Server.Models.JsonString.Source category = default, in CanonTests31.Server.Models.JsonString.Source status = default)
         {
             Create(ref _builder, category, status);
         }
@@ -1171,7 +1171,7 @@ public readonly partial struct GetSearchOkXFacets
     /// <param name="status">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.JsonString.Source category = default, in CanonTests31.Server.JsonString.Source status = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.Models.JsonString.Source category = default, in CanonTests31.Server.Models.JsonString.Source status = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

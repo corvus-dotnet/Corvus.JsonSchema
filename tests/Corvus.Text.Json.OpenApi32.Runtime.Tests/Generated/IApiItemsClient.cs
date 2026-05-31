@@ -214,21 +214,21 @@ public interface IApiItemsClient : IAsyncDisposable
     /// <param name="verbose">The verbose parameter.</param>
     /// <param name="xRequestId">The X-Request-Id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetItemResponse> GetItemAsync(CanonTests32.Client.JsonString.Source itemId, CanonTests32.Client.JsonString.Source filter = default, CanonTests32.Client.JsonInt32.Source limit = default, CanonTests32.Client.JsonBoolean.Source verbose = default, CanonTests32.Client.JsonString.Source xRequestId = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetItemResponse> GetItemAsync(CanonTests32.Client.Models.JsonString.Source itemId, CanonTests32.Client.Models.JsonString.Source filter = default, CanonTests32.Client.Models.JsonInt32.Source limit = default, CanonTests32.Client.Models.JsonBoolean.Source verbose = default, CanonTests32.Client.Models.JsonString.Source xRequestId = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Delete an item (204 no content)
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<DeleteItemResponse> DeleteItemAsync(CanonTests32.Client.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<DeleteItemResponse> DeleteItemAsync(CanonTests32.Client.Models.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Check item existence
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<HeadItemResponse> HeadItemAsync(CanonTests32.Client.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<HeadItemResponse> HeadItemAsync(CanonTests32.Client.Models.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Partially update an item
@@ -236,14 +236,14 @@ public interface IApiItemsClient : IAsyncDisposable
     /// <param name="itemId">The itemId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PatchItemResponse> PatchItemAsync(CanonTests32.Client.JsonString.Source itemId, CanonTests32.Client.PatchItemsByItemIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PatchItemResponse> PatchItemAsync(CanonTests32.Client.Models.JsonString.Source itemId, CanonTests32.Client.Models.PatchItemsByItemIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Diagnostic loop-back
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<TraceItemResponse> TraceItemAsync(CanonTests32.Client.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<TraceItemResponse> TraceItemAsync(CanonTests32.Client.Models.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Copy an item to a new location
@@ -251,14 +251,14 @@ public interface IApiItemsClient : IAsyncDisposable
     /// <param name="itemId">The itemId parameter.</param>
     /// <param name="Destination">The Destination parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CopyItemResponse> CopyItemAsync(CanonTests32.Client.JsonString.Source itemId, CanonTests32.Client.JsonString.Source Destination, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CopyItemResponse> CopyItemAsync(CanonTests32.Client.Models.JsonString.Source itemId, CanonTests32.Client.Models.JsonString.Source Destination, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Purge item from cache
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PurgeItemResponse> PurgeItemAsync(CanonTests32.Client.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PurgeItemResponse> PurgeItemAsync(CanonTests32.Client.Models.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Two path params: int64 + string, with trailing literal path
@@ -267,21 +267,21 @@ public interface IApiItemsClient : IAsyncDisposable
     /// <param name="tagName">The tagName parameter.</param>
     /// <param name="score">The score parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetItemTagResponse> GetItemTagAsync(CanonTests32.Client.JsonInt64.Source itemId, CanonTests32.Client.JsonString.Source tagName, CanonTests32.Client.JsonDouble.Source score = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetItemTagResponse> GetItemTagAsync(CanonTests32.Client.Models.JsonInt64.Source itemId, CanonTests32.Client.Models.JsonString.Source tagName, CanonTests32.Client.Models.JsonDouble.Source score = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Path with trailing literal after param
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetItemDetailsResponse> GetItemDetailsAsync(CanonTests32.Client.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetItemDetailsResponse> GetItemDetailsAsync(CanonTests32.Client.Models.JsonString.Source itemId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Update an item
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UpdateItemResponse> UpdateItemAsync(CanonTests32.Client.PutItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<UpdateItemResponse> UpdateItemAsync(CanonTests32.Client.Models.PutItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Create an item with request body
@@ -291,7 +291,7 @@ public interface IApiItemsClient : IAsyncDisposable
     /// </remarks>
     /// <param name="body">The item to create.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CreateItemResponse> CreateItemAsync(CanonTests32.Client.PostItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CreateItemResponse> CreateItemAsync(CanonTests32.Client.Models.PostItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Discover available operations

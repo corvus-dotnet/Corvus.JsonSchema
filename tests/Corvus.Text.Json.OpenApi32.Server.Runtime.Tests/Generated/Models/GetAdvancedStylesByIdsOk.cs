@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetAdvancedStylesByIdsOk
     /// <summary>
     /// Gets the (optional) <c>items</c> property.
     /// </summary>
-    public CanonTests32.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray Items
+    public CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray Items
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ItemsUtf8, out CanonTests32.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ItemsUtf8, out CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct GetAdvancedStylesByIdsOk
     /// <summary>
     /// Gets the (optional) <c>total</c> property.
     /// </summary>
-    public CanonTests32.Server.JsonInteger Total
+    public CanonTests32.Server.Models.JsonInteger Total
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests32.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests32.Server.Models.JsonInteger value))
             {
                 return value;
             }

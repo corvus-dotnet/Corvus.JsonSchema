@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using CanonTests31.Server;
+using CanonTests31.Server.Models;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.OpenApi31.Server.Runtime.Tests;

@@ -24,15 +24,15 @@ public readonly struct UploadPetPhotoParams
     /// <summary>
     /// Gets the 'petId' path parameter.
     /// </summary>
-    public Petstore.EndToEnd.Server.JsonString PetId { get; init; }
+    public Petstore.EndToEnd.Server.Models.JsonString PetId { get; init; }
 
     /// <summary>
     /// Gets the 'session_token' cookie parameter.
     /// </summary>
-    public Petstore.EndToEnd.Server.JsonString SessionToken { get; init; }
+    public Petstore.EndToEnd.Server.Models.JsonString SessionToken { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public Petstore.EndToEnd.Server.PostPetsByPetIdPhotosBody Body { get; init; }
+    public Petstore.EndToEnd.Server.Models.PostPetsByPetIdPhotosBody Body { get; init; }
 }

@@ -24,7 +24,7 @@ public readonly struct SubmitFeedbackParams
     /// <summary>
     /// Gets the 'source' query parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString Source { get; init; }
+    public CanonTests32.Server.Models.JsonString Source { get; init; }
 
     /// <summary>
     /// Gets the request body.

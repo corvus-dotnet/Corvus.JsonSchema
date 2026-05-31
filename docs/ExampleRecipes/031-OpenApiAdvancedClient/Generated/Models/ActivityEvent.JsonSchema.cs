@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -56,14 +56,14 @@ public readonly partial struct ActivityEvent
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Petstore.Extended.JsonString.JsonSchema.PushChildContextUnescaped(
+                Petstore.Extended.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.DescriptionUtf8,
                     evaluationPath: DescriptionSchemaEvaluationPath);
 
-            Petstore.Extended.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Petstore.Extended.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
@@ -71,14 +71,14 @@ public readonly partial struct ActivityEvent
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Petstore.Extended.JsonString.JsonSchema.PushChildContextUnescaped(
+                Petstore.Extended.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.EventIdUtf8,
                     evaluationPath: EventIdSchemaEvaluationPath);
 
-            Petstore.Extended.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            Petstore.Extended.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -93,14 +93,14 @@ public readonly partial struct ActivityEvent
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                Petstore.Extended.JsonDateTime.JsonSchema.PushChildContextUnescaped(
+                Petstore.Extended.Models.JsonDateTime.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.TimestampUtf8,
                     evaluationPath: TimestampSchemaEvaluationPath);
 
-            Petstore.Extended.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            Petstore.Extended.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -115,14 +115,14 @@ public readonly partial struct ActivityEvent
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
-                Petstore.Extended.ActivityEvent.TypeEntity.JsonSchema.PushChildContextUnescaped(
+                Petstore.Extended.Models.ActivityEvent.TypeEntity.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.TypeUtf8,
                     evaluationPath: TypeSchemaEvaluationPath);
 
-            Petstore.Extended.ActivityEvent.TypeEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            Petstore.Extended.Models.ActivityEvent.TypeEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
             context.CommitChildContext(childContext3.IsMatch, ref childContext3);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -133,9 +133,9 @@ public readonly partial struct ActivityEvent
             requiredBitBuffer[RequiredOffsetForType] |= RequiredBitForType;
         }
 
-        private static PropertySchemaMatchers<Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        private static PropertySchemaMatchers<Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator>([
+            return new PropertySchemaMatchers<Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.DescriptionUtf8, MatchDescription),
                 (static () => JsonPropertyNames.EventIdUtf8, MatchEventId),
                 (static () => JsonPropertyNames.TimestampUtf8, MatchTimestamp),
@@ -143,13 +143,13 @@ public readonly partial struct ActivityEvent
             ]);
         }
 
-        private static PropertySchemaMatchers<Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -208,7 +208,7 @@ public readonly partial struct ActivityEvent
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Petstore.Extended.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Petstore.Extended.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
                         validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 

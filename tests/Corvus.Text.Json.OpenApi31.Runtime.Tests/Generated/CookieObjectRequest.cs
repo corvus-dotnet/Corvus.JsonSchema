@@ -24,13 +24,13 @@ public readonly struct CookieObjectRequest : IApiRequest<CookieObjectRequest>
     /// <summary>
     /// Gets the prefs parameter.
     /// </summary>
-    public CanonTests31.Client.GetComplexCookieObjectPrefs Prefs { get; init; }
+    public CanonTests31.Client.Models.GetComplexCookieObjectPrefs Prefs { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CookieObjectRequest"/> struct.
     /// </summary>
     /// <param name="prefs">The prefs parameter.</param>
-    public CookieObjectRequest(CanonTests31.Client.GetComplexCookieObjectPrefs prefs)
+    public CookieObjectRequest(CanonTests31.Client.Models.GetComplexCookieObjectPrefs prefs)
     {
         this.Prefs = prefs;
     }

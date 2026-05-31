@@ -33,13 +33,13 @@ public struct CopyItemResponse : IApiResponse<CopyItemResponse>
     /// <summary>
     /// Gets the 201 response body.
     /// </summary>
-    public CanonTests32.Client.Schema CreatedBody { get; private set; }
+    public CanonTests32.Client.Models.Schema CreatedBody { get; private set; }
 
     /// <summary>
     /// Gets the value of the <c>Location</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.JsonUri locationHeaderValue;
+    private CanonTests32.Client.Models.JsonUri locationHeaderValue;
     private bool locationHeaderParsed;
 
     /// <summary>
@@ -47,7 +47,7 @@ public struct CopyItemResponse : IApiResponse<CopyItemResponse>
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public CanonTests32.Client.JsonUri LocationHeader
+    public CanonTests32.Client.Models.JsonUri LocationHeader
     {
         get
         {
@@ -62,7 +62,7 @@ public struct CopyItemResponse : IApiResponse<CopyItemResponse>
                 && this.responseHeaders.TryGetValue("Location", out string? rawValue)
                 && rawValue is not null)
             {
-                this.locationHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Client.JsonUri>(rawValue, this.workspace);
+                this.locationHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Client.Models.JsonUri>(rawValue, this.workspace);
             }
 
             return this.locationHeaderValue;
@@ -88,7 +88,7 @@ public struct CopyItemResponse : IApiResponse<CopyItemResponse>
 
         if (statusCode == 201)
         {
-            var createdDoc = await ParsedJsonDocument<CanonTests32.Client.Schema>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var createdDoc = await ParsedJsonDocument<CanonTests32.Client.Models.Schema>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = createdDoc;
             response.CreatedBody = createdDoc.RootElement;
             return response;
@@ -102,7 +102,7 @@ public struct CopyItemResponse : IApiResponse<CopyItemResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 201.</returns>
-    public bool TryGetCreated(out CanonTests32.Client.Schema result)
+    public bool TryGetCreated(out CanonTests32.Client.Models.Schema result)
     {
         if (this.StatusCode == 201)
         {
@@ -123,7 +123,7 @@ public struct CopyItemResponse : IApiResponse<CopyItemResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests32.Client.Schema, TResult> matchCreated,
+        ResponseMatcher<CanonTests32.Client.Models.Schema, TResult> matchCreated,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 201)
@@ -146,7 +146,7 @@ public struct CopyItemResponse : IApiResponse<CopyItemResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests32.Client.Schema, TContext, TResult> matchCreated,
+        ResponseMatcher<CanonTests32.Client.Models.Schema, TContext, TResult> matchCreated,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

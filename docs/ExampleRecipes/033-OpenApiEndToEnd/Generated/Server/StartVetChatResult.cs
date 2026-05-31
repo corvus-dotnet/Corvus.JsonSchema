@@ -67,7 +67,7 @@ public readonly struct StartVetChatResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="StartVetChatResult"/> with status 401.</returns>
-    public static StartVetChatResult Unauthorized(Petstore.EndToEnd.Server.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.EndToEnd.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static StartVetChatResult Unauthorized(Petstore.EndToEnd.Server.Models.Error.Source body, JsonWorkspace workspace) => new(401, Petstore.EndToEnd.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -78,7 +78,7 @@ public readonly struct StartVetChatResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            401 => Petstore.EndToEnd.Server.Error.From(this.Body).EvaluateSchema(),
+            401 => Petstore.EndToEnd.Server.Models.Error.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }
@@ -137,25 +137,25 @@ public readonly struct StartVetChatStream
     }
 
     /// <summary>
-    /// Appends a <see cref="Petstore.EndToEnd.Server.ChatChunk"/> item to the response stream.
+    /// Appends a <see cref="Petstore.EndToEnd.Server.Models.ChatChunk"/> item to the response stream.
     /// </summary>
     /// <param name="item">The item to append.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A value task that completes when the item has been flushed.</returns>
-    public ValueTask AppendChatChunk(in Petstore.EndToEnd.Server.ChatChunk.Source item, CancellationToken cancellationToken = default)
+    public ValueTask AppendChatChunk(in Petstore.EndToEnd.Server.Models.ChatChunk.Source item, CancellationToken cancellationToken = default)
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        using JsonDocumentBuilder<Petstore.EndToEnd.Server.ChatChunk.Mutable> builder = Petstore.EndToEnd.Server.ChatChunk.CreateBuilder(workspace, item);
+        using JsonDocumentBuilder<Petstore.EndToEnd.Server.Models.ChatChunk.Mutable> builder = Petstore.EndToEnd.Server.Models.ChatChunk.CreateBuilder(workspace, item);
         return this.writer.WriteItemAsync(builder.RootElement, cancellationToken);
     }
 
     /// <summary>
-    /// Appends a <see cref="Petstore.EndToEnd.Server.ChatChunk"/> item to the response stream.
+    /// Appends a <see cref="Petstore.EndToEnd.Server.Models.ChatChunk"/> item to the response stream.
     /// </summary>
     /// <param name="item">The item to append.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A value task that completes when the item has been flushed.</returns>
-    public ValueTask AppendChatChunk(Petstore.EndToEnd.Server.ChatChunk item, CancellationToken cancellationToken = default)
+    public ValueTask AppendChatChunk(Petstore.EndToEnd.Server.Models.ChatChunk item, CancellationToken cancellationToken = default)
     {
         return this.writer.WriteItemAsync(item, cancellationToken);
     }

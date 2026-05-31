@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended.Server;
+namespace Petstore.Extended.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -279,11 +279,11 @@ public readonly partial struct PostPetsByPetIdChatBody
                 /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                 /// </para>
                 /// </remarks>
-                public Petstore.Extended.Server.JsonString.Mutable Content
+                public Petstore.Extended.Server.Models.JsonString.Mutable Content
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out Petstore.Extended.Server.JsonString.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out Petstore.Extended.Server.Models.JsonString.Mutable value))
                         {
                             return value;
                         }
@@ -300,11 +300,11 @@ public readonly partial struct PostPetsByPetIdChatBody
                 /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                 /// </para>
                 /// </remarks>
-                public Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Mutable Role
+                public Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Mutable Role
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RoleUtf8, out Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RoleUtf8, out Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Mutable value))
                         {
                             return value;
                         }
@@ -356,7 +356,7 @@ public readonly partial struct PostPetsByPetIdChatBody
                 /// Set the <c>content</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetContent(in Petstore.Extended.Server.JsonString.Source value)
+                public void SetContent(in Petstore.Extended.Server.Models.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -387,7 +387,7 @@ public readonly partial struct PostPetsByPetIdChatBody
                 /// Set the <c>role</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRole(in Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Source value)
+                public void SetRole(in Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -755,7 +755,7 @@ public readonly partial struct PostPetsByPetIdChatBody
                     _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
                 }
 
-                internal Source(Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+                internal Source(Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
                 public static implicit operator Source(RequiredContentAndRole instance) => new(JsonElement.From(instance));
 
@@ -876,7 +876,7 @@ public readonly partial struct PostPetsByPetIdChatBody
 
                 public static implicit operator Source<TContext>(Source source) => new (source);
 
-                internal Source(scoped in TContext context, Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+                internal Source(scoped in TContext context, Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -992,8 +992,8 @@ public readonly partial struct PostPetsByPetIdChatBody
                 /// </summary>
                 internal static void Create(
                     ref ComplexValueBuilder builder,
-                    in Petstore.Extended.Server.JsonString.Source content,
-                    in Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Source role)
+                    in Petstore.Extended.Server.Models.JsonString.Source content,
+                    in Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Source role)
                 {
                     content.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Content, ref builder);
                     role.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Role, ref builder);
@@ -1002,7 +1002,7 @@ public readonly partial struct PostPetsByPetIdChatBody
                 /// <summary>
                 /// Creates an instance of a <see cref="RequiredContentAndRole"/>.
                 /// </summary>
-                public void Create(in Petstore.Extended.Server.JsonString.Source content, in Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Source role)
+                public void Create(in Petstore.Extended.Server.Models.JsonString.Source content, in Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Source role)
                 {
                     Create(ref _builder, content, role);
                 }
@@ -1164,7 +1164,7 @@ public readonly partial struct PostPetsByPetIdChatBody
             /// <param name="role">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.Server.JsonString.Source content, in Petstore.Extended.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Source role, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.Server.Models.JsonString.Source content, in Petstore.Extended.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity.Source role, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

@@ -6,6 +6,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 using Petstore.Client;
+using Petstore.Client.Models;
 
 // ── Setting up the client ────────────────────────────────────────────────────
 // The generated ApiPetsClient wraps the IApiTransport, which handles the actual

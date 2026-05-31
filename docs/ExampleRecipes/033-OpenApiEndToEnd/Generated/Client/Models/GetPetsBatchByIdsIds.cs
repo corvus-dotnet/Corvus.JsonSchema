@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Client;
+namespace Petstore.EndToEnd.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -69,7 +69,7 @@ public readonly partial struct GetPetsBatchByIdsIds
     {
         CheckValidInstance();
         written = 0;
-        foreach (Petstore.EndToEnd.Client.JsonInt64 item in EnumerateArray())
+        foreach (Petstore.EndToEnd.Client.Models.JsonInt64 item in EnumerateArray())
         {
             if (written >= items.Length)
             {
@@ -94,12 +94,12 @@ public readonly partial struct GetPetsBatchByIdsIds
     /// <returns>The item at the given index.</returns>
     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public Petstore.EndToEnd.Client.JsonInt64 this[int index]
+    public Petstore.EndToEnd.Client.Models.JsonInt64 this[int index]
     {
         get
         {
             CheckValidInstance();
-            return _parent.GetArrayIndexElement<Petstore.EndToEnd.Client.JsonInt64>(_idx, index);
+            return _parent.GetArrayIndexElement<Petstore.EndToEnd.Client.Models.JsonInt64>(_idx, index);
         }
     }
 
@@ -117,10 +117,10 @@ public readonly partial struct GetPetsBatchByIdsIds
     /// Enumerates the array.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public ArrayEnumerator<Petstore.EndToEnd.Client.JsonInt64> EnumerateArray()
+    public ArrayEnumerator<Petstore.EndToEnd.Client.Models.JsonInt64> EnumerateArray()
     {
         CheckValidInstance();
-        return EnumeratorCreator.CreateArrayEnumerator<Petstore.EndToEnd.Client.JsonInt64>(_parent, _idx);
+        return EnumeratorCreator.CreateArrayEnumerator<Petstore.EndToEnd.Client.Models.JsonInt64>(_parent, _idx);
     }
 
     /// <inheritdoc/>

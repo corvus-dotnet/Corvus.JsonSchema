@@ -31,12 +31,12 @@ public struct UploadPetPhotoResponse : IApiResponse<UploadPetPhotoResponse>
     /// <summary>
     /// Gets the 201 response body.
     /// </summary>
-    public Petstore.EndToEnd.Client.PhotoMetadata CreatedBody { get; private set; }
+    public Petstore.EndToEnd.Client.Models.PhotoMetadata CreatedBody { get; private set; }
 
     /// <summary>
     /// Gets the 401 response body.
     /// </summary>
-    public Petstore.EndToEnd.Client.Error UnauthorizedBody { get; private set; }
+    public Petstore.EndToEnd.Client.Models.Error UnauthorizedBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<UploadPetPhotoResponse> CreateAsync(
@@ -54,7 +54,7 @@ public struct UploadPetPhotoResponse : IApiResponse<UploadPetPhotoResponse>
 
         if (statusCode == 201)
         {
-            var createdDoc = await ParsedJsonDocument<Petstore.EndToEnd.Client.PhotoMetadata>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var createdDoc = await ParsedJsonDocument<Petstore.EndToEnd.Client.Models.PhotoMetadata>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = createdDoc;
             response.CreatedBody = createdDoc.RootElement;
             return response;
@@ -62,7 +62,7 @@ public struct UploadPetPhotoResponse : IApiResponse<UploadPetPhotoResponse>
 
         if (statusCode == 401)
         {
-            var unauthorizedDoc = await ParsedJsonDocument<Petstore.EndToEnd.Client.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var unauthorizedDoc = await ParsedJsonDocument<Petstore.EndToEnd.Client.Models.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = unauthorizedDoc;
             response.UnauthorizedBody = unauthorizedDoc.RootElement;
             return response;
@@ -76,7 +76,7 @@ public struct UploadPetPhotoResponse : IApiResponse<UploadPetPhotoResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 201.</returns>
-    public bool TryGetCreated(out Petstore.EndToEnd.Client.PhotoMetadata result)
+    public bool TryGetCreated(out Petstore.EndToEnd.Client.Models.PhotoMetadata result)
     {
         if (this.StatusCode == 201)
         {
@@ -93,7 +93,7 @@ public struct UploadPetPhotoResponse : IApiResponse<UploadPetPhotoResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 401.</returns>
-    public bool TryGetUnauthorized(out Petstore.EndToEnd.Client.Error result)
+    public bool TryGetUnauthorized(out Petstore.EndToEnd.Client.Models.Error result)
     {
         if (this.StatusCode == 401)
         {
@@ -115,8 +115,8 @@ public struct UploadPetPhotoResponse : IApiResponse<UploadPetPhotoResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<Petstore.EndToEnd.Client.PhotoMetadata, TResult> matchCreated,
-        ResponseMatcher<Petstore.EndToEnd.Client.Error, TResult> matchUnauthorized,
+        ResponseMatcher<Petstore.EndToEnd.Client.Models.PhotoMetadata, TResult> matchCreated,
+        ResponseMatcher<Petstore.EndToEnd.Client.Models.Error, TResult> matchUnauthorized,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 201)
@@ -145,8 +145,8 @@ public struct UploadPetPhotoResponse : IApiResponse<UploadPetPhotoResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<Petstore.EndToEnd.Client.PhotoMetadata, TContext, TResult> matchCreated,
-        ResponseMatcher<Petstore.EndToEnd.Client.Error, TContext, TResult> matchUnauthorized,
+        ResponseMatcher<Petstore.EndToEnd.Client.Models.PhotoMetadata, TContext, TResult> matchCreated,
+        ResponseMatcher<Petstore.EndToEnd.Client.Models.Error, TContext, TResult> matchUnauthorized,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

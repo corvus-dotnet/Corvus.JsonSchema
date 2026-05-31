@@ -24,33 +24,33 @@ public readonly struct GetItemRequest : IApiRequest<GetItemRequest>
     /// <summary>
     /// Gets the itemId parameter.
     /// </summary>
-    public CanonTests31.Client.JsonString ItemId { get; init; }
+    public CanonTests31.Client.Models.JsonString ItemId { get; init; }
 
     /// <summary>
     /// Gets the filter parameter.
     /// </summary>
-    public CanonTests31.Client.JsonString Filter { get; init; }
+    public CanonTests31.Client.Models.JsonString Filter { get; init; }
 
     /// <summary>
     /// Gets the limit parameter.
     /// </summary>
-    public CanonTests31.Client.JsonInt32 Limit { get; init; }
+    public CanonTests31.Client.Models.JsonInt32 Limit { get; init; }
 
     /// <summary>
     /// Gets the verbose parameter.
     /// </summary>
-    public CanonTests31.Client.JsonBoolean Verbose { get; init; }
+    public CanonTests31.Client.Models.JsonBoolean Verbose { get; init; }
 
     /// <summary>
     /// Gets the X-Request-Id parameter.
     /// </summary>
-    public CanonTests31.Client.JsonString XRequestId { get; init; }
+    public CanonTests31.Client.Models.JsonString XRequestId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetItemRequest"/> struct.
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
-    public GetItemRequest(CanonTests31.Client.JsonString itemId)
+    public GetItemRequest(CanonTests31.Client.Models.JsonString itemId)
     {
         this.ItemId = itemId;
     }

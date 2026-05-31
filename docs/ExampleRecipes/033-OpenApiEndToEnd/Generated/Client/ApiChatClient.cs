@@ -37,12 +37,12 @@ public sealed class ApiChatClient : IApiChatClient
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<StartVetChatResponse> StartVetChatAsync(Petstore.EndToEnd.Client.JsonString.Source petId, Petstore.EndToEnd.Client.JsonString.Source session_token, Petstore.EndToEnd.Client.PostPetsByPetIdChatBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<StartVetChatResponse> StartVetChatAsync(Petstore.EndToEnd.Client.Models.JsonString.Source petId, Petstore.EndToEnd.Client.Models.JsonString.Source session_token, Petstore.EndToEnd.Client.Models.PostPetsByPetIdChatBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.EndToEnd.Client.PostPetsByPetIdChatBody bodyValue = Petstore.EndToEnd.Client.PostPetsByPetIdChatBody.CreateBuilder(workspace, body, 30).RootElement;
-        Petstore.EndToEnd.Client.JsonString PetIdValue = Petstore.EndToEnd.Client.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
-        Petstore.EndToEnd.Client.JsonString SessionTokenValue = Petstore.EndToEnd.Client.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.PostPetsByPetIdChatBody bodyValue = Petstore.EndToEnd.Client.Models.PostPetsByPetIdChatBody.CreateBuilder(workspace, body, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.JsonString PetIdValue = Petstore.EndToEnd.Client.Models.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.JsonString SessionTokenValue = Petstore.EndToEnd.Client.Models.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
         StartVetChatRequest request = new(PetIdValue, SessionTokenValue);
 
         request.Validate(validationMode);
@@ -60,7 +60,7 @@ public sealed class ApiChatClient : IApiChatClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyAsyncCore<StartVetChatRequest, Petstore.EndToEnd.Client.PostPetsByPetIdChatBody, StartVetChatResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendWithBodyAsyncCore<StartVetChatRequest, Petstore.EndToEnd.Client.Models.PostPetsByPetIdChatBody, StartVetChatResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -69,13 +69,13 @@ public sealed class ApiChatClient : IApiChatClient
     /// <param name="petId">The petId parameter.</param>
     /// <param name="since">The since parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<StreamPetActivityResponse> StreamPetActivityAsync(Petstore.EndToEnd.Client.JsonString.Source petId, Petstore.EndToEnd.Client.JsonDateTime.Source since = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<StreamPetActivityResponse> StreamPetActivityAsync(Petstore.EndToEnd.Client.Models.JsonString.Source petId, Petstore.EndToEnd.Client.Models.JsonDateTime.Source since = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Petstore.EndToEnd.Client.JsonString PetIdValue = Petstore.EndToEnd.Client.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
+        Petstore.EndToEnd.Client.Models.JsonString PetIdValue = Petstore.EndToEnd.Client.Models.JsonString.CreateBuilder(workspace, petId, 30).RootElement;
         StreamPetActivityRequest request = new(PetIdValue)
         {
-            Since = since.IsUndefined ? default : (Petstore.EndToEnd.Client.JsonDateTime)Petstore.EndToEnd.Client.JsonDateTime.CreateBuilder(workspace, since, 30).RootElement,
+            Since = since.IsUndefined ? default : (Petstore.EndToEnd.Client.Models.JsonDateTime)Petstore.EndToEnd.Client.Models.JsonDateTime.CreateBuilder(workspace, since, 30).RootElement,
         }
         ;
 

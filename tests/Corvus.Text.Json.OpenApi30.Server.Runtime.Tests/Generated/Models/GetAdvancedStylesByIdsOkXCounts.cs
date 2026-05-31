@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Server;
+namespace CanonTests30.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -69,7 +69,7 @@ public readonly partial struct GetAdvancedStylesByIdsOkXCounts
     {
         CheckValidInstance();
         written = 0;
-        foreach (CanonTests30.Server.JsonInt64 item in EnumerateArray())
+        foreach (CanonTests30.Server.Models.JsonInt64 item in EnumerateArray())
         {
             if (written >= items.Length)
             {
@@ -94,12 +94,12 @@ public readonly partial struct GetAdvancedStylesByIdsOkXCounts
     /// <returns>The item at the given index.</returns>
     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public CanonTests30.Server.JsonInt64 this[int index]
+    public CanonTests30.Server.Models.JsonInt64 this[int index]
     {
         get
         {
             CheckValidInstance();
-            return _parent.GetArrayIndexElement<CanonTests30.Server.JsonInt64>(_idx, index);
+            return _parent.GetArrayIndexElement<CanonTests30.Server.Models.JsonInt64>(_idx, index);
         }
     }
 
@@ -117,10 +117,10 @@ public readonly partial struct GetAdvancedStylesByIdsOkXCounts
     /// Enumerates the array.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public ArrayEnumerator<CanonTests30.Server.JsonInt64> EnumerateArray()
+    public ArrayEnumerator<CanonTests30.Server.Models.JsonInt64> EnumerateArray()
     {
         CheckValidInstance();
-        return EnumeratorCreator.CreateArrayEnumerator<CanonTests30.Server.JsonInt64>(_parent, _idx);
+        return EnumeratorCreator.CreateArrayEnumerator<CanonTests30.Server.Models.JsonInt64>(_parent, _idx);
     }
 
     /// <inheritdoc/>

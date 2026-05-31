@@ -36,7 +36,7 @@ public struct DownloadMixedResponse : IApiResponse<DownloadMixedResponse>
     /// <summary>
     /// Gets the 404 response body.
     /// </summary>
-    public CanonTests31.Client.GetFilesDownloadMixedNotFound NotFoundBody { get; private set; }
+    public CanonTests31.Client.Models.GetFilesDownloadMixedNotFound NotFoundBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<DownloadMixedResponse> CreateAsync(
@@ -60,7 +60,7 @@ public struct DownloadMixedResponse : IApiResponse<DownloadMixedResponse>
 
         if (statusCode == 404)
         {
-            var notFoundDoc = await ParsedJsonDocument<CanonTests31.Client.GetFilesDownloadMixedNotFound>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var notFoundDoc = await ParsedJsonDocument<CanonTests31.Client.Models.GetFilesDownloadMixedNotFound>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = notFoundDoc;
             response.NotFoundBody = notFoundDoc.RootElement;
             return response;
@@ -91,7 +91,7 @@ public struct DownloadMixedResponse : IApiResponse<DownloadMixedResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 404.</returns>
-    public bool TryGetNotFound(out CanonTests31.Client.GetFilesDownloadMixedNotFound result)
+    public bool TryGetNotFound(out CanonTests31.Client.Models.GetFilesDownloadMixedNotFound result)
     {
         if (this.StatusCode == 404)
         {
@@ -114,7 +114,7 @@ public struct DownloadMixedResponse : IApiResponse<DownloadMixedResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
         ResponseMatcher<Stream?, TResult> matchOkStream,
-        ResponseMatcher<CanonTests31.Client.GetFilesDownloadMixedNotFound, TResult> matchNotFound,
+        ResponseMatcher<CanonTests31.Client.Models.GetFilesDownloadMixedNotFound, TResult> matchNotFound,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -144,7 +144,7 @@ public struct DownloadMixedResponse : IApiResponse<DownloadMixedResponse>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
         ResponseMatcher<Stream?, TContext, TResult> matchOkStream,
-        ResponseMatcher<CanonTests31.Client.GetFilesDownloadMixedNotFound, TContext, TResult> matchNotFound,
+        ResponseMatcher<CanonTests31.Client.Models.GetFilesDownloadMixedNotFound, TContext, TResult> matchNotFound,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

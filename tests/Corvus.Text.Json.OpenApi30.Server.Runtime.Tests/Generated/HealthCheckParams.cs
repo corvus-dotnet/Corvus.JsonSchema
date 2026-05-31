@@ -23,5 +23,5 @@ public readonly struct HealthCheckParams
     /// <summary>
     /// Gets the 'verbose' query parameter.
     /// </summary>
-    public CanonTests30.Server.JsonBoolean Verbose { get; init; }
+    public CanonTests30.Server.Models.JsonBoolean Verbose { get; init; }
 }

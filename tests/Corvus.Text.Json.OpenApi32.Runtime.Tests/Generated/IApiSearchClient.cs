@@ -167,7 +167,7 @@ public interface IApiSearchClient : IAsyncDisposable
     /// <param name="page">The page parameter.</param>
     /// <param name="rating">The rating parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SearchResponse> SearchAsync(CanonTests32.Client.JsonString.Source q, CanonTests32.Client.JsonInt32.Source page = default, CanonTests32.Client.JsonSingle.Source rating = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SearchResponse> SearchAsync(CanonTests32.Client.Models.JsonString.Source q, CanonTests32.Client.Models.JsonInt32.Source page = default, CanonTests32.Client.Models.JsonSingle.Source rating = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Search using HTTP QUERY method with request body
@@ -175,12 +175,12 @@ public interface IApiSearchClient : IAsyncDisposable
     /// <param name="limit">The limit parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<QuerySearchResponse> QuerySearchAsync(CanonTests32.Client.Schema1.Source body, CanonTests32.Client.JsonInt32.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<QuerySearchResponse> QuerySearchAsync(CanonTests32.Client.Models.Schema1.Source body, CanonTests32.Client.Models.JsonInt32.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Search using in:querystring parameter with content-based serialization
     /// </summary>
     /// <param name="qs">The qs parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SearchWithQuerystringResponse> SearchWithQuerystringAsync(CanonTests32.Client.GetSearchWithQuerystringQs.Source qs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SearchWithQuerystringResponse> SearchWithQuerystringAsync(CanonTests32.Client.Models.GetSearchWithQuerystringQs.Source qs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

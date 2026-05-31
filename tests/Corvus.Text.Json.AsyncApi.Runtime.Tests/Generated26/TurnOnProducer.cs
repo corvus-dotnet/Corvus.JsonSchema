@@ -39,10 +39,10 @@ public sealed class TurnOnProducer
     /// <param name="payload">The message payload.</param>
     /// <param name="streetlightId">The streetlight identifier.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask PublishTurnOnOffAsync(Streetlights.Client.V26.TurnOnOffPayload.Source payload, string streetlightId, CancellationToken cancellationToken = default)
+    public ValueTask PublishTurnOnOffAsync(Streetlights.Client.V26.Models.TurnOnOffPayload.Source payload, string streetlightId, CancellationToken cancellationToken = default)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Streetlights.Client.V26.TurnOnOffPayload payloadValue = Streetlights.Client.V26.TurnOnOffPayload.CreateBuilder(workspace, payload, 30).RootElement;
+        Streetlights.Client.V26.Models.TurnOnOffPayload payloadValue = Streetlights.Client.V26.Models.TurnOnOffPayload.CreateBuilder(workspace, payload, 30).RootElement;
 
         if (this.validationMode != ValidationMode.None)
         {

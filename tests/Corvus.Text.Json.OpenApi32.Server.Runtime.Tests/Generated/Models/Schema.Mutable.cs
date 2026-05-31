@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the (optional) <c>filter</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonString.Mutable Filter
+        public CanonTests32.Server.Models.JsonString.Mutable Filter
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out CanonTests32.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the (optional) <c>limit</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonInteger.Mutable Limit
+        public CanonTests32.Server.Models.JsonInteger.Mutable Limit
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LimitUtf8, out CanonTests32.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LimitUtf8, out CanonTests32.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -335,7 +335,7 @@ public readonly partial struct Schema
         /// Set the <c>filter</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFilter(in CanonTests32.Server.JsonString.Source value)
+        public void SetFilter(in CanonTests32.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -380,7 +380,7 @@ public readonly partial struct Schema
         /// Set the <c>limit</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLimit(in CanonTests32.Server.JsonInteger.Source value)
+        public void SetLimit(in CanonTests32.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -762,7 +762,7 @@ public readonly partial struct Schema
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.Schema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Server.Models.Schema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(Schema instance) => new(JsonElement.From(instance));
 
@@ -883,7 +883,7 @@ public readonly partial struct Schema
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.Schema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.Schema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -999,8 +999,8 @@ public readonly partial struct Schema
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Server.JsonString.Source filter = default,
-            in CanonTests32.Server.JsonInteger.Source limit = default)
+            in CanonTests32.Server.Models.JsonString.Source filter = default,
+            in CanonTests32.Server.Models.JsonInteger.Source limit = default)
         {
             filter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filter, ref builder);
             limit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Limit, ref builder);
@@ -1009,7 +1009,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Creates an instance of a <see cref="Schema"/>.
         /// </summary>
-        public void Create(in CanonTests32.Server.JsonString.Source filter = default, in CanonTests32.Server.JsonInteger.Source limit = default)
+        public void Create(in CanonTests32.Server.Models.JsonString.Source filter = default, in CanonTests32.Server.Models.JsonInteger.Source limit = default)
         {
             Create(ref _builder, filter, limit);
         }
@@ -1171,7 +1171,7 @@ public readonly partial struct Schema
     /// <param name="limit">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonString.Source filter = default, in CanonTests32.Server.JsonInteger.Source limit = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.Models.JsonString.Source filter = default, in CanonTests32.Server.Models.JsonInteger.Source limit = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

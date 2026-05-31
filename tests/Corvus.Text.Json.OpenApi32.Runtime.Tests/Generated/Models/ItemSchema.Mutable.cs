@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct ItemSchema
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable EventId
+        public CanonTests32.Client.Models.JsonString.Mutable EventId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventIdUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventIdUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct ItemSchema
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable EventType
+        public CanonTests32.Client.Models.JsonString.Mutable EventType
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventTypeUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventTypeUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -305,11 +305,11 @@ public readonly partial struct ItemSchema
         /// <summary>
         /// Gets the (optional) <c>payload</c> property.
         /// </summary>
-        public CanonTests32.Client.JsonObject.Mutable Payload
+        public CanonTests32.Client.Models.JsonObject.Mutable Payload
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PayloadUtf8, out CanonTests32.Client.JsonObject.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PayloadUtf8, out CanonTests32.Client.Models.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -326,11 +326,11 @@ public readonly partial struct ItemSchema
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonDateTime.Mutable Timestamp
+        public CanonTests32.Client.Models.JsonDateTime.Mutable Timestamp
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TimestampUtf8, out CanonTests32.Client.JsonDateTime.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TimestampUtf8, out CanonTests32.Client.Models.JsonDateTime.Mutable value))
                 {
                     return value;
                 }
@@ -382,7 +382,7 @@ public readonly partial struct ItemSchema
         /// Set the <c>eventId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEventId(in CanonTests32.Client.JsonString.Source value)
+        public void SetEventId(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -413,7 +413,7 @@ public readonly partial struct ItemSchema
         /// Set the <c>eventType</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEventType(in CanonTests32.Client.JsonString.Source value)
+        public void SetEventType(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -444,7 +444,7 @@ public readonly partial struct ItemSchema
         /// Set the <c>payload</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPayload(in CanonTests32.Client.JsonObject.Source value)
+        public void SetPayload(in CanonTests32.Client.Models.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -477,7 +477,7 @@ public readonly partial struct ItemSchema
         /// Set the <c>payload</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPayload<TContext>(in CanonTests32.Client.JsonObject.Source<TContext> value)
+        public void SetPayload<TContext>(in CanonTests32.Client.Models.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -525,7 +525,7 @@ public readonly partial struct ItemSchema
         /// Set the <c>timestamp</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTimestamp(in CanonTests32.Client.JsonDateTime.Source value)
+        public void SetTimestamp(in CanonTests32.Client.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -893,7 +893,7 @@ public readonly partial struct ItemSchema
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.ItemSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.ItemSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(ItemSchema instance) => new(JsonElement.From(instance));
 
@@ -1014,7 +1014,7 @@ public readonly partial struct ItemSchema
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.ItemSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.ItemSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1130,10 +1130,10 @@ public readonly partial struct ItemSchema
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonString.Source eventId,
-            in CanonTests32.Client.JsonString.Source eventType,
-            in CanonTests32.Client.JsonDateTime.Source timestamp,
-            in CanonTests32.Client.JsonObject.Source payload = default)
+            in CanonTests32.Client.Models.JsonString.Source eventId,
+            in CanonTests32.Client.Models.JsonString.Source eventType,
+            in CanonTests32.Client.Models.JsonDateTime.Source timestamp,
+            in CanonTests32.Client.Models.JsonObject.Source payload = default)
         {
             eventId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EventId, ref builder);
             eventType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EventType, ref builder);
@@ -1145,10 +1145,10 @@ public readonly partial struct ItemSchema
         /// Creates an instance of a <see cref="ItemSchema"/>.
         /// </summary>
         public void Create(
-            in CanonTests32.Client.JsonString.Source eventId,
-            in CanonTests32.Client.JsonString.Source eventType,
-            in CanonTests32.Client.JsonDateTime.Source timestamp,
-            in CanonTests32.Client.JsonObject.Source payload = default)
+            in CanonTests32.Client.Models.JsonString.Source eventId,
+            in CanonTests32.Client.Models.JsonString.Source eventType,
+            in CanonTests32.Client.Models.JsonDateTime.Source timestamp,
+            in CanonTests32.Client.Models.JsonObject.Source payload = default)
         {
             Create(ref _builder, eventId, eventType, timestamp, payload);
         }
@@ -1159,10 +1159,10 @@ public readonly partial struct ItemSchema
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonString.Source eventId,
-            in CanonTests32.Client.JsonString.Source eventType,
-            in CanonTests32.Client.JsonDateTime.Source timestamp,
-            in CanonTests32.Client.JsonObject.Source<TContext> payload = default)
+            in CanonTests32.Client.Models.JsonString.Source eventId,
+            in CanonTests32.Client.Models.JsonString.Source eventType,
+            in CanonTests32.Client.Models.JsonDateTime.Source timestamp,
+            in CanonTests32.Client.Models.JsonObject.Source<TContext> payload = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1178,10 +1178,10 @@ public readonly partial struct ItemSchema
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests32.Client.JsonString.Source eventId,
-            in CanonTests32.Client.JsonString.Source eventType,
-            in CanonTests32.Client.JsonDateTime.Source timestamp,
-            in CanonTests32.Client.JsonObject.Source<TContext> payload = default)
+            in CanonTests32.Client.Models.JsonString.Source eventId,
+            in CanonTests32.Client.Models.JsonString.Source eventType,
+            in CanonTests32.Client.Models.JsonDateTime.Source timestamp,
+            in CanonTests32.Client.Models.JsonObject.Source<TContext> payload = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1348,7 +1348,7 @@ public readonly partial struct ItemSchema
     /// <param name="payload">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source eventId, in CanonTests32.Client.JsonString.Source eventType, in CanonTests32.Client.JsonDateTime.Source timestamp, in CanonTests32.Client.JsonObject.Source payload = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source eventId, in CanonTests32.Client.Models.JsonString.Source eventType, in CanonTests32.Client.Models.JsonDateTime.Source timestamp, in CanonTests32.Client.Models.JsonObject.Source payload = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1373,7 +1373,7 @@ public readonly partial struct ItemSchema
     /// <param name="payload">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.JsonString.Source eventId, in CanonTests32.Client.JsonString.Source eventType, in CanonTests32.Client.JsonDateTime.Source timestamp, in CanonTests32.Client.JsonObject.Source<TContext> payload = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.Models.JsonString.Source eventId, in CanonTests32.Client.Models.JsonString.Source eventType, in CanonTests32.Client.Models.JsonDateTime.Source timestamp, in CanonTests32.Client.Models.JsonObject.Source<TContext> payload = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

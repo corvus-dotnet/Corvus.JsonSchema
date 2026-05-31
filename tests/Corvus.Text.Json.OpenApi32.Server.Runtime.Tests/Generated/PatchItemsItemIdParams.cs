@@ -24,10 +24,10 @@ public readonly struct PatchItemsItemIdParams
     /// <summary>
     /// Gets the 'itemId' path parameter.
     /// </summary>
-    public CanonTests32.Server.JsonString ItemId { get; init; }
+    public CanonTests32.Server.Models.JsonString ItemId { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.PatchItemsByItemIdBody Body { get; init; }
+    public CanonTests32.Server.Models.PatchItemsByItemIdBody Body { get; init; }
 }

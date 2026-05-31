@@ -101,6 +101,7 @@ The client delegates HTTP communication to an `IApiTransport`. The library provi
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Petstore.Client;
+using Petstore.Client.Models;
 
 HttpClient httpClient = new() { BaseAddress = new Uri("https://petstore.example.com/v1") };
 await using HttpClientTransport transport = new(httpClient, disposeClient: true);

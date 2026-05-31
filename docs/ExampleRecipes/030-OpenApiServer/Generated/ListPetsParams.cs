@@ -24,5 +24,5 @@ public readonly struct ListPetsParams
     /// <summary>
     /// Gets the 'limit' query parameter.
     /// </summary>
-    public Petstore.Server.GetPetsLimit Limit { get; init; }
+    public Petstore.Server.Models.GetPetsLimit Limit { get; init; }
 }

@@ -24,7 +24,7 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
     /// <summary>
     /// Gets the limit parameter.
     /// </summary>
-    public Petstore.Client.GetPetsLimit Limit { get; init; }
+    public Petstore.Client.Models.GetPetsLimit Limit { get; init; }
 
     /// <inheritdoc/>
     public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;

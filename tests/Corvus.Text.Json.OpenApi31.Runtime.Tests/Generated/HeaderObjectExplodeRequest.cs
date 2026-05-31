@@ -24,13 +24,13 @@ public readonly struct HeaderObjectExplodeRequest : IApiRequest<HeaderObjectExpl
     /// <summary>
     /// Gets the X-Dims parameter.
     /// </summary>
-    public CanonTests31.Client.GetComplexHeaderObjectExplodeXDims XDims { get; init; }
+    public CanonTests31.Client.Models.GetComplexHeaderObjectExplodeXDims XDims { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HeaderObjectExplodeRequest"/> struct.
     /// </summary>
     /// <param name="xDims">The X-Dims parameter.</param>
-    public HeaderObjectExplodeRequest(CanonTests31.Client.GetComplexHeaderObjectExplodeXDims xDims)
+    public HeaderObjectExplodeRequest(CanonTests31.Client.Models.GetComplexHeaderObjectExplodeXDims xDims)
     {
         this.XDims = xDims;
     }

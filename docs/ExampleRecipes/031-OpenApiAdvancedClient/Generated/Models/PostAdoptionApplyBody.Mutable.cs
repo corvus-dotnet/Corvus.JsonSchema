@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PostAdoptionApplyBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.Extended.JsonString.Mutable ApplicantName
+        public Petstore.Extended.Models.JsonString.Mutable ApplicantName
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicantNameUtf8, out Petstore.Extended.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicantNameUtf8, out Petstore.Extended.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct PostAdoptionApplyBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.Extended.JsonEmail.Mutable Email
+        public Petstore.Extended.Models.JsonEmail.Mutable Email
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out Petstore.Extended.JsonEmail.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out Petstore.Extended.Models.JsonEmail.Mutable value))
                 {
                     return value;
                 }
@@ -305,11 +305,11 @@ public readonly partial struct PostAdoptionApplyBody
         /// <summary>
         /// Gets the (optional) <c>experience</c> property.
         /// </summary>
-        public Petstore.Extended.JsonString.Mutable Experience
+        public Petstore.Extended.Models.JsonString.Mutable Experience
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperienceUtf8, out Petstore.Extended.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperienceUtf8, out Petstore.Extended.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -321,11 +321,11 @@ public readonly partial struct PostAdoptionApplyBody
         /// <summary>
         /// Gets the (optional) <c>hasGarden</c> property.
         /// </summary>
-        public Petstore.Extended.JsonBoolean.Mutable HasGarden
+        public Petstore.Extended.Models.JsonBoolean.Mutable HasGarden
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HasGardenUtf8, out Petstore.Extended.JsonBoolean.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HasGardenUtf8, out Petstore.Extended.Models.JsonBoolean.Mutable value))
                 {
                     return value;
                 }
@@ -342,11 +342,11 @@ public readonly partial struct PostAdoptionApplyBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.Extended.PostAdoptionApplyBody.HousingTypeEntity.Mutable HousingType
+        public Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Mutable HousingType
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HousingTypeUtf8, out Petstore.Extended.PostAdoptionApplyBody.HousingTypeEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HousingTypeUtf8, out Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Mutable value))
                 {
                     return value;
                 }
@@ -363,11 +363,11 @@ public readonly partial struct PostAdoptionApplyBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.Extended.JsonString.Mutable PetId
+        public Petstore.Extended.Models.JsonString.Mutable PetId
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PetIdUtf8, out Petstore.Extended.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PetIdUtf8, out Petstore.Extended.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -379,11 +379,11 @@ public readonly partial struct PostAdoptionApplyBody
         /// <summary>
         /// Gets the (optional) <c>phone</c> property.
         /// </summary>
-        public Petstore.Extended.JsonString.Mutable Phone
+        public Petstore.Extended.Models.JsonString.Mutable Phone
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhoneUtf8, out Petstore.Extended.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhoneUtf8, out Petstore.Extended.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -435,7 +435,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>applicantName</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetApplicantName(in Petstore.Extended.JsonString.Source value)
+        public void SetApplicantName(in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -466,7 +466,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>email</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEmail(in Petstore.Extended.JsonEmail.Source value)
+        public void SetEmail(in Petstore.Extended.Models.JsonEmail.Source value)
         {
             CheckValidInstance();
 
@@ -497,7 +497,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>experience</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExperience(in Petstore.Extended.JsonString.Source value)
+        public void SetExperience(in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -542,7 +542,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>hasGarden</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHasGarden(in Petstore.Extended.JsonBoolean.Source value)
+        public void SetHasGarden(in Petstore.Extended.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -587,7 +587,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>housingType</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHousingType(in Petstore.Extended.PostAdoptionApplyBody.HousingTypeEntity.Source value)
+        public void SetHousingType(in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source value)
         {
             CheckValidInstance();
 
@@ -618,7 +618,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>petId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPetId(in Petstore.Extended.JsonString.Source value)
+        public void SetPetId(in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -649,7 +649,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>phone</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPhone(in Petstore.Extended.JsonString.Source value)
+        public void SetPhone(in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1031,7 +1031,7 @@ public readonly partial struct PostAdoptionApplyBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Petstore.Extended.PostAdoptionApplyBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Petstore.Extended.Models.PostAdoptionApplyBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostAdoptionApplyBody instance) => new(JsonElement.From(instance));
 
@@ -1152,7 +1152,7 @@ public readonly partial struct PostAdoptionApplyBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Petstore.Extended.PostAdoptionApplyBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Petstore.Extended.Models.PostAdoptionApplyBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1268,13 +1268,13 @@ public readonly partial struct PostAdoptionApplyBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Petstore.Extended.JsonString.Source applicantName,
-            in Petstore.Extended.JsonEmail.Source email,
-            in Petstore.Extended.PostAdoptionApplyBody.HousingTypeEntity.Source housingType,
-            in Petstore.Extended.JsonString.Source petId,
-            in Petstore.Extended.JsonString.Source experience = default,
-            in Petstore.Extended.JsonBoolean.Source hasGarden = default,
-            in Petstore.Extended.JsonString.Source phone = default)
+            in Petstore.Extended.Models.JsonString.Source applicantName,
+            in Petstore.Extended.Models.JsonEmail.Source email,
+            in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source housingType,
+            in Petstore.Extended.Models.JsonString.Source petId,
+            in Petstore.Extended.Models.JsonString.Source experience = default,
+            in Petstore.Extended.Models.JsonBoolean.Source hasGarden = default,
+            in Petstore.Extended.Models.JsonString.Source phone = default)
         {
             applicantName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ApplicantName, ref builder);
             email.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Email, ref builder);
@@ -1289,13 +1289,13 @@ public readonly partial struct PostAdoptionApplyBody
         /// Creates an instance of a <see cref="PostAdoptionApplyBody"/>.
         /// </summary>
         public void Create(
-            in Petstore.Extended.JsonString.Source applicantName,
-            in Petstore.Extended.JsonEmail.Source email,
-            in Petstore.Extended.PostAdoptionApplyBody.HousingTypeEntity.Source housingType,
-            in Petstore.Extended.JsonString.Source petId,
-            in Petstore.Extended.JsonString.Source experience = default,
-            in Petstore.Extended.JsonBoolean.Source hasGarden = default,
-            in Petstore.Extended.JsonString.Source phone = default)
+            in Petstore.Extended.Models.JsonString.Source applicantName,
+            in Petstore.Extended.Models.JsonEmail.Source email,
+            in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source housingType,
+            in Petstore.Extended.Models.JsonString.Source petId,
+            in Petstore.Extended.Models.JsonString.Source experience = default,
+            in Petstore.Extended.Models.JsonBoolean.Source hasGarden = default,
+            in Petstore.Extended.Models.JsonString.Source phone = default)
         {
             Create(ref _builder, applicantName, email, housingType, petId, experience, hasGarden, phone);
         }
@@ -1462,7 +1462,7 @@ public readonly partial struct PostAdoptionApplyBody
     /// <param name="phone">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.JsonString.Source applicantName, in Petstore.Extended.JsonEmail.Source email, in Petstore.Extended.PostAdoptionApplyBody.HousingTypeEntity.Source housingType, in Petstore.Extended.JsonString.Source petId, in Petstore.Extended.JsonString.Source experience = default, in Petstore.Extended.JsonBoolean.Source hasGarden = default, in Petstore.Extended.JsonString.Source phone = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Extended.Models.JsonString.Source applicantName, in Petstore.Extended.Models.JsonEmail.Source email, in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source housingType, in Petstore.Extended.Models.JsonString.Source petId, in Petstore.Extended.Models.JsonString.Source experience = default, in Petstore.Extended.Models.JsonBoolean.Source hasGarden = default, in Petstore.Extended.Models.JsonString.Source phone = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

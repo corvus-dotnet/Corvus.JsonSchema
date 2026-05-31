@@ -24,10 +24,10 @@ public readonly struct SubmitFeedbackParams
     /// <summary>
     /// Gets the 'source' query parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString Source { get; init; }
+    public CanonTests31.Server.Models.JsonString Source { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests31.Server.PostFeedbackBody Body { get; init; }
+    public CanonTests31.Server.Models.PostFeedbackBody Body { get; init; }
 }

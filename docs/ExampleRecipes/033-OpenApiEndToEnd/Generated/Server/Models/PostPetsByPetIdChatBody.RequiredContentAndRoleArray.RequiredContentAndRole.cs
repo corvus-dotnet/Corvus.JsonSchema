@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Server;
+namespace Petstore.EndToEnd.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -172,11 +172,11 @@ public readonly partial struct PostPetsByPetIdChatBody
             /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
             /// </remarks>
-            public Petstore.EndToEnd.Server.JsonString Content
+            public Petstore.EndToEnd.Server.Models.JsonString Content
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out Petstore.EndToEnd.Server.JsonString value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out Petstore.EndToEnd.Server.Models.JsonString value))
                     {
                         return value;
                     }
@@ -193,11 +193,11 @@ public readonly partial struct PostPetsByPetIdChatBody
             /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
             /// </remarks>
-            public Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity Role
+            public Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity Role
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RoleUtf8, out Petstore.EndToEnd.Server.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RoleUtf8, out Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.RoleEntity value))
                     {
                         return value;
                     }

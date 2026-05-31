@@ -24,10 +24,10 @@ public readonly struct StreamPetActivityParams
     /// <summary>
     /// Gets the 'petId' path parameter.
     /// </summary>
-    public Petstore.Extended.Server.JsonString PetId { get; init; }
+    public Petstore.Extended.Server.Models.JsonString PetId { get; init; }
 
     /// <summary>
     /// Gets the 'since' query parameter.
     /// </summary>
-    public Petstore.Extended.Server.JsonDateTime Since { get; init; }
+    public Petstore.Extended.Server.Models.JsonDateTime Since { get; init; }
 }

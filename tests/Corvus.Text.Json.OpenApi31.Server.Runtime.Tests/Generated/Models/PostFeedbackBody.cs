@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct PostFeedbackBody
     /// <summary>
     /// Gets the (optional) <c>comment</c> property.
     /// </summary>
-    public CanonTests31.Server.JsonString Comment
+    public CanonTests31.Server.Models.JsonString Comment
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommentUtf8, out CanonTests31.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommentUtf8, out CanonTests31.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct PostFeedbackBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests31.Server.JsonInteger Rating
+    public CanonTests31.Server.Models.JsonInteger Rating
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RatingUtf8, out CanonTests31.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RatingUtf8, out CanonTests31.Server.Models.JsonInteger value))
             {
                 return value;
             }

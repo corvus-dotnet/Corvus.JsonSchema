@@ -19,7 +19,7 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct UpdateDocumentResult
 {
-    private UpdateDocumentResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.JsonInt32 xDocumentVersion = default)
+    private UpdateDocumentResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.Models.JsonInt32 xDocumentVersion = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -39,7 +39,7 @@ public readonly struct UpdateDocumentResult
     /// <summary>
     /// Gets the value of the <c>X-Document-Version</c> response header.
     /// </summary>
-    public CanonTests32.Server.JsonInt32 XDocumentVersion { get; }
+    public CanonTests32.Server.Models.JsonInt32 XDocumentVersion { get; }
 
     /// <summary>
     /// Creates a 200 Ok result.
@@ -48,7 +48,7 @@ public readonly struct UpdateDocumentResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="xDocumentVersion">The value for the <c>X-Document-Version</c> response header.</param>
     /// <returns>A <see cref="UpdateDocumentResult"/> with status 200.</returns>
-    public static UpdateDocumentResult Ok(CanonTests32.Server.Schema5.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xDocumentVersion = default) => new(200, CanonTests32.Server.Schema5.CreateBuilder(workspace, body, 30).RootElement, "application/json", xDocumentVersion: xDocumentVersion);
+    public static UpdateDocumentResult Ok(CanonTests32.Server.Models.Schema5.Source body, JsonWorkspace workspace, CanonTests32.Server.Models.JsonInt32 xDocumentVersion = default) => new(200, CanonTests32.Server.Models.Schema5.CreateBuilder(workspace, body, 30).RootElement, "application/json", xDocumentVersion: xDocumentVersion);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -59,7 +59,7 @@ public readonly struct UpdateDocumentResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests32.Server.Schema5.From(this.Body).EvaluateSchema(),
+            200 => CanonTests32.Server.Models.Schema5.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

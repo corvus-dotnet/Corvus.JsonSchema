@@ -265,159 +265,159 @@ public interface IApiComplexParamsClient : IAsyncDisposable
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PathArraySimpleResponse> PathArraySimpleAsync(CanonTests32.Client.GetComplexPathArraySimpleByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PathArraySimpleResponse> PathArraySimpleAsync(CanonTests32.Client.Models.GetComplexPathArraySimpleByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Path array param, label style
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PathArrayLabelResponse> PathArrayLabelAsync(CanonTests32.Client.GetComplexPathArrayLabelByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PathArrayLabelResponse> PathArrayLabelAsync(CanonTests32.Client.Models.GetComplexPathArrayLabelByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Path array param, matrix style
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PathArrayMatrixResponse> PathArrayMatrixAsync(CanonTests32.Client.GetComplexPathArrayMatrixByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PathArrayMatrixResponse> PathArrayMatrixAsync(CanonTests32.Client.Models.GetComplexPathArrayMatrixByIdsIds.Source ids, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Path object param, simple style (default, explode=false)
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PathObjectSimpleResponse> PathObjectSimpleAsync(CanonTests32.Client.GetComplexPathObjectSimpleByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PathObjectSimpleResponse> PathObjectSimpleAsync(CanonTests32.Client.Models.GetComplexPathObjectSimpleByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Path object param, simple+explode
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PathObjectSimpleExplodeResponse> PathObjectSimpleExplodeAsync(CanonTests32.Client.GetComplexPathObjectSimpleExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PathObjectSimpleExplodeResponse> PathObjectSimpleExplodeAsync(CanonTests32.Client.Models.GetComplexPathObjectSimpleExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Path object param, label style (explode=false)
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PathObjectLabelResponse> PathObjectLabelAsync(CanonTests32.Client.GetComplexPathObjectLabelByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PathObjectLabelResponse> PathObjectLabelAsync(CanonTests32.Client.Models.GetComplexPathObjectLabelByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Path object param, label+explode
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PathObjectLabelExplodeResponse> PathObjectLabelExplodeAsync(CanonTests32.Client.GetComplexPathObjectLabelExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PathObjectLabelExplodeResponse> PathObjectLabelExplodeAsync(CanonTests32.Client.Models.GetComplexPathObjectLabelExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Path object param, matrix style (explode=false)
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PathObjectMatrixResponse> PathObjectMatrixAsync(CanonTests32.Client.GetComplexPathObjectMatrixByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PathObjectMatrixResponse> PathObjectMatrixAsync(CanonTests32.Client.Models.GetComplexPathObjectMatrixByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Path object param, matrix+explode
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<PathObjectMatrixExplodeResponse> PathObjectMatrixExplodeAsync(CanonTests32.Client.GetComplexPathObjectMatrixExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<PathObjectMatrixExplodeResponse> PathObjectMatrixExplodeAsync(CanonTests32.Client.Models.GetComplexPathObjectMatrixExplodeByDimsDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Query array param, form+explode (default)
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<QueryArrayExplodeResponse> QueryArrayExplodeAsync(CanonTests32.Client.GetComplexQueryArrayExplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<QueryArrayExplodeResponse> QueryArrayExplodeAsync(CanonTests32.Client.Models.GetComplexQueryArrayExplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Query array param, form+explode=false
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<QueryArrayNonexplodeResponse> QueryArrayNonexplodeAsync(CanonTests32.Client.GetComplexQueryArrayNonexplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<QueryArrayNonexplodeResponse> QueryArrayNonexplodeAsync(CanonTests32.Client.Models.GetComplexQueryArrayNonexplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Query array param, spaceDelimited
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<QueryArraySpaceResponse> QueryArraySpaceAsync(CanonTests32.Client.GetComplexQueryArraySpaceColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<QueryArraySpaceResponse> QueryArraySpaceAsync(CanonTests32.Client.Models.GetComplexQueryArraySpaceColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Query array param, pipeDelimited
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<QueryArrayPipeResponse> QueryArrayPipeAsync(CanonTests32.Client.GetComplexQueryArrayPipeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<QueryArrayPipeResponse> QueryArrayPipeAsync(CanonTests32.Client.Models.GetComplexQueryArrayPipeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Query object param, form+explode (default)
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<QueryObjectExplodeResponse> QueryObjectExplodeAsync(CanonTests32.Client.GetComplexQueryObjectExplodeDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<QueryObjectExplodeResponse> QueryObjectExplodeAsync(CanonTests32.Client.Models.GetComplexQueryObjectExplodeDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Query object param, form+explode=false
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<QueryObjectNonexplodeResponse> QueryObjectNonexplodeAsync(CanonTests32.Client.GetComplexQueryObjectNonexplodeDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<QueryObjectNonexplodeResponse> QueryObjectNonexplodeAsync(CanonTests32.Client.Models.GetComplexQueryObjectNonexplodeDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Query object param, deepObject style
     /// </summary>
     /// <param name="dims">The dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<QueryObjectDeepResponse> QueryObjectDeepAsync(CanonTests32.Client.GetComplexQueryObjectDeepDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<QueryObjectDeepResponse> QueryObjectDeepAsync(CanonTests32.Client.Models.GetComplexQueryObjectDeepDims.Source dims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Header array param, simple (default)
     /// </summary>
     /// <param name="xTags">The X-Tags parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<HeaderArrayResponse> HeaderArrayAsync(CanonTests32.Client.GetComplexHeaderArrayXTags.Source xTags, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<HeaderArrayResponse> HeaderArrayAsync(CanonTests32.Client.Models.GetComplexHeaderArrayXTags.Source xTags, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Header object param, simple+explode=false (default)
     /// </summary>
     /// <param name="xDims">The X-Dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<HeaderObjectResponse> HeaderObjectAsync(CanonTests32.Client.GetComplexHeaderObjectXDims.Source xDims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<HeaderObjectResponse> HeaderObjectAsync(CanonTests32.Client.Models.GetComplexHeaderObjectXDims.Source xDims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Header object param, simple+explode
     /// </summary>
     /// <param name="xDims">The X-Dims parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<HeaderObjectExplodeResponse> HeaderObjectExplodeAsync(CanonTests32.Client.GetComplexHeaderObjectExplodeXDims.Source xDims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<HeaderObjectExplodeResponse> HeaderObjectExplodeAsync(CanonTests32.Client.Models.GetComplexHeaderObjectExplodeXDims.Source xDims, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Cookie array param, form+explode (default)
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CookieArrayResponse> CookieArrayAsync(CanonTests32.Client.GetComplexCookieArrayColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CookieArrayResponse> CookieArrayAsync(CanonTests32.Client.Models.GetComplexCookieArrayColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Cookie array param, form+explode=false
     /// </summary>
     /// <param name="colors">The colors parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CookieArrayNonexplodeResponse> CookieArrayNonexplodeAsync(CanonTests32.Client.GetComplexCookieArrayNonexplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CookieArrayNonexplodeResponse> CookieArrayNonexplodeAsync(CanonTests32.Client.Models.GetComplexCookieArrayNonexplodeColors.Source colors, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Cookie object param, form+explode (default)
     /// </summary>
     /// <param name="prefs">The prefs parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CookieObjectResponse> CookieObjectAsync(CanonTests32.Client.GetComplexCookieObjectPrefs.Source prefs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CookieObjectResponse> CookieObjectAsync(CanonTests32.Client.Models.GetComplexCookieObjectPrefs.Source prefs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Cookie object param, form+explode=false
     /// </summary>
     /// <param name="prefs">The prefs parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CookieObjectNonexplodeResponse> CookieObjectNonexplodeAsync(CanonTests32.Client.GetComplexCookieObjectNonexplodePrefs.Source prefs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CookieObjectNonexplodeResponse> CookieObjectNonexplodeAsync(CanonTests32.Client.Models.GetComplexCookieObjectNonexplodePrefs.Source prefs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

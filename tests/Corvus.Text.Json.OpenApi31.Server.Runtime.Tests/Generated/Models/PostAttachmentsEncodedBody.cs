@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PostAttachmentsEncodedBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests31.Server.JsonBinary File
+    public CanonTests31.Server.Models.JsonBinary File
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests31.Server.JsonBinary value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests31.Server.Models.JsonBinary value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct PostAttachmentsEncodedBody
     /// <summary>
     /// Gets the (optional) <c>metadata</c> property.
     /// </summary>
-    public CanonTests31.Server.PostAttachmentsEncodedBody.MetadataEntity Metadata
+    public CanonTests31.Server.Models.PostAttachmentsEncodedBody.MetadataEntity Metadata
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests31.Server.PostAttachmentsEncodedBody.MetadataEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests31.Server.Models.PostAttachmentsEncodedBody.MetadataEntity value))
             {
                 return value;
             }

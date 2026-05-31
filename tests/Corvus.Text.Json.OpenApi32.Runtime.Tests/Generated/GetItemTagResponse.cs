@@ -33,13 +33,13 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests32.Client.JsonObject OkBody { get; private set; }
+    public CanonTests32.Client.Models.JsonObject OkBody { get; private set; }
 
     /// <summary>
     /// Gets the value of the <c>X-Total-Count</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.JsonInt32 xTotalCountHeaderValue;
+    private CanonTests32.Client.Models.JsonInt32 xTotalCountHeaderValue;
     private bool xTotalCountHeaderParsed;
 
     /// <summary>
@@ -47,7 +47,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public CanonTests32.Client.JsonInt32 XTotalCountHeader
+    public CanonTests32.Client.Models.JsonInt32 XTotalCountHeader
     {
         get
         {
@@ -62,7 +62,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
                 && this.responseHeaders.TryGetValue("X-Total-Count", out string? rawValue)
                 && rawValue is not null)
             {
-                this.xTotalCountHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests32.Client.JsonInt32>(rawValue, this.workspace);
+                this.xTotalCountHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests32.Client.Models.JsonInt32>(rawValue, this.workspace);
             }
 
             return this.xTotalCountHeaderValue;
@@ -73,7 +73,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Request-Id</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.JsonString xRequestIdHeaderValue;
+    private CanonTests32.Client.Models.JsonString xRequestIdHeaderValue;
     private bool xRequestIdHeaderParsed;
 
     /// <summary>
@@ -81,7 +81,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public CanonTests32.Client.JsonString XRequestIdHeader
+    public CanonTests32.Client.Models.JsonString XRequestIdHeader
     {
         get
         {
@@ -96,7 +96,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
                 && this.responseHeaders.TryGetValue("X-Request-Id", out string? rawValue)
                 && rawValue is not null)
             {
-                this.xRequestIdHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Client.JsonString>(rawValue, this.workspace);
+                this.xRequestIdHeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Client.Models.JsonString>(rawValue, this.workspace);
             }
 
             return this.xRequestIdHeaderValue;
@@ -107,7 +107,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Tags</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXTags xTagsHeaderValue;
+    private CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXTags xTagsHeaderValue;
     private bool xTagsHeaderParsed;
 
     /// <summary>
@@ -115,7 +115,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXTags XTagsHeader
+    public CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXTags XTagsHeader
     {
         get
         {
@@ -130,7 +130,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
                 && this.responseHeaders.TryGetValue("X-Tags", out string? rawValue)
                 && rawValue is not null)
             {
-                this.xTagsHeaderValue = CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXTags.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXTags.Builder arrayBuilder) =>
+                this.xTagsHeaderValue = CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXTags.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXTags.Builder arrayBuilder) =>
                 {
                     System.ReadOnlySpan<char> remaining = ctx;
                     while (!remaining.IsEmpty)
@@ -151,7 +151,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Metadata</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXMetadata xMetadataHeaderValue;
+    private CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXMetadata xMetadataHeaderValue;
     private bool xMetadataHeaderParsed;
 
     /// <summary>
@@ -159,7 +159,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXMetadata XMetadataHeader
+    public CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXMetadata XMetadataHeader
     {
         get
         {
@@ -174,7 +174,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
                 && this.responseHeaders.TryGetValue("X-Metadata", out string? rawValue)
                 && rawValue is not null)
             {
-                this.xMetadataHeaderValue = CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXMetadata.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXMetadata.Builder objectBuilder) =>
+                this.xMetadataHeaderValue = CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXMetadata.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXMetadata.Builder objectBuilder) =>
                 {
                     System.ReadOnlySpan<char> remaining = ctx;
                     while (!remaining.IsEmpty)
@@ -199,7 +199,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Page-Sizes</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXPageSizes xPageSizesHeaderValue;
+    private CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXPageSizes xPageSizesHeaderValue;
     private bool xPageSizesHeaderParsed;
 
     /// <summary>
@@ -207,7 +207,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXPageSizes XPageSizesHeader
+    public CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXPageSizes XPageSizesHeader
     {
         get
         {
@@ -222,7 +222,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
                 && this.responseHeaders.TryGetValue("X-Page-Sizes", out string? rawValue)
                 && rawValue is not null)
             {
-                this.xPageSizesHeaderValue = CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXPageSizes.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXPageSizes.Builder arrayBuilder) =>
+                this.xPageSizesHeaderValue = CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXPageSizes.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXPageSizes.Builder arrayBuilder) =>
                 {
                     System.ReadOnlySpan<char> remaining = ctx;
                     while (!remaining.IsEmpty)
@@ -243,7 +243,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Flags</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXFlags xFlagsHeaderValue;
+    private CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXFlags xFlagsHeaderValue;
     private bool xFlagsHeaderParsed;
 
     /// <summary>
@@ -251,7 +251,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXFlags XFlagsHeader
+    public CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXFlags XFlagsHeader
     {
         get
         {
@@ -266,7 +266,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
                 && this.responseHeaders.TryGetValue("X-Flags", out string? rawValue)
                 && rawValue is not null)
             {
-                this.xFlagsHeaderValue = CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXFlags.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.GetItemsByItemIdTagsByTagNameOkXFlags.Builder arrayBuilder) =>
+                this.xFlagsHeaderValue = CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXFlags.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.Models.GetItemsByItemIdTagsByTagNameOkXFlags.Builder arrayBuilder) =>
                 {
                     System.ReadOnlySpan<char> remaining = ctx;
                     while (!remaining.IsEmpty)
@@ -302,7 +302,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<CanonTests32.Client.JsonObject>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<CanonTests32.Client.Models.JsonObject>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -316,7 +316,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests32.Client.JsonObject result)
+    public bool TryGetOk(out CanonTests32.Client.Models.JsonObject result)
     {
         if (this.StatusCode == 200)
         {
@@ -337,7 +337,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests32.Client.JsonObject, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.JsonObject, TResult> matchOk,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -360,7 +360,7 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests32.Client.JsonObject, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.JsonObject, TContext, TResult> matchOk,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

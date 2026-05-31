@@ -3,6 +3,7 @@
 // </copyright>
 
 using CanonTests32.Client;
+using CanonTests32.Client.Models;
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

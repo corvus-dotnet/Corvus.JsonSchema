@@ -31,7 +31,7 @@ public struct PathObjectMatrixResponse : IApiResponse<PathObjectMatrixResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests31.Client.JsonObject OkBody { get; private set; }
+    public CanonTests31.Client.Models.JsonObject OkBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<PathObjectMatrixResponse> CreateAsync(
@@ -49,7 +49,7 @@ public struct PathObjectMatrixResponse : IApiResponse<PathObjectMatrixResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<CanonTests31.Client.JsonObject>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<CanonTests31.Client.Models.JsonObject>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -63,7 +63,7 @@ public struct PathObjectMatrixResponse : IApiResponse<PathObjectMatrixResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests31.Client.JsonObject result)
+    public bool TryGetOk(out CanonTests31.Client.Models.JsonObject result)
     {
         if (this.StatusCode == 200)
         {
@@ -84,7 +84,7 @@ public struct PathObjectMatrixResponse : IApiResponse<PathObjectMatrixResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests31.Client.JsonObject, TResult> matchOk,
+        ResponseMatcher<CanonTests31.Client.Models.JsonObject, TResult> matchOk,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -107,7 +107,7 @@ public struct PathObjectMatrixResponse : IApiResponse<PathObjectMatrixResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests31.Client.JsonObject, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests31.Client.Models.JsonObject, TContext, TResult> matchOk,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

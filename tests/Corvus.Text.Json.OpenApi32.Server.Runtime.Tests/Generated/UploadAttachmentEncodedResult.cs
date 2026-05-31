@@ -41,7 +41,7 @@ public readonly struct UploadAttachmentEncodedResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="UploadAttachmentEncodedResult"/> with status 201.</returns>
-    public static UploadAttachmentEncodedResult Created(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace) => new(201, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static UploadAttachmentEncodedResult Created(CanonTests32.Server.Models.ItemEntity.Source body, JsonWorkspace workspace) => new(201, CanonTests32.Server.Models.ItemEntity.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct UploadAttachmentEncodedResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            201 => CanonTests32.Server.ItemEntity.From(this.Body).EvaluateSchema(),
+            201 => CanonTests32.Server.Models.ItemEntity.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

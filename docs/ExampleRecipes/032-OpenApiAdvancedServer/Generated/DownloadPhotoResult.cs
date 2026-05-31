@@ -47,7 +47,7 @@ public readonly struct DownloadPhotoResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="DownloadPhotoResult"/> with status 404.</returns>
-    public static DownloadPhotoResult NotFound(Petstore.Extended.Server.Error.Source body, JsonWorkspace workspace) => new(404, Petstore.Extended.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static DownloadPhotoResult NotFound(Petstore.Extended.Server.Models.Error.Source body, JsonWorkspace workspace) => new(404, Petstore.Extended.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -58,7 +58,7 @@ public readonly struct DownloadPhotoResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            404 => Petstore.Extended.Server.Error.From(this.Body).EvaluateSchema(),
+            404 => Petstore.Extended.Server.Models.Error.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -162,11 +162,11 @@ public readonly partial struct PostAttachmentsEncodedBody
         /// <summary>
         /// Gets the (optional) <c>name</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonString Name
+        public CanonTests32.Server.Models.JsonString Name
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests32.Server.JsonString value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests32.Server.Models.JsonString value))
                 {
                     return value;
                 }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct GetPreferencesOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Language
+        public CanonTests32.Client.Models.JsonString.Mutable Language
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LanguageUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LanguageUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct GetPreferencesOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.JsonString.Mutable Theme
+        public CanonTests32.Client.Models.JsonString.Mutable Theme
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ThemeUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ThemeUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -345,7 +345,7 @@ public readonly partial struct GetPreferencesOk
         /// Set the <c>language</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLanguage(in CanonTests32.Client.JsonString.Source value)
+        public void SetLanguage(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct GetPreferencesOk
         /// Set the <c>theme</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTheme(in CanonTests32.Client.JsonString.Source value)
+        public void SetTheme(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -744,7 +744,7 @@ public readonly partial struct GetPreferencesOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.GetPreferencesOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.GetPreferencesOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetPreferencesOk instance) => new(JsonElement.From(instance));
 
@@ -865,7 +865,7 @@ public readonly partial struct GetPreferencesOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.GetPreferencesOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.GetPreferencesOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -981,8 +981,8 @@ public readonly partial struct GetPreferencesOk
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.JsonString.Source language,
-            in CanonTests32.Client.JsonString.Source theme)
+            in CanonTests32.Client.Models.JsonString.Source language,
+            in CanonTests32.Client.Models.JsonString.Source theme)
         {
             language.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Language, ref builder);
             theme.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Theme, ref builder);
@@ -991,7 +991,7 @@ public readonly partial struct GetPreferencesOk
         /// <summary>
         /// Creates an instance of a <see cref="GetPreferencesOk"/>.
         /// </summary>
-        public void Create(in CanonTests32.Client.JsonString.Source language, in CanonTests32.Client.JsonString.Source theme)
+        public void Create(in CanonTests32.Client.Models.JsonString.Source language, in CanonTests32.Client.Models.JsonString.Source theme)
         {
             Create(ref _builder, language, theme);
         }
@@ -1153,7 +1153,7 @@ public readonly partial struct GetPreferencesOk
     /// <param name="theme">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source language, in CanonTests32.Client.JsonString.Source theme, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source language, in CanonTests32.Client.Models.JsonString.Source theme, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Server;
+namespace CanonTests30.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetStyledObjectByObjOk
     /// <summary>
     /// Gets the (optional) <c>found</c> property.
     /// </summary>
-    public CanonTests30.Server.JsonBoolean Found
+    public CanonTests30.Server.Models.JsonBoolean Found
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FoundUtf8, out CanonTests30.Server.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FoundUtf8, out CanonTests30.Server.Models.JsonBoolean value))
             {
                 return value;
             }

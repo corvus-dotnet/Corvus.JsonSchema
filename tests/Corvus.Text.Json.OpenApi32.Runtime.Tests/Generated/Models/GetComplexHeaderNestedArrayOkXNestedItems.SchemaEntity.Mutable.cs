@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -269,11 +269,11 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
             /// <summary>
             /// Gets the (optional) <c>id</c> property.
             /// </summary>
-            public CanonTests32.Client.JsonString.Mutable Id
+            public CanonTests32.Client.Models.JsonString.Mutable Id
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                     {
                         return value;
                     }
@@ -285,11 +285,11 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
             /// <summary>
             /// Gets the (optional) <c>tags</c> property.
             /// </summary>
-            public CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Mutable Tags
+            public CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Mutable Tags
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Mutable value))
                     {
                         return value;
                     }
@@ -341,7 +341,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in CanonTests32.Client.JsonString.Source value)
+            public void SetId(in CanonTests32.Client.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -386,7 +386,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
             /// Set the <c>tags</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTags(in CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source value)
+            public void SetTags(in CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -419,7 +419,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
             /// Set the <c>tags</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTags<TContext>(in CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source<TContext> value)
+            public void SetTags<TContext>(in CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -804,7 +804,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(SchemaEntity instance) => new(JsonElement.From(instance));
 
@@ -925,7 +925,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1041,8 +1041,8 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
             /// </summary>
             internal static void Create(
                 ref ComplexValueBuilder builder,
-                in CanonTests32.Client.JsonString.Source id = default,
-                in CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source tags = default)
+                in CanonTests32.Client.Models.JsonString.Source id = default,
+                in CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source tags = default)
             {
                 id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
                 tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref builder);
@@ -1051,7 +1051,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
             /// <summary>
             /// Creates an instance of a <see cref="SchemaEntity"/>.
             /// </summary>
-            public void Create(in CanonTests32.Client.JsonString.Source id = default, in CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source tags = default)
+            public void Create(in CanonTests32.Client.Models.JsonString.Source id = default, in CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source tags = default)
             {
                 Create(ref _builder, id, tags);
             }
@@ -1062,8 +1062,8 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
             internal static void Create<TContext>(
                 in TContext context,
                 ref ComplexValueBuilder builder,
-                in CanonTests32.Client.JsonString.Source id = default,
-                in CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source<TContext> tags = default)
+                in CanonTests32.Client.Models.JsonString.Source id = default,
+                in CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source<TContext> tags = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1077,8 +1077,8 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
             /// </summary>
             public void Create<TContext>(
                 in TContext context,
-                in CanonTests32.Client.JsonString.Source id = default,
-                in CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source<TContext> tags = default)
+                in CanonTests32.Client.Models.JsonString.Source id = default,
+                in CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source<TContext> tags = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1243,7 +1243,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
         /// <param name="tags">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source id = default, in CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source tags = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source id = default, in CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source tags = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1266,7 +1266,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
         /// <param name="tags">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.JsonString.Source id = default, in CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.Models.JsonString.Source id = default, in CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

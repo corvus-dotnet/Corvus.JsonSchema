@@ -35,11 +35,11 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Petstore.Server.GetPetsLimit LimitValue = default;
+                Petstore.Server.Models.GetPetsLimit LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
                 {
                     string LimitRaw = LimitQueryVal[0]!;
-                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Petstore.Server.GetPetsLimit>(LimitRaw, workspace);
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Petstore.Server.Models.GetPetsLimit>(LimitRaw, workspace);
                 }
 
                 if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
@@ -99,12 +99,12 @@ public static class ApiEndpointRegistration
         app.MapPost("/pets", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Petstore.Server.NewPet>? bodyDoc = null;
+            ParsedJsonDocument<Petstore.Server.Models.NewPet>? bodyDoc = null;
             try
             {
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<Petstore.Server.NewPet>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<Petstore.Server.Models.NewPet>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -170,10 +170,10 @@ public static class ApiEndpointRegistration
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
             {
-                Petstore.Server.JsonString PetIdValue = default;
+                Petstore.Server.Models.JsonString PetIdValue = default;
                 if (context.Request.RouteValues.TryGetValue("petId", out object? PetIdRouteVal) && PetIdRouteVal is string PetIdRaw)
                 {
-                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.Server.JsonString>(PetIdRaw, workspace);
+                    PetIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Petstore.Server.Models.JsonString>(PetIdRaw, workspace);
                 }
 
                 if (PetIdValue.IsUndefined())

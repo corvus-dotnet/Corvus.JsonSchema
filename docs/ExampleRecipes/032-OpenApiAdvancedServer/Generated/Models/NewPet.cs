@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended.Server;
+namespace Petstore.Extended.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct NewPet
     /// <summary>
     /// Gets the (optional) <c>age</c> property.
     /// </summary>
-    public Petstore.Extended.Server.JsonInteger Age
+    public Petstore.Extended.Server.Models.JsonInteger Age
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AgeUtf8, out Petstore.Extended.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AgeUtf8, out Petstore.Extended.Server.Models.JsonInteger value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct NewPet
     /// <summary>
     /// Gets the (optional) <c>breed</c> property.
     /// </summary>
-    public Petstore.Extended.Server.JsonString Breed
+    public Petstore.Extended.Server.Models.JsonString Breed
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -193,11 +193,11 @@ public readonly partial struct NewPet
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.Server.JsonString Name
+    public Petstore.Extended.Server.Models.JsonString Name
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Extended.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Extended.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -214,11 +214,11 @@ public readonly partial struct NewPet
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.Server.NewPet.StatusEntity Status
+    public Petstore.Extended.Server.Models.NewPet.StatusEntity Status
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Server.NewPet.StatusEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Server.Models.NewPet.StatusEntity value))
             {
                 return value;
             }
@@ -230,11 +230,11 @@ public readonly partial struct NewPet
     /// <summary>
     /// Gets the (optional) <c>tags</c> property.
     /// </summary>
-    public Petstore.Extended.Server.NewPet.JsonStringArray Tags
+    public Petstore.Extended.Server.Models.NewPet.JsonStringArray Tags
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Petstore.Extended.Server.NewPet.JsonStringArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Petstore.Extended.Server.Models.NewPet.JsonStringArray value))
             {
                 return value;
             }

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Client;
+namespace Petstore.EndToEnd.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -66,12 +66,12 @@ public readonly partial struct PetList
     /// <returns>The item at the given index.</returns>
     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public Petstore.EndToEnd.Client.Pet this[int index]
+    public Petstore.EndToEnd.Client.Models.Pet this[int index]
     {
         get
         {
             CheckValidInstance();
-            return _parent.GetArrayIndexElement<Petstore.EndToEnd.Client.Pet>(_idx, index);
+            return _parent.GetArrayIndexElement<Petstore.EndToEnd.Client.Models.Pet>(_idx, index);
         }
     }
 
@@ -89,10 +89,10 @@ public readonly partial struct PetList
     /// Enumerates the array.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public ArrayEnumerator<Petstore.EndToEnd.Client.Pet> EnumerateArray()
+    public ArrayEnumerator<Petstore.EndToEnd.Client.Models.Pet> EnumerateArray()
     {
         CheckValidInstance();
-        return EnumeratorCreator.CreateArrayEnumerator<Petstore.EndToEnd.Client.Pet>(_parent, _idx);
+        return EnumeratorCreator.CreateArrayEnumerator<Petstore.EndToEnd.Client.Models.Pet>(_parent, _idx);
     }
 
     /// <inheritdoc/>

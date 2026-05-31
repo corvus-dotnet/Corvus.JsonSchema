@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Server;
+namespace Petstore.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct NewPet
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Petstore.Server.JsonString.Mutable Name
+        public Petstore.Server.Models.JsonString.Mutable Name
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out Petstore.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct NewPet
         /// <summary>
         /// Gets the (optional) <c>tag</c> property.
         /// </summary>
-        public Petstore.Server.JsonString.Mutable Tag
+        public Petstore.Server.Models.JsonString.Mutable Tag
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagUtf8, out Petstore.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagUtf8, out Petstore.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -340,7 +340,7 @@ public readonly partial struct NewPet
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Petstore.Server.JsonString.Source value)
+        public void SetName(in Petstore.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -371,7 +371,7 @@ public readonly partial struct NewPet
         /// Set the <c>tag</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTag(in Petstore.Server.JsonString.Source value)
+        public void SetTag(in Petstore.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -753,7 +753,7 @@ public readonly partial struct NewPet
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Petstore.Server.NewPet.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Petstore.Server.Models.NewPet.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(NewPet instance) => new(JsonElement.From(instance));
 
@@ -874,7 +874,7 @@ public readonly partial struct NewPet
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Petstore.Server.NewPet.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Petstore.Server.Models.NewPet.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -990,8 +990,8 @@ public readonly partial struct NewPet
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Petstore.Server.JsonString.Source name,
-            in Petstore.Server.JsonString.Source tag = default)
+            in Petstore.Server.Models.JsonString.Source name,
+            in Petstore.Server.Models.JsonString.Source tag = default)
         {
             name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
             tag.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tag, ref builder);
@@ -1000,7 +1000,7 @@ public readonly partial struct NewPet
         /// <summary>
         /// Creates an instance of a <see cref="NewPet"/>.
         /// </summary>
-        public void Create(in Petstore.Server.JsonString.Source name, in Petstore.Server.JsonString.Source tag = default)
+        public void Create(in Petstore.Server.Models.JsonString.Source name, in Petstore.Server.Models.JsonString.Source tag = default)
         {
             Create(ref _builder, name, tag);
         }
@@ -1162,7 +1162,7 @@ public readonly partial struct NewPet
     /// <param name="tag">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Server.JsonString.Source name, in Petstore.Server.JsonString.Source tag = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Petstore.Server.Models.JsonString.Source name, in Petstore.Server.Models.JsonString.Source tag = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

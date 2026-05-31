@@ -24,18 +24,18 @@ public readonly struct StreamPetActivityRequest : IApiRequest<StreamPetActivityR
     /// <summary>
     /// Gets the petId parameter.
     /// </summary>
-    public Petstore.Extended.JsonString PetId { get; init; }
+    public Petstore.Extended.Models.JsonString PetId { get; init; }
 
     /// <summary>
     /// Gets the since parameter.
     /// </summary>
-    public Petstore.Extended.JsonDateTime Since { get; init; }
+    public Petstore.Extended.Models.JsonDateTime Since { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StreamPetActivityRequest"/> struct.
     /// </summary>
     /// <param name="petId">The petId parameter.</param>
-    public StreamPetActivityRequest(Petstore.Extended.JsonString petId)
+    public StreamPetActivityRequest(Petstore.Extended.Models.JsonString petId)
     {
         this.PetId = petId;
     }

@@ -24,13 +24,13 @@ public readonly struct ShowPetByIdRequest : IApiRequest<ShowPetByIdRequest>
     /// <summary>
     /// Gets the petId parameter.
     /// </summary>
-    public Petstore.Client.JsonString PetId { get; init; }
+    public Petstore.Client.Models.JsonString PetId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ShowPetByIdRequest"/> struct.
     /// </summary>
     /// <param name="petId">The petId parameter.</param>
-    public ShowPetByIdRequest(Petstore.Client.JsonString petId)
+    public ShowPetByIdRequest(Petstore.Client.Models.JsonString petId)
     {
         this.PetId = petId;
     }

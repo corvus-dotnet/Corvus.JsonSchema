@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Server;
+namespace Petstore.EndToEnd.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct ChatChunk
     /// <summary>
     /// Gets the (optional) <c>delta</c> property.
     /// </summary>
-    public Petstore.EndToEnd.Server.JsonString Delta
+    public Petstore.EndToEnd.Server.Models.JsonString Delta
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeltaUtf8, out Petstore.EndToEnd.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeltaUtf8, out Petstore.EndToEnd.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct ChatChunk
     /// <summary>
     /// Gets the (optional) <c>done</c> property.
     /// </summary>
-    public Petstore.EndToEnd.Server.JsonBoolean Done
+    public Petstore.EndToEnd.Server.Models.JsonBoolean Done
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DoneUtf8, out Petstore.EndToEnd.Server.JsonBoolean value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DoneUtf8, out Petstore.EndToEnd.Server.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -193,11 +193,11 @@ public readonly partial struct ChatChunk
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.EndToEnd.Server.JsonString Id
+    public Petstore.EndToEnd.Server.Models.JsonString Id
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.EndToEnd.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Petstore.EndToEnd.Server.Models.JsonString value))
             {
                 return value;
             }

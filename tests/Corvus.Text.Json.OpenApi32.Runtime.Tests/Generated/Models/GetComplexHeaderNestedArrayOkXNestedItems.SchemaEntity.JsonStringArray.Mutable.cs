@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -179,12 +179,12 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 /// <returns>The item at the given index.</returns>
                 /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
                 /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-                public CanonTests32.Client.JsonString.Mutable this[int index]
+                public CanonTests32.Client.Models.JsonString.Mutable this[int index]
                 {
                     get
                     {
                         CheckValidInstance();
-                        return _parent.GetArrayIndexElement<CanonTests32.Client.JsonString.Mutable>(_idx, index);
+                        return _parent.GetArrayIndexElement<CanonTests32.Client.Models.JsonString.Mutable>(_idx, index);
                     }
                 }
 
@@ -202,10 +202,10 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 /// Enumerates the array.
                 /// </summary>
                 /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-                public ArrayEnumerator<CanonTests32.Client.JsonString.Mutable> EnumerateArray()
+                public ArrayEnumerator<CanonTests32.Client.Models.JsonString.Mutable> EnumerateArray()
                 {
                     CheckValidInstance();
-                    return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.JsonString.Mutable>(_parent, _idx);
+                    return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.Models.JsonString.Mutable>(_parent, _idx);
                 }
 
                 /// <inheritdoc/>
@@ -334,7 +334,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetItem(int itemIndex, in CanonTests32.Client.JsonString.Source value)
+                public void SetItem(int itemIndex, in CanonTests32.Client.Models.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -381,7 +381,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void InsertItem(int itemIndex, in CanonTests32.Client.JsonString.Source value)
+                public void InsertItem(int itemIndex, in CanonTests32.Client.Models.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -407,7 +407,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void AddItem(in CanonTests32.Client.JsonString.Source value)
+                public void AddItem(in CanonTests32.Client.Models.JsonString.Source value)
                 {
                     InsertItem(GetArrayLength(), in value);
                 }
@@ -577,10 +577,10 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 /// <exception cref="ObjectDisposedException">
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
-                public bool Remove(in CanonTests32.Client.JsonString item)
+                public bool Remove(in CanonTests32.Client.Models.JsonString item)
                 {
                     CheckValidInstance();
-                    if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Client.JsonString>(this, in item))
+                    if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Client.Models.JsonString>(this, in item))
                     {
                         return false;
                     }
@@ -614,10 +614,10 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void RemoveWhere(JsonPredicate<CanonTests32.Client.JsonString> predicate)
+                public void RemoveWhere(JsonPredicate<CanonTests32.Client.Models.JsonString> predicate)
                 {
                     CheckValidInstance();
-                    JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Client.JsonString>(this, predicate);
+                    JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Client.Models.JsonString>(this, predicate);
                     _documentVersion = _parent.Version;
                 }
 
@@ -634,7 +634,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 /// <exception cref="ObjectDisposedException">
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
-                public bool Replace(in CanonTests32.Client.JsonString oldItem, in CanonTests32.Client.JsonString.Source newItem)
+                public bool Replace(in CanonTests32.Client.Models.JsonString oldItem, in CanonTests32.Client.Models.JsonString.Source newItem)
                 {
                     CheckValidInstance();
 
@@ -643,11 +643,11 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                         return Remove(in oldItem);
                     }
 
-                    var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.JsonString>(_parent, _idx);
+                    var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.Models.JsonString>(_parent, _idx);
 
                     while (enumerator.MoveNext())
                     {
-                        CanonTests32.Client.JsonString current = enumerator.Current;
+                        CanonTests32.Client.Models.JsonString current = enumerator.Current;
                         if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                         {
                             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -744,7 +744,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                     _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
                 }
 
-                internal Source(CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+                internal Source(CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
                 public static implicit operator Source(JsonStringArray instance) => new(JsonElement.From(instance));
 
@@ -865,7 +865,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
 
                 public static implicit operator Source<TContext>(Source source) => new (source);
 
-                internal Source(scoped in TContext context, CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+                internal Source(scoped in TContext context, CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.SchemaEntity.JsonStringArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -979,7 +979,7 @@ public readonly partial struct GetComplexHeaderNestedArrayOkXNestedItems
                 /// <summary>
                 /// Add an item to the array.
                 /// </summary>
-                public void AddItem(in CanonTests32.Client.JsonString.Source value)
+                public void AddItem(in CanonTests32.Client.Models.JsonString.Source value)
                 {
                     value.AddAsItem(ref _builder);
                 }

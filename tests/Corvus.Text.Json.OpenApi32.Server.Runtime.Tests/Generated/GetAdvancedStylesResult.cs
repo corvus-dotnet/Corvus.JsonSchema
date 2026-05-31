@@ -19,7 +19,7 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct GetAdvancedStylesResult
 {
-    private GetAdvancedStylesResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.JsonString xRequestId = default, CanonTests32.Server.GetAdvancedStylesByIdsOkXCounts xCounts = default, CanonTests32.Server.GetAdvancedStylesByIdsOkXScores xScores = default, CanonTests32.Server.GetAdvancedStylesByIdsOkXWeights xWeights = default)
+    private GetAdvancedStylesResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.Models.JsonString xRequestId = default, CanonTests32.Server.Models.GetAdvancedStylesByIdsOkXCounts xCounts = default, CanonTests32.Server.Models.GetAdvancedStylesByIdsOkXScores xScores = default, CanonTests32.Server.Models.GetAdvancedStylesByIdsOkXWeights xWeights = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -42,22 +42,22 @@ public readonly struct GetAdvancedStylesResult
     /// <summary>
     /// Gets the value of the <c>X-Request-Id</c> response header.
     /// </summary>
-    public CanonTests32.Server.JsonString XRequestId { get; }
+    public CanonTests32.Server.Models.JsonString XRequestId { get; }
 
     /// <summary>
     /// Gets the value of the <c>X-Counts</c> response header.
     /// </summary>
-    public CanonTests32.Server.GetAdvancedStylesByIdsOkXCounts XCounts { get; }
+    public CanonTests32.Server.Models.GetAdvancedStylesByIdsOkXCounts XCounts { get; }
 
     /// <summary>
     /// Gets the value of the <c>X-Scores</c> response header.
     /// </summary>
-    public CanonTests32.Server.GetAdvancedStylesByIdsOkXScores XScores { get; }
+    public CanonTests32.Server.Models.GetAdvancedStylesByIdsOkXScores XScores { get; }
 
     /// <summary>
     /// Gets the value of the <c>X-Weights</c> response header.
     /// </summary>
-    public CanonTests32.Server.GetAdvancedStylesByIdsOkXWeights XWeights { get; }
+    public CanonTests32.Server.Models.GetAdvancedStylesByIdsOkXWeights XWeights { get; }
 
     /// <summary>
     /// Creates a 200 Ok result.
@@ -69,7 +69,7 @@ public readonly struct GetAdvancedStylesResult
     /// <param name="xScores">The value for the <c>X-Scores</c> response header.</param>
     /// <param name="xWeights">The value for the <c>X-Weights</c> response header.</param>
     /// <returns>A <see cref="GetAdvancedStylesResult"/> with status 200.</returns>
-    public static GetAdvancedStylesResult Ok(CanonTests32.Server.GetAdvancedStylesByIdsOk.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonString xRequestId = default, CanonTests32.Server.GetAdvancedStylesByIdsOkXCounts xCounts = default, CanonTests32.Server.GetAdvancedStylesByIdsOkXScores xScores = default, CanonTests32.Server.GetAdvancedStylesByIdsOkXWeights xWeights = default) => new(200, CanonTests32.Server.GetAdvancedStylesByIdsOk.CreateBuilder(workspace, body, 30).RootElement, "application/json", xRequestId: xRequestId, xCounts: xCounts, xScores: xScores, xWeights: xWeights);
+    public static GetAdvancedStylesResult Ok(CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.Source body, JsonWorkspace workspace, CanonTests32.Server.Models.JsonString xRequestId = default, CanonTests32.Server.Models.GetAdvancedStylesByIdsOkXCounts xCounts = default, CanonTests32.Server.Models.GetAdvancedStylesByIdsOkXScores xScores = default, CanonTests32.Server.Models.GetAdvancedStylesByIdsOkXWeights xWeights = default) => new(200, CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.CreateBuilder(workspace, body, 30).RootElement, "application/json", xRequestId: xRequestId, xCounts: xCounts, xScores: xScores, xWeights: xWeights);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -80,7 +80,7 @@ public readonly struct GetAdvancedStylesResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests32.Server.GetAdvancedStylesByIdsOk.From(this.Body).EvaluateSchema(),
+            200 => CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

@@ -37,14 +37,14 @@ public sealed class ApiSearchClient : IApiSearchClient
     /// <param name="page">The page parameter.</param>
     /// <param name="rating">The rating parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SearchResponse> SearchAsync(CanonTests30.Client.JsonString.Source q, CanonTests30.Client.JsonInt32.Source page = default, CanonTests30.Client.JsonSingle.Source rating = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<SearchResponse> SearchAsync(CanonTests30.Client.Models.JsonString.Source q, CanonTests30.Client.Models.JsonInt32.Source page = default, CanonTests30.Client.Models.JsonSingle.Source rating = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.JsonString QValue = CanonTests30.Client.JsonString.CreateBuilder(workspace, q, 30).RootElement;
+        CanonTests30.Client.Models.JsonString QValue = CanonTests30.Client.Models.JsonString.CreateBuilder(workspace, q, 30).RootElement;
         SearchRequest request = new(QValue)
         {
-            Page = page.IsUndefined ? default : (CanonTests30.Client.JsonInt32)CanonTests30.Client.JsonInt32.CreateBuilder(workspace, page, 30).RootElement,
-            Rating = rating.IsUndefined ? default : (CanonTests30.Client.JsonSingle)CanonTests30.Client.JsonSingle.CreateBuilder(workspace, rating, 30).RootElement,
+            Page = page.IsUndefined ? default : (CanonTests30.Client.Models.JsonInt32)CanonTests30.Client.Models.JsonInt32.CreateBuilder(workspace, page, 30).RootElement,
+            Rating = rating.IsUndefined ? default : (CanonTests30.Client.Models.JsonSingle)CanonTests30.Client.Models.JsonSingle.CreateBuilder(workspace, rating, 30).RootElement,
         }
         ;
 

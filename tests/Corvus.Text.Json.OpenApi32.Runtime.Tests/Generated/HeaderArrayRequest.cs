@@ -24,13 +24,13 @@ public readonly struct HeaderArrayRequest : IApiRequest<HeaderArrayRequest>
     /// <summary>
     /// Gets the X-Tags parameter.
     /// </summary>
-    public CanonTests32.Client.GetComplexHeaderArrayXTags XTags { get; init; }
+    public CanonTests32.Client.Models.GetComplexHeaderArrayXTags XTags { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HeaderArrayRequest"/> struct.
     /// </summary>
     /// <param name="xTags">The X-Tags parameter.</param>
-    public HeaderArrayRequest(CanonTests32.Client.GetComplexHeaderArrayXTags xTags)
+    public HeaderArrayRequest(CanonTests32.Client.Models.GetComplexHeaderArrayXTags xTags)
     {
         this.XTags = xTags;
     }

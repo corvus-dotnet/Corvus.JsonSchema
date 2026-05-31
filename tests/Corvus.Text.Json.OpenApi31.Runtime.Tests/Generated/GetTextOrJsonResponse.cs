@@ -34,7 +34,7 @@ public struct GetTextOrJsonResponse : IApiResponse<GetTextOrJsonResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests31.Client.GetTextMixedOk OkBody { get; private set; }
+    public CanonTests31.Client.Models.GetTextMixedOk OkBody { get; private set; }
 
     /// <summary>
     /// Gets the text/plain response body as a string. The string is
@@ -58,7 +58,7 @@ public struct GetTextOrJsonResponse : IApiResponse<GetTextOrJsonResponse>
     /// <summary>
     /// Gets the 404 response body.
     /// </summary>
-    public CanonTests31.Client.GetTextMixedNotFound NotFoundBody { get; private set; }
+    public CanonTests31.Client.Models.GetTextMixedNotFound NotFoundBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<GetTextOrJsonResponse> CreateAsync(
@@ -78,7 +78,7 @@ public struct GetTextOrJsonResponse : IApiResponse<GetTextOrJsonResponse>
         {
             if (contentType is not null && (string.Equals(contentType, "application/json", StringComparison.OrdinalIgnoreCase) || contentType.EndsWith("+json", StringComparison.OrdinalIgnoreCase)))
             {
-                var okDoc = await ParsedJsonDocument<CanonTests31.Client.GetTextMixedOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+                var okDoc = await ParsedJsonDocument<CanonTests31.Client.Models.GetTextMixedOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
                 response.parsedDocument = okDoc;
                 response.OkBody = okDoc.RootElement;
             }
@@ -93,7 +93,7 @@ public struct GetTextOrJsonResponse : IApiResponse<GetTextOrJsonResponse>
 
         if (statusCode == 404)
         {
-            var notFoundDoc = await ParsedJsonDocument<CanonTests31.Client.GetTextMixedNotFound>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var notFoundDoc = await ParsedJsonDocument<CanonTests31.Client.Models.GetTextMixedNotFound>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = notFoundDoc;
             response.NotFoundBody = notFoundDoc.RootElement;
             return response;
@@ -107,7 +107,7 @@ public struct GetTextOrJsonResponse : IApiResponse<GetTextOrJsonResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests31.Client.GetTextMixedOk result)
+    public bool TryGetOk(out CanonTests31.Client.Models.GetTextMixedOk result)
     {
         if (this.StatusCode == 200)
         {
@@ -141,7 +141,7 @@ public struct GetTextOrJsonResponse : IApiResponse<GetTextOrJsonResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 404.</returns>
-    public bool TryGetNotFound(out CanonTests31.Client.GetTextMixedNotFound result)
+    public bool TryGetNotFound(out CanonTests31.Client.Models.GetTextMixedNotFound result)
     {
         if (this.StatusCode == 404)
         {
@@ -164,9 +164,9 @@ public struct GetTextOrJsonResponse : IApiResponse<GetTextOrJsonResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests31.Client.GetTextMixedOk, TResult> matchOk,
+        ResponseMatcher<CanonTests31.Client.Models.GetTextMixedOk, TResult> matchOk,
         ResponseMatcher<string?, TResult> matchOkString,
-        ResponseMatcher<CanonTests31.Client.GetTextMixedNotFound, TResult> matchNotFound,
+        ResponseMatcher<CanonTests31.Client.Models.GetTextMixedNotFound, TResult> matchNotFound,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -201,9 +201,9 @@ public struct GetTextOrJsonResponse : IApiResponse<GetTextOrJsonResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests31.Client.GetTextMixedOk, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests31.Client.Models.GetTextMixedOk, TContext, TResult> matchOk,
         ResponseMatcher<string?, TContext, TResult> matchOkString,
-        ResponseMatcher<CanonTests31.Client.GetTextMixedNotFound, TContext, TResult> matchNotFound,
+        ResponseMatcher<CanonTests31.Client.Models.GetTextMixedNotFound, TContext, TResult> matchNotFound,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

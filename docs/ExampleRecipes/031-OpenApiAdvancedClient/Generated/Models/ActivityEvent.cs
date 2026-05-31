@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct ActivityEvent
     /// <summary>
     /// Gets the (optional) <c>description</c> property.
     /// </summary>
-    public Petstore.Extended.JsonString Description
+    public Petstore.Extended.Models.JsonString Description
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DescriptionUtf8, out Petstore.Extended.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DescriptionUtf8, out Petstore.Extended.Models.JsonString value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct ActivityEvent
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.JsonString EventId
+    public Petstore.Extended.Models.JsonString EventId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventIdUtf8, out Petstore.Extended.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventIdUtf8, out Petstore.Extended.Models.JsonString value))
             {
                 return value;
             }
@@ -198,11 +198,11 @@ public readonly partial struct ActivityEvent
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.JsonDateTime Timestamp
+    public Petstore.Extended.Models.JsonDateTime Timestamp
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TimestampUtf8, out Petstore.Extended.JsonDateTime value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TimestampUtf8, out Petstore.Extended.Models.JsonDateTime value))
             {
                 return value;
             }
@@ -219,11 +219,11 @@ public readonly partial struct ActivityEvent
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Petstore.Extended.ActivityEvent.TypeEntity Type
+    public Petstore.Extended.Models.ActivityEvent.TypeEntity Type
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeUtf8, out Petstore.Extended.ActivityEvent.TypeEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeUtf8, out Petstore.Extended.Models.ActivityEvent.TypeEntity value))
             {
                 return value;
             }

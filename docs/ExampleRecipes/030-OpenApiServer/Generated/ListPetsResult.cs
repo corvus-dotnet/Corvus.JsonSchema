@@ -19,7 +19,7 @@ namespace Petstore.Server;
 /// </summary>
 public readonly struct ListPetsResult
 {
-    private ListPetsResult(int statusCode, JsonElement body, string? contentType, Petstore.Server.JsonString xNext = default)
+    private ListPetsResult(int statusCode, JsonElement body, string? contentType, Petstore.Server.Models.JsonString xNext = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -39,7 +39,7 @@ public readonly struct ListPetsResult
     /// <summary>
     /// Gets the value of the <c>x-next</c> response header.
     /// </summary>
-    public Petstore.Server.JsonString XNext { get; }
+    public Petstore.Server.Models.JsonString XNext { get; }
 
     /// <summary>
     /// Creates a 200 Ok result.
@@ -48,7 +48,7 @@ public readonly struct ListPetsResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="xNext">The value for the <c>x-next</c> response header.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status 200.</returns>
-    public static ListPetsResult Ok(Petstore.Server.Pets.Source body, JsonWorkspace workspace, Petstore.Server.JsonString xNext = default) => new(200, Petstore.Server.Pets.CreateBuilder(workspace, body, 30).RootElement, "application/json", xNext: xNext);
+    public static ListPetsResult Ok(Petstore.Server.Models.Pets.Source body, JsonWorkspace workspace, Petstore.Server.Models.JsonString xNext = default) => new(200, Petstore.Server.Models.Pets.CreateBuilder(workspace, body, 30).RootElement, "application/json", xNext: xNext);
 
     /// <summary>
     /// Creates a default error result.
@@ -57,7 +57,7 @@ public readonly struct ListPetsResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status default.</returns>
-    public static ListPetsResult Default(int statusCode, Petstore.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.Server.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static ListPetsResult Default(int statusCode, Petstore.Server.Models.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -68,7 +68,7 @@ public readonly struct ListPetsResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => Petstore.Server.Pets.From(this.Body).EvaluateSchema(),
+            200 => Petstore.Server.Models.Pets.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

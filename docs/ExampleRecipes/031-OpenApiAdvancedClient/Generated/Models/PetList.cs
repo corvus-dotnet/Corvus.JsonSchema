@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -66,12 +66,12 @@ public readonly partial struct PetList
     /// <returns>The item at the given index.</returns>
     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public Petstore.Extended.Pet this[int index]
+    public Petstore.Extended.Models.Pet this[int index]
     {
         get
         {
             CheckValidInstance();
-            return _parent.GetArrayIndexElement<Petstore.Extended.Pet>(_idx, index);
+            return _parent.GetArrayIndexElement<Petstore.Extended.Models.Pet>(_idx, index);
         }
     }
 
@@ -89,10 +89,10 @@ public readonly partial struct PetList
     /// Enumerates the array.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public ArrayEnumerator<Petstore.Extended.Pet> EnumerateArray()
+    public ArrayEnumerator<Petstore.Extended.Models.Pet> EnumerateArray()
     {
         CheckValidInstance();
-        return EnumeratorCreator.CreateArrayEnumerator<Petstore.Extended.Pet>(_parent, _idx);
+        return EnumeratorCreator.CreateArrayEnumerator<Petstore.Extended.Models.Pet>(_parent, _idx);
     }
 
     /// <inheritdoc/>

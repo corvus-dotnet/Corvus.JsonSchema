@@ -23,10 +23,10 @@ public readonly struct HealthCheckParams
     /// <summary>
     /// Gets the 'verbose' query parameter.
     /// </summary>
-    public CanonTests31.Server.JsonBoolean Verbose { get; init; }
+    public CanonTests31.Server.Models.JsonBoolean Verbose { get; init; }
 
     /// <summary>
     /// Gets the 'X-Check-Token' header parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString XCheckToken { get; init; }
+    public CanonTests31.Server.Models.JsonString XCheckToken { get; init; }
 }

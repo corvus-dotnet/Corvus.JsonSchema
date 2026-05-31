@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -182,12 +182,12 @@ public readonly partial struct PostDocsUploadMixedBody
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.Mutable Item1
+        public CanonTests32.Client.Models.PostDocsUploadMixedBody.RequiredTitle.Mutable Item1
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.Mutable>(_idx, 0);
+                return _parent.GetArrayIndexElement<CanonTests32.Client.Models.PostDocsUploadMixedBody.RequiredTitle.Mutable>(_idx, 0);
             }
         }
 
@@ -196,12 +196,12 @@ public readonly partial struct PostDocsUploadMixedBody
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public CanonTests32.Client.JsonBinary.Mutable Item2
+        public CanonTests32.Client.Models.JsonBinary.Mutable Item2
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<CanonTests32.Client.JsonBinary.Mutable>(_idx, 1);
+                return _parent.GetArrayIndexElement<CanonTests32.Client.Models.JsonBinary.Mutable>(_idx, 1);
             }
         }
 
@@ -761,7 +761,7 @@ public readonly partial struct PostDocsUploadMixedBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PostDocsUploadMixedBody.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PostDocsUploadMixedBody.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostDocsUploadMixedBody instance) => new(JsonElement.From(instance));
 
@@ -882,7 +882,7 @@ public readonly partial struct PostDocsUploadMixedBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PostDocsUploadMixedBody.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PostDocsUploadMixedBody.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -995,7 +995,7 @@ public readonly partial struct PostDocsUploadMixedBody
 
         private bool _addedPrefixItems = false;
 
-        public void CreateTuple(in CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.Source item1, in CanonTests32.Client.JsonBinary.Source item2)
+        public void CreateTuple(in CanonTests32.Client.Models.PostDocsUploadMixedBody.RequiredTitle.Source item1, in CanonTests32.Client.Models.JsonBinary.Source item2)
         {
             item1.AddAsItem(ref _builder);
             item2.AddAsItem(ref _builder);

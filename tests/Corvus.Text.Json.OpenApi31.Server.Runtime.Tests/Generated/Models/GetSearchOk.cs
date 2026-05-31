@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -172,11 +172,11 @@ public readonly partial struct GetSearchOk
     /// <summary>
     /// Gets the (optional) <c>nextPage</c> property.
     /// </summary>
-    public CanonTests31.Server.JsonInteger NextPage
+    public CanonTests31.Server.Models.JsonInteger NextPage
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageUtf8, out CanonTests31.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageUtf8, out CanonTests31.Server.Models.JsonInteger value))
             {
                 return value;
             }

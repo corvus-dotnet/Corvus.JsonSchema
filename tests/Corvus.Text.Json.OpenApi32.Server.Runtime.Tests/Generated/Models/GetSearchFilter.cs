@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetSearchFilter
     /// <summary>
     /// Gets the (optional) <c>max</c> property.
     /// </summary>
-    public CanonTests32.Server.JsonInteger Max
+    public CanonTests32.Server.Models.JsonInteger Max
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxUtf8, out CanonTests32.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxUtf8, out CanonTests32.Server.Models.JsonInteger value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct GetSearchFilter
     /// <summary>
     /// Gets the (optional) <c>min</c> property.
     /// </summary>
-    public CanonTests32.Server.JsonInteger Min
+    public CanonTests32.Server.Models.JsonInteger Min
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MinUtf8, out CanonTests32.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MinUtf8, out CanonTests32.Server.Models.JsonInteger value))
             {
                 return value;
             }

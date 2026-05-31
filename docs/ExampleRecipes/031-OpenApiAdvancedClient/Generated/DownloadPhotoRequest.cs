@@ -24,13 +24,13 @@ public readonly struct DownloadPhotoRequest : IApiRequest<DownloadPhotoRequest>
     /// <summary>
     /// Gets the photoId parameter.
     /// </summary>
-    public Petstore.Extended.JsonString PhotoId { get; init; }
+    public Petstore.Extended.Models.JsonString PhotoId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadPhotoRequest"/> struct.
     /// </summary>
     /// <param name="photoId">The photoId parameter.</param>
-    public DownloadPhotoRequest(Petstore.Extended.JsonString photoId)
+    public DownloadPhotoRequest(Petstore.Extended.Models.JsonString photoId)
     {
         this.PhotoId = photoId;
     }

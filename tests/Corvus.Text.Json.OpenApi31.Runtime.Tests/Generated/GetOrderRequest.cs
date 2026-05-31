@@ -24,23 +24,23 @@ public readonly struct GetOrderRequest : IApiRequest<GetOrderRequest>
     /// <summary>
     /// Gets the orderId parameter.
     /// </summary>
-    public CanonTests31.Client.JsonUuid OrderId { get; init; }
+    public CanonTests31.Client.Models.JsonUuid OrderId { get; init; }
 
     /// <summary>
     /// Gets the X-Trace-Id parameter.
     /// </summary>
-    public CanonTests31.Client.JsonString XTraceId { get; init; }
+    public CanonTests31.Client.Models.JsonString XTraceId { get; init; }
 
     /// <summary>
     /// Gets the fields parameter.
     /// </summary>
-    public CanonTests31.Client.JsonString Fields { get; init; }
+    public CanonTests31.Client.Models.JsonString Fields { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetOrderRequest"/> struct.
     /// </summary>
     /// <param name="orderId">The orderId parameter.</param>
-    public GetOrderRequest(CanonTests31.Client.JsonUuid orderId)
+    public GetOrderRequest(CanonTests31.Client.Models.JsonUuid orderId)
     {
         this.OrderId = orderId;
     }

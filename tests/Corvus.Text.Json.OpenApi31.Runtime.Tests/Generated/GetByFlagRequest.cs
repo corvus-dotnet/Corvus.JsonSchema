@@ -24,27 +24,27 @@ public readonly struct GetByFlagRequest : IApiRequest<GetByFlagRequest>
     /// <summary>
     /// Gets the active parameter.
     /// </summary>
-    public CanonTests31.Client.JsonBoolean Active { get; init; }
+    public CanonTests31.Client.Models.JsonBoolean Active { get; init; }
 
     /// <summary>
     /// Gets the X-Trace-Id parameter.
     /// </summary>
-    public CanonTests31.Client.JsonString XTraceId { get; init; }
+    public CanonTests31.Client.Models.JsonString XTraceId { get; init; }
 
     /// <summary>
     /// Gets the X-Request-Count parameter.
     /// </summary>
-    public CanonTests31.Client.JsonInt32 XRequestCount { get; init; }
+    public CanonTests31.Client.Models.JsonInt32 XRequestCount { get; init; }
 
     /// <summary>
     /// Gets the X-Debug parameter.
     /// </summary>
-    public CanonTests31.Client.JsonBoolean XDebug { get; init; }
+    public CanonTests31.Client.Models.JsonBoolean XDebug { get; init; }
 
     /// <summary>
     /// Gets the X-Score parameter.
     /// </summary>
-    public CanonTests31.Client.JsonDouble XScore { get; init; }
+    public CanonTests31.Client.Models.JsonDouble XScore { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetByFlagRequest"/> struct.
@@ -52,7 +52,7 @@ public readonly struct GetByFlagRequest : IApiRequest<GetByFlagRequest>
     /// <param name="active">The active parameter.</param>
     /// <param name="xTraceId">The X-Trace-Id parameter.</param>
     /// <param name="xRequestCount">The X-Request-Count parameter.</param>
-    public GetByFlagRequest(CanonTests31.Client.JsonBoolean active, CanonTests31.Client.JsonString xTraceId, CanonTests31.Client.JsonInt32 xRequestCount)
+    public GetByFlagRequest(CanonTests31.Client.Models.JsonBoolean active, CanonTests31.Client.Models.JsonString xTraceId, CanonTests31.Client.Models.JsonInt32 xRequestCount)
     {
         this.Active = active;
         this.XTraceId = xTraceId;

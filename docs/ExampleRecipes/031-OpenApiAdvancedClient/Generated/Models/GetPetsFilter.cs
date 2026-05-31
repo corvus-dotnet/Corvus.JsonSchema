@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended;
+namespace Petstore.Extended.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetPetsFilter
     /// <summary>
     /// Gets the (optional) <c>breed</c> property.
     /// </summary>
-    public Petstore.Extended.JsonString Breed
+    public Petstore.Extended.Models.JsonString Breed
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BreedUtf8, out Petstore.Extended.Models.JsonString value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct GetPetsFilter
     /// <summary>
     /// Gets the (optional) <c>maxAge</c> property.
     /// </summary>
-    public Petstore.Extended.JsonInteger MaxAge
+    public Petstore.Extended.Models.JsonInteger MaxAge
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxAgeUtf8, out Petstore.Extended.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxAgeUtf8, out Petstore.Extended.Models.JsonInteger value))
             {
                 return value;
             }
@@ -188,11 +188,11 @@ public readonly partial struct GetPetsFilter
     /// <summary>
     /// Gets the (optional) <c>minAge</c> property.
     /// </summary>
-    public Petstore.Extended.JsonInteger MinAge
+    public Petstore.Extended.Models.JsonInteger MinAge
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MinAgeUtf8, out Petstore.Extended.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MinAgeUtf8, out Petstore.Extended.Models.JsonInteger value))
             {
                 return value;
             }
@@ -204,11 +204,11 @@ public readonly partial struct GetPetsFilter
     /// <summary>
     /// Gets the (optional) <c>status</c> property.
     /// </summary>
-    public Petstore.Extended.GetPetsFilter.StatusEntity Status
+    public Petstore.Extended.Models.GetPetsFilter.StatusEntity Status
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.GetPetsFilter.StatusEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Petstore.Extended.Models.GetPetsFilter.StatusEntity value))
             {
                 return value;
             }

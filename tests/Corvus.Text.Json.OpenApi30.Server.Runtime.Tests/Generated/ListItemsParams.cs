@@ -24,25 +24,25 @@ public readonly struct ListItemsParams
     /// <summary>
     /// Gets the 'active' query parameter.
     /// </summary>
-    public CanonTests30.Server.GetItemsActive Active { get; init; }
+    public CanonTests30.Server.Models.GetItemsActive Active { get; init; }
 
     /// <summary>
     /// Gets the 'category' query parameter.
     /// </summary>
-    public CanonTests30.Server.GetItemsCategory Category { get; init; }
+    public CanonTests30.Server.Models.GetItemsCategory Category { get; init; }
 
     /// <summary>
     /// Gets the 'page' query parameter.
     /// </summary>
-    public CanonTests30.Server.GetItemsPage Page { get; init; }
+    public CanonTests30.Server.Models.GetItemsPage Page { get; init; }
 
     /// <summary>
     /// Gets the 'sort' query parameter.
     /// </summary>
-    public CanonTests30.Server.GetItemsSort Sort { get; init; }
+    public CanonTests30.Server.Models.GetItemsSort Sort { get; init; }
 
     /// <summary>
     /// Gets the 'verbose' query parameter.
     /// </summary>
-    public CanonTests30.Server.GetItemsVerbose Verbose { get; init; }
+    public CanonTests30.Server.Models.GetItemsVerbose Verbose { get; init; }
 }

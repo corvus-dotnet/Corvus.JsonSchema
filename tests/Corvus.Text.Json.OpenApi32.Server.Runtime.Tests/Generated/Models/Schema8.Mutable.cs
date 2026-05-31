@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct Schema8
         /// <summary>
         /// Gets the (optional) <c>filter</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonString.Mutable Filter
+        public CanonTests32.Server.Models.JsonString.Mutable Filter
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out CanonTests32.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -319,7 +319,7 @@ public readonly partial struct Schema8
         /// Set the <c>filter</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFilter(in CanonTests32.Server.JsonString.Source value)
+        public void SetFilter(in CanonTests32.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct Schema8
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.Schema8.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Server.Models.Schema8.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(Schema8 instance) => new(JsonElement.From(instance));
 
@@ -822,7 +822,7 @@ public readonly partial struct Schema8
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.Schema8.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.Schema8.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -936,7 +936,7 @@ public readonly partial struct Schema8
         /// <summary>
         /// Creates an instance of a <see cref="Schema8"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.JsonString.Source filter = default)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.Models.JsonString.Source filter = default)
         {
             filter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filter, ref builder);
         }
@@ -944,7 +944,7 @@ public readonly partial struct Schema8
         /// <summary>
         /// Creates an instance of a <see cref="Schema8"/>.
         /// </summary>
-        public void Create(in CanonTests32.Server.JsonString.Source filter = default)
+        public void Create(in CanonTests32.Server.Models.JsonString.Source filter = default)
         {
             Create(ref _builder, filter);
         }
@@ -1123,7 +1123,7 @@ public readonly partial struct Schema8
     /// <param name="filter">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonString.Source filter = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.Models.JsonString.Source filter = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

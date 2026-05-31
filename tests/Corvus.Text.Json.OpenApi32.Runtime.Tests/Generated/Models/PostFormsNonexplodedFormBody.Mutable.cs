@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PostFormsNonexplodedFormBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Mutable Data
+        public CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Mutable Data
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataUtf8, out CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataUtf8, out CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct PostFormsNonexplodedFormBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Mutable Keywords
+        public CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Mutable Keywords
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeywordsUtf8, out CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeywordsUtf8, out CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Mutable value))
                 {
                     return value;
                 }
@@ -345,7 +345,7 @@ public readonly partial struct PostFormsNonexplodedFormBody
         /// Set the <c>data</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetData(in CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Source value)
+        public void SetData(in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Source value)
         {
             CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct PostFormsNonexplodedFormBody
         /// Set the <c>data</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetData<TContext>(in CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Source<TContext> value)
+        public void SetData<TContext>(in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -410,7 +410,7 @@ public readonly partial struct PostFormsNonexplodedFormBody
         /// Set the <c>keywords</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetKeywords(in CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Source value)
+        public void SetKeywords(in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -441,7 +441,7 @@ public readonly partial struct PostFormsNonexplodedFormBody
         /// Set the <c>keywords</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetKeywords<TContext>(in CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Source<TContext> value)
+        public void SetKeywords<TContext>(in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -812,7 +812,7 @@ public readonly partial struct PostFormsNonexplodedFormBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PostFormsNonexplodedFormBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PostFormsNonexplodedFormBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostFormsNonexplodedFormBody instance) => new(JsonElement.From(instance));
 
@@ -933,7 +933,7 @@ public readonly partial struct PostFormsNonexplodedFormBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PostFormsNonexplodedFormBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PostFormsNonexplodedFormBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1049,8 +1049,8 @@ public readonly partial struct PostFormsNonexplodedFormBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Source data,
-            in CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Source keywords)
+            in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Source data,
+            in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Source keywords)
         {
             data.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Data, ref builder);
             keywords.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Keywords, ref builder);
@@ -1059,7 +1059,7 @@ public readonly partial struct PostFormsNonexplodedFormBody
         /// <summary>
         /// Creates an instance of a <see cref="PostFormsNonexplodedFormBody"/>.
         /// </summary>
-        public void Create(in CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Source data, in CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Source keywords)
+        public void Create(in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Source data, in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Source keywords)
         {
             Create(ref _builder, data, keywords);
         }
@@ -1070,8 +1070,8 @@ public readonly partial struct PostFormsNonexplodedFormBody
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Source<TContext> data,
-            in CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Source<TContext> keywords)
+            in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Source<TContext> data,
+            in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Source<TContext> keywords)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1085,8 +1085,8 @@ public readonly partial struct PostFormsNonexplodedFormBody
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Source<TContext> data,
-            in CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Source<TContext> keywords)
+            in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Source<TContext> data,
+            in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Source<TContext> keywords)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1251,7 +1251,7 @@ public readonly partial struct PostFormsNonexplodedFormBody
     /// <param name="keywords">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Source data, in CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Source keywords, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Source data, in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Source keywords, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1274,7 +1274,7 @@ public readonly partial struct PostFormsNonexplodedFormBody
     /// <param name="keywords">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.PostFormsNonexplodedFormBody.DataEntity.Source<TContext> data, in CanonTests32.Client.PostFormsNonexplodedFormBody.JsonStringArray.Source<TContext> keywords, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.DataEntity.Source<TContext> data, in CanonTests32.Client.Models.PostFormsNonexplodedFormBody.JsonStringArray.Source<TContext> keywords, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

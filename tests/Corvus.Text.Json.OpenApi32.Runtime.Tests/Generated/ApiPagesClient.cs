@@ -36,13 +36,13 @@ public sealed class ApiPagesClient : IApiPagesClient
     /// <param name="pageNum">The pageNum parameter.</param>
     /// <param name="offset">The offset parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetPageResponse> GetPageAsync(CanonTests32.Client.JsonInt32.Source pageNum, CanonTests32.Client.JsonInteger.Source offset = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetPageResponse> GetPageAsync(CanonTests32.Client.Models.JsonInt32.Source pageNum, CanonTests32.Client.Models.JsonInteger.Source offset = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.JsonInt32 PageNumValue = CanonTests32.Client.JsonInt32.CreateBuilder(workspace, pageNum, 30).RootElement;
+        CanonTests32.Client.Models.JsonInt32 PageNumValue = CanonTests32.Client.Models.JsonInt32.CreateBuilder(workspace, pageNum, 30).RootElement;
         GetPageRequest request = new(PageNumValue)
         {
-            Offset = offset.IsUndefined ? default : (CanonTests32.Client.JsonInteger)CanonTests32.Client.JsonInteger.CreateBuilder(workspace, offset, 30).RootElement,
+            Offset = offset.IsUndefined ? default : (CanonTests32.Client.Models.JsonInteger)CanonTests32.Client.Models.JsonInteger.CreateBuilder(workspace, offset, 30).RootElement,
         }
         ;
 

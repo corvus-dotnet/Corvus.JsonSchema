@@ -5,6 +5,7 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Petstore.Extended.Server;
+using Petstore.Extended.Server.Models;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Petstore Extended — Advanced OpenAPI Server Implementation

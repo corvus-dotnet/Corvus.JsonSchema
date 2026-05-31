@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct PostItemsByItemIdFormBody
     /// <summary>
     /// Gets the (optional) <c>metadata</c> property.
     /// </summary>
-    public CanonTests31.Server.PostItemsByItemIdFormBody.MetadataEntity Metadata
+    public CanonTests31.Server.Models.PostItemsByItemIdFormBody.MetadataEntity Metadata
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests31.Server.PostItemsByItemIdFormBody.MetadataEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests31.Server.Models.PostItemsByItemIdFormBody.MetadataEntity value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct PostItemsByItemIdFormBody
     /// <summary>
     /// Gets the (optional) <c>name</c> property.
     /// </summary>
-    public CanonTests31.Server.JsonString Name
+    public CanonTests31.Server.Models.JsonString Name
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests31.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests31.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -188,11 +188,11 @@ public readonly partial struct PostItemsByItemIdFormBody
     /// <summary>
     /// Gets the (optional) <c>tags</c> property.
     /// </summary>
-    public CanonTests31.Server.PostItemsByItemIdFormBody.JsonStringArray Tags
+    public CanonTests31.Server.Models.PostItemsByItemIdFormBody.JsonStringArray Tags
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests31.Server.PostItemsByItemIdFormBody.JsonStringArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests31.Server.Models.PostItemsByItemIdFormBody.JsonStringArray value))
             {
                 return value;
             }

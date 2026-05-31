@@ -48,10 +48,10 @@ public sealed class ApiFormsClient : IApiFormsClient
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SubmitContactFormResponse> SubmitContactFormAsync(CanonTests30.Client.PostFormsContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<SubmitContactFormResponse> SubmitContactFormAsync(CanonTests30.Client.Models.PostFormsContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PostFormsContactBody bodyValue = CanonTests30.Client.PostFormsContactBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests30.Client.Models.PostFormsContactBody bodyValue = CanonTests30.Client.Models.PostFormsContactBody.CreateBuilder(workspace, body, 30).RootElement;
         SubmitContactFormRequest request = new();
 
         request.Validate(validationMode);
@@ -77,10 +77,10 @@ public sealed class ApiFormsClient : IApiFormsClient
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<UploadDocumentResponse> UploadDocumentAsync(CanonTests30.Client.PostFormsUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<UploadDocumentResponse> UploadDocumentAsync(CanonTests30.Client.Models.PostFormsUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PostFormsUploadBody bodyValue = CanonTests30.Client.PostFormsUploadBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests30.Client.Models.PostFormsUploadBody bodyValue = CanonTests30.Client.Models.PostFormsUploadBody.CreateBuilder(workspace, body, 30).RootElement;
         UploadDocumentRequest request = new();
 
         request.Validate(validationMode);
@@ -107,10 +107,10 @@ public sealed class ApiFormsClient : IApiFormsClient
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SubmitEncodedContactFormResponse> SubmitEncodedContactFormAsync(CanonTests30.Client.PostFormsEncodedContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<SubmitEncodedContactFormResponse> SubmitEncodedContactFormAsync(CanonTests30.Client.Models.PostFormsEncodedContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PostFormsEncodedContactBody bodyValue = CanonTests30.Client.PostFormsEncodedContactBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests30.Client.Models.PostFormsEncodedContactBody bodyValue = CanonTests30.Client.Models.PostFormsEncodedContactBody.CreateBuilder(workspace, body, 30).RootElement;
         SubmitEncodedContactFormRequest request = new();
 
         request.Validate(validationMode);
@@ -136,10 +136,10 @@ public sealed class ApiFormsClient : IApiFormsClient
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<UploadEncodedDocumentResponse> UploadEncodedDocumentAsync(CanonTests30.Client.PostFormsEncodedUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<UploadEncodedDocumentResponse> UploadEncodedDocumentAsync(CanonTests30.Client.Models.PostFormsEncodedUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PostFormsEncodedUploadBody bodyValue = CanonTests30.Client.PostFormsEncodedUploadBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests30.Client.Models.PostFormsEncodedUploadBody bodyValue = CanonTests30.Client.Models.PostFormsEncodedUploadBody.CreateBuilder(workspace, body, 30).RootElement;
         UploadEncodedDocumentRequest request = new();
 
         request.Validate(validationMode);

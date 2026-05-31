@@ -30,5 +30,5 @@ public interface IApiAdoptionClient : IAsyncDisposable
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SubmitAdoptionApplicationResponse> SubmitAdoptionApplicationAsync(Petstore.EndToEnd.Client.PostAdoptionApplyBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SubmitAdoptionApplicationResponse> SubmitAdoptionApplicationAsync(Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

@@ -23,5 +23,5 @@ public readonly struct GetByMatrixTagsParams
     /// <summary>
     /// Gets the 'tags' path parameter.
     /// </summary>
-    public CanonTests32.Server.GetMatrixNoExplodeByTagsTags Tags { get; init; }
+    public CanonTests32.Server.Models.GetMatrixNoExplodeByTagsTags Tags { get; init; }
 }

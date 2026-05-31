@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct Schema4
     /// <summary>
     /// Gets the (optional) <c>processed</c> property.
     /// </summary>
-    public CanonTests32.Server.JsonInteger Processed
+    public CanonTests32.Server.Models.JsonInteger Processed
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProcessedUtf8, out CanonTests32.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProcessedUtf8, out CanonTests32.Server.Models.JsonInteger value))
             {
                 return value;
             }

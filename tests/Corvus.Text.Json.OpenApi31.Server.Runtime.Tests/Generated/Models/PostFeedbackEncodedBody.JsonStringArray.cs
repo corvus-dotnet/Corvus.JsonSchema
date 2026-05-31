@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -72,12 +72,12 @@ public readonly partial struct PostFeedbackEncodedBody
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public CanonTests31.Server.JsonString this[int index]
+        public CanonTests31.Server.Models.JsonString this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<CanonTests31.Server.JsonString>(_idx, index);
+                return _parent.GetArrayIndexElement<CanonTests31.Server.Models.JsonString>(_idx, index);
             }
         }
 
@@ -95,10 +95,10 @@ public readonly partial struct PostFeedbackEncodedBody
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<CanonTests31.Server.JsonString> EnumerateArray()
+        public ArrayEnumerator<CanonTests31.Server.Models.JsonString> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<CanonTests31.Server.JsonString>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<CanonTests31.Server.Models.JsonString>(_parent, _idx);
         }
 
         /// <inheritdoc/>

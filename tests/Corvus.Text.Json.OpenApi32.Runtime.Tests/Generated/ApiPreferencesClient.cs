@@ -36,13 +36,13 @@ public sealed class ApiPreferencesClient : IApiPreferencesClient
     /// <param name="session_token">The session_token parameter.</param>
     /// <param name="theme">The theme parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetPreferencesResponse> GetPreferencesAsync(CanonTests32.Client.JsonString.Source session_token, CanonTests32.Client.JsonString.Source theme = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetPreferencesResponse> GetPreferencesAsync(CanonTests32.Client.Models.JsonString.Source session_token, CanonTests32.Client.Models.JsonString.Source theme = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.JsonString SessionTokenValue = CanonTests32.Client.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
+        CanonTests32.Client.Models.JsonString SessionTokenValue = CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, session_token, 30).RootElement;
         GetPreferencesRequest request = new(SessionTokenValue)
         {
-            Theme = theme.IsUndefined ? default : (CanonTests32.Client.JsonString)CanonTests32.Client.JsonString.CreateBuilder(workspace, theme, 30).RootElement,
+            Theme = theme.IsUndefined ? default : (CanonTests32.Client.Models.JsonString)CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, theme, 30).RootElement,
         }
         ;
 

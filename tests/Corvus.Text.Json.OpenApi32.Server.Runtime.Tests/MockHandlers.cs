@@ -3,6 +3,7 @@
 // </copyright>
 
 using CanonTests32.Server;
+using CanonTests32.Server.Models;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.OpenApi32.Server.Runtime.Tests;

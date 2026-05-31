@@ -24,5 +24,5 @@ public readonly struct SubmitFeedbackEncodedParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests30.Server.PostFeedbackEncodedBody Body { get; init; }
+    public CanonTests30.Server.Models.PostFeedbackEncodedBody Body { get; init; }
 }

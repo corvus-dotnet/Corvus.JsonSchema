@@ -19,7 +19,7 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct OptionsItemsResult
 {
-    private OptionsItemsResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.JsonString accessControlAllowMethods = default)
+    private OptionsItemsResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.Models.JsonString accessControlAllowMethods = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -39,14 +39,14 @@ public readonly struct OptionsItemsResult
     /// <summary>
     /// Gets the value of the <c>Access-Control-Allow-Methods</c> response header.
     /// </summary>
-    public CanonTests32.Server.JsonString AccessControlAllowMethods { get; }
+    public CanonTests32.Server.Models.JsonString AccessControlAllowMethods { get; }
 
     /// <summary>
     /// Creates a 204 NoContent result.
     /// </summary>
     /// <param name="accessControlAllowMethods">The value for the <c>Access-Control-Allow-Methods</c> response header.</param>
     /// <returns>A <see cref="OptionsItemsResult"/> with status 204.</returns>
-    public static OptionsItemsResult NoContent(CanonTests32.Server.JsonString accessControlAllowMethods = default) => new(204, default, null, accessControlAllowMethods: accessControlAllowMethods);
+    public static OptionsItemsResult NoContent(CanonTests32.Server.Models.JsonString accessControlAllowMethods = default) => new(204, default, null, accessControlAllowMethods: accessControlAllowMethods);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

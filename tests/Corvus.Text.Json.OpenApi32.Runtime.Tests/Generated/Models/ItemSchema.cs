@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct ItemSchema
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonString EventId
+    public CanonTests32.Client.Models.JsonString EventId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventIdUtf8, out CanonTests32.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventIdUtf8, out CanonTests32.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -182,11 +182,11 @@ public readonly partial struct ItemSchema
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonString EventType
+    public CanonTests32.Client.Models.JsonString EventType
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventTypeUtf8, out CanonTests32.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EventTypeUtf8, out CanonTests32.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -198,11 +198,11 @@ public readonly partial struct ItemSchema
     /// <summary>
     /// Gets the (optional) <c>payload</c> property.
     /// </summary>
-    public CanonTests32.Client.JsonObject Payload
+    public CanonTests32.Client.Models.JsonObject Payload
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PayloadUtf8, out CanonTests32.Client.JsonObject value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PayloadUtf8, out CanonTests32.Client.Models.JsonObject value))
             {
                 return value;
             }
@@ -219,11 +219,11 @@ public readonly partial struct ItemSchema
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests32.Client.JsonDateTime Timestamp
+    public CanonTests32.Client.Models.JsonDateTime Timestamp
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TimestampUtf8, out CanonTests32.Client.JsonDateTime value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TimestampUtf8, out CanonTests32.Client.Models.JsonDateTime value))
             {
                 return value;
             }

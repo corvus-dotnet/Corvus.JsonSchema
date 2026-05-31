@@ -162,7 +162,7 @@ public interface IApiOrdersClient : IAsyncDisposable
     /// <param name="xTraceId">The X-Trace-Id parameter.</param>
     /// <param name="fields">The fields parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetOrderResponse> GetOrderAsync(CanonTests32.Client.JsonUuid.Source orderId, CanonTests32.Client.JsonString.Source xTraceId = default, CanonTests32.Client.JsonString.Source fields = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<GetOrderResponse> GetOrderAsync(CanonTests32.Client.Models.JsonUuid.Source orderId, CanonTests32.Client.Models.JsonString.Source xTraceId = default, CanonTests32.Client.Models.JsonString.Source fields = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Update order â€” inherits path-level params, overrides X-Trace-Id
@@ -171,5 +171,5 @@ public interface IApiOrdersClient : IAsyncDisposable
     /// <param name="xTraceId">The X-Trace-Id parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UpdateOrderResponse> UpdateOrderAsync(CanonTests32.Client.JsonUuid.Source orderId, CanonTests32.Client.JsonUuid.Source xTraceId, CanonTests32.Client.PutOrdersByOrderIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<UpdateOrderResponse> UpdateOrderAsync(CanonTests32.Client.Models.JsonUuid.Source orderId, CanonTests32.Client.Models.JsonUuid.Source xTraceId, CanonTests32.Client.Models.PutOrdersByOrderIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

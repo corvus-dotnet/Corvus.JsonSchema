@@ -31,12 +31,12 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public Petstore.Extended.Pet OkBody { get; private set; }
+    public Petstore.Extended.Models.Pet OkBody { get; private set; }
 
     /// <summary>
     /// Gets the 404 response body.
     /// </summary>
-    public Petstore.Extended.Error NotFoundBody { get; private set; }
+    public Petstore.Extended.Models.Error NotFoundBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<ShowPetByIdResponse> CreateAsync(
@@ -54,7 +54,7 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<Petstore.Extended.Pet>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<Petstore.Extended.Models.Pet>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -62,7 +62,7 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
 
         if (statusCode == 404)
         {
-            var notFoundDoc = await ParsedJsonDocument<Petstore.Extended.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var notFoundDoc = await ParsedJsonDocument<Petstore.Extended.Models.Error>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = notFoundDoc;
             response.NotFoundBody = notFoundDoc.RootElement;
             return response;
@@ -76,7 +76,7 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out Petstore.Extended.Pet result)
+    public bool TryGetOk(out Petstore.Extended.Models.Pet result)
     {
         if (this.StatusCode == 200)
         {
@@ -93,7 +93,7 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 404.</returns>
-    public bool TryGetNotFound(out Petstore.Extended.Error result)
+    public bool TryGetNotFound(out Petstore.Extended.Models.Error result)
     {
         if (this.StatusCode == 404)
         {
@@ -115,8 +115,8 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<Petstore.Extended.Pet, TResult> matchOk,
-        ResponseMatcher<Petstore.Extended.Error, TResult> matchNotFound,
+        ResponseMatcher<Petstore.Extended.Models.Pet, TResult> matchOk,
+        ResponseMatcher<Petstore.Extended.Models.Error, TResult> matchNotFound,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -145,8 +145,8 @@ public struct ShowPetByIdResponse : IApiResponse<ShowPetByIdResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<Petstore.Extended.Pet, TContext, TResult> matchOk,
-        ResponseMatcher<Petstore.Extended.Error, TContext, TResult> matchNotFound,
+        ResponseMatcher<Petstore.Extended.Models.Pet, TContext, TResult> matchOk,
+        ResponseMatcher<Petstore.Extended.Models.Error, TContext, TResult> matchNotFound,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

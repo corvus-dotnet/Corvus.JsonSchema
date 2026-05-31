@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -168,12 +168,12 @@ public readonly partial struct PostDocsBatchProcessBody
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Mutable this[int index]
+        public CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Mutable this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Mutable>(_idx, index);
+                return _parent.GetArrayIndexElement<CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Mutable>(_idx, index);
             }
         }
 
@@ -191,10 +191,10 @@ public readonly partial struct PostDocsBatchProcessBody
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Mutable> EnumerateArray()
+        public ArrayEnumerator<CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Mutable> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Mutable>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Mutable>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -323,7 +323,7 @@ public readonly partial struct PostDocsBatchProcessBody
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetItem(int itemIndex, in CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source value)
+        public void SetItem(int itemIndex, in CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Source value)
         {
             CheckValidInstance();
 
@@ -370,7 +370,7 @@ public readonly partial struct PostDocsBatchProcessBody
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InsertItem(int itemIndex, in CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source value)
+        public void InsertItem(int itemIndex, in CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Source value)
         {
             CheckValidInstance();
 
@@ -396,7 +396,7 @@ public readonly partial struct PostDocsBatchProcessBody
         ///   The parent <see cref="JsonDocument"/> has been disposed.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddItem(in CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source value)
+        public void AddItem(in CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Source value)
         {
             InsertItem(GetArrayLength(), in value);
         }
@@ -566,10 +566,10 @@ public readonly partial struct PostDocsBatchProcessBody
         /// <exception cref="ObjectDisposedException">
         ///   The parent <see cref="JsonDocument"/> has been disposed.
         /// </exception>
-        public bool Remove(in CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction item)
+        public bool Remove(in CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction item)
         {
             CheckValidInstance();
-            if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction>(this, in item))
+            if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction>(this, in item))
             {
                 return false;
             }
@@ -603,10 +603,10 @@ public readonly partial struct PostDocsBatchProcessBody
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RemoveWhere(JsonPredicate<CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction> predicate)
+        public void RemoveWhere(JsonPredicate<CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction> predicate)
         {
             CheckValidInstance();
-            JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction>(this, predicate);
+            JsonElementHelpers.RemoveWhereUnsafe<Mutable, CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction>(this, predicate);
             _documentVersion = _parent.Version;
         }
 
@@ -623,7 +623,7 @@ public readonly partial struct PostDocsBatchProcessBody
         /// <exception cref="ObjectDisposedException">
         ///   The parent <see cref="JsonDocument"/> has been disposed.
         /// </exception>
-        public bool Replace(in CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction oldItem, in CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source newItem)
+        public bool Replace(in CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction oldItem, in CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Source newItem)
         {
             CheckValidInstance();
 
@@ -632,11 +632,11 @@ public readonly partial struct PostDocsBatchProcessBody
                 return Remove(in oldItem);
             }
 
-            var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction>(_parent, _idx);
+            var enumerator = EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction>(_parent, _idx);
 
             while (enumerator.MoveNext())
             {
-                CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction current = enumerator.Current;
+                CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction current = enumerator.Current;
                 if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                 {
                     ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -733,7 +733,7 @@ public readonly partial struct PostDocsBatchProcessBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PostDocsBatchProcessBody.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PostDocsBatchProcessBody.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostDocsBatchProcessBody instance) => new(JsonElement.From(instance));
 
@@ -854,7 +854,7 @@ public readonly partial struct PostDocsBatchProcessBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PostDocsBatchProcessBody.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PostDocsBatchProcessBody.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -968,7 +968,7 @@ public readonly partial struct PostDocsBatchProcessBody
         /// <summary>
         /// Add an item to the array.
         /// </summary>
-        public void AddItem(in CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source value)
+        public void AddItem(in CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Source value)
         {
             value.AddAsItem(ref _builder);
         }

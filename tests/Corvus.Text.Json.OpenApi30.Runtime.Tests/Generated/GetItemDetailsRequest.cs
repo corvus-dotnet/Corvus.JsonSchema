@@ -24,13 +24,13 @@ public readonly struct GetItemDetailsRequest : IApiRequest<GetItemDetailsRequest
     /// <summary>
     /// Gets the itemId parameter.
     /// </summary>
-    public CanonTests30.Client.JsonString ItemId { get; init; }
+    public CanonTests30.Client.Models.JsonString ItemId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetItemDetailsRequest"/> struct.
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
-    public GetItemDetailsRequest(CanonTests30.Client.JsonString itemId)
+    public GetItemDetailsRequest(CanonTests30.Client.Models.JsonString itemId)
     {
         this.ItemId = itemId;
     }

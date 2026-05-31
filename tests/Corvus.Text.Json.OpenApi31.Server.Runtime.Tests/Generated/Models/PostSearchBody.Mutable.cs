@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostSearchBody
         /// <summary>
         /// Gets the (optional) <c>limit</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonInteger.Mutable Limit
+        public CanonTests31.Server.Models.JsonInteger.Mutable Limit
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LimitUtf8, out CanonTests31.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LimitUtf8, out CanonTests31.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct PostSearchBody
         /// <summary>
         /// Gets the (optional) <c>query</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonString.Mutable Query
+        public CanonTests31.Server.Models.JsonString.Mutable Query
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QueryUtf8, out CanonTests31.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QueryUtf8, out CanonTests31.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -335,7 +335,7 @@ public readonly partial struct PostSearchBody
         /// Set the <c>limit</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLimit(in CanonTests31.Server.JsonInteger.Source value)
+        public void SetLimit(in CanonTests31.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -380,7 +380,7 @@ public readonly partial struct PostSearchBody
         /// Set the <c>query</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetQuery(in CanonTests31.Server.JsonString.Source value)
+        public void SetQuery(in CanonTests31.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -762,7 +762,7 @@ public readonly partial struct PostSearchBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests31.Server.PostSearchBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests31.Server.Models.PostSearchBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostSearchBody instance) => new(JsonElement.From(instance));
 
@@ -883,7 +883,7 @@ public readonly partial struct PostSearchBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests31.Server.PostSearchBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests31.Server.Models.PostSearchBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -999,8 +999,8 @@ public readonly partial struct PostSearchBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests31.Server.JsonInteger.Source limit = default,
-            in CanonTests31.Server.JsonString.Source query = default)
+            in CanonTests31.Server.Models.JsonInteger.Source limit = default,
+            in CanonTests31.Server.Models.JsonString.Source query = default)
         {
             limit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Limit, ref builder);
             query.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Query, ref builder);
@@ -1009,7 +1009,7 @@ public readonly partial struct PostSearchBody
         /// <summary>
         /// Creates an instance of a <see cref="PostSearchBody"/>.
         /// </summary>
-        public void Create(in CanonTests31.Server.JsonInteger.Source limit = default, in CanonTests31.Server.JsonString.Source query = default)
+        public void Create(in CanonTests31.Server.Models.JsonInteger.Source limit = default, in CanonTests31.Server.Models.JsonString.Source query = default)
         {
             Create(ref _builder, limit, query);
         }
@@ -1171,7 +1171,7 @@ public readonly partial struct PostSearchBody
     /// <param name="query">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.JsonInteger.Source limit = default, in CanonTests31.Server.JsonString.Source query = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.Models.JsonInteger.Source limit = default, in CanonTests31.Server.Models.JsonString.Source query = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

@@ -24,10 +24,10 @@ public readonly struct QueryItemsParams
     /// <summary>
     /// Gets the 'format' query parameter.
     /// </summary>
-    public CanonTests32.Server.QueryEndpointQueryFormat Format { get; init; }
+    public CanonTests32.Server.Models.QueryEndpointQueryFormat Format { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.Schema Body { get; init; }
+    public CanonTests32.Server.Models.Schema Body { get; init; }
 }

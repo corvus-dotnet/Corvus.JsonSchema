@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Streetlights.Client;
+namespace Streetlights.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct LightMeasuredPayload
         /// Light intensity measured in lumens.
         /// </para>
         /// </remarks>
-        public Streetlights.Client.LightMeasuredPayload.LightIntensityMeasuredInLumens.Mutable Lumens
+        public Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Mutable Lumens
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out Streetlights.Client.LightMeasuredPayload.LightIntensityMeasuredInLumens.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LumensUtf8, out Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Mutable value))
                 {
                     return value;
                 }
@@ -289,11 +289,11 @@ public readonly partial struct LightMeasuredPayload
         /// Date and time when the message was sent.
         /// </para>
         /// </remarks>
-        public Streetlights.Client.JsonDateTime.Mutable SentAt
+        public Streetlights.Client.Models.JsonDateTime.Mutable SentAt
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out Streetlights.Client.JsonDateTime.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SentAtUtf8, out Streetlights.Client.Models.JsonDateTime.Mutable value))
                 {
                     return value;
                 }
@@ -345,7 +345,7 @@ public readonly partial struct LightMeasuredPayload
         /// Set the <c>lumens</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLumens(in Streetlights.Client.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source value)
+        public void SetLumens(in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source value)
         {
             CheckValidInstance();
 
@@ -390,7 +390,7 @@ public readonly partial struct LightMeasuredPayload
         /// Set the <c>sentAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSentAt(in Streetlights.Client.JsonDateTime.Source value)
+        public void SetSentAt(in Streetlights.Client.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -772,7 +772,7 @@ public readonly partial struct LightMeasuredPayload
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Streetlights.Client.LightMeasuredPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Streetlights.Client.Models.LightMeasuredPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(LightMeasuredPayload instance) => new(JsonElement.From(instance));
 
@@ -893,7 +893,7 @@ public readonly partial struct LightMeasuredPayload
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Streetlights.Client.LightMeasuredPayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Streetlights.Client.Models.LightMeasuredPayload.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1009,8 +1009,8 @@ public readonly partial struct LightMeasuredPayload
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Streetlights.Client.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source lumens = default,
-            in Streetlights.Client.JsonDateTime.Source sentAt = default)
+            in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source lumens = default,
+            in Streetlights.Client.Models.JsonDateTime.Source sentAt = default)
         {
             lumens.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lumens, ref builder);
             sentAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SentAt, ref builder);
@@ -1019,7 +1019,7 @@ public readonly partial struct LightMeasuredPayload
         /// <summary>
         /// Creates an instance of a <see cref="LightMeasuredPayload"/>.
         /// </summary>
-        public void Create(in Streetlights.Client.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source lumens = default, in Streetlights.Client.JsonDateTime.Source sentAt = default)
+        public void Create(in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source lumens = default, in Streetlights.Client.Models.JsonDateTime.Source sentAt = default)
         {
             Create(ref _builder, lumens, sentAt);
         }
@@ -1181,7 +1181,7 @@ public readonly partial struct LightMeasuredPayload
     /// <param name="sentAt">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Streetlights.Client.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source lumens = default, in Streetlights.Client.JsonDateTime.Source sentAt = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source lumens = default, in Streetlights.Client.Models.JsonDateTime.Source sentAt = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

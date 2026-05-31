@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Client;
+namespace CanonTests31.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetFilesDownloadMixedNotFound
     /// <summary>
     /// Gets the (optional) <c>error</c> property.
     /// </summary>
-    public CanonTests31.Client.JsonString Error
+    public CanonTests31.Client.Models.JsonString Error
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorUtf8, out CanonTests31.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorUtf8, out CanonTests31.Client.Models.JsonString value))
             {
                 return value;
             }

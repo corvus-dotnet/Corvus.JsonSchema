@@ -24,5 +24,5 @@ public readonly struct CreateItemParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests30.Server.PostItemsBody Body { get; init; }
+    public CanonTests30.Server.Models.PostItemsBody Body { get; init; }
 }

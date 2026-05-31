@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostFormsEncodedContactBody
         /// <summary>
         /// Gets the (optional) <c>address</c> property.
         /// </summary>
-        public CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Mutable Address
+        public CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Mutable Address
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AddressUtf8, out CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AddressUtf8, out CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct PostFormsEncodedContactBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests30.Client.JsonEmail.Mutable Email
+        public CanonTests30.Client.Models.JsonEmail.Mutable Email
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out CanonTests30.Client.JsonEmail.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out CanonTests30.Client.Models.JsonEmail.Mutable value))
                 {
                     return value;
                 }
@@ -305,11 +305,11 @@ public readonly partial struct PostFormsEncodedContactBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests30.Client.JsonString.Mutable Name
+        public CanonTests30.Client.Models.JsonString.Mutable Name
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests30.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests30.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -321,11 +321,11 @@ public readonly partial struct PostFormsEncodedContactBody
         /// <summary>
         /// Gets the (optional) <c>tags</c> property.
         /// </summary>
-        public CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Mutable Tags
+        public CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Mutable Tags
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Mutable value))
                 {
                     return value;
                 }
@@ -377,7 +377,7 @@ public readonly partial struct PostFormsEncodedContactBody
         /// Set the <c>address</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAddress(in CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Source value)
+        public void SetAddress(in CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Source value)
         {
             CheckValidInstance();
 
@@ -410,7 +410,7 @@ public readonly partial struct PostFormsEncodedContactBody
         /// Set the <c>address</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAddress<TContext>(in CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Source<TContext> value)
+        public void SetAddress<TContext>(in CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -458,7 +458,7 @@ public readonly partial struct PostFormsEncodedContactBody
         /// Set the <c>email</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEmail(in CanonTests30.Client.JsonEmail.Source value)
+        public void SetEmail(in CanonTests30.Client.Models.JsonEmail.Source value)
         {
             CheckValidInstance();
 
@@ -489,7 +489,7 @@ public readonly partial struct PostFormsEncodedContactBody
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in CanonTests30.Client.JsonString.Source value)
+        public void SetName(in CanonTests30.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -520,7 +520,7 @@ public readonly partial struct PostFormsEncodedContactBody
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Source value)
+        public void SetTags(in CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -553,7 +553,7 @@ public readonly partial struct PostFormsEncodedContactBody
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags<TContext>(in CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Source<TContext> value)
+        public void SetTags<TContext>(in CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -938,7 +938,7 @@ public readonly partial struct PostFormsEncodedContactBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests30.Client.PostFormsEncodedContactBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests30.Client.Models.PostFormsEncodedContactBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostFormsEncodedContactBody instance) => new(JsonElement.From(instance));
 
@@ -1059,7 +1059,7 @@ public readonly partial struct PostFormsEncodedContactBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests30.Client.PostFormsEncodedContactBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests30.Client.Models.PostFormsEncodedContactBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1175,10 +1175,10 @@ public readonly partial struct PostFormsEncodedContactBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests30.Client.JsonEmail.Source email,
-            in CanonTests30.Client.JsonString.Source name,
-            in CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Source address = default,
-            in CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Source tags = default)
+            in CanonTests30.Client.Models.JsonEmail.Source email,
+            in CanonTests30.Client.Models.JsonString.Source name,
+            in CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Source address = default,
+            in CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Source tags = default)
         {
             email.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Email, ref builder);
             name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
@@ -1190,10 +1190,10 @@ public readonly partial struct PostFormsEncodedContactBody
         /// Creates an instance of a <see cref="PostFormsEncodedContactBody"/>.
         /// </summary>
         public void Create(
-            in CanonTests30.Client.JsonEmail.Source email,
-            in CanonTests30.Client.JsonString.Source name,
-            in CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Source address = default,
-            in CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Source tags = default)
+            in CanonTests30.Client.Models.JsonEmail.Source email,
+            in CanonTests30.Client.Models.JsonString.Source name,
+            in CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Source address = default,
+            in CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Source tags = default)
         {
             Create(ref _builder, email, name, address, tags);
         }
@@ -1204,10 +1204,10 @@ public readonly partial struct PostFormsEncodedContactBody
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests30.Client.JsonEmail.Source email,
-            in CanonTests30.Client.JsonString.Source name,
-            in CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Source<TContext> address = default,
-            in CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Source<TContext> tags = default)
+            in CanonTests30.Client.Models.JsonEmail.Source email,
+            in CanonTests30.Client.Models.JsonString.Source name,
+            in CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Source<TContext> address = default,
+            in CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1223,10 +1223,10 @@ public readonly partial struct PostFormsEncodedContactBody
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests30.Client.JsonEmail.Source email,
-            in CanonTests30.Client.JsonString.Source name,
-            in CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Source<TContext> address = default,
-            in CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Source<TContext> tags = default)
+            in CanonTests30.Client.Models.JsonEmail.Source email,
+            in CanonTests30.Client.Models.JsonString.Source name,
+            in CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Source<TContext> address = default,
+            in CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1393,7 +1393,7 @@ public readonly partial struct PostFormsEncodedContactBody
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.JsonEmail.Source email, in CanonTests30.Client.JsonString.Source name, in CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Source address = default, in CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Source tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.Models.JsonEmail.Source email, in CanonTests30.Client.Models.JsonString.Source name, in CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Source address = default, in CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Source tags = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1418,7 +1418,7 @@ public readonly partial struct PostFormsEncodedContactBody
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests30.Client.JsonEmail.Source email, in CanonTests30.Client.JsonString.Source name, in CanonTests30.Client.PostFormsEncodedContactBody.AddressEntity.Source<TContext> address = default, in CanonTests30.Client.PostFormsEncodedContactBody.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests30.Client.Models.JsonEmail.Source email, in CanonTests30.Client.Models.JsonString.Source name, in CanonTests30.Client.Models.PostFormsEncodedContactBody.AddressEntity.Source<TContext> address = default, in CanonTests30.Client.Models.PostFormsEncodedContactBody.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

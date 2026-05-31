@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Client;
+namespace CanonTests31.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct GetItemsByItemIdDefault
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests31.Client.JsonString.Mutable Error
+        public CanonTests31.Client.Models.JsonString.Mutable Error
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorUtf8, out CanonTests31.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ErrorUtf8, out CanonTests31.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -324,7 +324,7 @@ public readonly partial struct GetItemsByItemIdDefault
         /// Set the <c>error</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetError(in CanonTests31.Client.JsonString.Source value)
+        public void SetError(in CanonTests31.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -692,7 +692,7 @@ public readonly partial struct GetItemsByItemIdDefault
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests31.Client.GetItemsByItemIdDefault.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests31.Client.Models.GetItemsByItemIdDefault.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetItemsByItemIdDefault instance) => new(JsonElement.From(instance));
 
@@ -813,7 +813,7 @@ public readonly partial struct GetItemsByItemIdDefault
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests31.Client.GetItemsByItemIdDefault.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests31.Client.Models.GetItemsByItemIdDefault.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -927,7 +927,7 @@ public readonly partial struct GetItemsByItemIdDefault
         /// <summary>
         /// Creates an instance of a <see cref="GetItemsByItemIdDefault"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests31.Client.JsonString.Source error)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests31.Client.Models.JsonString.Source error)
         {
             error.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Error, ref builder);
         }
@@ -935,7 +935,7 @@ public readonly partial struct GetItemsByItemIdDefault
         /// <summary>
         /// Creates an instance of a <see cref="GetItemsByItemIdDefault"/>.
         /// </summary>
-        public void Create(in CanonTests31.Client.JsonString.Source error)
+        public void Create(in CanonTests31.Client.Models.JsonString.Source error)
         {
             Create(ref _builder, error);
         }
@@ -1096,7 +1096,7 @@ public readonly partial struct GetItemsByItemIdDefault
     /// <param name="error">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Client.JsonString.Source error, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Client.Models.JsonString.Source error, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

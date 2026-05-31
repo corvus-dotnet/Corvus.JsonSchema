@@ -31,7 +31,7 @@ public struct DeleteItemResponse : IApiResponse<DeleteItemResponse>
     /// <summary>
     /// Gets the 404 response body.
     /// </summary>
-    public CanonTests30.Client.DeleteItemsByItemIdNotFound NotFoundBody { get; private set; }
+    public CanonTests30.Client.Models.DeleteItemsByItemIdNotFound NotFoundBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<DeleteItemResponse> CreateAsync(
@@ -55,7 +55,7 @@ public struct DeleteItemResponse : IApiResponse<DeleteItemResponse>
 
         if (statusCode == 404)
         {
-            var notFoundDoc = await ParsedJsonDocument<CanonTests30.Client.DeleteItemsByItemIdNotFound>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var notFoundDoc = await ParsedJsonDocument<CanonTests30.Client.Models.DeleteItemsByItemIdNotFound>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = notFoundDoc;
             response.NotFoundBody = notFoundDoc.RootElement;
             return response;
@@ -69,7 +69,7 @@ public struct DeleteItemResponse : IApiResponse<DeleteItemResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 404.</returns>
-    public bool TryGetNotFound(out CanonTests30.Client.DeleteItemsByItemIdNotFound result)
+    public bool TryGetNotFound(out CanonTests30.Client.Models.DeleteItemsByItemIdNotFound result)
     {
         if (this.StatusCode == 404)
         {
@@ -90,7 +90,7 @@ public struct DeleteItemResponse : IApiResponse<DeleteItemResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests30.Client.DeleteItemsByItemIdNotFound, TResult> matchNotFound,
+        ResponseMatcher<CanonTests30.Client.Models.DeleteItemsByItemIdNotFound, TResult> matchNotFound,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 404)
@@ -113,7 +113,7 @@ public struct DeleteItemResponse : IApiResponse<DeleteItemResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests30.Client.DeleteItemsByItemIdNotFound, TContext, TResult> matchNotFound,
+        ResponseMatcher<CanonTests30.Client.Models.DeleteItemsByItemIdNotFound, TContext, TResult> matchNotFound,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

@@ -35,10 +35,10 @@ public sealed class ApiDocumentsClient : IApiDocumentsClient
     /// </summary>
     /// <param name="docPath">The docPath parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<GetDocumentResponse> GetDocumentAsync(CanonTests32.Client.JsonString.Source docPath, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<GetDocumentResponse> GetDocumentAsync(CanonTests32.Client.Models.JsonString.Source docPath, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.JsonString DocPathValue = CanonTests32.Client.JsonString.CreateBuilder(workspace, docPath, 30).RootElement;
+        CanonTests32.Client.Models.JsonString DocPathValue = CanonTests32.Client.Models.JsonString.CreateBuilder(workspace, docPath, 30).RootElement;
         GetDocumentRequest request = new(DocPathValue);
 
         request.Validate(validationMode);

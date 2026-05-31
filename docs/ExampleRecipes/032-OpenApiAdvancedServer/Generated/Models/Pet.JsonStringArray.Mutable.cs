@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Extended.Server;
+namespace Petstore.Extended.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -174,12 +174,12 @@ public readonly partial struct Pet
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public Petstore.Extended.Server.JsonString.Mutable this[int index]
+            public Petstore.Extended.Server.Models.JsonString.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Petstore.Extended.Server.JsonString.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<Petstore.Extended.Server.Models.JsonString.Mutable>(_idx, index);
                 }
             }
 
@@ -197,10 +197,10 @@ public readonly partial struct Pet
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<Petstore.Extended.Server.JsonString.Mutable> EnumerateArray()
+            public ArrayEnumerator<Petstore.Extended.Server.Models.JsonString.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Petstore.Extended.Server.JsonString.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Petstore.Extended.Server.Models.JsonString.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -329,7 +329,7 @@ public readonly partial struct Pet
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Petstore.Extended.Server.JsonString.Source value)
+            public void SetItem(int itemIndex, in Petstore.Extended.Server.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct Pet
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Petstore.Extended.Server.JsonString.Source value)
+            public void InsertItem(int itemIndex, in Petstore.Extended.Server.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct Pet
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Petstore.Extended.Server.JsonString.Source value)
+            public void AddItem(in Petstore.Extended.Server.Models.JsonString.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -572,10 +572,10 @@ public readonly partial struct Pet
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Petstore.Extended.Server.JsonString item)
+            public bool Remove(in Petstore.Extended.Server.Models.JsonString item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Petstore.Extended.Server.JsonString>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Petstore.Extended.Server.Models.JsonString>(this, in item))
                 {
                     return false;
                 }
@@ -609,10 +609,10 @@ public readonly partial struct Pet
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Petstore.Extended.Server.JsonString> predicate)
+            public void RemoveWhere(JsonPredicate<Petstore.Extended.Server.Models.JsonString> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Petstore.Extended.Server.JsonString>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Petstore.Extended.Server.Models.JsonString>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -629,7 +629,7 @@ public readonly partial struct Pet
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Petstore.Extended.Server.JsonString oldItem, in Petstore.Extended.Server.JsonString.Source newItem)
+            public bool Replace(in Petstore.Extended.Server.Models.JsonString oldItem, in Petstore.Extended.Server.Models.JsonString.Source newItem)
             {
                 CheckValidInstance();
 
@@ -638,11 +638,11 @@ public readonly partial struct Pet
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Petstore.Extended.Server.JsonString>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Petstore.Extended.Server.Models.JsonString>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Petstore.Extended.Server.JsonString current = enumerator.Current;
+                    Petstore.Extended.Server.Models.JsonString current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -739,7 +739,7 @@ public readonly partial struct Pet
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Petstore.Extended.Server.Pet.JsonStringArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Petstore.Extended.Server.Models.Pet.JsonStringArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(JsonStringArray instance) => new(JsonElement.From(instance));
 
@@ -860,7 +860,7 @@ public readonly partial struct Pet
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Petstore.Extended.Server.Pet.JsonStringArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Petstore.Extended.Server.Models.Pet.JsonStringArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -974,7 +974,7 @@ public readonly partial struct Pet
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Petstore.Extended.Server.JsonString.Source value)
+            public void AddItem(in Petstore.Extended.Server.Models.JsonString.Source value)
             {
                 value.AddAsItem(ref _builder);
             }

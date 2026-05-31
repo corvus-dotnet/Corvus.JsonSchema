@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -156,11 +156,11 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
     /// <summary>
     /// Gets the (optional) <c>region</c> property.
     /// </summary>
-    public CanonTests32.Client.JsonString Region
+    public CanonTests32.Client.Models.JsonString Region
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RegionUtf8, out CanonTests32.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RegionUtf8, out CanonTests32.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -172,11 +172,11 @@ public readonly partial struct GetItemsByItemIdTagsByTagNameOkXMetadata
     /// <summary>
     /// Gets the (optional) <c>version</c> property.
     /// </summary>
-    public CanonTests32.Client.JsonString Version
+    public CanonTests32.Client.Models.JsonString Version
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out CanonTests32.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out CanonTests32.Client.Models.JsonString value))
             {
                 return value;
             }

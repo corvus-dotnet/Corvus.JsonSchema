@@ -24,5 +24,5 @@ public readonly struct DownloadPhotoParams
     /// <summary>
     /// Gets the 'photoId' path parameter.
     /// </summary>
-    public Petstore.Extended.Server.JsonString PhotoId { get; init; }
+    public Petstore.Extended.Server.Models.JsonString PhotoId { get; init; }
 }

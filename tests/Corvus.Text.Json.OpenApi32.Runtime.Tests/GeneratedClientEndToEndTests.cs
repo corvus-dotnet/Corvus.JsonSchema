@@ -7,6 +7,7 @@ using System.IO.Pipelines;
 using System.Net;
 using System.Text;
 using CanonTests32.Client;
+using CanonTests32.Client.Models;
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;

@@ -11,5 +11,5 @@ using global::System.Buffers.Text;
 using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
-namespace Streetlights.Client.V26;
+namespace Streetlights.Client.V26.Models;
 internal delegate void PropertiesValidationHandler_NamedPropertyValidator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex);

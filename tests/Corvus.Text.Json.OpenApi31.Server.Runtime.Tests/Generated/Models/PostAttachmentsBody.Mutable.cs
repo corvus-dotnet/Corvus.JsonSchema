@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PostAttachmentsBody
         /// <summary>
         /// Gets the (optional) <c>description</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonString.Mutable Description
+        public CanonTests31.Server.Models.JsonString.Mutable Description
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DescriptionUtf8, out CanonTests31.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DescriptionUtf8, out CanonTests31.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct PostAttachmentsBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests31.Server.JsonBinary.Mutable File
+        public CanonTests31.Server.Models.JsonBinary.Mutable File
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests31.Server.JsonBinary.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests31.Server.Models.JsonBinary.Mutable value))
                 {
                     return value;
                 }
@@ -340,7 +340,7 @@ public readonly partial struct PostAttachmentsBody
         /// Set the <c>description</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDescription(in CanonTests31.Server.JsonString.Source value)
+        public void SetDescription(in CanonTests31.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -385,7 +385,7 @@ public readonly partial struct PostAttachmentsBody
         /// Set the <c>file</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFile(in CanonTests31.Server.JsonBinary.Source value)
+        public void SetFile(in CanonTests31.Server.Models.JsonBinary.Source value)
         {
             CheckValidInstance();
 
@@ -753,7 +753,7 @@ public readonly partial struct PostAttachmentsBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests31.Server.PostAttachmentsBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests31.Server.Models.PostAttachmentsBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostAttachmentsBody instance) => new(JsonElement.From(instance));
 
@@ -874,7 +874,7 @@ public readonly partial struct PostAttachmentsBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests31.Server.PostAttachmentsBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests31.Server.Models.PostAttachmentsBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -990,8 +990,8 @@ public readonly partial struct PostAttachmentsBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests31.Server.JsonBinary.Source file,
-            in CanonTests31.Server.JsonString.Source description = default)
+            in CanonTests31.Server.Models.JsonBinary.Source file,
+            in CanonTests31.Server.Models.JsonString.Source description = default)
         {
             file.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.File, ref builder);
             description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
@@ -1000,7 +1000,7 @@ public readonly partial struct PostAttachmentsBody
         /// <summary>
         /// Creates an instance of a <see cref="PostAttachmentsBody"/>.
         /// </summary>
-        public void Create(in CanonTests31.Server.JsonBinary.Source file, in CanonTests31.Server.JsonString.Source description = default)
+        public void Create(in CanonTests31.Server.Models.JsonBinary.Source file, in CanonTests31.Server.Models.JsonString.Source description = default)
         {
             Create(ref _builder, file, description);
         }
@@ -1162,7 +1162,7 @@ public readonly partial struct PostAttachmentsBody
     /// <param name="description">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.JsonBinary.Source file, in CanonTests31.Server.JsonString.Source description = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.Models.JsonBinary.Source file, in CanonTests31.Server.Models.JsonString.Source description = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

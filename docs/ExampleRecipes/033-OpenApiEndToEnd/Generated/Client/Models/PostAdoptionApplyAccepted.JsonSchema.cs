@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.EndToEnd.Client;
+namespace Petstore.EndToEnd.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -49,14 +49,14 @@ public readonly partial struct PostAdoptionApplyAccepted
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Petstore.EndToEnd.Client.JsonString.JsonSchema.PushChildContextUnescaped(
+                Petstore.EndToEnd.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.ApplicationIdUtf8,
                     evaluationPath: ApplicationIdSchemaEvaluationPath);
 
-            Petstore.EndToEnd.Client.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Petstore.EndToEnd.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -71,14 +71,14 @@ public readonly partial struct PostAdoptionApplyAccepted
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Petstore.EndToEnd.Client.JsonInteger.JsonSchema.PushChildContextUnescaped(
+                Petstore.EndToEnd.Client.Models.JsonInteger.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.EstimatedReviewDaysUtf8,
                     evaluationPath: EstimatedReviewDaysSchemaEvaluationPath);
 
-            Petstore.EndToEnd.Client.JsonInteger.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            Petstore.EndToEnd.Client.Models.JsonInteger.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
@@ -86,14 +86,14 @@ public readonly partial struct PostAdoptionApplyAccepted
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                Petstore.EndToEnd.Client.PostAdoptionApplyAccepted.StatusEntity.JsonSchema.PushChildContextUnescaped(
+                Petstore.EndToEnd.Client.Models.PostAdoptionApplyAccepted.StatusEntity.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.StatusUtf8,
                     evaluationPath: StatusSchemaEvaluationPath);
 
-            Petstore.EndToEnd.Client.PostAdoptionApplyAccepted.StatusEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            Petstore.EndToEnd.Client.Models.PostAdoptionApplyAccepted.StatusEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -104,22 +104,22 @@ public readonly partial struct PostAdoptionApplyAccepted
             requiredBitBuffer[RequiredOffsetForStatus] |= RequiredBitForStatus;
         }
 
-        private static PropertySchemaMatchers<Petstore.EndToEnd.Client.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        private static PropertySchemaMatchers<Petstore.EndToEnd.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<Petstore.EndToEnd.Client.PropertiesValidationHandler_NamedPropertyValidator>([
+            return new PropertySchemaMatchers<Petstore.EndToEnd.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.ApplicationIdUtf8, MatchApplicationId),
                 (static () => JsonPropertyNames.EstimatedReviewDaysUtf8, MatchEstimatedReviewDays),
                 (static () => JsonPropertyNames.StatusUtf8, MatchStatus),
             ]);
         }
 
-        private static PropertySchemaMatchers<Petstore.EndToEnd.Client.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<Petstore.EndToEnd.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out Petstore.EndToEnd.Client.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out Petstore.EndToEnd.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -178,7 +178,7 @@ public readonly partial struct PostAdoptionApplyAccepted
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Petstore.EndToEnd.Client.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Petstore.EndToEnd.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
                         validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 

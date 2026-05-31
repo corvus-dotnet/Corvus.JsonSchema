@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Client;
+namespace CanonTests31.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -50,14 +50,14 @@ public readonly partial struct PostFormsEncodedContactBody
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                CanonTests31.Client.PostFormsEncodedContactBody.AddressEntity.JsonSchema.PushChildContextUnescaped(
+                CanonTests31.Client.Models.PostFormsEncodedContactBody.AddressEntity.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.AddressUtf8,
                     evaluationPath: AddressSchemaEvaluationPath);
 
-            CanonTests31.Client.PostFormsEncodedContactBody.AddressEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            CanonTests31.Client.Models.PostFormsEncodedContactBody.AddressEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
@@ -65,14 +65,14 @@ public readonly partial struct PostFormsEncodedContactBody
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                CanonTests31.Client.JsonEmail.JsonSchema.PushChildContextUnescaped(
+                CanonTests31.Client.Models.JsonEmail.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.EmailUtf8,
                     evaluationPath: EmailSchemaEvaluationPath);
 
-            CanonTests31.Client.JsonEmail.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            CanonTests31.Client.Models.JsonEmail.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -87,14 +87,14 @@ public readonly partial struct PostFormsEncodedContactBody
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                CanonTests31.Client.JsonString.JsonSchema.PushChildContextUnescaped(
+                CanonTests31.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.NameUtf8,
                     evaluationPath: NameSchemaEvaluationPath);
 
-            CanonTests31.Client.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            CanonTests31.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -109,20 +109,20 @@ public readonly partial struct PostFormsEncodedContactBody
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
-                CanonTests31.Client.PostFormsEncodedContactBody.JsonStringArray.JsonSchema.PushChildContextUnescaped(
+                CanonTests31.Client.Models.PostFormsEncodedContactBody.JsonStringArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.TagsUtf8,
                     evaluationPath: TagsSchemaEvaluationPath);
 
-            CanonTests31.Client.PostFormsEncodedContactBody.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            CanonTests31.Client.Models.PostFormsEncodedContactBody.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
             context.CommitChildContext(childContext3.IsMatch, ref childContext3);
         }
 
-        private static PropertySchemaMatchers<CanonTests31.Client.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
+        private static PropertySchemaMatchers<CanonTests31.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<CanonTests31.Client.PropertiesValidationHandler_NamedPropertyValidator1>([
+            return new PropertySchemaMatchers<CanonTests31.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1>([
                 (static () => JsonPropertyNames.AddressUtf8, MatchAddress),
                 (static () => JsonPropertyNames.EmailUtf8, MatchEmail),
                 (static () => JsonPropertyNames.NameUtf8, MatchName),
@@ -130,13 +130,13 @@ public readonly partial struct PostFormsEncodedContactBody
             ]);
         }
 
-        private static PropertySchemaMatchers<CanonTests31.Client.PropertiesValidationHandler_NamedPropertyValidator1> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<CanonTests31.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out CanonTests31.Client.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
+        out CanonTests31.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -195,7 +195,7 @@ public readonly partial struct PostFormsEncodedContactBody
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out CanonTests31.Client.PropertiesValidationHandler_NamedPropertyValidator1? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out CanonTests31.Client.Models.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                     {
                         validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 

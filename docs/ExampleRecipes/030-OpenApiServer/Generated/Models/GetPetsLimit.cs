@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Petstore.Server;
+namespace Petstore.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>

@@ -24,13 +24,13 @@ public readonly struct GetPetsBatchRequest : IApiRequest<GetPetsBatchRequest>
     /// <summary>
     /// Gets the ids parameter.
     /// </summary>
-    public Petstore.Extended.GetPetsBatchByIdsIds Ids { get; init; }
+    public Petstore.Extended.Models.GetPetsBatchByIdsIds Ids { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetPetsBatchRequest"/> struct.
     /// </summary>
     /// <param name="ids">The ids parameter.</param>
-    public GetPetsBatchRequest(Petstore.Extended.GetPetsBatchByIdsIds ids)
+    public GetPetsBatchRequest(Petstore.Extended.Models.GetPetsBatchByIdsIds ids)
     {
         this.Ids = ids;
     }

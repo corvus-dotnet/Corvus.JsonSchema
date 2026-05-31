@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Server;
+namespace CanonTests30.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct PostAttachmentsEncodedBody
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests30.Server.JsonBinary.Mutable File
+        public CanonTests30.Server.Models.JsonBinary.Mutable File
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests30.Server.JsonBinary.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileUtf8, out CanonTests30.Server.Models.JsonBinary.Mutable value))
                 {
                     return value;
                 }
@@ -284,11 +284,11 @@ public readonly partial struct PostAttachmentsEncodedBody
         /// <summary>
         /// Gets the (optional) <c>metadata</c> property.
         /// </summary>
-        public CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Mutable Metadata
+        public CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Mutable Metadata
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetadataUtf8, out CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Mutable value))
                 {
                     return value;
                 }
@@ -340,7 +340,7 @@ public readonly partial struct PostAttachmentsEncodedBody
         /// Set the <c>file</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFile(in CanonTests30.Server.JsonBinary.Source value)
+        public void SetFile(in CanonTests30.Server.Models.JsonBinary.Source value)
         {
             CheckValidInstance();
 
@@ -371,7 +371,7 @@ public readonly partial struct PostAttachmentsEncodedBody
         /// Set the <c>metadata</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMetadata(in CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Source value)
+        public void SetMetadata(in CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Source value)
         {
             CheckValidInstance();
 
@@ -404,7 +404,7 @@ public readonly partial struct PostAttachmentsEncodedBody
         /// Set the <c>metadata</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMetadata<TContext>(in CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Source<TContext> value)
+        public void SetMetadata<TContext>(in CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -789,7 +789,7 @@ public readonly partial struct PostAttachmentsEncodedBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests30.Server.PostAttachmentsEncodedBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests30.Server.Models.PostAttachmentsEncodedBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PostAttachmentsEncodedBody instance) => new(JsonElement.From(instance));
 
@@ -910,7 +910,7 @@ public readonly partial struct PostAttachmentsEncodedBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests30.Server.PostAttachmentsEncodedBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests30.Server.Models.PostAttachmentsEncodedBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1026,8 +1026,8 @@ public readonly partial struct PostAttachmentsEncodedBody
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests30.Server.JsonBinary.Source file,
-            in CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Source metadata = default)
+            in CanonTests30.Server.Models.JsonBinary.Source file,
+            in CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Source metadata = default)
         {
             file.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.File, ref builder);
             metadata.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Metadata, ref builder);
@@ -1036,7 +1036,7 @@ public readonly partial struct PostAttachmentsEncodedBody
         /// <summary>
         /// Creates an instance of a <see cref="PostAttachmentsEncodedBody"/>.
         /// </summary>
-        public void Create(in CanonTests30.Server.JsonBinary.Source file, in CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Source metadata = default)
+        public void Create(in CanonTests30.Server.Models.JsonBinary.Source file, in CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Source metadata = default)
         {
             Create(ref _builder, file, metadata);
         }
@@ -1047,8 +1047,8 @@ public readonly partial struct PostAttachmentsEncodedBody
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests30.Server.JsonBinary.Source file,
-            in CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Source<TContext> metadata = default)
+            in CanonTests30.Server.Models.JsonBinary.Source file,
+            in CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Source<TContext> metadata = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1062,8 +1062,8 @@ public readonly partial struct PostAttachmentsEncodedBody
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests30.Server.JsonBinary.Source file,
-            in CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Source<TContext> metadata = default)
+            in CanonTests30.Server.Models.JsonBinary.Source file,
+            in CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Source<TContext> metadata = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1228,7 +1228,7 @@ public readonly partial struct PostAttachmentsEncodedBody
     /// <param name="metadata">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Server.JsonBinary.Source file, in CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Source metadata = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Server.Models.JsonBinary.Source file, in CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Source metadata = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1251,7 +1251,7 @@ public readonly partial struct PostAttachmentsEncodedBody
     /// <param name="metadata">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests30.Server.JsonBinary.Source file, in CanonTests30.Server.PostAttachmentsEncodedBody.MetadataEntity.Source<TContext> metadata = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests30.Server.Models.JsonBinary.Source file, in CanonTests30.Server.Models.PostAttachmentsEncodedBody.MetadataEntity.Source<TContext> metadata = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

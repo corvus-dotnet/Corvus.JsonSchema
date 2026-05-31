@@ -31,7 +31,7 @@ public struct GetPetsBatchResponse : IApiResponse<GetPetsBatchResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public Petstore.EndToEnd.Client.PetList OkBody { get; private set; }
+    public Petstore.EndToEnd.Client.Models.PetList OkBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<GetPetsBatchResponse> CreateAsync(
@@ -49,7 +49,7 @@ public struct GetPetsBatchResponse : IApiResponse<GetPetsBatchResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<Petstore.EndToEnd.Client.PetList>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<Petstore.EndToEnd.Client.Models.PetList>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -63,7 +63,7 @@ public struct GetPetsBatchResponse : IApiResponse<GetPetsBatchResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out Petstore.EndToEnd.Client.PetList result)
+    public bool TryGetOk(out Petstore.EndToEnd.Client.Models.PetList result)
     {
         if (this.StatusCode == 200)
         {
@@ -84,7 +84,7 @@ public struct GetPetsBatchResponse : IApiResponse<GetPetsBatchResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<Petstore.EndToEnd.Client.PetList, TResult> matchOk,
+        ResponseMatcher<Petstore.EndToEnd.Client.Models.PetList, TResult> matchOk,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -107,7 +107,7 @@ public struct GetPetsBatchResponse : IApiResponse<GetPetsBatchResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<Petstore.EndToEnd.Client.PetList, TContext, TResult> matchOk,
+        ResponseMatcher<Petstore.EndToEnd.Client.Models.PetList, TContext, TResult> matchOk,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

@@ -31,7 +31,7 @@ public struct PatchItemResponse : IApiResponse<PatchItemResponse>
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests30.Client.PatchItemsByItemIdOk OkBody { get; private set; }
+    public CanonTests30.Client.Models.PatchItemsByItemIdOk OkBody { get; private set; }
 
     /// <inheritdoc/>
     public static async ValueTask<PatchItemResponse> CreateAsync(
@@ -49,7 +49,7 @@ public struct PatchItemResponse : IApiResponse<PatchItemResponse>
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<CanonTests30.Client.PatchItemsByItemIdOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<CanonTests30.Client.Models.PatchItemsByItemIdOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -63,7 +63,7 @@ public struct PatchItemResponse : IApiResponse<PatchItemResponse>
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests30.Client.PatchItemsByItemIdOk result)
+    public bool TryGetOk(out CanonTests30.Client.Models.PatchItemsByItemIdOk result)
     {
         if (this.StatusCode == 200)
         {
@@ -84,7 +84,7 @@ public struct PatchItemResponse : IApiResponse<PatchItemResponse>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests30.Client.PatchItemsByItemIdOk, TResult> matchOk,
+        ResponseMatcher<CanonTests30.Client.Models.PatchItemsByItemIdOk, TResult> matchOk,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -107,7 +107,7 @@ public struct PatchItemResponse : IApiResponse<PatchItemResponse>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests30.Client.PatchItemsByItemIdOk, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests30.Client.Models.PatchItemsByItemIdOk, TContext, TResult> matchOk,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

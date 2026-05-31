@@ -23,10 +23,10 @@ public readonly struct GetQuirkyParams
     /// <summary>
     /// Gets the 'qid' path parameter.
     /// </summary>
-    public CanonTests30.Server.JsonString Qid { get; init; }
+    public CanonTests30.Server.Models.JsonString Qid { get; init; }
 
     /// <summary>
     /// Gets the 'weirdLoc' query parameter.
     /// </summary>
-    public CanonTests30.Server.JsonString WeirdLoc { get; init; }
+    public CanonTests30.Server.Models.JsonString WeirdLoc { get; init; }
 }

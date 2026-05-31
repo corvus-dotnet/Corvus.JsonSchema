@@ -23,5 +23,5 @@ public readonly struct GetItemParams
     /// <summary>
     /// Gets the 'itemId' path parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString ItemId { get; init; }
+    public CanonTests31.Server.Models.JsonString ItemId { get; init; }
 }

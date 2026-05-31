@@ -41,7 +41,7 @@ public readonly struct GetResourceVersionResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetResourceVersionResult"/> with status 200.</returns>
-    public static GetResourceVersionResult Ok(CanonTests32.Server.Schema7.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Schema7.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static GetResourceVersionResult Ok(CanonTests32.Server.Models.Schema7.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Models.Schema7.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct GetResourceVersionResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => CanonTests32.Server.Schema7.From(this.Body).EvaluateSchema(),
+            200 => CanonTests32.Server.Models.Schema7.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

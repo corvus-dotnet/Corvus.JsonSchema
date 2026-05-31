@@ -24,23 +24,23 @@ public readonly struct SearchRequest : IApiRequest<SearchRequest>
     /// <summary>
     /// Gets the q parameter.
     /// </summary>
-    public CanonTests32.Client.JsonString Q { get; init; }
+    public CanonTests32.Client.Models.JsonString Q { get; init; }
 
     /// <summary>
     /// Gets the page parameter.
     /// </summary>
-    public CanonTests32.Client.JsonInt32 Page { get; init; }
+    public CanonTests32.Client.Models.JsonInt32 Page { get; init; }
 
     /// <summary>
     /// Gets the rating parameter.
     /// </summary>
-    public CanonTests32.Client.JsonSingle Rating { get; init; }
+    public CanonTests32.Client.Models.JsonSingle Rating { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SearchRequest"/> struct.
     /// </summary>
     /// <param name="q">The q parameter.</param>
-    public SearchRequest(CanonTests32.Client.JsonString q)
+    public SearchRequest(CanonTests32.Client.Models.JsonString q)
     {
         this.Q = q;
     }

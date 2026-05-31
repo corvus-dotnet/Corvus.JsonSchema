@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct PatchItemsByItemIdBody
         /// <summary>
         /// Gets the (optional) <c>name</c> property.
         /// </summary>
-        public CanonTests32.Client.JsonString.Mutable Name
+        public CanonTests32.Client.Models.JsonString.Mutable Name
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests32.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameUtf8, out CanonTests32.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -319,7 +319,7 @@ public readonly partial struct PatchItemsByItemIdBody
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in CanonTests32.Client.JsonString.Source value)
+        public void SetName(in CanonTests32.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct PatchItemsByItemIdBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Client.PatchItemsByItemIdBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Client.Models.PatchItemsByItemIdBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(PatchItemsByItemIdBody instance) => new(JsonElement.From(instance));
 
@@ -822,7 +822,7 @@ public readonly partial struct PatchItemsByItemIdBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Client.PatchItemsByItemIdBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Client.Models.PatchItemsByItemIdBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -936,7 +936,7 @@ public readonly partial struct PatchItemsByItemIdBody
         /// <summary>
         /// Creates an instance of a <see cref="PatchItemsByItemIdBody"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Client.JsonString.Source name = default)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Client.Models.JsonString.Source name = default)
         {
             name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
         }
@@ -944,7 +944,7 @@ public readonly partial struct PatchItemsByItemIdBody
         /// <summary>
         /// Creates an instance of a <see cref="PatchItemsByItemIdBody"/>.
         /// </summary>
-        public void Create(in CanonTests32.Client.JsonString.Source name = default)
+        public void Create(in CanonTests32.Client.Models.JsonString.Source name = default)
         {
             Create(ref _builder, name);
         }
@@ -1123,7 +1123,7 @@ public readonly partial struct PatchItemsByItemIdBody
     /// <param name="name">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.JsonString.Source name = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Client.Models.JsonString.Source name = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

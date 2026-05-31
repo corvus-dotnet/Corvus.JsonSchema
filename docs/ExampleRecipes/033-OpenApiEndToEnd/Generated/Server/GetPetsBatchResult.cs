@@ -41,7 +41,7 @@ public readonly struct GetPetsBatchResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetPetsBatchResult"/> with status 200.</returns>
-    public static GetPetsBatchResult Ok(Petstore.EndToEnd.Server.PetList.Source body, JsonWorkspace workspace) => new(200, Petstore.EndToEnd.Server.PetList.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    public static GetPetsBatchResult Ok(Petstore.EndToEnd.Server.Models.PetList.Source body, JsonWorkspace workspace) => new(200, Petstore.EndToEnd.Server.Models.PetList.CreateBuilder(workspace, body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.
@@ -52,7 +52,7 @@ public readonly struct GetPetsBatchResult
         if (this.Body.IsUndefined()) return true;
         return this.StatusCode switch
         {
-            200 => Petstore.EndToEnd.Server.PetList.From(this.Body).EvaluateSchema(),
+            200 => Petstore.EndToEnd.Server.Models.PetList.From(this.Body).EvaluateSchema(),
             _ => true,
         };
     }

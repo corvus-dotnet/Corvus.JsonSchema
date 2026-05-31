@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Client;
+namespace CanonTests31.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -161,11 +161,11 @@ public readonly partial struct PutOrdersByOrderIdBody
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public CanonTests31.Client.JsonString Status
+    public CanonTests31.Client.Models.JsonString Status
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests31.Client.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out CanonTests31.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -177,11 +177,11 @@ public readonly partial struct PutOrdersByOrderIdBody
     /// <summary>
     /// Gets the (optional) <c>total</c> property.
     /// </summary>
-    public CanonTests31.Client.JsonNumber Total
+    public CanonTests31.Client.Models.JsonNumber Total
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests31.Client.JsonNumber value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests31.Client.Models.JsonNumber value))
             {
                 return value;
             }

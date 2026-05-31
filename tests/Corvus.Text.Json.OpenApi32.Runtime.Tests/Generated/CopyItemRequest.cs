@@ -24,19 +24,19 @@ public readonly struct CopyItemRequest : IApiRequest<CopyItemRequest>
     /// <summary>
     /// Gets the itemId parameter.
     /// </summary>
-    public CanonTests32.Client.JsonString ItemId { get; init; }
+    public CanonTests32.Client.Models.JsonString ItemId { get; init; }
 
     /// <summary>
     /// Gets the Destination parameter.
     /// </summary>
-    public CanonTests32.Client.JsonString Destination { get; init; }
+    public CanonTests32.Client.Models.JsonString Destination { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CopyItemRequest"/> struct.
     /// </summary>
     /// <param name="itemId">The itemId parameter.</param>
     /// <param name="Destination">The Destination parameter.</param>
-    public CopyItemRequest(CanonTests32.Client.JsonString itemId, CanonTests32.Client.JsonString Destination)
+    public CopyItemRequest(CanonTests32.Client.Models.JsonString itemId, CanonTests32.Client.Models.JsonString Destination)
     {
         this.ItemId = itemId;
         this.Destination = Destination;

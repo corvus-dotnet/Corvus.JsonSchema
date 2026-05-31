@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Client;
+namespace CanonTests32.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -75,12 +75,12 @@ public readonly partial struct PostDocsUploadMixedBody
     /// </summary>
     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle Item1
+    public CanonTests32.Client.Models.PostDocsUploadMixedBody.RequiredTitle Item1
     {
         get
         {
             CheckValidInstance();
-            return _parent.GetArrayIndexElement<CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle>(_idx, 0);
+            return _parent.GetArrayIndexElement<CanonTests32.Client.Models.PostDocsUploadMixedBody.RequiredTitle>(_idx, 0);
         }
     }
 
@@ -89,12 +89,12 @@ public readonly partial struct PostDocsUploadMixedBody
     /// </summary>
     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-    public CanonTests32.Client.JsonBinary Item2
+    public CanonTests32.Client.Models.JsonBinary Item2
     {
         get
         {
             CheckValidInstance();
-            return _parent.GetArrayIndexElement<CanonTests32.Client.JsonBinary>(_idx, 1);
+            return _parent.GetArrayIndexElement<CanonTests32.Client.Models.JsonBinary>(_idx, 1);
         }
     }
 

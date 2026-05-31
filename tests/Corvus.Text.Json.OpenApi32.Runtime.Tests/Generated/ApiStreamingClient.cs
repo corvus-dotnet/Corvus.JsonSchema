@@ -49,10 +49,10 @@ public sealed class ApiStreamingClient : IApiStreamingClient
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<ChatCompletionsResponse> ChatCompletionsAsync(CanonTests32.Client.PostChatCompletionsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<ChatCompletionsResponse> ChatCompletionsAsync(CanonTests32.Client.Models.PostChatCompletionsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostChatCompletionsBody bodyValue = CanonTests32.Client.PostChatCompletionsBody.CreateBuilder(workspace, body, 30).RootElement;
+        CanonTests32.Client.Models.PostChatCompletionsBody bodyValue = CanonTests32.Client.Models.PostChatCompletionsBody.CreateBuilder(workspace, body, 30).RootElement;
         ChatCompletionsRequest request = new();
 
         request.Validate(validationMode);
@@ -70,7 +70,7 @@ public sealed class ApiStreamingClient : IApiStreamingClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyAsyncCore<ChatCompletionsRequest, CanonTests32.Client.PostChatCompletionsBody, ChatCompletionsResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendWithBodyAsyncCore<ChatCompletionsRequest, CanonTests32.Client.Models.PostChatCompletionsBody, ChatCompletionsResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>

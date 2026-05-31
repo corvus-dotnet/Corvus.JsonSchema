@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests32.Server;
+namespace CanonTests32.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -279,11 +279,11 @@ public readonly partial struct GetSearchOk
         /// <summary>
         /// Gets the (optional) <c>nextPage</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonInteger.Mutable NextPage
+        public CanonTests32.Server.Models.JsonInteger.Mutable NextPage
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageUtf8, out CanonTests32.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageUtf8, out CanonTests32.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -355,7 +355,7 @@ public readonly partial struct GetSearchOk
         /// Set the <c>nextPage</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNextPage(in CanonTests32.Server.JsonInteger.Source value)
+        public void SetNextPage(in CanonTests32.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -1091,9 +1091,9 @@ public readonly partial struct GetSearchOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.GetSearchOk.ObjectBuilder.Build value) {_objectBuilder = value; _kind = Kind.ObjectBuilder; }
+        internal Source(CanonTests32.Server.Models.GetSearchOk.ObjectBuilder.Build value) {_objectBuilder = value; _kind = Kind.ObjectBuilder; }
 
-        internal Source(CanonTests32.Server.GetSearchOk.ArrayBuilder.Build value) {_arrayBuilder = value; _kind = Kind.ArrayBuilder; }
+        internal Source(CanonTests32.Server.Models.GetSearchOk.ArrayBuilder.Build value) {_arrayBuilder = value; _kind = Kind.ArrayBuilder; }
 
         public static implicit operator Source(GetSearchOk instance) => new(JsonElement.From(instance));
 
@@ -1231,9 +1231,9 @@ public readonly partial struct GetSearchOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.GetSearchOk.ObjectBuilder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.ObjectBuilder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.GetSearchOk.ObjectBuilder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.ObjectBuilder; }
 
-        internal Source(scoped in TContext context, CanonTests32.Server.GetSearchOk.ArrayBuilder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.ArrayBuilder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Models.GetSearchOk.ArrayBuilder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.ArrayBuilder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1412,7 +1412,7 @@ public readonly partial struct GetSearchOk
         /// <summary>
         /// Creates an instance of a <see cref="GetSearchOk"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.JsonInteger.Source nextPage = default)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.Models.JsonInteger.Source nextPage = default)
         {
             nextPage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NextPage, ref builder);
         }
@@ -1420,7 +1420,7 @@ public readonly partial struct GetSearchOk
         /// <summary>
         /// Creates an instance of a <see cref="GetSearchOk"/>.
         /// </summary>
-        public void Create(in CanonTests32.Server.JsonInteger.Source nextPage = default)
+        public void Create(in CanonTests32.Server.Models.JsonInteger.Source nextPage = default)
         {
             Create(ref _builder, nextPage);
         }
@@ -1625,7 +1625,7 @@ public readonly partial struct GetSearchOk
     /// <param name="nextPage">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonInteger.Source nextPage = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.Models.JsonInteger.Source nextPage = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

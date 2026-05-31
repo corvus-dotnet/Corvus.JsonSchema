@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests30.Client;
+namespace CanonTests30.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -268,11 +268,11 @@ public readonly partial struct GetTextMixedOk
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public CanonTests30.Client.JsonString.Mutable Value
+        public CanonTests30.Client.Models.JsonString.Mutable Value
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out CanonTests30.Client.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out CanonTests30.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -324,7 +324,7 @@ public readonly partial struct GetTextMixedOk
         /// Set the <c>value</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetValue(in CanonTests30.Client.JsonString.Source value)
+        public void SetValue(in CanonTests30.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -692,7 +692,7 @@ public readonly partial struct GetTextMixedOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests30.Client.GetTextMixedOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests30.Client.Models.GetTextMixedOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetTextMixedOk instance) => new(JsonElement.From(instance));
 
@@ -813,7 +813,7 @@ public readonly partial struct GetTextMixedOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests30.Client.GetTextMixedOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests30.Client.Models.GetTextMixedOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -927,7 +927,7 @@ public readonly partial struct GetTextMixedOk
         /// <summary>
         /// Creates an instance of a <see cref="GetTextMixedOk"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests30.Client.JsonString.Source value)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests30.Client.Models.JsonString.Source value)
         {
             value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
         }
@@ -935,7 +935,7 @@ public readonly partial struct GetTextMixedOk
         /// <summary>
         /// Creates an instance of a <see cref="GetTextMixedOk"/>.
         /// </summary>
-        public void Create(in CanonTests30.Client.JsonString.Source value)
+        public void Create(in CanonTests30.Client.Models.JsonString.Source value)
         {
             Create(ref _builder, value);
         }
@@ -1096,7 +1096,7 @@ public readonly partial struct GetTextMixedOk
     /// <param name="value">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.JsonString.Source value, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests30.Client.Models.JsonString.Source value, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

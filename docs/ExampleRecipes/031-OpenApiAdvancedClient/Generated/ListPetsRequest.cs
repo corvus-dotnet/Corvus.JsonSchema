@@ -24,28 +24,28 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
     /// <summary>
     /// Gets the limit parameter.
     /// </summary>
-    public Petstore.Extended.GetPetsLimit Limit { get; init; }
+    public Petstore.Extended.Models.GetPetsLimit Limit { get; init; }
 
     /// <summary>
     /// Gets the tags parameter.
     /// </summary>
-    public Petstore.Extended.GetPetsTags Tags { get; init; }
+    public Petstore.Extended.Models.GetPetsTags Tags { get; init; }
 
     /// <summary>
     /// Gets the filter parameter.
     /// </summary>
-    public Petstore.Extended.GetPetsFilter Filter { get; init; }
+    public Petstore.Extended.Models.GetPetsFilter Filter { get; init; }
 
     /// <summary>
     /// Gets the x-request-id parameter.
     /// </summary>
-    public Petstore.Extended.JsonString XRequestId { get; init; }
+    public Petstore.Extended.Models.JsonString XRequestId { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ListPetsRequest"/> struct.
     /// </summary>
     /// <param name="xRequestId">The x-request-id parameter.</param>
-    public ListPetsRequest(Petstore.Extended.JsonString xRequestId)
+    public ListPetsRequest(Petstore.Extended.Models.JsonString xRequestId)
     {
         this.XRequestId = xRequestId;
     }

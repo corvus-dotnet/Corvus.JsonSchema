@@ -160,12 +160,12 @@ public interface IApiDocsClient : IAsyncDisposable
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<UploadDocMixedResponse> UploadDocMixedAsync(CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.Source part0, BinaryPartData part1, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<UploadDocMixedResponse> UploadDocMixedAsync(CanonTests32.Client.Models.PostDocsUploadMixedBody.RequiredTitle.Source part0, BinaryPartData part1, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Process a batch of items via multipart/mixed (itemEncoding)
     /// </summary>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ProcessBatchResponse> ProcessBatchAsync(IEnumerable<CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source> items, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ProcessBatchResponse> ProcessBatchAsync(IEnumerable<CanonTests32.Client.Models.PostDocsBatchProcessBody.RequiredAction.Source> items, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

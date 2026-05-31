@@ -3,6 +3,7 @@
 // </copyright>
 
 using CanonTests31.Client;
+using CanonTests31.Client.Models;
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 

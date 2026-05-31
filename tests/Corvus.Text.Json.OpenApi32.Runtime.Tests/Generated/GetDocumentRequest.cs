@@ -24,13 +24,13 @@ public readonly struct GetDocumentRequest : IApiRequest<GetDocumentRequest>
     /// <summary>
     /// Gets the docPath parameter.
     /// </summary>
-    public CanonTests32.Client.JsonString DocPath { get; init; }
+    public CanonTests32.Client.Models.JsonString DocPath { get; init; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetDocumentRequest"/> struct.
     /// </summary>
     /// <param name="docPath">The docPath parameter.</param>
-    public GetDocumentRequest(CanonTests32.Client.JsonString docPath)
+    public GetDocumentRequest(CanonTests32.Client.Models.JsonString docPath)
     {
         this.DocPath = docPath;
     }

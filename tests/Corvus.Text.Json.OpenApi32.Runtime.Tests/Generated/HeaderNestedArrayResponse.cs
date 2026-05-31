@@ -33,13 +33,13 @@ public struct HeaderNestedArrayResponse : IApiResponse<HeaderNestedArrayResponse
     /// <summary>
     /// Gets the 200 response body.
     /// </summary>
-    public CanonTests32.Client.GetComplexHeaderNestedArrayOk OkBody { get; private set; }
+    public CanonTests32.Client.Models.GetComplexHeaderNestedArrayOk OkBody { get; private set; }
 
     /// <summary>
     /// Gets the value of the <c>X-Nested-Items</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems xNestedItemsHeaderValue;
+    private CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems xNestedItemsHeaderValue;
     private bool xNestedItemsHeaderParsed;
 
     /// <summary>
@@ -47,7 +47,7 @@ public struct HeaderNestedArrayResponse : IApiResponse<HeaderNestedArrayResponse
     /// or <see langword="default"/> (undefined) if not present.
     /// Use <c>IsUndefined()</c> to check for absence.
     /// </summary>
-    public CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems XNestedItemsHeader
+    public CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems XNestedItemsHeader
     {
         get
         {
@@ -62,7 +62,7 @@ public struct HeaderNestedArrayResponse : IApiResponse<HeaderNestedArrayResponse
                 && this.responseHeaders.TryGetValue("X-Nested-Items", out string? rawValue)
                 && rawValue is not null)
             {
-                this.xNestedItemsHeaderValue = CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems.Builder arrayBuilder) =>
+                this.xNestedItemsHeaderValue = CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref CanonTests32.Client.Models.GetComplexHeaderNestedArrayOkXNestedItems.Builder arrayBuilder) =>
                 {
                     System.ReadOnlySpan<char> remaining = ctx;
                     while (!remaining.IsEmpty)
@@ -98,7 +98,7 @@ public struct HeaderNestedArrayResponse : IApiResponse<HeaderNestedArrayResponse
 
         if (statusCode == 200)
         {
-            var okDoc = await ParsedJsonDocument<CanonTests32.Client.GetComplexHeaderNestedArrayOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            var okDoc = await ParsedJsonDocument<CanonTests32.Client.Models.GetComplexHeaderNestedArrayOk>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
             return response;
@@ -112,7 +112,7 @@ public struct HeaderNestedArrayResponse : IApiResponse<HeaderNestedArrayResponse
     /// </summary>
     /// <param name="result">The typed response body if the status matches.</param>
     /// <returns><see langword="true"/> if the status code is 200.</returns>
-    public bool TryGetOk(out CanonTests32.Client.GetComplexHeaderNestedArrayOk result)
+    public bool TryGetOk(out CanonTests32.Client.Models.GetComplexHeaderNestedArrayOk result)
     {
         if (this.StatusCode == 200)
         {
@@ -133,7 +133,7 @@ public struct HeaderNestedArrayResponse : IApiResponse<HeaderNestedArrayResponse
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
-        ResponseMatcher<CanonTests32.Client.GetComplexHeaderNestedArrayOk, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.GetComplexHeaderNestedArrayOk, TResult> matchOk,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -156,7 +156,7 @@ public struct HeaderNestedArrayResponse : IApiResponse<HeaderNestedArrayResponse
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
-        ResponseMatcher<CanonTests32.Client.GetComplexHeaderNestedArrayOk, TContext, TResult> matchOk,
+        ResponseMatcher<CanonTests32.Client.Models.GetComplexHeaderNestedArrayOk, TContext, TResult> matchOk,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {

@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace CanonTests31.Server;
+namespace CanonTests31.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -263,11 +263,11 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// <summary>
         /// Gets the (optional) <c>items</c> property.
         /// </summary>
-        public CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Mutable Items
+        public CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Mutable Items
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ItemsUtf8, out CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ItemsUtf8, out CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Mutable value))
                 {
                     return value;
                 }
@@ -279,11 +279,11 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// <summary>
         /// Gets the (optional) <c>total</c> property.
         /// </summary>
-        public CanonTests31.Server.JsonInteger.Mutable Total
+        public CanonTests31.Server.Models.JsonInteger.Mutable Total
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests31.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TotalUtf8, out CanonTests31.Server.Models.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -335,7 +335,7 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// Set the <c>items</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetItems(in CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source value)
+        public void SetItems(in CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -368,7 +368,7 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// Set the <c>items</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetItems<TContext>(in CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> value)
+        public void SetItems<TContext>(in CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -416,7 +416,7 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// Set the <c>total</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTotal(in CanonTests31.Server.JsonInteger.Source value)
+        public void SetTotal(in CanonTests31.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -798,7 +798,7 @@ public readonly partial struct GetAdvancedStylesByIdsOk
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests31.Server.GetAdvancedStylesByIdsOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
         public static implicit operator Source(GetAdvancedStylesByIdsOk instance) => new(JsonElement.From(instance));
 
@@ -919,7 +919,7 @@ public readonly partial struct GetAdvancedStylesByIdsOk
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests31.Server.GetAdvancedStylesByIdsOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1035,8 +1035,8 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source items = default,
-            in CanonTests31.Server.JsonInteger.Source total = default)
+            in CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source items = default,
+            in CanonTests31.Server.Models.JsonInteger.Source total = default)
         {
             items.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Items, ref builder);
             total.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Total, ref builder);
@@ -1045,7 +1045,7 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// <summary>
         /// Creates an instance of a <see cref="GetAdvancedStylesByIdsOk"/>.
         /// </summary>
-        public void Create(in CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source items = default, in CanonTests31.Server.JsonInteger.Source total = default)
+        public void Create(in CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source items = default, in CanonTests31.Server.Models.JsonInteger.Source total = default)
         {
             Create(ref _builder, items, total);
         }
@@ -1056,8 +1056,8 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> items = default,
-            in CanonTests31.Server.JsonInteger.Source total = default)
+            in CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> items = default,
+            in CanonTests31.Server.Models.JsonInteger.Source total = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1071,8 +1071,8 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> items = default,
-            in CanonTests31.Server.JsonInteger.Source total = default)
+            in CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> items = default,
+            in CanonTests31.Server.Models.JsonInteger.Source total = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1237,7 +1237,7 @@ public readonly partial struct GetAdvancedStylesByIdsOk
     /// <param name="total">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source items = default, in CanonTests31.Server.JsonInteger.Source total = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source items = default, in CanonTests31.Server.Models.JsonInteger.Source total = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1260,7 +1260,7 @@ public readonly partial struct GetAdvancedStylesByIdsOk
     /// <param name="total">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests31.Server.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> items = default, in CanonTests31.Server.JsonInteger.Source total = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests31.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> items = default, in CanonTests31.Server.Models.JsonInteger.Source total = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

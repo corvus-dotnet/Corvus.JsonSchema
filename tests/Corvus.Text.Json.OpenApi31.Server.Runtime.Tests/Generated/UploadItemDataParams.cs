@@ -23,10 +23,10 @@ public readonly struct UploadItemDataParams
     /// <summary>
     /// Gets the 'itemId' path parameter.
     /// </summary>
-    public CanonTests31.Server.JsonString ItemId { get; init; }
+    public CanonTests31.Server.Models.JsonString ItemId { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests31.Server.PostItemsByItemIdUploadBody Body { get; init; }
+    public CanonTests31.Server.Models.PostItemsByItemIdUploadBody Body { get; init; }
 }

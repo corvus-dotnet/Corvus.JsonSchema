@@ -24,5 +24,5 @@ public readonly struct GetPetsBatchParams
     /// <summary>
     /// Gets the 'ids' path parameter.
     /// </summary>
-    public Petstore.EndToEnd.Server.GetPetsBatchByIdsIds Ids { get; init; }
+    public Petstore.EndToEnd.Server.Models.GetPetsBatchByIdsIds Ids { get; init; }
 }
