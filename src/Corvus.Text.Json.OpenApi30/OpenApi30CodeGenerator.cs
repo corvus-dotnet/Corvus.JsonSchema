@@ -5283,7 +5283,7 @@ public sealed class OpenApi30CodeGenerator
             ctorArgs.Append($"{statusExpr}, {bodyExpr}, {contentTypeExpr}");
             foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                ctorArgs.Append($", {fieldName}: {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
+                ctorArgs.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
             }
 
             w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({ctorArgs});");

@@ -7230,7 +7230,7 @@ public sealed class OpenApi32CodeGenerator
             ctorArgs.Append($"{statusExpr}, {bodyExpr}, {contentTypeExpr}");
             foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                ctorArgs.Append($", {fieldName}: {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
+                ctorArgs.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
             }
 
             w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({ctorArgs});");
@@ -7318,7 +7318,7 @@ public sealed class OpenApi32CodeGenerator
             ctorArgs.Append($"{statusExpr}, default, {contentTypeExpr}, streamWriter: static (jsonStreamWriter, context, cancellationToken) => (({streamWriterDelegateName})context!)(new {streamTypeName}(jsonStreamWriter), cancellationToken), streamWriterContext: writer");
             foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                ctorArgs.Append($", {fieldName}: {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
+                ctorArgs.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
             }
 
             w.WriteLine($"public static {structName} {methodName}({commonParams}) => new({ctorArgs});");
