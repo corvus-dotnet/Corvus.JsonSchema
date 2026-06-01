@@ -23,6 +23,8 @@ public class JsonWorkspace : IDisposable
 
     private Dictionary<IJsonDocument, int>? _documentIndices;
 
+    private HashSet<IJsonDocument>? _ownedDocuments;
+
     private int _length;
 
     private int _generation;
@@ -187,6 +189,31 @@ public class JsonWorkspace : IDisposable
     public void RegisterDocument(IWorkspaceManagedDocument document)
     {
         GetDocumentIndex(document);
+    }
+
+    /// <summary>
+    /// Transfers ownership of a document to this workspace. The document will be disposed
+    /// when the workspace is disposed or reset.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Use this for caller-owned documents (e.g., <see cref="ParsedJsonDocument{T}"/>)
+    /// whose lifetime should be tied to the workspace. This is particularly useful in
+    /// server handler scenarios where parsed response data must outlive the handler method
+    /// but should be cleaned up when the workspace is disposed.
+    /// </para>
+    /// <para>
+    /// This method is idempotent — calling it multiple times with the same document has no
+    /// additional effect.
+    /// </para>
+    /// </remarks>
+    /// <param name="document">The document to take ownership of.</param>
+    [CLSCompliant(false)]
+    public void TakeOwnership(IJsonDocument document)
+    {
+        GetDocumentIndex(document);
+        _ownedDocuments ??= new HashSet<IJsonDocument>();
+        _ownedDocuments.Add(document);
     }
 
     /// <summary>
@@ -360,11 +387,13 @@ public class JsonWorkspace : IDisposable
     {
         foreach (IJsonDocument document in _documents.AsSpan(0, _length))
         {
-            if (document is IWorkspaceManagedDocument)
+            if (document is IWorkspaceManagedDocument || _ownedDocuments?.Contains(document) == true)
             {
                 document.Dispose();
             }
         }
+
+        _ownedDocuments?.Clear();
     }
 
     /// <summary>

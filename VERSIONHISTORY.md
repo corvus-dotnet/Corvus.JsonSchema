@@ -10,6 +10,10 @@ V5.1.2 is a breaking change that moves generated JSON Schema model types into a 
 - **Server result factory methods use `.Source` for response headers** — Generated server result factory methods (e.g., `ListPetsResult.Ok(...)`) now accept `.Source` types for response header parameters instead of realized types. For example, a header parameter changes from `JsonString xNext = default` to `JsonString.Source xNext = default`. Existing code that passes realized types (e.g., `JsonString.ParseValue(...)`) continues to compile via implicit conversion. Factories with headers but no body now also require a `JsonWorkspace workspace` parameter.
 - **`ParseValue()` deprecated** — All `ParseValue()` overloads on `JsonElement` and generated types are now marked `[Obsolete]`. Use `ParsedJsonDocument<T>.Parse()` for pooled-memory parsing (returns a disposable document that recycles memory), or `Clone()` when you genuinely need a standalone copy. `ParseValue()` allocates backing memory that becomes GC garbage — the deprecation makes the performance tradeoff explicit. See [#772](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/772).
 
+### New features
+
+- **`JsonWorkspace.TakeOwnership()`** — Transfers lifetime ownership of any `IJsonDocument` (including `ParsedJsonDocument<T>`) to a workspace. The document is disposed when the workspace is disposed or reset. This enables handler patterns where parsed response data must outlive the handler method but should be cleaned up with the workspace, without forcing consumers into mutable builders for read-only scenarios. See [#777](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/777).
+
 ### Bug fixes
 
 - **Webhook schema pointer resolution** — `openapi-callback-server` previously constructed JSON pointers using `#/paths/{name}` instead of `#/webhooks/{name}` when processing webhook schemas, causing resolution failures. `SchemaPointerBuilder` full-pointer methods now accept a `rootSegmentUtf8` parameter to correctly distinguish between paths and webhooks. See [#773](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/773).
