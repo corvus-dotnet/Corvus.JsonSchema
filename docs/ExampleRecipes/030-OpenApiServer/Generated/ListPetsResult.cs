@@ -48,7 +48,7 @@ public readonly struct ListPetsResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="xNext">The value for the <c>x-next</c> response header.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status 200.</returns>
-    public static ListPetsResult Ok(Petstore.Server.Models.Pets.Source body, JsonWorkspace workspace, Petstore.Server.Models.JsonString.Source xNext = default) => new(200, Petstore.Server.Models.Pets.CreateBuilder(workspace, body, 30).RootElement, "application/json", xNext: Petstore.Server.Models.JsonString.CreateBuilder(workspace, xNext, 30).RootElement);
+    public static ListPetsResult Ok(Petstore.Server.Models.Pets.Source body, JsonWorkspace workspace, Petstore.Server.Models.JsonString.Source xNext = default) => new(200, Petstore.Server.Models.Pets.CreateBuilder(workspace, body, 30).RootElement, "application/json", xNext: xNext.IsUndefined ? default : Petstore.Server.Models.JsonString.CreateBuilder(workspace, xNext, 30).RootElement);
 
     /// <summary>
     /// Creates a default error result.

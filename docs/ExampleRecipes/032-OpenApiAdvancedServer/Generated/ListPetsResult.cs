@@ -55,7 +55,7 @@ public readonly struct ListPetsResult
     /// <param name="xTotalCount">The value for the <c>x-total-count</c> response header.</param>
     /// <param name="xNext">The value for the <c>x-next</c> response header.</param>
     /// <returns>A <see cref="ListPetsResult"/> with status 200.</returns>
-    public static ListPetsResult Ok(Petstore.Extended.Server.Models.PetList.Source body, JsonWorkspace workspace, Petstore.Extended.Server.Models.JsonInteger.Source xTotalCount = default, Petstore.Extended.Server.Models.JsonString.Source xNext = default) => new(200, Petstore.Extended.Server.Models.PetList.CreateBuilder(workspace, body, 30).RootElement, "application/json", xTotalCount: Petstore.Extended.Server.Models.JsonInteger.CreateBuilder(workspace, xTotalCount, 30).RootElement, xNext: Petstore.Extended.Server.Models.JsonString.CreateBuilder(workspace, xNext, 30).RootElement);
+    public static ListPetsResult Ok(Petstore.Extended.Server.Models.PetList.Source body, JsonWorkspace workspace, Petstore.Extended.Server.Models.JsonInteger.Source xTotalCount = default, Petstore.Extended.Server.Models.JsonString.Source xNext = default) => new(200, Petstore.Extended.Server.Models.PetList.CreateBuilder(workspace, body, 30).RootElement, "application/json", xTotalCount: xTotalCount.IsUndefined ? default : Petstore.Extended.Server.Models.JsonInteger.CreateBuilder(workspace, xTotalCount, 30).RootElement, xNext: xNext.IsUndefined ? default : Petstore.Extended.Server.Models.JsonString.CreateBuilder(workspace, xNext, 30).RootElement);
 
     /// <summary>
     /// Creates a default error result.
