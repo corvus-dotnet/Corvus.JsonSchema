@@ -7529,4 +7529,44 @@ public class OpenApi30CodeGeneratorTests
             files.Any(f => f.FileName.Contains("CreateSubscription", StringComparison.Ordinal)),
             "Callback client should not include paths operations like createSubscription");
     }
+
+    [TestMethod]
+    public void CollectWebhookAndCallbackSchemaPointers_CallbackResolvablePointerUsesFullPath()
+    {
+        // Regression test for #779: inline callback schemas must have ResolvablePointers
+        // that use the full document path through the parent operation's callbacks map,
+        // NOT a broken pointer rooted at #/paths/{callbackKey}/...
+        SchemaReference[] refs = OpenApi30CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
+            callbacksSpecRoot, out _);
+
+        // Find the callback request body schema reference from /subscriptions
+        SchemaReference callbackBodyRef = refs.First(r =>
+            r.PositionalPointer.Contains("request.body", StringComparison.Ordinal) &&
+            r.PositionalPointer.Contains("requestBody", StringComparison.Ordinal));
+
+        // The ResolvablePointer must contain the full path through the parent operation:
+        // #/paths/~1subscriptions/post/callbacks/onEvent/{...}/post/requestBody/...
+        Assert.IsTrue(
+            callbackBodyRef.ResolvablePointer.Contains("~1subscriptions/post/callbacks/onEvent/", StringComparison.Ordinal),
+            $"Expected ResolvablePointer to include full parent path. Got: {callbackBodyRef.ResolvablePointer}");
+
+        // And it must be resolvable against the document — verify the schema element exists
+        JsonElement schema = callbacksSpecRoot;
+        string fragment = callbackBodyRef.ResolvablePointer;
+        Assert.IsTrue(fragment.StartsWith('#'), "ResolvablePointer should start with #");
+
+        // Walk the pointer segments to verify it resolves
+        string[] segments = fragment[2..].Split('/');
+        foreach (string segment in segments)
+        {
+            string unescaped = segment.Replace("~1", "/").Replace("~0", "~");
+            Assert.IsTrue(
+                schema.TryGetProperty(unescaped, out schema),
+                $"Failed to resolve segment '{unescaped}' in pointer '{fragment}'");
+        }
+
+        // The resolved element should be a schema object
+        Assert.AreEqual(JsonValueKind.Object, schema.ValueKind,
+            "Resolved callback schema should be a JSON object");
+    }
 }
