@@ -2434,14 +2434,13 @@ public class OpenApi32CodeGeneratorTests
         string[] pointers = [.. OpenApi32CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
             callbacksSpecRoot, out _).Select(r => r.PositionalPointer)];
 
-        // Webhook request body schemas — the pointer builder uses #/paths/<key>/... format
-        // even for webhooks (the key is the webhook name)
+        // Webhook request body schemas use #/webhooks/<key>/... format
         CollectionAssert.Contains(
             pointers,
-            "#/paths/petAdopted/post/requestBody/content/application~1json/schema");
+            "#/webhooks/petAdopted/post/requestBody/content/application~1json/schema");
         CollectionAssert.Contains(
             pointers,
-            "#/paths/inventoryUpdate/put/requestBody/content/application~1json/schema");
+            "#/webhooks/inventoryUpdate/put/requestBody/content/application~1json/schema");
     }
 
     [TestMethod]
@@ -2453,9 +2452,9 @@ public class OpenApi32CodeGeneratorTests
         // inventoryUpdate has X-Signature header parameter
         CollectionAssert.Contains(
             pointers,
-            "#/paths/inventoryUpdate/put/parameters/0/schema");
+            "#/webhooks/inventoryUpdate/put/parameters/0/schema");
 
-        Assert.AreEqual("X-Signature", parameterNames["/paths/inventoryUpdate/put/parameters/0/schema"]);
+        Assert.AreEqual("X-Signature", parameterNames["/webhooks/inventoryUpdate/put/parameters/0/schema"]);
     }
 
     [TestMethod]

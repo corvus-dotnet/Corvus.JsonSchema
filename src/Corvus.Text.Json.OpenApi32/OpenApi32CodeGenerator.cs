@@ -234,7 +234,7 @@ public sealed class OpenApi32CodeGenerator
                 }
             }
 
-            CollectPathItemPointers(pathProp, pointers, paramNames, referenceResolver);
+            CollectPathItemPointers(pathProp, pointers, paramNames, referenceResolver, "paths"u8);
         }
 
         parameterNames = paramNames;
@@ -431,7 +431,8 @@ public sealed class OpenApi32CodeGenerator
         JsonProperty<OpenApiDocument.PathItem> pathProp,
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
-        IOpenApiReferenceResolver referenceResolver)
+        IOpenApiReferenceResolver referenceResolver,
+        ReadOnlySpan<byte> rootSegmentUtf8)
     {
         OpenApiDocument.PathItem pathItem = pathProp.Value;
 
@@ -453,47 +454,47 @@ public sealed class OpenApi32CodeGenerator
         {
             if (resolved.Get.IsNotUndefined())
             {
-                CollectOperationPointers(pathProp, resolved.Get, OperationMethod.Get, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                CollectOperationPointers(pathProp, resolved.Get, OperationMethod.Get, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
             }
 
             if (resolved.Put.IsNotUndefined())
             {
-                CollectOperationPointers(pathProp, resolved.Put, OperationMethod.Put, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                CollectOperationPointers(pathProp, resolved.Put, OperationMethod.Put, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
             }
 
             if (resolved.Post.IsNotUndefined())
             {
-                CollectOperationPointers(pathProp, resolved.Post, OperationMethod.Post, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                CollectOperationPointers(pathProp, resolved.Post, OperationMethod.Post, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
             }
 
             if (resolved.Delete.IsNotUndefined())
             {
-                CollectOperationPointers(pathProp, resolved.Delete, OperationMethod.Delete, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                CollectOperationPointers(pathProp, resolved.Delete, OperationMethod.Delete, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
             }
 
             if (resolved.Options.IsNotUndefined())
             {
-                CollectOperationPointers(pathProp, resolved.Options, OperationMethod.Options, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                CollectOperationPointers(pathProp, resolved.Options, OperationMethod.Options, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
             }
 
             if (resolved.Head.IsNotUndefined())
             {
-                CollectOperationPointers(pathProp, resolved.Head, OperationMethod.Head, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                CollectOperationPointers(pathProp, resolved.Head, OperationMethod.Head, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
             }
 
             if (resolved.Patch.IsNotUndefined())
             {
-                CollectOperationPointers(pathProp, resolved.Patch, OperationMethod.Patch, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                CollectOperationPointers(pathProp, resolved.Patch, OperationMethod.Patch, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
             }
 
             if (resolved.Trace.IsNotUndefined())
             {
-                CollectOperationPointers(pathProp, resolved.Trace, OperationMethod.Trace, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                CollectOperationPointers(pathProp, resolved.Trace, OperationMethod.Trace, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
             }
 
             if (resolved.Query.IsNotUndefined())
             {
-                CollectOperationPointers(pathProp, resolved.Query, OperationMethod.Query, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                CollectOperationPointers(pathProp, resolved.Query, OperationMethod.Query, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
             }
 
             // Walk additionalOperations — custom HTTP methods
@@ -503,7 +504,7 @@ public sealed class OpenApi32CodeGenerator
                 {
                     if (additionalOp.Value.IsNotUndefined())
                     {
-                        CollectAdditionalOperationPointers(pathProp, additionalOp.Value, additionalOp.Name, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                        CollectAdditionalOperationPointers(pathProp, additionalOp.Value, additionalOp.Name, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
                     }
                 }
             }
@@ -518,6 +519,7 @@ public sealed class OpenApi32CodeGenerator
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver,
+        ReadOnlySpan<byte> rootSegmentUtf8,
         string? pathItemRefValue = null)
     {
         using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
@@ -529,7 +531,7 @@ public sealed class OpenApi32CodeGenerator
             if (param.SchemaValue.IsNotUndefined())
             {
                 string positionalPointer = SchemaPointerBuilder.BuildParameterSchemaPointer(
-                    pathName.Span, method, sourceIndex, isPathLevel);
+                    rootSegmentUtf8, pathName.Span, method, sourceIndex, isPathLevel);
 
                 string resolvablePointer = refValue is not null
                     ? SchemaPointerBuilder.BuildRefBasedPointer(refValue, "/schema")
@@ -558,7 +560,7 @@ public sealed class OpenApi32CodeGenerator
                     using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                     string positionalPointer = SchemaPointerBuilder.BuildParameterContentSchemaPointer(
-                        pathName.Span, method, sourceIndex, isPathLevel, mediaTypeName.Span);
+                        rootSegmentUtf8, pathName.Span, method, sourceIndex, isPathLevel, mediaTypeName.Span);
 
                     string resolvablePointer = refValue is not null
                         ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -602,7 +604,7 @@ public sealed class OpenApi32CodeGenerator
                         }
 
                         string positionalPointer = SchemaPointerBuilder.BuildContentSchemaPointer(
-                            pathName.Span, method, "/requestBody"u8, mediaTypeName.Span);
+                            rootSegmentUtf8, pathName.Span, method, "/requestBody"u8, mediaTypeName.Span);
 
                         string resolvablePointer = rbRefValue is not null
                             ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -633,7 +635,7 @@ public sealed class OpenApi32CodeGenerator
                                 if (!CodeEmitHelpers.IsRawStreamMediaType(contentType))
                                 {
                                     string pointer = BuildPrefixItemSchemaPointer(
-                                        pathName.Span, method, mtName.Span, prefixIndex, null);
+                                        rootSegmentUtf8, pathName.Span, method, mtName.Span, prefixIndex, null);
                                     pointers.Add(new SchemaReference(pointer, pointer));
                                 }
 
@@ -650,7 +652,7 @@ public sealed class OpenApi32CodeGenerator
                             {
                                 using UnescapedUtf8JsonString mtName = mediaTypeProp.Utf8NameSpan;
                                 string pointer = BuildItemsSchemaPointer(
-                                    pathName.Span, method, mtName.Span, null);
+                                    rootSegmentUtf8, pathName.Span, method, mtName.Span, null);
                                 pointers.Add(new SchemaReference(pointer, pointer));
                             }
                         }
@@ -688,7 +690,7 @@ public sealed class OpenApi32CodeGenerator
                                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                                 string positionalPointer = SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                                    pathName.Span, method, statusCode.Span, mediaTypeName.Span);
+                                    rootSegmentUtf8, pathName.Span, method, statusCode.Span, mediaTypeName.Span);
 
                                 string resolvablePointer = responseRefValue is not null
                                     ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -706,7 +708,7 @@ public sealed class OpenApi32CodeGenerator
                                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                                 string positionalPointer = SchemaPointerBuilder.BuildResponseContentItemSchemaPointer(
-                                    pathName.Span, method, statusCode.Span, mediaTypeName.Span);
+                                    rootSegmentUtf8, pathName.Span, method, statusCode.Span, mediaTypeName.Span);
 
                                 pointers.Add(new SchemaReference(positionalPointer, positionalPointer));
                             }
@@ -734,7 +736,7 @@ public sealed class OpenApi32CodeGenerator
                                     using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
 
                                     string positionalPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                                        pathName.Span, method, statusCode.Span, headerName.Span);
+                                        rootSegmentUtf8, pathName.Span, method, statusCode.Span, headerName.Span);
 
                                     string resolvablePointer = headerRefValue is not null
                                         ? SchemaPointerBuilder.BuildRefBasedPointer(headerRefValue, "/schema")
@@ -764,6 +766,7 @@ public sealed class OpenApi32CodeGenerator
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver,
+        ReadOnlySpan<byte> rootSegmentUtf8,
         string? pathItemRefValue = null)
     {
         using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
@@ -776,7 +779,7 @@ public sealed class OpenApi32CodeGenerator
             if (param.SchemaValue.IsNotUndefined())
             {
                 string positionalPointer = BuildAdditionalOpParameterPointer(
-                    pathName.Span, customMethodUtf8, sourceIndex, isPathLevel);
+                    rootSegmentUtf8, pathName.Span, customMethodUtf8, sourceIndex, isPathLevel);
 
                 string resolvablePointer = refValue is not null
                     ? SchemaPointerBuilder.BuildRefBasedPointer(refValue, "/schema")
@@ -801,7 +804,7 @@ public sealed class OpenApi32CodeGenerator
                     using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                     string positionalPointer = BuildAdditionalOpParameterContentSchemaPointer(
-                        pathName.Span, customMethodName, sourceIndex, mediaTypeName.Span);
+                        rootSegmentUtf8, pathName.Span, customMethodName, sourceIndex, mediaTypeName.Span);
 
                     string resolvablePointer = refValue is not null
                         ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -844,7 +847,7 @@ public sealed class OpenApi32CodeGenerator
                         }
 
                         string positionalPointer = BuildAdditionalOpContentPointer(
-                            pathName.Span, customMethodUtf8, "/requestBody"u8, mediaTypeName.Span);
+                            rootSegmentUtf8, pathName.Span, customMethodUtf8, "/requestBody"u8, mediaTypeName.Span);
 
                         string resolvablePointer = rbRefValue is not null
                             ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -872,7 +875,7 @@ public sealed class OpenApi32CodeGenerator
                                 if (!CodeEmitHelpers.IsRawStreamMediaType(contentType))
                                 {
                                     string pointer = BuildPrefixItemSchemaPointer(
-                                        pathName.Span, OperationMethod.Get, mtName.Span, prefixIndex, customMethodName);
+                                        rootSegmentUtf8, pathName.Span, OperationMethod.Get, mtName.Span, prefixIndex, customMethodName);
                                     pointers.Add(new SchemaReference(pointer, pointer));
                                 }
 
@@ -889,7 +892,7 @@ public sealed class OpenApi32CodeGenerator
                             {
                                 using UnescapedUtf8JsonString mtName = mediaTypeProp.Utf8NameSpan;
                                 string pointer = BuildItemsSchemaPointer(
-                                    pathName.Span, OperationMethod.Get, mtName.Span, customMethodName);
+                                    rootSegmentUtf8, pathName.Span, OperationMethod.Get, mtName.Span, customMethodName);
                                 pointers.Add(new SchemaReference(pointer, pointer));
                             }
                         }
@@ -931,7 +934,7 @@ public sealed class OpenApi32CodeGenerator
                                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                                 string positionalPointer = BuildAdditionalOpResponseContentPointer(
-                                    pathName.Span, customMethodUtf8, statusCode.Span, mediaTypeName.Span);
+                                    rootSegmentUtf8, pathName.Span, customMethodUtf8, statusCode.Span, mediaTypeName.Span);
 
                                 string resolvablePointer = responseRefValue is not null
                                     ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -946,7 +949,7 @@ public sealed class OpenApi32CodeGenerator
                                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                                 string positionalPointer = BuildAdditionalOpResponseContentItemSchemaPointer(
-                                    pathName.Span, customMethodName, statusCode.Span, mediaTypeName.Span);
+                                    rootSegmentUtf8, pathName.Span, customMethodName, statusCode.Span, mediaTypeName.Span);
 
                                 pointers.Add(new SchemaReference(positionalPointer, positionalPointer));
                             }
@@ -969,7 +972,7 @@ public sealed class OpenApi32CodeGenerator
                                     using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
 
                                     string positionalPointer = BuildAdditionalOpResponseHeaderPointer(
-                                        pathName.Span, customMethodUtf8, statusCode.Span, headerName.Span);
+                                        rootSegmentUtf8, pathName.Span, customMethodUtf8, statusCode.Span, headerName.Span);
 
                                     string resolvablePointer = headerRefValue is not null
                                         ? SchemaPointerBuilder.BuildRefBasedPointer(headerRefValue, "/schema")
@@ -989,47 +992,51 @@ public sealed class OpenApi32CodeGenerator
     // Format: #/paths/<path>/additionalOperations/<METHOD>/...
     // Uses string concatenation since this is codegen-time only (not runtime hot path).
     private static string BuildAdditionalOpParameterPointer(
-        ReadOnlySpan<byte> pathNameUtf8, ReadOnlySpan<byte> customMethodUtf8, int index, bool isPathLevel)
+        ReadOnlySpan<byte> rootSegmentUtf8, ReadOnlySpan<byte> pathNameUtf8, ReadOnlySpan<byte> customMethodUtf8, int index, bool isPathLevel)
     {
+        string rootSegment = System.Text.Encoding.UTF8.GetString(rootSegmentUtf8);
         string pathSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(pathNameUtf8));
         string methodName = System.Text.Encoding.UTF8.GetString(customMethodUtf8);
 
         return isPathLevel
-            ? $"#/paths/{pathSegment}/parameters/{index}/schema"
-            : $"#/paths/{pathSegment}/additionalOperations/{methodName}/parameters/{index}/schema";
+            ? $"#/{rootSegment}/{pathSegment}/parameters/{index}/schema"
+            : $"#/{rootSegment}/{pathSegment}/additionalOperations/{methodName}/parameters/{index}/schema";
     }
 
     private static string BuildAdditionalOpContentPointer(
-        ReadOnlySpan<byte> pathNameUtf8, ReadOnlySpan<byte> customMethodUtf8, ReadOnlySpan<byte> parentSegmentUtf8, ReadOnlySpan<byte> mediaTypeNameUtf8)
+        ReadOnlySpan<byte> rootSegmentUtf8, ReadOnlySpan<byte> pathNameUtf8, ReadOnlySpan<byte> customMethodUtf8, ReadOnlySpan<byte> parentSegmentUtf8, ReadOnlySpan<byte> mediaTypeNameUtf8)
     {
+        string rootSegment = System.Text.Encoding.UTF8.GetString(rootSegmentUtf8);
         string pathSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(pathNameUtf8));
         string methodName = System.Text.Encoding.UTF8.GetString(customMethodUtf8);
         string parentSegment = System.Text.Encoding.UTF8.GetString(parentSegmentUtf8);
         string mediaTypeSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(mediaTypeNameUtf8));
 
-        return $"#/paths/{pathSegment}/additionalOperations/{methodName}{parentSegment}/content/{mediaTypeSegment}/schema";
+        return $"#/{rootSegment}/{pathSegment}/additionalOperations/{methodName}{parentSegment}/content/{mediaTypeSegment}/schema";
     }
 
     private static string BuildAdditionalOpResponseContentPointer(
-        ReadOnlySpan<byte> pathNameUtf8, ReadOnlySpan<byte> customMethodUtf8, ReadOnlySpan<byte> statusCodeUtf8, ReadOnlySpan<byte> mediaTypeNameUtf8)
+        ReadOnlySpan<byte> rootSegmentUtf8, ReadOnlySpan<byte> pathNameUtf8, ReadOnlySpan<byte> customMethodUtf8, ReadOnlySpan<byte> statusCodeUtf8, ReadOnlySpan<byte> mediaTypeNameUtf8)
     {
+        string rootSegment = System.Text.Encoding.UTF8.GetString(rootSegmentUtf8);
         string pathSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(pathNameUtf8));
         string methodName = System.Text.Encoding.UTF8.GetString(customMethodUtf8);
         string statusCode = System.Text.Encoding.UTF8.GetString(statusCodeUtf8);
         string mediaTypeSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(mediaTypeNameUtf8));
 
-        return $"#/paths/{pathSegment}/additionalOperations/{methodName}/responses/{statusCode}/content/{mediaTypeSegment}/schema";
+        return $"#/{rootSegment}/{pathSegment}/additionalOperations/{methodName}/responses/{statusCode}/content/{mediaTypeSegment}/schema";
     }
 
     private static string BuildAdditionalOpResponseHeaderPointer(
-        ReadOnlySpan<byte> pathNameUtf8, ReadOnlySpan<byte> customMethodUtf8, ReadOnlySpan<byte> statusCodeUtf8, ReadOnlySpan<byte> headerNameUtf8)
+        ReadOnlySpan<byte> rootSegmentUtf8, ReadOnlySpan<byte> pathNameUtf8, ReadOnlySpan<byte> customMethodUtf8, ReadOnlySpan<byte> statusCodeUtf8, ReadOnlySpan<byte> headerNameUtf8)
     {
+        string rootSegment = System.Text.Encoding.UTF8.GetString(rootSegmentUtf8);
         string pathSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(pathNameUtf8));
         string methodName = System.Text.Encoding.UTF8.GetString(customMethodUtf8);
         string statusCode = System.Text.Encoding.UTF8.GetString(statusCodeUtf8);
         string headerSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(headerNameUtf8));
 
-        return $"#/paths/{pathSegment}/additionalOperations/{methodName}/responses/{statusCode}/headers/{headerSegment}/schema";
+        return $"#/{rootSegment}/{pathSegment}/additionalOperations/{methodName}/responses/{statusCode}/headers/{headerSegment}/schema";
     }
 
     private static string EncodeJsonPointerSegment(string segment) =>
@@ -1062,12 +1069,17 @@ public sealed class OpenApi32CodeGenerator
     }
 
     private static string BuildAdditionalOpResponseContentItemSchemaPointer(
-        ReadOnlySpan<byte> pathNameUtf8, string customMethodName, ReadOnlySpan<byte> statusCodeUtf8, ReadOnlySpan<byte> mediaTypeNameUtf8)
+        ReadOnlySpan<byte> rootSegmentUtf8,
+        ReadOnlySpan<byte> pathNameUtf8,
+        string customMethodName,
+        ReadOnlySpan<byte> statusCodeUtf8,
+        ReadOnlySpan<byte> mediaTypeNameUtf8)
     {
+        string rootSegment = System.Text.Encoding.UTF8.GetString(rootSegmentUtf8);
         string pathSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(pathNameUtf8));
         string statusCode = System.Text.Encoding.UTF8.GetString(statusCodeUtf8);
         string mediaTypeSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(mediaTypeNameUtf8));
-        return $"#/paths/{pathSegment}/additionalOperations/{customMethodName}/responses/{statusCode}/content/{mediaTypeSegment}/itemSchema";
+        return $"#/{rootSegment}/{pathSegment}/additionalOperations/{customMethodName}/responses/{statusCode}/content/{mediaTypeSegment}/itemSchema";
     }
 
     private static string BuildAdditionalOpResponseHeaderSchemaPointer(
@@ -1817,7 +1829,7 @@ public sealed class OpenApi32CodeGenerator
                 ? (customMethodName is not null
                     ? BuildAdditionalOpParameterSchemaPointer(pathNameUtf8, customMethodName, sourceIndex)
                     : SchemaPointerBuilder.BuildParameterSchemaPointer(
-                        pathNameUtf8, method, sourceIndex, isPathLevel))
+                        "paths"u8, pathNameUtf8, method, sourceIndex, isPathLevel))
                 : null;
 
             // Extract schema default value (if any) for optional parameters.
@@ -1864,25 +1876,27 @@ public sealed class OpenApi32CodeGenerator
             {
                 // Build pointer for additionalOperations parameters
                 return BuildAdditionalOpParameterContentSchemaPointer(
-                    pathNameUtf8, customMethodName, sourceIndex, mediaTypeName.Span);
+                    "paths"u8, pathNameUtf8, customMethodName, sourceIndex, mediaTypeName.Span);
             }
 
             return SchemaPointerBuilder.BuildParameterContentSchemaPointer(
-                pathNameUtf8, method, sourceIndex, isPathLevel, mediaTypeName.Span);
+                "paths"u8, pathNameUtf8, method, sourceIndex, isPathLevel, mediaTypeName.Span);
         }
 
         return null;
     }
 
     private static string BuildAdditionalOpParameterContentSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
         ReadOnlySpan<byte> pathNameUtf8,
         string customMethodName,
         int index,
         ReadOnlySpan<byte> mediaTypeNameUtf8)
     {
+        string rootSegment = System.Text.Encoding.UTF8.GetString(rootSegmentUtf8);
         string pathSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(pathNameUtf8));
         string mediaTypeSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(mediaTypeNameUtf8));
-        return $"#/paths/{pathSegment}/additionalOperations/{customMethodName}/parameters/{index}/content/{mediaTypeSegment}/schema";
+        return $"#/{rootSegment}/{pathSegment}/additionalOperations/{customMethodName}/parameters/{index}/content/{mediaTypeSegment}/schema";
     }
 
     private static RequestBodyInfo? PrepareRequestBody(
@@ -2084,7 +2098,7 @@ public sealed class OpenApi32CodeGenerator
                 schemaPointer = customMethodName is not null
                     ? BuildAdditionalOpContentSchemaPointer(pathNameUtf8, customMethodName, parentSegmentUtf8, mediaTypeName.Span)
                     : SchemaPointerBuilder.BuildContentSchemaPointer(
-                        pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
+                        "paths"u8, pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
             }
 
             IReadOnlyDictionary<string, EncodingInfo>? encodings = ReadEncodings(OpenApiDocument.MediaType.From(mediaTypeProp.Value));
@@ -2123,7 +2137,7 @@ public sealed class OpenApi32CodeGenerator
                 schemaPointer = customMethodName is not null
                     ? BuildAdditionalOpResponseContentSchemaPointer(pathNameUtf8, customMethodName, statusCodeUtf8, mediaTypeName.Span)
                     : SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                        pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
+                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
             }
 
             string? itemSchemaPointer = null;
@@ -2131,9 +2145,9 @@ public sealed class OpenApi32CodeGenerator
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
                 itemSchemaPointer = customMethodName is not null
-                    ? BuildAdditionalOpResponseContentItemSchemaPointer(pathNameUtf8, customMethodName, statusCodeUtf8, mediaTypeName.Span)
+                    ? BuildAdditionalOpResponseContentItemSchemaPointer("paths"u8, pathNameUtf8, customMethodName, statusCodeUtf8, mediaTypeName.Span)
                     : SchemaPointerBuilder.BuildResponseContentItemSchemaPointer(
-                        pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
+                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
             }
 
             result.Add(new ContentInfo(mediaType, schemaPointer, null, itemSchemaPointer));
@@ -2219,7 +2233,7 @@ public sealed class OpenApi32CodeGenerator
                     schemaPointer = customMethodName is not null
                         ? BuildAdditionalOpResponseHeaderSchemaPointer(pathNameUtf8, customMethodName, statusCodeUtf8, headerName.Span)
                         : SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                            pathNameUtf8, method, statusCodeUtf8, headerName.Span);
+                            "paths"u8, pathNameUtf8, method, statusCodeUtf8, headerName.Span);
                 }
 
                 // Extract explode and serialization kind for response header deserialization.
@@ -2979,7 +2993,7 @@ public sealed class OpenApi32CodeGenerator
 
             // Build schema pointer for this prefixItem position.
             string schemaPointer = BuildPrefixItemSchemaPointer(
-                pathNameUtf8, method, mediaTypeNameUtf8, index, customMethodName);
+                "paths"u8, pathNameUtf8, method, mediaTypeNameUtf8, index, customMethodName);
 
             parts.Add(new MixedPartInfo(schemaPointer, contentType, isBinary));
             index++;
@@ -3006,46 +3020,50 @@ public sealed class OpenApi32CodeGenerator
             || contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
 
         string schemaPointer = BuildItemsSchemaPointer(
-            pathNameUtf8, method, mediaTypeNameUtf8, customMethodName);
+            "paths"u8, pathNameUtf8, method, mediaTypeNameUtf8, customMethodName);
 
         return new MixedPartInfo(schemaPointer, contentType, isBinary);
     }
 
     private static string BuildPrefixItemSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         ReadOnlySpan<byte> mediaTypeNameUtf8,
         int index,
         string? customMethodName)
     {
+        string rootSegment = Encoding.UTF8.GetString(rootSegmentUtf8);
         string pathSegment = EscapeJsonPointerSegment(Encoding.UTF8.GetString(pathNameUtf8));
         string mediaTypeSegment = EscapeJsonPointerSegment(Encoding.UTF8.GetString(mediaTypeNameUtf8));
         string methodStr = method.ToString().ToLowerInvariant();
 
         if (customMethodName is not null)
         {
-            return $"#/paths/{pathSegment}/additionalOperations/{customMethodName}/requestBody/content/{mediaTypeSegment}/schema/prefixItems/{index}";
+            return $"#/{rootSegment}/{pathSegment}/additionalOperations/{customMethodName}/requestBody/content/{mediaTypeSegment}/schema/prefixItems/{index}";
         }
 
-        return $"#/paths/{pathSegment}/{methodStr}/requestBody/content/{mediaTypeSegment}/schema/prefixItems/{index}";
+        return $"#/{rootSegment}/{pathSegment}/{methodStr}/requestBody/content/{mediaTypeSegment}/schema/prefixItems/{index}";
     }
 
     private static string BuildItemsSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         ReadOnlySpan<byte> mediaTypeNameUtf8,
         string? customMethodName)
     {
+        string rootSegment = Encoding.UTF8.GetString(rootSegmentUtf8);
         string pathSegment = EscapeJsonPointerSegment(Encoding.UTF8.GetString(pathNameUtf8));
         string mediaTypeSegment = EscapeJsonPointerSegment(Encoding.UTF8.GetString(mediaTypeNameUtf8));
         string methodStr = method.ToString().ToLowerInvariant();
 
         if (customMethodName is not null)
         {
-            return $"#/paths/{pathSegment}/additionalOperations/{customMethodName}/requestBody/content/{mediaTypeSegment}/schema/items";
+            return $"#/{rootSegment}/{pathSegment}/additionalOperations/{customMethodName}/requestBody/content/{mediaTypeSegment}/schema/items";
         }
 
-        return $"#/paths/{pathSegment}/{methodStr}/requestBody/content/{mediaTypeSegment}/schema/items";
+        return $"#/{rootSegment}/{pathSegment}/{methodStr}/requestBody/content/{mediaTypeSegment}/schema/items";
     }
 
     /// <summary>
@@ -6488,7 +6506,7 @@ public sealed class OpenApi32CodeGenerator
                     }
                 }
 
-                CollectPathItemPointers(webhookProp, pointers, paramNames, referenceResolver);
+                CollectPathItemPointers(webhookProp, pointers, paramNames, referenceResolver, "webhooks"u8);
             }
         }
 
@@ -6533,7 +6551,7 @@ public sealed class OpenApi32CodeGenerator
                                     }
                                 }
 
-                                CollectPathItemPointers(callbackPathProp, pointers, paramNames, referenceResolver);
+                                CollectPathItemPointers(callbackPathProp, pointers, paramNames, referenceResolver, "paths"u8);
                             }
                         }
                     }
