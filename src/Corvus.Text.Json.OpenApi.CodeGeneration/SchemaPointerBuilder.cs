@@ -560,4 +560,41 @@ public static class SchemaPointerBuilder
 
         sb.Append(methodSpan);
     }
+
+    /// <summary>
+    /// Builds a JSON Pointer to a callback path-item within the document:
+    /// <c>#/paths/&lt;parentPath&gt;/&lt;method&gt;/callbacks/&lt;callbackName&gt;/&lt;callbackPathKey&gt;</c>.
+    /// </summary>
+    /// <param name="parentPathNameUtf8">The UTF-8 name of the parent path (e.g. <c>/subscribe</c>).</param>
+    /// <param name="method">The HTTP method of the operation containing the callback.</param>
+    /// <param name="callbackNameUtf8">The UTF-8 callback object key (e.g. <c>onEvent</c>).</param>
+    /// <param name="callbackPathKeyUtf8">The UTF-8 callback path key (e.g. <c>{$request.body#/callbackUrl}</c>).</param>
+    /// <returns>The JSON Pointer string (including leading <c>#</c>).</returns>
+    public static string BuildCallbackPathItemPointer(
+        ReadOnlySpan<byte> parentPathNameUtf8,
+        OperationMethod method,
+        ReadOnlySpan<byte> callbackNameUtf8,
+        ReadOnlySpan<byte> callbackPathKeyUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            AppendRootPrefix(ref sb, "paths"u8);
+            AppendEncodedSegment(ref sb, parentPathNameUtf8);
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/callbacks/"u8);
+            AppendEncodedSegment(ref sb, callbackNameUtf8);
+            sb.Append((byte)'/');
+            AppendEncodedSegment(ref sb, callbackPathKeyUtf8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
 }

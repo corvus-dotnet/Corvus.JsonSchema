@@ -387,17 +387,21 @@ public sealed class OpenApi31CodeGenerator
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver,
-        ReadOnlySpan<byte> rootSegmentUtf8)
+        ReadOnlySpan<byte> rootSegmentUtf8,
+        string? callbackPathItemRef = null)
     {
         OpenApiDocument.PathItem pathItem = pathProp.Value;
 
         // Determine if this path item is a $ref and compute its absolute reference
-        string? pathItemRefValue = null;
-        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(pathItem);
-        if (asRef.Ref.IsNotUndefined())
+        string? pathItemRefValue = callbackPathItemRef;
+        if (pathItemRefValue is null)
         {
-            string refStr = asRef.Ref.GetString()!;
-            pathItemRefValue = referenceResolver.ResolveToAbsolute(refStr);
+            OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(pathItem);
+            if (asRef.Ref.IsNotUndefined())
+            {
+                string refStr = asRef.Ref.GetString()!;
+                pathItemRefValue = referenceResolver.ResolveToAbsolute(refStr);
+            }
         }
 
         if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
@@ -869,6 +873,49 @@ public sealed class OpenApi31CodeGenerator
         if (resolved.Trace.IsNotUndefined())
         {
             yield return resolved.Trace;
+        }
+    }
+
+    private static IEnumerable<(OpenApiDocument.Operation Operation, OperationMethod Method)> EnumerateOperationsWithMethod(OpenApiDocument.PathItem resolved)
+    {
+        if (resolved.Get.IsNotUndefined())
+        {
+            yield return (resolved.Get, OperationMethod.Get);
+        }
+
+        if (resolved.Put.IsNotUndefined())
+        {
+            yield return (resolved.Put, OperationMethod.Put);
+        }
+
+        if (resolved.Post.IsNotUndefined())
+        {
+            yield return (resolved.Post, OperationMethod.Post);
+        }
+
+        if (resolved.Delete.IsNotUndefined())
+        {
+            yield return (resolved.Delete, OperationMethod.Delete);
+        }
+
+        if (resolved.Options.IsNotUndefined())
+        {
+            yield return (resolved.Options, OperationMethod.Options);
+        }
+
+        if (resolved.Head.IsNotUndefined())
+        {
+            yield return (resolved.Head, OperationMethod.Head);
+        }
+
+        if (resolved.Patch.IsNotUndefined())
+        {
+            yield return (resolved.Patch, OperationMethod.Patch);
+        }
+
+        if (resolved.Trace.IsNotUndefined())
+        {
+            yield return (resolved.Trace, OperationMethod.Trace);
         }
     }
 
@@ -4783,7 +4830,7 @@ public sealed class OpenApi31CodeGenerator
 
                 using (pathItemScope)
                 {
-                    foreach (OpenApiDocument.Operation operation in EnumerateOperationsInPathItem(resolved))
+                    foreach ((OpenApiDocument.Operation operation, OperationMethod method) in EnumerateOperationsWithMethod(resolved))
                     {
                         OpenApiDocument.Operation.CallbacksEntity callbacks = operation.Callbacks;
                         if (callbacks.IsUndefined())
@@ -4810,7 +4857,13 @@ public sealed class OpenApi31CodeGenerator
                                     }
                                 }
 
-                                CollectPathItemPointers(callbackPathProp, pointers, paramNames, referenceResolver, "paths"u8);
+                                using UnescapedUtf8JsonString callbackPathName = callbackPathProp.Utf8NameSpan;
+                                using UnescapedUtf8JsonString parentPathName = pathProp.Utf8NameSpan;
+                                using UnescapedUtf8JsonString callbackName = callbackProp.Utf8NameSpan;
+                                string callbackRef = SchemaPointerBuilder.BuildCallbackPathItemPointer(
+                                    parentPathName.Span, method, callbackName.Span, callbackPathName.Span);
+
+                                CollectPathItemPointers(callbackPathProp, pointers, paramNames, referenceResolver, "paths"u8, callbackRef);
                             }
                         }
                     }
