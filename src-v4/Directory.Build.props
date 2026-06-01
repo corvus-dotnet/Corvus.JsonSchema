@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Allow V4 code to use deprecated ParseValue() -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
   <!-- Pin Microsoft.Bcl.Memory on netstandard2.0/2.1 to ensure a non-vulnerable version.

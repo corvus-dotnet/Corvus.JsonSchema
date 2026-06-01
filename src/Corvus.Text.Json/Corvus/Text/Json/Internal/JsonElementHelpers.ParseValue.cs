@@ -34,6 +34,7 @@ public static partial class JsonElementHelpers
     /// A value could not be read from the span.
     /// </exception>
     [CLSCompliant(false)]
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static T ParseValue<T>(ReadOnlySpan<byte> span, JsonDocumentOptions options = default)
         where T : struct, IJsonElement<T>
     {
@@ -59,6 +60,7 @@ public static partial class JsonElementHelpers
     /// A value could not be read from the reader.
     /// </exception>
     [CLSCompliant(false)]
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static T ParseValue<T>(ReadOnlySpan<char> span, JsonDocumentOptions options = default)
         where T : struct, IJsonElement<T>
     {
@@ -84,6 +86,7 @@ public static partial class JsonElementHelpers
     /// A value could not be read from the text.
     /// </exception>
     [CLSCompliant(false)]
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static T ParseValue<T>(string text, JsonDocumentOptions options = default)
         where T : struct, IJsonElement<T>
     {
@@ -127,6 +130,7 @@ public static partial class JsonElementHelpers
     /// A value could not be read from the reader.
     /// </exception>
     [CLSCompliant(false)]
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static T ParseValue<T>(ref Utf8JsonReader reader)
         where T : struct, IJsonElement<T>
     {

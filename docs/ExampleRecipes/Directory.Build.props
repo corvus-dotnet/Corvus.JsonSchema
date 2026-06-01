@@ -1,0 +1,8 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Allow example code to use deprecated ParseValue() for demonstration purposes -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
+
+</Project>

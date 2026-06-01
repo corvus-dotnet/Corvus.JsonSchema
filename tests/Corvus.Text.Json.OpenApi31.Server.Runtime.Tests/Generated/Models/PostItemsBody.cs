@@ -335,10 +335,13 @@ public readonly partial struct PostItemsBody
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PostItemsBody ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<PostItemsBody>(utf8Json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -358,10 +361,13 @@ public readonly partial struct PostItemsBody
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PostItemsBody ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<PostItemsBody>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -381,10 +387,13 @@ public readonly partial struct PostItemsBody
     /// <exception cref="JsonException">
     ///   A value could not be read from the text.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PostItemsBody ParseValue(string json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<PostItemsBody>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -422,9 +431,12 @@ public readonly partial struct PostItemsBody
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static PostItemsBody ParseValue(ref Utf8JsonReader reader)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<PostItemsBody>(ref reader);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
