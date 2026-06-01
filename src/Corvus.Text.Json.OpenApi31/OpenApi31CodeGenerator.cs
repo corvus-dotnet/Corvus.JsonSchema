@@ -4692,7 +4692,7 @@ public sealed class OpenApi31CodeGenerator
             files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
         }
 
-        files.Add(this.EmitServerEndpointRegistration(groups));
+        files.Add(this.EmitServerEndpointRegistration(groups, operations));
 
         return files;
     }
@@ -4733,7 +4733,7 @@ public sealed class OpenApi31CodeGenerator
             files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
         }
 
-        files.Add(this.EmitServerEndpointRegistration(groups));
+        files.Add(this.EmitServerEndpointRegistration(groups, operations));
 
         return files;
     }
@@ -5372,7 +5372,8 @@ public sealed class OpenApi31CodeGenerator
     }
 
     private GeneratedFile EmitServerEndpointRegistration(
-        Dictionary<string, List<OperationInfo>> groups)
+        Dictionary<string, List<OperationInfo>> groups,
+        IReadOnlyList<OperationInfo> operations)
     {
         string prefix = this.clientNamePrefix ?? "Api";
         string className = $"{prefix}EndpointRegistration";
@@ -5412,6 +5413,24 @@ public sealed class OpenApi31CodeGenerator
             handlerParams.Add($"I{handlerName}Handler {paramName}");
         }
 
+        // Identify operations whose path templates contain runtime expressions.
+        Dictionary<string, string> runtimeExpressionRouteParams = [];
+        HashSet<string> seenRouteParamNames = [];
+        foreach (OperationInfo op in operations)
+        {
+            if (ContainsRuntimeExpression(op.PathTemplate))
+            {
+                string routeParamName = CodeEmitHelpers.SanitizeParameterName(op.MethodName) + "Route";
+                if (!seenRouteParamNames.Add(routeParamName))
+                {
+                    continue;
+                }
+
+                string opKey = $"{op.Method}:{op.PathTemplate}";
+                runtimeExpressionRouteParams[opKey] = routeParamName;
+            }
+        }
+
         w.WriteLine("/// <summary>");
         w.WriteLine($"/// Maps all {prefix} API endpoints to the application.");
         w.WriteLine("/// </summary>");
@@ -5423,11 +5442,21 @@ public sealed class OpenApi31CodeGenerator
             w.WriteLine($"/// <param name=\"{paramName}\">The handler for {handlerName} operations.</param>");
         }
 
+        foreach ((string _, string routeParamName) in runtimeExpressionRouteParams)
+        {
+            w.WriteLine($"/// <param name=\"{routeParamName}\">The route template to register for this callback endpoint.</param>");
+        }
+
         w.WriteLine("/// <returns>The endpoint route builder for chaining.</returns>");
         w.Write($"public static IEndpointRouteBuilder Map{prefix}Endpoints(this IEndpointRouteBuilder app");
         foreach (string hp in handlerParams)
         {
             w.Write($", {hp}");
+        }
+
+        foreach ((string _, string routeParamName) in runtimeExpressionRouteParams)
+        {
+            w.Write($", string {routeParamName}");
         }
 
         w.WriteLine(")");
@@ -5455,14 +5484,25 @@ public sealed class OpenApi31CodeGenerator
 
                 w.WriteLine();
 
-                if (mapMethod == "MapMethods")
+                // Determine the route string: use the parameter if this is a runtime expression path.
+                string routeExpression;
+                if (runtimeExpressionRouteParams.TryGetValue(operationKey, out string? routeParam))
                 {
-                    string httpMethod = op.Method.ToString().ToUpperInvariant();
-                    w.WriteLine($"app.MapMethods(\"{ConvertToAspNetRoute(op.PathTemplate)}\", new[] {{ \"{httpMethod}\" }}, async (HttpContext context) =>");
+                    routeExpression = routeParam;
                 }
                 else
                 {
-                    w.WriteLine($"app.{mapMethod}(\"{ConvertToAspNetRoute(op.PathTemplate)}\", async (HttpContext context) =>");
+                    routeExpression = $"\"{ConvertToAspNetRoute(op.PathTemplate)}\"";
+                }
+
+                if (mapMethod == "MapMethods")
+                {
+                    string httpMethod = op.Method.ToString().ToUpperInvariant();
+                    w.WriteLine($"app.MapMethods({routeExpression}, new[] {{ \"{httpMethod}\" }}, async (HttpContext context) =>");
+                }
+                else
+                {
+                    w.WriteLine($"app.{mapMethod}({routeExpression}, async (HttpContext context) =>");
                 }
 
                 w.OpenBrace();
@@ -5726,7 +5766,27 @@ public sealed class OpenApi31CodeGenerator
     }
 
     /// <summary>
-    /// Emits an RFC 9457 Problem Details JSON response with the given status, title, and detail.
+    /// Returns <see langword="true"/> if the path template contains an OpenAPI runtime expression
+    /// (a parameter starting with <c>$</c>, e.g. <c>{$request.body#/callbackUrl}</c>).
+    /// </summary>
+    private static bool ContainsRuntimeExpression(string pathTemplate)
+    {
+        int idx = pathTemplate.IndexOf('{');
+        while (idx >= 0 && idx + 1 < pathTemplate.Length)
+        {
+            if (pathTemplate[idx + 1] == '$')
+            {
+                return true;
+            }
+
+            idx = pathTemplate.IndexOf('{', idx + 1);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Emits code that writes an RFC 9457 Problem Details JSON response and sets the HTTP status code.
     /// </summary>
     private static void EmitProblemDetailsResponse(IndentedWriter w, int statusCode, string title, string detail)
     {

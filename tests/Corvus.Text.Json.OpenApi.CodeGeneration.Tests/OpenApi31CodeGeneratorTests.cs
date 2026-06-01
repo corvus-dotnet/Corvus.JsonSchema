@@ -8662,4 +8662,55 @@ public class OpenApi31CodeGeneratorTests
         Assert.AreEqual(JsonValueKind.Object, schema.ValueKind,
             "Resolved webhook schema should be a JSON object");
     }
+
+    [TestMethod]
+    public void GenerateCallbackServer_RuntimeExpressionPathUsesRouteParameter()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi31CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        // Must NOT emit runtime expressions as literal route strings
+        Assert.IsFalse(
+            registration.Content.Contains("\"{$request", StringComparison.Ordinal),
+            "Generated endpoint registration should not emit runtime expressions as literal route strings");
+
+        // Must have a string route parameter for runtime expression paths
+        Assert.IsTrue(
+            registration.Content.Contains("string ", StringComparison.Ordinal) &&
+            registration.Content.Contains("Route", StringComparison.Ordinal),
+            "Generated MapApiEndpoints must accept a route parameter for runtime expression paths");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackServer_StaticPathUsesLiteralRoute()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi31CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        // Static webhook paths should appear as literal route strings
+        Assert.IsTrue(
+            registration.Content.Contains("\"petAdopted\"", StringComparison.Ordinal),
+            "Static webhook path 'petAdopted' should appear as a literal route");
+        Assert.IsTrue(
+            registration.Content.Contains("\"inventoryUpdate\"", StringComparison.Ordinal),
+            "Static webhook path 'inventoryUpdate' should appear as a literal route");
+    }
 }

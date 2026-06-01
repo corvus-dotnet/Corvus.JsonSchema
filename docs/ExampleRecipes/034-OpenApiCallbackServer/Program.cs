@@ -29,7 +29,8 @@ CallbackReceiver handler = new(app.Logger);
 // Named arguments make it clear which handler instance serves which tag group.
 app.MapApiEndpoints(
     callbacksHandler: handler,
-    webhooksHandler: handler);
+    webhooksHandler: handler,
+    OnEventCallbackRoute: "/callbacks/onEvent");
 
 app.Run();
 

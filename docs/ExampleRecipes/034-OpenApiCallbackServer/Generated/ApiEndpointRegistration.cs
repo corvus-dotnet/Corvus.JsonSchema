@@ -27,8 +27,9 @@ public static class ApiEndpointRegistration
     /// <param name="app">The endpoint route builder.</param>
     /// <param name="webhooksHandler">The handler for ApiWebhooks operations.</param>
     /// <param name="callbacksHandler">The handler for ApiCallbacks operations.</param>
+    /// <param name="OnEventCallbackRoute">The route template to register for this callback endpoint.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiWebhooksHandler webhooksHandler, IApiCallbacksHandler callbacksHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiWebhooksHandler webhooksHandler, IApiCallbacksHandler callbacksHandler, string OnEventCallbackRoute)
     {
 
         app.MapPost("systemAlert", async (HttpContext context) =>
@@ -100,7 +101,7 @@ public static class ApiEndpointRegistration
         }
         );
 
-        app.MapPost("{$request.body#/callbackUrl}", async (HttpContext context) =>
+        app.MapPost(OnEventCallbackRoute, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<EventSubscription.CallbackServer.Models.Schema1>? bodyDoc = null;

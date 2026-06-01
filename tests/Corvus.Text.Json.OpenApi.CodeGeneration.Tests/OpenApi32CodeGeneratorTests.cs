@@ -2652,4 +2652,108 @@ public class OpenApi32CodeGeneratorTests
         Assert.AreEqual(JsonValueKind.Object, schema.ValueKind,
             "Resolved webhook schema should be a JSON object");
     }
+
+    [TestMethod]
+    public void GenerateCallbackServer_RuntimeExpressionPathUsesRouteParameter()
+    {
+        // Integration test: callback paths with runtime expressions (e.g. {$request.body#/callbackUrl})
+        // must NOT emit the expression as a literal route — instead they must emit a method parameter.
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi32CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi32CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        // The generated code must NOT contain the raw runtime expression as a route literal
+        Assert.IsFalse(
+            registration.Content.Contains("\"$request.body", StringComparison.Ordinal),
+            "Generated endpoint registration should not emit runtime expressions as literal route strings");
+        Assert.IsFalse(
+            registration.Content.Contains("\"{$request", StringComparison.Ordinal),
+            "Generated endpoint registration should not emit runtime expressions as literal route strings");
+
+        // The generated MapApiEndpoints method must have a string route parameter for the callback
+        Assert.IsTrue(
+            registration.Content.Contains("string ", StringComparison.Ordinal) &&
+            registration.Content.Contains("Route", StringComparison.Ordinal),
+            "Generated MapApiEndpoints must accept a route parameter for runtime expression paths");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackServer_StaticPathUsesLiteralRoute()
+    {
+        // Integration test: webhook paths without runtime expressions (e.g. "petAdopted")
+        // should emit the path as a literal string in the MapXxx call.
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi32CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi32CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        // The static webhook paths (petAdopted, inventoryUpdate) should appear as literal route strings
+        Assert.IsTrue(
+            registration.Content.Contains("\"petAdopted\"", StringComparison.Ordinal),
+            "Static webhook path 'petAdopted' should appear as a literal route");
+        Assert.IsTrue(
+            registration.Content.Contains("\"inventoryUpdate\"", StringComparison.Ordinal),
+            "Static webhook path 'inventoryUpdate' should appear as a literal route");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackServer_NoInvalidAspNetRouteCharacters()
+    {
+        // Integration test: the generated endpoint registration must not contain any route
+        // template with characters that ASP.NET Core route parameters forbid ($, #, /).
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi32CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi32CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        // Extract all route strings from app.MapPost/MapGet/MapMethods calls.
+        // A valid route string like MapPost("path", ...) should not trigger ASP0017.
+        // If a runtime expression were emitted literally it would contain $ # /
+        foreach (string line in registration.Content.Split('\n'))
+        {
+            string trimmed = line.Trim();
+            if (trimmed.StartsWith("app.Map", StringComparison.Ordinal) && trimmed.Contains('('))
+            {
+                // If the line contains a string literal route (not a variable reference),
+                // verify it doesn't have invalid chars inside route parameters
+                int quoteStart = trimmed.IndexOf('"');
+                if (quoteStart >= 0)
+                {
+                    int quoteEnd = trimmed.IndexOf('"', quoteStart + 1);
+                    if (quoteEnd > quoteStart)
+                    {
+                        string route = trimmed.Substring(quoteStart + 1, quoteEnd - quoteStart - 1);
+                        Assert.IsFalse(
+                            route.Contains('$'),
+                            $"Route literal '{route}' contains invalid '$' character (ASP0017)");
+                        Assert.IsFalse(
+                            route.Contains('#'),
+                            $"Route literal '{route}' contains invalid '#' character (ASP0017)");
+                    }
+                }
+            }
+        }
+    }
 }

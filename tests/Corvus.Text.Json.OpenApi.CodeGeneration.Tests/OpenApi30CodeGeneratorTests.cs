@@ -7569,4 +7569,31 @@ public class OpenApi30CodeGeneratorTests
         Assert.AreEqual(JsonValueKind.Object, schema.ValueKind,
             "Resolved callback schema should be a JSON object");
     }
+
+    [TestMethod]
+    public void GenerateCallbackServer_RuntimeExpressionPathUsesRouteParameter()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi30CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi30CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        // Must NOT emit runtime expressions as literal route strings
+        Assert.IsFalse(
+            registration.Content.Contains("\"{$request", StringComparison.Ordinal),
+            "Generated endpoint registration should not emit runtime expressions as literal route strings");
+
+        // Must have a string route parameter for runtime expression paths
+        Assert.IsTrue(
+            registration.Content.Contains("string ", StringComparison.Ordinal) &&
+            registration.Content.Contains("Route", StringComparison.Ordinal),
+            "Generated MapApiEndpoints must accept a route parameter for runtime expression paths");
+    }
 }
