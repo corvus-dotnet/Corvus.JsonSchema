@@ -32,10 +32,10 @@ public sealed class ApiWebhooksClient : IApiWebhooksClient
 
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SystemAlertWebhookResponse> SystemAlertWebhookAsync(JsonElement.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<SystemAlertWebhookResponse> SystemAlertWebhookAsync(EventSubscription.CallbackClient.Models.Schema.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        JsonElement bodyValue = JsonElement.CreateBuilder(workspace, body, 30).RootElement;
+        EventSubscription.CallbackClient.Models.Schema bodyValue = EventSubscription.CallbackClient.Models.Schema.CreateBuilder(workspace, body, 30).RootElement;
         SystemAlertWebhookRequest request = new();
 
         request.Validate(validationMode);
@@ -53,7 +53,7 @@ public sealed class ApiWebhooksClient : IApiWebhooksClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyAsyncCore<SystemAlertWebhookRequest, JsonElement, SystemAlertWebhookResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendWithBodyAsyncCore<SystemAlertWebhookRequest, EventSubscription.CallbackClient.Models.Schema, SystemAlertWebhookResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>

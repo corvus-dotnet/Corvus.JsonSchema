@@ -23,5 +23,5 @@ public readonly struct SystemAlertWebhookParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public JsonElement Body { get; init; }
+    public EventSubscription.CallbackServer.Models.Schema Body { get; init; }
 }

@@ -20,7 +20,7 @@ await using HttpClientTransport transport = new(httpClient, disposeClient: true)
 await using ApiWebhooksClient client = new(transport);
 
 await using SystemAlertWebhookResponse response = await client.SystemAlertWebhookAsync(
-    body: new PostSystemAlertBody.Source(static (ref PostSystemAlertBody.Builder b) =>
+    body: new Schema.Source(static (ref Schema.Builder b) =>
     {
         b.Create(
             alertId: "alert-001"u8,

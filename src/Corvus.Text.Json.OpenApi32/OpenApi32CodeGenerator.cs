@@ -6558,7 +6558,11 @@ public sealed class OpenApi32CodeGenerator
                     }
                 }
 
-                CollectPathItemPointers(webhookProp, pointers, paramNames, referenceResolver, "webhooks"u8);
+                // Use "paths" as the root for positional pointers (matches code generator emit)
+                // but pass a webhookRef so ResolvablePointer points to the actual document location.
+                using UnescapedUtf8JsonString webhookName = webhookProp.Utf8NameSpan;
+                string webhookRef = SchemaPointerBuilder.BuildWebhookPathItemPointer(webhookName.Span);
+                CollectPathItemPointers(webhookProp, pointers, paramNames, referenceResolver, "paths"u8, webhookRef);
             }
         }
 

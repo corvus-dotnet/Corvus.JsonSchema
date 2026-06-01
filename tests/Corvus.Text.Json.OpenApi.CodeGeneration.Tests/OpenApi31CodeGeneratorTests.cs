@@ -8444,13 +8444,13 @@ public class OpenApi31CodeGeneratorTests
         string[] pointers = [.. OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
             callbacksSpecRoot, out _).Select(r => r.PositionalPointer)];
 
-        // Webhook request body schemas use #/webhooks/<key>/... format
+        // Webhook positional pointers use #/paths/<key>/... (matching code generator emit)
         CollectionAssert.Contains(
             pointers,
-            "#/webhooks/petAdopted/post/requestBody/content/application~1json/schema");
+            "#/paths/petAdopted/post/requestBody/content/application~1json/schema");
         CollectionAssert.Contains(
             pointers,
-            "#/webhooks/inventoryUpdate/put/requestBody/content/application~1json/schema");
+            "#/paths/inventoryUpdate/put/requestBody/content/application~1json/schema");
     }
 
     [TestMethod]
@@ -8462,9 +8462,9 @@ public class OpenApi31CodeGeneratorTests
         // inventoryUpdate has X-Signature header parameter
         CollectionAssert.Contains(
             pointers,
-            "#/webhooks/inventoryUpdate/put/parameters/0/schema");
+            "#/paths/inventoryUpdate/put/parameters/0/schema");
 
-        Assert.AreEqual("X-Signature", parameterNames["/webhooks/inventoryUpdate/put/parameters/0/schema"]);
+        Assert.AreEqual("X-Signature", parameterNames["/paths/inventoryUpdate/put/parameters/0/schema"]);
     }
 
     [TestMethod]
@@ -8626,17 +8626,40 @@ public class OpenApi31CodeGeneratorTests
     }
 
     [TestMethod]
-    public void CollectWebhookAndCallbackSchemaPointers_WebhookResolvablePointerMatchesPositional()
+    public void CollectWebhookAndCallbackSchemaPointers_WebhookResolvablePointerUsesWebhooksRoot()
     {
-        // For inline webhook schemas (no $ref), ResolvablePointer should equal PositionalPointer
+        // Webhook ResolvablePointer should use webhooks root (actual document location)
+        // while PositionalPointer uses paths root (matching code generator emit)
         SchemaReference[] refs = OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
             callbacksSpecRoot, out _);
 
         SchemaReference webhookRef = refs.First(r =>
-            r.PositionalPointer.Contains("webhooks/petAdopted", StringComparison.Ordinal) &&
+            r.PositionalPointer.Contains("petAdopted", StringComparison.Ordinal) &&
             r.PositionalPointer.Contains("requestBody", StringComparison.Ordinal));
 
-        Assert.AreEqual(webhookRef.PositionalPointer, webhookRef.ResolvablePointer,
-            "Inline webhook schemas should have ResolvablePointer == PositionalPointer");
+        // PositionalPointer uses "paths" root for map lookups
+        Assert.IsTrue(
+            webhookRef.PositionalPointer.StartsWith("#/paths/petAdopted/", StringComparison.Ordinal),
+            $"Expected PositionalPointer with paths root. Got: {webhookRef.PositionalPointer}");
+
+        // ResolvablePointer uses "webhooks" root for document resolution
+        Assert.IsTrue(
+            webhookRef.ResolvablePointer.StartsWith("#/webhooks/petAdopted/", StringComparison.Ordinal),
+            $"Expected ResolvablePointer with webhooks root. Got: {webhookRef.ResolvablePointer}");
+
+        // Verify the ResolvablePointer actually resolves against the document
+        JsonElement schema = callbacksSpecRoot;
+        string fragment = webhookRef.ResolvablePointer;
+        string[] segments = fragment[2..].Split('/');
+        foreach (string segment in segments)
+        {
+            string unescaped = segment.Replace("~1", "/").Replace("~0", "~");
+            Assert.IsTrue(
+                schema.TryGetProperty(unescaped, out schema),
+                $"Failed to resolve segment '{unescaped}' in pointer '{fragment}'");
+        }
+
+        Assert.AreEqual(JsonValueKind.Object, schema.ValueKind,
+            "Resolved webhook schema should be a JSON object");
     }
 }

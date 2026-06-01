@@ -597,4 +597,36 @@ public static class SchemaPointerBuilder
             sb.Dispose();
         }
     }
+
+    /// <summary>
+    /// Builds the full document-relative pointer to a webhook path-item.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Result: <c>#/webhooks/&lt;webhookName&gt;</c> with RFC 6901 escaping.
+    /// This is used as the <c>pathItemRefValue</c> so that inline webhook schemas
+    /// get a <see cref="SchemaReference.ResolvablePointer"/> that points to their
+    /// actual location in the document, while the <see cref="SchemaReference.PositionalPointer"/>
+    /// uses <c>paths</c> as root (matching what the code generator produces during emit).
+    /// </para>
+    /// </remarks>
+    /// <param name="webhookNameUtf8">The UTF-8 webhook name.</param>
+    /// <returns>The JSON Pointer string (including leading <c>#</c>).</returns>
+    public static string BuildWebhookPathItemPointer(ReadOnlySpan<byte> webhookNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            AppendRootPrefix(ref sb, "webhooks"u8);
+            AppendEncodedSegment(ref sb, webhookNameUtf8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
 }

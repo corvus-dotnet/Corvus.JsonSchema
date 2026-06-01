@@ -34,12 +34,12 @@ public static class ApiEndpointRegistration
         app.MapPost("systemAlert", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<JsonElement>? bodyDoc = null;
+            ParsedJsonDocument<EventSubscription.CallbackServer.Models.Schema>? bodyDoc = null;
             try
             {
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<JsonElement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<EventSubscription.CallbackServer.Models.Schema>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
