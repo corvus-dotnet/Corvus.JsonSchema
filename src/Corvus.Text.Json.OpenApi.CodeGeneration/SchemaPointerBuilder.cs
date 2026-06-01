@@ -20,14 +20,16 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 public static class SchemaPointerBuilder
 {
     /// <summary>
-    /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/parameters/&lt;index&gt;/schema</c>.
+    /// Builds: <c>#/&lt;root&gt;/&lt;path&gt;/&lt;method&gt;/parameters/&lt;index&gt;/schema</c>.
     /// </summary>
-    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c> or <c>"webhooks"u8</c>).</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths/webhooks map.</param>
     /// <param name="method">The HTTP method.</param>
     /// <param name="index">The parameter index.</param>
     /// <param name="isPathLevel">Whether the parameter is path-level.</param>
     /// <returns>The JSON Pointer string (including leading <c>#</c>).</returns>
     public static string BuildParameterSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         int index,
@@ -38,7 +40,7 @@ public static class SchemaPointerBuilder
 
         try
         {
-            sb.Append("#/paths/"u8);
+            AppendRootPrefix(ref sb, rootSegmentUtf8);
             AppendEncodedSegment(ref sb, pathNameUtf8);
 
             if (!isPathLevel)
@@ -60,15 +62,17 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
-    /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/parameters/&lt;idx&gt;/content/&lt;mediaType&gt;/schema</c>.
+    /// Builds: <c>#/&lt;root&gt;/&lt;path&gt;/&lt;method&gt;/parameters/&lt;idx&gt;/content/&lt;mediaType&gt;/schema</c>.
     /// </summary>
-    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c> or <c>"webhooks"u8</c>).</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths/webhooks map.</param>
     /// <param name="method">The HTTP method.</param>
     /// <param name="index">The zero-based parameter index.</param>
     /// <param name="isPathLevel">Whether the parameter is at path-item level rather than operation level.</param>
     /// <param name="mediaTypeNameUtf8">The UTF-8 media type name from the content map.</param>
     /// <returns>The JSON Pointer string.</returns>
     public static string BuildParameterContentSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         int index,
@@ -80,7 +84,7 @@ public static class SchemaPointerBuilder
 
         try
         {
-            sb.Append("#/paths/"u8);
+            AppendRootPrefix(ref sb, rootSegmentUtf8);
             AppendEncodedSegment(ref sb, pathNameUtf8);
 
             if (!isPathLevel)
@@ -104,14 +108,16 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
-    /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/&lt;parentSegment&gt;/content/&lt;mediaType&gt;/schema</c>.
+    /// Builds: <c>#/&lt;root&gt;/&lt;path&gt;/&lt;method&gt;/&lt;parentSegment&gt;/content/&lt;mediaType&gt;/schema</c>.
     /// </summary>
-    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c> or <c>"webhooks"u8</c>).</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths/webhooks map.</param>
     /// <param name="method">The HTTP method.</param>
     /// <param name="parentSegmentUtf8">The parent segment (e.g. <c>/requestBody</c>) as UTF-8.</param>
     /// <param name="mediaTypeNameUtf8">The UTF-8 media type name from the content map.</param>
     /// <returns>The JSON Pointer string.</returns>
     public static string BuildContentSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         ReadOnlySpan<byte> parentSegmentUtf8,
@@ -122,7 +128,7 @@ public static class SchemaPointerBuilder
 
         try
         {
-            sb.Append("#/paths/"u8);
+            AppendRootPrefix(ref sb, rootSegmentUtf8);
             AppendEncodedSegment(ref sb, pathNameUtf8);
             sb.Append((byte)'/');
             AppendMethodUtf8(ref sb, method);
@@ -140,14 +146,16 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
-    /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/content/&lt;mediaType&gt;/schema</c>.
+    /// Builds: <c>#/&lt;root&gt;/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/content/&lt;mediaType&gt;/schema</c>.
     /// </summary>
-    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c> or <c>"webhooks"u8</c>).</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths/webhooks map.</param>
     /// <param name="method">The HTTP method.</param>
     /// <param name="statusCodeUtf8">The UTF-8 status code from the responses map.</param>
     /// <param name="mediaTypeNameUtf8">The UTF-8 media type name from the content map.</param>
     /// <returns>The JSON Pointer string.</returns>
     public static string BuildResponseContentSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         ReadOnlySpan<byte> statusCodeUtf8,
@@ -158,7 +166,7 @@ public static class SchemaPointerBuilder
 
         try
         {
-            sb.Append("#/paths/"u8);
+            AppendRootPrefix(ref sb, rootSegmentUtf8);
             AppendEncodedSegment(ref sb, pathNameUtf8);
             sb.Append((byte)'/');
             AppendMethodUtf8(ref sb, method);
@@ -177,14 +185,16 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
-    /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/content/&lt;mediaType&gt;/itemSchema</c>.
+    /// Builds: <c>#/&lt;root&gt;/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/content/&lt;mediaType&gt;/itemSchema</c>.
     /// </summary>
-    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c> or <c>"webhooks"u8</c>).</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths/webhooks map.</param>
     /// <param name="method">The HTTP method.</param>
     /// <param name="statusCodeUtf8">The UTF-8 status code from the responses map.</param>
     /// <param name="mediaTypeNameUtf8">The UTF-8 media type name from the content map.</param>
     /// <returns>The JSON Pointer string (including leading <c>#</c>).</returns>
     public static string BuildResponseContentItemSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         ReadOnlySpan<byte> statusCodeUtf8,
@@ -195,7 +205,7 @@ public static class SchemaPointerBuilder
 
         try
         {
-            sb.Append("#/paths/"u8);
+            AppendRootPrefix(ref sb, rootSegmentUtf8);
             AppendEncodedSegment(ref sb, pathNameUtf8);
             sb.Append((byte)'/');
             AppendMethodUtf8(ref sb, method);
@@ -214,14 +224,16 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
-    /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/headers/&lt;headerName&gt;/schema</c>.
+    /// Builds: <c>#/&lt;root&gt;/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/headers/&lt;headerName&gt;/schema</c>.
     /// </summary>
-    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c> or <c>"webhooks"u8</c>).</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths/webhooks map.</param>
     /// <param name="method">The HTTP method.</param>
     /// <param name="statusCodeUtf8">The UTF-8 status code from the responses map.</param>
     /// <param name="headerNameUtf8">The UTF-8 header name from the response headers map.</param>
     /// <returns>The JSON Pointer string.</returns>
     public static string BuildResponseHeaderSchemaPointer(
+        ReadOnlySpan<byte> rootSegmentUtf8,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         ReadOnlySpan<byte> statusCodeUtf8,
@@ -232,7 +244,7 @@ public static class SchemaPointerBuilder
 
         try
         {
-            sb.Append("#/paths/"u8);
+            AppendRootPrefix(ref sb, rootSegmentUtf8);
             AppendEncodedSegment(ref sb, pathNameUtf8);
             sb.Append((byte)'/');
             AppendMethodUtf8(ref sb, method);
@@ -469,6 +481,20 @@ public static class SchemaPointerBuilder
         {
             sb.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Appends the root prefix <c>#/&lt;rootSegment&gt;/</c> to the string builder.
+    /// </summary>
+    /// <param name="sb">The string builder.</param>
+    /// <param name="rootSegmentUtf8">The root segment (e.g. <c>"paths"u8</c> or <c>"webhooks"u8</c>).</param>
+    internal static void AppendRootPrefix(
+        ref Utf8ValueStringBuilder sb,
+        ReadOnlySpan<byte> rootSegmentUtf8)
+    {
+        sb.Append("#/"u8);
+        sb.Append(rootSegmentUtf8);
+        sb.Append((byte)'/');
     }
 
     /// <summary>

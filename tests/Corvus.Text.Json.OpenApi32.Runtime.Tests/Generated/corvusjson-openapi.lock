@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-01T08:04:27.9172342\u002B00:00",
+  "generatedAt": "2026-06-01T08:35:23.8710421\u002B00:00",
   "generatedFiles": [
     "GetItemRequest.cs",
     "GetItemResponse.cs",
@@ -529,7 +529,7 @@
     "Models\\PostTrackingBody.JsonSchema.cs",
     "Models\\Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B39eadde9cafa0a3c422ff2a93eedc1c6af0692fd",
+  "generatorVersion": "1.0.0\u002Bcba6720b83bfaebc0ec603786f39fef79488f9b5",
   "includePaths": [],
   "rootNamespace": "CanonTests32.Client",
   "specFileHash": "df9273ae97517d3b16f6d0f7fd2cff2d8a3d22840d53d8c26b0fa4cb896a747b",

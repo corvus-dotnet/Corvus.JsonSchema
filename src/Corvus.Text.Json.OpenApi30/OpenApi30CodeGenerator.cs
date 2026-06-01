@@ -214,7 +214,7 @@ public sealed class OpenApi30CodeGenerator
                 }
             }
 
-            CollectPathItemPointers(pathProp, pointers, paramNames, referenceResolver);
+            CollectPathItemPointers(pathProp, pointers, paramNames, referenceResolver, "paths"u8);
         }
 
         parameterNames = paramNames;
@@ -402,7 +402,8 @@ public sealed class OpenApi30CodeGenerator
         JsonProperty<JsonElement> pathProp,
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
-        IOpenApiReferenceResolver referenceResolver)
+        IOpenApiReferenceResolver referenceResolver,
+        ReadOnlySpan<byte> rootSegmentUtf8)
     {
         OpenApiDocument.PathItem pathItem = OpenApiDocument.PathItem.From(pathProp.Value);
 
@@ -428,7 +429,7 @@ public sealed class OpenApi30CodeGenerator
                     && operationElement.ValueKind == JsonValueKind.Object)
                 {
                     OpenApiDocument.Operation operation = operationElement;
-                    CollectOperationPointers(pathProp, operation, method, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                    CollectOperationPointers(pathProp, operation, method, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
                 }
             }
         }
@@ -442,6 +443,7 @@ public sealed class OpenApi30CodeGenerator
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver,
+        ReadOnlySpan<byte> rootSegmentUtf8,
         string? pathItemRefValue = null)
     {
         using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
@@ -453,7 +455,7 @@ public sealed class OpenApi30CodeGenerator
             if (param.Schema.IsNotUndefined())
             {
                 string positionalPointer = SchemaPointerBuilder.BuildParameterSchemaPointer(
-                    pathName.Span, method, sourceIndex, isPathLevel);
+                    rootSegmentUtf8, pathName.Span, method, sourceIndex, isPathLevel);
 
                 string resolvablePointer = refValue is not null
                     ? SchemaPointerBuilder.BuildRefBasedPointer(refValue, "/schema")
@@ -496,7 +498,7 @@ public sealed class OpenApi30CodeGenerator
                         using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                         string positionalPointer = SchemaPointerBuilder.BuildContentSchemaPointer(
-                            pathName.Span, method, "/requestBody"u8, mediaTypeName.Span);
+                            rootSegmentUtf8, pathName.Span, method, "/requestBody"u8, mediaTypeName.Span);
 
                         string resolvablePointer = rbRefValue is not null
                             ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -551,7 +553,7 @@ public sealed class OpenApi30CodeGenerator
                                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                                 string positionalPointer = SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                                    pathName.Span, method, statusCode.Span, mediaTypeName.Span);
+                                    rootSegmentUtf8, pathName.Span, method, statusCode.Span, mediaTypeName.Span);
 
                                 string resolvablePointer = responseRefValue is not null
                                     ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -587,7 +589,7 @@ public sealed class OpenApi30CodeGenerator
                                     using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
 
                                     string positionalPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                                        pathName.Span, method, statusCode.Span, headerName.Span);
+                                        rootSegmentUtf8, pathName.Span, method, statusCode.Span, headerName.Span);
 
                                     string resolvablePointer = headerRefValue is not null
                                         ? SchemaPointerBuilder.BuildRefBasedPointer(headerRefValue, "/schema")
@@ -1272,7 +1274,7 @@ public sealed class OpenApi30CodeGenerator
 
             string? schemaPointer = hasSchema
                 ? SchemaPointerBuilder.BuildParameterSchemaPointer(
-                    pathNameUtf8, method, sourceIndex, isPathLevel)
+                    "paths"u8, pathNameUtf8, method, sourceIndex, isPathLevel)
                 : null;
 
             // Extract schema default value (if any) for optional parameters.
@@ -1478,7 +1480,7 @@ public sealed class OpenApi30CodeGenerator
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
                 schemaPointer = SchemaPointerBuilder.BuildContentSchemaPointer(
-                    pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
+                    "paths"u8, pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
             }
 
             result.Add(new ContentInfo(mediaType, schemaPointer, ReadEncodings(mediaTypeProp.Value)));
@@ -1511,7 +1513,7 @@ public sealed class OpenApi30CodeGenerator
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
                 schemaPointer = SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                    pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
+                    "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
             }
 
             result.Add(new ContentInfo(mediaType, schemaPointer, null));
@@ -1592,7 +1594,7 @@ public sealed class OpenApi30CodeGenerator
                 {
                     using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
                     schemaPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                        pathNameUtf8, method, statusCodeUtf8, headerName.Span);
+                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, headerName.Span);
                 }
 
                 // Extract explode and serialization kind for response header deserialization.
@@ -4790,7 +4792,7 @@ public sealed class OpenApi30CodeGenerator
                                     }
                                 }
 
-                                CollectPathItemPointers(callbackPathProp.AsJsonElementProperty(), pointers, paramNames, referenceResolver);
+                                CollectPathItemPointers(callbackPathProp.AsJsonElementProperty(), pointers, paramNames, referenceResolver, "paths"u8);
                             }
                         }
                     }
