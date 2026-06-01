@@ -99,17 +99,13 @@ dotnet run --project docs/ExampleRecipes/034-OpenApiCallbackServer
 Send a webhook (system alert):
 
 ```bash
-curl -X POST http://localhost:64910/systemAlert \
-  -H "Content-Type: application/json" \
-  -d '{"alertId":"alert-001","severity":"critical","message":"Disk usage exceeded 90%."}'
+curl -X POST http://localhost:64910/systemAlert -H "Content-Type: application/json" -d '{"alertId":"alert-001","severity":"critical","message":"Disk usage exceeded 90%."}'
 ```
 
 Send a callback (event notification):
 
 ```bash
-curl -X POST http://localhost:64910/callbacks/onEvent \
-  -H "Content-Type: application/json" \
-  -d '{"eventId":"evt-123","eventType":"subscription.created","timestamp":"2026-01-15T10:30:00Z"}'
+curl -X POST http://localhost:64910/callbacks/onEvent -H "Content-Type: application/json" -d '{"eventId":"evt-123","eventType":"subscription.created","timestamp":"2026-01-15T10:30:00Z"}'
 ```
 
 Both should return HTTP 200.

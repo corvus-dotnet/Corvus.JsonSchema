@@ -475,16 +475,20 @@ example-recipes:
   - path: "docs/ExampleRecipes/034-OpenApiCallbackServer/README.md"
     companion_project: "docs/ExampleRecipes/034-OpenApiCallbackServer/"
     blocks:
-      - {index: 0, language: bash, lines: [21, 25]}
-      - {index: 1, language: csharp, lines: [42, 61], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [69, 79], category: compilable, verified: false}
-      - {index: 3, language: bash, lines: [87, 89]}
+      - {index: 0, language: bash, lines: [19, 23]}
+      - {index: 1, language: csharp, lines: [40, 59], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [67, 78], category: compilable, verified: false}
+      - {index: 3, language: bash, lines: [86, 88]}
+      - {index: 4, language: bash, lines: [101, 103]}
+      - {index: 5, language: bash, lines: [107, 109]}
   - path: "docs/ExampleRecipes/035-OpenApiCallbackClient/README.md"
     companion_project: "docs/ExampleRecipes/035-OpenApiCallbackClient/"
     blocks:
-      - {index: 0, language: bash, lines: [18, 22]}
-      - {index: 1, language: csharp, lines: [36, 57], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [63, 72], category: compilable, verified: false}
+      - {index: 0, language: bash, lines: [21, 25]}
+      - {index: 1, language: bash, lines: [37, 39]}
+      - {index: 2, language: , lines: [43, 53]}
+      - {index: 3, language: csharp, lines: [59, 82], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [88, 97], category: compilable, verified: false}
   - path: "docs/ExampleRecipes/036-AsyncApiProducer/README.md"
     companion_project: "docs/ExampleRecipes/036-AsyncApiProducer/"
     blocks:
