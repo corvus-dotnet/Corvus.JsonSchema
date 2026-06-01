@@ -5247,6 +5247,15 @@ public sealed class OpenApi31CodeGenerator
 
             paramList.Append($"{bodyTypeName}.Source body, JsonWorkspace workspace");
         }
+        else if (respHeaders.Count > 0)
+        {
+            if (paramList.Length > 0)
+            {
+                paramList.Append(", ");
+            }
+
+            paramList.Append("JsonWorkspace workspace");
+        }
 
         foreach (var (_, typeName, fieldName, _) in respHeaders)
         {
@@ -5255,7 +5264,7 @@ public sealed class OpenApi31CodeGenerator
                 paramList.Append(", ");
             }
 
-            paramList.Append($"{typeName} {fieldName} = default");
+            paramList.Append($"{typeName}.Source {fieldName} = default");
         }
 
         if (isDefault)
@@ -5267,6 +5276,10 @@ public sealed class OpenApi31CodeGenerator
         {
             w.WriteLine($"/// <param name=\"body\">The response body.</param>");
             w.WriteLine($"/// <param name=\"workspace\">The workspace for building the response value.</param>");
+        }
+        else if (respHeaders.Count > 0)
+        {
+            w.WriteLine($"/// <param name=\"workspace\">The workspace for building header values.</param>");
         }
 
         foreach (var (header, _, fieldName, _) in respHeaders)
@@ -5286,9 +5299,9 @@ public sealed class OpenApi31CodeGenerator
         {
             StringBuilder ctorArgs = new();
             ctorArgs.Append($"{statusExpr}, {bodyExpr}, {contentTypeExpr}");
-            foreach (var (_, _, fieldName, _) in respHeaders)
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                ctorArgs.Append($", {fieldName}: {fieldName}");
+                ctorArgs.Append($", {fieldName}: {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
             }
 
             w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({ctorArgs});");

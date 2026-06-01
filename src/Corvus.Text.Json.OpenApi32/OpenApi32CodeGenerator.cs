@@ -7172,6 +7172,15 @@ public sealed class OpenApi32CodeGenerator
 
             paramList.Append($"{bodyTypeName}.Source body, JsonWorkspace workspace");
         }
+        else if (hasRespHeaders)
+        {
+            if (paramList.Length > 0)
+            {
+                paramList.Append(", ");
+            }
+
+            paramList.Append("JsonWorkspace workspace");
+        }
 
         foreach (var (header, typeName, fieldName, _) in respHeaders)
         {
@@ -7180,8 +7189,8 @@ public sealed class OpenApi32CodeGenerator
                 paramList.Append(", ");
             }
 
-            // Headers are optional in the factory (default to undefined).
-            paramList.Append($"{typeName} {fieldName} = default");
+            // Headers use Source pattern (consistent with body parameters).
+            paramList.Append($"{typeName}.Source {fieldName} = default");
         }
 
         // XML doc params
@@ -7194,6 +7203,10 @@ public sealed class OpenApi32CodeGenerator
         {
             w.WriteLine($"/// <param name=\"body\">The response body.</param>");
             w.WriteLine($"/// <param name=\"workspace\">The workspace for building the response value.</param>");
+        }
+        else if (hasRespHeaders)
+        {
+            w.WriteLine($"/// <param name=\"workspace\">The workspace for building header values.</param>");
         }
 
         foreach (var (header, _, fieldName, _) in respHeaders)
@@ -7215,9 +7228,9 @@ public sealed class OpenApi32CodeGenerator
             // Use the expanded constructor form
             StringBuilder ctorArgs = new();
             ctorArgs.Append($"{statusExpr}, {bodyExpr}, {contentTypeExpr}");
-            foreach (var (_, _, fieldName, _) in respHeaders)
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                ctorArgs.Append($", {fieldName}: {fieldName}");
+                ctorArgs.Append($", {fieldName}: {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
             }
 
             w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({ctorArgs});");
@@ -7256,9 +7269,15 @@ public sealed class OpenApi32CodeGenerator
             }
 
             commonParams.Append(writerParam);
+            bool hasHeaders = respHeaders.Count > 0;
+            if (hasHeaders)
+            {
+                commonParams.Append(", JsonWorkspace workspace");
+            }
+
             foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                commonParams.Append($", {typeName} {fieldName} = default");
+                commonParams.Append($", {typeName}.Source {fieldName} = default");
             }
 
             StringBuilder contextParams = new();
@@ -7268,9 +7287,14 @@ public sealed class OpenApi32CodeGenerator
             }
 
             contextParams.Append($"TContext context, {contextWriterParam}");
+            if (hasHeaders)
+            {
+                contextParams.Append(", JsonWorkspace workspace");
+            }
+
             foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                contextParams.Append($", {typeName} {fieldName} = default");
+                contextParams.Append($", {typeName}.Source {fieldName} = default");
             }
 
             if (isDefault)
@@ -7279,6 +7303,11 @@ public sealed class OpenApi32CodeGenerator
             }
 
             w.WriteLine($"/// <param name=\"writer\">The callback that appends items to the <see cref=\"{streamTypeName}\"/>.</param>");
+            if (hasHeaders)
+            {
+                w.WriteLine("/// <param name=\"workspace\">The workspace for building header values.</param>");
+            }
+
             foreach (var (header, _, fieldName, _) in respHeaders)
             {
                 w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
@@ -7287,9 +7316,9 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
             StringBuilder ctorArgs = new();
             ctorArgs.Append($"{statusExpr}, default, {contentTypeExpr}, streamWriter: static (jsonStreamWriter, context, cancellationToken) => (({streamWriterDelegateName})context!)(new {streamTypeName}(jsonStreamWriter), cancellationToken), streamWriterContext: writer");
-            foreach (var (_, _, fieldName, _) in respHeaders)
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                ctorArgs.Append($", {fieldName}: {fieldName}");
+                ctorArgs.Append($", {fieldName}: {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
             }
 
             w.WriteLine($"public static {structName} {methodName}({commonParams}) => new({ctorArgs});");
@@ -7302,6 +7331,11 @@ public sealed class OpenApi32CodeGenerator
 
             w.WriteLine($"/// <param name=\"context\">The callback context.</param>");
             w.WriteLine($"/// <param name=\"writer\">The callback that appends items to the <see cref=\"{streamTypeName}\"/>.</param>");
+            if (hasHeaders)
+            {
+                w.WriteLine("/// <param name=\"workspace\">The workspace for building header values.</param>");
+            }
+
             foreach (var (header, _, fieldName, _) in respHeaders)
             {
                 w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
@@ -7319,9 +7353,9 @@ public sealed class OpenApi32CodeGenerator
             w.PopIndent();
             w.WriteLine("},");
             w.Write($"streamWriterContext: new {streamWriterDelegateName}Context<TContext>(context, writer)");
-            foreach (var (_, _, fieldName, _) in respHeaders)
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                w.Write($", {fieldName}: {fieldName}");
+                w.Write($", {fieldName}: {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
             }
 
             w.WriteLine(");");

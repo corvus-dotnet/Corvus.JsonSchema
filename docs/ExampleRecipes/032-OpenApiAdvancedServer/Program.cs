@@ -162,9 +162,9 @@ internal sealed class PetsHandler : IApiPetsHandler
                 }
             }),
             workspace: workspace,
-            xTotalCount: JsonInteger.ParseValue(totalCount.ToString()),
+            xTotalCount: totalCount,
             xNext: results.Count < totalCount
-                ? JsonString.ParseValue($"\"/pets?offset={limit}\"")
+                ? (JsonString.Source)$"\"/pets?offset={limit}\""
                 : default));
     }
 

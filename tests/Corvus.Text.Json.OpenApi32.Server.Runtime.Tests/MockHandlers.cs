@@ -49,7 +49,7 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
     }
 
     public ValueTask<OptionsItemsResult> HandleOptionsItemsAsync(OptionsItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(OptionsItemsResult.NoContent(OptionsAllowMethodsHeader));
+        => new(OptionsItemsResult.NoContent(workspace, OptionsAllowMethodsHeader));
 
     public ValueTask<PurgeItemsResult> HandlePurgeItemsAsync(PurgeItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(PurgeItemsResult.NoContent());
