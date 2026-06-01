@@ -139,7 +139,7 @@ public sealed class UnnecessaryConversionAnalyzer : DiagnosticAnalyzer
         foreach (IMethodSymbol method in targetType.GetMembers("op_Implicit").OfType<IMethodSymbol>())
         {
             if (method.Parameters.Length == 1 &&
-                IsAssignableFrom(method.Parameters[0].Type, sourceType, compilation))
+                IsAssignableFromWithoutUserDefinedConversion(method.Parameters[0].Type, sourceType, compilation))
             {
                 return true;
             }
@@ -149,7 +149,7 @@ public sealed class UnnecessaryConversionAnalyzer : DiagnosticAnalyzer
         foreach (IMethodSymbol method in sourceType.GetMembers("op_Implicit").OfType<IMethodSymbol>())
         {
             if (method.ReturnType is not null &&
-                IsAssignableFrom(targetType, method.ReturnType, compilation))
+                IsAssignableFromWithoutUserDefinedConversion(targetType, method.ReturnType, compilation))
             {
                 return true;
             }
@@ -158,9 +158,9 @@ public sealed class UnnecessaryConversionAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static bool IsAssignableFrom(ITypeSymbol target, ITypeSymbol source, Compilation compilation)
+    private static bool IsAssignableFromWithoutUserDefinedConversion(ITypeSymbol target, ITypeSymbol source, Compilation compilation)
     {
         Conversion conversion = compilation.ClassifyConversion(source, target);
-        return conversion.IsIdentity || conversion.IsImplicit;
+        return conversion.IsIdentity || (conversion.IsImplicit && !conversion.IsUserDefined);
     }
 }

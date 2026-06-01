@@ -77,6 +77,15 @@ public sealed class MissingDisposeAnalyzer : DiagnosticAnalyzer
                 continue;
             }
 
+            // CTJ006: Don't warn about workspace-owned builders.
+            // If the builder is created via a workspace method or a factory that accepts
+            // a workspace parameter, the workspace manages its lifetime.
+            if (descriptor == DiagnosticDescriptors.MissingDisposeOnJsonDocumentBuilder &&
+                IsWorkspaceOwned(declarator.Initializer.Value, context.SemanticModel, context.CancellationToken))
+            {
+                continue;
+            }
+
             // Check if Dispose() is called on this variable in the containing block.
             string variableName = declarator.Identifier.ValueText;
             if (IsDisposedInScope(variableName, localDecl, context.SemanticModel))
@@ -183,6 +192,66 @@ public sealed class MissingDisposeAnalyzer : DiagnosticAnalyzer
 
         // Also check if the variable is passed to a using block via a return or
         // assigned to a field (which indicates ownership transfer).
+        return false;
+    }
+
+    private static bool IsWorkspaceOwned(
+        ExpressionSyntax initializer,
+        SemanticModel semanticModel,
+        System.Threading.CancellationToken cancellationToken)
+    {
+        // Handle await expressions: var builder = await store.ReadMutableAsync(workspace, ct);
+        if (initializer is AwaitExpressionSyntax awaitExpr)
+        {
+            initializer = awaitExpr.Expression;
+        }
+
+        // Handle tuple deconstruction element: var (builder, etag) = ...
+        // The initializer at this point is the element from the tuple.
+        // For simple invocations, check if the method takes a JsonWorkspace parameter.
+        if (initializer is InvocationExpressionSyntax invocation)
+        {
+            return InvocationHasWorkspaceParameter(invocation, semanticModel, cancellationToken);
+        }
+
+        // Handle .Result or .GetAwaiter().GetResult() patterns
+        if (initializer is MemberAccessExpressionSyntax memberAccess &&
+            memberAccess.Expression is InvocationExpressionSyntax innerInvocation)
+        {
+            return InvocationHasWorkspaceParameter(innerInvocation, semanticModel, cancellationToken);
+        }
+
+        return false;
+    }
+
+    private static bool InvocationHasWorkspaceParameter(
+        InvocationExpressionSyntax invocation,
+        SemanticModel semanticModel,
+        System.Threading.CancellationToken cancellationToken)
+    {
+        SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(invocation, cancellationToken);
+        if (symbolInfo.Symbol is not IMethodSymbol method)
+        {
+            return false;
+        }
+
+        // If the method is on JsonWorkspace itself (e.g., workspace.CreateBuilder<T>())
+        if (method.ContainingType?.Name == "JsonWorkspace" &&
+            method.ContainingType.ContainingNamespace?.ToDisplayString() == "Corvus.Text.Json")
+        {
+            return true;
+        }
+
+        // If the method takes a JsonWorkspace parameter, it's workspace-owned.
+        foreach (IParameterSymbol param in method.Parameters)
+        {
+            if (param.Type.Name == "JsonWorkspace" &&
+                param.Type.ContainingNamespace?.ToDisplayString() == "Corvus.Text.Json")
+            {
+                return true;
+            }
+        }
+
         return false;
     }
 }

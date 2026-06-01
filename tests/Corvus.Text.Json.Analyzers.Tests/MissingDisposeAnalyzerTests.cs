@@ -48,6 +48,7 @@ namespace Corvus.Text.Json
 
     public class JsonDocumentBuilder<T> : IDisposable
     {
+        public static JsonDocumentBuilder<T> CreateUnmanaged() => new();
         public T RootElement => default!;
         public void Dispose() { }
     }
@@ -259,7 +260,7 @@ namespace TestApp
     // CTJ006: JsonDocumentBuilder
     // ========================
     [TestMethod]
-    public async Task JsonDocumentBuilder_WithoutUsing_FiresCTJ006()
+    public async Task JsonDocumentBuilder_WorkspaceOwned_WithoutUsing_NoDiagnostic()
     {
         const string testCode = DisposableStubs + @"
 namespace TestApp
@@ -270,7 +271,28 @@ namespace TestApp
         {
             using var workspace = Corvus.Text.Json.JsonWorkspace.Create();
             using var doc = Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.JsonElement>.Parse(""{}"");
-            var builder = {|#0:doc.RootElement.BuildDocument(workspace)|};
+            var builder = doc.RootElement.BuildDocument(workspace);
+        }
+    }
+}";
+
+        await new AnalyzerTest
+        {
+            TestCode = testCode,
+        }.RunAsync();
+    }
+
+    [TestMethod]
+    public async Task JsonDocumentBuilder_NotWorkspaceOwned_WithoutUsing_FiresCTJ006()
+    {
+        const string testCode = DisposableStubs + @"
+namespace TestApp
+{
+    class Test
+    {
+        void Method()
+        {
+            var builder = {|#0:Corvus.Text.Json.JsonDocumentBuilder<Corvus.Text.Json.JsonElement>.CreateUnmanaged()|};
         }
     }
 }";
