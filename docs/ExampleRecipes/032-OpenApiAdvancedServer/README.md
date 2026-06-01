@@ -113,8 +113,8 @@ Return headers as part of the Result factory. The generated code emits them:
 return ListPetsResult.Ok(
     body: ...,
     workspace: workspace,
-    xTotalCount: JsonInteger.ParseValue("42"),  // x-total-count: 42
-    xNext: JsonString.ParseValue("\"/pets?offset=10\""));  // x-next: /pets?offset=10
+    xTotalCount: 42,                        // x-total-count: 42
+    xNext: "\"/pets?offset=10\""u8);        // x-next: /pets?offset=10
 ```
 
 ### Streaming Responses (SSE/NDJSON)

@@ -79,3 +79,66 @@ dotnet run
 - [TOON](../Toon.md)
 - [OpenAPI](../OpenApi.md)
 - [AsyncAPI](../AsyncApi.md)
+
+## Regenerating Generated Code
+
+Several recipes include pre-generated code in a `Generated/` subdirectory. After making changes to the code generators, you must regenerate these files.
+
+### OpenAPI recipes
+
+```powershell
+# 029 — OpenAPI Client (basic Petstore)
+Remove-Item -Recurse -Force docs\ExampleRecipes\029-OpenApiClient\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- openapi-client docs\ExampleRecipes\029-OpenApiClient\petstore.json --rootNamespace Petstore.Client --outputPath docs\ExampleRecipes\029-OpenApiClient\Generated
+
+# 030 — OpenAPI Server (basic Petstore)
+Remove-Item -Recurse -Force docs\ExampleRecipes\030-OpenApiServer\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- openapi-server docs\ExampleRecipes\030-OpenApiServer\petstore.json --rootNamespace Petstore.Server --outputPath docs\ExampleRecipes\030-OpenApiServer\Generated
+
+# 031 — OpenAPI Advanced Client (extended Petstore)
+Remove-Item -Recurse -Force docs\ExampleRecipes\031-OpenApiAdvancedClient\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- openapi-client docs\ExampleRecipes\031-OpenApiAdvancedClient\petstore-extended.json --rootNamespace Petstore.Extended.Client --outputPath docs\ExampleRecipes\031-OpenApiAdvancedClient\Generated
+
+# 032 — OpenAPI Advanced Server (extended Petstore)
+Remove-Item -Recurse -Force docs\ExampleRecipes\032-OpenApiAdvancedServer\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- openapi-server docs\ExampleRecipes\032-OpenApiAdvancedServer\petstore-extended.json --rootNamespace Petstore.Extended.Server --outputPath docs\ExampleRecipes\032-OpenApiAdvancedServer\Generated
+
+# 033 — OpenAPI End to End
+Remove-Item -Recurse -Force docs\ExampleRecipes\033-OpenApiEndToEnd\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- openapi-client docs\ExampleRecipes\033-OpenApiEndToEnd\petstore-extended.json --rootNamespace Petstore.EndToEnd.Client --outputPath docs\ExampleRecipes\033-OpenApiEndToEnd\Generated\Client
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- openapi-server docs\ExampleRecipes\033-OpenApiEndToEnd\petstore-extended.json --rootNamespace Petstore.EndToEnd.Server --outputPath docs\ExampleRecipes\033-OpenApiEndToEnd\Generated\Server
+
+# 034 — OpenAPI Callback Server
+Remove-Item -Recurse -Force docs\ExampleRecipes\034-OpenApiCallbackServer\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- openapi-callback-server docs\ExampleRecipes\034-OpenApiCallbackServer\event-api.json --rootNamespace Petstore.Callbacks.Server --outputPath docs\ExampleRecipes\034-OpenApiCallbackServer\Generated
+
+# 035 — OpenAPI Callback Client
+Remove-Item -Recurse -Force docs\ExampleRecipes\035-OpenApiCallbackClient\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- openapi-callback-client docs\ExampleRecipes\035-OpenApiCallbackClient\event-api.json --rootNamespace Petstore.Callbacks.Client --outputPath docs\ExampleRecipes\035-OpenApiCallbackClient\Generated
+```
+
+### AsyncAPI recipes
+
+```powershell
+# 036 — AsyncAPI Producer
+Remove-Item -Recurse -Force docs\ExampleRecipes\036-AsyncApiProducer\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- asyncapi-generate docs\ExampleRecipes\036-AsyncApiProducer\streetlights.json --rootNamespace Streetlights.Client --outputPath docs\ExampleRecipes\036-AsyncApiProducer\Generated
+
+# 037 — AsyncAPI Consumer
+Remove-Item -Recurse -Force docs\ExampleRecipes\037-AsyncApiConsumer\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- asyncapi-generate docs\ExampleRecipes\037-AsyncApiConsumer\streetlights.json --rootNamespace Streetlights.Client --outputPath docs\ExampleRecipes\037-AsyncApiConsumer\Generated
+
+# 038 — AsyncAPI End to End
+Remove-Item -Recurse -Force docs\ExampleRecipes\038-AsyncApiEndToEnd\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- asyncapi-generate docs\ExampleRecipes\038-AsyncApiEndToEnd\streetlights.json --rootNamespace Streetlights.Client --outputPath docs\ExampleRecipes\038-AsyncApiEndToEnd\Generated
+
+# 039 — AsyncAPI Authentication
+Remove-Item -Recurse -Force docs\ExampleRecipes\039-AsyncApiAuthentication\Generated\*
+dotnet run --project src\Corvus.Json.Cli -f net10.0 -- asyncapi-generate docs\ExampleRecipes\039-AsyncApiAuthentication\streetlights.json --rootNamespace Streetlights.Client --outputPath docs\ExampleRecipes\039-AsyncApiAuthentication\Generated
+```
+
+### Verify after regeneration
+
+```powershell
+dotnet build docs\ExampleRecipes\ExampleRecipes.slnx
+```

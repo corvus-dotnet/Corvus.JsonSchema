@@ -1537,12 +1537,15 @@ internal static partial class CodeGeneratorExtensions
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 """)
             .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)")
             .AppendLineIndent("{")
             .PushIndent()
+                .AppendLineIndent("#pragma warning disable CS0618 // Type or member is obsolete")
                 .AppendLineIndent("return JsonElementHelpers.ParseValue<", typeDeclaration.DotnetTypeName(), ">(utf8Json, options);")
+                .AppendLineIndent("#pragma warning restore CS0618")
             .PopIndent()
             .AppendLineIndent("}")
             .AppendSeparatorLine()
@@ -1565,12 +1568,15 @@ internal static partial class CodeGeneratorExtensions
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 """)
             .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)")
             .AppendLineIndent("{")
             .PushIndent()
+                .AppendLineIndent("#pragma warning disable CS0618 // Type or member is obsolete")
                 .AppendLineIndent("return JsonElementHelpers.ParseValue<", typeDeclaration.DotnetTypeName(), ">(json, options);")
+                .AppendLineIndent("#pragma warning restore CS0618")
             .PopIndent()
             .AppendLineIndent("}")
             .AppendSeparatorLine()
@@ -1593,12 +1599,15 @@ internal static partial class CodeGeneratorExtensions
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the text.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 """)
             .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " ParseValue(string json, JsonDocumentOptions options = default)")
             .AppendLineIndent("{")
             .PushIndent()
+                .AppendLineIndent("#pragma warning disable CS0618 // Type or member is obsolete")
                 .AppendLineIndent("return JsonElementHelpers.ParseValue<", typeDeclaration.DotnetTypeName(), ">(json, options);")
+                .AppendLineIndent("#pragma warning restore CS0618")
             .PopIndent()
             .AppendLineIndent("}")
             .AppendSeparatorLine()
@@ -1639,11 +1648,14 @@ internal static partial class CodeGeneratorExtensions
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the reader.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 """)
             .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " ParseValue(ref Utf8JsonReader reader)")
             .AppendLineIndent("{")
             .PushIndent()
+                .AppendLineIndent("#pragma warning disable CS0618 // Type or member is obsolete")
                 .AppendLineIndent("return JsonElementHelpers.ParseValue<", typeDeclaration.DotnetTypeName(), ">(ref reader);")
+                .AppendLineIndent("#pragma warning restore CS0618")
             .PopIndent()
             .AppendLineIndent("}")
             .AppendSeparatorLine()

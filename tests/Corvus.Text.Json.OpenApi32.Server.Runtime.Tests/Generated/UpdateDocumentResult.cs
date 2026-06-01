@@ -48,7 +48,7 @@ public readonly struct UpdateDocumentResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="xDocumentVersion">The value for the <c>X-Document-Version</c> response header.</param>
     /// <returns>A <see cref="UpdateDocumentResult"/> with status 200.</returns>
-    public static UpdateDocumentResult Ok(CanonTests32.Server.Models.Schema5.Source body, JsonWorkspace workspace, CanonTests32.Server.Models.JsonInt32 xDocumentVersion = default) => new(200, CanonTests32.Server.Models.Schema5.CreateBuilder(workspace, body, 30).RootElement, "application/json", xDocumentVersion: xDocumentVersion);
+    public static UpdateDocumentResult Ok(CanonTests32.Server.Models.Schema5.Source body, JsonWorkspace workspace, CanonTests32.Server.Models.JsonInt32.Source xDocumentVersion = default) => new(200, CanonTests32.Server.Models.Schema5.CreateBuilder(workspace, body, 30).RootElement, "application/json", xDocumentVersion: xDocumentVersion.IsUndefined ? default : CanonTests32.Server.Models.JsonInt32.CreateBuilder(workspace, xDocumentVersion, 30).RootElement);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

@@ -29,7 +29,28 @@ CallbackReceiver handler = new(app.Logger);
 // Named arguments make it clear which handler instance serves which tag group.
 app.MapApiEndpoints(
     callbacksHandler: handler,
-    webhooksHandler: handler);
+    webhooksHandler: handler,
+    OnEventCallbackRoute: "/callbacks/onEvent");
+
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    string baseUrl = app.Urls.FirstOrDefault(static url => url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+        ?? app.Urls.FirstOrDefault()
+        ?? "http://localhost:64910";
+
+    Console.WriteLine();
+    Console.WriteLine("OpenAPI Callback Server example is running.");
+    Console.WriteLine($"Base URL: {baseUrl}");
+    Console.WriteLine();
+    Console.WriteLine("Registered endpoints:");
+    Console.WriteLine("  POST /systemAlert          — receives top-level webhook deliveries");
+    Console.WriteLine("  POST /callbacks/onEvent    — receives per-subscription callback deliveries");
+    Console.WriteLine();
+    Console.WriteLine("Try these requests from another terminal:");
+    Console.WriteLine($@"  curl -X POST {baseUrl}/systemAlert -H ""Content-Type: application/json"" -d '{{""alertId"":""alert-001"",""severity"":""critical"",""message"":""Disk usage exceeded 90%.""}}'");
+    Console.WriteLine($@"  curl -X POST {baseUrl}/callbacks/onEvent -H ""Content-Type: application/json"" -d '{{""eventId"":""evt-123"",""eventType"":""subscription.created"",""timestamp"":""2026-01-15T10:30:00Z""}}'");
+    Console.WriteLine();
+});
 
 app.Run();
 

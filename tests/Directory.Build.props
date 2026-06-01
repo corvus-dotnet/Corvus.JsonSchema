@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <!-- Disable analyzers warnings about JSON being misformatted in string literals -->
     <NoWarn>$(NoWarn);JSON001</NoWarn>
+    <!-- Allow test code to use deprecated ParseValue() for test data setup -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
     <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
   </PropertyGroup>

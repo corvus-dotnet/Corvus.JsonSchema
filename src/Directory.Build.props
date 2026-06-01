@@ -1,0 +1,8 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Allow library internals to use ParseValue() where standalone results are required -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
+
+</Project>

@@ -8444,8 +8444,7 @@ public class OpenApi31CodeGeneratorTests
         string[] pointers = [.. OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
             callbacksSpecRoot, out _).Select(r => r.PositionalPointer)];
 
-        // Webhook request body schemas — the pointer builder uses #/paths/<key>/... format
-        // even for webhooks (the key is the webhook name)
+        // Webhook positional pointers use #/paths/<key>/... (matching code generator emit)
         CollectionAssert.Contains(
             pointers,
             "#/paths/petAdopted/post/requestBody/content/application~1json/schema");
@@ -8584,5 +8583,134 @@ public class OpenApi31CodeGeneratorTests
 
         Assert.AreEqual(1, ops.Length, "Filter should match only petAdopted webhook");
         Assert.AreEqual("petAdoptedWebhook", ops[0].OperationId);
+    }
+
+    [TestMethod]
+    public void CollectWebhookAndCallbackSchemaPointers_CallbackResolvablePointerUsesFullPath()
+    {
+        // Regression test for #779: inline callback schemas must have ResolvablePointers
+        // that use the full document path through the parent operation's callbacks map,
+        // NOT a broken pointer rooted at #/paths/{callbackKey}/...
+        SchemaReference[] refs = OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
+            callbacksSpecRoot, out _);
+
+        // Find the callback request body schema reference
+        SchemaReference callbackBodyRef = refs.First(r =>
+            r.PositionalPointer.Contains("request.body", StringComparison.Ordinal) &&
+            r.PositionalPointer.Contains("requestBody", StringComparison.Ordinal));
+
+        // The ResolvablePointer must contain the full path through the parent operation:
+        // #/paths/~1subscriptions/post/callbacks/onEvent/{...}/post/requestBody/...
+        Assert.IsTrue(
+            callbackBodyRef.ResolvablePointer.Contains("~1subscriptions/post/callbacks/onEvent/", StringComparison.Ordinal),
+            $"Expected ResolvablePointer to include full parent path. Got: {callbackBodyRef.ResolvablePointer}");
+
+        // And it must be resolvable against the document — verify the schema element exists
+        JsonElement schema = callbacksSpecRoot;
+        string fragment = callbackBodyRef.ResolvablePointer;
+        Assert.IsTrue(fragment.StartsWith('#'), "ResolvablePointer should start with #");
+
+        // Walk the pointer segments to verify it resolves
+        string[] segments = fragment[2..].Split('/');
+        foreach (string segment in segments)
+        {
+            string unescaped = segment.Replace("~1", "/").Replace("~0", "~");
+            Assert.IsTrue(
+                schema.TryGetProperty(unescaped, out schema),
+                $"Failed to resolve segment '{unescaped}' in pointer '{fragment}'");
+        }
+
+        // The resolved element should be a schema object
+        Assert.AreEqual(JsonValueKind.Object, schema.ValueKind,
+            "Resolved callback schema should be a JSON object");
+    }
+
+    [TestMethod]
+    public void CollectWebhookAndCallbackSchemaPointers_WebhookResolvablePointerUsesWebhooksRoot()
+    {
+        // Webhook ResolvablePointer should use webhooks root (actual document location)
+        // while PositionalPointer uses paths root (matching code generator emit)
+        SchemaReference[] refs = OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(
+            callbacksSpecRoot, out _);
+
+        SchemaReference webhookRef = refs.First(r =>
+            r.PositionalPointer.Contains("petAdopted", StringComparison.Ordinal) &&
+            r.PositionalPointer.Contains("requestBody", StringComparison.Ordinal));
+
+        // PositionalPointer uses "paths" root for map lookups
+        Assert.IsTrue(
+            webhookRef.PositionalPointer.StartsWith("#/paths/petAdopted/", StringComparison.Ordinal),
+            $"Expected PositionalPointer with paths root. Got: {webhookRef.PositionalPointer}");
+
+        // ResolvablePointer uses "webhooks" root for document resolution
+        Assert.IsTrue(
+            webhookRef.ResolvablePointer.StartsWith("#/webhooks/petAdopted/", StringComparison.Ordinal),
+            $"Expected ResolvablePointer with webhooks root. Got: {webhookRef.ResolvablePointer}");
+
+        // Verify the ResolvablePointer actually resolves against the document
+        JsonElement schema = callbacksSpecRoot;
+        string fragment = webhookRef.ResolvablePointer;
+        string[] segments = fragment[2..].Split('/');
+        foreach (string segment in segments)
+        {
+            string unescaped = segment.Replace("~1", "/").Replace("~0", "~");
+            Assert.IsTrue(
+                schema.TryGetProperty(unescaped, out schema),
+                $"Failed to resolve segment '{unescaped}' in pointer '{fragment}'");
+        }
+
+        Assert.AreEqual(JsonValueKind.Object, schema.ValueKind,
+            "Resolved webhook schema should be a JSON object");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackServer_RuntimeExpressionPathUsesRouteParameter()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi31CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        // Must NOT emit runtime expressions as literal route strings
+        Assert.IsFalse(
+            registration.Content.Contains("\"{$request", StringComparison.Ordinal),
+            "Generated endpoint registration should not emit runtime expressions as literal route strings");
+
+        // Must have a string route parameter for runtime expression paths
+        Assert.IsTrue(
+            registration.Content.Contains("string ", StringComparison.Ordinal) &&
+            registration.Content.Contains("Route", StringComparison.Ordinal),
+            "Generated MapApiEndpoints must accept a route parameter for runtime expression paths");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackServer_StaticPathUsesLiteralRoute()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi31CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        // Static webhook paths should appear as literal route strings
+        Assert.IsTrue(
+            registration.Content.Contains("\"petAdopted\"", StringComparison.Ordinal),
+            "Static webhook path 'petAdopted' should appear as a literal route");
+        Assert.IsTrue(
+            registration.Content.Contains("\"inventoryUpdate\"", StringComparison.Ordinal),
+            "Static webhook path 'inventoryUpdate' should appear as a literal route");
     }
 }

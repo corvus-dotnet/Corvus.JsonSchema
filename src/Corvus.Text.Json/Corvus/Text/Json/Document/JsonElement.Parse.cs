@@ -22,9 +22,12 @@ public readonly partial struct JsonElement
     /// <returns>A <see cref="JsonElement"/> representation of the JSON value.</returns>
     /// <exception cref="JsonException"><paramref name="utf8Json"/> does not represent a valid single JSON value.</exception>
     /// <exception cref="ArgumentException"><paramref name="options"/> contains unsupported options.</exception>
+    [Obsolete("Use ParsedJsonDocument<JsonElement>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static JsonElement ParseValue([StringSyntax(StringSyntaxAttribute.Json)] ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonElement>(utf8Json, options);
+#pragma warning restore CS0618
     }
 
     /// <summary>
@@ -35,9 +38,12 @@ public readonly partial struct JsonElement
     /// <returns>A <see cref="JsonElement"/> representation of the JSON value.</returns>
     /// <exception cref="JsonException"><paramref name="json"/> does not represent a valid single JSON value.</exception>
     /// <exception cref="ArgumentException"><paramref name="options"/> contains unsupported options.</exception>
+    [Obsolete("Use ParsedJsonDocument<JsonElement>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static JsonElement ParseValue([StringSyntax(StringSyntaxAttribute.Json)] ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonElement>(json, options);
+#pragma warning restore CS0618
     }
 
     /// <summary>
@@ -49,11 +55,14 @@ public readonly partial struct JsonElement
     /// <exception cref="ArgumentNullException"><paramref name="json"/> is <see langword="null"/>.</exception>
     /// <exception cref="JsonException"><paramref name="json"/> does not represent a valid single JSON value.</exception>
     /// <exception cref="ArgumentException"><paramref name="options"/> contains unsupported options.</exception>
+    [Obsolete("Use ParsedJsonDocument<JsonElement>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static JsonElement ParseValue([StringSyntax(StringSyntaxAttribute.Json)] string json, JsonDocumentOptions options = default)
     {
         ArgumentNullException.ThrowIfNull(json);
 
+#pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonElement>(json, options);
+#pragma warning restore CS0618
     }
 
     /// <summary>
@@ -91,10 +100,13 @@ public readonly partial struct JsonElement
     /// <exception cref="JsonException">
     /// A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<JsonElement>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonElement ParseValue(ref Utf8JsonReader reader)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonElement>(ref reader);
+#pragma warning restore CS0618
     }
 
     /// <summary>

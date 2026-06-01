@@ -101,6 +101,12 @@
   <Folder Name="/033-OpenApiEndToEnd/">
     <Project Path="033-OpenApiEndToEnd\OpenApiEndToEnd.csproj" />
   </Folder>
+  <Folder Name="/034-OpenApiCallbackServer/">
+    <Project Path="034-OpenApiCallbackServer\OpenApiCallbackServer.csproj" />
+  </Folder>
+  <Folder Name="/035-OpenApiCallbackClient/">
+    <Project Path="035-OpenApiCallbackClient\OpenApiCallbackClient.csproj" />
+  </Folder>
   <Folder Name="/036-AsyncApiProducer/">
     <Project Path="036-AsyncApiProducer\AsyncApiProducer.csproj" />
   </Folder>

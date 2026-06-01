@@ -355,11 +355,18 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         return db.TakeOwnership(out rentedBacking);
     }
 
-    JsonElement IJsonDocument.CloneElement(int index) => JsonElement.ParseValue(_rawValue.Span);
+    JsonElement IJsonDocument.CloneElement(int index)
+    {
+#pragma warning disable CS0618 // Type or member is obsolete
+        return JsonElement.ParseValue(_rawValue.Span);
+#pragma warning restore CS0618
+    }
 
     TElement IJsonDocument.CloneElement<TElement>(int index)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<TElement>(_rawValue.Span);
+#pragma warning restore CS0618
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

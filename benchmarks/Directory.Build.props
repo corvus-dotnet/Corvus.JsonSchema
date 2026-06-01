@@ -1,0 +1,8 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Allow benchmark code to use deprecated ParseValue() in generated models -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
+
+</Project>

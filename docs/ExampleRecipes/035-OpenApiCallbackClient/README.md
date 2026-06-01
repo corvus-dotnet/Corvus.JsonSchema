@@ -2,14 +2,17 @@
 
 This recipe shows how to generate the **server-side sender** for OpenAPI webhooks and callbacks. The generated callback client lets your API send strongly-typed notifications to subscriber endpoints using the same OpenAPI description that defined the subscription contract.
 
+> **Paired with [034-OpenApiCallbackServer](../034-OpenApiCallbackServer/):** That recipe is the *receiver*; this one is the *sender*. Together they demonstrate the full callback/webhook round-trip.
+
 ## What This Shows
 
 | Feature | Where |
 |---------|-------|
 | Generate a typed callback client from `webhooks` and `callbacks` | `corvusjson openapi-callback-client` |
-| Point the transport at a subscriber callback endpoint | `HttpClientTransport` |
 | Send a typed webhook body from server code | `ApiWebhooksClient.SystemAlertWebhookAsync(...)` |
-| Handle the subscriber's acknowledgement | `SystemAlertWebhookResponse` |
+| Send a per-subscription callback | `ApiCallbacksClient.OnEventCallbackAsync(...)` |
+| Handle the subscriber's acknowledgement | `SystemAlertWebhookResponse.IsSuccess` |
+| In-memory transport for self-contained demo | `DemoTransport` |
 
 ## Generate the Callback Client
 
@@ -29,14 +32,35 @@ For this spec, the generated output includes:
 - `ApiCallbacksClient` / `IApiCallbacksClient` for the `onEventCallback` callback operation
 - typed request/response models under `Generated/Models/`
 
-## Sending a Notification to a Subscriber
+## Running the Example
 
-A server typically stores the subscriber's callback base URL when the subscription is created. Later, it creates a transport for that subscriber and uses the generated client to send the notification:
+```bash
+dotnet run --project docs/ExampleRecipes/035-OpenApiCallbackClient
+```
+
+The example uses an in-memory `DemoTransport` (like [031-OpenApiAdvancedClient](../031-OpenApiAdvancedClient/)) so it runs self-contained with no external dependencies. Output:
+
+```
+Using in-memory demo transport. In production, replace with HttpClientTransport.
+
+1. Sending systemAlert webhook...
+   Subscriber acknowledged the webhook (HTTP 200).
+
+2. Sending onEventCallback...
+   Subscriber acknowledged the callback (HTTP 200).
+
+Done!
+```
+
+## Production Usage
+
+In production, replace `DemoTransport` with `HttpClientTransport` pointing at the subscriber's callback URL:
 
 ```csharp
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using EventSubscription.CallbackClient;
+using EventSubscription.CallbackClient.Models;
 
 HttpClient httpClient = new()
 {
@@ -47,13 +71,14 @@ await using HttpClientTransport transport = new(httpClient, disposeClient: true)
 await using ApiWebhooksClient client = new(transport);
 
 await using SystemAlertWebhookResponse response = await client.SystemAlertWebhookAsync(
-    body: new PostSystemAlertBody.Source(static (ref PostSystemAlertBody.Builder b) =>
+    body: new Schema.Source(static (ref Schema.Builder b) =>
     {
         b.Create(
             alertId: "alert-001"u8,
             severity: "critical"u8,
             message: "Disk usage exceeded 90%."u8);
-    }));
+    }),
+    validationMode: ValidationMode.Basic);
 ```
 
 ## Handling the Subscriber Response

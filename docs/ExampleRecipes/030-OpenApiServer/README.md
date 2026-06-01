@@ -106,7 +106,7 @@ internal sealed class PetsHandler : IApiPetsHandler
             }),
             workspace: workspace,
             xNext: limit < this.pets.Count
-                ? JsonString.ParseValue("\"/pets?offset=1\""u8)
+                ? "\"/pets?offset=1\""u8
                 : default);
 
         return ValueTask.FromResult(result);
@@ -198,7 +198,7 @@ return ValueTask.FromResult(ShowPetByIdResult.Default(
 return ValueTask.FromResult(ListPetsResult.Ok(
     body: ...,
     workspace: workspace,
-    xNext: JsonString.ParseValue("\"/pets?offset=10\""u8)));
+    xNext: "\"/pets?offset=10\""u8));
 ```
 
 ## Automatic Validation and Error Handling

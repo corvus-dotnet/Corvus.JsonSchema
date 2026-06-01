@@ -122,7 +122,7 @@ internal sealed class PetsHandler : IApiPetsHandler
             }),
             workspace: workspace,
             xNext: limit < this.pets.Count
-                ? JsonString.ParseValue("\"/pets?offset=1\""u8)
+                ? "\"/pets?offset=1\""u8
                 : default);
 
         return ValueTask.FromResult(result);

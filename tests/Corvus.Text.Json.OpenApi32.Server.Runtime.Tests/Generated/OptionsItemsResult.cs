@@ -44,9 +44,10 @@ public readonly struct OptionsItemsResult
     /// <summary>
     /// Creates a 204 NoContent result.
     /// </summary>
+    /// <param name="workspace">The workspace for building header values.</param>
     /// <param name="accessControlAllowMethods">The value for the <c>Access-Control-Allow-Methods</c> response header.</param>
     /// <returns>A <see cref="OptionsItemsResult"/> with status 204.</returns>
-    public static OptionsItemsResult NoContent(CanonTests32.Server.Models.JsonString accessControlAllowMethods = default) => new(204, default, null, accessControlAllowMethods: accessControlAllowMethods);
+    public static OptionsItemsResult NoContent(JsonWorkspace workspace, CanonTests32.Server.Models.JsonString.Source accessControlAllowMethods = default) => new(204, default, null, accessControlAllowMethods: accessControlAllowMethods.IsUndefined ? default : CanonTests32.Server.Models.JsonString.CreateBuilder(workspace, accessControlAllowMethods, 30).RootElement);
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

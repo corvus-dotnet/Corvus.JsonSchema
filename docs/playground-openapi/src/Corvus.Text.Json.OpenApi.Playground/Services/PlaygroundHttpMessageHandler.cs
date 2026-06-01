@@ -14,27 +14,14 @@ public sealed class PlaygroundHttpMessageHandler : HttpMessageHandler
         string path = request.RequestUri?.AbsolutePath ?? "/";
         HttpResponseMessage response = (request.Method.Method, path) switch
         {
-            ("GET", "/v1/pets") => JsonResponse(HttpStatusCode.OK, """
-                [
-                  { "id": 1, "name": "Fido", "tag": "dog" },
-                  { "id": 2, "name": "Mittens", "tag": "cat" }
-                ]
-                """, ("x-next", "/v1/pets?limit=10&cursor=next")),
+            ("GET", "/pets") => JsonResponse(HttpStatusCode.OK, AdvancedPetList, ("x-total-count", "2"), ("x-next", "/pets?limit=10&cursor=next")),
+            ("POST", "/pets") => JsonResponse(HttpStatusCode.Created, AdvancedPet),
+            ("GET", "/pets/pet-123") => JsonResponse(HttpStatusCode.OK, AdvancedPet),
 
-            ("POST", "/v1/pets") => JsonResponse(HttpStatusCode.Created, """
-                { "id": 42, "name": "Fido", "tag": "dog" }
-                """),
+            ("GET", string p) when p.StartsWith("/pets/batch/", StringComparison.Ordinal) => JsonResponse(HttpStatusCode.OK, AdvancedPetList),
+            ("GET", "/pets/pet-42") => JsonResponse(HttpStatusCode.OK, AdvancedPet),
 
-            ("GET", "/v1/pets/pet-123") => JsonResponse(HttpStatusCode.OK, """
-                { "id": 123, "name": "Fido", "tag": "dog" }
-                """),
-
-            ("GET", "/v2/pets") => JsonResponse(HttpStatusCode.OK, AdvancedPetList, ("x-total-count", "2"), ("x-next", "/v2/pets?limit=10&cursor=next")),
-            ("GET", string p) when p.StartsWith("/v2/pets/batch/", StringComparison.Ordinal) => JsonResponse(HttpStatusCode.OK, AdvancedPetList),
-            ("GET", "/v2/pets/pet-42") => JsonResponse(HttpStatusCode.OK, AdvancedPet),
-            ("POST", "/v2/pets") => JsonResponse(HttpStatusCode.Created, AdvancedPet),
-
-            ("POST", "/v2/pets/pet-42/photos") => JsonResponse(HttpStatusCode.Created, """
+            ("POST", "/pets/pet-42/photos") => JsonResponse(HttpStatusCode.Created, """
                 {
                   "photoId": "photo-7",
                   "petId": "pet-42",
@@ -44,9 +31,9 @@ public sealed class PlaygroundHttpMessageHandler : HttpMessageHandler
                 }
                 """),
 
-            ("GET", "/v2/photos/photo-7") => BinaryResponse(HttpStatusCode.OK, "application/octet-stream", [0x89, 0x50, 0x4E, 0x47]),
+            ("GET", "/photos/photo-7") => BinaryResponse(HttpStatusCode.OK, "application/octet-stream", [0x89, 0x50, 0x4E, 0x47]),
 
-            ("POST", "/v2/pets/pet-42/chat") => TextResponse(HttpStatusCode.OK, "text/event-stream", """
+            ("POST", "/pets/pet-42/chat") => TextResponse(HttpStatusCode.OK, "text/event-stream", """
                 event: message
                 data: {"id":"chunk-1","delta":"Bella looks healthy.","done":false}
 
@@ -55,13 +42,13 @@ public sealed class PlaygroundHttpMessageHandler : HttpMessageHandler
 
                 """),
 
-            ("GET", "/v2/pets/pet-42/activity") => TextResponse(HttpStatusCode.OK, "application/x-ndjson", """
+            ("GET", "/pets/pet-42/activity") => TextResponse(HttpStatusCode.OK, "application/x-ndjson", """
                 {"eventId":"evt-1","type":"walk","timestamp":"2026-05-28T08:00:00Z","description":"Morning walk"}
                 {"eventId":"evt-2","type":"feeding","timestamp":"2026-05-28T09:00:00Z","description":"Breakfast"}
 
                 """),
 
-            ("POST", "/v2/adoption/apply") => JsonResponse(HttpStatusCode.Accepted, """
+            ("POST", "/adoption/apply") => JsonResponse(HttpStatusCode.Accepted, """
                 {
                   "applicationId": "app-123",
                   "status": "received",
@@ -83,6 +70,7 @@ public sealed class PlaygroundHttpMessageHandler : HttpMessageHandler
         {
           "id": 42,
           "name": "Bella",
+          "tag": "dog",
           "breed": "golden retriever",
           "age": 2,
           "status": "available",
@@ -97,6 +85,7 @@ public sealed class PlaygroundHttpMessageHandler : HttpMessageHandler
           {
             "id": 42,
             "name": "Bella",
+            "tag": "dog",
             "breed": "golden retriever",
             "age": 2,
             "status": "available",
@@ -106,6 +95,7 @@ public sealed class PlaygroundHttpMessageHandler : HttpMessageHandler
           {
             "id": 43,
             "name": "Milo",
+            "tag": "dog",
             "breed": "labrador",
             "age": 4,
             "status": "pending",

@@ -244,4 +244,47 @@ namespace TestApp
 
         await Verify.VerifyAnalyzerAsync(testCode);
     }
+
+    [TestMethod]
+    public async Task CastToIntermediateType_TwoHopChain_NoDiagnostic()
+    {
+        // The two-hop chain: Mutable -> TodoItem (implicit) -> Source (implicit)
+        // But there is NO direct implicit conversion Mutable -> Source.
+        // Casting (TodoItem)mutable is required to reach Source via TodoItem.
+        // The analyzer must NOT flag this as unnecessary (#775).
+        const string testCode = @"
+namespace TestApp
+{
+    public readonly struct Source
+    {
+        public static implicit operator Source(TodoItem t) => default;
+    }
+
+    public struct TodoItem
+    {
+        public static implicit operator TodoItem(Mutable m) => default;
+    }
+
+    public struct Mutable
+    {
+    }
+
+    class Container
+    {
+        public void SetValue(Source value) { }
+    }
+
+    class Test
+    {
+        void M()
+        {
+            var mutable = new Mutable();
+            var container = new Container();
+            container.SetValue((TodoItem)mutable);
+        }
+    }
+}";
+
+        await Verify.VerifyAnalyzerAsync(testCode);
+    }
 }

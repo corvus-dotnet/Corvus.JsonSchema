@@ -167,7 +167,9 @@ public readonly partial struct JsonElementForBooleanFalseSchema : IJsonElement<J
     /// <exception cref="ArgumentException"><paramref name="options"/> contains unsupported options.</exception>
     public static JsonElementForBooleanFalseSchema ParseValue([StringSyntax(StringSyntaxAttribute.Json)] ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonElementForBooleanFalseSchema>(utf8Json);
+#pragma warning restore CS0618
     }
 
     /// <summary>
@@ -180,7 +182,9 @@ public readonly partial struct JsonElementForBooleanFalseSchema : IJsonElement<J
     /// <exception cref="ArgumentException"><paramref name="options"/> contains unsupported options.</exception>
     public static JsonElementForBooleanFalseSchema ParseValue([StringSyntax(StringSyntaxAttribute.Json)] ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonElementForBooleanFalseSchema>(json);
+#pragma warning restore CS0618
     }
 
     /// <summary>
@@ -196,7 +200,9 @@ public readonly partial struct JsonElementForBooleanFalseSchema : IJsonElement<J
     {
         ArgumentNullException.ThrowIfNull(json);
 
+#pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonElementForBooleanFalseSchema>(json);
+#pragma warning restore CS0618
     }
 
     /// <summary>
@@ -237,7 +243,9 @@ public readonly partial struct JsonElementForBooleanFalseSchema : IJsonElement<J
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonElementForBooleanFalseSchema ParseValue(ref Utf8JsonReader reader)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JsonElementForBooleanFalseSchema>(ref reader);
+#pragma warning restore CS0618
     }
 
     /// <summary>

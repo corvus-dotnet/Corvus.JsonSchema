@@ -214,7 +214,7 @@ public sealed class OpenApi30CodeGenerator
                 }
             }
 
-            CollectPathItemPointers(pathProp, pointers, paramNames, referenceResolver);
+            CollectPathItemPointers(pathProp, pointers, paramNames, referenceResolver, "paths"u8);
         }
 
         parameterNames = paramNames;
@@ -402,17 +402,22 @@ public sealed class OpenApi30CodeGenerator
         JsonProperty<JsonElement> pathProp,
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
-        IOpenApiReferenceResolver referenceResolver)
+        IOpenApiReferenceResolver referenceResolver,
+        ReadOnlySpan<byte> rootSegmentUtf8,
+        string? callbackPathItemRef = null)
     {
         OpenApiDocument.PathItem pathItem = OpenApiDocument.PathItem.From(pathProp.Value);
 
         // Determine if this path item is a $ref and compute its absolute reference
-        string? pathItemRefValue = null;
-        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(pathItem);
-        if (asRef.Ref.IsNotUndefined())
+        string? pathItemRefValue = callbackPathItemRef;
+        if (pathItemRefValue is null)
         {
-            string refStr = asRef.Ref.GetString()!;
-            pathItemRefValue = referenceResolver.ResolveToAbsolute(refStr);
+            OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(pathItem);
+            if (asRef.Ref.IsNotUndefined())
+            {
+                string refStr = asRef.Ref.GetString()!;
+                pathItemRefValue = referenceResolver.ResolveToAbsolute(refStr);
+            }
         }
 
         if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
@@ -428,7 +433,7 @@ public sealed class OpenApi30CodeGenerator
                     && operationElement.ValueKind == JsonValueKind.Object)
                 {
                     OpenApiDocument.Operation operation = operationElement;
-                    CollectOperationPointers(pathProp, operation, method, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                    CollectOperationPointers(pathProp, operation, method, resolved, pointers, parameterNames, referenceResolver, rootSegmentUtf8, pathItemRefValue);
                 }
             }
         }
@@ -442,6 +447,7 @@ public sealed class OpenApi30CodeGenerator
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver,
+        ReadOnlySpan<byte> rootSegmentUtf8,
         string? pathItemRefValue = null)
     {
         using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
@@ -453,7 +459,7 @@ public sealed class OpenApi30CodeGenerator
             if (param.Schema.IsNotUndefined())
             {
                 string positionalPointer = SchemaPointerBuilder.BuildParameterSchemaPointer(
-                    pathName.Span, method, sourceIndex, isPathLevel);
+                    rootSegmentUtf8, pathName.Span, method, sourceIndex, isPathLevel);
 
                 string resolvablePointer = refValue is not null
                     ? SchemaPointerBuilder.BuildRefBasedPointer(refValue, "/schema")
@@ -496,7 +502,7 @@ public sealed class OpenApi30CodeGenerator
                         using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                         string positionalPointer = SchemaPointerBuilder.BuildContentSchemaPointer(
-                            pathName.Span, method, "/requestBody"u8, mediaTypeName.Span);
+                            rootSegmentUtf8, pathName.Span, method, "/requestBody"u8, mediaTypeName.Span);
 
                         string resolvablePointer = rbRefValue is not null
                             ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -551,7 +557,7 @@ public sealed class OpenApi30CodeGenerator
                                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                                 string positionalPointer = SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                                    pathName.Span, method, statusCode.Span, mediaTypeName.Span);
+                                    rootSegmentUtf8, pathName.Span, method, statusCode.Span, mediaTypeName.Span);
 
                                 string resolvablePointer = responseRefValue is not null
                                     ? SchemaPointerBuilder.BuildRefBasedPointer(
@@ -587,7 +593,7 @@ public sealed class OpenApi30CodeGenerator
                                     using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
 
                                     string positionalPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                                        pathName.Span, method, statusCode.Span, headerName.Span);
+                                        rootSegmentUtf8, pathName.Span, method, statusCode.Span, headerName.Span);
 
                                     string resolvablePointer = headerRefValue is not null
                                         ? SchemaPointerBuilder.BuildRefBasedPointer(headerRefValue, "/schema")
@@ -778,6 +784,49 @@ public sealed class OpenApi30CodeGenerator
         if (resolved.Trace.IsNotUndefined())
         {
             yield return resolved.Trace;
+        }
+    }
+
+    private static IEnumerable<(OpenApiDocument.Operation Operation, OperationMethod Method)> EnumerateOperationsWithMethod(OpenApiDocument.PathItem resolved)
+    {
+        if (resolved.Get.IsNotUndefined())
+        {
+            yield return (resolved.Get, OperationMethod.Get);
+        }
+
+        if (resolved.Put.IsNotUndefined())
+        {
+            yield return (resolved.Put, OperationMethod.Put);
+        }
+
+        if (resolved.Post.IsNotUndefined())
+        {
+            yield return (resolved.Post, OperationMethod.Post);
+        }
+
+        if (resolved.Delete.IsNotUndefined())
+        {
+            yield return (resolved.Delete, OperationMethod.Delete);
+        }
+
+        if (resolved.Options.IsNotUndefined())
+        {
+            yield return (resolved.Options, OperationMethod.Options);
+        }
+
+        if (resolved.Head.IsNotUndefined())
+        {
+            yield return (resolved.Head, OperationMethod.Head);
+        }
+
+        if (resolved.Patch.IsNotUndefined())
+        {
+            yield return (resolved.Patch, OperationMethod.Patch);
+        }
+
+        if (resolved.Trace.IsNotUndefined())
+        {
+            yield return (resolved.Trace, OperationMethod.Trace);
         }
     }
 
@@ -1272,7 +1321,7 @@ public sealed class OpenApi30CodeGenerator
 
             string? schemaPointer = hasSchema
                 ? SchemaPointerBuilder.BuildParameterSchemaPointer(
-                    pathNameUtf8, method, sourceIndex, isPathLevel)
+                    "paths"u8, pathNameUtf8, method, sourceIndex, isPathLevel)
                 : null;
 
             // Extract schema default value (if any) for optional parameters.
@@ -1478,7 +1527,7 @@ public sealed class OpenApi30CodeGenerator
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
                 schemaPointer = SchemaPointerBuilder.BuildContentSchemaPointer(
-                    pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
+                    "paths"u8, pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
             }
 
             result.Add(new ContentInfo(mediaType, schemaPointer, ReadEncodings(mediaTypeProp.Value)));
@@ -1511,7 +1560,7 @@ public sealed class OpenApi30CodeGenerator
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
                 schemaPointer = SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                    pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
+                    "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
             }
 
             result.Add(new ContentInfo(mediaType, schemaPointer, null));
@@ -1592,7 +1641,7 @@ public sealed class OpenApi30CodeGenerator
                 {
                     using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
                     schemaPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                        pathNameUtf8, method, statusCodeUtf8, headerName.Span);
+                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, headerName.Span);
                 }
 
                 // Extract explode and serialization kind for response header deserialization.
@@ -4634,7 +4683,7 @@ public sealed class OpenApi30CodeGenerator
             files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
         }
 
-        files.Add(this.EmitServerEndpointRegistration(groups));
+        files.Add(this.EmitServerEndpointRegistration(groups, operations));
 
         return files;
     }
@@ -4678,7 +4727,7 @@ public sealed class OpenApi30CodeGenerator
             files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
         }
 
-        files.Add(this.EmitServerEndpointRegistration(groups));
+        files.Add(this.EmitServerEndpointRegistration(groups, operations));
 
         return files;
     }
@@ -4763,7 +4812,7 @@ public sealed class OpenApi30CodeGenerator
 
                 using (pathItemScope)
                 {
-                    foreach (OpenApiDocument.Operation operation in EnumerateOperationsInPathItem(resolved))
+                    foreach ((OpenApiDocument.Operation operation, OperationMethod method) in EnumerateOperationsWithMethod(resolved))
                     {
                         OpenApiDocument.Operation.CallbacksEntity callbacks = operation.Callbacks;
                         if (callbacks.IsUndefined())
@@ -4790,7 +4839,13 @@ public sealed class OpenApi30CodeGenerator
                                     }
                                 }
 
-                                CollectPathItemPointers(callbackPathProp.AsJsonElementProperty(), pointers, paramNames, referenceResolver);
+                                using UnescapedUtf8JsonString callbackPathName = callbackPathProp.Utf8NameSpan;
+                                using UnescapedUtf8JsonString parentPathName = pathProp.Utf8NameSpan;
+                                using UnescapedUtf8JsonString callbackName = callbackProp.Utf8NameSpan;
+                                string callbackRef = SchemaPointerBuilder.BuildCallbackPathItemPointer(
+                                    parentPathName.Span, method, callbackName.Span, callbackPathName.Span);
+
+                                CollectPathItemPointers(callbackPathProp.AsJsonElementProperty(), pointers, paramNames, referenceResolver, "paths"u8, callbackRef);
                             }
                         }
                     }
@@ -5229,6 +5284,15 @@ public sealed class OpenApi30CodeGenerator
 
             paramList.Append($"{bodyTypeName}.Source body, JsonWorkspace workspace");
         }
+        else if (respHeaders.Count > 0)
+        {
+            if (paramList.Length > 0)
+            {
+                paramList.Append(", ");
+            }
+
+            paramList.Append("JsonWorkspace workspace");
+        }
 
         foreach (var (_, typeName, fieldName, _) in respHeaders)
         {
@@ -5237,7 +5301,7 @@ public sealed class OpenApi30CodeGenerator
                 paramList.Append(", ");
             }
 
-            paramList.Append($"{typeName} {fieldName} = default");
+            paramList.Append($"{typeName}.Source {fieldName} = default");
         }
 
         if (isDefault)
@@ -5249,6 +5313,10 @@ public sealed class OpenApi30CodeGenerator
         {
             w.WriteLine($"/// <param name=\"body\">The response body.</param>");
             w.WriteLine($"/// <param name=\"workspace\">The workspace for building the response value.</param>");
+        }
+        else if (respHeaders.Count > 0)
+        {
+            w.WriteLine($"/// <param name=\"workspace\">The workspace for building header values.</param>");
         }
 
         foreach (var (header, _, fieldName, _) in respHeaders)
@@ -5268,9 +5336,9 @@ public sealed class OpenApi30CodeGenerator
         {
             StringBuilder ctorArgs = new();
             ctorArgs.Append($"{statusExpr}, {bodyExpr}, {contentTypeExpr}");
-            foreach (var (_, _, fieldName, _) in respHeaders)
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
-                ctorArgs.Append($", {fieldName}: {fieldName}");
+                ctorArgs.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
             }
 
             w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({ctorArgs});");
@@ -5282,7 +5350,8 @@ public sealed class OpenApi30CodeGenerator
     }
 
     private GeneratedFile EmitServerEndpointRegistration(
-        Dictionary<string, List<OperationInfo>> groups)
+        Dictionary<string, List<OperationInfo>> groups,
+        IReadOnlyList<OperationInfo> operations)
     {
         string prefix = this.clientNamePrefix ?? "Api";
         string className = $"{prefix}EndpointRegistration";
@@ -5322,6 +5391,24 @@ public sealed class OpenApi30CodeGenerator
             handlerParams.Add($"I{handlerName}Handler {paramName}");
         }
 
+        // Identify operations whose path templates contain runtime expressions.
+        Dictionary<string, string> runtimeExpressionRouteParams = [];
+        HashSet<string> seenRouteParamNames = [];
+        foreach (OperationInfo op in operations)
+        {
+            if (ContainsRuntimeExpression(op.PathTemplate))
+            {
+                string routeParamName = CodeEmitHelpers.SanitizeParameterName(op.MethodName) + "Route";
+                if (!seenRouteParamNames.Add(routeParamName))
+                {
+                    continue;
+                }
+
+                string opKey = $"{op.Method}:{op.PathTemplate}";
+                runtimeExpressionRouteParams[opKey] = routeParamName;
+            }
+        }
+
         w.WriteLine("/// <summary>");
         w.WriteLine($"/// Maps all {prefix} API endpoints to the application.");
         w.WriteLine("/// </summary>");
@@ -5333,11 +5420,21 @@ public sealed class OpenApi30CodeGenerator
             w.WriteLine($"/// <param name=\"{paramName}\">The handler for {handlerName} operations.</param>");
         }
 
+        foreach ((string _, string routeParamName) in runtimeExpressionRouteParams)
+        {
+            w.WriteLine($"/// <param name=\"{routeParamName}\">The route template to register for this callback endpoint.</param>");
+        }
+
         w.WriteLine("/// <returns>The endpoint route builder for chaining.</returns>");
         w.Write($"public static IEndpointRouteBuilder Map{prefix}Endpoints(this IEndpointRouteBuilder app");
         foreach (string hp in handlerParams)
         {
             w.Write($", {hp}");
+        }
+
+        foreach ((string _, string routeParamName) in runtimeExpressionRouteParams)
+        {
+            w.Write($", string {routeParamName}");
         }
 
         w.WriteLine(")");
@@ -5365,14 +5462,25 @@ public sealed class OpenApi30CodeGenerator
 
                 w.WriteLine();
 
-                if (mapMethod == "MapMethods")
+                // Determine the route string: use the parameter if this is a runtime expression path.
+                string routeExpression;
+                if (runtimeExpressionRouteParams.TryGetValue(operationKey, out string? routeParam))
                 {
-                    string httpMethod = op.Method.ToString().ToUpperInvariant();
-                    w.WriteLine($"app.MapMethods(\"{ConvertToAspNetRoute(op.PathTemplate)}\", new[] {{ \"{httpMethod}\" }}, async (HttpContext context) =>");
+                    routeExpression = routeParam;
                 }
                 else
                 {
-                    w.WriteLine($"app.{mapMethod}(\"{ConvertToAspNetRoute(op.PathTemplate)}\", async (HttpContext context) =>");
+                    routeExpression = $"\"{ConvertToAspNetRoute(op.PathTemplate)}\"";
+                }
+
+                if (mapMethod == "MapMethods")
+                {
+                    string httpMethod = op.Method.ToString().ToUpperInvariant();
+                    w.WriteLine($"app.MapMethods({routeExpression}, new[] {{ \"{httpMethod}\" }}, async (HttpContext context) =>");
+                }
+                else
+                {
+                    w.WriteLine($"app.{mapMethod}({routeExpression}, async (HttpContext context) =>");
                 }
 
                 w.OpenBrace();
@@ -5633,6 +5741,26 @@ public sealed class OpenApi30CodeGenerator
 
         sb.Append(openApiPath, pos, openApiPath.Length - pos);
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the path template contains an OpenAPI runtime expression
+    /// (a parameter starting with <c>$</c>, e.g. <c>{$request.body#/callbackUrl}</c>).
+    /// </summary>
+    private static bool ContainsRuntimeExpression(string pathTemplate)
+    {
+        int idx = pathTemplate.IndexOf('{');
+        while (idx >= 0 && idx + 1 < pathTemplate.Length)
+        {
+            if (pathTemplate[idx + 1] == '$')
+            {
+                return true;
+            }
+
+            idx = pathTemplate.IndexOf('{', idx + 1);
+        }
+
+        return false;
     }
 
     /// <summary>

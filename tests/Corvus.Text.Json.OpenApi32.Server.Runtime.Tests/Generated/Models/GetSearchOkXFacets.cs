@@ -314,10 +314,13 @@ public readonly partial struct GetSearchOkXFacets
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static GetSearchOkXFacets ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<GetSearchOkXFacets>(utf8Json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -337,10 +340,13 @@ public readonly partial struct GetSearchOkXFacets
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static GetSearchOkXFacets ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<GetSearchOkXFacets>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -360,10 +366,13 @@ public readonly partial struct GetSearchOkXFacets
     /// <exception cref="JsonException">
     ///   A value could not be read from the text.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static GetSearchOkXFacets ParseValue(string json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<GetSearchOkXFacets>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -401,9 +410,12 @@ public readonly partial struct GetSearchOkXFacets
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static GetSearchOkXFacets ParseValue(ref Utf8JsonReader reader)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<GetSearchOkXFacets>(ref reader);
+        #pragma warning restore CS0618
     }
 
     /// <summary>

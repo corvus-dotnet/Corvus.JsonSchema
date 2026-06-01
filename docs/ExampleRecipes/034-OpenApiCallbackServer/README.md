@@ -2,8 +2,6 @@
 
 This recipe shows the **receiver side** of OpenAPI callbacks and webhooks: you generate ASP.NET Core minimal API endpoints that a remote service can call when it needs to notify your application.
 
-> **Important:** This recipe is intentionally **not** added to `docs/ExampleRecipes/ExampleRecipes.slnx` yet. The checked-in `Generated/` folder is only a placeholder, so you must regenerate the callback server before this project will compile.
-
 ## What This Shows
 
 | Feature | Where |
@@ -12,7 +10,7 @@ This recipe shows the **receiver side** of OpenAPI callbacks and webhooks: you g
 | Implementing generated handler interfaces | `Program.cs` |
 | Registering generated minimal API endpoints | `app.MapApiEndpoints(...)` |
 | Receiving per-operation callbacks and top-level webhooks in one app | `CallbackReceiver` |
-| Keeping generated output separate from hand-written code | `Generated/` |
+| Runtime expression route parameters | `OnEventCallbackRoute: "/callbacks/onEvent"` |
 
 ## Generating the Callback Server
 
@@ -73,19 +71,47 @@ WebApplication app = builder.Build();
 CallbackReceiver handler = new(app.Logger);
 app.MapApiEndpoints(
     callbacksHandler: handler,
-    webhooksHandler: handler);
+    webhooksHandler: handler,
+    OnEventCallbackRoute: "/callbacks/onEvent");
 
 app.Run();
 ```
 
 `MapApiEndpoints()` comes from generated code. It registers one route per callback or webhook operation and dispatches the request to your handler implementation.
 
-## Running the Recipe
+The `OnEventCallbackRoute` parameter is required because the OpenAPI spec defines this callback path as a runtime expression (`{$request.body#/callbackUrl}`). The actual URL is determined dynamically by the client at subscription time, so you — the server implementer — choose what route to listen on.
 
-After regenerating `Generated/`, you can run the sample with:
+## Running the Recipe
 
 ```bash
 dotnet run --project docs/ExampleRecipes/034-OpenApiCallbackServer
 ```
 
-Use this pattern when your application needs to **receive** asynchronous notifications such as subscription events, partner callbacks, or infrastructure alerts.
+### Registered endpoints
+
+| Method | Route | Purpose |
+|--------|-------|---------|
+| POST | `/systemAlert` | Receives webhook deliveries for the `systemAlert` webhook |
+| POST | `/callbacks/onEvent` | Receives callback deliveries for the `onEvent` callback |
+
+### Testing with curl
+
+Send a webhook (system alert):
+
+```bash
+curl -X POST http://localhost:64910/systemAlert -H "Content-Type: application/json" -d '{"alertId":"alert-001","severity":"critical","message":"Disk usage exceeded 90%."}'
+```
+
+Send a callback (event notification):
+
+```bash
+curl -X POST http://localhost:64910/callbacks/onEvent -H "Content-Type: application/json" -d '{"eventId":"evt-123","eventType":"subscription.created","timestamp":"2026-01-15T10:30:00Z"}'
+```
+
+Both should return HTTP 200.
+
+## Key Concepts
+
+- **Webhooks** have static paths — the route is known at build time from the webhook name (e.g. `systemAlert`).
+- **Callbacks** with runtime expressions (e.g. `{$request.body#/callbackUrl}`) have dynamic paths — you provide the route at registration time since only you know what URL your clients will use.
+- The generator produces strongly-typed `Params` and `Result` structs so your handler receives validated data and returns spec-compliant responses.
