@@ -118,7 +118,7 @@ await using UploadPetPhotoResponse uploadResponse = await photosClient.UploadPet
     body: new PostPetsByPetIdPhotosBody.Source((ref PostPetsByPetIdPhotosBody.Builder b) =>
     {
         b.Create(
-            file: default,
+            file: "bella-park.png"u8,
             caption: "Bella at the park"u8,
             isPrimary: true);
     }),
