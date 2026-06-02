@@ -112,11 +112,23 @@
 <td></td>
 </tr>
 <tr>
+<td><a href="#addproperty-readonlyspan-byte-jsonelement-source-tcontext">AddProperty(ReadOnlySpan&lt;byte&gt;, JsonElement.Source&lt;TContext&gt;)</a></td>
+<td></td>
+</tr>
+<tr>
 <td><a href="#addproperty-readonlyspan-char-jsonelement-source">AddProperty(ReadOnlySpan&lt;char&gt;, JsonElement.Source)</a></td>
 <td></td>
 </tr>
 <tr>
+<td><a href="#addproperty-readonlyspan-char-jsonelement-source-tcontext">AddProperty(ReadOnlySpan&lt;char&gt;, JsonElement.Source&lt;TContext&gt;)</a></td>
+<td></td>
+</tr>
+<tr>
 <td><a href="#addproperty-string-jsonelement-source">AddProperty(string, JsonElement.Source)</a></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="#addproperty-string-jsonelement-source-tcontext">AddProperty(string, JsonElement.Source&lt;TContext&gt;)</a></td>
 <td></td>
 </tr>
 </tbody>
@@ -166,8 +178,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="addproperty-readonlyspan-char-jsonelement-source">AddProperty(ReadOnlySpan&lt;char&gt;, JsonElement.Source)</h2>
-<pre><code class="language-csharp">public void AddProperty(ReadOnlySpan&lt;char&gt; propertyName, in JsonElement.Source value)
+<h2 id="addproperty-readonlyspan-byte-jsonelement-source-tcontext">AddProperty(ReadOnlySpan&lt;byte&gt;, JsonElement.Source&lt;TContext&gt;)</h2>
+<pre><code class="language-csharp">public void AddProperty&lt;TContext&gt;(ReadOnlySpan&lt;byte&gt; propertyName, in JsonElement.Source&lt;TContext&gt; value)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
 <table>
@@ -181,12 +193,12 @@
 <tbody>
 <tr>
 <td><code>propertyName</code></td>
-<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;char&gt;</code></a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
 <td></td>
 </tr>
 <tr>
 <td><code>value</code></td>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source&lt;TContext&gt;</code></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -211,10 +223,100 @@
 </tbody>
 </table>
 <hr />
+<h2 id="addproperty-readonlyspan-char-jsonelement-source">AddProperty(ReadOnlySpan&lt;char&gt;, JsonElement.Source)</h2>
+<pre><code class="language-csharp">public void AddProperty(ReadOnlySpan&lt;char&gt; propertyName, in JsonElement.Source value)
+</code></pre>
+<h3 id="parameters-2">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>propertyName</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;char&gt;</code></a></td>
+<td></td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source</code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-2">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="addproperty-readonlyspan-char-jsonelement-source-tcontext">AddProperty(ReadOnlySpan&lt;char&gt;, JsonElement.Source&lt;TContext&gt;)</h2>
+<pre><code class="language-csharp">public void AddProperty&lt;TContext&gt;(ReadOnlySpan&lt;char&gt; propertyName, in JsonElement.Source&lt;TContext&gt; value)
+</code></pre>
+<h3 id="parameters-3">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>propertyName</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;char&gt;</code></a></td>
+<td></td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source&lt;TContext&gt;</code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-3">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="addproperty-string-jsonelement-source">AddProperty(string, JsonElement.Source)</h2>
 <pre><code class="language-csharp">public void AddProperty(string propertyName, in JsonElement.Source value)
 </code></pre>
-<h3 id="parameters-2">Parameters</h3>
+<h3 id="parameters-4">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -236,7 +338,52 @@
 </tr>
 </tbody>
 </table>
-<h2 id="applies-to-2">Applies To</h2>
+<h2 id="applies-to-4">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="addproperty-string-jsonelement-source-tcontext">AddProperty(string, JsonElement.Source&lt;TContext&gt;)</h2>
+<pre><code class="language-csharp">public void AddProperty&lt;TContext&gt;(string propertyName, in JsonElement.Source&lt;TContext&gt; value)
+</code></pre>
+<h3 id="parameters-5">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>propertyName</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td></td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement-source.html"><code>JsonElement.Source&lt;TContext&gt;</code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-5">Applies To</h2>
 <table>
 <thead>
 <tr>

@@ -14774,7 +14774,7 @@
     "Title": "JsonPatchDocument.AddOperation.Builder.AddProperty",
     "Description": "",
     "Keywords": "JsonPatchDocument.AddOperation.Builder AddProperty method Corvus.Text.Json.Patch",
-    "Body": "  "
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation-builder-build.html",
@@ -15516,7 +15516,7 @@
     "Title": "JsonPatchDocument.Builder.AddItem",
     "Description": "",
     "Keywords": "JsonPatchDocument.Builder AddItem method Corvus.Text.Json.Patch",
-    "Body": ""
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-builder-build.html",
@@ -15817,7 +15817,7 @@
     "Title": "JsonPatchDocument.CopyOperation.Builder.AddProperty",
     "Description": "",
     "Keywords": "JsonPatchDocument.CopyOperation.Builder AddProperty method Corvus.Text.Json.Patch",
-    "Body": "  "
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation-builder-build.html",
@@ -16790,7 +16790,7 @@
     "Title": "JsonPatchDocument.MoveOperation.Builder.AddProperty",
     "Description": "",
     "Keywords": "JsonPatchDocument.MoveOperation.Builder AddProperty method Corvus.Text.Json.Patch",
-    "Body": "  "
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation-builder-build.html",
@@ -17987,7 +17987,7 @@
     "Title": "JsonPatchDocument.PatchOperation.Builder.AddProperty",
     "Description": "",
     "Keywords": "JsonPatchDocument.PatchOperation.Builder AddProperty method Corvus.Text.Json.Patch",
-    "Body": "  "
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-builder-build.html",
@@ -18596,7 +18596,7 @@
     "Title": "JsonPatchDocument.PatchOperationCommon.Builder.AddProperty",
     "Description": "",
     "Keywords": "JsonPatchDocument.PatchOperationCommon.Builder AddProperty method Corvus.Text.Json.Patch",
-    "Body": "  "
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperationcommon-builder-build.html",
@@ -19156,7 +19156,7 @@
     "Title": "JsonPatchDocument.RemoveOperation.Builder.AddProperty",
     "Description": "",
     "Keywords": "JsonPatchDocument.RemoveOperation.Builder AddProperty method Corvus.Text.Json.Patch",
-    "Body": "  "
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-builder-build.html",
@@ -20094,7 +20094,7 @@
     "Title": "JsonPatchDocument.ReplaceOperation.Builder.AddProperty",
     "Description": "",
     "Keywords": "JsonPatchDocument.ReplaceOperation.Builder AddProperty method Corvus.Text.Json.Patch",
-    "Body": "  "
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation-builder-build.html",
@@ -21095,7 +21095,7 @@
     "Title": "JsonPatchDocument.TestOperation.Builder.AddProperty",
     "Description": "",
     "Keywords": "JsonPatchDocument.TestOperation.Builder AddProperty method Corvus.Text.Json.Patch",
-    "Body": "  "
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation-builder-build.html",
