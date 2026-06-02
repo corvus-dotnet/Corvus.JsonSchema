@@ -177,13 +177,15 @@ jobs:
             10.0.x
             9.0.x
 
-      - name: Restore package cache
+      - name: Restore build cache
         uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
-            _packages
+            .nuget-packages
+            Solutions
+            solutions
             ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
-          key: build-state-${{ github.run_id }}-package
+          key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
       - name: Install dotnet-coverage
