@@ -371,7 +371,7 @@
 <li><code>Generated/Models/</code> — strongly-typed JSON Schema models</li>
 </ul>
 <h2 id="implementing-the-server">Implementing the Server</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/48b543a59703ae8face929a2426c258e81be542d/docs/ExampleRecipes/030-OpenApiServer/Program.cs">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/4311e7280a48be3eecfd335f15e7bca253ec8974/docs/ExampleRecipes/030-OpenApiServer/Program.cs">Example code</a></p>
 <h3 id="registering-endpoints">Registering endpoints</h3>
 <p>A single extension method wires all routes:</p>
 <pre><code class="language-csharp">using Petstore.Server;
@@ -426,7 +426,7 @@ app.MapApiEndpoints(app.Services.GetRequiredService&lt;IApiPetsHandler&gt;());
             }),
             workspace: workspace,
             xNext: limit &lt; this.pets.Count
-                ? JsonString.ParseValue(&quot;\&quot;/pets?offset=1\&quot;&quot;u8)
+                ? &quot;\&quot;/pets?offset=1\&quot;&quot;u8
                 : default);
 
         return ValueTask.FromResult(result);
@@ -501,7 +501,7 @@ return ValueTask.FromResult(ShowPetByIdResult.Default(
 return ValueTask.FromResult(ListPetsResult.Ok(
     body: ...,
     workspace: workspace,
-    xNext: JsonString.ParseValue(&quot;\&quot;/pets?offset=10\&quot;&quot;u8)));
+    xNext: &quot;\&quot;/pets?offset=10\&quot;&quot;u8));
 </code></pre>
 <h2 id="automatic-validation-and-error-handling">Automatic Validation and Error Handling</h2>
 <p>The generated middleware validates all inputs before your handler runs:</p>

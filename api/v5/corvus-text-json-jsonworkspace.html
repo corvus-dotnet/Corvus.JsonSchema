@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/48b543a59703ae8face929a2426c258e81be542d/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonWorkspace.cs#L18">JsonWorkspace.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/4311e7280a48be3eecfd335f15e7bca253ec8974/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonWorkspace.cs#L18">JsonWorkspace.cs</a></p>
 <p>A workspace for manipulating JSON documents.</p>
 <pre><code class="language-csharp">public class JsonWorkspace : IDisposable
 </code></pre>
@@ -171,6 +171,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.returnwriterandbuffer.html#returnwriterandbuffer-utf8jsonwriter-ibytebufferwriter">ReturnWriterAndBuffer(Utf8JsonWriter, IByteBufferWriter)</a></td>
 <td>Returns a rented UTF-8 JSON writer and buffer writer to the pool.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonworkspace.takeownership.html#takeownership-ijsondocument">TakeOwnership(IJsonDocument)</a></td>
+<td>Transfers ownership of a document to this workspace. The document will be disposed when the workspace is disposed or reset.</td>
 </tr>
 </tbody>
 </table>

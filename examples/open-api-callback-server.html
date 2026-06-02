@@ -314,9 +314,6 @@
                         <span class="card__tag">server</span>
                 </div>
 <p>This recipe shows the <strong>receiver side</strong> of OpenAPI callbacks and webhooks: you generate ASP.NET Core minimal API endpoints that a remote service can call when it needs to notify your application.</p>
-<blockquote>
-<p><strong>Important:</strong> This recipe is intentionally <strong>not</strong> added to <code>docs/ExampleRecipes/ExampleRecipes.slnx</code> yet. The checked-in <code>Generated/</code> folder is only a placeholder, so you must regenerate the callback server before this project will compile.</p>
-</blockquote>
 <h2 id="what-this-shows">What This Shows</h2>
 <table>
 <thead>
@@ -343,8 +340,8 @@
 <td><code>CallbackReceiver</code></td>
 </tr>
 <tr>
-<td>Keeping generated output separate from hand-written code</td>
-<td><code>Generated/</code></td>
+<td>Runtime expression route parameters</td>
+<td><code>OnEventCallbackRoute: &quot;/callbacks/onEvent&quot;</code></td>
 </tr>
 </tbody>
 </table>
@@ -395,16 +392,52 @@ WebApplication app = builder.Build();
 CallbackReceiver handler = new(app.Logger);
 app.MapApiEndpoints(
     callbacksHandler: handler,
-    webhooksHandler: handler);
+    webhooksHandler: handler,
+    OnEventCallbackRoute: &quot;/callbacks/onEvent&quot;);
 
 app.Run();
 </code></pre>
 <p><code>MapApiEndpoints()</code> comes from generated code. It registers one route per callback or webhook operation and dispatches the request to your handler implementation.</p>
+<p>The <code>OnEventCallbackRoute</code> parameter is required because the OpenAPI spec defines this callback path as a runtime expression (<code>{$request.body#/callbackUrl}</code>). The actual URL is determined dynamically by the client at subscription time, so you — the server implementer — choose what route to listen on.</p>
 <h2 id="running-the-recipe">Running the Recipe</h2>
-<p>After regenerating <code>Generated/</code>, you can run the sample with:</p>
 <pre><code class="language-bash">dotnet run --project docs/ExampleRecipes/034-OpenApiCallbackServer
 </code></pre>
-<p>Use this pattern when your application needs to <strong>receive</strong> asynchronous notifications such as subscription events, partner callbacks, or infrastructure alerts.</p>
+<h3 id="registered-endpoints">Registered endpoints</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Route</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/systemAlert</code></td>
+<td>Receives webhook deliveries for the <code>systemAlert</code> webhook</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/callbacks/onEvent</code></td>
+<td>Receives callback deliveries for the <code>onEvent</code> callback</td>
+</tr>
+</tbody>
+</table>
+<h3 id="testing-with-curl">Testing with curl</h3>
+<p>Send a webhook (system alert):</p>
+<pre><code class="language-bash">curl -X POST http://localhost:64910/systemAlert -H &quot;Content-Type: application/json&quot; -d '{&quot;alertId&quot;:&quot;alert-001&quot;,&quot;severity&quot;:&quot;critical&quot;,&quot;message&quot;:&quot;Disk usage exceeded 90%.&quot;}'
+</code></pre>
+<p>Send a callback (event notification):</p>
+<pre><code class="language-bash">curl -X POST http://localhost:64910/callbacks/onEvent -H &quot;Content-Type: application/json&quot; -d '{&quot;eventId&quot;:&quot;evt-123&quot;,&quot;eventType&quot;:&quot;subscription.created&quot;,&quot;timestamp&quot;:&quot;2026-01-15T10:30:00Z&quot;}'
+</code></pre>
+<p>Both should return HTTP 200.</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<ul>
+<li><strong>Webhooks</strong> have static paths — the route is known at build time from the webhook name (e.g. <code>systemAlert</code>).</li>
+<li><strong>Callbacks</strong> with runtime expressions (e.g. <code>{$request.body#/callbackUrl}</code>) have dynamic paths — you provide the route at registration time since only you know what URL your clients will use.</li>
+<li>The generator produces strongly-typed <code>Params</code> and <code>Result</code> structs so your handler receives validated data and returns spec-compliant responses.</li>
+</ul>
         </div>
     </main>
 </div>

@@ -452,8 +452,8 @@ string token = (string)parameters.SessionToken;
 <pre><code class="language-csharp">return ListPetsResult.Ok(
     body: ...,
     workspace: workspace,
-    xTotalCount: JsonInteger.ParseValue(&quot;42&quot;),  // x-total-count: 42
-    xNext: JsonString.ParseValue(&quot;\&quot;/pets?offset=10\&quot;&quot;));  // x-next: /pets?offset=10
+    xTotalCount: 42,                        // x-total-count: 42
+    xNext: &quot;\&quot;/pets?offset=10\&quot;&quot;u8);        // x-next: /pets?offset=10
 </code></pre>
 <h3 id="streaming-responses-ssendjson">Streaming Responses (SSE/NDJSON)</h3>
 <p>For streaming operations, return <code>Ok(...)</code> with a generated writer callback. The endpoint registration keeps the HTTP response body open while the callback runs and applies the media framing for each item:</p>
