@@ -1309,7 +1309,7 @@ internal static partial class CodeGeneratorExtensions
                 string fqdtn = fallbackType.ReducedType.FullyQualifiedDotnetTypeName();
                 if (seenTypes.Add(fqdtn))
                 {
-                    AppendAddPropertyMethods(generator, fqdtn, isAlsoArray);
+                    AppendAddPropertyMethods(generator, fqdtn, isAlsoArray, SupportsContextSource(fallbackType.ReducedType));
                 }
             }
         }
@@ -1323,7 +1323,7 @@ internal static partial class CodeGeneratorExtensions
                 string fqdtn = localFallbackType.ReducedType.FullyQualifiedDotnetTypeName();
                 if (seenTypes.Add(fqdtn))
                 {
-                    AppendAddPropertyMethods(generator, fqdtn, isAlsoArray);
+                    AppendAddPropertyMethods(generator, fqdtn, isAlsoArray, SupportsContextSource(localFallbackType.ReducedType));
                 }
             }
         }
@@ -1336,7 +1336,7 @@ internal static partial class CodeGeneratorExtensions
                 string fqdtn = localAndAppliedFallbackType.ReducedType.FullyQualifiedDotnetTypeName();
                 if (seenTypes.Add(fqdtn))
                 {
-                    AppendAddPropertyMethods(generator, fqdtn, isAlsoArray);
+                    AppendAddPropertyMethods(generator, fqdtn, isAlsoArray, SupportsContextSource(localAndAppliedFallbackType.ReducedType));
                 }
             }
             else
@@ -1357,20 +1357,25 @@ internal static partial class CodeGeneratorExtensions
         {
             if (seenTypes.Add("JsonElement"))
             {
-                AppendAddPropertyMethods(generator, "JsonElement", isAlsoArray);
+                AppendAddPropertyMethods(generator, "JsonElement", isAlsoArray, supportsContextSource: true);
             }
         }
 
         return generator;
 
-        static void AppendAddPropertyMethods(CodeGenerator generator, string propertyTypeName, bool isAlsoArray)
+        static bool SupportsContextSource(TypeDeclaration typeDeclaration)
         {
-            AppendAddPropertyMethod(generator, propertyTypeName, isAlsoArray, "ReadOnlySpan<byte>");
-            AppendAddPropertyMethod(generator, propertyTypeName, isAlsoArray, "ReadOnlySpan<char>");
-            AppendAddPropertyMethod(generator, propertyTypeName, isAlsoArray, "string");
+            return (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0;
         }
 
-        static void AppendAddPropertyMethod(CodeGenerator generator, string propertyTypeName, bool isAlsoArray, string nameType)
+        static void AppendAddPropertyMethods(CodeGenerator generator, string propertyTypeName, bool isAlsoArray, bool supportsContextSource)
+        {
+            AppendAddPropertyMethod(generator, propertyTypeName, isAlsoArray, "ReadOnlySpan<byte>", supportsContextSource);
+            AppendAddPropertyMethod(generator, propertyTypeName, isAlsoArray, "ReadOnlySpan<char>", supportsContextSource);
+            AppendAddPropertyMethod(generator, propertyTypeName, isAlsoArray, "string", supportsContextSource);
+        }
+
+        static void AppendAddPropertyMethod(CodeGenerator generator, string propertyTypeName, bool isAlsoArray, string nameType, bool supportsContextSource)
         {
             generator
                 .AppendSeparatorLine()
@@ -1384,6 +1389,31 @@ internal static partial class CodeGeneratorExtensions
                 .PushIndent();
 
             generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("value.AddAsProperty(propertyName, ref _builder);")
+                .PopIndent()
+                .AppendLineIndent("}");
+
+            if (!supportsContextSource)
+            {
+                return;
+            }
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Add a property to the object.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent("/// <param name=\"propertyName\">The name of the property to add.</param>")
+                .AppendLineIndent("/// <param name=\"value\">The value of the property to add.</param>")
+                .AppendLineIndent("public void AddProperty<TContext>(", nameType, " propertyName, in ", propertyTypeName, ".", generator.SourceClassName(propertyTypeName), "<TContext> value)")
+                .AppendLine("#if NET9_0_OR_GREATER")
+                .PushIndent()
+                    .AppendLineIndent("where TContext : allows ref struct")
+                .PopIndent()
+                .AppendLine("#endif")
+                .AppendLineIndent("{")
+                .PushIndent()
                     .AppendSeparatorLine()
                     .AppendLineIndent("value.AddAsProperty(propertyName, ref _builder);")
                 .PopIndent()
@@ -1456,6 +1486,7 @@ internal static partial class CodeGeneratorExtensions
             }
 
             string arrayItemsType = arrayItemsTypeDeclaration.FullyQualifiedDotnetTypeName();
+            bool supportsContextSource = (arrayItemsTypeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0;
 
             generator
                 .AppendSeparatorLine()
@@ -1493,6 +1524,51 @@ internal static partial class CodeGeneratorExtensions
                     .AppendLineIndent("value.AddAsItem(ref _builder);")
                 .PopIndent()
                 .AppendLineIndent("}");
+
+            if (supportsContextSource)
+            {
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("/// <summary>")
+                    .AppendLineIndent("/// Add an item to the array.")
+                    .AppendLineIndent("/// </summary>");
+
+                if (hasTuple)
+                {
+                    generator
+                        .AppendLineIndent("/// <remarks>")
+                        .AppendLineIndent("/// You must call <see cref=\"CreateTuple\"/> before adding additional items.")
+                        .AppendLineIndent("/// </remarks>");
+                }
+
+                generator
+                    .AppendLineIndent("public void AddItem<TContext>(in ", arrayItemsType, ".", generator.SourceClassName(arrayItemsType), "<TContext> value)")
+                    .AppendLine("#if NET9_0_OR_GREATER")
+                    .PushIndent()
+                        .AppendLineIndent("where TContext : allows ref struct")
+                    .PopIndent()
+                    .AppendLine("#endif")
+                    .AppendLineIndent("{")
+                    .PushIndent();
+
+                if (hasTuple)
+                {
+                    // Note that we are already in the allowsNonPrefixItems case here, so we know we have added the _addedPrefixItems field.
+                    generator
+                        .AppendLineIndent("if (!_addedPrefixItems)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("CodeGenThrowHelper.ThrowInvalidOperationException_PrefixTupleMustBeCreatedFirst();")
+                        .PopIndent()
+                        .AppendLineIndent("}");
+                }
+
+                generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("value.AddAsItem(ref _builder);")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+            }
         }
 
         return generator;
