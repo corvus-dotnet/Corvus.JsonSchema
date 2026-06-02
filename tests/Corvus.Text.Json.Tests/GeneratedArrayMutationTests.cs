@@ -124,6 +124,38 @@ public class GeneratedArrayMutationTests
     }
 
     [TestMethod]
+    public void BuilderAddItem_WithContextSource_AppendsItemToEnd()
+    {
+        using var workspace = JsonWorkspace.Create();
+
+        using JsonDocumentBuilder<ArrayOfItems.Mutable> doc =
+            ArrayOfItems.CreateBuilder(
+                workspace,
+                4,
+                static (in int itemCount, ref ArrayOfItems.Builder builder) =>
+                {
+                    for (int i = 0; i < itemCount; ++i)
+                    {
+                        ArrayOfItems.RequiredId.Source<int> item =
+                            ArrayOfItems.RequiredId.Build(
+                                i + 1,
+                                static (in int id, ref ArrayOfItems.RequiredId.Builder itemBuilder) =>
+                                {
+                                    itemBuilder.Create(id);
+                                });
+
+                        builder.AddItem(item);
+                    }
+                });
+
+        ArrayOfItems.Mutable root = doc.RootElement;
+
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(1, (int)root[0].Id);
+        Assert.AreEqual(4, (int)root[3].Id);
+    }
+
+    [TestMethod]
     public void AddItem_MultipleAppends_PreservesOrder()
     {
         using var workspace = JsonWorkspace.Create();

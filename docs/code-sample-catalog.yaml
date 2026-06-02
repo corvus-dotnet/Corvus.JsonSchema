@@ -1708,6 +1708,20 @@ skills:
       - {index: 2, language: powershell, lines: [42, 52]}
       - {index: 3, language: json, lines: [103, 121]}
       - {index: 4, language: powershell, lines: [125, 133]}
+  - path: ".github/skills/corvus-ctj-handler-implementation/SKILL.md"
+    blocks:
+      - {index: 0, language: csharp, lines: [29, 34], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [38, 43], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [53, 64], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [78, 85], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [89, 93], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [99, 105], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [113, 119], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [127, 136], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [142, 158], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [164, 175], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [183, 191], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [197, 205], category: compilable, verified: false}
   - path: ".github/skills/corvus-docs-website/SKILL.md"
     blocks:
       - {index: 0, language: powershell, lines: [24, 27]}

@@ -1018,6 +1018,25 @@ public readonly partial struct PostDocsUploadMixedBody
             value.AddAsItem(ref _builder);
         }
 
+        /// <summary>
+        /// Add an item to the array.
+        /// </summary>
+        /// <remarks>
+        /// You must call <see cref="CreateTuple"/> before adding additional items.
+        /// </remarks>
+        public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            if (!_addedPrefixItems)
+            {
+                CodeGenThrowHelper.ThrowInvalidOperationException_PrefixTupleMustBeCreatedFirst();
+            }
+
+            value.AddAsItem(ref _builder);
+        }
+
         internal static void BuildValue(Build value, ref ComplexValueBuilder o)
         {
             o.StartArray();

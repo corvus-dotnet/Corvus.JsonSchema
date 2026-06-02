@@ -36,6 +36,32 @@ public class GeneratedObjectWithArrayPropertyTests
         Assert.AreEqual(2, root.Tags.GetArrayLength());
     }
 
+    [TestMethod]
+    public void BuilderAddProperty_WithContextSource_SetsArrayProperty()
+    {
+        using var workspace = JsonWorkspace.Create();
+
+        ObjectWithArrayProperty.JsonStringArray.Source<int> tags =
+            ObjectWithArrayProperty.JsonStringArray.Build(
+                3,
+                static (in int itemCount, ref ObjectWithArrayProperty.JsonStringArray.Builder builder) =>
+                {
+                    for (int i = 0; i < itemCount; ++i)
+                    {
+                        builder.AddItem($"tag-{i}");
+                    }
+                });
+
+        using JsonDocumentBuilder<ObjectWithArrayProperty.Mutable> doc =
+            ObjectWithArrayProperty.CreateBuilder(workspace, 3, tags);
+
+        ObjectWithArrayProperty.Mutable root = doc.RootElement;
+
+        Assert.AreEqual(3, root.Tags.GetArrayLength());
+        Assert.AreEqual("tag-0", (string)root.Tags[0]);
+        Assert.AreEqual("tag-2", (string)root.Tags[2]);
+    }
+
     #endregion
 
     #region IsUndefined guards
