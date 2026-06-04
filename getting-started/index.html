@@ -294,7 +294,7 @@
 <li><strong>No redundant copying</strong> — the underlying UTF-8 bytes are shared, not cloned.</li>
 <li><strong>Conversion cost is deferred</strong> — you only pay for what you access.</li>
 </ul>
-<p>The code generator walks the schema tree from the root type and generates C# for every schema it encounters. Each schema element typically produces multiple partial-class files by concern (e.g., <code>Person.cs</code>, <code>Person.JsonSchema.cs</code>, <code>Person.Mutable.cs</code>). Nested entity types like <code>PersonName</code> become nested structs within the parent type (e.g., <code>Person.PersonNameEntity</code>).</p>
+<p>The code generator walks the schema tree from the root type and generates C# for every schema it encounters. Each schema element typically produces multiple partial-class files by concern (e.g., <code>Person.cs</code>, <code>Person.JsonSchema.cs</code>, <code>Person.Mutable.cs</code>). Nested definitions like <code>PersonName</code> become nested structs within the parent type (e.g., <code>Person.PersonName</code>). When a property name would clash with a nested type name (e.g., the <code>address</code> property and the <code>Address</code> type), the property accessor gets a <code>Value</code> suffix (e.g., <code>person.AddressValue</code>).</p>
 <h2 id="source-generator-recommended">Source generator (recommended)</h2>
 <p>Add the source generator and runtime packages to your <code>.csproj</code>:</p>
 <pre><code class="language-xml">&lt;ItemGroup&gt;
@@ -338,19 +338,14 @@ public readonly partial struct Person;
         &quot;&quot;&quot;{&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;,&quot;givenName&quot;:&quot;Michael&quot;},&quot;age&quot;:30}&quot;&quot;&quot;);
 Person person = doc.RootElement;
 </code></pre>
-<h3 id="parsevalue-convenience">ParseValue (convenience)</h3>
-<p>Returns a self-owned value — no explicit disposal needed, but the backing memory is not shared:</p>
-<pre><code class="language-csharp">Person person = Person.ParseValue(
-    &quot;&quot;&quot;{&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;,&quot;givenName&quot;:&quot;Michael&quot;},&quot;age&quot;:30}&quot;&quot;&quot;);
-</code></pre>
 <h3 id="other-sources">Other sources</h3>
 <pre><code class="language-csharp">// From UTF-8 bytes
-Person person = Person.ParseValue(
-    &quot;&quot;&quot;{&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;},&quot;age&quot;:30}&quot;&quot;&quot;u8);
+using ParsedJsonDocument&lt;Person&gt; doc2 = ParsedJsonDocument&lt;Person&gt;.Parse(
+    &quot;&quot;&quot;{&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;},&quot;age&quot;:30}&quot;&quot;&quot;u8.ToArray());
 
 // From a stream
 using FileStream stream = File.OpenRead(&quot;person.json&quot;);
-using ParsedJsonDocument&lt;Person&gt; doc = ParsedJsonDocument&lt;Person&gt;.Parse(stream);
+using ParsedJsonDocument&lt;Person&gt; doc3 = ParsedJsonDocument&lt;Person&gt;.Parse(stream);
 </code></pre>
 <h2 id="property-access">Property access</h2>
 <p>Each schema property generates a typed accessor returning a nested entity struct:</p>
@@ -380,11 +375,15 @@ JsonElement name = person[&quot;name&quot;u8];
 JsonElement age = person[&quot;age&quot;];
 </code></pre>
 <h3 id="trygetproperty">TryGetProperty</h3>
+<p>For dynamic property access when you don't know the property name at compile time:</p>
 <pre><code class="language-csharp">if (person.TryGetProperty(&quot;email&quot;u8, out JsonElement email))
 {
-    Console.WriteLine((string)email);
+    Console.WriteLine(email.GetString());
 }
 </code></pre>
+<blockquote>
+<p><strong>Tip:</strong> Prefer the strongly-typed property accessors (e.g., <code>person.Email</code>) over <code>TryGetProperty()</code> whenever the property is known at compile time. The typed accessors return the correct generated type, support direct conversions, and are validated by the compiler.</p>
+</blockquote>
 <h2 id="array-access">Array access</h2>
 <p>Our Person schema has two array types: <code>hobbies</code> is a simple <code>&quot;type&quot;: &quot;array&quot;</code> with <code>&quot;items&quot;: { &quot;type&quot;: &quot;string&quot; }</code>, and <code>PersonNameElementArray</code> (used by <code>otherNames</code> via <code>oneOf</code>) is an array of <code>PersonNameElement</code> strings. The code generator produces strongly-typed array wrappers for both.</p>
 <h3 id="enumerating-array-elements">Enumerating array elements</h3>
@@ -394,12 +393,15 @@ JsonElement age = person[&quot;age&quot;];
     Console.WriteLine((string)hobby);
 }
 </code></pre>
-<p>When <code>otherNames</code> is an array (rather than a single string), you can enumerate it in the same way:</p>
+<p>When <code>otherNames</code> is an array (rather than a single string), you can use <code>TryGetAsPersonNameElementArray</code> to access the strongly-typed array variant:</p>
 <pre><code class="language-csharp">// otherNames uses oneOf — it can be a single string or an array
-// Use AsPersonNameElementArray to access the array variant
-foreach (var name in person.Name.OtherNames.AsPersonNameElementArray.EnumerateArray())
+// Use TryGetAsPersonNameElementArray to access the array variant
+if (person.Name.OtherNamesValue.TryGetAsPersonNameElementArray(out var otherNamesArray))
 {
-    Console.WriteLine((string)name);
+    foreach (var name in otherNamesArray.EnumerateArray())
+    {
+        Console.WriteLine((string)name);
+    }
 }
 </code></pre>
 <p>The enumerator also supports LINQ:</p>
@@ -713,8 +715,11 @@ person.Email.IsNotNullOrUndefined() // true if present with a non-null value
 <p>When you attempt to cast an undefined or null value to a .NET type, it throws an <code>InvalidOperationException</code>. Always check before casting optional properties.</p>
 <h2 id="equality-and-comparison">Equality and comparison</h2>
 <p>Generated types support value equality:</p>
-<pre><code class="language-csharp">Person a = Person.ParseValue(json);
-Person b = Person.ParseValue(json);
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;Person&gt; docA = ParsedJsonDocument&lt;Person&gt;.Parse(json);
+using ParsedJsonDocument&lt;Person&gt; docB = ParsedJsonDocument&lt;Person&gt;.Parse(json);
+
+Person a = docA.RootElement;
+Person b = docB.RootElement;
 
 bool equal = a.Equals(b);  // true — deep JSON equality
 bool same  = a == b;        // operator overload
@@ -729,22 +734,22 @@ bool same  = a == b;        // operator overload
 }
 </code></pre>
 <p>The generated type provides a <code>Match()</code> method that dispatches to a typed delegate for each variant. Each variant gets its own named parameter, and a <code>defaultMatch</code> fallback handles values that don't conform to any variant:</p>
-<pre><code class="language-csharp">string result = person.Name.OtherNames.Match(
-    matchPersonNameElement: static (v) =&gt; $&quot;Single name: {(string)v}&quot;,
-    matchPersonNameElementArray: static (v)
+<pre><code class="language-csharp">string result = person.Name.OtherNamesValue.Match(
+    matchPersonNameElement: static (in v) =&gt; $&quot;Single name: {(string)v}&quot;,
+    matchPersonNameElementArray: static (in v)
         =&gt; $&quot;Multiple names: {string.Join(&quot;, &quot;, v.EnumerateArray().Select(n =&gt; (string)n))}&quot;,
-    defaultMatch: static (_) =&gt; &quot;Unknown format&quot;);
+    defaultMatch: static (in _) =&gt; &quot;Unknown format&quot;);
 
 Console.WriteLine(result);
 </code></pre>
 <p><code>Match()</code> evaluates each variant's schema in order, calls the first matching delegate, and returns the result. All delegates must return the same type (<code>TResult</code>), which the compiler infers from usage.</p>
 <p>There is also a context-passing overload for when you need to pass state into the matchers without capturing:</p>
-<pre><code class="language-csharp">string result = person.Name.OtherNames.Match(
+<pre><code class="language-csharp">string result = person.Name.OtherNamesValue.Match(
     separator,  // context passed to each matcher
-    matchPersonNameElement: static (v, sep) =&gt; (string)v,
-    matchPersonNameElementArray: static (v, sep)
+    matchPersonNameElement: static (in v, in sep) =&gt; (string)v,
+    matchPersonNameElementArray: static (in v, in sep)
         =&gt; string.Join(sep, v.EnumerateArray().Select(n =&gt; (string)n)),
-    defaultMatch: static (_, sep) =&gt; string.Empty);
+    defaultMatch: static (in _, in sep) =&gt; string.Empty);
 </code></pre>
 <h2 id="creating-objects-from-scratch">Creating objects from scratch</h2>
 <p>Use the convenience <code>CreateBuilder()</code> overload with named property parameters:</p>
@@ -752,7 +757,7 @@ Console.WriteLine(result);
 
 using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonNameEntity.Build(
+    name: Person.PersonName.Build(
         (ref nb) =&gt; nb.Create(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8)),
     age: 30,
     email: &quot;michael@example.com&quot;u8);
@@ -765,10 +770,10 @@ Console.WriteLine(builder.RootElement.ToString());
 <p>Use <code>NestedType.Build()</code> to compose nested values as parameters:</p>
 <pre><code class="language-csharp">using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonNameEntity.Build(
+    name: Person.PersonName.Build(
         (ref nb) =&gt; nb.Create(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8)),
     age: 30,
-    address: Person.AddressEntity.Build((ref ab) =&gt; ab.Create(
+    address: Person.Address.Build((ref ab) =&gt; ab.Create(
         street: &quot;123 Main St&quot;u8,
         city: &quot;Springfield&quot;u8)));
 </code></pre>
@@ -776,9 +781,9 @@ Console.WriteLine(builder.RootElement.ToString());
 <p>Build array properties by adding elements inside the builder delegate:</p>
 <pre><code class="language-csharp">using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonNameEntity.Build(
+    name: Person.PersonName.Build(
         (ref nb) =&gt; nb.Create(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8)),
-    hobbies: Person.HobbiesEntity.Build((ref hb) =&gt;
+    hobbies: Person.JsonStringArray.Build((ref hb) =&gt;
     {
         hb.AddItem(&quot;reading&quot;u8);
         hb.AddItem(&quot;hiking&quot;u8);
@@ -790,8 +795,8 @@ Console.WriteLine(builder.RootElement.ToString());
 <pre><code class="language-csharp">using var builder = TargetType.CreateBuilder(workspace, (ref TargetType.Builder b) =&gt;
 {
     b.Create(
-        fullName: TargetType.FullNameEntity.From(source.Name),
-        identifier: TargetType.IdentifierEntity.From(source.Id));
+        fullName: TargetType.FullName.From(source.Name),
+        identifier: TargetType.Identifier.From(source.Id));
 });
 </code></pre>
 <h2 id="mutating-properties">Mutating properties</h2>
@@ -826,19 +831,19 @@ Console.WriteLine(root.ToString());
 <pre><code class="language-csharp">Person.Mutable root = builder.RootElement;
 root.SetAge(31);
 root.SetEmail(&quot;michael@example.com&quot;u8);
-root.Address.SetCity(&quot;London&quot;u8);
+root.AddressValue.SetCity(&quot;London&quot;u8);
 </code></pre>
 <p>A root element is always live, so it never needs to be re-obtained. Intermediate child references, however, <em>will</em> be invalidated by sibling mutations — always navigate from the root to access different children:</p>
 <pre><code class="language-csharp">Person.Mutable root = builder.RootElement;  // always live — cache freely
 root.RemoveEmail();              // structural change
-root.Address.SetCity(&quot;London&quot;u8); // still valid — root is always live
+root.AddressValue.SetCity(&quot;London&quot;u8); // still valid — root is always live
 </code></pre>
 <p>To avoid expensive lookups, you can make multiple modifications to the <em>same</em> entity. Its own version is refreshed when it is modified.</p>
 <pre><code class="language-csharp">Person.Mutable root = builder.RootElement;  // always live — cache freely
 root.RemoveEmail();              // structural change
-Person.AddressEntity.Mutable address = root.Address;
-address.SetCity(&quot;London&quot;u8); // still valid — root is always live
-address.SetZipCode(&quot;SE3&quot;u8); // still valid — root is always live
+Person.Address.Mutable address = root.AddressValue;
+address.SetCity(&quot;London&quot;u8); // valid — navigated from always-live root
+address.SetZipCode(&quot;SE3&quot;u8); // still valid — same entity, version refreshed
 </code></pre>
 <h2 id="removing-properties">Removing properties</h2>
 <p>Optional properties can be removed from mutable instances:</p>
@@ -852,7 +857,7 @@ using var targetBuilder = targetDoc.RootElement.CreateBuilder(workspace);
 
 Person.Mutable target = targetBuilder.RootElement;
 
-// Both documents use the same PersonNameEntity type — direct assignment
+// Both documents use the same PersonName type — direct assignment
 target.SetName(sourceDoc.RootElement.Name);
 </code></pre>
 <p>In practice, you often need to map between types generated from <em>different</em> schemas. Imagine a CRM system that defines its own <code>Employee</code> schema:</p>
@@ -868,16 +873,16 @@ target.SetName(sourceDoc.RootElement.Name);
     &quot;required&quot;: [&quot;employeeId&quot;, &quot;fullName&quot;, &quot;workEmail&quot;]
 }
 </code></pre>
-<p>Both schemas have an email property based on <code>&quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot;</code>, but the Employee schema adds a <code>maxLength</code> constraint. That extra constraint means the code generator produces a distinct <code>Employee.WorkEmailEntity</code> type rather than reusing the shared global email type. Because the underlying JSON is structurally compatible, you can use <code>TTarget.From()</code> to reinterpret the value without copying:</p>
+<p>Both schemas have an email property based on <code>&quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot;</code>, but the Employee schema adds a <code>maxLength</code> constraint. That extra constraint means the code generator produces a distinct <code>Employee.WorkEmail</code> type rather than reusing the shared global email type. Because the underlying JSON is structurally compatible, you can use <code>TTarget.From()</code> to reinterpret the value without copying:</p>
 <pre><code class="language-csharp">using ParsedJsonDocument&lt;Employee&gt; employeeDoc =
     ParsedJsonDocument&lt;Employee&gt;.Parse(employeeJson);
 using var personBuilder = personDoc.RootElement.CreateBuilder(workspace);
 
 Person.Mutable person = personBuilder.RootElement;
 
-// Employee.WorkEmailEntity and Person.EmailEntity are different C# types
+// Employee.WorkEmail and the Person email type are different C# types
 // but both wrap &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot; — From() bridges them
-person.SetEmail(Person.EmailEntity.From(employeeDoc.RootElement.WorkEmail));
+person.SetEmail(JsonEmail.From(employeeDoc.RootElement.WorkEmail));
 
 // Simple string values can also be assigned directly via implicit conversion
 person.Name.SetGivenName(employeeDoc.RootElement.FullName);
@@ -901,8 +906,8 @@ using ParsedJsonDocument&lt;Person&gt; doc =
 using var builder = doc.RootElement.CreateBuilder(workspace);
 
 // Parse a Location with city and country
-using ParsedJsonDocument&lt;Person.AddressEntity.LocationEntity&gt; locationDoc =
-    ParsedJsonDocument&lt;Person.AddressEntity.LocationEntity&gt;.Parse(
+using ParsedJsonDocument&lt;Person.Location&gt; locationDoc =
+    ParsedJsonDocument&lt;Person.Location&gt;.Parse(
         &quot;&quot;&quot;
         {
           &quot;city&quot;: &quot;Springfield&quot;,
@@ -912,9 +917,9 @@ using ParsedJsonDocument&lt;Person.AddressEntity.LocationEntity&gt; locationDoc 
 
 // Apply merges the location properties into the address
 Person.Mutable root = builder.RootElement;
-root.Address.Apply(locationDoc.RootElement);
+root.AddressValue.Apply(locationDoc.RootElement);
 
-Console.WriteLine(root.Address.ToString());
+Console.WriteLine(root.AddressValue.ToString());
 // {&quot;street&quot;:&quot;123 Main St&quot;,&quot;zipCode&quot;:&quot;SP1 1AA&quot;,&quot;city&quot;:&quot;Springfield&quot;,&quot;country&quot;:&quot;UK&quot;}
 </code></pre>
 <p><code>Apply()</code> iterates the properties of the composed type and merges them into the target object. If a property already exists, it is overwritten. You can call <code>Apply()</code> multiple times to layer properties from different composed types — this is the mutable equivalent of JSON Schema's <code>allOf</code> composition.</p>
@@ -984,7 +989,7 @@ builder.RootElement.SetAge(31);
 Person frozen = builder.RootElement.Freeze();
 
 // Or freeze a nested element to get an immutable copy of just that subtree
-Person.PersonNameEntity frozenName = builder.RootElement.Name.Freeze();
+Person.PersonName frozenName = builder.RootElement.Name.Freeze();
 
 // Both are valid for the lifetime of the workspace
 </code></pre>
