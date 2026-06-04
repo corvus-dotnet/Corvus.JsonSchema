@@ -13,7 +13,7 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 
 using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonNameEntity.Build(
+    name: Person.PersonName.Build(
         (ref nb) => nb.Create(familyName: "Oldroyd"u8, givenName: "Michael"u8)),
     age: 30,
     email: "michael@example.com"u8);
@@ -31,10 +31,10 @@ Use `NestedType.Build()` to compose nested values as parameters:
 ```csharp
 using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonNameEntity.Build(
+    name: Person.PersonName.Build(
         (ref nb) => nb.Create(familyName: "Oldroyd"u8, givenName: "Michael"u8)),
     age: 30,
-    address: Person.AddressEntity.Build((ref ab) => ab.Create(
+    address: Person.Address.Build((ref ab) => ab.Create(
         street: "123 Main St"u8,
         city: "Springfield"u8)));
 ```
@@ -46,9 +46,9 @@ Build array properties by adding elements inside the builder delegate:
 ```csharp
 using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonNameEntity.Build(
+    name: Person.PersonName.Build(
         (ref nb) => nb.Create(familyName: "Oldroyd"u8, givenName: "Michael"u8)),
-    hobbies: Person.HobbiesEntity.Build((ref hb) =>
+    hobbies: Person.JsonStringArray.Build((ref hb) =>
     {
         hb.AddItem("reading"u8);
         hb.AddItem("hiking"u8);
@@ -64,8 +64,8 @@ For scenarios that require logic inside the builder (e.g., conditional propertie
 using var builder = TargetType.CreateBuilder(workspace, (ref TargetType.Builder b) =>
 {
     b.Create(
-        fullName: TargetType.FullNameEntity.From(source.Name),
-        identifier: TargetType.IdentifierEntity.From(source.Id));
+        fullName: TargetType.FullName.From(source.Name),
+        identifier: TargetType.Identifier.From(source.Id));
 });
 ```
 
@@ -111,7 +111,7 @@ You can make multiple modifications to the *same* entity without re-obtaining it
 Person.Mutable root = builder.RootElement;
 root.SetAge(31);
 root.SetEmail("michael@example.com"u8);
-root.Address.SetCity("London"u8);
+root.AddressValue.SetCity("London"u8);
 ```
 
 A root element is always live, so it never needs to be re-obtained. Intermediate child references, however, *will* be invalidated by sibling mutations — always navigate from the root to access different children:
@@ -119,7 +119,7 @@ A root element is always live, so it never needs to be re-obtained. Intermediate
 ```csharp
 Person.Mutable root = builder.RootElement;  // always live — cache freely
 root.RemoveEmail();              // structural change
-root.Address.SetCity("London"u8); // still valid — root is always live
+root.AddressValue.SetCity("London"u8); // still valid — root is always live
 ```
 
 To avoid expensive lookups, you can make multiple modifications to the *same* entity. Its own version is refreshed when it is modified.
@@ -127,9 +127,9 @@ To avoid expensive lookups, you can make multiple modifications to the *same* en
 ```csharp
 Person.Mutable root = builder.RootElement;  // always live — cache freely
 root.RemoveEmail();              // structural change
-Person.AddressEntity.Mutable address = root.Address;
-address.SetCity("London"u8); // still valid — root is always live
-address.SetZipCode("SE3"u8); // still valid — root is always live
+Person.Address.Mutable address = root.AddressValue;
+address.SetCity("London"u8); // valid — navigated from always-live root
+address.SetZipCode("SE3"u8); // still valid — same entity, version refreshed
 ```
 
 ## Removing properties
@@ -151,7 +151,7 @@ using var targetBuilder = targetDoc.RootElement.CreateBuilder(workspace);
 
 Person.Mutable target = targetBuilder.RootElement;
 
-// Both documents use the same PersonNameEntity type — direct assignment
+// Both documents use the same PersonName type — direct assignment
 target.SetName(sourceDoc.RootElement.Name);
 ```
 
@@ -171,7 +171,7 @@ In practice, you often need to map between types generated from *different* sche
 }
 ```
 
-Both schemas have an email property based on `"type": "string", "format": "email"`, but the Employee schema adds a `maxLength` constraint. That extra constraint means the code generator produces a distinct `Employee.WorkEmailEntity` type rather than reusing the shared global email type. Because the underlying JSON is structurally compatible, you can use `TTarget.From()` to reinterpret the value without copying:
+Both schemas have an email property based on `"type": "string", "format": "email"`, but the Employee schema adds a `maxLength` constraint. That extra constraint means the code generator produces a distinct `Employee.WorkEmail` type rather than reusing the shared global email type. Because the underlying JSON is structurally compatible, you can use `TTarget.From()` to reinterpret the value without copying:
 
 ```csharp
 using ParsedJsonDocument<Employee> employeeDoc =
@@ -180,9 +180,9 @@ using var personBuilder = personDoc.RootElement.CreateBuilder(workspace);
 
 Person.Mutable person = personBuilder.RootElement;
 
-// Employee.WorkEmailEntity and Person.EmailEntity are different C# types
+// Employee.WorkEmail and the Person email type are different C# types
 // but both wrap "type": "string", "format": "email" — From() bridges them
-person.SetEmail(Person.EmailEntity.From(employeeDoc.RootElement.WorkEmail));
+person.SetEmail(JsonEmail.From(employeeDoc.RootElement.WorkEmail));
 
 // Simple string values can also be assigned directly via implicit conversion
 person.Name.SetGivenName(employeeDoc.RootElement.FullName);
@@ -211,8 +211,8 @@ using ParsedJsonDocument<Person> doc =
 using var builder = doc.RootElement.CreateBuilder(workspace);
 
 // Parse a Location with city and country
-using ParsedJsonDocument<Person.AddressEntity.LocationEntity> locationDoc =
-    ParsedJsonDocument<Person.AddressEntity.LocationEntity>.Parse(
+using ParsedJsonDocument<Person.Location> locationDoc =
+    ParsedJsonDocument<Person.Location>.Parse(
         """
         {
           "city": "Springfield",
@@ -222,9 +222,9 @@ using ParsedJsonDocument<Person.AddressEntity.LocationEntity> locationDoc =
 
 // Apply merges the location properties into the address
 Person.Mutable root = builder.RootElement;
-root.Address.Apply(locationDoc.RootElement);
+root.AddressValue.Apply(locationDoc.RootElement);
 
-Console.WriteLine(root.Address.ToString());
+Console.WriteLine(root.AddressValue.ToString());
 // {"street":"123 Main St","zipCode":"SP1 1AA","city":"Springfield","country":"UK"}
 ```
 
@@ -310,7 +310,7 @@ builder.RootElement.SetAge(31);
 Person frozen = builder.RootElement.Freeze();
 
 // Or freeze a nested element to get an immutable copy of just that subtree
-Person.PersonNameEntity frozenName = builder.RootElement.Name.Freeze();
+Person.PersonName frozenName = builder.RootElement.Name.Freeze();
 
 // Both are valid for the lifetime of the workspace
 ```

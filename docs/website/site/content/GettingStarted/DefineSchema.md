@@ -128,5 +128,5 @@ Values are converted to .NET primitives like `string`, `int`, or `LocalDate` onl
 - **No redundant copying** — the underlying UTF-8 bytes are shared, not cloned.
 - **Conversion cost is deferred** — you only pay for what you access.
 
-The code generator walks the schema tree from the root type and generates C# for every schema it encounters. Each schema element typically produces multiple partial-class files by concern (e.g., `Person.cs`, `Person.JsonSchema.cs`, `Person.Mutable.cs`). Nested entity types like `PersonName` become nested structs within the parent type (e.g., `Person.PersonNameEntity`).
+The code generator walks the schema tree from the root type and generates C# for every schema it encounters. Each schema element typically produces multiple partial-class files by concern (e.g., `Person.cs`, `Person.JsonSchema.cs`, `Person.Mutable.cs`). Nested definitions like `PersonName` become nested structs within the parent type (e.g., `Person.PersonName`). When a property name would clash with a nested type name (e.g., the `address` property and the `Address` type), the property accessor gets a `Value` suffix (e.g., `person.AddressValue`).
 
