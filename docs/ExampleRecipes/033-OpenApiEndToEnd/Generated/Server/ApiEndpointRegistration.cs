@@ -32,8 +32,23 @@ public static class ApiEndpointRegistration
     /// <returns>The endpoint route builder for chaining.</returns>
     public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler, IApiPhotosHandler photosHandler, IApiChatHandler chatHandler, IApiAdoptionHandler adoptionHandler)
     {
+        return MapApiEndpoints(app, petsHandler, photosHandler, chatHandler, adoptionHandler, configureEndpoint: null);
+    }
 
-        app.MapGet("/pets", async (HttpContext context) =>
+    /// <summary>
+    /// Maps all Api API endpoints to the application.
+    /// </summary>
+    /// <param name="app">The endpoint route builder.</param>
+    /// <param name="petsHandler">The handler for ApiPets operations.</param>
+    /// <param name="photosHandler">The handler for ApiPhotos operations.</param>
+    /// <param name="chatHandler">The handler for ApiChat operations.</param>
+    /// <param name="adoptionHandler">The handler for ApiAdoption operations.</param>
+    /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
+    /// <returns>The endpoint route builder for chaining.</returns>
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler, IApiPhotosHandler photosHandler, IApiChatHandler chatHandler, IApiAdoptionHandler adoptionHandler, ConfigureEndpoint? configureEndpoint)
+    {
+
+        IEndpointConventionBuilder __ListPetsEndpoint = app.MapGet("/pets", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -168,8 +183,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listPets",
+                methodName: "ListPets",
+                httpMethod: "GET",
+                routeTemplate: "/pets",
+                tags: new[] { "pets" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __ListPetsEndpoint);
 
-        app.MapPost("/pets", async (HttpContext context) =>
+        IEndpointConventionBuilder __CreatePetEndpoint = app.MapPost("/pets", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Petstore.EndToEnd.Server.Models.NewPet>? bodyDoc = null;
@@ -262,8 +287,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "createPet",
+                methodName: "CreatePet",
+                httpMethod: "POST",
+                routeTemplate: "/pets",
+                tags: new[] { "pets" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __CreatePetEndpoint);
 
-        app.MapGet("/pets/batch/{ids}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetPetsBatchEndpoint = app.MapGet("/pets/batch/{ids}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -341,8 +376,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getPetsBatch",
+                methodName: "GetPetsBatch",
+                httpMethod: "GET",
+                routeTemplate: "/pets/batch/{ids}",
+                tags: new[] { "pets" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetPetsBatchEndpoint);
 
-        app.MapGet("/pets/{petId}", async (HttpContext context) =>
+        IEndpointConventionBuilder __ShowPetByIdEndpoint = app.MapGet("/pets/{petId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -410,8 +455,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "showPetById",
+                methodName: "ShowPetById",
+                httpMethod: "GET",
+                routeTemplate: "/pets/{petId}",
+                tags: new[] { "pets" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __ShowPetByIdEndpoint);
 
-        app.MapPost("/pets/{petId}/photos", async (HttpContext context) =>
+        IEndpointConventionBuilder __UploadPetPhotoEndpoint = app.MapPost("/pets/{petId}/photos", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Petstore.EndToEnd.Server.Models.PostPetsByPetIdPhotosBody>? bodyDoc = null;
@@ -517,8 +572,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "uploadPetPhoto",
+                methodName: "UploadPetPhoto",
+                httpMethod: "POST",
+                routeTemplate: "/pets/{petId}/photos",
+                tags: new[] { "photos" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __UploadPetPhotoEndpoint);
 
-        app.MapGet("/photos/{photoId}", async (HttpContext context) =>
+        IEndpointConventionBuilder __DownloadPhotoEndpoint = app.MapGet("/photos/{photoId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -586,8 +651,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "downloadPhoto",
+                methodName: "DownloadPhoto",
+                httpMethod: "GET",
+                routeTemplate: "/photos/{photoId}",
+                tags: new[] { "photos" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __DownloadPhotoEndpoint);
 
-        app.MapPost("/pets/{petId}/chat", async (HttpContext context) =>
+        IEndpointConventionBuilder __StartVetChatEndpoint = app.MapPost("/pets/{petId}/chat", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody>? bodyDoc = null;
@@ -718,8 +793,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "startVetChat",
+                methodName: "StartVetChat",
+                httpMethod: "POST",
+                routeTemplate: "/pets/{petId}/chat",
+                tags: new[] { "chat" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __StartVetChatEndpoint);
 
-        app.MapGet("/pets/{petId}/activity", async (HttpContext context) =>
+        IEndpointConventionBuilder __StreamPetActivityEndpoint = app.MapGet("/pets/{petId}/activity", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -818,8 +903,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "streamPetActivity",
+                methodName: "StreamPetActivity",
+                httpMethod: "GET",
+                routeTemplate: "/pets/{petId}/activity",
+                tags: new[] { "chat" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __StreamPetActivityEndpoint);
 
-        app.MapPost("/adoption/apply", async (HttpContext context) =>
+        IEndpointConventionBuilder __SubmitAdoptionApplicationEndpoint = app.MapPost("/adoption/apply", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Petstore.EndToEnd.Server.Models.PostAdoptionApplyBody>? bodyDoc = null;
@@ -887,7 +982,95 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "submitAdoptionApplication",
+                methodName: "SubmitAdoptionApplication",
+                httpMethod: "POST",
+                routeTemplate: "/adoption/apply",
+                tags: new[] { "adoption" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __SubmitAdoptionApplicationEndpoint);
 
         return app;
     }
+}
+
+/// <summary>
+/// Configures a single generated API endpoint. Invoked once per mapped operation.
+/// </summary>
+/// <param name="endpoint">A descriptor identifying the operation being mapped.</param>
+/// <param name="builder">The endpoint convention builder for the mapped route.</param>
+public delegate void ConfigureEndpoint(in EndpointDescriptor endpoint, IEndpointConventionBuilder builder);
+
+/// <summary>
+/// Describes a single generated API endpoint passed to a <see cref="ConfigureEndpoint"/> callback.
+/// </summary>
+public readonly struct EndpointDescriptor
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EndpointDescriptor"/> struct.
+    /// </summary>
+    /// <param name="operationId">The OpenAPI <c>operationId</c>, or <see langword="null"/> if the operation declares none.</param>
+    /// <param name="methodName">The generated handler method name (the <c>{MethodName}</c> in <c>Handle{MethodName}Async</c>).</param>
+    /// <param name="httpMethod">The HTTP method (e.g. <c>GET</c>, <c>POST</c>).</param>
+    /// <param name="routeTemplate">The ASP.NET route template as registered.</param>
+    /// <param name="tags">The OpenAPI tags for the operation.</param>
+    /// <param name="isCallback">Whether the operation originates from a webhook/callback rather than the main paths.</param>
+    /// <param name="securityRequirements">The operation's security requirements (scheme name and required scopes).</param>
+    public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> securityRequirements)
+    {
+        this.OperationId = operationId;
+        this.MethodName = methodName;
+        this.HttpMethod = httpMethod;
+        this.RouteTemplate = routeTemplate;
+        this.Tags = tags;
+        this.IsCallback = isCallback;
+        this.SecurityRequirements = securityRequirements;
+    }
+
+    /// <summary>Gets the OpenAPI <c>operationId</c>, or <see langword="null"/> if the operation declares none.</summary>
+    public string? OperationId { get; }
+
+    /// <summary>Gets the generated handler method name.</summary>
+    public string MethodName { get; }
+
+    /// <summary>Gets the HTTP method (e.g. <c>GET</c>, <c>POST</c>).</summary>
+    public string HttpMethod { get; }
+
+    /// <summary>Gets the ASP.NET route template as registered.</summary>
+    public string RouteTemplate { get; }
+
+    /// <summary>Gets the OpenAPI tags for the operation.</summary>
+    public System.Collections.Generic.IReadOnlyList<string> Tags { get; }
+
+    /// <summary>Gets a value indicating whether the operation originates from a webhook/callback rather than the main paths.</summary>
+    public bool IsCallback { get; }
+
+    /// <summary>Gets the operation's security requirements (scheme name and required scopes).</summary>
+    public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> SecurityRequirements { get; }
+}
+
+/// <summary>
+/// A single security requirement (a scheme name and the scopes it requires) for an operation.
+/// </summary>
+public readonly struct EndpointSecurityRequirement
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EndpointSecurityRequirement"/> struct.
+    /// </summary>
+    /// <param name="schemeName">The name of the security scheme.</param>
+    /// <param name="scopes">The scopes required by this requirement.</param>
+    public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes)
+    {
+        this.SchemeName = schemeName;
+        this.Scopes = scopes;
+    }
+
+    /// <summary>Gets the name of the security scheme.</summary>
+    public string SchemeName { get; }
+
+    /// <summary>Gets the scopes required by this requirement.</summary>
+    public System.Collections.Generic.IReadOnlyList<string> Scopes { get; }
 }
