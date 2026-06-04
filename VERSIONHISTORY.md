@@ -1,5 +1,13 @@
 # Version History
 
+## V5.1.7
+
+V5.1.7 adds an optional per-endpoint configuration callback to the generated OpenAPI server registration, enabling consumers to apply ASP.NET endpoint conventions — including wiring the OpenAPI security specification onto endpoints — without editing generated code.
+
+### New features
+
+- **Per-endpoint configuration callback for generated servers** — The generated `MapApiEndpoints` extension gains an additive overload that accepts a `ConfigureEndpoint` callback. It is invoked once per generated endpoint (including webhook/callback endpoints) with an `EndpointDescriptor` (operation id, generated method name, HTTP verb, route template, tags, callback origin, and the operation's security requirements) and the route's `IEndpointConventionBuilder`. This lets consumers apply per-endpoint conventions — authorization, naming, tags, output caching, rate limiting — and wire the OpenAPI security specification onto endpoints without editing generated code. The original overload is preserved, so the change is source- and binary-compatible. Implemented for OpenAPI 3.0/3.1/3.2 across both the regular and callback/webhook server paths, with no new package dependency on the generated server. See [#783](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/783).
+
 ## V5.1.2
 
 V5.1.2 is a breaking change that moves generated JSON Schema model types into a `.Models` sub-namespace for OpenAPI and AsyncAPI code generation, preventing name collisions with request/response infrastructure types.
