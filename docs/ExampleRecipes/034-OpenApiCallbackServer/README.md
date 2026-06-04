@@ -112,7 +112,7 @@ app.MapApiEndpoints(
     });
 ```
 
-`EndpointDescriptor` carries the `OperationId`, `MethodName`, `HttpMethod`, `RouteTemplate`, `Tags`, `IsCallback`, and `SecurityRequirements` for the operation. See [docs/OpenApi.md → Customizing Generated Endpoints](../../OpenApi.md#customizing-generated-endpoints) for the full descriptor reference and a spec that wires `RequireAuthorization()` from declared security.
+`EndpointDescriptor` carries the `OperationId`, `MethodName`, `HttpMethod`, `RouteTemplate`, `Tags`, `IsCallback`, and `SecurityRequirements` for the operation. See the "Customizing Generated Endpoints" section of the main OpenAPI guide (`docs/OpenApi.md`) for the full descriptor reference and a spec that wires `RequireAuthorization()` from declared security.
 
 ## Running the Recipe
 
