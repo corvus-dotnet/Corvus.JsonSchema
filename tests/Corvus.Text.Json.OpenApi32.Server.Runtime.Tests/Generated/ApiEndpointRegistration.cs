@@ -31,8 +31,22 @@ public static class ApiEndpointRegistration
     /// <returns>The endpoint route builder for chaining.</returns>
     public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiDefaultHandler defaultHandler, IApiItemsHandler ItemsHandler, IApiSearchHandler SearchHandler)
     {
+        return MapApiEndpoints(app, defaultHandler, ItemsHandler, SearchHandler, configureEndpoint: null);
+    }
 
-        app.MapGet("/items", async (HttpContext context) =>
+    /// <summary>
+    /// Maps all Api API endpoints to the application.
+    /// </summary>
+    /// <param name="app">The endpoint route builder.</param>
+    /// <param name="defaultHandler">The handler for ApiDefault operations.</param>
+    /// <param name="ItemsHandler">The handler for ApiItems operations.</param>
+    /// <param name="SearchHandler">The handler for ApiSearch operations.</param>
+    /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
+    /// <returns>The endpoint route builder for chaining.</returns>
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiDefaultHandler defaultHandler, IApiItemsHandler ItemsHandler, IApiSearchHandler SearchHandler, ConfigureEndpoint? configureEndpoint)
+    {
+
+        IEndpointConventionBuilder __ListItemsEndpoint = app.MapGet("/items", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -153,8 +167,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listItems",
+                methodName: "ListItems",
+                httpMethod: "GET",
+                routeTemplate: "/items",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("bearerAuth", System.Array.Empty<string>()), new EndpointSecurityRequirement("apiKeyAuth", System.Array.Empty<string>()) }),
+            __ListItemsEndpoint);
 
-        app.MapPost("/items", async (HttpContext context) =>
+        IEndpointConventionBuilder __CreateItemEndpoint = app.MapPost("/items", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.PostItemsBody>? bodyDoc = null;
@@ -239,8 +263,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "createItem",
+                methodName: "CreateItem",
+                httpMethod: "POST",
+                routeTemplate: "/items",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __CreateItemEndpoint);
 
-        app.MapMethods("/items", new[] { "OPTIONS" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __OptionsItemsEndpoint = app.MapMethods("/items", new[] { "OPTIONS" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -286,8 +320,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "OptionsItems",
+                httpMethod: "OPTIONS",
+                routeTemplate: "/items",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __OptionsItemsEndpoint);
 
-        app.MapMethods("/items", new[] { "PURGE" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __PurgeItemsEndpoint = app.MapMethods("/items", new[] { "PURGE" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -329,8 +373,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "PurgeItems",
+                httpMethod: "PURGE",
+                routeTemplate: "/items",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __PurgeItemsEndpoint);
 
-        app.MapGet("/items/{itemId}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetItemEndpoint = app.MapGet("/items/{itemId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -402,8 +456,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getItem",
+                methodName: "GetItem",
+                httpMethod: "GET",
+                routeTemplate: "/items/{itemId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetItemEndpoint);
 
-        app.MapPatch("/items/{itemId}", async (HttpContext context) =>
+        IEndpointConventionBuilder __PatchItemsItemIdEndpoint = app.MapPatch("/items/{itemId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.PatchItemsByItemIdBody>? bodyDoc = null;
@@ -495,8 +559,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "PatchItemsItemId",
+                httpMethod: "PATCH",
+                routeTemplate: "/items/{itemId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __PatchItemsItemIdEndpoint);
 
-        app.MapPost("/items/{itemId}/form", async (HttpContext context) =>
+        IEndpointConventionBuilder __UpdateItemFormEndpoint = app.MapPost("/items/{itemId}/form", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Corvus.Text.Json.JsonElement>? bodyDoc = null;
@@ -588,8 +662,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "updateItemForm",
+                methodName: "UpdateItemForm",
+                httpMethod: "POST",
+                routeTemplate: "/items/{itemId}/form",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __UpdateItemFormEndpoint);
 
-        app.MapPost("/items/{itemId}/upload", async (HttpContext context) =>
+        IEndpointConventionBuilder __UploadItemDataEndpoint = app.MapPost("/items/{itemId}/upload", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.PostItemsByItemIdUploadBody>? bodyDoc = null;
@@ -672,8 +756,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "uploadItemData",
+                methodName: "UploadItemData",
+                httpMethod: "POST",
+                routeTemplate: "/items/{itemId}/upload",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __UploadItemDataEndpoint);
 
-        app.MapGet("/download", async (HttpContext context) =>
+        IEndpointConventionBuilder __DownloadFileEndpoint = app.MapGet("/download", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -715,8 +809,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "downloadFile",
+                methodName: "DownloadFile",
+                httpMethod: "GET",
+                routeTemplate: "/download",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __DownloadFileEndpoint);
 
-        app.MapGet("/quirky/{qid}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetQuirkyEndpoint = app.MapGet("/quirky/{qid}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -791,8 +895,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getQuirky",
+                methodName: "GetQuirky",
+                httpMethod: "GET",
+                routeTemplate: "/quirky/{qid}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetQuirkyEndpoint);
 
-        app.MapGet("/quirky/{sid}/styled", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetStyledQuirkyEndpoint = app.MapGet("/quirky/{sid}/styled", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -875,8 +989,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getStyledQuirky",
+                methodName: "GetStyledQuirky",
+                httpMethod: "GET",
+                routeTemplate: "/quirky/{sid}/styled",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetStyledQuirkyEndpoint);
 
-        app.MapGet("/export", async (HttpContext context) =>
+        IEndpointConventionBuilder __ExportDataEndpoint = app.MapGet("/export", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -918,8 +1042,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "exportData",
+                methodName: "ExportData",
+                httpMethod: "GET",
+                routeTemplate: "/export",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __ExportDataEndpoint);
 
-        app.MapGet("/empty-servers", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetEmptyServersEndpoint = app.MapGet("/empty-servers", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -961,8 +1095,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getEmptyServers",
+                methodName: "GetEmptyServers",
+                httpMethod: "GET",
+                routeTemplate: "/empty-servers",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetEmptyServersEndpoint);
 
-        app.MapMethods("/health", new[] { "HEAD" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __HeadHealthEndpoint = app.MapMethods("/health", new[] { "HEAD" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1004,8 +1148,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "HeadHealth",
+                httpMethod: "HEAD",
+                routeTemplate: "/health",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __HeadHealthEndpoint);
 
-        app.MapMethods("/health", new[] { "TRACE" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __TraceHealthEndpoint = app.MapMethods("/health", new[] { "TRACE" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1047,8 +1201,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "TraceHealth",
+                httpMethod: "TRACE",
+                routeTemplate: "/health",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __TraceHealthEndpoint);
 
-        app.MapGet("/advanced-styles/{ids}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetAdvancedStylesEndpoint = app.MapGet("/advanced-styles/{ids}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1201,8 +1365,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getAdvancedStyles",
+                methodName: "GetAdvancedStyles",
+                httpMethod: "GET",
+                routeTemplate: "/advanced-styles/{ids}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetAdvancedStylesEndpoint);
 
-        app.MapGet("/matrix-test/{codes}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetByMatrixCodesEndpoint = app.MapGet("/matrix-test/{codes}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1284,8 +1458,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getByMatrixCodes",
+                methodName: "GetByMatrixCodes",
+                httpMethod: "GET",
+                routeTemplate: "/matrix-test/{codes}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetByMatrixCodesEndpoint);
 
-        app.MapGet("/matrix-no-explode/{tags}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetByMatrixTagsEndpoint = app.MapGet("/matrix-no-explode/{tags}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1368,8 +1552,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getByMatrixTags",
+                methodName: "GetByMatrixTags",
+                httpMethod: "GET",
+                routeTemplate: "/matrix-no-explode/{tags}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetByMatrixTagsEndpoint);
 
-        app.MapGet("/label-no-explode/{items}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetByLabelItemsEndpoint = app.MapGet("/label-no-explode/{items}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1451,8 +1645,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getByLabelItems",
+                methodName: "GetByLabelItems",
+                httpMethod: "GET",
+                routeTemplate: "/label-no-explode/{items}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetByLabelItemsEndpoint);
 
-        app.MapGet("/styled-object/{obj}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetByStyledObjectEndpoint = app.MapGet("/styled-object/{obj}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1540,8 +1744,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getByStyledObject",
+                methodName: "GetByStyledObject",
+                httpMethod: "GET",
+                routeTemplate: "/styled-object/{obj}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetByStyledObjectEndpoint);
 
-        app.MapMethods("/query-endpoint", new[] { "QUERY" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __QueryItemsEndpoint = app.MapMethods("/query-endpoint", new[] { "QUERY" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.Schema>? bodyDoc = null;
@@ -1626,8 +1840,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "queryItems",
+                methodName: "QueryItems",
+                httpMethod: "QUERY",
+                routeTemplate: "/query-endpoint",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __QueryItemsEndpoint);
 
-        app.MapGet("/resources/{resourceId}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetResourceEndpoint = app.MapGet("/resources/{resourceId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1695,8 +1919,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getResource",
+                methodName: "GetResource",
+                httpMethod: "GET",
+                routeTemplate: "/resources/{resourceId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetResourceEndpoint);
 
-        app.MapMethods("/resources/{resourceId}", new[] { "COPY" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __CopyResourceEndpoint = app.MapMethods("/resources/{resourceId}", new[] { "COPY" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.Schema2>? bodyDoc = null;
@@ -1815,8 +2049,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "copyResource",
+                methodName: "CopyResource",
+                httpMethod: "COPY",
+                routeTemplate: "/resources/{resourceId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __CopyResourceEndpoint);
 
-        app.MapMethods("/resources/{resourceId}", new[] { "PURGE" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __PurgeResourceEndpoint = app.MapMethods("/resources/{resourceId}", new[] { "PURGE" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1884,8 +2128,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "purgeResource",
+                methodName: "PurgeResource",
+                httpMethod: "PURGE",
+                routeTemplate: "/resources/{resourceId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __PurgeResourceEndpoint);
 
-        app.MapMethods("/resources/{resourceId}", new[] { "MOVE" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __MoveResourceEndpoint = app.MapMethods("/resources/{resourceId}", new[] { "MOVE" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2000,8 +2254,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "moveResource",
+                methodName: "MoveResource",
+                httpMethod: "MOVE",
+                routeTemplate: "/resources/{resourceId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __MoveResourceEndpoint);
 
-        app.MapMethods("/resources/{resourceId}", new[] { "BATCH" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __BatchResourceEndpoint = app.MapMethods("/resources/{resourceId}", new[] { "BATCH" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<JsonElement>? bodyDoc = null;
@@ -2093,8 +2357,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "batchResource",
+                methodName: "BatchResource",
+                httpMethod: "BATCH",
+                routeTemplate: "/resources/{resourceId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __BatchResourceEndpoint);
 
-        app.MapGet("/events/stream", async (HttpContext context) =>
+        IEndpointConventionBuilder __StreamEventsEndpoint = app.MapGet("/events/stream", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2152,8 +2426,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "streamEvents",
+                methodName: "StreamEvents",
+                httpMethod: "GET",
+                routeTemplate: "/events/stream",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __StreamEventsEndpoint);
 
-        app.MapGet("/search-qs", async (HttpContext context) =>
+        IEndpointConventionBuilder __SearchWithQuerystringEndpoint = app.MapGet("/search-qs", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2260,8 +2544,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "searchWithQuerystring",
+                methodName: "SearchWithQuerystring",
+                httpMethod: "GET",
+                routeTemplate: "/search-qs",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __SearchWithQuerystringEndpoint);
 
-        app.MapGet("/documents/{documentId}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetDocumentEndpoint = app.MapGet("/documents/{documentId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2333,8 +2627,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getDocument",
+                methodName: "GetDocument",
+                httpMethod: "GET",
+                routeTemplate: "/documents/{documentId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetDocumentEndpoint);
 
-        app.MapPut("/documents/{documentId}", async (HttpContext context) =>
+        IEndpointConventionBuilder __UpdateDocumentEndpoint = app.MapPut("/documents/{documentId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.Schema6>? bodyDoc = null;
@@ -2430,8 +2734,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "updateDocument",
+                methodName: "UpdateDocument",
+                httpMethod: "PUT",
+                routeTemplate: "/documents/{documentId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __UpdateDocumentEndpoint);
 
-        app.MapPost("/upload-raw", async (HttpContext context) =>
+        IEndpointConventionBuilder __UploadRawFileEndpoint = app.MapPost("/upload-raw", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2477,8 +2791,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "uploadRawFile",
+                methodName: "UploadRawFile",
+                httpMethod: "POST",
+                routeTemplate: "/upload-raw",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __UploadRawFileEndpoint);
 
-        app.MapGet("/versions/{versionId}", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetResourceVersionEndpoint = app.MapGet("/versions/{versionId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2539,8 +2863,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getResourceVersion",
+                methodName: "GetResourceVersion",
+                httpMethod: "GET",
+                routeTemplate: "/versions/{versionId}",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetResourceVersionEndpoint);
 
-        app.MapGet("/monitoring/status", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetMonitoringStatusEndpoint = app.MapGet("/monitoring/status", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2582,8 +2916,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "GetMonitoringStatus",
+                httpMethod: "GET",
+                routeTemplate: "/monitoring/status",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __GetMonitoringStatusEndpoint);
 
-        app.MapPut("/monitoring/status", async (HttpContext context) =>
+        IEndpointConventionBuilder __PutMonitoringStatusEndpoint = app.MapPut("/monitoring/status", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.PutMonitoringStatusBody>? bodyDoc = null;
@@ -2651,8 +2995,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "PutMonitoringStatus",
+                httpMethod: "PUT",
+                routeTemplate: "/monitoring/status",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __PutMonitoringStatusEndpoint);
 
-        app.MapPost("/monitoring/status", async (HttpContext context) =>
+        IEndpointConventionBuilder __PostMonitoringStatusEndpoint = app.MapPost("/monitoring/status", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.PostMonitoringStatusBody>? bodyDoc = null;
@@ -2720,8 +3074,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "PostMonitoringStatus",
+                httpMethod: "POST",
+                routeTemplate: "/monitoring/status",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __PostMonitoringStatusEndpoint);
 
-        app.MapDelete("/monitoring/status", async (HttpContext context) =>
+        IEndpointConventionBuilder __DeleteMonitoringStatusEndpoint = app.MapDelete("/monitoring/status", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2763,8 +3127,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "DeleteMonitoringStatus",
+                httpMethod: "DELETE",
+                routeTemplate: "/monitoring/status",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __DeleteMonitoringStatusEndpoint);
 
-        app.MapMethods("/monitoring/status", new[] { "QUERY" }, async (HttpContext context) =>
+        IEndpointConventionBuilder __QueryMonitoringStatusEndpoint = app.MapMethods("/monitoring/status", new[] { "QUERY" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.Schema8>? bodyDoc = null;
@@ -2832,8 +3206,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: null,
+                methodName: "QueryMonitoringStatus",
+                httpMethod: "QUERY",
+                routeTemplate: "/monitoring/status",
+                tags: System.Array.Empty<string>(),
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __QueryMonitoringStatusEndpoint);
 
-        app.MapGet("/search", async (HttpContext context) =>
+        IEndpointConventionBuilder __SearchItemsEndpoint = app.MapGet("/search", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -3042,8 +3426,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "searchItems",
+                methodName: "SearchItems",
+                httpMethod: "GET",
+                routeTemplate: "/search",
+                tags: new[] { "Items", "Search" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __SearchItemsEndpoint);
 
-        app.MapPost("/upload", async (HttpContext context) =>
+        IEndpointConventionBuilder __UploadFileEndpoint = app.MapPost("/upload", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -3114,8 +3508,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "uploadFile",
+                methodName: "UploadFile",
+                httpMethod: "POST",
+                routeTemplate: "/upload",
+                tags: new[] { "Items" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __UploadFileEndpoint);
 
-        app.MapPost("/feedback", async (HttpContext context) =>
+        IEndpointConventionBuilder __SubmitFeedbackEndpoint = app.MapPost("/feedback", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Corvus.Text.Json.JsonElement>? bodyDoc = null;
@@ -3200,8 +3604,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "submitFeedback",
+                methodName: "SubmitFeedback",
+                httpMethod: "POST",
+                routeTemplate: "/feedback",
+                tags: new[] { "Items" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __SubmitFeedbackEndpoint);
 
-        app.MapPost("/attachments", async (HttpContext context) =>
+        IEndpointConventionBuilder __UploadAttachmentEndpoint = app.MapPost("/attachments", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.PostAttachmentsBody>? bodyDoc = null;
@@ -3285,8 +3699,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "uploadAttachment",
+                methodName: "UploadAttachment",
+                httpMethod: "POST",
+                routeTemplate: "/attachments",
+                tags: new[] { "Items" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __UploadAttachmentEndpoint);
 
-        app.MapPost("/feedback-encoded", async (HttpContext context) =>
+        IEndpointConventionBuilder __SubmitFeedbackEncodedEndpoint = app.MapPost("/feedback-encoded", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Corvus.Text.Json.JsonElement>? bodyDoc = null;
@@ -3371,8 +3795,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "submitFeedbackEncoded",
+                methodName: "SubmitFeedbackEncoded",
+                httpMethod: "POST",
+                routeTemplate: "/feedback-encoded",
+                tags: new[] { "Items" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __SubmitFeedbackEncodedEndpoint);
 
-        app.MapPost("/attachments-encoded", async (HttpContext context) =>
+        IEndpointConventionBuilder __UploadAttachmentEncodedEndpoint = app.MapPost("/attachments-encoded", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.PostAttachmentsEncodedBody>? bodyDoc = null;
@@ -3448,8 +3882,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "uploadAttachmentEncoded",
+                methodName: "UploadAttachmentEncoded",
+                httpMethod: "POST",
+                routeTemplate: "/attachments-encoded",
+                tags: new[] { "Items" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __UploadAttachmentEncodedEndpoint);
 
-        app.MapPost("/search", async (HttpContext context) =>
+        IEndpointConventionBuilder __SearchItemsAdvancedEndpoint = app.MapPost("/search", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Models.PostSearchBody>? bodyDoc = null;
@@ -3542,6 +3986,16 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "searchItemsAdvanced",
+                methodName: "SearchItemsAdvanced",
+                httpMethod: "POST",
+                routeTemplate: "/search",
+                tags: new[] { "Search" },
+                isCallback: false,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __SearchItemsAdvancedEndpoint);
 
         return app;
     }
@@ -3665,4 +4119,82 @@ public static class ApiEndpointRegistration
         public static readonly string[] Oauth2AuthAvailableScopes = ["read", "write"];
     }
 
+}
+
+/// <summary>
+/// Configures a single generated API endpoint. Invoked once per mapped operation.
+/// </summary>
+/// <param name="endpoint">A descriptor identifying the operation being mapped.</param>
+/// <param name="builder">The endpoint convention builder for the mapped route.</param>
+public delegate void ConfigureEndpoint(in EndpointDescriptor endpoint, IEndpointConventionBuilder builder);
+
+/// <summary>
+/// Describes a single generated API endpoint passed to a <see cref="ConfigureEndpoint"/> callback.
+/// </summary>
+public readonly struct EndpointDescriptor
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EndpointDescriptor"/> struct.
+    /// </summary>
+    /// <param name="operationId">The OpenAPI <c>operationId</c>, or <see langword="null"/> if the operation declares none.</param>
+    /// <param name="methodName">The generated handler method name (the <c>{MethodName}</c> in <c>Handle{MethodName}Async</c>).</param>
+    /// <param name="httpMethod">The HTTP method (e.g. <c>GET</c>, <c>POST</c>).</param>
+    /// <param name="routeTemplate">The ASP.NET route template as registered.</param>
+    /// <param name="tags">The OpenAPI tags for the operation.</param>
+    /// <param name="isCallback">Whether the operation originates from a webhook/callback rather than the main paths.</param>
+    /// <param name="securityRequirements">The operation's security requirements (scheme name and required scopes).</param>
+    public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> securityRequirements)
+    {
+        this.OperationId = operationId;
+        this.MethodName = methodName;
+        this.HttpMethod = httpMethod;
+        this.RouteTemplate = routeTemplate;
+        this.Tags = tags;
+        this.IsCallback = isCallback;
+        this.SecurityRequirements = securityRequirements;
+    }
+
+    /// <summary>Gets the OpenAPI <c>operationId</c>, or <see langword="null"/> if the operation declares none.</summary>
+    public string? OperationId { get; }
+
+    /// <summary>Gets the generated handler method name.</summary>
+    public string MethodName { get; }
+
+    /// <summary>Gets the HTTP method (e.g. <c>GET</c>, <c>POST</c>).</summary>
+    public string HttpMethod { get; }
+
+    /// <summary>Gets the ASP.NET route template as registered.</summary>
+    public string RouteTemplate { get; }
+
+    /// <summary>Gets the OpenAPI tags for the operation.</summary>
+    public System.Collections.Generic.IReadOnlyList<string> Tags { get; }
+
+    /// <summary>Gets a value indicating whether the operation originates from a webhook/callback rather than the main paths.</summary>
+    public bool IsCallback { get; }
+
+    /// <summary>Gets the operation's security requirements (scheme name and required scopes).</summary>
+    public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> SecurityRequirements { get; }
+}
+
+/// <summary>
+/// A single security requirement (a scheme name and the scopes it requires) for an operation.
+/// </summary>
+public readonly struct EndpointSecurityRequirement
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EndpointSecurityRequirement"/> struct.
+    /// </summary>
+    /// <param name="schemeName">The name of the security scheme.</param>
+    /// <param name="scopes">The scopes required by this requirement.</param>
+    public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes)
+    {
+        this.SchemeName = schemeName;
+        this.Scopes = scopes;
+    }
+
+    /// <summary>Gets the name of the security scheme.</summary>
+    public string SchemeName { get; }
+
+    /// <summary>Gets the scopes required by this requirement.</summary>
+    public System.Collections.Generic.IReadOnlyList<string> Scopes { get; }
 }
