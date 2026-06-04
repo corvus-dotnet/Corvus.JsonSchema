@@ -8249,6 +8249,97 @@ public class OpenApi31CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_EndpointRegistration_EmitsConfigureEndpointOverload()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        // Original overload preserved and delegating to the new one with a null callback.
+        Assert.IsTrue(
+            registration.Content.Contains("configureEndpoint: null", StringComparison.Ordinal),
+            "Expected the original overload to delegate with a null callback");
+
+        // New additive overload carries the ConfigureEndpoint callback.
+        Assert.IsTrue(
+            registration.Content.Contains(", ConfigureEndpoint? configureEndpoint)", StringComparison.Ordinal),
+            "Expected a new MapApiEndpoints overload accepting a ConfigureEndpoint callback");
+    }
+
+    [TestMethod]
+    public void GenerateServer_EndpointRegistration_EmitsConfigurationTypes()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(
+            registration.Content.Contains(
+                "public delegate void ConfigureEndpoint(in EndpointDescriptor endpoint, IEndpointConventionBuilder builder);",
+                StringComparison.Ordinal),
+            "Expected the ConfigureEndpoint delegate to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public readonly struct EndpointDescriptor", StringComparison.Ordinal),
+            "Expected the EndpointDescriptor struct to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public readonly struct EndpointSecurityRequirement", StringComparison.Ordinal),
+            "Expected the EndpointSecurityRequirement struct to be emitted");
+        Assert.IsFalse(
+            registration.Content.Contains("Microsoft.AspNetCore.Authorization", StringComparison.Ordinal),
+            "Generated registration must not take a dependency on Microsoft.AspNetCore.Authorization");
+    }
+
+    [TestMethod]
+    public void GenerateServer_EndpointRegistration_InvokesCallbackPerEndpoint()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(
+            registration.Content.Contains("configureEndpoint?.Invoke(", StringComparison.Ordinal),
+            "Expected configureEndpoint to be invoked per endpoint");
+        Assert.IsTrue(
+            registration.Content.Contains("methodName: \"ListItems\"", StringComparison.Ordinal),
+            "Expected the descriptor to carry the generated method name");
+        Assert.IsTrue(
+            registration.Content.Contains("httpMethod: \"GET\"", StringComparison.Ordinal),
+            "Expected the descriptor to carry the HTTP method");
+        Assert.IsTrue(
+            registration.Content.Contains("isCallback: false", StringComparison.Ordinal),
+            "Expected regular server endpoints to be flagged isCallback: false");
+
+        // OpenAPI 3.1 does not extract security: every descriptor surfaces an empty list.
+        Assert.IsTrue(
+            registration.Content.Contains("securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()", StringComparison.Ordinal),
+            "Expected 3.1 endpoints to surface an empty security requirements list");
+        Assert.IsFalse(
+            registration.Content.Contains("new EndpointSecurityRequirement[]", StringComparison.Ordinal),
+            "OpenAPI 3.1 should not populate any security requirements");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackServer_EndpointRegistration_FlagsEndpointsAsCallback()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+        foreach (SchemaReference schemaRef in OpenApi31CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi31CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        Assert.IsTrue(
+            registration.Content.Contains("configureEndpoint?.Invoke(", StringComparison.Ordinal),
+            "Expected the callback server to invoke configureEndpoint per endpoint");
+        Assert.IsTrue(
+            registration.Content.Contains("isCallback: true", StringComparison.Ordinal),
+            "Expected webhook/callback endpoints to be flagged isCallback: true");
+        Assert.IsFalse(
+            registration.Content.Contains("isCallback: false", StringComparison.Ordinal),
+            "Callback server endpoints must not be flagged isCallback: false");
+    }
+
+    [TestMethod]
     public void GenerateServer_WithFilter_OnlyIncludesMatchedPaths()
     {
         JsonElement root = GetCoverageRoot();
