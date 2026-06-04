@@ -17,25 +17,16 @@ using ParsedJsonDocument<Person> doc =
 Person person = doc.RootElement;
 ```
 
-### ParseValue (convenience)
-
-Returns a self-owned value — no explicit disposal needed, but the backing memory is not shared:
-
-```csharp
-Person person = Person.ParseValue(
-    """{"name":{"familyName":"Oldroyd","givenName":"Michael"},"age":30}""");
-```
-
 ### Other sources
 
 ```csharp
 // From UTF-8 bytes
-Person person = Person.ParseValue(
-    """{"name":{"familyName":"Oldroyd"},"age":30}"""u8);
+using ParsedJsonDocument<Person> doc2 = ParsedJsonDocument<Person>.Parse(
+    """{"name":{"familyName":"Oldroyd"},"age":30}"""u8.ToArray());
 
 // From a stream
 using FileStream stream = File.OpenRead("person.json");
-using ParsedJsonDocument<Person> doc = ParsedJsonDocument<Person>.Parse(stream);
+using ParsedJsonDocument<Person> doc3 = ParsedJsonDocument<Person>.Parse(stream);
 ```
 
 ## Property access
@@ -75,12 +66,16 @@ JsonElement age = person["age"];
 
 ### TryGetProperty
 
+For dynamic property access when you don't know the property name at compile time:
+
 ```csharp
 if (person.TryGetProperty("email"u8, out JsonElement email))
 {
-    Console.WriteLine((string)email);
+    Console.WriteLine(email.GetString());
 }
 ```
+
+> **Tip:** Prefer the strongly-typed property accessors (e.g., `person.Email`) over `TryGetProperty()` whenever the property is known at compile time. The typed accessors return the correct generated type, support direct conversions, and are validated by the compiler.
 
 ## Array access
 
@@ -97,14 +92,17 @@ foreach (var hobby in person.Hobbies.EnumerateArray())
 }
 ```
 
-When `otherNames` is an array (rather than a single string), you can enumerate it in the same way:
+When `otherNames` is an array (rather than a single string), you can use `TryGetAsPersonNameElementArray` to access the strongly-typed array variant:
 
 ```csharp
 // otherNames uses oneOf — it can be a single string or an array
-// Use AsPersonNameElementArray to access the array variant
-foreach (var name in person.Name.OtherNames.AsPersonNameElementArray.EnumerateArray())
+// Use TryGetAsPersonNameElementArray to access the array variant
+if (person.Name.OtherNamesValue.TryGetAsPersonNameElementArray(out var otherNamesArray))
 {
-    Console.WriteLine((string)name);
+    foreach (var name in otherNamesArray.EnumerateArray())
+    {
+        Console.WriteLine((string)name);
+    }
 }
 ```
 
@@ -271,8 +269,11 @@ When you attempt to cast an undefined or null value to a .NET type, it throws an
 Generated types support value equality:
 
 ```csharp
-Person a = Person.ParseValue(json);
-Person b = Person.ParseValue(json);
+using ParsedJsonDocument<Person> docA = ParsedJsonDocument<Person>.Parse(json);
+using ParsedJsonDocument<Person> docB = ParsedJsonDocument<Person>.Parse(json);
+
+Person a = docA.RootElement;
+Person b = docB.RootElement;
 
 bool equal = a.Equals(b);  // true — deep JSON equality
 bool same  = a == b;        // operator overload
@@ -294,11 +295,11 @@ JSON Schema supports composition keywords like `oneOf`, `anyOf`, and `allOf` tha
 The generated type provides a `Match()` method that dispatches to a typed delegate for each variant. Each variant gets its own named parameter, and a `defaultMatch` fallback handles values that don't conform to any variant:
 
 ```csharp
-string result = person.Name.OtherNames.Match(
-    matchPersonNameElement: static (v) => $"Single name: {(string)v}",
-    matchPersonNameElementArray: static (v)
+string result = person.Name.OtherNamesValue.Match(
+    matchPersonNameElement: static (in v) => $"Single name: {(string)v}",
+    matchPersonNameElementArray: static (in v)
         => $"Multiple names: {string.Join(", ", v.EnumerateArray().Select(n => (string)n))}",
-    defaultMatch: static (_) => "Unknown format");
+    defaultMatch: static (in _) => "Unknown format");
 
 Console.WriteLine(result);
 ```
@@ -308,10 +309,10 @@ Console.WriteLine(result);
 There is also a context-passing overload for when you need to pass state into the matchers without capturing:
 
 ```csharp
-string result = person.Name.OtherNames.Match(
+string result = person.Name.OtherNamesValue.Match(
     separator,  // context passed to each matcher
-    matchPersonNameElement: static (v, sep) => (string)v,
-    matchPersonNameElementArray: static (v, sep)
+    matchPersonNameElement: static (in v, in sep) => (string)v,
+    matchPersonNameElementArray: static (in v, in sep)
         => string.Join(sep, v.EnumerateArray().Select(n => (string)n)),
-    defaultMatch: static (_, sep) => string.Empty);
+    defaultMatch: static (in _, in sep) => string.Empty);
 ```
