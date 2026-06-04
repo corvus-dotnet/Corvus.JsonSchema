@@ -11,6 +11,7 @@ This recipe shows the **receiver side** of OpenAPI callbacks and webhooks: you g
 | Registering generated minimal API endpoints | `app.MapApiEndpoints(...)` |
 | Receiving per-operation callbacks and top-level webhooks in one app | `CallbackReceiver` |
 | Runtime expression route parameters | `OnEventCallbackRoute: "/callbacks/onEvent"` |
+| Customizing each endpoint via the `configureEndpoint` hook | `app.MapApiEndpoints(..., configureEndpoint: ...)` |
 
 ## Generating the Callback Server
 
@@ -80,6 +81,38 @@ app.Run();
 `MapApiEndpoints()` comes from generated code. It registers one route per callback or webhook operation and dispatches the request to your handler implementation.
 
 The `OnEventCallbackRoute` parameter is required because the OpenAPI spec defines this callback path as a runtime expression (`{$request.body#/callbackUrl}`). The actual URL is determined dynamically by the client at subscription time, so you — the server implementer — choose what route to listen on.
+
+## Customizing the Generated Endpoints
+
+`MapApiEndpoints` has a second overload that accepts a `configureEndpoint` callback. It runs once per generated endpoint, after the route is mapped, with a descriptor for the operation and the route's `IEndpointConventionBuilder` — the standard ASP.NET extension point for naming, tags, authorization, output caching, rate limiting, and more. The bare overload is preserved, so adopting the hook is source- and binary-compatible.
+
+```csharp
+app.MapApiEndpoints(
+    callbacksHandler: handler,
+    webhooksHandler: handler,
+    OnEventCallbackRoute: "/callbacks/onEvent",
+    configureEndpoint: static (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
+    {
+        builder.WithName(endpoint.OperationId ?? endpoint.MethodName);
+        builder.WithTags([.. endpoint.Tags]);
+
+        // IsCallback is true for every webhook/callback operation.
+        if (endpoint.IsCallback)
+        {
+            builder.WithMetadata(new EndpointGroupNameAttribute("event-deliveries"));
+        }
+
+        // For a spec that declares security, translate each requirement into the
+        // authorization policies your app registered. event-api.json declares no
+        // security, so this list is empty and the endpoints stay anonymous.
+        foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
+        {
+            builder.RequireAuthorization($"{requirement.SchemeName}:{string.Join('+', requirement.Scopes)}");
+        }
+    });
+```
+
+`EndpointDescriptor` carries the `OperationId`, `MethodName`, `HttpMethod`, `RouteTemplate`, `Tags`, `IsCallback`, and `SecurityRequirements` for the operation. See [docs/OpenApi.md → Customizing Generated Endpoints](../../OpenApi.md#customizing-generated-endpoints) for the full descriptor reference and a spec that wires `RequireAuthorization()` from declared security.
 
 ## Running the Recipe
 

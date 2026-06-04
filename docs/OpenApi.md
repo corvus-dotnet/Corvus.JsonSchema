@@ -502,6 +502,85 @@ The generated middleware validates all inputs before your handler runs:
 
 You never write validation code. Your handler only receives valid, typed data.
 
+## Customizing Generated Endpoints
+
+By default `MapApiEndpoints` registers each operation as a bare minimal-API route. When you need per-endpoint conventions — authorization, route names, tags, `Produces` metadata, output caching, rate limiting — use the `configureEndpoint` overload. It is invoked once per generated endpoint, *after* the route is mapped (so your conventions win), with a descriptor identifying the operation and the route's `IEndpointConventionBuilder`:
+
+```csharp
+app.MapApiEndpoints(petsHandler, static (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
+{
+    builder.WithName(endpoint.OperationId ?? endpoint.MethodName);
+    builder.WithTags([.. endpoint.Tags]);
+
+    // Webhook/callback operations (from openapi-callback-server) are flagged separately.
+    if (endpoint.IsCallback)
+    {
+        builder.WithMetadata(new EndpointGroupNameAttribute("webhooks"));
+    }
+});
+```
+
+The bare `MapApiEndpoints(petsHandler)` overload is preserved unchanged; the callback variant is an **additional overload**, so adopting the hook is both source- and binary-compatible. No new package dependency is added — the callback receives `IEndpointConventionBuilder` from `Microsoft.AspNetCore.Routing`, which the generated server already references.
+
+### EndpointDescriptor
+
+`EndpointDescriptor`, `EndpointSecurityRequirement`, and the `ConfigureEndpoint` delegate are read-only types generated alongside `ApiEndpointRegistration` in your server's root namespace.
+
+| Member | Type | Description |
+|---|---|---|
+| `OperationId` | `string?` | OpenAPI `operationId`, or `null` if the operation declares none |
+| `MethodName` | `string` | Generated handler method name (the `{MethodName}` in `Handle{MethodName}Async`) |
+| `HttpMethod` | `string` | HTTP method (`GET`, `POST`, …) |
+| `RouteTemplate` | `string` | ASP.NET route template as registered |
+| `Tags` | `IReadOnlyList<string>` | OpenAPI tags for the operation |
+| `IsCallback` | `bool` | `true` for webhook/callback operations, `false` for main `paths` |
+| `SecurityRequirements` | `IReadOnlyList<EndpointSecurityRequirement>` | The operation's declared security (each carries `SchemeName` and `Scopes`) |
+
+`SecurityRequirements` is populated for OpenAPI 3.2 specs (which extract `security`); for 3.0/3.1 the list is currently always empty, but the hook works identically.
+
+### Applying OpenAPI Security as Authorization
+
+The generator parses `components.securitySchemes` and per-operation `security` and emits them as static metadata, but it deliberately does **not** wire authorization onto endpoints — which scheme maps to which policy, and how scopes are enforced, are application concerns. `configureEndpoint` is the unopinionated place to close that gap: translate each declared requirement into a policy your app has registered.
+
+```csharp
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAuthentication(/* your scheme(s) */);
+builder.Services.AddAuthorization(options =>
+{
+    // One policy per (scheme, scopes) your spec declares.
+    options.AddPolicy("oauth2:read:pets", p => p.RequireClaim("scope", "read:pets"));
+    options.AddPolicy("oauth2:write:pets", p => p.RequireClaim("scope", "write:pets"));
+});
+
+WebApplication app = builder.Build();
+app.UseAuthentication();
+app.UseAuthorization();
+
+PetsHandler petsHandler = new();
+app.MapApiEndpoints(petsHandler, static (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
+{
+    // Operations with no declared security are explicitly anonymous.
+    if (endpoint.SecurityRequirements.Count == 0)
+    {
+        builder.AllowAnonymous();
+        return;
+    }
+
+    // Map each declared (scheme, scopes) requirement to the matching app policy.
+    foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
+    {
+        string scopes = string.Join('+', requirement.Scopes);
+        builder.RequireAuthorization(
+            scopes.Length == 0 ? requirement.SchemeName : $"{requirement.SchemeName}:{scopes}");
+    }
+});
+
+app.Run();
+```
+
+Because the callback just hands you an `IEndpointConventionBuilder`, every standard ASP.NET endpoint extension is available the same way — `RequireRateLimiting`, `CacheOutput`, `RequireCors`, `DisableAntiforgery`, and so on. See the `034-OpenApiCallbackServer` recipe for the hook applied to a callback/webhook server.
+
 ## Authentication
 
 Corvus generates typed parameters for OpenAPI security schemes declared in the spec — but authentication itself is implemented using standard .NET `HttpClient` patterns. The generated transport (`HttpClientTransport`) wraps a regular `HttpClient`, so you configure auth the same way you would for any HTTP client.

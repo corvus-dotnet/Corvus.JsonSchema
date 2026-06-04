@@ -27,10 +27,39 @@ CallbackReceiver handler = new(app.Logger);
 
 // The generated extension method registers one endpoint per callback/webhook.
 // Named arguments make it clear which handler instance serves which tag group.
+//
+// The optional configureEndpoint callback is an additional overload (the bare
+// MapApiEndpoints(...) is preserved unchanged). It runs once per generated endpoint,
+// after the route is mapped, with a descriptor for the operation and the route's
+// IEndpointConventionBuilder — the standard ASP.NET extension point for naming, tags,
+// authorization, output caching, rate limiting, and so on.
 app.MapApiEndpoints(
     callbacksHandler: handler,
     webhooksHandler: handler,
-    OnEventCallbackRoute: "/callbacks/onEvent");
+    OnEventCallbackRoute: "/callbacks/onEvent",
+    configureEndpoint: static (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
+    {
+        // Give every endpoint a stable name and its OpenAPI tags.
+        builder.WithName(endpoint.OperationId ?? endpoint.MethodName);
+        builder.WithTags([.. endpoint.Tags]);
+
+        // IsCallback distinguishes webhook/callback deliveries from regular /paths
+        // operations — here every endpoint is a delivery, so group them together.
+        if (endpoint.IsCallback)
+        {
+            builder.WithMetadata(new EndpointGroupNameAttribute("event-deliveries"));
+        }
+
+        // Translate any declared OpenAPI security into the authorization policies your
+        // app has registered. event-api.json declares no security, so this list is empty
+        // and the endpoints stay anonymous (the curl calls below return 200). For a spec
+        // that does declare security, this is where RequireAuthorization() is applied —
+        // see docs/OpenApi.md, "Customizing Generated Endpoints".
+        foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
+        {
+            builder.RequireAuthorization($"{requirement.SchemeName}:{string.Join('+', requirement.Scopes)}");
+        }
+    });
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {
