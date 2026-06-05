@@ -1,0 +1,144 @@
+// ==========================================================================
+// Typography — Headings, body text, links, lists, blockquotes
+// ==========================================================================
+
+// ---- Headings ----
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-heading);
+  color: var(--color-white);
+}
+
+h1 {
+  font-size: var(--font-size-hero);
+  margin-bottom: var(--space-lg);
+}
+
+h2 {
+  font-size: var(--font-size-xxl);
+  margin-bottom: var(--space-md);
+}
+
+h3 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-md);
+}
+
+h4 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-sm);
+}
+
+h5 {
+  font-size: var(--font-size-rg);
+  margin-bottom: var(--space-sm);
+}
+
+h6 {
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-gray-med);
+}
+
+// ---- Paragraphs ----
+
+p {
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  color: var(--color-gray-med);
+}
+
+// ---- Links ----
+
+.content a,
+.doc__content a:not(.card--link):not(.api-browser__item-link),
+.text-content a,
+a.link {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  transition: color var(--transition-fast);
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-brand-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
+
+// External link indicator — small icon after links to external sites
+.doc__content a[href^="https://"],
+.doc__content a[href^="http://"] {
+  &::after {
+    content: "\2009\2197"; // thin space + ↗
+    font-size: 0.75em;
+    vertical-align: super;
+    text-decoration: none;
+    display: inline;
+    opacity: 0.6;
+  }
+}
+
+// ---- Lists ----
+
+ul, ol {
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  padding-left: var(--space-lg);
+  color: var(--color-gray-med);
+}
+
+li {
+  margin-bottom: var(--space-xs);
+
+  &::marker {
+    color: var(--color-brand);
+  }
+}
+
+// ---- Blockquotes ----
+
+blockquote {
+  margin: 0 0 var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-left: 3px solid var(--color-brand);
+  background: var(--color-bg-raised);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: var(--color-gray-med);
+  font-style: italic;
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ---- Horizontal rules ----
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--space-lg) 0;
+}
+
+// ---- Small / caption ----
+
+small,
+.text-small {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-dark);
+}
+
+// ---- Strong / emphasis ----
+
+strong, b {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-white);
+}
