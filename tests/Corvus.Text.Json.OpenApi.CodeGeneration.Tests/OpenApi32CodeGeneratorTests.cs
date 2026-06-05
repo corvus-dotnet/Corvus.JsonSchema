@@ -1095,6 +1095,143 @@ public class OpenApi32CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_EndpointRegistration_EmitsConfigureEndpointOverload()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        // The original overload is preserved (no ConfigureEndpoint parameter)...
+        Assert.IsTrue(
+            registration.Content.Contains(
+                "public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiDefaultHandler defaultHandler",
+                StringComparison.Ordinal),
+            "Expected the original MapApiEndpoints overload to be preserved");
+
+        // ...and delegates to the new overload passing a null callback.
+        Assert.IsTrue(
+            registration.Content.Contains("configureEndpoint: null", StringComparison.Ordinal),
+            "Expected the original overload to delegate to the new overload with a null callback");
+
+        // The new, additive overload carries the ConfigureEndpoint callback.
+        Assert.IsTrue(
+            registration.Content.Contains(", ConfigureEndpoint? configureEndpoint)", StringComparison.Ordinal),
+            "Expected a new MapApiEndpoints overload accepting a ConfigureEndpoint callback");
+    }
+
+    [TestMethod]
+    public void GenerateServer_EndpointRegistration_EmitsConfigurationTypes()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(
+            registration.Content.Contains(
+                "public delegate void ConfigureEndpoint(in EndpointDescriptor endpoint, IEndpointConventionBuilder builder);",
+                StringComparison.Ordinal),
+            "Expected the ConfigureEndpoint delegate to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public readonly struct EndpointDescriptor", StringComparison.Ordinal),
+            "Expected the EndpointDescriptor struct to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public readonly struct EndpointSecurityRequirement", StringComparison.Ordinal),
+            "Expected the EndpointSecurityRequirement struct to be emitted");
+
+        // No new package dependency: the callback uses only Microsoft.AspNetCore.Routing types.
+        Assert.IsFalse(
+            registration.Content.Contains("Microsoft.AspNetCore.Authorization", StringComparison.Ordinal),
+            "Generated registration must not take a dependency on Microsoft.AspNetCore.Authorization");
+    }
+
+    [TestMethod]
+    public void GenerateServer_EndpointRegistration_InvokesCallbackPerEndpoint()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        // The callback is invoked once per endpoint, building an EndpointDescriptor.
+        Assert.IsTrue(
+            registration.Content.Contains("configureEndpoint?.Invoke(", StringComparison.Ordinal),
+            "Expected configureEndpoint to be invoked per endpoint");
+        Assert.IsTrue(
+            registration.Content.Contains("new EndpointDescriptor(", StringComparison.Ordinal),
+            "Expected an EndpointDescriptor to be constructed for each endpoint");
+
+        // Descriptor fields are populated from operation metadata. listItems is a GET on /items.
+        Assert.IsTrue(
+            registration.Content.Contains("methodName: \"ListItems\"", StringComparison.Ordinal),
+            "Expected the descriptor to carry the generated method name");
+        Assert.IsTrue(
+            registration.Content.Contains("operationId: \"listItems\"", StringComparison.Ordinal),
+            "Expected the descriptor to carry the operationId");
+        Assert.IsTrue(
+            registration.Content.Contains("httpMethod: \"GET\"", StringComparison.Ordinal),
+            "Expected the descriptor to carry the HTTP method");
+
+        // Regular (paths) server: every endpoint is flagged as not a callback.
+        Assert.IsTrue(
+            registration.Content.Contains("isCallback: false", StringComparison.Ordinal),
+            "Expected regular server endpoints to be flagged isCallback: false");
+        Assert.IsFalse(
+            registration.Content.Contains("isCallback: true", StringComparison.Ordinal),
+            "Regular server endpoints must not be flagged as callbacks");
+    }
+
+    [TestMethod]
+    public void GenerateServer_EndpointRegistration_SurfacesSecurityRequirements()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        // covspec declares security schemes; the operation's requirements must be surfaced on the
+        // descriptor so consumers can apply authorization.
+        Assert.IsTrue(
+            registration.Content.Contains("securityRequirements: new EndpointSecurityRequirement[]", StringComparison.Ordinal),
+            "Expected at least one operation to surface its security requirements");
+        Assert.IsTrue(
+            registration.Content.Contains("new EndpointSecurityRequirement(\"bearerAuth\"", StringComparison.Ordinal),
+            "Expected the bearerAuth scheme to be surfaced on the descriptor");
+    }
+
+    [TestMethod]
+    public void GenerateCallbackServer_EndpointRegistration_FlagsEndpointsAsCallback()
+    {
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach (SchemaReference schemaRef in OpenApi32CodeGenerator.CollectWebhookAndCallbackSchemaPointers(callbacksSpecRoot, out _))
+        {
+            schemaTypeMap[schemaRef.PositionalPointer] = $"Callbacks.Test.{schemaRef.PositionalPointer.GetHashCode():X8}";
+        }
+
+        OpenApi32CodeGenerator generator = new("Callbacks.Test", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateCallbackServer(callbacksSpecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName.Contains("EndpointRegistration.cs"));
+
+        // Webhook/callback endpoints are flagged as callbacks, and still invoke the hook.
+        Assert.IsTrue(
+            registration.Content.Contains("configureEndpoint?.Invoke(", StringComparison.Ordinal),
+            "Expected the callback server to invoke configureEndpoint per endpoint");
+        Assert.IsTrue(
+            registration.Content.Contains("isCallback: true", StringComparison.Ordinal),
+            "Expected webhook/callback endpoints to be flagged isCallback: true");
+        Assert.IsFalse(
+            registration.Content.Contains("isCallback: false", StringComparison.Ordinal),
+            "Callback server endpoints must not be flagged isCallback: false");
+    }
+
+    [TestMethod]
     public void GenerateServer_WithFilter_OnlyIncludesMatchedPaths()
     {
         Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();

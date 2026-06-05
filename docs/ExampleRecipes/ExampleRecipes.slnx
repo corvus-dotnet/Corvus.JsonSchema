@@ -74,11 +74,11 @@
   <Folder Name="/024-JsonLogic/">
     <Project Path="024-JsonLogic\JsonLogic.csproj" />
   </Folder>
-  <Folder Name="/025-JSONata/">
-    <Project Path="025-JSONata\JSONata.csproj" />
+  <Folder Name="/025-Jsonata/">
+    <Project Path="025-Jsonata\JSONata.csproj" />
   </Folder>
-  <Folder Name="/026-JMESPath/">
-    <Project Path="026-JMESPath\JMESPath.csproj" />
+  <Folder Name="/026-Jmespath/">
+    <Project Path="026-Jmespath\JMESPath.csproj" />
   </Folder>
   <Folder Name="/027-Yaml/">
     <Project Path="027-Yaml\Yaml.csproj" />

@@ -973,6 +973,17 @@ public readonly partial struct PetList
             value.AddAsItem(ref _builder);
         }
 
+        /// <summary>
+        /// Add an item to the array.
+        /// </summary>
+        public void AddItem<TContext>(in Petstore.Extended.Server.Models.Pet.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            value.AddAsItem(ref _builder);
+        }
+
         internal static void BuildValue(Build value, ref ComplexValueBuilder o)
         {
             o.StartArray();

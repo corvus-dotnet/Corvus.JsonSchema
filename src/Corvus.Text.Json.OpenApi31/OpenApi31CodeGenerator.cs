@@ -4692,7 +4692,7 @@ public sealed class OpenApi31CodeGenerator
             files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
         }
 
-        files.Add(this.EmitServerEndpointRegistration(groups, operations));
+        files.Add(this.EmitServerEndpointRegistration(groups, operations, isCallbackServer: false));
 
         return files;
     }
@@ -4733,7 +4733,7 @@ public sealed class OpenApi31CodeGenerator
             files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
         }
 
-        files.Add(this.EmitServerEndpointRegistration(groups, operations));
+        files.Add(this.EmitServerEndpointRegistration(groups, operations, isCallbackServer: true));
 
         return files;
     }
@@ -5373,7 +5373,8 @@ public sealed class OpenApi31CodeGenerator
 
     private GeneratedFile EmitServerEndpointRegistration(
         Dictionary<string, List<OperationInfo>> groups,
-        IReadOnlyList<OperationInfo> operations)
+        IReadOnlyList<OperationInfo> operations,
+        bool isCallbackServer)
     {
         string prefix = this.clientNamePrefix ?? "Api";
         string className = $"{prefix}EndpointRegistration";
@@ -5406,11 +5407,13 @@ public sealed class OpenApi31CodeGenerator
         w.OpenBrace();
 
         List<string> handlerParams = [];
+        List<string> handlerParamNames = [];
         foreach ((string tag, _) in groups)
         {
             string handlerName = this.GetHandlerName(tag);
             string paramName = CodeEmitHelpers.SanitizeParameterName(tag) + "Handler";
             handlerParams.Add($"I{handlerName}Handler {paramName}");
+            handlerParamNames.Add(paramName);
         }
 
         // Identify operations whose path templates contain runtime expressions.
@@ -5431,23 +5434,36 @@ public sealed class OpenApi31CodeGenerator
             }
         }
 
-        w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Maps all {prefix} API endpoints to the application.");
-        w.WriteLine("/// </summary>");
-        w.WriteLine("/// <param name=\"app\">The endpoint route builder.</param>");
-        foreach ((string tag, _) in groups)
+        // Emit the XML doc-comment header shared by both overloads.
+        void EmitMapEndpointsDocComment(bool includeConfigureEndpoint)
         {
-            string paramName = CodeEmitHelpers.SanitizeParameterName(tag) + "Handler";
-            string handlerName = this.GetHandlerName(tag);
-            w.WriteLine($"/// <param name=\"{paramName}\">The handler for {handlerName} operations.</param>");
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Maps all {prefix} API endpoints to the application.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"app\">The endpoint route builder.</param>");
+            foreach ((string docTag, _) in groups)
+            {
+                string docParamName = CodeEmitHelpers.SanitizeParameterName(docTag) + "Handler";
+                string docHandlerName = this.GetHandlerName(docTag);
+                w.WriteLine($"/// <param name=\"{docParamName}\">The handler for {docHandlerName} operations.</param>");
+            }
+
+            foreach ((string _, string routeParamName) in runtimeExpressionRouteParams)
+            {
+                w.WriteLine($"/// <param name=\"{routeParamName}\">The route template to register for this callback endpoint.</param>");
+            }
+
+            if (includeConfigureEndpoint)
+            {
+                w.WriteLine("/// <param name=\"configureEndpoint\">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword=\"null\"/>.</param>");
+            }
+
+            w.WriteLine("/// <returns>The endpoint route builder for chaining.</returns>");
         }
 
-        foreach ((string _, string routeParamName) in runtimeExpressionRouteParams)
-        {
-            w.WriteLine($"/// <param name=\"{routeParamName}\">The route template to register for this callback endpoint.</param>");
-        }
-
-        w.WriteLine("/// <returns>The endpoint route builder for chaining.</returns>");
+        // Original overload — preserved verbatim for source- and binary-compatibility.
+        // It delegates to the new overload below, passing a null callback.
+        EmitMapEndpointsDocComment(includeConfigureEndpoint: false);
         w.Write($"public static IEndpointRouteBuilder Map{prefix}Endpoints(this IEndpointRouteBuilder app");
         foreach (string hp in handlerParams)
         {
@@ -5459,6 +5475,37 @@ public sealed class OpenApi31CodeGenerator
             w.Write($", string {routeParamName}");
         }
 
+        w.WriteLine(")");
+        w.OpenBrace();
+        w.Write($"return Map{prefix}Endpoints(app");
+        foreach (string hpn in handlerParamNames)
+        {
+            w.Write($", {hpn}");
+        }
+
+        foreach ((string _, string routeParamName) in runtimeExpressionRouteParams)
+        {
+            w.Write($", {routeParamName}");
+        }
+
+        w.WriteLine(", configureEndpoint: null);");
+        w.CloseBrace();
+        w.WriteLine();
+
+        // New, additive overload carrying the per-endpoint customization callback.
+        EmitMapEndpointsDocComment(includeConfigureEndpoint: true);
+        w.Write($"public static IEndpointRouteBuilder Map{prefix}Endpoints(this IEndpointRouteBuilder app");
+        foreach (string hp in handlerParams)
+        {
+            w.Write($", {hp}");
+        }
+
+        foreach ((string _, string routeParamName) in runtimeExpressionRouteParams)
+        {
+            w.Write($", string {routeParamName}");
+        }
+
+        w.Write(", ConfigureEndpoint? configureEndpoint");
         w.WriteLine(")");
         w.OpenBrace();
 
@@ -5495,14 +5542,17 @@ public sealed class OpenApi31CodeGenerator
                     routeExpression = $"\"{ConvertToAspNetRoute(op.PathTemplate)}\"";
                 }
 
+                // Capture the route builder so the per-endpoint configuration callback can be
+                // invoked against it after the route is mapped.
+                string endpointVar = $"__{op.MethodName}Endpoint";
+                string httpVerb = op.Method.ToString().ToUpperInvariant();
                 if (mapMethod == "MapMethods")
                 {
-                    string httpMethod = op.Method.ToString().ToUpperInvariant();
-                    w.WriteLine($"app.MapMethods({routeExpression}, new[] {{ \"{httpMethod}\" }}, async (HttpContext context) =>");
+                    w.WriteLine($"IEndpointConventionBuilder {endpointVar} = app.MapMethods({routeExpression}, new[] {{ \"{httpVerb}\" }}, async (HttpContext context) =>");
                 }
                 else
                 {
-                    w.WriteLine($"app.{mapMethod}({routeExpression}, async (HttpContext context) =>");
+                    w.WriteLine($"IEndpointConventionBuilder {endpointVar} = app.{mapMethod}({routeExpression}, async (HttpContext context) =>");
                 }
 
                 w.OpenBrace();
@@ -5720,6 +5770,11 @@ public sealed class OpenApi31CodeGenerator
 
                 w.CloseBrace().Write(");");
                 w.WriteLine();
+
+                // Invoke the per-endpoint configuration callback (if provided) after the route is
+                // mapped, so any conventions the consumer applies take precedence over generator
+                // conventions emitted above.
+                EmitConfigureEndpointInvocation(w, op, endpointVar, routeExpression, httpVerb, isCallbackServer);
             }
         }
 
@@ -5729,7 +5784,135 @@ public sealed class OpenApi31CodeGenerator
 
         w.CloseBrace();
 
+        // Emit the supporting public types for the per-endpoint configuration callback at
+        // namespace scope, alongside the registration class.
+        EmitEndpointConfigurationTypes(w);
+
         return new GeneratedFile($"{className}.cs", w.ToString());
+    }
+
+    /// <summary>
+    /// Emits the <c>configureEndpoint?.Invoke(...)</c> call for a single mapped operation, building
+    /// an <c>EndpointDescriptor</c> from the operation's metadata. OpenAPI 3.1 does not extract
+    /// security requirements, so they are always surfaced as an empty list.
+    /// </summary>
+    private static void EmitConfigureEndpointInvocation(
+        IndentedWriter w,
+        OperationInfo op,
+        string endpointVar,
+        string routeExpression,
+        string httpVerb,
+        bool isCallbackServer)
+    {
+        string operationIdLiteral = op.OperationId is null
+            ? "null"
+            : CodeEmitHelpers.FormatStringLiteral(op.OperationId);
+        string tagsLiteral = op.Tags is { Length: > 0 }
+            ? $"new[] {{ {string.Join(", ", op.Tags.Select(CodeEmitHelpers.FormatStringLiteral))} }}"
+            : "System.Array.Empty<string>()";
+
+        w.WriteLine("configureEndpoint?.Invoke(");
+        w.PushIndent();
+        w.WriteLine("new EndpointDescriptor(");
+        w.PushIndent();
+        w.WriteLine($"operationId: {operationIdLiteral},");
+        w.WriteLine($"methodName: {CodeEmitHelpers.FormatStringLiteral(op.MethodName)},");
+        w.WriteLine($"httpMethod: {CodeEmitHelpers.FormatStringLiteral(httpVerb)},");
+        w.WriteLine($"routeTemplate: {routeExpression},");
+        w.WriteLine($"tags: {tagsLiteral},");
+        w.WriteLine($"isCallback: {(isCallbackServer ? "true" : "false")},");
+        w.WriteLine("securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),");
+        w.PopIndent();
+        w.WriteLine($"{endpointVar});");
+        w.PopIndent();
+    }
+
+    /// <summary>
+    /// Emits the public <c>ConfigureEndpoint</c> delegate, <c>EndpointDescriptor</c> struct, and
+    /// <c>EndpointSecurityRequirement</c> struct at namespace scope.
+    /// </summary>
+    private static void EmitEndpointConfigurationTypes(IndentedWriter w)
+    {
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Configures a single generated API endpoint. Invoked once per mapped operation.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"endpoint\">A descriptor identifying the operation being mapped.</param>");
+        w.WriteLine("/// <param name=\"builder\">The endpoint convention builder for the mapped route.</param>");
+        w.WriteLine("public delegate void ConfigureEndpoint(in EndpointDescriptor endpoint, IEndpointConventionBuilder builder);");
+        w.WriteLine();
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Describes a single generated API endpoint passed to a <see cref=\"ConfigureEndpoint\"/> callback.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public readonly struct EndpointDescriptor");
+        w.OpenBrace();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Initializes a new instance of the <see cref=\"EndpointDescriptor\"/> struct.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"operationId\">The OpenAPI <c>operationId</c>, or <see langword=\"null\"/> if the operation declares none.</param>");
+        w.WriteLine("/// <param name=\"methodName\">The generated handler method name (the <c>{MethodName}</c> in <c>Handle{MethodName}Async</c>).</param>");
+        w.WriteLine("/// <param name=\"httpMethod\">The HTTP method (e.g. <c>GET</c>, <c>POST</c>).</param>");
+        w.WriteLine("/// <param name=\"routeTemplate\">The ASP.NET route template as registered.</param>");
+        w.WriteLine("/// <param name=\"tags\">The OpenAPI tags for the operation.</param>");
+        w.WriteLine("/// <param name=\"isCallback\">Whether the operation originates from a webhook/callback rather than the main paths.</param>");
+        w.WriteLine("/// <param name=\"securityRequirements\">The operation's security requirements (scheme name and required scopes).</param>");
+        w.WriteLine("public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> securityRequirements)");
+        w.OpenBrace();
+        w.WriteLine("this.OperationId = operationId;");
+        w.WriteLine("this.MethodName = methodName;");
+        w.WriteLine("this.HttpMethod = httpMethod;");
+        w.WriteLine("this.RouteTemplate = routeTemplate;");
+        w.WriteLine("this.Tags = tags;");
+        w.WriteLine("this.IsCallback = isCallback;");
+        w.WriteLine("this.SecurityRequirements = securityRequirements;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the OpenAPI <c>operationId</c>, or <see langword=\"null\"/> if the operation declares none.</summary>");
+        w.WriteLine("public string? OperationId { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the generated handler method name.</summary>");
+        w.WriteLine("public string MethodName { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the HTTP method (e.g. <c>GET</c>, <c>POST</c>).</summary>");
+        w.WriteLine("public string HttpMethod { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the ASP.NET route template as registered.</summary>");
+        w.WriteLine("public string RouteTemplate { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the OpenAPI tags for the operation.</summary>");
+        w.WriteLine("public System.Collections.Generic.IReadOnlyList<string> Tags { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets a value indicating whether the operation originates from a webhook/callback rather than the main paths.</summary>");
+        w.WriteLine("public bool IsCallback { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the operation's security requirements (scheme name and required scopes).</summary>");
+        w.WriteLine("public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> SecurityRequirements { get; }");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// A single security requirement (a scheme name and the scopes it requires) for an operation.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public readonly struct EndpointSecurityRequirement");
+        w.OpenBrace();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Initializes a new instance of the <see cref=\"EndpointSecurityRequirement\"/> struct.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"schemeName\">The name of the security scheme.</param>");
+        w.WriteLine("/// <param name=\"scopes\">The scopes required by this requirement.</param>");
+        w.WriteLine("public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes)");
+        w.OpenBrace();
+        w.WriteLine("this.SchemeName = schemeName;");
+        w.WriteLine("this.Scopes = scopes;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the name of the security scheme.</summary>");
+        w.WriteLine("public string SchemeName { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the scopes required by this requirement.</summary>");
+        w.WriteLine("public System.Collections.Generic.IReadOnlyList<string> Scopes { get; }");
+        w.CloseBrace();
     }
 
     /// <summary>

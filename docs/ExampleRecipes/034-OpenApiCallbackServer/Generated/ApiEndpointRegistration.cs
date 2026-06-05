@@ -31,8 +31,22 @@ public static class ApiEndpointRegistration
     /// <returns>The endpoint route builder for chaining.</returns>
     public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiWebhooksHandler webhooksHandler, IApiCallbacksHandler callbacksHandler, string OnEventCallbackRoute)
     {
+        return MapApiEndpoints(app, webhooksHandler, callbacksHandler, OnEventCallbackRoute, configureEndpoint: null);
+    }
 
-        app.MapPost("systemAlert", async (HttpContext context) =>
+    /// <summary>
+    /// Maps all Api API endpoints to the application.
+    /// </summary>
+    /// <param name="app">The endpoint route builder.</param>
+    /// <param name="webhooksHandler">The handler for ApiWebhooks operations.</param>
+    /// <param name="callbacksHandler">The handler for ApiCallbacks operations.</param>
+    /// <param name="OnEventCallbackRoute">The route template to register for this callback endpoint.</param>
+    /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
+    /// <returns>The endpoint route builder for chaining.</returns>
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiWebhooksHandler webhooksHandler, IApiCallbacksHandler callbacksHandler, string OnEventCallbackRoute, ConfigureEndpoint? configureEndpoint)
+    {
+
+        IEndpointConventionBuilder __SystemAlertWebhookEndpoint = app.MapPost("systemAlert", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<EventSubscription.CallbackServer.Models.Schema>? bodyDoc = null;
@@ -100,8 +114,18 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "systemAlertWebhook",
+                methodName: "SystemAlertWebhook",
+                httpMethod: "POST",
+                routeTemplate: "systemAlert",
+                tags: new[] { "webhooks" },
+                isCallback: true,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __SystemAlertWebhookEndpoint);
 
-        app.MapPost(OnEventCallbackRoute, async (HttpContext context) =>
+        IEndpointConventionBuilder __OnEventCallbackEndpoint = app.MapPost(OnEventCallbackRoute, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<EventSubscription.CallbackServer.Models.Schema1>? bodyDoc = null;
@@ -169,7 +193,95 @@ public static class ApiEndpointRegistration
             }
         }
         );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "onEventCallback",
+                methodName: "OnEventCallback",
+                httpMethod: "POST",
+                routeTemplate: OnEventCallbackRoute,
+                tags: new[] { "callbacks" },
+                isCallback: true,
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+            __OnEventCallbackEndpoint);
 
         return app;
     }
+}
+
+/// <summary>
+/// Configures a single generated API endpoint. Invoked once per mapped operation.
+/// </summary>
+/// <param name="endpoint">A descriptor identifying the operation being mapped.</param>
+/// <param name="builder">The endpoint convention builder for the mapped route.</param>
+public delegate void ConfigureEndpoint(in EndpointDescriptor endpoint, IEndpointConventionBuilder builder);
+
+/// <summary>
+/// Describes a single generated API endpoint passed to a <see cref="ConfigureEndpoint"/> callback.
+/// </summary>
+public readonly struct EndpointDescriptor
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EndpointDescriptor"/> struct.
+    /// </summary>
+    /// <param name="operationId">The OpenAPI <c>operationId</c>, or <see langword="null"/> if the operation declares none.</param>
+    /// <param name="methodName">The generated handler method name (the <c>{MethodName}</c> in <c>Handle{MethodName}Async</c>).</param>
+    /// <param name="httpMethod">The HTTP method (e.g. <c>GET</c>, <c>POST</c>).</param>
+    /// <param name="routeTemplate">The ASP.NET route template as registered.</param>
+    /// <param name="tags">The OpenAPI tags for the operation.</param>
+    /// <param name="isCallback">Whether the operation originates from a webhook/callback rather than the main paths.</param>
+    /// <param name="securityRequirements">The operation's security requirements (scheme name and required scopes).</param>
+    public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> securityRequirements)
+    {
+        this.OperationId = operationId;
+        this.MethodName = methodName;
+        this.HttpMethod = httpMethod;
+        this.RouteTemplate = routeTemplate;
+        this.Tags = tags;
+        this.IsCallback = isCallback;
+        this.SecurityRequirements = securityRequirements;
+    }
+
+    /// <summary>Gets the OpenAPI <c>operationId</c>, or <see langword="null"/> if the operation declares none.</summary>
+    public string? OperationId { get; }
+
+    /// <summary>Gets the generated handler method name.</summary>
+    public string MethodName { get; }
+
+    /// <summary>Gets the HTTP method (e.g. <c>GET</c>, <c>POST</c>).</summary>
+    public string HttpMethod { get; }
+
+    /// <summary>Gets the ASP.NET route template as registered.</summary>
+    public string RouteTemplate { get; }
+
+    /// <summary>Gets the OpenAPI tags for the operation.</summary>
+    public System.Collections.Generic.IReadOnlyList<string> Tags { get; }
+
+    /// <summary>Gets a value indicating whether the operation originates from a webhook/callback rather than the main paths.</summary>
+    public bool IsCallback { get; }
+
+    /// <summary>Gets the operation's security requirements (scheme name and required scopes).</summary>
+    public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> SecurityRequirements { get; }
+}
+
+/// <summary>
+/// A single security requirement (a scheme name and the scopes it requires) for an operation.
+/// </summary>
+public readonly struct EndpointSecurityRequirement
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EndpointSecurityRequirement"/> struct.
+    /// </summary>
+    /// <param name="schemeName">The name of the security scheme.</param>
+    /// <param name="scopes">The scopes required by this requirement.</param>
+    public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes)
+    {
+        this.SchemeName = schemeName;
+        this.Scopes = scopes;
+    }
+
+    /// <summary>Gets the name of the security scheme.</summary>
+    public string SchemeName { get; }
+
+    /// <summary>Gets the scopes required by this requirement.</summary>
+    public System.Collections.Generic.IReadOnlyList<string> Scopes { get; }
 }
