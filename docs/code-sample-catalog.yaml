@@ -1367,8 +1367,8 @@ main-docs:
       - {index: 7, language: xml, lines: [114, 123]}
       - {index: 8, language: xml, lines: [127, 131]}
       - {index: 9, language: xml, lines: [139, 145]}
-      - {index: 10, language: xml, lines: [176, 180]}
-      - {index: 11, language: , lines: [184, 189]}
+      - {index: 10, language: xml, lines: [178, 182]}
+      - {index: 11, language: , lines: [186, 191]}
   - path: "docs/StandaloneEvaluatorInternals.md"
     blocks:
       - {index: 0, language: csharp, lines: [19, 26], category: compilable, verified: false}
