@@ -20,8 +20,16 @@ public enum OptionalAsNullable
     None,
 
     /// <summary>
-    /// Properties that are optional are emitted as nullable, and <c>JsonValueKind.Null</c> or 
+    /// Properties that are optional are emitted as nullable, and <c>JsonValueKind.Null</c> or
     /// <c>JsonValueKind.Undefined</c> values produce <see langword="null"/>.
     /// </summary>
     NullOrUndefined,
+
+    /// <summary>
+    /// As <see cref="NullOrUndefined"/>, except that optional properties which declare a
+    /// non-null <c>default</c> are emitted as non-nullable values (the default is returned
+    /// when the property is absent). Optional properties whose <c>default</c> is JSON
+    /// <c>null</c> remain nullable.
+    /// </summary>
+    NullOrUndefinedExceptNonNullDefaulted,
 }

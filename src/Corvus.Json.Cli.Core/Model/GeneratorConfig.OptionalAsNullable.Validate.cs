@@ -106,6 +106,18 @@ public readonly partial struct GeneratorConfig
             /// as a UTF8 byte array.
             /// </summary>
             public static ReadOnlySpan<byte> NullOrUndefinedUtf8 => CorvusValidation.Enum2Utf8;
+
+            /// <summary>
+            /// Gets the string 'NullOrUndefinedExceptNonNullDefaulted'
+            /// as a <see cref="Corvus.Json.CodeGenerator.GeneratorConfig.OptionalAsNullable"/>.
+            /// </summary>
+            public static OptionalAsNullable NullOrUndefinedExceptNonNullDefaulted { get; } = CorvusValidation.Enum3.As<OptionalAsNullable>();
+
+            /// <summary>
+            /// Gets the string 'NullOrUndefinedExceptNonNullDefaulted'
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> NullOrUndefinedExceptNonNullDefaultedUtf8 => CorvusValidation.Enum3Utf8;
         }
 
         /// <summary>
@@ -121,6 +133,10 @@ public readonly partial struct GeneratorConfig
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
             public static readonly JsonString Enum2 = JsonString.ParseValue("\"NullOrUndefined\"");
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly JsonString Enum3 = JsonString.ParseValue("\"NullOrUndefinedExceptNonNullDefaulted\"");
 
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
@@ -130,6 +146,10 @@ public readonly partial struct GeneratorConfig
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
             public static ReadOnlySpan<byte> Enum2Utf8 => "\"NullOrUndefined\""u8;
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static ReadOnlySpan<byte> Enum3Utf8 => "\"NullOrUndefinedExceptNonNullDefaulted\""u8;
 
             /// <summary>
             /// Core type validation.
@@ -178,6 +198,11 @@ public readonly partial struct GeneratorConfig
                     if (!enumFoundValid)
                     {
                         enumFoundValid = value.Equals(CorvusValidation.Enum2);
+                    }
+
+                    if (!enumFoundValid)
+                    {
+                        enumFoundValid = value.Equals(CorvusValidation.Enum3);
                     }
 
                     if (enumFoundValid)

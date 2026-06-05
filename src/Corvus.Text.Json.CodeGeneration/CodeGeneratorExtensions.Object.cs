@@ -717,11 +717,24 @@ internal static partial class CodeGeneratorExtensions
                 return generator;
             }
 
-            bool isNullable = typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional;
+            bool isOptional = property.RequiredOrOptional == RequiredOrOptional.Optional;
+            JsonValueKind defaultValueKind = property.ReducedPropertyType.DefaultValue().ValueKind;
+            bool hasDefault = defaultValueKind != JsonValueKind.Undefined;
+            bool hasNonNullDefault = hasDefault && defaultValueKind != JsonValueKind.Null;
+
+            // In the "except non-null defaulted" mode, an optional property that declares a non-null
+            // default is generated as a non-nullable type (the default is always materialised).
+            bool nonNullable = typeDeclaration.ExcludeNonNullDefaulted() && isOptional && hasNonNullDefault;
+            bool isNullable = typeDeclaration.OptionalAsNullable() && isOptional && !nonNullable;
+
+            // In that same mode, an optional property whose default is JSON null stays nullable and
+            // returns a C# null (rather than a Null-kind default instance) when the property is absent.
+            bool flipBackNullDefault = typeDeclaration.ExcludeNonNullDefaulted() && isOptional && hasDefault && !hasNonNullDefault;
+
             string propertyType = $"{property.ReducedPropertyType.FullyQualifiedDotnetTypeName()}{(forMutable ? ".Mutable" : "")}";
 
             string immutableTypeName = property.ReducedPropertyType.FullyQualifiedDotnetTypeName();
-            bool hasDefaultValue = !forMutable && property.ReducedPropertyType.DefaultValue().ValueKind != JsonValueKind.Undefined;
+            bool hasDefaultValue = !forMutable && hasDefault && !flipBackNullDefault;
 
             generator
                 .AppendSeparatorLine()
@@ -1617,8 +1630,12 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLine(".")
                 .AppendLineIndent("/// </para>");
         }
-        else if (property.Owner.OptionalAsNullable())
+        else if (property.Owner.OptionalAsNullable() &&
+            !(property.Owner.ExcludeNonNullDefaulted() &&
+                property.ReducedPropertyType.DefaultValue().ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Null))
         {
+            // Emitted for properties that are generated as nullable. A property with a non-null
+            // default under "except non-null defaulted" is non-nullable, so it is excluded here.
             usingRemarks = true;
 
             generator

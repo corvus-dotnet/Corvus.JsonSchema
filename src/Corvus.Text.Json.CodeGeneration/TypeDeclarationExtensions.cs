@@ -66,6 +66,7 @@ public static class TypeDeclarationExtensions
     private const string DotnetTypeNameWithoutNamespaceKey = "CSharp_LanguageProvider_DotnetTypeNameWithoutNamespace";
     private const string FullyQualifiedDotnetTypeNameKey = "CSharp_LanguageProvider_FullyQualifiedDotnetTypeName";
     private const string OptionalAsNullableKey = "CSharp_LanguageProvider_OptionalAsNullable";
+    private const string ExcludeNonNullDefaultedKey = "CSharp_LanguageProvider_ExcludeNonNullDefaulted";
     private const string ParentKey = "CSharp_LanguageProvider_Parent";
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
     private const string UseImplicitOperatorStringKey = "CSharp_LanguageProvider_UseImplicitOperatorString";
@@ -526,6 +527,24 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating whether an optional property that declares a non-null
+    /// <c>default</c> should be generated as a non-nullable type, even when
+    /// <see cref="OptionalAsNullable(TypeDeclaration)"/> is <see langword="true"/>.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if optional properties with a non-null default should be generated as non-nullable types.</returns>
+    public static bool ExcludeNonNullDefaulted(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(ExcludeNonNullDefaultedKey, out bool? excludeNonNullDefaulted) &&
+            excludeNonNullDefaulted is bool value)
+        {
+            return value;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Gets the .NET namespace.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration.</param>
@@ -594,6 +613,7 @@ public static class TypeDeclarationExtensions
     {
         typeDeclaration.SetMetadata(AlwaysAssertFormatKey, options.AlwaysAssertFormat);
         typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
+        typeDeclaration.SetMetadata(ExcludeNonNullDefaultedKey, options.ExcludeNonNullDefaulted);
         typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
         typeDeclaration.SetMetadata(AddExplicitUsingsKey, options.AddExplicitUsings);
         typeDeclaration.SetMetadata(DefaultAccessibilityKey, options.DefaultAccessibility);

@@ -222,19 +222,24 @@ public static class GenerationDriverV5
     {
         CodeGeneration.GeneratedTypeAccessibility defaultAccessibility = GetDefaultAccessibility(generatorConfig);
 
+        GeneratorConfig.OptionalAsNullable optionalAsNullableMode = generatorConfig.OptionalAsNullableValue ?? GeneratorConfig.OptionalAsNullable.DefaultInstance;
+        bool excludeNonNullDefaulted = optionalAsNullableMode.Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefinedExceptNonNullDefaulted);
+        bool optionalAsNullable = excludeNonNullDefaulted || optionalAsNullableMode.Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefined);
+
         return new CodeGeneration.CSharpLanguageProvider.Options(
             (string)generatorConfig.RootNamespace,
             namedTypes: namedTypes.Select(n => new CodeGeneration.CSharpLanguageProvider.NamedType(new((string)n.Reference), (string)n.DotnetTypeName, n.DotnetNamespace?.GetString(), GetAccessibility(n) ?? defaultAccessibility)).ToArray(),
             namespaces: generatorConfig.Namespaces?.Select(n => new CodeGeneration.CSharpLanguageProvider.Namespace(new JsonReference((string)n.Key), (string)n.Value)).ToArray(),
             alwaysAssertFormat: generatorConfig.AssertFormat ?? true,
             useOptionalNameHeuristics: !(generatorConfig.DisableOptionalNameHeuristics ?? false),
-            optionalAsNullable: (generatorConfig.OptionalAsNullableValue ?? GeneratorConfig.OptionalAsNullable.DefaultInstance).Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefined),
+            optionalAsNullable: optionalAsNullable,
             disabledNamingHeuristics: generatorConfig.DisabledNamingHeuristics?.Select(n => (string)n).ToArray(),
             useImplicitOperatorString: generatorConfig.UseImplicitOperatorString ?? false,
             lineEndSequence: (generatorConfig.UseUnixLineEndings ?? false) ? "\n" : "\r\n",
             addExplicitUsings: generatorConfig.AddExplicitUsings ?? false,
             defaultAccessibility: defaultAccessibility,
-            codeGenerationMode: codeGenerationMode);
+            codeGenerationMode: codeGenerationMode,
+            excludeNonNullDefaulted: excludeNonNullDefaulted);
     }
 
     private static CodeGeneration.GeneratedTypeAccessibility GetDefaultAccessibility(in GeneratorConfig generatorConfig)

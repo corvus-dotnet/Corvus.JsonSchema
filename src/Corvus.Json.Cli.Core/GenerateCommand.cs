@@ -86,7 +86,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public string[]? DisableNamingHeuristic { get; init; }
 
         [CommandOption("--optionalAsNullable")]
-        [Description("If NullOrUndefined, optional properties are emitted as .NET nullable values.")]
+        [Description("If NullOrUndefined, optional properties are emitted as .NET nullable values. If NullOrUndefinedExceptNonNullDefaulted, optional properties with a non-null default are instead emitted as non-nullable values.")]
         [DefaultValue(OptionalAsNullable.None)]
         public OptionalAsNullable OptionalAsNullable { get; init; }
 
