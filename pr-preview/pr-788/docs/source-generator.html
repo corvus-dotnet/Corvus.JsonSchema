@@ -440,7 +440,7 @@ public readonly partial struct PhoneNumber;
 <tr>
 <td><code>CorvusTextJsonOptionalAsNullable</code></td>
 <td>—</td>
-<td>When set to <code>NullOrUndefined</code>, optional properties generate as .NET nullable types (<code>T?</code>). JSON <code>null</code> or missing values map to C# <code>null</code>. When omitted, optional properties use the full type and you check for <code>Undefined</code> explicitly.</td>
+<td>When set to <code>NullOrUndefined</code>, optional properties generate as .NET nullable types (<code>T?</code>). JSON <code>null</code> or missing values map to C# <code>null</code>. When set to <code>NullOrUndefinedExceptNonNullDefaulted</code>, this applies to all optional properties <em>except</em> those that declare a non-null <code>default</code>, which are generated as the non-nullable type <code>T</code> (the default is returned when the property is absent); an optional property whose <code>default</code> is JSON <code>null</code> stays nullable. When omitted, optional properties use the full type and you check for <code>Undefined</code> explicitly.</td>
 </tr>
 <tr>
 <td><code>CorvusTextJsonAlwaysAssertFormat</code></td>
@@ -469,6 +469,9 @@ public readonly partial struct PhoneNumber;
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><strong>Note on <code>default: null</code>.</strong> Under <code>NullOrUndefined</code>, an optional property whose <code>default</code> is JSON <code>null</code> returns its (null-valued) default instance — not C# <code>null</code> — when the property is absent. Under <code>NullOrUndefinedExceptNonNullDefaulted</code>, such a property instead returns C# <code>null</code> when absent, consistent with it remaining a nullable <code>T?</code>. Only a non-null <code>default</code> triggers generation as a non-nullable <code>T</code>.</p>
+</blockquote>
 <h2 id="what-gets-generated">What Gets Generated</h2>
 <p>For each <code>[JsonSchemaTypeGenerator]</code> attribute, the generator produces a complete implementation of the partial struct:</p>
 <ul>

@@ -135,7 +135,7 @@
 </tbody>
 </table>
 <h2 id="parse-readonlymemory-byte-jsondocumentoptions">Parse(ReadOnlyMemory&lt;byte&gt;, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0caa0f0c33428fb0c7a67b8286455017c26982a9/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L90">ParsedJsonDocument.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/3de17aee4a50b5f9fad6a2c5b463006bc79e226b/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L90">ParsedJsonDocument.Parse.cs</a></p>
 <p>Parse memory as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.</p>
 <pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlyMemory&lt;byte&gt; utf8Json, JsonDocumentOptions options)
 </code></pre>
@@ -206,7 +206,7 @@
 </table>
 <hr />
 <h2 id="parse-readonlymemory-byte-byte-jsondocumentoptions">Parse(ReadOnlyMemory&lt;byte&gt;, byte[], JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0caa0f0c33428fb0c7a67b8286455017c26982a9/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L124">ParsedJsonDocument.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/3de17aee4a50b5f9fad6a2c5b463006bc79e226b/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L124">ParsedJsonDocument.Parse.cs</a></p>
 <p>Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument, taking ownership of a rented <a href="https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1"><code>ArrayPool</code></a> byte array that backs the memory.</p>
 <pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlyMemory&lt;byte&gt; utf8Json, byte[] rentedArrayPoolBytes, JsonDocumentOptions options)
 </code></pre>
@@ -282,7 +282,7 @@
 </table>
 <hr />
 <h2 id="parse-readonlysequence-byte-jsondocumentoptions">Parse(ReadOnlySequence&lt;byte&gt;, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0caa0f0c33428fb0c7a67b8286455017c26982a9/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L154">ParsedJsonDocument.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/3de17aee4a50b5f9fad6a2c5b463006bc79e226b/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L154">ParsedJsonDocument.Parse.cs</a></p>
 <p>Parse a sequence as UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument.</p>
 <pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlySequence&lt;byte&gt; utf8Json, JsonDocumentOptions options)
 </code></pre>
@@ -353,7 +353,7 @@
 </table>
 <hr />
 <h2 id="parse-stream-jsondocumentoptions">Parse(Stream, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0caa0f0c33428fb0c7a67b8286455017c26982a9/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L195">ParsedJsonDocument.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/3de17aee4a50b5f9fad6a2c5b463006bc79e226b/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L195">ParsedJsonDocument.Parse.cs</a></p>
 <p>Parse a <a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a> as UTF-8 encoded data representing a single JSON value into a ParsedJsonDocument. The Stream will be read to completion.</p>
 <pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(Stream utf8Json, JsonDocumentOptions options)
 </code></pre>
@@ -422,7 +422,7 @@
 </table>
 <hr />
 <h2 id="parse-readonlymemory-char-jsondocumentoptions">Parse(ReadOnlyMemory&lt;char&gt;, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0caa0f0c33428fb0c7a67b8286455017c26982a9/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L310">ParsedJsonDocument.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/3de17aee4a50b5f9fad6a2c5b463006bc79e226b/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L310">ParsedJsonDocument.Parse.cs</a></p>
 <p>Parses text representing a single JSON value into a ParsedJsonDocument.</p>
 <pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(ReadOnlyMemory&lt;char&gt; json, JsonDocumentOptions options)
 </code></pre>
@@ -493,7 +493,7 @@
 </table>
 <hr />
 <h2 id="parse-string-jsondocumentoptions">Parse(string, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0caa0f0c33428fb0c7a67b8286455017c26982a9/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L373">ParsedJsonDocument.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/3de17aee4a50b5f9fad6a2c5b463006bc79e226b/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.Parse.cs#L373">ParsedJsonDocument.Parse.cs</a></p>
 <p>Parses text representing a single JSON value into a ParsedJsonDocument.</p>
 <pre><code class="language-csharp">public static ParsedJsonDocument&lt;T&gt; Parse(string json, JsonDocumentOptions options)
 </code></pre>
