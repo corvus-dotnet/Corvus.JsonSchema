@@ -5,11 +5,29 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PreserveCompilationContext>true</PreserveCompilationContext>
-    <NoWarn>$(NoWarn);NU1504;CS1591;SA1210;SA1514;SA1509;SA1513;SA1508;SA1000;SA1028;SA1400;SA1511;SA1507</NoWarn>
+    <NoWarn>$(NoWarn);NU1504;CS1591;SA1210;SA1514;SA1509;SA1513;SA1508;SA1000;SA1028;SA1400;SA1511;SA1507;RCS1251</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+
+  <!-- The GeneratorConfig model is generated at build time from generator-config.json by the
+       V4 source generator (the model and its consumers use the V4 Corvus.Json runtime).
+       DocumentationNameHeuristic is re-enabled (the generator disables it by default) to preserve
+       the documentation-derived type names this configuration schema relies on. -->
+  <PropertyGroup>
+    <CorvusJsonSchemaOptionalAsNullable>NullOrUndefined</CorvusJsonSchemaOptionalAsNullable>
+    <CorvusJsonSchemaDisabledNamingHeuristics></CorvusJsonSchemaDisabledNamingHeuristics>
+    <CorvusJsonSchemaDefaultAccessibility>Public</CorvusJsonSchemaDefaultAccessibility>
+  </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="CorvusJsonSchemaOptionalAsNullable" />
+    <CompilerVisibleProperty Include="CorvusJsonSchemaDisabledNamingHeuristics" />
+    <CompilerVisibleProperty Include="CorvusJsonSchemaDefaultAccessibility" />
+    <AdditionalFiles Include="generator-config.json" />
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SetTargetFramework="TargetFramework=netstandard2.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Spectre.Console.Cli" />

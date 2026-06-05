@@ -162,7 +162,7 @@ public static class GenerationDriverV5
         foreach (GeneratorConfig.GenerationSpecification generatorSpecification in generatorConfig.TypesToGenerate)
         {
             string schemaFile = (string)generatorSpecification.SchemaFile;
-            JsonReference reference = new(schemaFile, generatorSpecification.RootPath is JsonUriReference rootPath ? (string)rootPath : string.Empty);
+            JsonReference reference = new(schemaFile, generatorSpecification.RootPath is { } rootPath ? (string)rootPath : string.Empty);
             ProgressTask typeBuilderTask = context.AddTask($"Building type declarations for [green]{reference}[/]");
             TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(reference, defaultVocabulary, generatorSpecification.RebaseToRootPath ?? false);
             typesToGenerate.Add(rootType);
@@ -173,10 +173,19 @@ public static class GenerationDriverV5
                 fallbackOutputPath = Path.GetDirectoryName(schemaFile);
             }
 
-            if (generatorSpecification.OutputRootTypeName is JsonString outputRootTypeName)
+            if (generatorSpecification.OutputRootTypeName is { } outputRootTypeName)
             {
+                GeneratorConfig.NamedTypeSpecification.DotnetNamespaceEntity? dotnetNamespace = null;
+                if (generatorSpecification.OutputRootNamespace is { } outputRootNamespace)
+                {
+                    dotnetNamespace = outputRootNamespace.As<GeneratorConfig.NamedTypeSpecification.DotnetNamespaceEntity>();
+                }
+
                 GeneratorConfig.NamedTypeSpecification rootNamedType =
-                    GeneratorConfig.NamedTypeSpecification.Create(outputRootTypeName, new JsonIriReference(rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location), generatorSpecification.OutputRootNamespace);
+                    GeneratorConfig.NamedTypeSpecification.Create(
+                        outputRootTypeName.As<GeneratorConfig.NamedTypeSpecification.TheNetNameToUseForTheSchema>(),
+                        new JsonIriReference(rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location),
+                        dotnetNamespace: dotnetNamespace);
 
                 if (TryGetStringProperty(generatorSpecification, "outputRootAccessibility", out string? outputRootAccessibility))
                 {
@@ -307,7 +316,7 @@ public static class GenerationDriverV5
 
     private static async Task<string?> BeginMapFile(GeneratorConfig generatorConfig, string outputPath)
     {
-        string? mapFile = generatorConfig.OutputMapFile is JsonString omf ? Path.Combine(outputPath, (string)omf) : null;
+        string? mapFile = generatorConfig.OutputMapFile is { } omf ? Path.Combine(outputPath, (string)omf) : null;
         if (!string.IsNullOrEmpty(mapFile))
         {
             File.Delete(mapFile);
