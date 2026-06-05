@@ -854,6 +854,8 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
     /// <param name="lineEndSequence">The line-end sequence. Defaults to <c>\r\n</c>.</param>
     /// <param name="addExplicitUsings">If true, then the generated files will include using statements for the standard implicit usings. You should use this when your project does not use implicit usings.</param>
     /// <param name="defaultAccessibility">Defines the accessibility of the generated types. Defaults to <see cref="GeneratedTypeAccessibility.Public"/>.</param>
+    /// <param name="codeGenerationMode">The code generation mode to use.</param>
+    /// <param name="excludeNonNullDefaulted">If true (and <paramref name="optionalAsNullable"/> is true), then optional properties that declare a non-null <c>default</c> are generated as non-nullable types.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -867,7 +869,8 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
         string lineEndSequence = "\r\n",
         bool addExplicitUsings = false,
         GeneratedTypeAccessibility defaultAccessibility = GeneratedTypeAccessibility.Public,
-        CodeGenerationMode codeGenerationMode = CodeGenerationMode.TypeGeneration)
+        CodeGenerationMode codeGenerationMode = CodeGenerationMode.TypeGeneration,
+        bool excludeNonNullDefaulted = false)
     {
         private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -896,6 +899,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
         /// Gets a value indicating whether to generate nullable types for optional parameters.
         /// </summary>
         internal bool OptionalAsNullable { get; } = optionalAsNullable;
+
+        /// <summary>
+        /// Gets a value indicating whether optional properties that declare a non-null
+        /// <c>default</c> are generated as non-nullable types when <see cref="OptionalAsNullable"/> is set.
+        /// </summary>
+        internal bool ExcludeNonNullDefaulted { get; } = excludeNonNullDefaulted;
 
         /// <summary>
         /// Gets the file extension (including the leading '.').

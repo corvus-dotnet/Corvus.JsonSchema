@@ -124,10 +124,12 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         }
 
         bool optionalAsNullable = false;
+        bool excludeNonNullDefaulted = false;
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonOptionalAsNullable", out string? optionalAsNullableName))
         {
-            optionalAsNullable = optionalAsNullableName == "NullOrUndefined";
+            optionalAsNullable = optionalAsNullableName is "NullOrUndefined" or "NullOrUndefinedExceptNonNullDefaulted";
+            excludeNonNullDefaulted = optionalAsNullableName == "NullOrUndefinedExceptNonNullDefaulted";
         }
 
         bool addExplicitUsings = true;
@@ -198,6 +200,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         return new(
             fallbackVocabulary,
             optionalAsNullable,
+            excludeNonNullDefaulted,
             useOptionalNameHeuristics,
             alwaysAssertFormat,
             disabledNamingHeuristics ?? DefaultDisabledNamingHeuristics,
@@ -261,6 +264,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
     private class GlobalOptions(
         IVocabulary fallbackVocabulary,
         bool optionalAsNullable,
+        bool excludeNonNullDefaulted,
         bool useOptionalNameHeuristics,
         bool alwaysAssertFormat,
         ImmutableArray<string> disabledNamingHeuristics,
@@ -273,6 +277,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
         public bool OptionalAsNullable { get; } = optionalAsNullable;
+
+        public bool ExcludeNonNullDefaulted { get; } = excludeNonNullDefaulted;
 
         public bool UseOptionalNameHeuristics { get; } = useOptionalNameHeuristics;
 
@@ -325,7 +331,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 disabledNamingHeuristics: [.. DisabledNamingHeuristics],
                 fileExtension: ".g.cs",
                 defaultAccessibility: DefaultAccessibility,
-                codeGenerationMode: EmitEvaluator ? CodeGenerationMode.Both : CodeGenerationMode.TypeGeneration);
+                codeGenerationMode: EmitEvaluator ? CodeGenerationMode.Both : CodeGenerationMode.TypeGeneration,
+                excludeNonNullDefaulted: ExcludeNonNullDefaulted);
 
             return options;
         }

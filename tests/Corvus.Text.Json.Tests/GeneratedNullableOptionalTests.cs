@@ -63,6 +63,30 @@ public class GeneratedNullableOptionalTests
 
     #endregion
 
+    #region Nullable optional property — explicit JSON null returns null
+
+    [TestMethod]
+    public void NullableOptional_ExplicitNullEmail_ReturnsNull()
+    {
+        // The "NullOrUndefined" contract: an explicit JSON null maps to a C# null,
+        // not to a Null-kind value. (Regression test for the V5 collapse bug.)
+        using var doc =
+            ParsedJsonDocument<ObjectWithMixedProperties>.Parse("""{"name":"Alice","age":30,"email":null}""");
+
+        Assert.IsNull(doc.RootElement.Email);
+    }
+
+    [TestMethod]
+    public void NullableOptional_ExplicitNullIsActive_ReturnsNull()
+    {
+        using var doc =
+            ParsedJsonDocument<ObjectWithMixedProperties>.Parse("""{"name":"Alice","age":30,"isActive":null}""");
+
+        Assert.IsNull(doc.RootElement.IsActive);
+    }
+
+    #endregion
+
     #region Nullable optional — mutable set and remove
 
     [TestMethod]

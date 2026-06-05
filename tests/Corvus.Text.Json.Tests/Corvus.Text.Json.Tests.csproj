@@ -160,6 +160,8 @@
     <Compile Include="GeneratedIfThenElseMatchTests.cs" />
     <Compile Include="GeneratedMixedCompositionTests.cs" />
     <Compile Include="GeneratedNullableOptionalTests.cs" />
+    <Compile Include="GeneratedNonNullDefaultedTests.cs" />
+    <Compile Include="GeneratedV4NonNullDefaultedTests.cs" />
     <Compile Include="GeneratedTupleArrayTests.cs" />
     <Compile Include="GeneratedComposedTupleTests.cs" />
     <Compile Include="GeneratedComposedCreationTests.cs" />
@@ -377,6 +379,8 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels\Corvus.Text.Json.Tests.GeneratedModels.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable\Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels.NullOrUndefinedExceptNonNullDefaulted\Corvus.Text.Json.Tests.GeneratedModels.NullOrUndefinedExceptNonNullDefaulted.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels.V4NonNullDefaulted\Corvus.Text.Json.Tests.GeneratedModels.V4NonNullDefaulted.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Tests.MigrationModels.V4\Corvus.Text.Json.Tests.MigrationModels.V4.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Tests.MigrationModels.V5\Corvus.Text.Json.Tests.MigrationModels.V5.csproj" />
   </ItemGroup>

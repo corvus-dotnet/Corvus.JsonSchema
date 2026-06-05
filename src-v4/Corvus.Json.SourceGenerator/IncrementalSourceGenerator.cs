@@ -129,7 +129,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             fileExtension: "_g.cs",
             defaultAccessibility: generationSource.DefaultAccessibility,
             addExplicitUsings: generationSource.AddExplicitUsings,
-            useImplicitOperatorString: generationSource.UseImplicitOperatorString);
+            useImplicitOperatorString: generationSource.UseImplicitOperatorString,
+            excludeNonNullDefaulted: generationSource.ExcludeNonNullDefaulted);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 
@@ -207,10 +208,12 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         }
 
         bool optionalAsNullable = true;
+        bool excludeNonNullDefaulted = false;
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaOptionalAsNullable", out string? optionalAsNullableName))
         {
-            optionalAsNullable = optionalAsNullableName == "NullOrUndefined";
+            optionalAsNullable = optionalAsNullableName is "NullOrUndefined" or "NullOrUndefinedExceptNonNullDefaulted";
+            excludeNonNullDefaulted = optionalAsNullableName == "NullOrUndefinedExceptNonNullDefaulted";
         }
 
         bool addExplicitUsings = true;
@@ -279,6 +282,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         return new(
             fallbackVocabulary,
             optionalAsNullable,
+            excludeNonNullDefaulted,
             useOptionalNameHeuristics,
             alwaysAssertFormat,
             disabledNamingHeuristics ?? DefaultDisabledNamingHeuristics,
@@ -418,6 +422,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         public bool OptionalAsNullable { get; } = right.OptionalAsNullable;
 
+        public bool ExcludeNonNullDefaulted { get; } = right.ExcludeNonNullDefaulted;
+
         public bool UseOptionalNameHeuristics { get; } = right.UseOptionalNameHeuristics;
 
         public ImmutableArray<string> DisabledNamingHeuristics { get; } = right.DisabledNamingHeuristics;
@@ -441,6 +447,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         public bool OptionalAsNullable { get; } = right.OptionalAsNullable;
 
+        public bool ExcludeNonNullDefaulted { get; } = right.ExcludeNonNullDefaulted;
+
         public bool UseOptionalNameHeuristics { get; } = right.UseOptionalNameHeuristics;
 
         public ImmutableArray<string> DisabledNamingHeuristics { get; } = right.DisabledNamingHeuristics;
@@ -457,6 +465,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
     private readonly struct GlobalOptions(
         IVocabulary fallbackVocabulary,
         bool optionalAsNullable,
+        bool excludeNonNullDefaulted,
         bool useOptionalNameHeuristics,
         bool alwaysAssertFormat,
         ImmutableArray<string> disabledNamingHeuristics,
@@ -467,6 +476,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
         public bool OptionalAsNullable { get; } = optionalAsNullable;
+
+        public bool ExcludeNonNullDefaulted { get; } = excludeNonNullDefaulted;
 
         public bool UseOptionalNameHeuristics { get; } = useOptionalNameHeuristics;
 

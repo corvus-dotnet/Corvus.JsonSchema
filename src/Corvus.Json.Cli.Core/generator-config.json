@@ -41,7 +41,7 @@
         },
         "optionalAsNullable": {
             "$ref": "#/$defs/optionalAsNullable",
-            "description": "If NullOrUndefined, optional properties are emitted as .NET nullable values."
+            "description": "If NullOrUndefined, optional properties are emitted as .NET nullable values. If NullOrUndefinedExceptNonNullDefaulted, optional properties that declare a non-null default are instead emitted as non-nullable values."
         },
         "additionalFiles": {
             "$ref": "#/$defs/fileList",
@@ -133,7 +133,7 @@
         },
         "optionalAsNullable": {
             "type": "string",
-            "enum": [ "None", "NullOrUndefined" ],
+            "enum": [ "None", "NullOrUndefined", "NullOrUndefinedExceptNonNullDefaulted" ],
             "default":  "None"
         },
         "useSchema": {

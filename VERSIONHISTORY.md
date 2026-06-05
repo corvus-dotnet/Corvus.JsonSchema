@@ -1,5 +1,17 @@
 # Version History
 
+## V5.2.0
+
+V5.2.0 adds an opt-in `NullOrUndefinedExceptNonNullDefaulted` value for the `OptionalAsNullable` generation option — generating optional properties that declare a non-null `default` as non-nullable `T` — and fixes a V5 bug where an explicit JSON `null` was not mapped to C# `null` under `OptionalAsNullable=NullOrUndefined`.
+
+### New features
+
+- **`OptionalAsNullable=NullOrUndefinedExceptNonNullDefaulted`** — A new opt-in value for the `OptionalAsNullable` generation option (CLI `--optionalAsNullable`, MSBuild `CorvusTextJsonOptionalAsNullable` / `CorvusJsonSchemaOptionalAsNullable`), supported by both the V4 and V5 engines. It behaves like `NullOrUndefined`, except that an optional property which declares a **non-null** `default` is generated as a non-nullable `T` (the default is always materialised when the property is absent), rather than `T?`. Optional properties without a `default`, or whose `default` is JSON `null`, remain nullable `T?`. The new value is additive — existing `None` and `NullOrUndefined` consumers are unaffected. See [#787](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/787).
+
+### Breaking changes
+
+- **V5 `OptionalAsNullable=NullOrUndefined` now maps an explicit JSON `null` to C# `null`** — Previously the V5 engine returned a `Null`-kind value (rather than C# `null`) when an optional property was explicitly present as JSON `null`, implementing only the "Undefined" half of the documented "JSON `null` or missing values map to C# `null`" contract. It now returns C# `null` for an explicit JSON `null`, matching both the documentation and the V4 engine. Only generated getters for optional properties under `NullOrUndefined` are affected; absent properties, and properties with a non-null `default`, are unchanged. See [#787](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/787).
+
 ## V5.1.7
 
 V5.1.7 adds an optional per-endpoint configuration callback to the generated OpenAPI server registration, enabling consumers to apply ASP.NET endpoint conventions — including wiring the OpenAPI security specification onto endpoints — without editing generated code.
