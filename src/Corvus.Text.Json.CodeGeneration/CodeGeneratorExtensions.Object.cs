@@ -730,7 +730,23 @@ internal static partial class CodeGeneratorExtensions
                 .BeginPublicReadOnlyPropertyDeclaration(propertyType, property.DotnetPropertyName(), isNullable)
                     .AppendLineIndent("if (_parent.TryGetNamedPropertyValue(_idx, ", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), "Utf8, out ", propertyType, " value))")
                     .AppendLineIndent("{")
-                    .PushIndent()
+                    .PushIndent();
+
+            if (isNullable)
+            {
+                // When the property is generated as a nullable type, an explicit JSON null maps to a
+                // C# null (the "NullOrUndefined" contract), in line with the V4 engine.
+                generator
+                        .AppendLineIndent("if (value.IsNull())")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("return default;")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendSeparatorLine();
+            }
+
+            generator
                         .AppendLineIndent("return value;")
                     .PopIndent()
                     .AppendLineIndent("}")
@@ -1608,15 +1624,7 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendLineIndent("/// <remarks>")
                 .AppendLineIndent("/// <para>")
-                .AppendIndent("/// If this JSON property is <see cref=\"JsonValueKind.Undefined\"/>");
-
-            if ((property.ReducedPropertyType.ImpliedCoreTypesOrAny() & CoreTypes.Null) != 0)
-            {
-                generator.Append(", or <see cref=\"JsonValueKind.Null\"/>");
-            }
-
-            generator
-                .AppendLine(" then the value returned will be <see langword=\"null\" />.")
+                .AppendLineIndent("/// If this JSON property is <see cref=\"JsonValueKind.Undefined\"/> or <see cref=\"JsonValueKind.Null\"/> then the value returned will be <see langword=\"null\" />.")
                 .AppendLineIndent("/// </para>");
         }
 
