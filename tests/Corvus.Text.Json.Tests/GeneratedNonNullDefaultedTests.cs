@@ -119,4 +119,107 @@ public class GeneratedNonNullDefaultedTests
     }
 
     #endregion
+
+    #region Mutable (object-backed) getters
+
+    [TestMethod]
+    public void Mutable_NonNullDefault_Status_PresentAndSet()
+    {
+        using var workspace = JsonWorkspace.Create();
+        using var doc = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse("""{"name":"test","status":"archived"}""");
+        using JsonDocumentBuilder<ObjectWithDefaultProperties.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        ObjectWithDefaultProperties.Mutable root = builder.RootElement;
+
+        // Non-nullable mutable getter, present path (object backing).
+        ObjectWithDefaultProperties.StatusEntity.Mutable status = root.Status;
+        Assert.AreEqual("archived", (string)status);
+
+        root.SetStatus("active");
+        Assert.AreEqual("active", (string)root.Status);
+    }
+
+    [TestMethod]
+    public void Mutable_NoDefault_Label_PresentRemovedAbsent()
+    {
+        using var workspace = JsonWorkspace.Create();
+        using var doc = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse("""{"name":"test","label":"hi"}""");
+        using JsonDocumentBuilder<ObjectWithDefaultProperties.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        ObjectWithDefaultProperties.Mutable root = builder.RootElement;
+
+        // Nullable mutable getter, present path.
+        Assert.AreEqual("hi", root.Label?.ToString());
+
+        // Absent path returns C# null.
+        root.RemoveLabel();
+        Assert.IsNull(root.Label);
+    }
+
+    [TestMethod]
+    public void Mutable_NullDefault_Nickname_PresentRemovedAbsent()
+    {
+        using var workspace = JsonWorkspace.Create();
+        using var doc = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse("""{"name":"test","nickname":"bob"}""");
+        using JsonDocumentBuilder<ObjectWithDefaultProperties.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        ObjectWithDefaultProperties.Mutable root = builder.RootElement;
+
+        Assert.IsNotNull(root.Nickname);
+
+        root.RemoveNickname();
+        Assert.IsNull(root.Nickname);
+    }
+
+    [TestMethod]
+    public void Mutable_NoDefault_Label_ExplicitNull_ReturnsNull()
+    {
+        using var workspace = JsonWorkspace.Create();
+        using var doc = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse("""{"name":"test","label":null}""");
+        using JsonDocumentBuilder<ObjectWithDefaultProperties.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        // Mutable nullable getter, present-null path collapses to C# null.
+        Assert.IsNull(builder.RootElement.Label);
+    }
+
+    [TestMethod]
+    public void Mutable_NullDefault_Nickname_ExplicitNull_ReturnsNull()
+    {
+        using var workspace = JsonWorkspace.Create();
+        using var doc = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse("""{"name":"test","nickname":null}""");
+        using JsonDocumentBuilder<ObjectWithDefaultProperties.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        Assert.IsNull(builder.RootElement.Nickname);
+    }
+
+    [TestMethod]
+    public void Mutable_NonNullDefault_Status_Absent_NotSynthesised()
+    {
+        using var workspace = JsonWorkspace.Create();
+        using var doc = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse("""{"name":"test"}""");
+        using JsonDocumentBuilder<ObjectWithDefaultProperties.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        // The mutable view does not synthesise the schema default for an absent property
+        // (the default is materialised on the immutable read), exercising the absent path.
+        ObjectWithDefaultProperties.Mutable root = builder.RootElement;
+        _ = root.Status;
+        Assert.IsFalse(root.ToString().Contains("status"));
+    }
+
+    [TestMethod]
+    public void Mutable_RoundTrip_NonNullableStatusPreserved()
+    {
+        using var workspace = JsonWorkspace.Create();
+        using var doc = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse("""{"name":"test"}""");
+        using JsonDocumentBuilder<ObjectWithDefaultProperties.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        ObjectWithDefaultProperties.Mutable root = builder.RootElement;
+        root.SetStatus("archived");
+        string json = root.ToString();
+
+        using var roundTrip = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse(json);
+        Assert.AreEqual("archived", (string)roundTrip.RootElement.Status);
+    }
+
+    #endregion
 }

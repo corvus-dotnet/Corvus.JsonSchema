@@ -107,4 +107,83 @@ public class GeneratedV4NonNullDefaultedTests
     }
 
     #endregion
+
+    #region Object-backed getters (built, not parsed)
+
+    [TestMethod]
+    public void ObjectBacking_NonNullDefault_StatusPresent_ReturnsValue()
+    {
+        // Create() produces an object/dotnet-backed instance, exercising the Backing.Object accessor path.
+        ObjectWithDefaultProperties value = ObjectWithDefaultProperties.Create("test", status: "archived");
+
+        Assert.AreEqual("archived", (string)value.Status);
+    }
+
+    [TestMethod]
+    public void ObjectBacking_NonNullDefault_StatusAbsent_ReturnsDefault()
+    {
+        ObjectWithDefaultProperties value = ObjectWithDefaultProperties.Create("test");
+
+        Assert.AreEqual("active", (string)value.Status);
+    }
+
+    [TestMethod]
+    public void ObjectBacking_NonNullDefault_StatusNull_ReturnsNullKind()
+    {
+        // Non-nullable Status: the object-backed null-collapse is suppressed, so an explicit
+        // null property surfaces as a Null-kind value.
+        ObjectWithDefaultProperties value = ObjectWithDefaultProperties.FromProperties(
+            ("name", (JsonAny)"test"),
+            ("status", JsonAny.Null));
+
+        Assert.IsTrue(value.Status.IsNull());
+    }
+
+    [TestMethod]
+    public void ObjectBacking_NoDefault_LabelPresent_ReturnsValue()
+    {
+        ObjectWithDefaultProperties value = ObjectWithDefaultProperties.Create("test", label: "hi");
+
+        Assert.IsNotNull(value.Label);
+    }
+
+    [TestMethod]
+    public void ObjectBacking_NoDefault_LabelNull_ReturnsNull()
+    {
+        // Nullable Label: the object-backed null-collapse maps an explicit null to C# null.
+        ObjectWithDefaultProperties value = ObjectWithDefaultProperties.FromProperties(
+            ("name", (JsonAny)"test"),
+            ("label", JsonAny.Null));
+
+        Assert.IsNull(value.Label);
+    }
+
+    [TestMethod]
+    public void ObjectBacking_NullDefault_NicknamePresent_ReturnsValue()
+    {
+        // Object-backed, present non-null value path for a nullable property.
+        ObjectWithDefaultProperties value = ObjectWithDefaultProperties.Create("test", nickname: "bob");
+
+        Assert.IsNotNull(value.Nickname);
+    }
+
+    [TestMethod]
+    public void ObjectBacking_NullDefault_NicknameAbsent_ReturnsNull()
+    {
+        ObjectWithDefaultProperties value = ObjectWithDefaultProperties.Create("test");
+
+        Assert.IsNull(value.Nickname);
+    }
+
+    [TestMethod]
+    public void ObjectBacking_NullDefault_NicknameNull_ReturnsNull()
+    {
+        ObjectWithDefaultProperties value = ObjectWithDefaultProperties.FromProperties(
+            ("name", (JsonAny)"test"),
+            ("nickname", JsonAny.Null));
+
+        Assert.IsNull(value.Nickname);
+    }
+
+    #endregion
 }
