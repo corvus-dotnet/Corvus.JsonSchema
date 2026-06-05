@@ -178,6 +178,30 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Determines how an optional property is affected by the <c>OptionalAsNullable</c> options.
+    /// </summary>
+    /// <param name="typeDeclaration">The owning type declaration.</param>
+    /// <param name="property">The property declaration.</param>
+    /// <returns>
+    /// <c>IsNullable</c> indicates whether the property is generated as a nullable type;
+    /// <c>FlipBackNullDefault</c> indicates that the property declares a JSON-null default in
+    /// "except non-null defaulted" mode, so it stays nullable and returns C# null when absent.
+    /// </returns>
+    private static (bool IsNullable, bool FlipBackNullDefault) GetOptionalNullability(TypeDeclaration typeDeclaration, PropertyDeclaration property)
+    {
+        bool optional = property.RequiredOrOptional == RequiredOrOptional.Optional;
+        bool hasDefault = property.ReducedPropertyType.HasDefaultValue();
+        bool hasNonNullDefault = hasDefault && property.ReducedPropertyType.DefaultValue().ValueKind != JsonValueKind.Null;
+
+        // In "except non-null defaulted" mode, an optional property with a non-null default is generated
+        // as non-nullable; one whose default is JSON null stays nullable but returns C# null when absent.
+        bool nonNullable = typeDeclaration.ExcludeNonNullDefaulted() && optional && hasNonNullDefault;
+        bool isNullable = typeDeclaration.OptionalAsNullable() && optional && !nonNullable;
+        bool flipBackNullDefault = typeDeclaration.ExcludeNonNullDefaulted() && optional && hasDefault && !hasNonNullDefault;
+        return (isNullable, flipBackNullDefault);
+    }
+
+    /// <summary>
     /// Append the property accessors.
     /// </summary>
     /// <param name="generator">The generator to which to append the properties.</param>
@@ -197,7 +221,7 @@ internal static partial class CodeGeneratorExtensions
                 return generator;
             }
 
-            bool isNullable = typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional;
+            (bool isNullable, bool flipBackNullDefault) = GetOptionalNullability(typeDeclaration, property);
             generator
                 .AppendSeparatorLine()
                 .AppendPropertyDocumentation(property)
@@ -207,7 +231,7 @@ internal static partial class CodeGeneratorExtensions
                     .AppendConditionalBackingValueCallbackIndent("Backing.Object", "objectBacking", (g, f) => AppendObjectBackedAccessor(g, typeDeclaration, f, property))
                     .AppendSeparatorLine();
 
-            if (property.ReducedPropertyType.HasDefaultValue())
+            if (property.ReducedPropertyType.HasDefaultValue() && !flipBackNullDefault)
             {
                 generator
                     .AppendLineIndent("return ", property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), ".DefaultInstance;");
@@ -250,7 +274,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("{")
                 .PushIndent();
 
-            if (typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional)
+            if (GetOptionalNullability(typeDeclaration, property).IsNullable)
             {
                 generator
                     .AppendLineIndent("if (result.ValueKind == JsonValueKind.Null)")
@@ -288,7 +312,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("{")
                 .PushIndent();
 
-            if (typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional)
+            if (GetOptionalNullability(typeDeclaration, property).IsNullable)
             {
                 generator
                     .AppendLineIndent("if (result.IsNullOrUndefined())")
@@ -806,7 +830,7 @@ internal static partial class CodeGeneratorExtensions
                             .Single(p => p.JsonPropertyName == declaration.JsonPropertyName);
                     string dotnetPropertyName = property.DotnetPropertyName();
                     string targetName = declaration.ReducedDepdendentSchemaType.FullyQualifiedDotnetTypeName();
-                    bool isNullable = typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional;
+                    bool isNullable = GetOptionalNullability(typeDeclaration, property).IsNullable;
 
                     generator
                         .AppendSeparatorLine()
@@ -1296,7 +1320,7 @@ internal static partial class CodeGeneratorExtensions
                 return generator;
             }
 
-            bool isNullable = typeDeclaration.OptionalAsNullable() && property.RequiredOrOptional == RequiredOrOptional.Optional;
+            bool isNullable = GetOptionalNullability(typeDeclaration, property).IsNullable;
             generator
                 .AppendSeparatorLine()
                 .AppendWithPropertyDocumentation(property)
@@ -1702,8 +1726,10 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLine(".")
                 .AppendLineIndent("/// </para>");
         }
-        else if (property.Owner.OptionalAsNullable())
+        else if (GetOptionalNullability(property.Owner, property).IsNullable)
         {
+            // Emitted for properties that are generated as nullable. A property with a non-null
+            // default under "except non-null defaulted" is non-nullable, so it is excluded here.
             usingRemarks = true;
 
             generator
