@@ -147,12 +147,14 @@ Control the generator's behaviour with MSBuild properties in your `.csproj`:
 | Property | Default | Description |
 |----------|---------|-------------|
 | `CorvusTextJsonFallbackVocabulary` | `Draft202012` | Fallback schema vocabulary when the `$schema` keyword is omitted. Values: `Draft4`, `Draft6`, `Draft7`, `Draft201909`, `Draft202012`, `OpenApi30`. |
-| `CorvusTextJsonOptionalAsNullable` | — | When set to `NullOrUndefined`, optional properties generate as .NET nullable types (`T?`). JSON `null` or missing values map to C# `null`. When omitted, optional properties use the full type and you check for `Undefined` explicitly. |
+| `CorvusTextJsonOptionalAsNullable` | — | When set to `NullOrUndefined`, optional properties generate as .NET nullable types (`T?`). JSON `null` or missing values map to C# `null`. When set to `NullOrUndefinedExceptNonNullDefaulted`, this applies to all optional properties *except* those that declare a non-null `default`, which are generated as the non-nullable type `T` (the default is returned when the property is absent); an optional property whose `default` is JSON `null` stays nullable. When omitted, optional properties use the full type and you check for `Undefined` explicitly. |
 | `CorvusTextJsonAlwaysAssertFormat` | `true` | When `true`, the `format` keyword is enforced as a validation assertion. When `false`, it is treated as an annotation only. |
 | `CorvusTextJsonUseImplicitOperatorString` | `true` | When `true`, conversion operators to `string` are implicit. When `false`, explicit casting is required. Explicit casts make string allocations more visible. |
 | `CorvusTextJsonAddExplicitUsings` | `true` | When `true`, generated files include `using` statements for standard implicit usings. Disable if your project already uses implicit usings and you want cleaner output. |
 | `CorvusTextJsonUseOptionalNameHeuristics` | `true` | When `true`, applies naming heuristics to infer idiomatic C# names from JSON Schema property names and definitions. |
 | `CorvusTextJsonDisabledNamingHeuristics` | `DocumentationNameHeuristic` | Semicolon-separated list of specific naming heuristics to disable (e.g., `DocumentationNameHeuristic;PathNameHeuristic`). |
+
+> **Note on `default: null`.** Under `NullOrUndefined`, an optional property whose `default` is JSON `null` returns its (null-valued) default instance — not C# `null` — when the property is absent. Under `NullOrUndefinedExceptNonNullDefaulted`, such a property instead returns C# `null` when absent, consistent with it remaining a nullable `T?`. Only a non-null `default` triggers generation as a non-nullable `T`.
 
 ## What Gets Generated
 
