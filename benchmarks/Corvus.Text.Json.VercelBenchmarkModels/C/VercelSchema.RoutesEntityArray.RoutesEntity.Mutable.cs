@@ -395,7 +395,7 @@ public readonly partial struct VercelSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -726,11 +726,11 @@ public readonly partial struct VercelSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc" />.
+                /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsRequiredSrc(out Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc result)
+                public bool TryGetAsRequiredSrc(out Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Mutable result)
                 {
                     if (Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -743,11 +743,11 @@ public readonly partial struct VercelSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle" />.
+                /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsRequiredHandle(out Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle result)
+                public bool TryGetAsRequiredHandle(out Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Mutable result)
                 {
                     if (Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.JsonSchema.Evaluate(_parent, _idx))
                     {

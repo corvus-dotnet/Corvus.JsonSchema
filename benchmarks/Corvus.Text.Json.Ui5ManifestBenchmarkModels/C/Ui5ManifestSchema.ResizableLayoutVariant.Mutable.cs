@@ -179,7 +179,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ResizableLayoutVariantCardProperties.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -192,7 +192,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ResizableLayoutVariantCardProperties.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -205,7 +205,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(string propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(string propertyName, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ResizableLayoutVariantCardProperties.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -219,6 +219,16 @@ public readonly partial struct Ui5ManifestSchema
             {
                 CheckValidInstance();
                 return _parent.GetPropertyCount(_idx);
+            }
+
+            /// <summary>
+            /// Enumerates the object.
+            /// </summary>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public ObjectEnumerator<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ResizableLayoutVariantCardProperties.Mutable> EnumerateObject()
+            {
+                CheckValidInstance();
+                return EnumeratorCreator.CreateObjectEnumerator<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ResizableLayoutVariantCardProperties.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -284,7 +294,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -345,7 +355,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ResizableLayoutVariantCardProperties.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -368,7 +378,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ResizableLayoutVariantCardProperties.Source value)
             {
                 CheckValidInstance();
 
@@ -415,7 +425,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ResizableLayoutVariantCardProperties.Source value)
             {
                 CheckValidInstance();
 
@@ -828,6 +838,19 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -838,7 +861,33 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }

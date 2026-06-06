@@ -456,7 +456,7 @@ public readonly partial struct TmuxinatorSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -787,11 +787,11 @@ public readonly partial struct TmuxinatorSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.JsonString" />.
+                /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.JsonString.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJsonString(out Corvus.TmuxinatorBenchmark.Current.JsonString result)
+                public bool TryGetAsJsonString(out Corvus.TmuxinatorBenchmark.Current.JsonString.Mutable result)
                 {
                     if (Corvus.TmuxinatorBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -804,11 +804,11 @@ public readonly partial struct TmuxinatorSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity" />.
+                /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsOneOf1Entity(out Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity result)
+                public bool TryGetAsOneOf1Entity(out Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.Mutable result)
                 {
                     if (Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
                     {

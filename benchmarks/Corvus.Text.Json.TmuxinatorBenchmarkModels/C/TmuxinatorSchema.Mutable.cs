@@ -1906,7 +1906,7 @@ public readonly partial struct TmuxinatorSchema
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -2009,12 +2009,37 @@ public readonly partial struct TmuxinatorSchema
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source _createArg1;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonObject.Source _createArg3;
+        private readonly Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source _createArg4;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg5;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg6;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg7;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg8;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg9;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg10;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg11;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg12;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg13;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg14;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg15;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg16;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg17;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg18;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg19;
+        private readonly Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source _createArg20;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg21;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source _createArg22;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg23;
+        private readonly Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source _createArg24;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2028,6 +2053,35 @@ public readonly partial struct TmuxinatorSchema
         }
 
         internal Source(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source arg3, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source arg20, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source arg24)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _createArg14 = arg14;
+            _createArg15 = arg15;
+            _createArg16 = arg16;
+            _createArg17 = arg17;
+            _createArg18 = arg18;
+            _createArg19 = arg19;
+            _createArg20 = arg20;
+            _createArg21 = arg21;
+            _createArg22 = arg22;
+            _createArg23 = arg23;
+            _createArg24 = arg24;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(TmuxinatorSchema instance) => new(JsonElement.From(instance));
 
@@ -2043,6 +2097,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2061,6 +2122,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2079,6 +2147,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2097,6 +2172,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2115,6 +2197,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2132,12 +2221,37 @@ public readonly partial struct TmuxinatorSchema
             Unknown,
             Source,
             Builder,
+            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source _createArg1;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> _createArg3;
+        private readonly Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source _createArg4;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg5;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg6;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg7;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg8;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg9;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg10;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg11;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg12;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg13;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg14;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg15;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg16;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg17;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg18;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg19;
+        private readonly Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> _createArg20;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg21;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source _createArg22;
+        private readonly Corvus.TmuxinatorBenchmark.Current.JsonString.Source _createArg23;
+        private readonly Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> _createArg24;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2149,6 +2263,36 @@ public readonly partial struct TmuxinatorSchema
         public static implicit operator Source<TContext>(Source source) => new (source);
 
         internal Source(scoped in TContext context, Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in TContext context, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> arg3, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> arg20, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> arg24)
+        {
+            _context = context;
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _createArg14 = arg14;
+            _createArg15 = arg15;
+            _createArg16 = arg16;
+            _createArg17 = arg17;
+            _createArg18 = arg18;
+            _createArg19 = arg19;
+            _createArg20 = arg20;
+            _createArg21 = arg21;
+            _createArg22 = arg22;
+            _createArg23 = arg23;
+            _createArg24 = arg24;
+            _kind = Kind.Create;
+        }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -2162,6 +2306,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2180,6 +2331,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2198,6 +2356,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2216,6 +2381,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2234,6 +2406,13 @@ public readonly partial struct TmuxinatorSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2465,6 +2644,81 @@ public readonly partial struct TmuxinatorSchema
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="arg14">The value of the property.</param>
+        /// <param name="arg15">The value of the property.</param>
+        /// <param name="arg16">The value of the property.</param>
+        /// <param name="arg17">The value of the property.</param>
+        /// <param name="arg18">The value of the property.</param>
+        /// <param name="arg19">The value of the property.</param>
+        /// <param name="arg20">The value of the property.</param>
+        /// <param name="arg21">The value of the property.</param>
+        /// <param name="arg22">The value of the property.</param>
+        /// <param name="arg23">The value of the property.</param>
+        /// <param name="arg24">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source arg3, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source arg20, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source arg24, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24);
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="arg14">The value of the property.</param>
+        /// <param name="arg15">The value of the property.</param>
+        /// <param name="arg16">The value of the property.</param>
+        /// <param name="arg17">The value of the property.</param>
+        /// <param name="arg18">The value of the property.</param>
+        /// <param name="arg19">The value of the property.</param>
+        /// <param name="arg20">The value of the property.</param>
+        /// <param name="arg21">The value of the property.</param>
+        /// <param name="arg22">The value of the property.</param>
+        /// <param name="arg23">The value of the property.</param>
+        /// <param name="arg24">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> arg3, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> arg20, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> arg24, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartObject();
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -2494,6 +2748,77 @@ public readonly partial struct TmuxinatorSchema
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="attach">The value of the <c>"attach"</c> property.</param>
+    /// <param name="cliArgs">The value of the <c>"cli_args"</c> property.</param>
+    /// <param name="defaults">The value of the <c>"defaults"</c> property.</param>
+    /// <param name="name">The value of the <c>"name"</c> property.</param>
+    /// <param name="onProjectExit">The value of the <c>"on_project_exit"</c> property.</param>
+    /// <param name="onProjectFirstStart">The value of the <c>"on_project_first_start"</c> property.</param>
+    /// <param name="onProjectRestart">The value of the <c>"on_project_restart"</c> property.</param>
+    /// <param name="onProjectStart">The value of the <c>"on_project_start"</c> property.</param>
+    /// <param name="onProjectStop">The value of the <c>"on_project_stop"</c> property.</param>
+    /// <param name="post">The value of the <c>"post"</c> property.</param>
+    /// <param name="pre">The value of the <c>"pre"</c> property.</param>
+    /// <param name="preWindow">The value of the <c>"pre_window"</c> property.</param>
+    /// <param name="projectName">The value of the <c>"project_name"</c> property.</param>
+    /// <param name="projectRoot">The value of the <c>"project_root"</c> property.</param>
+    /// <param name="rbenv">The value of the <c>"rbenv"</c> property.</param>
+    /// <param name="root">The value of the <c>"root"</c> property.</param>
+    /// <param name="socketName">The value of the <c>"socket_name"</c> property.</param>
+    /// <param name="startupPane">The value of the <c>"startup_pane"</c> property.</param>
+    /// <param name="startupWindow">The value of the <c>"startup_window"</c> property.</param>
+    /// <param name="tabs">The value of the <c>"tabs"</c> property.</param>
+    /// <param name="tmuxCommand">The value of the <c>"tmux_command"</c> property.</param>
+    /// <param name="tmuxDetached">The value of the <c>"tmux_detached"</c> property.</param>
+    /// <param name="tmuxOptions">The value of the <c>"tmux_options"</c> property.</param>
+    /// <param name="windows">The value of the <c>"windows"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source defaults = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source tabs = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source windows = default)
+    {
+        return new Source(attach, cliArgs, defaults, name, onProjectExit, onProjectFirstStart, onProjectRestart, onProjectStart, onProjectStop, post, pre, preWindow, projectName, projectRoot, rbenv, root, socketName, startupPane, startupWindow, tabs, tmuxCommand, tmuxDetached, tmuxOptions, windows);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="attach">The value of the <c>"attach"</c> property.</param>
+    /// <param name="cliArgs">The value of the <c>"cli_args"</c> property.</param>
+    /// <param name="defaults">The value of the <c>"defaults"</c> property.</param>
+    /// <param name="name">The value of the <c>"name"</c> property.</param>
+    /// <param name="onProjectExit">The value of the <c>"on_project_exit"</c> property.</param>
+    /// <param name="onProjectFirstStart">The value of the <c>"on_project_first_start"</c> property.</param>
+    /// <param name="onProjectRestart">The value of the <c>"on_project_restart"</c> property.</param>
+    /// <param name="onProjectStart">The value of the <c>"on_project_start"</c> property.</param>
+    /// <param name="onProjectStop">The value of the <c>"on_project_stop"</c> property.</param>
+    /// <param name="post">The value of the <c>"post"</c> property.</param>
+    /// <param name="pre">The value of the <c>"pre"</c> property.</param>
+    /// <param name="preWindow">The value of the <c>"pre_window"</c> property.</param>
+    /// <param name="projectName">The value of the <c>"project_name"</c> property.</param>
+    /// <param name="projectRoot">The value of the <c>"project_root"</c> property.</param>
+    /// <param name="rbenv">The value of the <c>"rbenv"</c> property.</param>
+    /// <param name="root">The value of the <c>"root"</c> property.</param>
+    /// <param name="socketName">The value of the <c>"socket_name"</c> property.</param>
+    /// <param name="startupPane">The value of the <c>"startup_pane"</c> property.</param>
+    /// <param name="startupWindow">The value of the <c>"startup_window"</c> property.</param>
+    /// <param name="tabs">The value of the <c>"tabs"</c> property.</param>
+    /// <param name="tmuxCommand">The value of the <c>"tmux_command"</c> property.</param>
+    /// <param name="tmuxDetached">The value of the <c>"tmux_detached"</c> property.</param>
+    /// <param name="tmuxOptions">The value of the <c>"tmux_options"</c> property.</param>
+    /// <param name="windows">The value of the <c>"windows"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> defaults = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> tabs = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> windows = default)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, attach, cliArgs, defaults, name, onProjectExit, onProjectFirstStart, onProjectRestart, onProjectStart, onProjectStop, post, pre, preWindow, projectName, projectRoot, rbenv, root, socketName, startupPane, startupWindow, tabs, tmuxCommand, tmuxDetached, tmuxOptions, windows);
     }
 
     /// <summary>

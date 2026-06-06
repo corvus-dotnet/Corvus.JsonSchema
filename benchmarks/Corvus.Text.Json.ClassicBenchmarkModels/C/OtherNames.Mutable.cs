@@ -362,7 +362,7 @@ public readonly partial struct OtherNames
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -869,11 +869,11 @@ public readonly partial struct OtherNames
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.ClassicBenchmark.Current.PersonNameElement" />.
+        /// Gets the value as a <see cref="Corvus.ClassicBenchmark.Current.PersonNameElement.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsPersonNameElement(out Corvus.ClassicBenchmark.Current.PersonNameElement result)
+        public bool TryGetAsPersonNameElement(out Corvus.ClassicBenchmark.Current.PersonNameElement.Mutable result)
         {
             if (Corvus.ClassicBenchmark.Current.PersonNameElement.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -886,11 +886,11 @@ public readonly partial struct OtherNames
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.ClassicBenchmark.Current.PersonNameElementArray" />.
+        /// Gets the value as a <see cref="Corvus.ClassicBenchmark.Current.PersonNameElementArray.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsPersonNameElementArray(out Corvus.ClassicBenchmark.Current.PersonNameElementArray result)
+        public bool TryGetAsPersonNameElementArray(out Corvus.ClassicBenchmark.Current.PersonNameElementArray.Mutable result)
         {
             if (Corvus.ClassicBenchmark.Current.PersonNameElementArray.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1262,6 +1262,17 @@ public readonly partial struct OtherNames
         /// Add an item to the array.
         /// </summary>
         public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
+        {
+            value.AddAsItem(ref _builder);
+        }
+
+        /// <summary>
+        /// Add an item to the array.
+        /// </summary>
+        public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
         {
             value.AddAsItem(ref _builder);
         }

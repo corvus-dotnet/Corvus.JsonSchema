@@ -1277,7 +1277,7 @@ public readonly partial struct Media
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -1374,11 +1374,11 @@ public readonly partial struct Media
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ExtendableElement" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ExtendableElement.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsExtendableElement(out Corvus.Ui5ManifestBenchmark.Current.ExtendableElement result)
+        public bool TryGetAsExtendableElement(out Corvus.Ui5ManifestBenchmark.Current.ExtendableElement.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ExtendableElement.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1397,12 +1397,24 @@ public readonly partial struct Media
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source _createArg1;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg3;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg4;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg5;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg6;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source _createArg7;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg8;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg9;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg10;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source _createArg11;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1416,6 +1428,22 @@ public readonly partial struct Media
         }
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.Media.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(Media instance) => new(JsonElement.From(instance));
 
@@ -1431,6 +1459,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1449,6 +1484,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1467,6 +1509,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1485,6 +1534,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1503,6 +1559,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1520,12 +1583,24 @@ public readonly partial struct Media
             Unknown,
             Source,
             Builder,
+            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> _createArg1;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg3;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg4;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg5;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg6;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source _createArg7;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg8;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg9;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg10;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source _createArg11;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1537,6 +1612,23 @@ public readonly partial struct Media
         public static implicit operator Source<TContext>(Source source) => new (source);
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Media.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11)
+        {
+            _context = context;
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _kind = Kind.Create;
+        }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1550,6 +1642,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1568,6 +1667,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1586,6 +1692,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1604,6 +1717,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1622,6 +1742,13 @@ public readonly partial struct Media
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1775,6 +1902,55 @@ public readonly partial struct Media
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartObject();
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -1804,6 +1980,51 @@ public readonly partial struct Media
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="sources">The value of the <c>"sources"</c> property.</param>
+    /// <param name="altText">The value of the <c>"altText"</c> property.</param>
+    /// <param name="fallback">The value of the <c>"fallback"</c> property.</param>
+    /// <param name="height">The value of the <c>"height"</c> property.</param>
+    /// <param name="id">The value of the <c>"id"</c> property.</param>
+    /// <param name="isVisible">The value of the <c>"isVisible"</c> property.</param>
+    /// <param name="poster">The value of the <c>"poster"</c> property.</param>
+    /// <param name="requires">The value of the <c>"requires"</c> property.</param>
+    /// <param name="separator">The value of the <c>"separator"</c> property.</param>
+    /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
+    /// <param name="type">The value of the <c>"type"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source sources, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, in Corvus.Text.Json.JsonElement.Source fallback = default, in Corvus.Text.Json.JsonElement.Source height = default, in Corvus.Text.Json.JsonElement.Source id = default, in Corvus.Text.Json.JsonElement.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source poster = default, in Corvus.Text.Json.JsonElement.Source requires = default, in Corvus.Text.Json.JsonElement.Source separator = default, in Corvus.Text.Json.JsonElement.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source type = default)
+    {
+        return new Source(sources, altText, fallback, height, id, isVisible, poster, requires, separator, spacing, type);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="sources">The value of the <c>"sources"</c> property.</param>
+    /// <param name="altText">The value of the <c>"altText"</c> property.</param>
+    /// <param name="fallback">The value of the <c>"fallback"</c> property.</param>
+    /// <param name="height">The value of the <c>"height"</c> property.</param>
+    /// <param name="id">The value of the <c>"id"</c> property.</param>
+    /// <param name="isVisible">The value of the <c>"isVisible"</c> property.</param>
+    /// <param name="poster">The value of the <c>"poster"</c> property.</param>
+    /// <param name="requires">The value of the <c>"requires"</c> property.</param>
+    /// <param name="separator">The value of the <c>"separator"</c> property.</param>
+    /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
+    /// <param name="type">The value of the <c>"type"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> sources, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, in Corvus.Text.Json.JsonElement.Source<TContext> height = default, in Corvus.Text.Json.JsonElement.Source<TContext> id = default, in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source poster = default, in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source type = default)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, sources, altText, fallback, height, id, isVisible, poster, requires, separator, spacing, type);
     }
 
     /// <summary>

@@ -172,11 +172,11 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents the default properties defined for route and target
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.ConfigEntity Config
+        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefaultPropertiesDefinedForRouteAndTarget Config
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConfigUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.ConfigEntity value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConfigUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefaultPropertiesDefinedForRouteAndTarget value))
                 {
                     return value;
                 }
@@ -351,10 +351,13 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RoutingFlexEnabled ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<RoutingFlexEnabled>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -374,10 +377,13 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RoutingFlexEnabled ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<RoutingFlexEnabled>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -397,10 +403,13 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RoutingFlexEnabled ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<RoutingFlexEnabled>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -438,9 +447,12 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static RoutingFlexEnabled ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<RoutingFlexEnabled>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>

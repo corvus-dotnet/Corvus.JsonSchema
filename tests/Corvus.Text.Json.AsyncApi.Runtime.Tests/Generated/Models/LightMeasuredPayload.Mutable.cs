@@ -754,12 +754,15 @@ public readonly partial struct LightMeasuredPayload
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source _createArg1;
+        private readonly Streetlights.Client.Models.JsonDateTime.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -773,6 +776,13 @@ public readonly partial struct LightMeasuredPayload
         }
 
         internal Source(Streetlights.Client.Models.LightMeasuredPayload.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source arg1, in Streetlights.Client.Models.JsonDateTime.Source arg2)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(LightMeasuredPayload instance) => new(JsonElement.From(instance));
 
@@ -788,6 +798,13 @@ public readonly partial struct LightMeasuredPayload
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -806,6 +823,13 @@ public readonly partial struct LightMeasuredPayload
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -824,6 +848,13 @@ public readonly partial struct LightMeasuredPayload
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -842,6 +873,13 @@ public readonly partial struct LightMeasuredPayload
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -860,6 +898,13 @@ public readonly partial struct LightMeasuredPayload
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1115,6 +1160,19 @@ public readonly partial struct LightMeasuredPayload
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source arg1, in Streetlights.Client.Models.JsonDateTime.Source arg2, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -1144,6 +1202,17 @@ public readonly partial struct LightMeasuredPayload
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="lumens">The value of the <c>"lumens"</c> property.</param>
+    /// <param name="sentAt">The value of the <c>"sentAt"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Streetlights.Client.Models.LightMeasuredPayload.LightIntensityMeasuredInLumens.Source lumens = default, in Streetlights.Client.Models.JsonDateTime.Source sentAt = default)
+    {
+        return new Source(lumens, sentAt);
     }
 
     /// <summary>

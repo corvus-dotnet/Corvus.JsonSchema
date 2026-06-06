@@ -385,7 +385,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -716,11 +716,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsHeaderTypeDefault(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault result)
+            public bool TryGetAsHeaderTypeDefault(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -733,11 +733,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsHeaderTypeNumeric(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric result)
+            public bool TryGetAsHeaderTypeNumeric(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.JsonSchema.Evaluate(_parent, _idx))
                 {

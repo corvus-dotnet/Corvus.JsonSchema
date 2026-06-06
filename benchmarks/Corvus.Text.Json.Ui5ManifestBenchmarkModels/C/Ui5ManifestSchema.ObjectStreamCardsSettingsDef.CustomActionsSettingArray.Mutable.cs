@@ -281,7 +281,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -994,6 +994,17 @@ public readonly partial struct Ui5ManifestSchema
                     value.AddAsItem(ref _builder);
                 }
 
+                /// <summary>
+                /// Add an item to the array.
+                /// </summary>
+                public void AddItem<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
+                {
+                    value.AddAsItem(ref _builder);
+                }
+
                 internal static void BuildValue(Build value, ref ComplexValueBuilder o)
                 {
                     o.StartArray();
@@ -1080,6 +1091,53 @@ public readonly partial struct Ui5ManifestSchema
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 cvb.StartArray();
                 cvb.EndArray();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder;
+            }
+
+            /// <summary>
+            /// Creates and initializes a mutable document from a value.
+            /// </summary>
+            /// <param name="workspace">The JSON workspace.</param>
+            /// <param name="value">The value with which to initialize the builder.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>An instance of a mutable document initialized with the given value.</returns>
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(
+                JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                // Create the document builder without a MetadataDb
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder;
+            }
+
+            /// <summary>
+            /// Creates and initializes a mutable document from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="workspace">The JSON workspace.</param>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the builder.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>An instance of a mutable document initialized with the given value.</returns>
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+                JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                // Create the document builder without a MetadataDb
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
                 return documentBuilder;
             }

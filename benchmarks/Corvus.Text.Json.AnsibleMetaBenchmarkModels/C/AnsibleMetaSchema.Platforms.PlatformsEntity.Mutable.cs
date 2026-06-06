@@ -1987,7 +1987,7 @@ public readonly partial struct AnsibleMetaSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -2920,11 +2920,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsAixPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel result)
+                public bool TryGetAsAixPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -2937,11 +2937,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsAlpinePlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel result)
+                public bool TryGetAsAlpinePlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -2954,11 +2954,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsAmazonLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel result)
+                public bool TryGetAsAmazonLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -2971,11 +2971,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsAmazonPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel result)
+                public bool TryGetAsAmazonPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -2988,11 +2988,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsArchLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel result)
+                public bool TryGetAsArchLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3005,11 +3005,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsClearLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel result)
+                public bool TryGetAsClearLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3022,11 +3022,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsCumulusPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel result)
+                public bool TryGetAsCumulusPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3039,11 +3039,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsDebianPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel result)
+                public bool TryGetAsDebianPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3056,11 +3056,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsDellOsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel result)
+                public bool TryGetAsDellOsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3073,11 +3073,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsDevuanPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel result)
+                public bool TryGetAsDevuanPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3090,11 +3090,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsDragonFlyBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel result)
+                public bool TryGetAsDragonFlyBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3107,11 +3107,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsElPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel result)
+                public bool TryGetAsElPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3124,11 +3124,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsFedoraPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel result)
+                public bool TryGetAsFedoraPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3141,11 +3141,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsFreeBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel result)
+                public bool TryGetAsFreeBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3158,11 +3158,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsGenericBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel result)
+                public bool TryGetAsGenericBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3175,11 +3175,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsGenericLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel result)
+                public bool TryGetAsGenericLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3192,11 +3192,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsGenericUnixPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel result)
+                public bool TryGetAsGenericUnixPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3209,11 +3209,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsGentooPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel result)
+                public bool TryGetAsGentooPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3226,11 +3226,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsHardenedBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel result)
+                public bool TryGetAsHardenedBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3243,11 +3243,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsIosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel result)
+                public bool TryGetAsIosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3260,11 +3260,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJunosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel result)
+                public bool TryGetAsJunosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3277,11 +3277,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsKaliPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel result)
+                public bool TryGetAsKaliPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3294,11 +3294,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsMacOsxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel result)
+                public bool TryGetAsMacOsxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3311,11 +3311,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsMageiaPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel result)
+                public bool TryGetAsMageiaPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3328,11 +3328,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsNxosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel result)
+                public bool TryGetAsNxosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3345,11 +3345,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsNetBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel result)
+                public bool TryGetAsNetBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3362,11 +3362,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsOpenBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel result)
+                public bool TryGetAsOpenBsdPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3379,11 +3379,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsOpenWrtPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel result)
+                public bool TryGetAsOpenWrtPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3396,11 +3396,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsOracleLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel result)
+                public bool TryGetAsOracleLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3413,11 +3413,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsPanOsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel result)
+                public bool TryGetAsPanOsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3430,11 +3430,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsSlesPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel result)
+                public bool TryGetAsSlesPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3447,11 +3447,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsSmartOsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel result)
+                public bool TryGetAsSmartOsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3464,11 +3464,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsSolarisPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel result)
+                public bool TryGetAsSolarisPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3481,11 +3481,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsSynologyPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel result)
+                public bool TryGetAsSynologyPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3498,11 +3498,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsTmosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel result)
+                public bool TryGetAsTmosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3515,11 +3515,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsUbuntuPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel result)
+                public bool TryGetAsUbuntuPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3532,11 +3532,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsVoidLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel result)
+                public bool TryGetAsVoidLinuxPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3549,11 +3549,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsWindowsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel result)
+                public bool TryGetAsWindowsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3566,11 +3566,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsAosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel result)
+                public bool TryGetAsAosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3583,11 +3583,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsEosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel result)
+                public bool TryGetAsEosPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3600,11 +3600,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsMacOsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel result)
+                public bool TryGetAsMacOsPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3617,11 +3617,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsOpensusePlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel result)
+                public bool TryGetAsOpensusePlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3634,11 +3634,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsOs10PlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel result)
+                public bool TryGetAsOs10PlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3651,11 +3651,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsVCenterPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel result)
+                public bool TryGetAsVCenterPlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -3668,11 +3668,11 @@ public readonly partial struct AnsibleMetaSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel" />.
+                /// Gets the value as a <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsVSpherePlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel result)
+                public bool TryGetAsVSpherePlatformModel(out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Mutable result)
                 {
                     if (Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.JsonSchema.Evaluate(_parent, _idx))
                     {

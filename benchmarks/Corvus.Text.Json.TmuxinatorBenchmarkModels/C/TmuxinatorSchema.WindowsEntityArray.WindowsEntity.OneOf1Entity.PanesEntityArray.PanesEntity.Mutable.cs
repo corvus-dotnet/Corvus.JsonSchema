@@ -492,7 +492,7 @@ public readonly partial struct TmuxinatorSchema
                             /// <inheritdoc/>
                             public override string ToString()
                             {
-                                if (_parent == null || _documentVersion != _parent.Version)
+                                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                                 {
                                     return string.Empty;
                                 }
@@ -1013,11 +1013,11 @@ public readonly partial struct TmuxinatorSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.JsonNumber" />.
+                            /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.JsonNumber.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsJsonNumber(out Corvus.TmuxinatorBenchmark.Current.JsonNumber result)
+                            public bool TryGetAsJsonNumber(out Corvus.TmuxinatorBenchmark.Current.JsonNumber.Mutable result)
                             {
                                 if (Corvus.TmuxinatorBenchmark.Current.JsonNumber.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -1030,11 +1030,11 @@ public readonly partial struct TmuxinatorSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.OneOf1Entity" />.
+                            /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.OneOf1Entity.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsOneOf1Entity(out Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.OneOf1Entity result)
+                            public bool TryGetAsOneOf1Entity(out Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.OneOf1Entity.Mutable result)
                             {
                                 if (Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -1047,11 +1047,11 @@ public readonly partial struct TmuxinatorSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.JsonStringArray" />.
+                            /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.JsonStringArray.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsJsonStringArray(out Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.JsonStringArray result)
+                            public bool TryGetAsJsonStringArray(out Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.JsonStringArray.Mutable result)
                             {
                                 if (Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -1475,6 +1475,17 @@ public readonly partial struct TmuxinatorSchema
                             /// Add an item to the array.
                             /// </summary>
                             public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
+                            {
+                                value.AddAsItem(ref _builder);
+                            }
+
+                            /// <summary>
+                            /// Add an item to the array.
+                            /// </summary>
+                            public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                                where TContext : allows ref struct
+#endif
                             {
                                 value.AddAsItem(ref _builder);
                             }

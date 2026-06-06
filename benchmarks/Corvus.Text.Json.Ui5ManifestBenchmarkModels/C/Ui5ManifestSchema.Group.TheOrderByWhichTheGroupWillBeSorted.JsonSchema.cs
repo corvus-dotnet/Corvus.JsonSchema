@@ -55,14 +55,14 @@ public readonly partial struct Ui5ManifestSchema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
-                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.DirEntity.JsonSchema.PushChildContextUnescaped(
+                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.DirUtf8,
                             evaluationPath: DirSchemaEvaluationPath);
 
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.DirEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                 }
 

@@ -1397,7 +1397,7 @@ public readonly partial struct PulumiSchema
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -1676,12 +1676,26 @@ public readonly partial struct PulumiSchema
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source _createArg1;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source _createArg2;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source _createArg3;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source _createArg4;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source _createArg5;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source _createArg6;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity.Source _createArg7;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source _createArg8;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source _createArg9;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source _createArg10;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source _createArg11;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source _createArg12;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source _createArg13;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1695,6 +1709,24 @@ public readonly partial struct PulumiSchema
         }
 
         internal Source(Corvus.PulumiBenchmark.Current.PulumiSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source arg5, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity.Source arg7, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source arg9, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source arg10, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source arg12, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(PulumiSchema instance) => new(JsonElement.From(instance));
 
@@ -1710,6 +1742,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1728,6 +1767,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1746,6 +1792,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1764,6 +1817,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1782,6 +1842,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1799,12 +1866,26 @@ public readonly partial struct PulumiSchema
             Unknown,
             Source,
             Builder,
+            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source _createArg1;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> _createArg2;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source _createArg3;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> _createArg4;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> _createArg5;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source _createArg6;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity.Source _createArg7;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source _createArg8;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> _createArg9;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> _createArg10;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source _createArg11;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> _createArg12;
+        private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source _createArg13;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1816,6 +1897,25 @@ public readonly partial struct PulumiSchema
         public static implicit operator Source<TContext>(Source source) => new (source);
 
         internal Source(scoped in TContext context, Corvus.PulumiBenchmark.Current.PulumiSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> arg5, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity.Source arg7, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> arg9, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> arg10, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> arg12, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13)
+        {
+            _context = context;
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _kind = Kind.Create;
+        }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1829,6 +1929,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1847,6 +1954,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1865,6 +1979,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1883,6 +2004,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1901,6 +2029,13 @@ public readonly partial struct PulumiSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2059,6 +2194,19 @@ public readonly partial struct PulumiSchema
         /// </summary>
         /// <param name="propertyName">The name of the property to add.</param>
         /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
         public void AddProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
         {
             value.AddAsProperty(propertyName, ref _builder);
@@ -2069,7 +2217,33 @@ public readonly partial struct PulumiSchema
         /// </summary>
         /// <param name="propertyName">The name of the property to add.</param>
         /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
         public void AddProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(string propertyName, in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
         {
             value.AddAsProperty(propertyName, ref _builder);
         }
@@ -2094,6 +2268,59 @@ public readonly partial struct PulumiSchema
             Builder ovb = new(o);
             value(context, ref ovb);
             o = ovb._builder;
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source arg5, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity.Source arg7, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source arg9, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source arg10, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source arg12, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> arg5, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity.Source arg7, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> arg9, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> arg10, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> arg12, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartObject();
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
             o.EndObject();
         }
     }
@@ -2125,6 +2352,55 @@ public readonly partial struct PulumiSchema
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="name">The value of the <c>"name"</c> property.</param>
+    /// <param name="runtime">The value of the <c>"runtime"</c> property.</param>
+    /// <param name="author">The value of the <c>"author"</c> property.</param>
+    /// <param name="backend">The value of the <c>"backend"</c> property.</param>
+    /// <param name="config">The value of the <c>"config"</c> property.</param>
+    /// <param name="description">The value of the <c>"description"</c> property.</param>
+    /// <param name="license">The value of the <c>"license"</c> property.</param>
+    /// <param name="main">The value of the <c>"main"</c> property.</param>
+    /// <param name="options">The value of the <c>"options"</c> property.</param>
+    /// <param name="plugins">The value of the <c>"plugins"</c> property.</param>
+    /// <param name="stackConfigDir">The value of the <c>"stackConfigDir"</c> property.</param>
+    /// <param name="template">The value of the <c>"template"</c> property.</param>
+    /// <param name="website">The value of the <c>"website"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source name, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source runtime, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source author = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source backend = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source config = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity.Source license = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source main = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source options = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source plugins = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source stackConfigDir = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source template = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source website = default)
+    {
+        return new Source(name, runtime, author, backend, config, description, license, main, options, plugins, stackConfigDir, template, website);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="name">The value of the <c>"name"</c> property.</param>
+    /// <param name="runtime">The value of the <c>"runtime"</c> property.</param>
+    /// <param name="author">The value of the <c>"author"</c> property.</param>
+    /// <param name="backend">The value of the <c>"backend"</c> property.</param>
+    /// <param name="config">The value of the <c>"config"</c> property.</param>
+    /// <param name="description">The value of the <c>"description"</c> property.</param>
+    /// <param name="license">The value of the <c>"license"</c> property.</param>
+    /// <param name="main">The value of the <c>"main"</c> property.</param>
+    /// <param name="options">The value of the <c>"options"</c> property.</param>
+    /// <param name="plugins">The value of the <c>"plugins"</c> property.</param>
+    /// <param name="stackConfigDir">The value of the <c>"stackConfigDir"</c> property.</param>
+    /// <param name="template">The value of the <c>"template"</c> property.</param>
+    /// <param name="website">The value of the <c>"website"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source name, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> runtime, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source author = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> backend = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> config = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseEntity.Source license = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source main = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> options = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> plugins = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source stackConfigDir = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> template = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source website = default)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, name, runtime, author, backend, config, description, license, main, options, plugins, stackConfigDir, template, website);
     }
 
     /// <summary>

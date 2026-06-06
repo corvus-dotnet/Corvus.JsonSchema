@@ -168,7 +168,7 @@ public readonly partial struct KrakendSchema
         /// <param name="value">The value of the property, if present.</param>
         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement.Mutable value)
+        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.Text.Json.JsonElement.Mutable value)
         {
             CheckValidInstance();
             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -181,7 +181,7 @@ public readonly partial struct KrakendSchema
         /// <param name="value">The value of the property, if present.</param>
         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement.Mutable value)
+        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.Text.Json.JsonElement.Mutable value)
         {
             CheckValidInstance();
             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -194,7 +194,7 @@ public readonly partial struct KrakendSchema
         /// <param name="value">The value of the property, if present.</param>
         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(string propertyName, out JsonElement.Mutable value)
+        public bool TryGetProperty(string propertyName, out Corvus.Text.Json.JsonElement.Mutable value)
         {
             CheckValidInstance();
             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -1093,6 +1093,16 @@ public readonly partial struct KrakendSchema
         {
             CheckValidInstance();
             return _parent.GetPropertyCount(_idx);
+        }
+
+        /// <summary>
+        /// Enumerates the object.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public ObjectEnumerator<Corvus.Text.Json.JsonElement.Mutable> EnumerateObject()
+        {
+            CheckValidInstance();
+            return EnumeratorCreator.CreateObjectEnumerator<Corvus.Text.Json.JsonElement.Mutable>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -2971,7 +2981,7 @@ public readonly partial struct KrakendSchema
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -3032,7 +3042,7 @@ public readonly partial struct KrakendSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -3055,7 +3065,7 @@ public readonly partial struct KrakendSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -3102,7 +3112,7 @@ public readonly partial struct KrakendSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -3761,6 +3771,19 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="propertyName">The name of the property to add.</param>
         /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
         public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
         {
             value.AddAsProperty(propertyName, ref _builder);
@@ -3771,7 +3794,33 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="propertyName">The name of the property to add.</param>
         /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
         public void AddProperty(string propertyName, in JsonElement.Source value)
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
         {
             value.AddAsProperty(propertyName, ref _builder);
         }
@@ -3803,6 +3852,18 @@ public readonly partial struct KrakendSchema
     /// <summary>
     /// Build an instance of the value.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+    /// overload with a <c>static</c> callback, capturing your source data in the context.
+    /// </para>
+    /// <para>
+    /// A <c>Build(...)</c> overload taking the individual property values directly is
+    /// intentionally not generated for this type, because its estimated captured-argument
+    /// footprint exceeds the configured build-parameters threshold. The threshold is
+    /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+    /// </para>
+    /// </remarks>
     /// <param name="buildValue">The callback that builds the value.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>The source from which to build the value.</returns>
@@ -3815,6 +3876,18 @@ public readonly partial struct KrakendSchema
     /// <summary>
     /// Build an instance of the value.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+    /// overload with a <c>static</c> callback, capturing your source data in the context.
+    /// </para>
+    /// <para>
+    /// A <c>Build(...)</c> overload taking the individual property values directly is
+    /// intentionally not generated for this type, because its estimated captured-argument
+    /// footprint exceeds the configured build-parameters threshold. The threshold is
+    /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+    /// </para>
+    /// </remarks>
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="buildValue">The callback that builds the value.</param>

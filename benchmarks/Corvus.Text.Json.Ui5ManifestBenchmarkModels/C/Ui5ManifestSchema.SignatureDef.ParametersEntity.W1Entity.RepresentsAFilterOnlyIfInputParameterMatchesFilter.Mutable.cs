@@ -386,7 +386,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// <inheritdoc/>
                         public override string ToString()
                         {
-                            if (_parent == null || _documentVersion != _parent.Version)
+                            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                             {
                                 return string.Empty;
                             }
@@ -489,12 +489,15 @@ public readonly partial struct Ui5ManifestSchema
                         {
                             Unknown,
                             JsonElement,
+                            Create,
                             Builder,
                         }
 
                         private readonly Kind _kind;
                         private readonly JsonElement _jsonElement;
                         private readonly Builder.Build? _objectBuilder;
+                        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg1;
+                        private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsAFilterOnlyIfInputParameterMatchesFilter.FormatEntity.Source _createArg2;
 
                         /// <summary>
                         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -508,6 +511,13 @@ public readonly partial struct Ui5ManifestSchema
                         }
 
                         internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsAFilterOnlyIfInputParameterMatchesFilter.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+                        internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsAFilterOnlyIfInputParameterMatchesFilter.FormatEntity.Source arg2)
+                        {
+                            _createArg1 = arg1;
+                            _createArg2 = arg2;
+                            _kind = Kind.Create;
+                        }
 
                         public static implicit operator Source(RepresentsAFilterOnlyIfInputParameterMatchesFilter instance) => new(JsonElement.From(instance));
 
@@ -523,6 +533,13 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.Builder:
                                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                     break;
+                                case Kind.Create:
+                                    {
+                                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                        valueBuilder.EndProperty(handle);
+                                        break;
+                                    }
                                 default:
                                     Debug.Fail("Unexpected Kind");
                                     break;
@@ -541,6 +558,13 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.Builder:
                                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.Create:
+                                    {
+                                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                        valueBuilder.EndProperty(handle);
+                                        break;
+                                    }
                                 default:
                                     Debug.Fail("Unexpected Kind");
                                     break;
@@ -559,6 +583,13 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.Builder:
                                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.Create:
+                                    {
+                                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                        valueBuilder.EndProperty(handle);
+                                        break;
+                                    }
                                 default:
                                     Debug.Fail("Unexpected Kind");
                                     break;
@@ -577,6 +608,13 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.Builder:
                                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.Create:
+                                    {
+                                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                        valueBuilder.EndProperty(handle);
+                                        break;
+                                    }
                                 default:
                                     Debug.Fail("Unexpected Kind");
                                     break;
@@ -595,6 +633,13 @@ public readonly partial struct Ui5ManifestSchema
                                 case Kind.Builder:
                                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.Create:
+                                    {
+                                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                        valueBuilder.EndItem(handle);
+                                        break;
+                                    }
                                 default:
                                     Debug.Fail("Unexpected Kind");
                                     break;
@@ -781,6 +826,19 @@ public readonly partial struct Ui5ManifestSchema
                             o = ovb._builder;
                             o.EndObject();
                         }
+
+                        /// <summary>
+                        /// Builds the object value directly from its captured property values into the given complex value builder.
+                        /// </summary>
+                        /// <param name="arg1">The value of the property.</param>
+                        /// <param name="arg2">The value of the property.</param>
+                        /// <param name="o">The complex value builder into which to write the object.</param>
+                        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsAFilterOnlyIfInputParameterMatchesFilter.FormatEntity.Source arg2, ref ComplexValueBuilder o)
+                        {
+                            o.StartObject();
+                            Create(ref o, arg1, arg2);
+                            o.EndObject();
+                        }
                     }
 
                     /// <summary>
@@ -810,6 +868,17 @@ public readonly partial struct Ui5ManifestSchema
                         #endif
                     {
                         return new Source<TContext>(context, buildValue);
+                    }
+
+                    /// <summary>
+                    /// Build an instance of the value directly from its property values.
+                    /// </summary>
+                    /// <param name="value">The value of the <c>"value"</c> property.</param>
+                    /// <param name="format">The value of the <c>"format"</c> property.</param>
+                    /// <returns>The source from which to build the value.</returns>
+                    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsAFilterOnlyIfInputParameterMatchesFilter.FormatEntity.Source format = default)
+                    {
+                        return new Source(value, format);
                     }
 
                     /// <summary>

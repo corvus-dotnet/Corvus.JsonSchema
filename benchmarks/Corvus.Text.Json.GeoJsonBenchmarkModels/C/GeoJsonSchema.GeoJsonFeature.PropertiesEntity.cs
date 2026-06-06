@@ -293,10 +293,13 @@ public readonly partial struct GeoJsonSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static PropertiesEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<PropertiesEntity>(utf8Json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -316,10 +319,13 @@ public readonly partial struct GeoJsonSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static PropertiesEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<PropertiesEntity>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -339,10 +345,13 @@ public readonly partial struct GeoJsonSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the text.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static PropertiesEntity ParseValue(string json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<PropertiesEntity>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -380,9 +389,12 @@ public readonly partial struct GeoJsonSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the reader.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             public static PropertiesEntity ParseValue(ref Utf8JsonReader reader)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<PropertiesEntity>(ref reader);
+                #pragma warning restore CS0618
             }
 
             /// <summary>

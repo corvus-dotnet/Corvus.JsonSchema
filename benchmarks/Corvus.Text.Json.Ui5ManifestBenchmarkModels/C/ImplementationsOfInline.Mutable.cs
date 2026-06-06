@@ -481,7 +481,7 @@ public readonly partial struct ImplementationsOfInline
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -754,11 +754,11 @@ public readonly partial struct ImplementationsOfInline
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType result)
+        public bool TryGetAsRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.JsonSchema.Evaluate(_parent, _idx))
             {

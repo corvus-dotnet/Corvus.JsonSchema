@@ -197,7 +197,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -210,7 +210,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -223,7 +223,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(string propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(string propertyName, out Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -397,6 +397,16 @@ public readonly partial struct OpenapiSchema
             {
                 CheckValidInstance();
                 return _parent.GetPropertyCount(_idx);
+            }
+
+            /// <summary>
+            /// Enumerates the object.
+            /// </summary>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public ObjectEnumerator<Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Mutable> EnumerateObject()
+            {
+                CheckValidInstance();
+                return EnumeratorCreator.CreateObjectEnumerator<Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -1290,7 +1300,7 @@ public readonly partial struct OpenapiSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1351,7 +1361,7 @@ public readonly partial struct OpenapiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1374,7 +1384,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1421,7 +1431,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1563,11 +1573,11 @@ public readonly partial struct OpenapiSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.SpecificationExtensions" />.
+            /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.SpecificationExtensions.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsSpecificationExtensions(out Corvus.OpenapiBenchmark.Current.OpenapiSchema.SpecificationExtensions result)
+            public bool TryGetAsSpecificationExtensions(out Corvus.OpenapiBenchmark.Current.OpenapiSchema.SpecificationExtensions.Mutable result)
             {
                 if (Corvus.OpenapiBenchmark.Current.OpenapiSchema.SpecificationExtensions.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1586,12 +1596,23 @@ public readonly partial struct OpenapiSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source _createArg1;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source _createArg2;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source _createArg3;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source _createArg4;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source _createArg5;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source _createArg6;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source _createArg7;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source _createArg8;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source _createArg9;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source _createArg10;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1605,6 +1626,21 @@ public readonly partial struct OpenapiSchema
             }
 
             internal Source(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source arg6, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source arg8, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source arg10)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(Components instance) => new(JsonElement.From(instance));
 
@@ -1620,6 +1656,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1638,6 +1681,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1656,6 +1706,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1674,6 +1731,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1692,6 +1756,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1709,12 +1780,23 @@ public readonly partial struct OpenapiSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> _createArg1;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> _createArg2;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> _createArg3;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> _createArg4;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> _createArg5;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> _createArg6;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> _createArg7;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> _createArg8;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> _createArg9;
+            private readonly Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> _createArg10;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1726,6 +1808,22 @@ public readonly partial struct OpenapiSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> arg5, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> arg6, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> arg8, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> arg10)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1739,6 +1837,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1757,6 +1862,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1775,6 +1887,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1793,6 +1912,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1811,6 +1937,13 @@ public readonly partial struct OpenapiSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1951,6 +2084,19 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -1961,7 +2107,33 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -1986,6 +2158,53 @@ public readonly partial struct OpenapiSchema
                 Builder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source arg6, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source arg8, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source arg10, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> arg5, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> arg6, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> arg8, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> arg10, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
                 o.EndObject();
             }
         }
@@ -2017,6 +2236,49 @@ public readonly partial struct OpenapiSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="callbacks">The value of the <c>"callbacks"</c> property.</param>
+        /// <param name="examples">The value of the <c>"examples"</c> property.</param>
+        /// <param name="headers">The value of the <c>"headers"</c> property.</param>
+        /// <param name="links">The value of the <c>"links"</c> property.</param>
+        /// <param name="parameters">The value of the <c>"parameters"</c> property.</param>
+        /// <param name="pathItems">The value of the <c>"pathItems"</c> property.</param>
+        /// <param name="requestBodies">The value of the <c>"requestBodies"</c> property.</param>
+        /// <param name="responses">The value of the <c>"responses"</c> property.</param>
+        /// <param name="schemas">The value of the <c>"schemas"</c> property.</param>
+        /// <param name="securitySchemes">The value of the <c>"securitySchemes"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source callbacks = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source examples = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source headers = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source links = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source parameters = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source pathItems = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source requestBodies = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source responses = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source schemas = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source securitySchemes = default)
+        {
+            return new Source(callbacks, examples, headers, links, parameters, pathItems, requestBodies, responses, schemas, securitySchemes);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="callbacks">The value of the <c>"callbacks"</c> property.</param>
+        /// <param name="examples">The value of the <c>"examples"</c> property.</param>
+        /// <param name="headers">The value of the <c>"headers"</c> property.</param>
+        /// <param name="links">The value of the <c>"links"</c> property.</param>
+        /// <param name="parameters">The value of the <c>"parameters"</c> property.</param>
+        /// <param name="pathItems">The value of the <c>"pathItems"</c> property.</param>
+        /// <param name="requestBodies">The value of the <c>"requestBodies"</c> property.</param>
+        /// <param name="responses">The value of the <c>"responses"</c> property.</param>
+        /// <param name="schemas">The value of the <c>"schemas"</c> property.</param>
+        /// <param name="securitySchemes">The value of the <c>"securitySchemes"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> callbacks = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> examples = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> headers = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> links = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> parameters = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> pathItems = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> requestBodies = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> responses = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> schemas = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> securitySchemes = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, callbacks, examples, headers, links, parameters, pathItems, requestBodies, responses, schemas, securitySchemes);
         }
 
         /// <summary>

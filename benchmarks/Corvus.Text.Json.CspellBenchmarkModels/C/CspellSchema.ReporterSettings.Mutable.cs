@@ -388,7 +388,7 @@ public readonly partial struct CspellSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -909,11 +909,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.JsonString" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.JsonString.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonString(out Corvus.CspellBenchmark.Current.JsonString result)
+            public bool TryGetAsJsonString(out Corvus.CspellBenchmark.Current.JsonString.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -926,11 +926,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.JsonStringArray" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.JsonStringArray.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonStringArray(out Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.JsonStringArray result)
+            public bool TryGetAsJsonStringArray(out Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.JsonStringArray.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -943,11 +943,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.AnyOf2Array" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.AnyOf2Array.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAnyOf2Array(out Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.AnyOf2Array result)
+            public bool TryGetAsAnyOf2Array(out Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.AnyOf2Array.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettings.AnyOf2Array.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1319,6 +1319,17 @@ public readonly partial struct CspellSchema
             /// Add an item to the array.
             /// </summary>
             public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
+            {
+                value.AddAsItem(ref _builder);
+            }
+
+            /// <summary>
+            /// Add an item to the array.
+            /// </summary>
+            public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsItem(ref _builder);
             }

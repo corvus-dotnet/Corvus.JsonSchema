@@ -304,10 +304,13 @@ public readonly partial struct StylecopSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ConfigurationForNamingRulesSa1300 ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<ConfigurationForNamingRulesSa1300>(utf8Json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -327,10 +330,13 @@ public readonly partial struct StylecopSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ConfigurationForNamingRulesSa1300 ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<ConfigurationForNamingRulesSa1300>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -350,10 +356,13 @@ public readonly partial struct StylecopSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the text.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static ConfigurationForNamingRulesSa1300 ParseValue(string json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<ConfigurationForNamingRulesSa1300>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -391,9 +400,12 @@ public readonly partial struct StylecopSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the reader.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             public static ConfigurationForNamingRulesSa1300 ParseValue(ref Utf8JsonReader reader)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<ConfigurationForNamingRulesSa1300>(ref reader);
+                #pragma warning restore CS0618
             }
 
             /// <summary>

@@ -529,7 +529,7 @@ public readonly partial struct Cql2Schema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -902,11 +902,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsBinaryComparisonPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate result)
+            public bool TryGetAsBinaryComparisonPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -919,11 +919,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsIsBetweenPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate result)
+            public bool TryGetAsIsBetweenPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -936,11 +936,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsIsInListPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate result)
+            public bool TryGetAsIsInListPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -953,11 +953,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsIsLikePredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate result)
+            public bool TryGetAsIsLikePredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -970,11 +970,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsIsNullPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate result)
+            public bool TryGetAsIsNullPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.JsonSchema.Evaluate(_parent, _idx))
                 {

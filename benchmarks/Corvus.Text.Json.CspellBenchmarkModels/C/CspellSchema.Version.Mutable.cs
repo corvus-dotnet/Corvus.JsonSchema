@@ -332,7 +332,7 @@ public readonly partial struct CspellSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -487,11 +487,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsVersionLatest(out Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest result)
+            public bool TryGetAsVersionLatest(out Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -504,11 +504,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsVersionLegacy(out Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy result)
+            public bool TryGetAsVersionLegacy(out Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy.JsonSchema.Evaluate(_parent, _idx))
                 {

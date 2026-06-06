@@ -561,7 +561,7 @@ public readonly partial struct Cql2Schema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -920,11 +920,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsArithmeticExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression result)
+                public bool TryGetAsArithmeticExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -937,11 +937,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.JsonNumber" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.JsonNumber.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJsonNumber(out Corvus.Cql2Benchmark.Current.JsonNumber result)
+                public bool TryGetAsJsonNumber(out Corvus.Cql2Benchmark.Current.JsonNumber.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.JsonNumber.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -954,11 +954,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsFunctionRef(out Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef result)
+                public bool TryGetAsFunctionRef(out Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -971,11 +971,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsPropertyRef(out Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef result)
+                public bool TryGetAsPropertyRef(out Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.JsonSchema.Evaluate(_parent, _idx))
                     {

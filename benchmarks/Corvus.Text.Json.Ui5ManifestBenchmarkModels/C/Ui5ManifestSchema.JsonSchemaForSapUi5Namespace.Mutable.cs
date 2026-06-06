@@ -2122,7 +2122,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -2453,11 +2453,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredContentDensitiesAndDependencies(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies result)
+            public bool TryGetAsRequiredContentDensitiesAndDependencies(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -2470,11 +2470,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf1Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity result)
+            public bool TryGetAsAllOf1Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -2493,12 +2493,32 @@ public readonly partial struct Ui5ManifestSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg4;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source _createArg12;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source _createArg13;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source _createArg14;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source _createArg15;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source _createArg16;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source _createArg17;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source _createArg18;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source _createArg19;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2512,6 +2532,30 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source arg18, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source arg19)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(JsonSchemaForSapUi5Namespace instance) => new(JsonElement.From(instance));
 
@@ -2527,6 +2571,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2545,6 +2596,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2563,6 +2621,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2581,6 +2646,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2599,6 +2671,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2616,12 +2695,32 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source<TContext> _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source<TContext> _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg4;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source<TContext> _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source<TContext> _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source<TContext> _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source<TContext> _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source<TContext> _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source _createArg12;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source _createArg13;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source _createArg14;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source<TContext> _createArg15;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source<TContext> _createArg16;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source<TContext> _createArg17;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source<TContext> _createArg18;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source<TContext> _createArg19;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2633,6 +2732,31 @@ public readonly partial struct Ui5ManifestSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source<TContext> arg15, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source<TContext> arg16, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source<TContext> arg17, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source<TContext> arg18, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source<TContext> arg19)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -2646,6 +2770,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2664,6 +2795,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2682,6 +2820,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2700,6 +2845,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2718,6 +2870,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2912,6 +3071,19 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -2922,7 +3094,33 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -2947,6 +3145,71 @@ public readonly partial struct Ui5ManifestSchema
                 Builder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source arg18, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source arg19, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source<TContext> arg15, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source<TContext> arg16, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source<TContext> arg17, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source<TContext> arg18, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source<TContext> arg19, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19);
                 o.EndObject();
             }
         }
@@ -2978,6 +3241,67 @@ public readonly partial struct Ui5ManifestSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="contentDensities">The value of the <c>"contentDensities"</c> property.</param>
+        /// <param name="dependencies">The value of the <c>"dependencies"</c> property.</param>
+        /// <param name="version">The value of the <c>"_version"</c> property.</param>
+        /// <param name="appVariantId">The value of the <c>"appVariantId"</c> property.</param>
+        /// <param name="appVariantIdHierarchy">The value of the <c>"appVariantIdHierarchy"</c> property.</param>
+        /// <param name="autoPrefixId">The value of the <c>"autoPrefixId"</c> property.</param>
+        /// <param name="commands">The value of the <c>"commands"</c> property.</param>
+        /// <param name="componentName">The value of the <c>"componentName"</c> property.</param>
+        /// <param name="componentUsages">The value of the <c>"componentUsages"</c> property.</param>
+        /// <param name="config">The value of the <c>"config"</c> property.</param>
+        /// <param name="extends">The value of the <c>"extends"</c> property.</param>
+        /// <param name="flexExtensionPointEnabled">The value of the <c>"flexExtensionPointEnabled"</c> property.</param>
+        /// <param name="handleValidation">The value of the <c>"handleValidation"</c> property.</param>
+        /// <param name="isCloudDevAdaptation">The value of the <c>"isCloudDevAdaptation"</c> property.</param>
+        /// <param name="library">The value of the <c>"library"</c> property.</param>
+        /// <param name="models">The value of the <c>"models"</c> property.</param>
+        /// <param name="resourceRoots">The value of the <c>"resourceRoots"</c> property.</param>
+        /// <param name="resources">The value of the <c>"resources"</c> property.</param>
+        /// <param name="services">The value of the <c>"services"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source contentDensities, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source dependencies, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source appVariantId = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source appVariantIdHierarchy = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source autoPrefixId = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source commands = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source componentName = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source componentUsages = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source config = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source extends = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source flexExtensionPointEnabled = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source handleValidation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source isCloudDevAdaptation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source library = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source models = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source resourceRoots = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source resources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source services = default)
+        {
+            return new Source(contentDensities, dependencies, version, appVariantId, appVariantIdHierarchy, autoPrefixId, commands, componentName, componentUsages, config, extends, flexExtensionPointEnabled, handleValidation, isCloudDevAdaptation, library, models, resourceRoots, resources, services);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="contentDensities">The value of the <c>"contentDensities"</c> property.</param>
+        /// <param name="dependencies">The value of the <c>"dependencies"</c> property.</param>
+        /// <param name="version">The value of the <c>"_version"</c> property.</param>
+        /// <param name="appVariantId">The value of the <c>"appVariantId"</c> property.</param>
+        /// <param name="appVariantIdHierarchy">The value of the <c>"appVariantIdHierarchy"</c> property.</param>
+        /// <param name="autoPrefixId">The value of the <c>"autoPrefixId"</c> property.</param>
+        /// <param name="commands">The value of the <c>"commands"</c> property.</param>
+        /// <param name="componentName">The value of the <c>"componentName"</c> property.</param>
+        /// <param name="componentUsages">The value of the <c>"componentUsages"</c> property.</param>
+        /// <param name="config">The value of the <c>"config"</c> property.</param>
+        /// <param name="extends">The value of the <c>"extends"</c> property.</param>
+        /// <param name="flexExtensionPointEnabled">The value of the <c>"flexExtensionPointEnabled"</c> property.</param>
+        /// <param name="handleValidation">The value of the <c>"handleValidation"</c> property.</param>
+        /// <param name="isCloudDevAdaptation">The value of the <c>"isCloudDevAdaptation"</c> property.</param>
+        /// <param name="library">The value of the <c>"library"</c> property.</param>
+        /// <param name="models">The value of the <c>"models"</c> property.</param>
+        /// <param name="resourceRoots">The value of the <c>"resourceRoots"</c> property.</param>
+        /// <param name="resources">The value of the <c>"resources"</c> property.</param>
+        /// <param name="services">The value of the <c>"services"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source<TContext> contentDensities, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source<TContext> dependencies, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source appVariantId = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source<TContext> appVariantIdHierarchy = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source autoPrefixId = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source<TContext> commands = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source componentName = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source<TContext> componentUsages = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source<TContext> config = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source<TContext> extends = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source flexExtensionPointEnabled = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source handleValidation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source isCloudDevAdaptation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source<TContext> library = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source<TContext> models = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source<TContext> resourceRoots = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source<TContext> resources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source<TContext> services = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, contentDensities, dependencies, version, appVariantId, appVariantIdHierarchy, autoPrefixId, commands, componentName, componentUsages, config, extends, flexExtensionPointEnabled, handleValidation, isCloudDevAdaptation, library, models, resourceRoots, resources, services);
         }
 
         /// <summary>

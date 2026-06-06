@@ -727,7 +727,7 @@ public readonly partial struct Cql2Schema
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -1142,11 +1142,11 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression" />.
+        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsAndOrExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression result)
+        public bool TryGetAsAndOrExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Mutable result)
         {
             if (Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1159,11 +1159,11 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate" />.
+        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsArrayPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate result)
+        public bool TryGetAsArrayPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Mutable result)
         {
             if (Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1176,11 +1176,11 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ComparisonPredicate" />.
+        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ComparisonPredicate.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsComparisonPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.ComparisonPredicate result)
+        public bool TryGetAsComparisonPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.ComparisonPredicate.Mutable result)
         {
             if (Corvus.Cql2Benchmark.Current.Cql2Schema.ComparisonPredicate.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1193,11 +1193,11 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef" />.
+        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsFunctionRef(out Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef result)
+        public bool TryGetAsFunctionRef(out Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Mutable result)
         {
             if (Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1210,11 +1210,11 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression" />.
+        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsNotExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression result)
+        public bool TryGetAsNotExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Mutable result)
         {
             if (Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1227,11 +1227,11 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate" />.
+        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsSpatialPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate result)
+        public bool TryGetAsSpatialPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Mutable result)
         {
             if (Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1244,11 +1244,11 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate" />.
+        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsTemporalPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate result)
+        public bool TryGetAsTemporalPredicate(out Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Mutable result)
         {
             if (Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1261,11 +1261,11 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.JsonBoolean" />.
+        /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.JsonBoolean.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsJsonBoolean(out Corvus.Cql2Benchmark.Current.JsonBoolean result)
+        public bool TryGetAsJsonBoolean(out Corvus.Cql2Benchmark.Current.JsonBoolean.Mutable result)
         {
             if (Corvus.Cql2Benchmark.Current.JsonBoolean.JsonSchema.Evaluate(_parent, _idx))
             {

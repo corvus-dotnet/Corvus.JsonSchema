@@ -75,8 +75,8 @@ public readonly partial struct ClangFormatSchema
                 int oneOfMatchedCount = 0;
 
                 JsonSchemaContext oneOfContext0 =
-                    Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf0SchemaEvaluationPath);
-                Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext0);
+                    Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf0SchemaEvaluationPath);
+                Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext0);
 
                 if (oneOfContext0.IsMatch)
                 {

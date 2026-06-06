@@ -861,7 +861,7 @@ public readonly partial struct VercelSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -964,12 +964,21 @@ public readonly partial struct VercelSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source _createArg1;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source _createArg2;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source _createArg3;
+            private readonly Corvus.VercelBenchmark.Current.JsonBoolean.Source _createArg4;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source _createArg5;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source _createArg6;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source _createArg7;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source _createArg8;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -983,6 +992,19 @@ public readonly partial struct VercelSchema
             }
 
             internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source arg8)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(RequiredSizes instance) => new(JsonElement.From(instance));
 
@@ -998,6 +1020,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1016,6 +1045,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1034,6 +1070,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1052,6 +1095,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1070,6 +1120,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1087,12 +1144,21 @@ public readonly partial struct VercelSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> _createArg1;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source _createArg2;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source _createArg3;
+            private readonly Corvus.VercelBenchmark.Current.JsonBoolean.Source _createArg4;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> _createArg5;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> _createArg6;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source _createArg7;
+            private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> _createArg8;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1104,6 +1170,20 @@ public readonly partial struct VercelSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> arg8)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1117,6 +1197,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1135,6 +1222,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1153,6 +1247,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1171,6 +1272,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1189,6 +1297,13 @@ public readonly partial struct VercelSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1324,6 +1439,49 @@ public readonly partial struct VercelSchema
                 o = ovb._builder;
                 o.EndObject();
             }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source arg8, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> arg8, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                o.EndObject();
+            }
         }
 
         /// <summary>
@@ -1353,6 +1511,45 @@ public readonly partial struct VercelSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="sizes">The value of the <c>"sizes"</c> property.</param>
+        /// <param name="contentDispositionType">The value of the <c>"contentDispositionType"</c> property.</param>
+        /// <param name="contentSecurityPolicy">The value of the <c>"contentSecurityPolicy"</c> property.</param>
+        /// <param name="dangerouslyAllowSvg">The value of the <c>"dangerouslyAllowSVG"</c> property.</param>
+        /// <param name="domains">The value of the <c>"domains"</c> property.</param>
+        /// <param name="formats">The value of the <c>"formats"</c> property.</param>
+        /// <param name="minimumCacheTtl">The value of the <c>"minimumCacheTTL"</c> property.</param>
+        /// <param name="remotePatterns">The value of the <c>"remotePatterns"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source sizes, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source contentDispositionType = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source contentSecurityPolicy = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source dangerouslyAllowSvg = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source domains = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source formats = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source minimumCacheTtl = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source remotePatterns = default)
+        {
+            return new Source(sizes, contentDispositionType, contentSecurityPolicy, dangerouslyAllowSvg, domains, formats, minimumCacheTtl, remotePatterns);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="sizes">The value of the <c>"sizes"</c> property.</param>
+        /// <param name="contentDispositionType">The value of the <c>"contentDispositionType"</c> property.</param>
+        /// <param name="contentSecurityPolicy">The value of the <c>"contentSecurityPolicy"</c> property.</param>
+        /// <param name="dangerouslyAllowSvg">The value of the <c>"dangerouslyAllowSVG"</c> property.</param>
+        /// <param name="domains">The value of the <c>"domains"</c> property.</param>
+        /// <param name="formats">The value of the <c>"formats"</c> property.</param>
+        /// <param name="minimumCacheTtl">The value of the <c>"minimumCacheTTL"</c> property.</param>
+        /// <param name="remotePatterns">The value of the <c>"remotePatterns"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> sizes, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source contentDispositionType = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source contentSecurityPolicy = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source dangerouslyAllowSvg = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> domains = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> formats = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source minimumCacheTtl = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> remotePatterns = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, sizes, contentDispositionType, contentSecurityPolicy, dangerouslyAllowSvg, domains, formats, minimumCacheTtl, remotePatterns);
         }
 
         /// <summary>

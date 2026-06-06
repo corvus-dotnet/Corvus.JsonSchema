@@ -487,7 +487,7 @@ public readonly partial struct Cql2Schema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -832,11 +832,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredArgsAndOp(out Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp result)
+            public bool TryGetAsRequiredArgsAndOp(out Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -849,11 +849,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsPatternExpressionRequiredArgsAndOp(out Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp result)
+            public bool TryGetAsPatternExpressionRequiredArgsAndOp(out Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -866,11 +866,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.JsonString" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.JsonString.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonString(out Corvus.Cql2Benchmark.Current.JsonString result)
+            public bool TryGetAsJsonString(out Corvus.Cql2Benchmark.Current.JsonString.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                 {

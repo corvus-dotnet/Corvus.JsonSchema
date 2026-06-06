@@ -547,7 +547,7 @@ public readonly partial struct Cql2Schema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -878,11 +878,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsBboxLiteral(out Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral result)
+            public bool TryGetAsBboxLiteral(out Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -895,11 +895,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.GeometryLiteral" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.GeometryLiteral.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsGeometryLiteral(out Corvus.Cql2Benchmark.Current.Cql2Schema.GeometryLiteral result)
+            public bool TryGetAsGeometryLiteral(out Corvus.Cql2Benchmark.Current.Cql2Schema.GeometryLiteral.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.GeometryLiteral.JsonSchema.Evaluate(_parent, _idx))
                 {

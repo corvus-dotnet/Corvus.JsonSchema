@@ -1327,7 +1327,7 @@ public readonly partial struct JasmineSchema
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -1672,11 +1672,11 @@ public readonly partial struct JasmineSchema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JasmineSchema.AllOf1Entity" />.
+        /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JasmineSchema.AllOf1Entity.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsAllOf1Entity(out Corvus.JasmineBenchmark.Current.JasmineSchema.AllOf1Entity result)
+        public bool TryGetAsAllOf1Entity(out Corvus.JasmineBenchmark.Current.JasmineSchema.AllOf1Entity.Mutable result)
         {
             if (Corvus.JasmineBenchmark.Current.JasmineSchema.AllOf1Entity.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1689,11 +1689,11 @@ public readonly partial struct JasmineSchema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems" />.
+        /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsEnvItems(out Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems result)
+        public bool TryGetAsEnvItems(out Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Mutable result)
         {
             if (Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1706,11 +1706,11 @@ public readonly partial struct JasmineSchema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems" />.
+        /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsRootItems(out Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems result)
+        public bool TryGetAsRootItems(out Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.Mutable result)
         {
             if (Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1729,12 +1729,25 @@ public readonly partial struct JasmineSchema
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source _createArg1;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source _createArg2;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source _createArg3;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Source _createArg4;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source _createArg5;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source _createArg6;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source _createArg7;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source _createArg8;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source _createArg9;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source _createArg10;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source _createArg11;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source _createArg12;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1748,6 +1761,23 @@ public readonly partial struct JasmineSchema
         }
 
         internal Source(Corvus.JasmineBenchmark.Current.JasmineSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source arg3, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Source arg4, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source arg5, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source arg6, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source arg7, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source arg8, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source arg9, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source arg10, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source arg11, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source arg12)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(JasmineSchema instance) => new(JsonElement.From(instance));
 
@@ -1763,6 +1793,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1781,6 +1818,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1799,6 +1843,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1817,6 +1868,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1835,6 +1893,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1852,12 +1917,25 @@ public readonly partial struct JasmineSchema
             Unknown,
             Source,
             Builder,
+            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source _createArg1;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> _createArg2;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source _createArg3;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Source<TContext> _createArg4;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source _createArg5;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> _createArg6;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source _createArg7;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source _createArg8;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source _createArg9;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source _createArg10;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source _createArg11;
+        private readonly Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source _createArg12;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1869,6 +1947,24 @@ public readonly partial struct JasmineSchema
         public static implicit operator Source<TContext>(Source source) => new (source);
 
         internal Source(scoped in TContext context, Corvus.JasmineBenchmark.Current.JasmineSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in TContext context, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source arg3, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Source<TContext> arg4, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source arg5, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> arg6, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source arg7, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source arg8, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source arg9, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source arg10, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source arg11, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source arg12)
+        {
+            _context = context;
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _kind = Kind.Create;
+        }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1882,6 +1978,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1900,6 +2003,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1918,6 +2028,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1936,6 +2053,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1954,6 +2078,13 @@ public readonly partial struct JasmineSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2106,6 +2237,19 @@ public readonly partial struct JasmineSchema
         /// </summary>
         /// <param name="propertyName">The name of the property to add.</param>
         /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
         public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
         {
             value.AddAsProperty(propertyName, ref _builder);
@@ -2116,7 +2260,33 @@ public readonly partial struct JasmineSchema
         /// </summary>
         /// <param name="propertyName">The name of the property to add.</param>
         /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
         public void AddProperty(string propertyName, in JsonElement.Source value)
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
         {
             value.AddAsProperty(propertyName, ref _builder);
         }
@@ -2141,6 +2311,57 @@ public readonly partial struct JasmineSchema
             Builder ovb = new(o);
             value(context, ref ovb);
             o = ovb._builder;
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source arg3, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Source arg4, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source arg5, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source arg6, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source arg7, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source arg8, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source arg9, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source arg10, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source arg11, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source arg12, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source arg3, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Source<TContext> arg4, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source arg5, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> arg6, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source arg7, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source arg8, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source arg9, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source arg10, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source arg11, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source arg12, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartObject();
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
             o.EndObject();
         }
     }
@@ -2172,6 +2393,53 @@ public readonly partial struct JasmineSchema
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="specDir">The value of the <c>"spec_dir"</c> property.</param>
+    /// <param name="specFiles">The value of the <c>"spec_files"</c> property.</param>
+    /// <param name="autoCleanClosure">The value of the <c>"autoCleanClosure"</c> property.</param>
+    /// <param name="env">The value of the <c>"env"</c> property.</param>
+    /// <param name="failSpecWithNoExpectations">The value of the <c>"failSpecWithNoExpectations"</c> property.</param>
+    /// <param name="helpers">The value of the <c>"helpers"</c> property.</param>
+    /// <param name="hideDisbaled">The value of the <c>"hideDisbaled"</c> property.</param>
+    /// <param name="random">The value of the <c>"random"</c> property.</param>
+    /// <param name="seed">The value of the <c>"seed"</c> property.</param>
+    /// <param name="stopOnSpecFailure">The value of the <c>"stopOnSpecFailure"</c> property.</param>
+    /// <param name="stopSpecOnExpectationFailure">The value of the <c>"stopSpecOnExpectationFailure"</c> property.</param>
+    /// <param name="verboseDeprication">The value of the <c>"verboseDeprication"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source specDir, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source specFiles, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source autoCleanClosure = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Source env = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source failSpecWithNoExpectations = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source helpers = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source hideDisbaled = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source random = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source seed = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source stopOnSpecFailure = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source stopSpecOnExpectationFailure = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source verboseDeprication = default)
+    {
+        return new Source(specDir, specFiles, autoCleanClosure, env, failSpecWithNoExpectations, helpers, hideDisbaled, random, seed, stopOnSpecFailure, stopSpecOnExpectationFailure, verboseDeprication);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="specDir">The value of the <c>"spec_dir"</c> property.</param>
+    /// <param name="specFiles">The value of the <c>"spec_files"</c> property.</param>
+    /// <param name="autoCleanClosure">The value of the <c>"autoCleanClosure"</c> property.</param>
+    /// <param name="env">The value of the <c>"env"</c> property.</param>
+    /// <param name="failSpecWithNoExpectations">The value of the <c>"failSpecWithNoExpectations"</c> property.</param>
+    /// <param name="helpers">The value of the <c>"helpers"</c> property.</param>
+    /// <param name="hideDisbaled">The value of the <c>"hideDisbaled"</c> property.</param>
+    /// <param name="random">The value of the <c>"random"</c> property.</param>
+    /// <param name="seed">The value of the <c>"seed"</c> property.</param>
+    /// <param name="stopOnSpecFailure">The value of the <c>"stopOnSpecFailure"</c> property.</param>
+    /// <param name="stopSpecOnExpectationFailure">The value of the <c>"stopSpecOnExpectationFailure"</c> property.</param>
+    /// <param name="verboseDeprication">The value of the <c>"verboseDeprication"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source specDir, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> specFiles, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source autoCleanClosure = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Source<TContext> env = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source failSpecWithNoExpectations = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> helpers = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source hideDisbaled = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source random = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source seed = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source stopOnSpecFailure = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source stopSpecOnExpectationFailure = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source verboseDeprication = default)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, specDir, specFiles, autoCleanClosure, env, failSpecWithNoExpectations, helpers, hideDisbaled, random, seed, stopOnSpecFailure, stopSpecOnExpectationFailure, verboseDeprication);
     }
 
     /// <summary>

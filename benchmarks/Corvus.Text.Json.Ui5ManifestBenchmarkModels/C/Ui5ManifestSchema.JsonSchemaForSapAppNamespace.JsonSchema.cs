@@ -331,14 +331,14 @@ public readonly partial struct Ui5ManifestSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext15 =
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.JsonSchema.PushChildContextUnescaped(
+                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.ProviderUtf8,
                         evaluationPath: ProviderSchemaEvaluationPath);
 
-                Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext15);
+                Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext15);
                 context.CommitChildContext(childContext15.IsMatch, ref childContext15);
             }
 

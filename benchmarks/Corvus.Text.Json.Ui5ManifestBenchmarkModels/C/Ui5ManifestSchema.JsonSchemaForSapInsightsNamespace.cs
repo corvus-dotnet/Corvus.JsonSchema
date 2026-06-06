@@ -263,11 +263,11 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents the template name, from where manifest is generated
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.TemplateNameEntity TemplateName
+        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated TemplateName
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TemplateNameUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.TemplateNameEntity value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TemplateNameUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated value))
                 {
                     return value;
                 }
@@ -437,10 +437,13 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JsonSchemaForSapInsightsNamespace ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<JsonSchemaForSapInsightsNamespace>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -460,10 +463,13 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JsonSchemaForSapInsightsNamespace ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<JsonSchemaForSapInsightsNamespace>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -483,10 +489,13 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JsonSchemaForSapInsightsNamespace ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<JsonSchemaForSapInsightsNamespace>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -524,9 +533,12 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static JsonSchemaForSapInsightsNamespace ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<JsonSchemaForSapInsightsNamespace>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>

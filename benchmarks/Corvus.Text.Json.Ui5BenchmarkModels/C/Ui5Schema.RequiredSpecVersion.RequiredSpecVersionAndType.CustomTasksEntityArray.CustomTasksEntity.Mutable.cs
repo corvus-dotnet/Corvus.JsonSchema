@@ -405,7 +405,7 @@ public readonly partial struct Ui5Schema
                         /// <inheritdoc/>
                         public override string ToString()
                         {
-                            if (_parent == null || _documentVersion != _parent.Version)
+                            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                             {
                                 return string.Empty;
                             }
@@ -736,11 +736,11 @@ public readonly partial struct Ui5Schema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName" />.
+                        /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsRequiredBeforeTaskAndName(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName result)
+                        public bool TryGetAsRequiredBeforeTaskAndName(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Mutable result)
                         {
                             if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -753,11 +753,11 @@ public readonly partial struct Ui5Schema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName" />.
+                        /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsRequiredAfterTaskAndName(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName result)
+                        public bool TryGetAsRequiredAfterTaskAndName(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Mutable result)
                         {
                             if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.JsonSchema.Evaluate(_parent, _idx))
                             {

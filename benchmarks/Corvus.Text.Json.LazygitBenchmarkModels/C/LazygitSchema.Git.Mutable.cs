@@ -1592,7 +1592,7 @@ public readonly partial struct LazygitSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1695,12 +1695,29 @@ public readonly partial struct LazygitSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source _createArg1;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source _createArg2;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source _createArg3;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source _createArg4;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source _createArg5;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source _createArg6;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source _createArg7;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source _createArg8;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source _createArg9;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source _createArg10;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source _createArg11;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source _createArg12;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source _createArg13;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source _createArg14;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source _createArg15;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source _createArg16;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1714,6 +1731,27 @@ public readonly partial struct LazygitSchema
             }
 
             internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(Git instance) => new(JsonElement.From(instance));
 
@@ -1729,6 +1767,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1747,6 +1792,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1765,6 +1817,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1783,6 +1842,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1801,6 +1867,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1818,12 +1891,29 @@ public readonly partial struct LazygitSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source _createArg1;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source _createArg2;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source _createArg3;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source _createArg4;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> _createArg5;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> _createArg6;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source _createArg7;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source _createArg8;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source _createArg9;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> _createArg10;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> _createArg11;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> _createArg12;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source _createArg13;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> _createArg14;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source _createArg15;
+            private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source _createArg16;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1835,6 +1925,28 @@ public readonly partial struct LazygitSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1848,6 +1960,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1866,6 +1985,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1884,6 +2010,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1902,6 +2035,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1920,6 +2060,13 @@ public readonly partial struct LazygitSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2103,6 +2250,65 @@ public readonly partial struct LazygitSchema
                 o = ovb._builder;
                 o.EndObject();
             }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
+                o.EndObject();
+            }
         }
 
         /// <summary>
@@ -2132,6 +2338,61 @@ public readonly partial struct LazygitSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="allBranchesLogCmd">The value of the <c>"allBranchesLogCmd"</c> property.</param>
+        /// <param name="autoFetch">The value of the <c>"autoFetch"</c> property.</param>
+        /// <param name="autoRefresh">The value of the <c>"autoRefresh"</c> property.</param>
+        /// <param name="branchLogCmd">The value of the <c>"branchLogCmd"</c> property.</param>
+        /// <param name="commit">The value of the <c>"commit"</c> property.</param>
+        /// <param name="commitPrefixes">The value of the <c>"commitPrefixes"</c> property.</param>
+        /// <param name="diffContextSize">The value of the <c>"diffContextSize"</c> property.</param>
+        /// <param name="disableForcePushing">The value of the <c>"disableForcePushing"</c> property.</param>
+        /// <param name="fetchAll">The value of the <c>"fetchAll"</c> property.</param>
+        /// <param name="log">The value of the <c>"log"</c> property.</param>
+        /// <param name="mainBranches">The value of the <c>"mainBranches"</c> property.</param>
+        /// <param name="merging">The value of the <c>"merging"</c> property.</param>
+        /// <param name="overrideGpg">The value of the <c>"overrideGpg"</c> property.</param>
+        /// <param name="paging">The value of the <c>"paging"</c> property.</param>
+        /// <param name="parseEmoji">The value of the <c>"parseEmoji"</c> property.</param>
+        /// <param name="skipHookPrefix">The value of the <c>"skipHookPrefix"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source allBranchesLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source autoFetch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source autoRefresh = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source branchLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source commit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source commitPrefixes = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source diffContextSize = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source disableForcePushing = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source fetchAll = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source log = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source mainBranches = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source merging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source overrideGpg = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source paging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source parseEmoji = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source skipHookPrefix = default)
+        {
+            return new Source(allBranchesLogCmd, autoFetch, autoRefresh, branchLogCmd, commit, commitPrefixes, diffContextSize, disableForcePushing, fetchAll, log, mainBranches, merging, overrideGpg, paging, parseEmoji, skipHookPrefix);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="allBranchesLogCmd">The value of the <c>"allBranchesLogCmd"</c> property.</param>
+        /// <param name="autoFetch">The value of the <c>"autoFetch"</c> property.</param>
+        /// <param name="autoRefresh">The value of the <c>"autoRefresh"</c> property.</param>
+        /// <param name="branchLogCmd">The value of the <c>"branchLogCmd"</c> property.</param>
+        /// <param name="commit">The value of the <c>"commit"</c> property.</param>
+        /// <param name="commitPrefixes">The value of the <c>"commitPrefixes"</c> property.</param>
+        /// <param name="diffContextSize">The value of the <c>"diffContextSize"</c> property.</param>
+        /// <param name="disableForcePushing">The value of the <c>"disableForcePushing"</c> property.</param>
+        /// <param name="fetchAll">The value of the <c>"fetchAll"</c> property.</param>
+        /// <param name="log">The value of the <c>"log"</c> property.</param>
+        /// <param name="mainBranches">The value of the <c>"mainBranches"</c> property.</param>
+        /// <param name="merging">The value of the <c>"merging"</c> property.</param>
+        /// <param name="overrideGpg">The value of the <c>"overrideGpg"</c> property.</param>
+        /// <param name="paging">The value of the <c>"paging"</c> property.</param>
+        /// <param name="parseEmoji">The value of the <c>"parseEmoji"</c> property.</param>
+        /// <param name="skipHookPrefix">The value of the <c>"skipHookPrefix"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source allBranchesLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source autoFetch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source autoRefresh = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source branchLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> commit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> commitPrefixes = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source diffContextSize = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source disableForcePushing = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source fetchAll = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> log = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> mainBranches = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> merging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source overrideGpg = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> paging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source parseEmoji = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source skipHookPrefix = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, allBranchesLogCmd, autoFetch, autoRefresh, branchLogCmd, commit, commitPrefixes, diffContextSize, disableForcePushing, fetchAll, log, mainBranches, merging, overrideGpg, paging, parseEmoji, skipHookPrefix);
         }
 
         /// <summary>

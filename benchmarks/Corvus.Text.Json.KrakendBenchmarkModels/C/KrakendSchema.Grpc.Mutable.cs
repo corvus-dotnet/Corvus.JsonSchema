@@ -182,7 +182,7 @@ public readonly partial struct KrakendSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.Text.Json.JsonElement.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -195,7 +195,7 @@ public readonly partial struct KrakendSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.Text.Json.JsonElement.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -208,7 +208,7 @@ public readonly partial struct KrakendSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(string propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(string propertyName, out Corvus.Text.Json.JsonElement.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -528,6 +528,16 @@ public readonly partial struct KrakendSchema
             {
                 CheckValidInstance();
                 return _parent.GetPropertyCount(_idx);
+            }
+
+            /// <summary>
+            /// Enumerates the object.
+            /// </summary>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public ObjectEnumerator<Corvus.Text.Json.JsonElement.Mutable> EnumerateObject()
+            {
+                CheckValidInstance();
+                return EnumeratorCreator.CreateObjectEnumerator<Corvus.Text.Json.JsonElement.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -1241,7 +1251,7 @@ public readonly partial struct KrakendSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1302,7 +1312,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1325,7 +1335,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1372,7 +1382,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1520,12 +1530,25 @@ public readonly partial struct KrakendSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source _createArg1;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source _createArg2;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source _createArg3;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source _createArg4;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source _createArg5;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source _createArg6;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source _createArg7;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source _createArg8;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source _createArg9;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source _createArg10;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg11;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source _createArg12;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1539,6 +1562,23 @@ public readonly partial struct KrakendSchema
             }
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(Grpc instance) => new(JsonElement.From(instance));
 
@@ -1554,6 +1594,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1572,6 +1619,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1590,6 +1644,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1608,6 +1669,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1626,6 +1694,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1643,12 +1718,25 @@ public readonly partial struct KrakendSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> _createArg1;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source _createArg2;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> _createArg3;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> _createArg4;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source _createArg5;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source _createArg6;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source _createArg7;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source _createArg8;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source _createArg9;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source _createArg10;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg11;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source _createArg12;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1660,6 +1748,24 @@ public readonly partial struct KrakendSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1673,6 +1779,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1691,6 +1804,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1709,6 +1829,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1727,6 +1854,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1745,6 +1879,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1897,6 +2038,19 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -1907,7 +2061,33 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -1932,6 +2112,57 @@ public readonly partial struct KrakendSchema
                 Builder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
                 o.EndObject();
             }
         }
@@ -1963,6 +2194,53 @@ public readonly partial struct KrakendSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="clientTls">The value of the <c>"client_tls"</c> property.</param>
+        /// <param name="disableQueryParams">The value of the <c>"disable_query_params"</c> property.</param>
+        /// <param name="headerMapping">The value of the <c>"header_mapping"</c> property.</param>
+        /// <param name="inputMapping">The value of the <c>"input_mapping"</c> property.</param>
+        /// <param name="outputDurationAsString">The value of the <c>"output_duration_as_string"</c> property.</param>
+        /// <param name="outputEnumAsString">The value of the <c>"output_enum_as_string"</c> property.</param>
+        /// <param name="outputRemoveUnsetValues">The value of the <c>"output_remove_unset_values"</c> property.</param>
+        /// <param name="outputTimestampAsString">The value of the <c>"output_timestamp_as_string"</c> property.</param>
+        /// <param name="requestNamingConvention">The value of the <c>"request_naming_convention"</c> property.</param>
+        /// <param name="responseNamingConvention">The value of the <c>"response_naming_convention"</c> property.</param>
+        /// <param name="useAlternateHostOnError">The value of the <c>"use_alternate_host_on_error"</c> property.</param>
+        /// <param name="useRequestBody">The value of the <c>"use_request_body"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source disableQueryParams = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source headerMapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source inputMapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source outputDurationAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source outputEnumAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source outputRemoveUnsetValues = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source outputTimestampAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source requestNamingConvention = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source responseNamingConvention = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source useAlternateHostOnError = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source useRequestBody = default)
+        {
+            return new Source(clientTls, disableQueryParams, headerMapping, inputMapping, outputDurationAsString, outputEnumAsString, outputRemoveUnsetValues, outputTimestampAsString, requestNamingConvention, responseNamingConvention, useAlternateHostOnError, useRequestBody);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="clientTls">The value of the <c>"client_tls"</c> property.</param>
+        /// <param name="disableQueryParams">The value of the <c>"disable_query_params"</c> property.</param>
+        /// <param name="headerMapping">The value of the <c>"header_mapping"</c> property.</param>
+        /// <param name="inputMapping">The value of the <c>"input_mapping"</c> property.</param>
+        /// <param name="outputDurationAsString">The value of the <c>"output_duration_as_string"</c> property.</param>
+        /// <param name="outputEnumAsString">The value of the <c>"output_enum_as_string"</c> property.</param>
+        /// <param name="outputRemoveUnsetValues">The value of the <c>"output_remove_unset_values"</c> property.</param>
+        /// <param name="outputTimestampAsString">The value of the <c>"output_timestamp_as_string"</c> property.</param>
+        /// <param name="requestNamingConvention">The value of the <c>"request_naming_convention"</c> property.</param>
+        /// <param name="responseNamingConvention">The value of the <c>"response_naming_convention"</c> property.</param>
+        /// <param name="useAlternateHostOnError">The value of the <c>"use_alternate_host_on_error"</c> property.</param>
+        /// <param name="useRequestBody">The value of the <c>"use_request_body"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source disableQueryParams = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> headerMapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> inputMapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source outputDurationAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source outputEnumAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source outputRemoveUnsetValues = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source outputTimestampAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source requestNamingConvention = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source responseNamingConvention = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source useAlternateHostOnError = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source useRequestBody = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, clientTls, disableQueryParams, headerMapping, inputMapping, outputDurationAsString, outputEnumAsString, outputRemoveUnsetValues, outputTimestampAsString, requestNamingConvention, responseNamingConvention, useAlternateHostOnError, useRequestBody);
         }
 
         /// <summary>

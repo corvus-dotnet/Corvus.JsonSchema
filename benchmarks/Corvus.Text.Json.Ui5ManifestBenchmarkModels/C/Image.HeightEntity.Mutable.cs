@@ -373,7 +373,7 @@ public readonly partial struct Image
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -528,11 +528,11 @@ public readonly partial struct Image
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsBlockElementHeight(out Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight result)
+            public bool TryGetAsBlockElementHeight(out Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -545,11 +545,11 @@ public readonly partial struct Image
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonString(out Corvus.Ui5ManifestBenchmark.Current.JsonString result)
+            public bool TryGetAsJsonString(out Corvus.Ui5ManifestBenchmark.Current.JsonString.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                 {

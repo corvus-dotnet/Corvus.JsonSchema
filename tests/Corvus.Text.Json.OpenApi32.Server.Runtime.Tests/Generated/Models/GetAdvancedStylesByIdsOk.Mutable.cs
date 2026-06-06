@@ -780,12 +780,15 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source _createArg1;
+        private readonly CanonTests32.Server.Models.JsonInteger.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -799,6 +802,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         }
 
         internal Source(CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source arg1, in CanonTests32.Server.Models.JsonInteger.Source arg2)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(GetAdvancedStylesByIdsOk instance) => new(JsonElement.From(instance));
 
@@ -814,6 +824,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -832,6 +849,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -850,6 +874,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -868,6 +899,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -886,6 +924,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -903,12 +948,15 @@ public readonly partial struct GetAdvancedStylesByIdsOk
             Unknown,
             Source,
             Builder,
+            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> _createArg1;
+        private readonly CanonTests32.Server.Models.JsonInteger.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -920,6 +968,14 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         public static implicit operator Source<TContext>(Source source) => new (source);
 
         internal Source(scoped in TContext context, CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in TContext context, in CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> arg1, in CanonTests32.Server.Models.JsonInteger.Source arg2)
+        {
+            _context = context;
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _kind = Kind.Create;
+        }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -933,6 +989,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -951,6 +1014,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -969,6 +1039,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -987,6 +1064,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1005,6 +1089,13 @@ public readonly partial struct GetAdvancedStylesByIdsOk
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1171,6 +1262,37 @@ public readonly partial struct GetAdvancedStylesByIdsOk
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source arg1, in CanonTests32.Server.Models.JsonInteger.Source arg2, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2);
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> arg1, in CanonTests32.Server.Models.JsonInteger.Source arg2, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartObject();
+            Create(context, ref o, arg1, arg2);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -1200,6 +1322,33 @@ public readonly partial struct GetAdvancedStylesByIdsOk
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="items">The value of the <c>"items"</c> property.</param>
+    /// <param name="total">The value of the <c>"total"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source items = default, in CanonTests32.Server.Models.JsonInteger.Source total = default)
+    {
+        return new Source(items, total);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="items">The value of the <c>"items"</c> property.</param>
+    /// <param name="total">The value of the <c>"total"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in CanonTests32.Server.Models.GetAdvancedStylesByIdsOk.ItemsEntityArray.Source<TContext> items = default, in CanonTests32.Server.Models.JsonInteger.Source total = default)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, items, total);
     }
 
     /// <summary>

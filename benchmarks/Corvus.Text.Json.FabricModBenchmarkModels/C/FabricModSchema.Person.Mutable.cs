@@ -451,7 +451,7 @@ public readonly partial struct FabricModSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -782,11 +782,11 @@ public readonly partial struct FabricModSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.FabricModBenchmark.Current.JsonString" />.
+            /// Gets the value as a <see cref="Corvus.FabricModBenchmark.Current.JsonString.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonString(out Corvus.FabricModBenchmark.Current.JsonString result)
+            public bool TryGetAsJsonString(out Corvus.FabricModBenchmark.Current.JsonString.Mutable result)
             {
                 if (Corvus.FabricModBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -799,11 +799,11 @@ public readonly partial struct FabricModSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName" />.
+            /// Gets the value as a <see cref="Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredName(out Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName result)
+            public bool TryGetAsRequiredName(out Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Mutable result)
             {
                 if (Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.JsonSchema.Evaluate(_parent, _idx))
                 {

@@ -1134,7 +1134,7 @@ public readonly partial struct CspellSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1237,12 +1237,23 @@ public readonly partial struct CspellSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source _createArg1;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.ListOfWordArray.Source _createArg2;
+            private readonly Corvus.CspellBenchmark.Current.JsonString.Source _createArg3;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonStringArray.Source _createArg4;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.IgnoreWordArray.Source _createArg5;
+            private readonly Corvus.CspellBenchmark.Current.JsonBoolean.Source _createArg6;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source _createArg7;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.SuggestWorArray.Source _createArg8;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source _createArg9;
+            private readonly Corvus.CspellBenchmark.Current.JsonBoolean.Source _createArg10;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1256,6 +1267,21 @@ public readonly partial struct CspellSchema
             }
 
             internal Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.ListOfWordArray.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonStringArray.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.IgnoreWordArray.Source arg5, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.SuggestWorArray.Source arg8, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg9, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg10)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(DictionaryDefinitionInlineWords instance) => new(JsonElement.From(instance));
 
@@ -1271,6 +1297,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1289,6 +1322,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1307,6 +1347,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1325,6 +1372,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1343,6 +1397,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1360,12 +1421,23 @@ public readonly partial struct CspellSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source _createArg1;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.ListOfWordArray.Source<TContext> _createArg2;
+            private readonly Corvus.CspellBenchmark.Current.JsonString.Source _createArg3;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonStringArray.Source<TContext> _createArg4;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.IgnoreWordArray.Source<TContext> _createArg5;
+            private readonly Corvus.CspellBenchmark.Current.JsonBoolean.Source _createArg6;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> _createArg7;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.SuggestWorArray.Source<TContext> _createArg8;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source _createArg9;
+            private readonly Corvus.CspellBenchmark.Current.JsonBoolean.Source _createArg10;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1377,6 +1449,22 @@ public readonly partial struct CspellSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.ListOfWordArray.Source<TContext> arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonStringArray.Source<TContext> arg4, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.IgnoreWordArray.Source<TContext> arg5, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg7, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.SuggestWorArray.Source<TContext> arg8, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg9, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg10)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1390,6 +1478,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1408,6 +1503,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1426,6 +1528,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1444,6 +1553,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1462,6 +1578,13 @@ public readonly partial struct CspellSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1609,6 +1732,53 @@ public readonly partial struct CspellSchema
                 o = ovb._builder;
                 o.EndObject();
             }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.ListOfWordArray.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonStringArray.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.IgnoreWordArray.Source arg5, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.SuggestWorArray.Source arg8, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg9, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg10, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.ListOfWordArray.Source<TContext> arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonStringArray.Source<TContext> arg4, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.IgnoreWordArray.Source<TContext> arg5, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg7, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.SuggestWorArray.Source<TContext> arg8, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg9, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg10, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                o.EndObject();
+            }
         }
 
         /// <summary>
@@ -1638,6 +1808,49 @@ public readonly partial struct CspellSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="name">The value of the <c>"name"</c> property.</param>
+        /// <param name="words">The value of the <c>"words"</c> property.</param>
+        /// <param name="description">The value of the <c>"description"</c> property.</param>
+        /// <param name="flagWords">The value of the <c>"flagWords"</c> property.</param>
+        /// <param name="ignoreWords">The value of the <c>"ignoreWords"</c> property.</param>
+        /// <param name="noSuggest">The value of the <c>"noSuggest"</c> property.</param>
+        /// <param name="repMap">The value of the <c>"repMap"</c> property.</param>
+        /// <param name="suggestWords">The value of the <c>"suggestWords"</c> property.</param>
+        /// <param name="type">The value of the <c>"type"</c> property.</param>
+        /// <param name="useCompounds">The value of the <c>"useCompounds"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.ListOfWordArray.Source words, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonStringArray.Source flagWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.IgnoreWordArray.Source ignoreWords = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source repMap = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.SuggestWorArray.Source suggestWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default)
+        {
+            return new Source(name, words, description, flagWords, ignoreWords, noSuggest, repMap, suggestWords, type, useCompounds);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="name">The value of the <c>"name"</c> property.</param>
+        /// <param name="words">The value of the <c>"words"</c> property.</param>
+        /// <param name="description">The value of the <c>"description"</c> property.</param>
+        /// <param name="flagWords">The value of the <c>"flagWords"</c> property.</param>
+        /// <param name="ignoreWords">The value of the <c>"ignoreWords"</c> property.</param>
+        /// <param name="noSuggest">The value of the <c>"noSuggest"</c> property.</param>
+        /// <param name="repMap">The value of the <c>"repMap"</c> property.</param>
+        /// <param name="suggestWords">The value of the <c>"suggestWords"</c> property.</param>
+        /// <param name="type">The value of the <c>"type"</c> property.</param>
+        /// <param name="useCompounds">The value of the <c>"useCompounds"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.ListOfWordArray.Source<TContext> words, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonStringArray.Source<TContext> flagWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.IgnoreWordArray.Source<TContext> ignoreWords = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> repMap = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.SuggestWorArray.Source<TContext> suggestWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, name, words, description, flagWords, ignoreWords, noSuggest, repMap, suggestWords, type, useCompounds);
         }
 
         /// <summary>

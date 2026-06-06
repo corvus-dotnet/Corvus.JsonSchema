@@ -425,7 +425,7 @@ public readonly partial struct ActionExecute
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -756,11 +756,11 @@ public readonly partial struct ActionExecute
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonString(out Corvus.Ui5ManifestBenchmark.Current.JsonString result)
+            public bool TryGetAsJsonString(out Corvus.Ui5ManifestBenchmark.Current.JsonString.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -773,11 +773,11 @@ public readonly partial struct ActionExecute
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonObject(out Corvus.Ui5ManifestBenchmark.Current.JsonObject result)
+            public bool TryGetAsJsonObject(out Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1160,6 +1160,19 @@ public readonly partial struct ActionExecute
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -1170,7 +1183,33 @@ public readonly partial struct ActionExecute
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }

@@ -900,12 +900,18 @@ public readonly partial struct PostFormsMultipartTypesBody
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly CanonTests32.Client.Models.JsonBoolean.Source _createArg1;
+        private readonly CanonTests32.Client.Models.JsonInteger.Source _createArg2;
+        private readonly CanonTests32.Client.Models.JsonString.Source _createArg3;
+        private readonly CanonTests32.Client.Models.JsonBinary.Source _createArg4;
+        private readonly CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Source _createArg5;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -919,6 +925,16 @@ public readonly partial struct PostFormsMultipartTypesBody
         }
 
         internal Source(CanonTests32.Client.Models.PostFormsMultipartTypesBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in CanonTests32.Client.Models.JsonBoolean.Source arg1, in CanonTests32.Client.Models.JsonInteger.Source arg2, in CanonTests32.Client.Models.JsonString.Source arg3, in CanonTests32.Client.Models.JsonBinary.Source arg4, in CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Source arg5)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(PostFormsMultipartTypesBody instance) => new(JsonElement.From(instance));
 
@@ -934,6 +950,13 @@ public readonly partial struct PostFormsMultipartTypesBody
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -952,6 +975,13 @@ public readonly partial struct PostFormsMultipartTypesBody
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -970,6 +1000,13 @@ public readonly partial struct PostFormsMultipartTypesBody
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -988,6 +1025,13 @@ public readonly partial struct PostFormsMultipartTypesBody
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1006,6 +1050,13 @@ public readonly partial struct PostFormsMultipartTypesBody
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1272,6 +1323,22 @@ public readonly partial struct PostFormsMultipartTypesBody
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in CanonTests32.Client.Models.JsonBoolean.Source arg1, in CanonTests32.Client.Models.JsonInteger.Source arg2, in CanonTests32.Client.Models.JsonString.Source arg3, in CanonTests32.Client.Models.JsonBinary.Source arg4, in CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Source arg5, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -1301,6 +1368,20 @@ public readonly partial struct PostFormsMultipartTypesBody
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="active">The value of the <c>"active"</c> property.</param>
+    /// <param name="count">The value of the <c>"count"</c> property.</param>
+    /// <param name="title">The value of the <c>"title"</c> property.</param>
+    /// <param name="file">The value of the <c>"file"</c> property.</param>
+    /// <param name="note">The value of the <c>"note"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in CanonTests32.Client.Models.JsonBoolean.Source active, in CanonTests32.Client.Models.JsonInteger.Source count, in CanonTests32.Client.Models.JsonString.Source title, in CanonTests32.Client.Models.JsonBinary.Source file = default, in CanonTests32.Client.Models.PostFormsMultipartTypesBody.NoteEntity.Source note = default)
+    {
+        return new Source(active, count, title, file, note);
     }
 
     /// <summary>

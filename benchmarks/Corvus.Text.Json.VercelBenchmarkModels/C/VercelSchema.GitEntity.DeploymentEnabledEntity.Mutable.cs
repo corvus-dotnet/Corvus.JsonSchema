@@ -437,7 +437,7 @@ public readonly partial struct VercelSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -768,11 +768,11 @@ public readonly partial struct VercelSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.JsonBoolean" />.
+                /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.JsonBoolean.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJsonBoolean(out Corvus.VercelBenchmark.Current.JsonBoolean result)
+                public bool TryGetAsJsonBoolean(out Corvus.VercelBenchmark.Current.JsonBoolean.Mutable result)
                 {
                     if (Corvus.VercelBenchmark.Current.JsonBoolean.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -785,11 +785,11 @@ public readonly partial struct VercelSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.DeploymentEnabledEntity.OneOf1Entity" />.
+                /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.DeploymentEnabledEntity.OneOf1Entity.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsOneOf1Entity(out Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.DeploymentEnabledEntity.OneOf1Entity result)
+                public bool TryGetAsOneOf1Entity(out Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.DeploymentEnabledEntity.OneOf1Entity.Mutable result)
                 {
                     if (Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.DeploymentEnabledEntity.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
                     {

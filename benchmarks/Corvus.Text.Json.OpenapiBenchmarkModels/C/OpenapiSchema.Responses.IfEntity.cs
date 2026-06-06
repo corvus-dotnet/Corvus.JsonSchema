@@ -170,6 +170,104 @@ public readonly partial struct OpenapiSchema
             }
 
             /// <summary>
+            /// Determines if a property name matches '^[1-5](?:[0-9]{2}|XX)$'
+            /// for the pattern property producing the type
+            /// <see cref="Corvus.Text.Json.JsonElementForBooleanFalseSchema"/>.
+            /// </summary>
+            /// <param name="propertyName">The unescaped UTF-8 property name.</param>
+            /// <returns><see langword="true"/> if the property name matches the pattern, otherwise <see langword="false"/>.</returns>
+            public static bool MatchesPatternJsonElementForBooleanFalseSchema(ReadOnlySpan<byte> propertyName)
+            {
+                return JsonSchemaEvaluation.MatchRegularExpression(propertyName, JsonSchema.PatternProperties);
+            }
+
+            /// <summary>
+            /// Gets an instance of the type
+            /// <see cref="Corvus.Text.Json.JsonElementForBooleanFalseSchema"/>
+            /// if the property name matches '^[1-5](?:[0-9]{2}|XX)$'.
+            /// </summary>
+            /// <param name="propertyName">The unescaped UTF-8 property name.</param>
+            /// <param name="value">The property value.</param>
+            /// <param name="result">The typed property value, if the name matches.</param>
+            /// <returns><see langword="true"/> if the property name matches the pattern, otherwise <see langword="false"/>.</returns>
+            public static bool TryAsPatternJsonElementForBooleanFalseSchema(ReadOnlySpan<byte> propertyName, in JsonElement value, out Corvus.Text.Json.JsonElementForBooleanFalseSchema result)
+            {
+                if (MatchesPatternJsonElementForBooleanFalseSchema(propertyName))
+                {
+                    result = Corvus.Text.Json.JsonElementForBooleanFalseSchema.From(value);
+                    return true;
+                }
+
+                result = default;
+                return false;
+            }
+
+            /// <summary>
+            /// Visits properties matched by generated pattern property helpers.
+            /// </summary>
+            /// <typeparam name="TState">The visitor state type.</typeparam>
+            public interface IPatternPropertyVisitor<TState>
+            {
+                /// <summary>
+                /// Visits a property matching '^[1-5](?:[0-9]{2}|XX)$'.
+                /// </summary>
+                bool VisitPatternJsonElementForBooleanFalseSchema(ReadOnlySpan<byte> name, in Corvus.Text.Json.JsonElementForBooleanFalseSchema value, ref TState state);
+
+                /// <summary>
+                /// Visits a property that did not match any generated pattern property.
+                /// </summary>
+                bool VisitUnmatched(ReadOnlySpan<byte> name, in JsonElement value, ref TState state);
+            }
+
+            /// <summary>
+            /// Matches each property against the generated pattern properties and dispatches to a visitor.
+            /// </summary>
+            /// <typeparam name="TState">The visitor state type.</typeparam>
+            /// <typeparam name="TVisitor">The visitor type.</typeparam>
+            /// <param name="state">The visitor state.</param>
+            /// <param name="visitor">The visitor to call for each matched or unmatched property.</param>
+            /// <param name="shortCircuit">If <see langword="true"/>, only the first matching pattern is visited for each property.</param>
+            /// <returns><see langword="true"/> if every visitor call returned <see langword="true"/>, otherwise <see langword="false"/>.</returns>
+            public bool MatchPatternProperties<TState, TVisitor>(ref TState state, TVisitor visitor, bool shortCircuit = false)
+                where TVisitor : IPatternPropertyVisitor<TState>
+            {
+                CheckValidInstance();
+
+                foreach (var property in EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString unescapedPropertyName = property.Utf8NameSpan;
+                    ReadOnlySpan<byte> propertyName = unescapedPropertyName.Span;
+                    bool matched = false;
+
+                    if (MatchesPatternJsonElementForBooleanFalseSchema(propertyName))
+                    {
+                        matched = true;
+                        Corvus.Text.Json.JsonElementForBooleanFalseSchema typedValue = Corvus.Text.Json.JsonElementForBooleanFalseSchema.From(property.Value);
+                        if (!visitor.VisitPatternJsonElementForBooleanFalseSchema(propertyName, in typedValue, ref state))
+                        {
+                            return false;
+                        }
+
+                        if (shortCircuit)
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (!matched)
+                    {
+                        JsonElement unmatchedValue = JsonElement.From(property.Value);
+                        if (!visitor.VisitUnmatched(propertyName, in unmatchedValue, ref state))
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            /// <summary>
             /// Gets the number of properties in the object.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -298,10 +396,13 @@ public readonly partial struct OpenapiSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static IfEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<IfEntity>(utf8Json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -321,10 +422,13 @@ public readonly partial struct OpenapiSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static IfEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<IfEntity>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -344,10 +448,13 @@ public readonly partial struct OpenapiSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the text.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static IfEntity ParseValue(string json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<IfEntity>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -385,9 +492,12 @@ public readonly partial struct OpenapiSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the reader.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             public static IfEntity ParseValue(ref Utf8JsonReader reader)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<IfEntity>(ref reader);
+                #pragma warning restore CS0618
             }
 
             /// <summary>

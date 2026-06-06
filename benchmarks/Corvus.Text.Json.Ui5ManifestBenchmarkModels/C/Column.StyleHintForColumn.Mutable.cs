@@ -360,7 +360,7 @@ public readonly partial struct Column
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -515,11 +515,11 @@ public readonly partial struct Column
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonNull" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonNull.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonNull(out Corvus.Ui5ManifestBenchmark.Current.JsonNull result)
+            public bool TryGetAsJsonNull(out Corvus.Ui5ManifestBenchmark.Current.JsonNull.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -532,11 +532,11 @@ public readonly partial struct Column
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ContainerStyle" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ContainerStyle.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsContainerStyle(out Corvus.Ui5ManifestBenchmark.Current.ContainerStyle result)
+            public bool TryGetAsContainerStyle(out Corvus.Ui5ManifestBenchmark.Current.ContainerStyle.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.ContainerStyle.JsonSchema.Evaluate(_parent, _idx))
                 {

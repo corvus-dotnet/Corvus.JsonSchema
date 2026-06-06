@@ -410,7 +410,7 @@ public readonly partial struct VercelSchema
                         /// <inheritdoc/>
                         public override string ToString()
                         {
-                            if (_parent == null || _documentVersion != _parent.Version)
+                            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                             {
                                 return string.Empty;
                             }
@@ -741,11 +741,11 @@ public readonly partial struct VercelSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredTypeAndValue" />.
+                        /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredTypeAndValue.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsRequiredTypeAndValue(out Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredTypeAndValue result)
+                        public bool TryGetAsRequiredTypeAndValue(out Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredTypeAndValue.Mutable result)
                         {
                             if (Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredTypeAndValue.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -758,11 +758,11 @@ public readonly partial struct VercelSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType" />.
+                        /// Gets the value as a <see cref="Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsRequiredKeyAndType(out Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType result)
+                        public bool TryGetAsRequiredKeyAndType(out Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.Mutable result)
                         {
                             if (Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.RequiredDestinationAndSourceEntity.MissingEntityArray.MissingEntity.RequiredKeyAndType.JsonSchema.Evaluate(_parent, _idx))
                             {

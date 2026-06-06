@@ -423,14 +423,14 @@ public readonly partial struct CypressSchema
                                 context.AddAppliedEvaluatedProperty(objectValidation_propertyCount);
 
                                 JsonSchemaContext hoistedChildContext10 =
-                                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.JsonSchema.PushChildContextUnescaped(
+                                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.JsonSchema.PushChildContextUnescaped(
                                         parentDocument,
                                         objectValidation_currentIndex,
                                         ref hoistedAllOf0_context,
                                         "experimentalFetchPolyfill"u8,
                                         evaluationPath: HoistedAllOf0ExperimentalFetchPolyfillSchemaEvaluationPath);
 
-                                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref hoistedChildContext10);
+                                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref hoistedChildContext10);
                                 hoistedAllOf0_context.CommitChildContext(hoistedChildContext10.IsMatch, ref hoistedChildContext10);
                                 break;
                             case 11:

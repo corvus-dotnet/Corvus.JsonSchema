@@ -408,7 +408,7 @@ public readonly partial struct CspellSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -753,11 +753,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsDictionaryDefinitionInlineFlagWords(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords result)
+            public bool TryGetAsDictionaryDefinitionInlineFlagWords(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -770,11 +770,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsDictionaryDefinitionInlineIgnoreWords(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords result)
+            public bool TryGetAsDictionaryDefinitionInlineIgnoreWords(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -787,11 +787,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsDictionaryDefinitionInlineWords(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords result)
+            public bool TryGetAsDictionaryDefinitionInlineWords(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.JsonSchema.Evaluate(_parent, _idx))
                 {

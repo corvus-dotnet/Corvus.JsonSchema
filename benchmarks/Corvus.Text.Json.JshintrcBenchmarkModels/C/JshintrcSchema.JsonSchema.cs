@@ -267,14 +267,14 @@ public readonly partial struct JshintrcSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext11 =
-                Corvus.JshintrcBenchmark.Current.JshintrcSchema.EqeqeqEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.EqeqeqUtf8,
                     evaluationPath: EqeqeqSchemaEvaluationPath);
 
-            Corvus.JshintrcBenchmark.Current.JshintrcSchema.EqeqeqEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext11);
+            Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext11);
             context.CommitChildContext(childContext11.IsMatch, ref childContext11);
         }
 
@@ -657,14 +657,14 @@ public readonly partial struct JshintrcSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext37 =
-                Corvus.JshintrcBenchmark.Current.JshintrcSchema.MozEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.MozUtf8,
                     evaluationPath: MozSchemaEvaluationPath);
 
-            Corvus.JshintrcBenchmark.Current.JshintrcSchema.MozEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext37);
+            Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext37);
             context.CommitChildContext(childContext37.IsMatch, ref childContext37);
         }
 
@@ -672,14 +672,14 @@ public readonly partial struct JshintrcSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext38 =
-                Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoargEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.NoargUtf8,
                     evaluationPath: NoargSchemaEvaluationPath);
 
-            Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoargEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext38);
+            Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext38);
             context.CommitChildContext(childContext38.IsMatch, ref childContext38);
         }
 

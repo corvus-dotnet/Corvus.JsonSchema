@@ -203,19 +203,19 @@ public readonly partial struct ClangFormatSchema
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
         /// <summary>
-        /// Conversion to <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity"/>.
+        /// Conversion to <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static explicit operator Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity(AlignConsecutiveDeclarationsEntity value)
+        public static explicit operator Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations(AlignConsecutiveDeclarationsEntity value)
         {
-            return Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity.From(value);
+            return Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations.From(value);
         }
 
         /// <summary>
-        /// Conversion from <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity"/>.
+        /// Conversion from <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
-        public static implicit operator AlignConsecutiveDeclarationsEntity(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity value)
+        public static implicit operator AlignConsecutiveDeclarationsEntity(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations value)
         {
             return From(value);
         }
@@ -344,10 +344,13 @@ public readonly partial struct ClangFormatSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static AlignConsecutiveDeclarationsEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<AlignConsecutiveDeclarationsEntity>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -367,10 +370,13 @@ public readonly partial struct ClangFormatSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static AlignConsecutiveDeclarationsEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<AlignConsecutiveDeclarationsEntity>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -390,10 +396,13 @@ public readonly partial struct ClangFormatSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static AlignConsecutiveDeclarationsEntity ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<AlignConsecutiveDeclarationsEntity>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -431,9 +440,12 @@ public readonly partial struct ClangFormatSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static AlignConsecutiveDeclarationsEntity ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<AlignConsecutiveDeclarationsEntity>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -693,15 +705,15 @@ public readonly partial struct ClangFormatSchema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity" />.
+        /// Gets the value as a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf0Entity(out Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity result)
+        public bool TryGetAsClangFormat38StyleOfAligningConsecutiveDeclarations(out Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations result)
         {
-            if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations.JsonSchema.Evaluate(_parent, _idx))
             {
-                result = Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity.From(this);
+                result = Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations.From(this);
                 return true;
             }
 
@@ -732,22 +744,22 @@ public readonly partial struct ClangFormatSchema
         /// <typeparam name="TContext">The type of the immutable context to pass in to the match function.</typeparam>
         /// <typeparam name="TResult">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchOneOf0Entity">Match a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity"/>.</param>
+        /// <param name="matchClangFormat38StyleOfAligningConsecutiveDeclarations">Match a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations"/>.</param>
         /// <param name="matchClangFormat15AlignmentOptions">Match a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat15AlignmentOptions"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TContext, TResult>(
             in TContext context,
-            Matcher<Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity, TContext, TResult> matchOneOf0Entity,
+            Matcher<Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations, TContext, TResult> matchClangFormat38StyleOfAligningConsecutiveDeclarations,
             Matcher<Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat15AlignmentOptions, TContext, TResult> matchClangFormat15AlignmentOptions,
             Matcher<Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
         where TContext : allows ref struct
 #endif
         {
-            if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations.JsonSchema.Evaluate(_parent, _idx))
             {
-                return matchOneOf0Entity(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity.From(this), context);
+                return matchClangFormat38StyleOfAligningConsecutiveDeclarations(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations.From(this), context);
             }
 
             if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat15AlignmentOptions.JsonSchema.Evaluate(_parent, _idx))
@@ -762,18 +774,18 @@ public readonly partial struct ClangFormatSchema
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <typeparam name="TResult">The result of calling the match function.</typeparam>
-        /// <param name="matchOneOf0Entity">Match a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity"/>.</param>
+        /// <param name="matchClangFormat38StyleOfAligningConsecutiveDeclarations">Match a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations"/>.</param>
         /// <param name="matchClangFormat15AlignmentOptions">Match a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat15AlignmentOptions"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TResult>(
-            Matcher<Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity, TResult> matchOneOf0Entity,
+            Matcher<Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations, TResult> matchClangFormat38StyleOfAligningConsecutiveDeclarations,
             Matcher<Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat15AlignmentOptions, TResult> matchClangFormat15AlignmentOptions,
             Matcher<Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity, TResult> defaultMatch)
         {
-            if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations.JsonSchema.Evaluate(_parent, _idx))
             {
-                return matchOneOf0Entity(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.OneOf0Entity.From(this));
+                return matchClangFormat38StyleOfAligningConsecutiveDeclarations(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat38StyleOfAligningConsecutiveDeclarations.From(this));
             }
 
             if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.ClangFormat15AlignmentOptions.JsonSchema.Evaluate(_parent, _idx))

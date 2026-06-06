@@ -2113,7 +2113,7 @@ public readonly partial struct BabelrcSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -2392,12 +2392,37 @@ public readonly partial struct BabelrcSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source _createArg1;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg2;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg3;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source _createArg4;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source _createArg5;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source _createArg6;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg7;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source _createArg8;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg9;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonBoolean.Source _createArg10;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source _createArg11;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source _createArg12;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source _createArg13;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg14;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source _createArg15;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg16;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source _createArg17;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source _createArg18;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source _createArg19;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source _createArg20;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg21;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source _createArg22;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg23;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg24;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2411,6 +2436,35 @@ public readonly partial struct BabelrcSchema
             }
 
             internal Source(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg7, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg8, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg9, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg10, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source arg11, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source arg12, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg13, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg14, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg15, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg16, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source arg17, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source arg18, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source arg19, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg20, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg21, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg22, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg23, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _createArg23 = arg23;
+                _createArg24 = arg24;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(Options instance) => new(JsonElement.From(instance));
 
@@ -2426,6 +2480,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2444,6 +2505,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2462,6 +2530,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2480,6 +2555,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2498,6 +2580,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2515,12 +2604,37 @@ public readonly partial struct BabelrcSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source _createArg1;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg2;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg3;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source _createArg4;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source _createArg5;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source _createArg6;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg7;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source _createArg8;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg9;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonBoolean.Source _createArg10;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> _createArg11;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> _createArg12;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source _createArg13;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg14;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source _createArg15;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg16;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> _createArg17;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> _createArg18;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> _createArg19;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source _createArg20;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg21;
+            private readonly Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source _createArg22;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg23;
+            private readonly Corvus.BabelrcBenchmark.Current.JsonString.Source _createArg24;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2532,6 +2646,36 @@ public readonly partial struct BabelrcSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg7, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg8, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg9, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg10, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> arg11, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> arg12, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg13, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg14, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg15, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg16, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> arg17, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> arg18, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> arg19, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg20, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg21, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg22, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg23, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _createArg23 = arg23;
+                _createArg24 = arg24;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -2545,6 +2689,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2563,6 +2714,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2581,6 +2739,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2599,6 +2764,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2617,6 +2789,13 @@ public readonly partial struct BabelrcSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2841,6 +3020,19 @@ public readonly partial struct BabelrcSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -2851,7 +3043,33 @@ public readonly partial struct BabelrcSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -2876,6 +3094,81 @@ public readonly partial struct BabelrcSchema
                 Builder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="arg23">The value of the property.</param>
+            /// <param name="arg24">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg7, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg8, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg9, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg10, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source arg11, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source arg12, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg13, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg14, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg15, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg16, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source arg17, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source arg18, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source arg19, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg20, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg21, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg22, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg23, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="arg23">The value of the property.</param>
+            /// <param name="arg24">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg7, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg8, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg9, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg10, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> arg11, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> arg12, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg13, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg14, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg15, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg16, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> arg17, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> arg18, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> arg19, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg20, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg21, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg22, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg23, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24);
                 o.EndObject();
             }
         }
@@ -2907,6 +3200,77 @@ public readonly partial struct BabelrcSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="ast">The value of the <c>"ast"</c> property.</param>
+        /// <param name="auxiliaryCommentAfter">The value of the <c>"auxiliaryCommentAfter"</c> property.</param>
+        /// <param name="auxiliaryCommentBefore">The value of the <c>"auxiliaryCommentBefore"</c> property.</param>
+        /// <param name="code">The value of the <c>"code"</c> property.</param>
+        /// <param name="comments">The value of the <c>"comments"</c> property.</param>
+        /// <param name="compact">The value of the <c>"compact"</c> property.</param>
+        /// <param name="extends">The value of the <c>"extends"</c> property.</param>
+        /// <param name="filename">The value of the <c>"filename"</c> property.</param>
+        /// <param name="filenameRelative">The value of the <c>"filenameRelative"</c> property.</param>
+        /// <param name="highlightCode">The value of the <c>"highlightCode"</c> property.</param>
+        /// <param name="ignore">The value of the <c>"ignore"</c> property.</param>
+        /// <param name="inputSourceMap">The value of the <c>"inputSourceMap"</c> property.</param>
+        /// <param name="keepModuleIdExtensions">The value of the <c>"keepModuleIdExtensions"</c> property.</param>
+        /// <param name="moduleId">The value of the <c>"moduleId"</c> property.</param>
+        /// <param name="moduleIds">The value of the <c>"moduleIds"</c> property.</param>
+        /// <param name="moduleRoot">The value of the <c>"moduleRoot"</c> property.</param>
+        /// <param name="only">The value of the <c>"only"</c> property.</param>
+        /// <param name="plugins">The value of the <c>"plugins"</c> property.</param>
+        /// <param name="presets">The value of the <c>"presets"</c> property.</param>
+        /// <param name="retainLines">The value of the <c>"retainLines"</c> property.</param>
+        /// <param name="sourceFileName">The value of the <c>"sourceFileName"</c> property.</param>
+        /// <param name="sourceMaps">The value of the <c>"sourceMaps"</c> property.</param>
+        /// <param name="sourceMapTarget">The value of the <c>"sourceMapTarget"</c> property.</param>
+        /// <param name="sourceRoot">The value of the <c>"sourceRoot"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source ast = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentAfter = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentBefore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source code = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source comments = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source compact = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source extends = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source filename = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source filenameRelative = default, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source highlightCode = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source ignore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source inputSourceMap = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source keepModuleIdExtensions = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleId = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source moduleIds = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleRoot = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source only = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source plugins = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source presets = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source retainLines = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceFileName = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source sourceMaps = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceMapTarget = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceRoot = default)
+        {
+            return new Source(ast, auxiliaryCommentAfter, auxiliaryCommentBefore, code, comments, compact, extends, filename, filenameRelative, highlightCode, ignore, inputSourceMap, keepModuleIdExtensions, moduleId, moduleIds, moduleRoot, only, plugins, presets, retainLines, sourceFileName, sourceMaps, sourceMapTarget, sourceRoot);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="ast">The value of the <c>"ast"</c> property.</param>
+        /// <param name="auxiliaryCommentAfter">The value of the <c>"auxiliaryCommentAfter"</c> property.</param>
+        /// <param name="auxiliaryCommentBefore">The value of the <c>"auxiliaryCommentBefore"</c> property.</param>
+        /// <param name="code">The value of the <c>"code"</c> property.</param>
+        /// <param name="comments">The value of the <c>"comments"</c> property.</param>
+        /// <param name="compact">The value of the <c>"compact"</c> property.</param>
+        /// <param name="extends">The value of the <c>"extends"</c> property.</param>
+        /// <param name="filename">The value of the <c>"filename"</c> property.</param>
+        /// <param name="filenameRelative">The value of the <c>"filenameRelative"</c> property.</param>
+        /// <param name="highlightCode">The value of the <c>"highlightCode"</c> property.</param>
+        /// <param name="ignore">The value of the <c>"ignore"</c> property.</param>
+        /// <param name="inputSourceMap">The value of the <c>"inputSourceMap"</c> property.</param>
+        /// <param name="keepModuleIdExtensions">The value of the <c>"keepModuleIdExtensions"</c> property.</param>
+        /// <param name="moduleId">The value of the <c>"moduleId"</c> property.</param>
+        /// <param name="moduleIds">The value of the <c>"moduleIds"</c> property.</param>
+        /// <param name="moduleRoot">The value of the <c>"moduleRoot"</c> property.</param>
+        /// <param name="only">The value of the <c>"only"</c> property.</param>
+        /// <param name="plugins">The value of the <c>"plugins"</c> property.</param>
+        /// <param name="presets">The value of the <c>"presets"</c> property.</param>
+        /// <param name="retainLines">The value of the <c>"retainLines"</c> property.</param>
+        /// <param name="sourceFileName">The value of the <c>"sourceFileName"</c> property.</param>
+        /// <param name="sourceMaps">The value of the <c>"sourceMaps"</c> property.</param>
+        /// <param name="sourceMapTarget">The value of the <c>"sourceMapTarget"</c> property.</param>
+        /// <param name="sourceRoot">The value of the <c>"sourceRoot"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source ast = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentAfter = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentBefore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source code = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source comments = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source compact = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source extends = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source filename = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source filenameRelative = default, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source highlightCode = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> ignore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> inputSourceMap = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source keepModuleIdExtensions = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleId = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source moduleIds = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleRoot = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> only = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> plugins = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> presets = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source retainLines = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceFileName = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source sourceMaps = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceMapTarget = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceRoot = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, ast, auxiliaryCommentAfter, auxiliaryCommentBefore, code, comments, compact, extends, filename, filenameRelative, highlightCode, ignore, inputSourceMap, keepModuleIdExtensions, moduleId, moduleIds, moduleRoot, only, plugins, presets, retainLines, sourceFileName, sourceMaps, sourceMapTarget, sourceRoot);
         }
 
         /// <summary>

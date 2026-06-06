@@ -1101,7 +1101,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1581,6 +1581,18 @@ public readonly partial struct Ui5ManifestSchema
         /// <summary>
         /// Build an instance of the value.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+        /// overload with a <c>static</c> callback, capturing your source data in the context.
+        /// </para>
+        /// <para>
+        /// A <c>Build(...)</c> overload taking the individual property values directly is
+        /// intentionally not generated for this type, because its estimated captured-argument
+        /// footprint exceeds the configured build-parameters threshold. The threshold is
+        /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+        /// </para>
+        /// </remarks>
         /// <param name="buildValue">The callback that builds the value.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>The source from which to build the value.</returns>
@@ -1593,6 +1605,18 @@ public readonly partial struct Ui5ManifestSchema
         /// <summary>
         /// Build an instance of the value.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+        /// overload with a <c>static</c> callback, capturing your source data in the context.
+        /// </para>
+        /// <para>
+        /// A <c>Build(...)</c> overload taking the individual property values directly is
+        /// intentionally not generated for this type, because its estimated captured-argument
+        /// footprint exceeds the configured build-parameters threshold. The threshold is
+        /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+        /// </para>
+        /// </remarks>
         /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="buildValue">The callback that builds the value.</param>

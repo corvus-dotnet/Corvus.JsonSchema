@@ -955,7 +955,7 @@ public readonly partial struct KrakendSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1586,6 +1586,7 @@ public readonly partial struct KrakendSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 ObjectBuilder,
                 ArrayBuilder,
             }
@@ -1593,6 +1594,13 @@ public readonly partial struct KrakendSchema
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly ObjectBuilder.Build? _objectBuilder;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.OpenExternalLibs.Source _createArg1;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.LiveReload.Source _createArg2;
+            private readonly Corvus.KrakendBenchmark.Current.JsonObject.Source _createArg3;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg4;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg5;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.SkipNext.Source _createArg6;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source _createArg7;
             private readonly ArrayBuilder.Build? _arrayBuilder;
 
             /// <summary>
@@ -1607,6 +1615,18 @@ public readonly partial struct KrakendSchema
             }
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.ObjectBuilder.Build value) {_objectBuilder = value; _kind = Kind.ObjectBuilder; }
+
+            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.OpenExternalLibs.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.LiveReload.Source arg2, in Corvus.KrakendBenchmark.Current.JsonObject.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.SkipNext.Source arg6, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg7)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _kind = Kind.Create;
+            }
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.ArrayBuilder.Build value) {_arrayBuilder = value; _kind = Kind.ArrayBuilder; }
 
@@ -1624,6 +1644,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
@@ -1645,6 +1672,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                         break;
@@ -1666,6 +1700,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                         break;
@@ -1687,6 +1728,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                         break;
@@ -1708,6 +1756,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddItem(_arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                         break;
@@ -1729,12 +1784,20 @@ public readonly partial struct KrakendSchema
                 Source,
                 ObjectBuilder,
                 ArrayBuilder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly ObjectBuilder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.OpenExternalLibs.Source _createArg1;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.LiveReload.Source _createArg2;
+            private readonly Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> _createArg3;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg4;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg5;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.SkipNext.Source _createArg6;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> _createArg7;
             private readonly ArrayBuilder.Build<TContext>? _arrayBuilder;
 
             /// <summary>
@@ -1747,6 +1810,19 @@ public readonly partial struct KrakendSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.ObjectBuilder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.ObjectBuilder; }
+
+            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.OpenExternalLibs.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.LiveReload.Source arg2, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.SkipNext.Source arg6, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg7)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _kind = Kind.Create;
+            }
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.ArrayBuilder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.ArrayBuilder; }
 
@@ -1762,6 +1838,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
@@ -1783,6 +1866,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
@@ -1804,6 +1894,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
@@ -1825,6 +1922,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
@@ -1846,6 +1950,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
@@ -1878,6 +1989,17 @@ public readonly partial struct KrakendSchema
             /// Add an item to the array.
             /// </summary>
             public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
+            {
+                value.AddAsItem(ref _builder);
+            }
+
+            /// <summary>
+            /// Add an item to the array.
+            /// </summary>
+            public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsItem(ref _builder);
             }
@@ -2021,6 +2143,19 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -2031,7 +2166,33 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -2056,6 +2217,47 @@ public readonly partial struct KrakendSchema
                 ObjectBuilder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.OpenExternalLibs.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.LiveReload.Source arg2, in Corvus.KrakendBenchmark.Current.JsonObject.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.SkipNext.Source arg6, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg7, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.OpenExternalLibs.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.LiveReload.Source arg2, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.SkipNext.Source arg6, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg7, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
                 o.EndObject();
             }
         }
@@ -2087,6 +2289,43 @@ public readonly partial struct KrakendSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="allowOpenLibs">The value of the <c>"allow_open_libs"</c> property.</param>
+        /// <param name="live">The value of the <c>"live"</c> property.</param>
+        /// <param name="md5">The value of the <c>"md5"</c> property.</param>
+        /// <param name="post">The value of the <c>"post"</c> property.</param>
+        /// <param name="pre">The value of the <c>"pre"</c> property.</param>
+        /// <param name="skipNext">The value of the <c>"skip_next"</c> property.</param>
+        /// <param name="sources">The value of the <c>"sources"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.OpenExternalLibs.Source allowOpenLibs = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.LiveReload.Source live = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source md5 = default, in Corvus.KrakendBenchmark.Current.JsonString.Source post = default, in Corvus.KrakendBenchmark.Current.JsonString.Source pre = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.SkipNext.Source skipNext = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source sources = default)
+        {
+            return new Source(allowOpenLibs, live, md5, post, pre, skipNext, sources);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="allowOpenLibs">The value of the <c>"allow_open_libs"</c> property.</param>
+        /// <param name="live">The value of the <c>"live"</c> property.</param>
+        /// <param name="md5">The value of the <c>"md5"</c> property.</param>
+        /// <param name="post">The value of the <c>"post"</c> property.</param>
+        /// <param name="pre">The value of the <c>"pre"</c> property.</param>
+        /// <param name="skipNext">The value of the <c>"skip_next"</c> property.</param>
+        /// <param name="sources">The value of the <c>"sources"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.OpenExternalLibs.Source allowOpenLibs = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.LiveReload.Source live = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> md5 = default, in Corvus.KrakendBenchmark.Current.JsonString.Source post = default, in Corvus.KrakendBenchmark.Current.JsonString.Source pre = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.SkipNext.Source skipNext = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> sources = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, allowOpenLibs, live, md5, post, pre, skipNext, sources);
         }
 
         /// <summary>

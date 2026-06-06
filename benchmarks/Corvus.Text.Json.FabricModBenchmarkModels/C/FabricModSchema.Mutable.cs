@@ -2292,7 +2292,7 @@ public readonly partial struct FabricModSchema
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -2571,12 +2571,34 @@ public readonly partial struct FabricModSchema
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source _createArg1;
+        private readonly Corvus.FabricModBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.FabricModBenchmark.Current.JsonString.Source _createArg3;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source _createArg4;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source _createArg5;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source _createArg6;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source _createArg7;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source _createArg8;
+        private readonly Corvus.FabricModBenchmark.Current.JsonObject.Source _createArg9;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source _createArg10;
+        private readonly Corvus.FabricModBenchmark.Current.JsonString.Source _createArg11;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source _createArg12;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source _createArg13;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source _createArg14;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source _createArg15;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source _createArg16;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source _createArg17;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source _createArg18;
+        private readonly Corvus.FabricModBenchmark.Current.JsonString.Source _createArg19;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source _createArg20;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source _createArg21;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2590,6 +2612,32 @@ public readonly partial struct FabricModSchema
         }
 
         internal Source(Corvus.FabricModBenchmark.Current.FabricModSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source arg6, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg7, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source arg8, in Corvus.FabricModBenchmark.Current.JsonObject.Source arg9, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source arg10, in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source arg12, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source arg14, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source arg15, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source arg16, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source arg17, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source arg18, in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source arg20, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source arg21)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _createArg14 = arg14;
+            _createArg15 = arg15;
+            _createArg16 = arg16;
+            _createArg17 = arg17;
+            _createArg18 = arg18;
+            _createArg19 = arg19;
+            _createArg20 = arg20;
+            _createArg21 = arg21;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(FabricModSchema instance) => new(JsonElement.From(instance));
 
@@ -2605,6 +2653,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2623,6 +2678,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2641,6 +2703,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2659,6 +2728,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2677,6 +2753,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2694,12 +2777,34 @@ public readonly partial struct FabricModSchema
             Unknown,
             Source,
             Builder,
+            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source _createArg1;
+        private readonly Corvus.FabricModBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.FabricModBenchmark.Current.JsonString.Source _createArg3;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> _createArg4;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> _createArg5;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> _createArg6;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> _createArg7;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> _createArg8;
+        private readonly Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> _createArg9;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> _createArg10;
+        private readonly Corvus.FabricModBenchmark.Current.JsonString.Source _createArg11;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> _createArg12;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source _createArg13;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> _createArg14;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> _createArg15;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> _createArg16;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> _createArg17;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> _createArg18;
+        private readonly Corvus.FabricModBenchmark.Current.JsonString.Source _createArg19;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> _createArg20;
+        private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> _createArg21;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2711,6 +2816,33 @@ public readonly partial struct FabricModSchema
         public static implicit operator Source<TContext>(Source source) => new (source);
 
         internal Source(scoped in TContext context, Corvus.FabricModBenchmark.Current.FabricModSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> arg6, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg7, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> arg8, in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> arg9, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> arg10, in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> arg12, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> arg14, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> arg15, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> arg16, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> arg17, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> arg18, in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> arg20, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> arg21)
+        {
+            _context = context;
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _createArg14 = arg14;
+            _createArg15 = arg15;
+            _createArg16 = arg16;
+            _createArg17 = arg17;
+            _createArg18 = arg18;
+            _createArg19 = arg19;
+            _createArg20 = arg20;
+            _createArg21 = arg21;
+            _kind = Kind.Create;
+        }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -2724,6 +2856,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2742,6 +2881,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2760,6 +2906,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2778,6 +2931,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2796,6 +2956,13 @@ public readonly partial struct FabricModSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -3004,6 +3171,19 @@ public readonly partial struct FabricModSchema
         /// </summary>
         /// <param name="propertyName">The name of the property to add.</param>
         /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
         public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
         {
             value.AddAsProperty(propertyName, ref _builder);
@@ -3014,7 +3194,33 @@ public readonly partial struct FabricModSchema
         /// </summary>
         /// <param name="propertyName">The name of the property to add.</param>
         /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
         public void AddProperty(string propertyName, in JsonElement.Source value)
+        {
+            value.AddAsProperty(propertyName, ref _builder);
+        }
+
+        /// <summary>
+        /// Add a property to the object.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
+        public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
         {
             value.AddAsProperty(propertyName, ref _builder);
         }
@@ -3039,6 +3245,75 @@ public readonly partial struct FabricModSchema
             Builder ovb = new(o);
             value(context, ref ovb);
             o = ovb._builder;
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="arg14">The value of the property.</param>
+        /// <param name="arg15">The value of the property.</param>
+        /// <param name="arg16">The value of the property.</param>
+        /// <param name="arg17">The value of the property.</param>
+        /// <param name="arg18">The value of the property.</param>
+        /// <param name="arg19">The value of the property.</param>
+        /// <param name="arg20">The value of the property.</param>
+        /// <param name="arg21">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source arg6, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg7, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source arg8, in Corvus.FabricModBenchmark.Current.JsonObject.Source arg9, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source arg10, in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source arg12, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source arg14, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source arg15, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source arg16, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source arg17, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source arg18, in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source arg20, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source arg21, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21);
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="arg14">The value of the property.</param>
+        /// <param name="arg15">The value of the property.</param>
+        /// <param name="arg16">The value of the property.</param>
+        /// <param name="arg17">The value of the property.</param>
+        /// <param name="arg18">The value of the property.</param>
+        /// <param name="arg19">The value of the property.</param>
+        /// <param name="arg20">The value of the property.</param>
+        /// <param name="arg21">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> arg6, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg7, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> arg8, in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> arg9, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> arg10, in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> arg12, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> arg14, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> arg15, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> arg16, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> arg17, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> arg18, in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> arg20, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> arg21, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartObject();
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21);
             o.EndObject();
         }
     }
@@ -3070,6 +3345,71 @@ public readonly partial struct FabricModSchema
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="id">The value of the <c>"id"</c> property.</param>
+    /// <param name="version">The value of the <c>"version"</c> property.</param>
+    /// <param name="accessWidener">The value of the <c>"accessWidener"</c> property.</param>
+    /// <param name="authors">The value of the <c>"authors"</c> property.</param>
+    /// <param name="breaks">The value of the <c>"breaks"</c> property.</param>
+    /// <param name="conflicts">The value of the <c>"conflicts"</c> property.</param>
+    /// <param name="contact">The value of the <c>"contact"</c> property.</param>
+    /// <param name="contributors">The value of the <c>"contributors"</c> property.</param>
+    /// <param name="custom">The value of the <c>"custom"</c> property.</param>
+    /// <param name="depends">The value of the <c>"depends"</c> property.</param>
+    /// <param name="description">The value of the <c>"description"</c> property.</param>
+    /// <param name="entrypoints">The value of the <c>"entrypoints"</c> property.</param>
+    /// <param name="environment">The value of the <c>"environment"</c> property.</param>
+    /// <param name="icon">The value of the <c>"icon"</c> property.</param>
+    /// <param name="jars">The value of the <c>"jars"</c> property.</param>
+    /// <param name="languageAdapters">The value of the <c>"languageAdapters"</c> property.</param>
+    /// <param name="license">The value of the <c>"license"</c> property.</param>
+    /// <param name="mixins">The value of the <c>"mixins"</c> property.</param>
+    /// <param name="name">The value of the <c>"name"</c> property.</param>
+    /// <param name="recommends">The value of the <c>"recommends"</c> property.</param>
+    /// <param name="suggests">The value of the <c>"suggests"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, in Corvus.FabricModBenchmark.Current.JsonString.Source version, in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source authors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source breaks = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source conflicts = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source contact = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source contributors = default, in Corvus.FabricModBenchmark.Current.JsonObject.Source custom = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source depends = default, in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source entrypoints = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source icon = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source jars = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source languageAdapters = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source license = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source mixins = default, in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source recommends = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source suggests = default)
+    {
+        return new Source(id, version, accessWidener, authors, breaks, conflicts, contact, contributors, custom, depends, description, entrypoints, environment, icon, jars, languageAdapters, license, mixins, name, recommends, suggests);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="id">The value of the <c>"id"</c> property.</param>
+    /// <param name="version">The value of the <c>"version"</c> property.</param>
+    /// <param name="accessWidener">The value of the <c>"accessWidener"</c> property.</param>
+    /// <param name="authors">The value of the <c>"authors"</c> property.</param>
+    /// <param name="breaks">The value of the <c>"breaks"</c> property.</param>
+    /// <param name="conflicts">The value of the <c>"conflicts"</c> property.</param>
+    /// <param name="contact">The value of the <c>"contact"</c> property.</param>
+    /// <param name="contributors">The value of the <c>"contributors"</c> property.</param>
+    /// <param name="custom">The value of the <c>"custom"</c> property.</param>
+    /// <param name="depends">The value of the <c>"depends"</c> property.</param>
+    /// <param name="description">The value of the <c>"description"</c> property.</param>
+    /// <param name="entrypoints">The value of the <c>"entrypoints"</c> property.</param>
+    /// <param name="environment">The value of the <c>"environment"</c> property.</param>
+    /// <param name="icon">The value of the <c>"icon"</c> property.</param>
+    /// <param name="jars">The value of the <c>"jars"</c> property.</param>
+    /// <param name="languageAdapters">The value of the <c>"languageAdapters"</c> property.</param>
+    /// <param name="license">The value of the <c>"license"</c> property.</param>
+    /// <param name="mixins">The value of the <c>"mixins"</c> property.</param>
+    /// <param name="name">The value of the <c>"name"</c> property.</param>
+    /// <param name="recommends">The value of the <c>"recommends"</c> property.</param>
+    /// <param name="suggests">The value of the <c>"suggests"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, in Corvus.FabricModBenchmark.Current.JsonString.Source version, in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> authors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> breaks = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> conflicts = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> contact = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> contributors = default, in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> custom = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> depends = default, in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> entrypoints = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> icon = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> jars = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> languageAdapters = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> license = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> mixins = default, in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> recommends = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> suggests = default)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, id, version, accessWidener, authors, breaks, conflicts, contact, contributors, custom, depends, description, entrypoints, environment, icon, jars, languageAdapters, license, mixins, name, recommends, suggests);
     }
 
     /// <summary>

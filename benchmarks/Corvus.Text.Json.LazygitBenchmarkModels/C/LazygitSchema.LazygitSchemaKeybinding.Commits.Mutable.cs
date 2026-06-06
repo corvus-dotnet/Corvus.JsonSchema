@@ -1739,7 +1739,7 @@ public readonly partial struct LazygitSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -1842,12 +1842,34 @@ public readonly partial struct LazygitSchema
                 {
                     Unknown,
                     JsonElement,
+                    Create,
                     Builder,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Builder.Build? _objectBuilder;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg1;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg2;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg3;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg4;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg5;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg6;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg7;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg8;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg9;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg10;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg11;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg12;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg13;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg14;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg15;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg16;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg17;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg18;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg19;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg20;
+                private readonly Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source _createArg21;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1861,6 +1883,32 @@ public readonly partial struct LazygitSchema
                 }
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Commits.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg16, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg17, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg18, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg19, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg20, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg21)
+                {
+                    _createArg1 = arg1;
+                    _createArg2 = arg2;
+                    _createArg3 = arg3;
+                    _createArg4 = arg4;
+                    _createArg5 = arg5;
+                    _createArg6 = arg6;
+                    _createArg7 = arg7;
+                    _createArg8 = arg8;
+                    _createArg9 = arg9;
+                    _createArg10 = arg10;
+                    _createArg11 = arg11;
+                    _createArg12 = arg12;
+                    _createArg13 = arg13;
+                    _createArg14 = arg14;
+                    _createArg15 = arg15;
+                    _createArg16 = arg16;
+                    _createArg17 = arg17;
+                    _createArg18 = arg18;
+                    _createArg19 = arg19;
+                    _createArg20 = arg20;
+                    _createArg21 = arg21;
+                    _kind = Kind.Create;
+                }
 
                 public static implicit operator Source(Commits instance) => new(JsonElement.From(instance));
 
@@ -1876,6 +1924,13 @@ public readonly partial struct LazygitSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1894,6 +1949,13 @@ public readonly partial struct LazygitSchema
                         case Kind.Builder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1912,6 +1974,13 @@ public readonly partial struct LazygitSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1930,6 +1999,13 @@ public readonly partial struct LazygitSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1948,6 +2024,13 @@ public readonly partial struct LazygitSchema
                         case Kind.Builder:
                             valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, ref valueBuilder);
+                                valueBuilder.EndItem(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2193,6 +2276,38 @@ public readonly partial struct LazygitSchema
                     o = ovb._builder;
                     o.EndObject();
                 }
+
+                /// <summary>
+                /// Builds the object value directly from its captured property values into the given complex value builder.
+                /// </summary>
+                /// <param name="arg1">The value of the property.</param>
+                /// <param name="arg2">The value of the property.</param>
+                /// <param name="arg3">The value of the property.</param>
+                /// <param name="arg4">The value of the property.</param>
+                /// <param name="arg5">The value of the property.</param>
+                /// <param name="arg6">The value of the property.</param>
+                /// <param name="arg7">The value of the property.</param>
+                /// <param name="arg8">The value of the property.</param>
+                /// <param name="arg9">The value of the property.</param>
+                /// <param name="arg10">The value of the property.</param>
+                /// <param name="arg11">The value of the property.</param>
+                /// <param name="arg12">The value of the property.</param>
+                /// <param name="arg13">The value of the property.</param>
+                /// <param name="arg14">The value of the property.</param>
+                /// <param name="arg15">The value of the property.</param>
+                /// <param name="arg16">The value of the property.</param>
+                /// <param name="arg17">The value of the property.</param>
+                /// <param name="arg18">The value of the property.</param>
+                /// <param name="arg19">The value of the property.</param>
+                /// <param name="arg20">The value of the property.</param>
+                /// <param name="arg21">The value of the property.</param>
+                /// <param name="o">The complex value builder into which to write the object.</param>
+                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg16, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg17, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg18, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg19, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg20, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg21, ref ComplexValueBuilder o)
+                {
+                    o.StartObject();
+                    Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21);
+                    o.EndObject();
+                }
             }
 
             /// <summary>
@@ -2222,6 +2337,36 @@ public readonly partial struct LazygitSchema
                 #endif
             {
                 return new Source<TContext>(context, buildValue);
+            }
+
+            /// <summary>
+            /// Build an instance of the value directly from its property values.
+            /// </summary>
+            /// <param name="amendToCommit">The value of the <c>"amendToCommit"</c> property.</param>
+            /// <param name="checkoutCommit">The value of the <c>"checkoutCommit"</c> property.</param>
+            /// <param name="cherryPickCopy">The value of the <c>"cherryPickCopy"</c> property.</param>
+            /// <param name="cherryPickCopyRange">The value of the <c>"cherryPickCopyRange"</c> property.</param>
+            /// <param name="copyCommitMessageToClipboard">The value of the <c>"copyCommitMessageToClipboard"</c> property.</param>
+            /// <param name="createFixupCommit">The value of the <c>"createFixupCommit"</c> property.</param>
+            /// <param name="markCommitAsFixup">The value of the <c>"markCommitAsFixup"</c> property.</param>
+            /// <param name="moveDownCommit">The value of the <c>"moveDownCommit"</c> property.</param>
+            /// <param name="moveUpCommit">The value of the <c>"moveUpCommit"</c> property.</param>
+            /// <param name="openLogMenu">The value of the <c>"openLogMenu"</c> property.</param>
+            /// <param name="pasteCommits">The value of the <c>"pasteCommits"</c> property.</param>
+            /// <param name="pickCommit">The value of the <c>"pickCommit"</c> property.</param>
+            /// <param name="renameCommit">The value of the <c>"renameCommit"</c> property.</param>
+            /// <param name="renameCommitWithEditor">The value of the <c>"renameCommitWithEditor"</c> property.</param>
+            /// <param name="resetCherryPick">The value of the <c>"resetCherryPick"</c> property.</param>
+            /// <param name="revertCommit">The value of the <c>"revertCommit"</c> property.</param>
+            /// <param name="squashAboveCommits">The value of the <c>"squashAboveCommits"</c> property.</param>
+            /// <param name="squashDown">The value of the <c>"squashDown"</c> property.</param>
+            /// <param name="tagCommit">The value of the <c>"tagCommit"</c> property.</param>
+            /// <param name="viewBisectOptions">The value of the <c>"viewBisectOptions"</c> property.</param>
+            /// <param name="viewResetOptions">The value of the <c>"viewResetOptions"</c> property.</param>
+            /// <returns>The source from which to build the value.</returns>
+            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source amendToCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source checkoutCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source cherryPickCopy = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source cherryPickCopyRange = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source copyCommitMessageToClipboard = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createFixupCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source markCommitAsFixup = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source moveDownCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source moveUpCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openLogMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pasteCommits = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pickCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source renameCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source renameCommitWithEditor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source resetCherryPick = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source revertCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source squashAboveCommits = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source squashDown = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source tagCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewBisectOptions = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewResetOptions = default)
+            {
+                return new Source(amendToCommit, checkoutCommit, cherryPickCopy, cherryPickCopyRange, copyCommitMessageToClipboard, createFixupCommit, markCommitAsFixup, moveDownCommit, moveUpCommit, openLogMenu, pasteCommits, pickCommit, renameCommit, renameCommitWithEditor, resetCherryPick, revertCommit, squashAboveCommits, squashDown, tagCommit, viewBisectOptions, viewResetOptions);
             }
 
             /// <summary>

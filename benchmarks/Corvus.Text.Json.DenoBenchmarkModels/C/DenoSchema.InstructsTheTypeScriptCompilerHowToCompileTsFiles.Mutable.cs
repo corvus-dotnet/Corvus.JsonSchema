@@ -389,11 +389,11 @@ public readonly partial struct DenoSchema
             /// Enable experimental support for TC39 stage 2 draft decorators.
             /// </para>
             /// </remarks>
-            public Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.Mutable ExperimentalDecorators
+            public Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Mutable ExperimentalDecorators
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalDecoratorsUtf8, out Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalDecoratorsUtf8, out Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Mutable value))
                     {
                         return value;
                     }
@@ -1174,7 +1174,7 @@ public readonly partial struct DenoSchema
             /// Set the <c>experimentalDecorators</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExperimentalDecorators(in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.Source value)
+            public void SetExperimentalDecorators(in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source value)
             {
                 CheckValidInstance();
 
@@ -2375,7 +2375,7 @@ public readonly partial struct DenoSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -2654,12 +2654,43 @@ public readonly partial struct DenoSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source _createArg1;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source _createArg2;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source _createArg3;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source _createArg4;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source _createArg5;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source _createArg6;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source _createArg7;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source _createArg8;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source _createArg9;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source _createArg10;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source _createArg11;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source _createArg12;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source _createArg13;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source _createArg14;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source _createArg15;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source _createArg16;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source _createArg17;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source _createArg18;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source _createArg19;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source _createArg20;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source _createArg21;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source _createArg22;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source _createArg23;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source _createArg24;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source _createArg25;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source _createArg26;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source _createArg27;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source _createArg28;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source _createArg29;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source _createArg30;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2673,6 +2704,41 @@ public readonly partial struct DenoSchema
             }
 
             internal Source(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source arg2, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source arg3, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source arg4, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source arg5, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source arg6, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source arg7, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source arg8, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source arg9, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source arg10, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source arg11, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source arg12, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source arg13, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source arg14, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source arg15, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source arg16, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source arg17, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source arg18, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source arg19, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source arg20, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source arg21, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source arg22, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source arg23, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source arg24, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source arg25, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source arg26, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source arg27, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source arg28, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source arg29, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source arg30)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _createArg23 = arg23;
+                _createArg24 = arg24;
+                _createArg25 = arg25;
+                _createArg26 = arg26;
+                _createArg27 = arg27;
+                _createArg28 = arg28;
+                _createArg29 = arg29;
+                _createArg30 = arg30;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(InstructsTheTypeScriptCompilerHowToCompileTsFiles instance) => new(JsonElement.From(instance));
 
@@ -2688,6 +2754,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2706,6 +2779,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2724,6 +2804,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2742,6 +2829,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2760,6 +2854,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2777,12 +2878,43 @@ public readonly partial struct DenoSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source _createArg1;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source _createArg2;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source _createArg3;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source _createArg4;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source _createArg5;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source _createArg6;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source _createArg7;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source _createArg8;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source _createArg9;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source _createArg10;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source _createArg11;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source<TContext> _createArg12;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source _createArg13;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source _createArg14;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source _createArg15;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source _createArg16;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source _createArg17;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source _createArg18;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source _createArg19;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source _createArg20;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source _createArg21;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source _createArg22;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source _createArg23;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source _createArg24;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source _createArg25;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source _createArg26;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source _createArg27;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source _createArg28;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source _createArg29;
+            private readonly Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source _createArg30;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2794,6 +2926,42 @@ public readonly partial struct DenoSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source arg2, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source arg3, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source arg4, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source arg5, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source arg6, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source arg7, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source arg8, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source arg9, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source arg10, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source arg11, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source<TContext> arg12, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source arg13, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source arg14, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source arg15, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source arg16, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source arg17, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source arg18, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source arg19, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source arg20, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source arg21, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source arg22, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source arg23, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source arg24, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source arg25, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source arg26, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source arg27, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source arg28, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source arg29, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source arg30)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _createArg23 = arg23;
+                _createArg24 = arg24;
+                _createArg25 = arg25;
+                _createArg26 = arg26;
+                _createArg27 = arg27;
+                _createArg28 = arg28;
+                _createArg29 = arg29;
+                _createArg30 = arg30;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -2807,6 +2975,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2825,6 +3000,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2843,6 +3025,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2861,6 +3050,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2879,6 +3075,13 @@ public readonly partial struct DenoSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, _createArg24, _createArg25, _createArg26, _createArg27, _createArg28, _createArg29, _createArg30, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2914,7 +3117,7 @@ public readonly partial struct DenoSchema
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default,
-                in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.Source experimentalDecorators = default,
+                in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source experimentalDecorators = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default,
@@ -2981,7 +3184,7 @@ public readonly partial struct DenoSchema
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default,
-                in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.Source experimentalDecorators = default,
+                in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source experimentalDecorators = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default,
@@ -3021,7 +3224,7 @@ public readonly partial struct DenoSchema
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default,
-                in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.Source experimentalDecorators = default,
+                in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source experimentalDecorators = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default,
@@ -3092,7 +3295,7 @@ public readonly partial struct DenoSchema
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default,
-                in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.Source experimentalDecorators = default,
+                in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source experimentalDecorators = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default,
@@ -3139,6 +3342,19 @@ public readonly partial struct DenoSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -3149,7 +3365,33 @@ public readonly partial struct DenoSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -3174,6 +3416,93 @@ public readonly partial struct DenoSchema
                 Builder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="arg23">The value of the property.</param>
+            /// <param name="arg24">The value of the property.</param>
+            /// <param name="arg25">The value of the property.</param>
+            /// <param name="arg26">The value of the property.</param>
+            /// <param name="arg27">The value of the property.</param>
+            /// <param name="arg28">The value of the property.</param>
+            /// <param name="arg29">The value of the property.</param>
+            /// <param name="arg30">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source arg2, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source arg3, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source arg4, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source arg5, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source arg6, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source arg7, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source arg8, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source arg9, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source arg10, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source arg11, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source arg12, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source arg13, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source arg14, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source arg15, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source arg16, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source arg17, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source arg18, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source arg19, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source arg20, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source arg21, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source arg22, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source arg23, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source arg24, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source arg25, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source arg26, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source arg27, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source arg28, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source arg29, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source arg30, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26, arg27, arg28, arg29, arg30);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="arg23">The value of the property.</param>
+            /// <param name="arg24">The value of the property.</param>
+            /// <param name="arg25">The value of the property.</param>
+            /// <param name="arg26">The value of the property.</param>
+            /// <param name="arg27">The value of the property.</param>
+            /// <param name="arg28">The value of the property.</param>
+            /// <param name="arg29">The value of the property.</param>
+            /// <param name="arg30">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source arg2, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source arg3, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source arg4, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source arg5, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source arg6, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source arg7, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source arg8, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source arg9, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source arg10, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source arg11, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source<TContext> arg12, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source arg13, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source arg14, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source arg15, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source arg16, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source arg17, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source arg18, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source arg19, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source arg20, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source arg21, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source arg22, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source arg23, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source arg24, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source arg25, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source arg26, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source arg27, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source arg28, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source arg29, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source arg30, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26, arg27, arg28, arg29, arg30);
                 o.EndObject();
             }
         }
@@ -3205,6 +3534,89 @@ public readonly partial struct DenoSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="allowJs">The value of the <c>"allowJs"</c> property.</param>
+        /// <param name="allowUnreachableCode">The value of the <c>"allowUnreachableCode"</c> property.</param>
+        /// <param name="allowUnusedLabels">The value of the <c>"allowUnusedLabels"</c> property.</param>
+        /// <param name="checkJs">The value of the <c>"checkJs"</c> property.</param>
+        /// <param name="exactOptionalPropertyTypes">The value of the <c>"exactOptionalPropertyTypes"</c> property.</param>
+        /// <param name="experimentalDecorators">The value of the <c>"experimentalDecorators"</c> property.</param>
+        /// <param name="jsx">The value of the <c>"jsx"</c> property.</param>
+        /// <param name="jsxFactory">The value of the <c>"jsxFactory"</c> property.</param>
+        /// <param name="jsxFragmentFactory">The value of the <c>"jsxFragmentFactory"</c> property.</param>
+        /// <param name="jsxImportSource">The value of the <c>"jsxImportSource"</c> property.</param>
+        /// <param name="keyofStringsOnly">The value of the <c>"keyofStringsOnly"</c> property.</param>
+        /// <param name="lib">The value of the <c>"lib"</c> property.</param>
+        /// <param name="noErrorTruncation">The value of the <c>"noErrorTruncation"</c> property.</param>
+        /// <param name="noFallthroughCasesInSwitch">The value of the <c>"noFallthroughCasesInSwitch"</c> property.</param>
+        /// <param name="noImplicitAny">The value of the <c>"noImplicitAny"</c> property.</param>
+        /// <param name="noImplicitOverride">The value of the <c>"noImplicitOverride"</c> property.</param>
+        /// <param name="noImplicitReturns">The value of the <c>"noImplicitReturns"</c> property.</param>
+        /// <param name="noImplicitThis">The value of the <c>"noImplicitThis"</c> property.</param>
+        /// <param name="noImplicitUseStrict">The value of the <c>"noImplicitUseStrict"</c> property.</param>
+        /// <param name="noStrictGenericChecks">The value of the <c>"noStrictGenericChecks"</c> property.</param>
+        /// <param name="noUncheckedIndexedAccess">The value of the <c>"noUncheckedIndexedAccess"</c> property.</param>
+        /// <param name="noUnusedLocals">The value of the <c>"noUnusedLocals"</c> property.</param>
+        /// <param name="noUnusedParameters">The value of the <c>"noUnusedParameters"</c> property.</param>
+        /// <param name="strict">The value of the <c>"strict"</c> property.</param>
+        /// <param name="strictBindCallApply">The value of the <c>"strictBindCallApply"</c> property.</param>
+        /// <param name="strictFunctionTypes">The value of the <c>"strictFunctionTypes"</c> property.</param>
+        /// <param name="strictNullChecks">The value of the <c>"strictNullChecks"</c> property.</param>
+        /// <param name="strictPropertyInitialization">The value of the <c>"strictPropertyInitialization"</c> property.</param>
+        /// <param name="suppressExcessPropertyErrors">The value of the <c>"suppressExcessPropertyErrors"</c> property.</param>
+        /// <param name="suppressImplicitAnyIndexErrors">The value of the <c>"suppressImplicitAnyIndexErrors"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source allowUnreachableCode = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source experimentalDecorators = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source lib = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source noErrorTruncation = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source noImplicitAny = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source noImplicitThis = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source noUncheckedIndexedAccess = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default)
+        {
+            return new Source(allowJs, allowUnreachableCode, allowUnusedLabels, checkJs, exactOptionalPropertyTypes, experimentalDecorators, jsx, jsxFactory, jsxFragmentFactory, jsxImportSource, keyofStringsOnly, lib, noErrorTruncation, noFallthroughCasesInSwitch, noImplicitAny, noImplicitOverride, noImplicitReturns, noImplicitThis, noImplicitUseStrict, noStrictGenericChecks, noUncheckedIndexedAccess, noUnusedLocals, noUnusedParameters, strict, strictBindCallApply, strictFunctionTypes, strictNullChecks, strictPropertyInitialization, suppressExcessPropertyErrors, suppressImplicitAnyIndexErrors);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="allowJs">The value of the <c>"allowJs"</c> property.</param>
+        /// <param name="allowUnreachableCode">The value of the <c>"allowUnreachableCode"</c> property.</param>
+        /// <param name="allowUnusedLabels">The value of the <c>"allowUnusedLabels"</c> property.</param>
+        /// <param name="checkJs">The value of the <c>"checkJs"</c> property.</param>
+        /// <param name="exactOptionalPropertyTypes">The value of the <c>"exactOptionalPropertyTypes"</c> property.</param>
+        /// <param name="experimentalDecorators">The value of the <c>"experimentalDecorators"</c> property.</param>
+        /// <param name="jsx">The value of the <c>"jsx"</c> property.</param>
+        /// <param name="jsxFactory">The value of the <c>"jsxFactory"</c> property.</param>
+        /// <param name="jsxFragmentFactory">The value of the <c>"jsxFragmentFactory"</c> property.</param>
+        /// <param name="jsxImportSource">The value of the <c>"jsxImportSource"</c> property.</param>
+        /// <param name="keyofStringsOnly">The value of the <c>"keyofStringsOnly"</c> property.</param>
+        /// <param name="lib">The value of the <c>"lib"</c> property.</param>
+        /// <param name="noErrorTruncation">The value of the <c>"noErrorTruncation"</c> property.</param>
+        /// <param name="noFallthroughCasesInSwitch">The value of the <c>"noFallthroughCasesInSwitch"</c> property.</param>
+        /// <param name="noImplicitAny">The value of the <c>"noImplicitAny"</c> property.</param>
+        /// <param name="noImplicitOverride">The value of the <c>"noImplicitOverride"</c> property.</param>
+        /// <param name="noImplicitReturns">The value of the <c>"noImplicitReturns"</c> property.</param>
+        /// <param name="noImplicitThis">The value of the <c>"noImplicitThis"</c> property.</param>
+        /// <param name="noImplicitUseStrict">The value of the <c>"noImplicitUseStrict"</c> property.</param>
+        /// <param name="noStrictGenericChecks">The value of the <c>"noStrictGenericChecks"</c> property.</param>
+        /// <param name="noUncheckedIndexedAccess">The value of the <c>"noUncheckedIndexedAccess"</c> property.</param>
+        /// <param name="noUnusedLocals">The value of the <c>"noUnusedLocals"</c> property.</param>
+        /// <param name="noUnusedParameters">The value of the <c>"noUnusedParameters"</c> property.</param>
+        /// <param name="strict">The value of the <c>"strict"</c> property.</param>
+        /// <param name="strictBindCallApply">The value of the <c>"strictBindCallApply"</c> property.</param>
+        /// <param name="strictFunctionTypes">The value of the <c>"strictFunctionTypes"</c> property.</param>
+        /// <param name="strictNullChecks">The value of the <c>"strictNullChecks"</c> property.</param>
+        /// <param name="strictPropertyInitialization">The value of the <c>"strictPropertyInitialization"</c> property.</param>
+        /// <param name="suppressExcessPropertyErrors">The value of the <c>"suppressExcessPropertyErrors"</c> property.</param>
+        /// <param name="suppressImplicitAnyIndexErrors">The value of the <c>"suppressImplicitAnyIndexErrors"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source allowUnreachableCode = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source experimentalDecorators = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source<TContext> lib = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source noErrorTruncation = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source noImplicitAny = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source noImplicitThis = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source noUncheckedIndexedAccess = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, allowJs, allowUnreachableCode, allowUnusedLabels, checkJs, exactOptionalPropertyTypes, experimentalDecorators, jsx, jsxFactory, jsxFragmentFactory, jsxImportSource, keyofStringsOnly, lib, noErrorTruncation, noFallthroughCasesInSwitch, noImplicitAny, noImplicitOverride, noImplicitReturns, noImplicitThis, noImplicitUseStrict, noStrictGenericChecks, noUncheckedIndexedAccess, noUnusedLocals, noUnusedParameters, strict, strictBindCallApply, strictFunctionTypes, strictNullChecks, strictPropertyInitialization, suppressExcessPropertyErrors, suppressImplicitAnyIndexErrors);
         }
 
         /// <summary>
@@ -3309,7 +3721,7 @@ public readonly partial struct DenoSchema
         /// <param name="suppressImplicitAnyIndexErrors">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source allowUnreachableCode = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.Source experimentalDecorators = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source lib = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source noErrorTruncation = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source noImplicitAny = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source noImplicitThis = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source noUncheckedIndexedAccess = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source allowUnreachableCode = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source experimentalDecorators = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source lib = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source noErrorTruncation = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source noImplicitAny = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source noImplicitThis = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source noUncheckedIndexedAccess = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -3360,7 +3772,7 @@ public readonly partial struct DenoSchema
         /// <param name="suppressImplicitAnyIndexErrors">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source allowUnreachableCode = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.Source experimentalDecorators = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source<TContext> lib = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source noErrorTruncation = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source noImplicitAny = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source noImplicitThis = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source noUncheckedIndexedAccess = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.Source allowUnreachableCode = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.Source allowUnusedLabels = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.Source experimentalDecorators = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source<TContext> lib = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.Source noErrorTruncation = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.Source noImplicitAny = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.Source noImplicitThis = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.Source noUncheckedIndexedAccess = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

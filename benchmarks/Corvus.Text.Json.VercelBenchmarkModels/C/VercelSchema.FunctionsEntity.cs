@@ -72,7 +72,7 @@ public readonly partial struct VercelSchema
         /// <param name="value">The value of the property, if present.</param>
         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement value)
+        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity value)
         {
             CheckValidInstance();
             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -85,7 +85,7 @@ public readonly partial struct VercelSchema
         /// <param name="value">The value of the property, if present.</param>
         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement value)
+        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity value)
         {
             CheckValidInstance();
             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -98,10 +98,108 @@ public readonly partial struct VercelSchema
         /// <param name="value">The value of the property, if present.</param>
         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(string propertyName, out JsonElement value)
+        public bool TryGetProperty(string propertyName, out Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity value)
         {
             CheckValidInstance();
             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+        }
+
+        /// <summary>
+        /// Determines if a property name matches '^.{1,256}$'
+        /// for the pattern property producing the type
+        /// <see cref="Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity"/>.
+        /// </summary>
+        /// <param name="propertyName">The unescaped UTF-8 property name.</param>
+        /// <returns><see langword="true"/> if the property name matches the pattern, otherwise <see langword="false"/>.</returns>
+        public static bool MatchesPatternType1256Entity(ReadOnlySpan<byte> propertyName)
+        {
+            return JsonSchemaEvaluation.MatchRangeRegularExpression(propertyName, 1, 256);
+        }
+
+        /// <summary>
+        /// Gets an instance of the type
+        /// <see cref="Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity"/>
+        /// if the property name matches '^.{1,256}$'.
+        /// </summary>
+        /// <param name="propertyName">The unescaped UTF-8 property name.</param>
+        /// <param name="value">The property value.</param>
+        /// <param name="result">The typed property value, if the name matches.</param>
+        /// <returns><see langword="true"/> if the property name matches the pattern, otherwise <see langword="false"/>.</returns>
+        public static bool TryAsPatternType1256Entity(ReadOnlySpan<byte> propertyName, in JsonElement value, out Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity result)
+        {
+            if (MatchesPatternType1256Entity(propertyName))
+            {
+                result = Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.From(value);
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Visits properties matched by generated pattern property helpers.
+        /// </summary>
+        /// <typeparam name="TState">The visitor state type.</typeparam>
+        public interface IPatternPropertyVisitor<TState>
+        {
+            /// <summary>
+            /// Visits a property matching '^.{1,256}$'.
+            /// </summary>
+            bool VisitPatternType1256Entity(ReadOnlySpan<byte> name, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity value, ref TState state);
+
+            /// <summary>
+            /// Visits a property that did not match any generated pattern property.
+            /// </summary>
+            bool VisitUnmatched(ReadOnlySpan<byte> name, in JsonElement value, ref TState state);
+        }
+
+        /// <summary>
+        /// Matches each property against the generated pattern properties and dispatches to a visitor.
+        /// </summary>
+        /// <typeparam name="TState">The visitor state type.</typeparam>
+        /// <typeparam name="TVisitor">The visitor type.</typeparam>
+        /// <param name="state">The visitor state.</param>
+        /// <param name="visitor">The visitor to call for each matched or unmatched property.</param>
+        /// <param name="shortCircuit">If <see langword="true"/>, only the first matching pattern is visited for each property.</param>
+        /// <returns><see langword="true"/> if every visitor call returned <see langword="true"/>, otherwise <see langword="false"/>.</returns>
+        public bool MatchPatternProperties<TState, TVisitor>(ref TState state, TVisitor visitor, bool shortCircuit = false)
+            where TVisitor : IPatternPropertyVisitor<TState>
+        {
+            CheckValidInstance();
+
+            foreach (var property in EnumerateObject())
+            {
+                using UnescapedUtf8JsonString unescapedPropertyName = property.Utf8NameSpan;
+                ReadOnlySpan<byte> propertyName = unescapedPropertyName.Span;
+                bool matched = false;
+
+                if (MatchesPatternType1256Entity(propertyName))
+                {
+                    matched = true;
+                    Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity typedValue = Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.From(property.Value);
+                    if (!visitor.VisitPatternType1256Entity(propertyName, in typedValue, ref state))
+                    {
+                        return false;
+                    }
+
+                    if (shortCircuit)
+                    {
+                        continue;
+                    }
+                }
+
+                if (!matched)
+                {
+                    JsonElement unmatchedValue = JsonElement.From(property.Value);
+                    if (!visitor.VisitUnmatched(propertyName, in unmatchedValue, ref state))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -112,6 +210,16 @@ public readonly partial struct VercelSchema
         {
             CheckValidInstance();
             return _parent.GetPropertyCount(_idx);
+        }
+
+        /// <summary>
+        /// Enumerates the object.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public ObjectEnumerator<Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity> EnumerateObject()
+        {
+            CheckValidInstance();
+            return EnumeratorCreator.CreateObjectEnumerator<Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -223,10 +331,13 @@ public readonly partial struct VercelSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FunctionsEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<FunctionsEntity>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -246,10 +357,13 @@ public readonly partial struct VercelSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FunctionsEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<FunctionsEntity>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -269,10 +383,13 @@ public readonly partial struct VercelSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FunctionsEntity ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<FunctionsEntity>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -310,9 +427,12 @@ public readonly partial struct VercelSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static FunctionsEntity ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<FunctionsEntity>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>

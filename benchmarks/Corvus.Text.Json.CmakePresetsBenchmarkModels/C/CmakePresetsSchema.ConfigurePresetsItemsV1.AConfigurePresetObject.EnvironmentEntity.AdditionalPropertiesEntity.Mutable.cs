@@ -331,7 +331,7 @@ public readonly partial struct CmakePresetsSchema
                         /// <inheritdoc/>
                         public override string ToString()
                         {
-                            if (_parent == null || _documentVersion != _parent.Version)
+                            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                             {
                                 return string.Empty;
                             }
@@ -486,11 +486,11 @@ public readonly partial struct CmakePresetsSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonNull" />.
+                        /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonNull.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsJsonNull(out Corvus.CmakePresetsBenchmark.Current.JsonNull result)
+                        public bool TryGetAsJsonNull(out Corvus.CmakePresetsBenchmark.Current.JsonNull.Mutable result)
                         {
                             if (Corvus.CmakePresetsBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -503,11 +503,11 @@ public readonly partial struct CmakePresetsSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonString" />.
+                        /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonString.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsJsonString(out Corvus.CmakePresetsBenchmark.Current.JsonString result)
+                        public bool TryGetAsJsonString(out Corvus.CmakePresetsBenchmark.Current.JsonString.Mutable result)
                         {
                             if (Corvus.CmakePresetsBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                             {

@@ -153,14 +153,14 @@ public readonly partial struct DenoSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext5 =
-                    Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.JsonSchema.PushChildContextUnescaped(
+                    Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.ExperimentalDecoratorsUtf8,
                         evaluationPath: ExperimentalDecoratorsSchemaEvaluationPath);
 
-                Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
+                Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
                 context.CommitChildContext(childContext5.IsMatch, ref childContext5);
             }
 

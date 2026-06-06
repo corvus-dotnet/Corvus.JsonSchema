@@ -585,7 +585,7 @@ public readonly partial struct GeoJsonSchema
                             /// <inheritdoc/>
                             public override string ToString()
                             {
-                                if (_parent == null || _documentVersion != _parent.Version)
+                                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                                 {
                                     return string.Empty;
                                 }
@@ -972,11 +972,11 @@ public readonly partial struct GeoJsonSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPoint" />.
+                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPoint.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsGeoJsonPoint(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPoint result)
+                            public bool TryGetAsGeoJsonPoint(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPoint.Mutable result)
                             {
                                 if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPoint.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -989,11 +989,11 @@ public readonly partial struct GeoJsonSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonLineString" />.
+                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonLineString.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsGeoJsonLineString(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonLineString result)
+                            public bool TryGetAsGeoJsonLineString(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonLineString.Mutable result)
                             {
                                 if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonLineString.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -1006,11 +1006,11 @@ public readonly partial struct GeoJsonSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPolygon" />.
+                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPolygon.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsGeoJsonPolygon(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPolygon result)
+                            public bool TryGetAsGeoJsonPolygon(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPolygon.Mutable result)
                             {
                                 if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonPolygon.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -1023,11 +1023,11 @@ public readonly partial struct GeoJsonSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPoint" />.
+                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPoint.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsGeoJsonMultiPoint(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPoint result)
+                            public bool TryGetAsGeoJsonMultiPoint(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPoint.Mutable result)
                             {
                                 if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPoint.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -1040,11 +1040,11 @@ public readonly partial struct GeoJsonSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiLineString" />.
+                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiLineString.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsGeoJsonMultiLineString(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiLineString result)
+                            public bool TryGetAsGeoJsonMultiLineString(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiLineString.Mutable result)
                             {
                                 if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiLineString.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -1057,11 +1057,11 @@ public readonly partial struct GeoJsonSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon" />.
+                            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsGeoJsonMultiPolygon(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon result)
+                            public bool TryGetAsGeoJsonMultiPolygon(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.Mutable result)
                             {
                                 if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.JsonSchema.Evaluate(_parent, _idx))
                                 {

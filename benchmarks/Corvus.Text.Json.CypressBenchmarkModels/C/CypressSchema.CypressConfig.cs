@@ -377,16 +377,16 @@ public readonly partial struct CypressSchema
         /// Polyfills `window.fetch` to enable Network spying and stubbing
         /// </para>
         /// </remarks>
-        public Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity ExperimentalFetchPolyfill
+        public Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing ExperimentalFetchPolyfill
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalFetchPolyfillUtf8, out Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalFetchPolyfillUtf8, out Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing value))
                 {
                     return value;
                 }
 
-                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.DefaultInstance;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.DefaultInstance;
             }
         }
 
@@ -1317,10 +1317,13 @@ public readonly partial struct CypressSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CypressConfig ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<CypressConfig>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -1340,10 +1343,13 @@ public readonly partial struct CypressSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CypressConfig ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<CypressConfig>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -1363,10 +1369,13 @@ public readonly partial struct CypressSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CypressConfig ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<CypressConfig>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -1404,9 +1413,12 @@ public readonly partial struct CypressSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static CypressConfig ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<CypressConfig>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>

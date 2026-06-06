@@ -474,7 +474,7 @@ public readonly partial struct ClangFormatSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -805,11 +805,11 @@ public readonly partial struct ClangFormatSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat38StyleOfAligningConsecutiveAssignments" />.
+            /// Gets the value as a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat38StyleOfAligningConsecutiveAssignments.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsClangFormat38StyleOfAligningConsecutiveAssignments(out Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat38StyleOfAligningConsecutiveAssignments result)
+            public bool TryGetAsClangFormat38StyleOfAligningConsecutiveAssignments(out Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat38StyleOfAligningConsecutiveAssignments.Mutable result)
             {
                 if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat38StyleOfAligningConsecutiveAssignments.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -822,11 +822,11 @@ public readonly partial struct ClangFormatSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions" />.
+            /// Gets the value as a <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsClangFormat15AlignmentOptions(out Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions result)
+            public bool TryGetAsClangFormat15AlignmentOptions(out Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Mutable result)
             {
                 if (Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.JsonSchema.Evaluate(_parent, _idx))
                 {

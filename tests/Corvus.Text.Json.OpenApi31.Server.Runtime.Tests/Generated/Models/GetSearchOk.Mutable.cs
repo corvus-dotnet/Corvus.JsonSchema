@@ -1071,6 +1071,7 @@ public readonly partial struct GetSearchOk
         {
             Unknown,
             JsonElement,
+            Create,
             ObjectBuilder,
             ArrayBuilder,
         }
@@ -1078,6 +1079,7 @@ public readonly partial struct GetSearchOk
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly ObjectBuilder.Build? _objectBuilder;
+        private readonly CanonTests31.Server.Models.JsonInteger.Source _createArg1;
         private readonly ArrayBuilder.Build? _arrayBuilder;
 
         /// <summary>
@@ -1092,6 +1094,12 @@ public readonly partial struct GetSearchOk
         }
 
         internal Source(CanonTests31.Server.Models.GetSearchOk.ObjectBuilder.Build value) {_objectBuilder = value; _kind = Kind.ObjectBuilder; }
+
+        internal Source(in CanonTests31.Server.Models.JsonInteger.Source arg1)
+        {
+            _createArg1 = arg1;
+            _kind = Kind.Create;
+        }
 
         internal Source(CanonTests31.Server.Models.GetSearchOk.ArrayBuilder.Build value) {_arrayBuilder = value; _kind = Kind.ArrayBuilder; }
 
@@ -1109,6 +1117,13 @@ public readonly partial struct GetSearchOk
                 case Kind.ObjectBuilder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        ObjectBuilder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 case Kind.ArrayBuilder:
                     valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
@@ -1130,6 +1145,13 @@ public readonly partial struct GetSearchOk
                 case Kind.ObjectBuilder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        ObjectBuilder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 case Kind.ArrayBuilder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                     break;
@@ -1151,6 +1173,13 @@ public readonly partial struct GetSearchOk
                 case Kind.ObjectBuilder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        ObjectBuilder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 case Kind.ArrayBuilder:
                     valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                     break;
@@ -1172,6 +1201,13 @@ public readonly partial struct GetSearchOk
                 case Kind.ObjectBuilder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        ObjectBuilder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 case Kind.ArrayBuilder:
                     valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                     break;
@@ -1193,6 +1229,13 @@ public readonly partial struct GetSearchOk
                 case Kind.ObjectBuilder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        ObjectBuilder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 case Kind.ArrayBuilder:
                     valueBuilder.AddItem(_arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                     break;
@@ -1527,6 +1570,18 @@ public readonly partial struct GetSearchOk
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in CanonTests31.Server.Models.JsonInteger.Source arg1, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -1556,6 +1611,16 @@ public readonly partial struct GetSearchOk
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="nextPage">The value of the <c>"nextPage"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in CanonTests31.Server.Models.JsonInteger.Source nextPage = default)
+    {
+        return new Source(nextPage);
     }
 
     /// <summary>
