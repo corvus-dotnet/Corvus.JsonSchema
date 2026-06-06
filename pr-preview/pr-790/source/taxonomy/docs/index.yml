@@ -1,0 +1,27 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: Documentation
+Navigation:
+  Title: Documentation
+  Description: "In-depth documentation for Corvus.Text.Json components and migration guides."
+  Parent: /
+  Url: /docs/index.html
+  Rank: 2
+  Header:
+    Visible: True
+    Link: True
+  Footer:
+    Visible: True
+    Link: True
+MetaData:
+  Title: "Documentation — Corvus.Text.Json"
+  Description: "Detailed documentation covering ParsedJsonDocument, JsonDocumentBuilder, migration from v4 to v5, and advanced usage of Corvus.Text.Json."
+  Keywords: [documentation, docs, ParsedJsonDocument, JsonDocumentBuilder, migration, v4, v5]
+OpenGraph:
+  Title: "Documentation — Corvus.Text.Json"
+  Description: "Detailed documentation covering ParsedJsonDocument, JsonDocumentBuilder, and migration from v4 to v5."
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Overview
+    Spec:
+      Path: ../../content/Docs/Overview.md
