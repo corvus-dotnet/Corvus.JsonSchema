@@ -116,6 +116,10 @@
 <td></td>
 </tr>
 <tr>
+<td><a href="#build-jsonstring-source-jsonpointer-source">Build(JsonString.Source, JsonPointer.Source)</a></td>
+<td></td>
+</tr>
+<tr>
 <td><a href="#build-jsonpatchdocument-addoperation-builder-build-int">Build(JsonPatchDocument.AddOperation.Builder.Build, int)</a></td>
 <td></td>
 </tr>
@@ -264,10 +268,57 @@
 </tbody>
 </table>
 <hr />
+<h2 id="build-jsonstring-source-jsonpointer-source">Build(JsonString.Source, JsonPointer.Source)</h2>
+<pre><code class="language-csharp">public static JsonPatchDocument.PatchOperation.Source Build(in JsonString.Source op, in JsonPointer.Source path)
+</code></pre>
+<h3 id="parameters-2">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>op</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring-source.html"><code>JsonString.Source</code></a></td>
+<td></td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer-source.html"><code>JsonPointer.Source</code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-2">Returns</h3>
+<p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-source.html"><code>JsonPatchDocument.PatchOperation.Source</code></a></p>
+<h2 id="applies-to-2">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="build-jsonpatchdocument-addoperation-builder-build-int">Build(JsonPatchDocument.AddOperation.Builder.Build, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.AddOperation.Source Build(in JsonPatchDocument.AddOperation.Builder.Build buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-2">Parameters</h3>
+<h3 id="parameters-3">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -289,9 +340,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-2">Returns</h3>
+<h3 id="returns-3">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation-source.html"><code>JsonPatchDocument.AddOperation.Source</code></a></p>
-<h2 id="applies-to-2">Applies To</h2>
+<h2 id="applies-to-3">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -314,7 +365,7 @@
 <h2 id="build-tcontext-jsonpatchdocument-addoperation-builder-build-tcontext-int">Build(TContext, JsonPatchDocument.AddOperation.Builder.Build&lt;TContext&gt;, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.AddOperation.Source&lt;TContext&gt; Build&lt;TContext&gt;(in TContext context, in JsonPatchDocument.AddOperation.Builder.Build&lt;TContext&gt; buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-3">Parameters</h3>
+<h3 id="parameters-4">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -341,9 +392,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-3">Returns</h3>
+<h3 id="returns-4">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation-source.html"><code>JsonPatchDocument.AddOperation.Source&lt;TContext&gt;</code></a></p>
-<h2 id="applies-to-3">Applies To</h2>
+<h2 id="applies-to-4">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -366,7 +417,7 @@
 <h2 id="build-jsonpatchdocument-copyoperation-builder-build-int">Build(JsonPatchDocument.CopyOperation.Builder.Build, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.Source Build(in JsonPatchDocument.CopyOperation.Builder.Build buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-4">Parameters</h3>
+<h3 id="parameters-5">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -388,9 +439,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-4">Returns</h3>
+<h3 id="returns-5">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation-source.html"><code>JsonPatchDocument.CopyOperation.Source</code></a></p>
-<h2 id="applies-to-4">Applies To</h2>
+<h2 id="applies-to-5">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -413,7 +464,7 @@
 <h2 id="build-tcontext-jsonpatchdocument-copyoperation-builder-build-tcontext-int">Build(TContext, JsonPatchDocument.CopyOperation.Builder.Build&lt;TContext&gt;, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.CopyOperation.Source&lt;TContext&gt; Build&lt;TContext&gt;(in TContext context, in JsonPatchDocument.CopyOperation.Builder.Build&lt;TContext&gt; buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-5">Parameters</h3>
+<h3 id="parameters-6">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -440,9 +491,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-5">Returns</h3>
+<h3 id="returns-6">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation-source.html"><code>JsonPatchDocument.CopyOperation.Source&lt;TContext&gt;</code></a></p>
-<h2 id="applies-to-5">Applies To</h2>
+<h2 id="applies-to-6">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -465,7 +516,7 @@
 <h2 id="build-jsonpatchdocument-moveoperation-builder-build-int">Build(JsonPatchDocument.MoveOperation.Builder.Build, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.MoveOperation.Source Build(in JsonPatchDocument.MoveOperation.Builder.Build buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-6">Parameters</h3>
+<h3 id="parameters-7">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -487,9 +538,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-6">Returns</h3>
+<h3 id="returns-7">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation-source.html"><code>JsonPatchDocument.MoveOperation.Source</code></a></p>
-<h2 id="applies-to-6">Applies To</h2>
+<h2 id="applies-to-7">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -512,7 +563,7 @@
 <h2 id="build-tcontext-jsonpatchdocument-moveoperation-builder-build-tcontext-int">Build(TContext, JsonPatchDocument.MoveOperation.Builder.Build&lt;TContext&gt;, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.MoveOperation.Source&lt;TContext&gt; Build&lt;TContext&gt;(in TContext context, in JsonPatchDocument.MoveOperation.Builder.Build&lt;TContext&gt; buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-7">Parameters</h3>
+<h3 id="parameters-8">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -539,9 +590,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-7">Returns</h3>
+<h3 id="returns-8">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation-source.html"><code>JsonPatchDocument.MoveOperation.Source&lt;TContext&gt;</code></a></p>
-<h2 id="applies-to-7">Applies To</h2>
+<h2 id="applies-to-8">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -564,7 +615,7 @@
 <h2 id="build-jsonpatchdocument-removeoperation-builder-build-int">Build(JsonPatchDocument.RemoveOperation.Builder.Build, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.RemoveOperation.Source Build(in JsonPatchDocument.RemoveOperation.Builder.Build buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-8">Parameters</h3>
+<h3 id="parameters-9">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -586,9 +637,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-8">Returns</h3>
+<h3 id="returns-9">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-source.html"><code>JsonPatchDocument.RemoveOperation.Source</code></a></p>
-<h2 id="applies-to-8">Applies To</h2>
+<h2 id="applies-to-9">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -611,7 +662,7 @@
 <h2 id="build-tcontext-jsonpatchdocument-removeoperation-builder-build-tcontext-int">Build(TContext, JsonPatchDocument.RemoveOperation.Builder.Build&lt;TContext&gt;, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.RemoveOperation.Source&lt;TContext&gt; Build&lt;TContext&gt;(in TContext context, in JsonPatchDocument.RemoveOperation.Builder.Build&lt;TContext&gt; buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-9">Parameters</h3>
+<h3 id="parameters-10">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -638,9 +689,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-9">Returns</h3>
+<h3 id="returns-10">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-source.html"><code>JsonPatchDocument.RemoveOperation.Source&lt;TContext&gt;</code></a></p>
-<h2 id="applies-to-9">Applies To</h2>
+<h2 id="applies-to-10">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -663,7 +714,7 @@
 <h2 id="build-jsonpatchdocument-replaceoperation-builder-build-int">Build(JsonPatchDocument.ReplaceOperation.Builder.Build, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.ReplaceOperation.Source Build(in JsonPatchDocument.ReplaceOperation.Builder.Build buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-10">Parameters</h3>
+<h3 id="parameters-11">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -685,9 +736,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-10">Returns</h3>
+<h3 id="returns-11">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation-source.html"><code>JsonPatchDocument.ReplaceOperation.Source</code></a></p>
-<h2 id="applies-to-10">Applies To</h2>
+<h2 id="applies-to-11">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -710,7 +761,7 @@
 <h2 id="build-tcontext-jsonpatchdocument-replaceoperation-builder-build-tcontext-int">Build(TContext, JsonPatchDocument.ReplaceOperation.Builder.Build&lt;TContext&gt;, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.ReplaceOperation.Source&lt;TContext&gt; Build&lt;TContext&gt;(in TContext context, in JsonPatchDocument.ReplaceOperation.Builder.Build&lt;TContext&gt; buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-11">Parameters</h3>
+<h3 id="parameters-12">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -737,9 +788,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-11">Returns</h3>
+<h3 id="returns-12">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation-source.html"><code>JsonPatchDocument.ReplaceOperation.Source&lt;TContext&gt;</code></a></p>
-<h2 id="applies-to-11">Applies To</h2>
+<h2 id="applies-to-12">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -762,7 +813,7 @@
 <h2 id="build-jsonpatchdocument-testoperation-builder-build-int">Build(JsonPatchDocument.TestOperation.Builder.Build, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.TestOperation.Source Build(in JsonPatchDocument.TestOperation.Builder.Build buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-12">Parameters</h3>
+<h3 id="parameters-13">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -784,9 +835,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-12">Returns</h3>
+<h3 id="returns-13">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation-source.html"><code>JsonPatchDocument.TestOperation.Source</code></a></p>
-<h2 id="applies-to-12">Applies To</h2>
+<h2 id="applies-to-13">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -809,7 +860,7 @@
 <h2 id="build-tcontext-jsonpatchdocument-testoperation-builder-build-tcontext-int">Build(TContext, JsonPatchDocument.TestOperation.Builder.Build&lt;TContext&gt;, int)</h2>
 <pre><code class="language-csharp">public static JsonPatchDocument.TestOperation.Source&lt;TContext&gt; Build&lt;TContext&gt;(in TContext context, in JsonPatchDocument.TestOperation.Builder.Build&lt;TContext&gt; buildValue, int initialCapacity)
 </code></pre>
-<h3 id="parameters-13">Parameters</h3>
+<h3 id="parameters-14">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -836,9 +887,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-13">Returns</h3>
+<h3 id="returns-14">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation-source.html"><code>JsonPatchDocument.TestOperation.Source&lt;TContext&gt;</code></a></p>
-<h2 id="applies-to-13">Applies To</h2>
+<h2 id="applies-to-14">Applies To</h2>
 <table>
 <thead>
 <tr>

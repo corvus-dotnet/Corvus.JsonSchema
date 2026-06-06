@@ -14718,7 +14718,7 @@
     "Title": "JsonPatchDocument.AddOperation.Build",
     "Description": "",
     "Keywords": "JsonPatchDocument.AddOperation Build method Corvus.Text.Json.Patch",
-    "Body": " "
+    "Body": "   "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation.createbuilder.html",
@@ -15761,7 +15761,7 @@
     "Title": "JsonPatchDocument.CopyOperation.Build",
     "Description": "",
     "Keywords": "JsonPatchDocument.CopyOperation Build method Corvus.Text.Json.Patch",
-    "Body": " "
+    "Body": "  "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation.createbuilder.html",
@@ -16734,7 +16734,7 @@
     "Title": "JsonPatchDocument.MoveOperation.Build",
     "Description": "",
     "Keywords": "JsonPatchDocument.MoveOperation Build method Corvus.Text.Json.Patch",
-    "Body": " "
+    "Body": "  "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation.createbuilder.html",
@@ -17931,7 +17931,7 @@
     "Title": "JsonPatchDocument.PatchOperation.Build",
     "Description": "",
     "Keywords": "JsonPatchDocument.PatchOperation Build method Corvus.Text.Json.Patch",
-    "Body": "             "
+    "Body": "              "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation.createbuilder.html",
@@ -18547,7 +18547,7 @@
     "Title": "JsonPatchDocument.PatchOperationCommon.Build",
     "Description": "",
     "Keywords": "JsonPatchDocument.PatchOperationCommon Build method Corvus.Text.Json.Patch",
-    "Body": " "
+    "Body": "  "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperationcommon.createbuilder.html",
@@ -19100,7 +19100,7 @@
     "Title": "JsonPatchDocument.RemoveOperation.Build",
     "Description": "",
     "Keywords": "JsonPatchDocument.RemoveOperation Build method Corvus.Text.Json.Patch",
-    "Body": " "
+    "Body": "  "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation.createbuilder.html",
@@ -20038,7 +20038,7 @@
     "Title": "JsonPatchDocument.ReplaceOperation.Build",
     "Description": "",
     "Keywords": "JsonPatchDocument.ReplaceOperation Build method Corvus.Text.Json.Patch",
-    "Body": " "
+    "Body": "   "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation.createbuilder.html",
@@ -21039,7 +21039,7 @@
     "Title": "JsonPatchDocument.TestOperation.Build",
     "Description": "",
     "Keywords": "JsonPatchDocument.TestOperation Build method Corvus.Text.Json.Patch",
-    "Body": " "
+    "Body": "   "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation.createbuilder.html",
