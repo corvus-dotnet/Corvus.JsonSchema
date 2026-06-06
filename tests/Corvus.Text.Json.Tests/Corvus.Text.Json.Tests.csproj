@@ -153,6 +153,7 @@
     <Compile Include="GeneratedCreateBuilderFromPropertiesTests.cs" />
     <Compile Include="GeneratedSelfReferencingObjectTests.cs" />
     <Compile Include="GeneratedNestedObjectMutationTests.cs" />
+    <Compile Include="GeneratedParamsBuildTests.cs" />
     <Compile Include="GeneratedArrayMutationTests.cs" />
     <Compile Include="GeneratedObjectWithArrayPropertyTests.cs" />
     <Compile Include="GeneratedCompositionApplyTests.cs" />

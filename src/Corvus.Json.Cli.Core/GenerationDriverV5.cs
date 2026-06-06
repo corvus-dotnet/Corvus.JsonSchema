@@ -248,7 +248,10 @@ public static class GenerationDriverV5
             addExplicitUsings: generatorConfig.AddExplicitUsings ?? false,
             defaultAccessibility: defaultAccessibility,
             codeGenerationMode: codeGenerationMode,
-            excludeNonNullDefaulted: excludeNonNullDefaulted);
+            excludeNonNullDefaulted: excludeNonNullDefaulted,
+            buildParametersThreshold: generatorConfig.BuildParametersThreshold is Corvus.Json.JsonInteger buildParametersThreshold && !buildParametersThreshold.IsUndefined()
+                ? (int)buildParametersThreshold
+                : CodeGeneration.CSharpLanguageProvider.Options.DefaultBuildParametersThreshold);
     }
 
     private static CodeGeneration.GeneratedTypeAccessibility GetDefaultAccessibility(in GeneratorConfig generatorConfig)
