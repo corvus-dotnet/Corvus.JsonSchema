@@ -175,7 +175,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/items",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("bearerAuth", System.Array.Empty<string>(), "http"), new EndpointSecurityRequirement("apiKeyAuth", System.Array.Empty<string>(), "apiKey") }),
             __ListItemsEndpoint);
 
         IEndpointConventionBuilder __CreateItemEndpoint = app.MapPost("/items", async (HttpContext context) =>
@@ -2372,10 +2372,12 @@ public readonly struct EndpointSecurityRequirement
     /// </summary>
     /// <param name="schemeName">The name of the security scheme.</param>
     /// <param name="scopes">The scopes required by this requirement.</param>
-    public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes)
+    /// <param name="schemeType">The OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword="null"/> if the scheme is not declared in <c>components.securitySchemes</c>.</param>
+    public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes, string? schemeType = null)
     {
         this.SchemeName = schemeName;
         this.Scopes = scopes;
+        this.SchemeType = schemeType;
     }
 
     /// <summary>Gets the name of the security scheme.</summary>
@@ -2383,4 +2385,51 @@ public readonly struct EndpointSecurityRequirement
 
     /// <summary>Gets the scopes required by this requirement.</summary>
     public System.Collections.Generic.IReadOnlyList<string> Scopes { get; }
+
+    /// <summary>Gets the OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword="null"/> if the scheme is not declared in <c>components.securitySchemes</c>.</summary>
+    public string? SchemeType { get; }
+
+    /// <summary>
+    /// Gets the canonical authorization policy name for this requirement: the scheme name alone
+    /// when no scopes are required, otherwise <c>{schemeName}:{scope+scope...}</c>. Use the same value
+    /// when registering policies with <c>AddAuthorization</c> so endpoint mapping and policy registration stay in sync.
+    /// </summary>
+    public string PolicyName => this.Scopes.Count == 0 ? this.SchemeName : this.SchemeName + ":" + string.Join("+", this.Scopes);
+}
+
+/// <summary>
+/// Extension methods that translate an <see cref="EndpointDescriptor"/>'s declared OpenAPI security
+/// into ASP.NET Core authorization conventions.
+/// </summary>
+public static class EndpointSecurityConventions
+{
+    /// <summary>
+    /// Applies the endpoint's declared OpenAPI security to the route using the canonical policy-name
+    /// convention (see <see cref="EndpointSecurityRequirement.PolicyName"/>). When the operation declares
+    /// no security the endpoint is marked <c>AllowAnonymous</c>; otherwise <c>RequireAuthorization</c> is
+    /// called once per declared requirement.
+    /// </summary>
+    /// <param name="builder">The endpoint convention builder for the mapped route.</param>
+    /// <param name="endpoint">The descriptor for the operation being mapped.</param>
+    /// <returns>The same <paramref name="builder"/>, for chaining.</returns>
+    /// <remarks>
+    /// You must register one authorization policy per declared <see cref="EndpointSecurityRequirement.PolicyName"/>
+    /// (and call <c>AddAuthentication</c>/<c>UseAuthentication</c>/<c>UseAuthorization</c>) for these conventions to take effect.
+    /// Multiple requirements on one operation are combined with AND semantics (every policy must pass); the
+    /// OpenAPI OR-between-alternatives form is not yet represented.
+    /// </remarks>
+    public static IEndpointConventionBuilder RequireDeclaredAuthorization(this IEndpointConventionBuilder builder, in EndpointDescriptor endpoint)
+    {
+        if (endpoint.SecurityRequirements.Count == 0)
+        {
+            return builder.AllowAnonymous();
+        }
+
+        foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
+        {
+            builder.RequireAuthorization(requirement.PolicyName);
+        }
+
+        return builder;
+    }
 }

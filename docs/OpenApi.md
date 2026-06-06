@@ -534,13 +534,26 @@ The bare `MapApiEndpoints(petsHandler)` overload is preserved unchanged; the cal
 | `RouteTemplate` | `string` | ASP.NET route template as registered |
 | `Tags` | `IReadOnlyList<string>` | OpenAPI tags for the operation |
 | `IsCallback` | `bool` | `true` for webhook/callback operations, `false` for main `paths` |
-| `SecurityRequirements` | `IReadOnlyList<EndpointSecurityRequirement>` | The operation's declared security (each carries `SchemeName` and `Scopes`) |
+| `SecurityRequirements` | `IReadOnlyList<EndpointSecurityRequirement>` | The operation's declared security (see below) |
 
-`SecurityRequirements` is populated for OpenAPI 3.2 specs (which extract `security`); for 3.0/3.1 the list is currently always empty, but the hook works identically.
+`SecurityRequirements` is populated for all supported spec versions (OpenAPI 3.0, 3.1, and 3.2). Operation-level `security` takes precedence over the document-level default; operations that declare neither surface an empty list.
+
+Each `EndpointSecurityRequirement` carries:
+
+| Member | Type | Description |
+|---|---|---|
+| `SchemeName` | `string` | The security scheme name, as declared in `components.securitySchemes` |
+| `Scopes` | `IReadOnlyList<string>` | The scopes required by this requirement (empty for non-scoped schemes) |
+| `SchemeType` | `string?` | The scheme's OpenAPI `type` (`oauth2`, `apiKey`, `http`, `openIdConnect`), or `null` if the scheme is not declared in `components.securitySchemes`. Lets the callback branch on scheme type without cross-referencing the scheme table |
+| `PolicyName` | `string` | The canonical policy name: the scheme name alone when no scopes are required, otherwise `{schemeName}:{scope+scope...}`. Use the same value when registering policies so endpoint mapping and policy registration stay in sync |
 
 ### Applying OpenAPI Security as Authorization
 
-The generator parses `components.securitySchemes` and per-operation `security` and emits them as static metadata, but it deliberately does **not** wire authorization onto endpoints — which scheme maps to which policy, and how scopes are enforced, are application concerns. `configureEndpoint` is the unopinionated place to close that gap: translate each declared requirement into a policy your app has registered.
+The generator parses `components.securitySchemes` and per-operation `security` and surfaces them on the descriptor, but it deliberately does **not** decide *how* a scheme maps to an authentication handler or how scopes are enforced — those are application concerns. It does, however, generate a small helper that applies the declared security using a sensible default convention, so the common case needs only one line.
+
+#### The generated `RequireDeclaredAuthorization` helper
+
+Alongside the registration types, the generator emits an `EndpointSecurityConventions.RequireDeclaredAuthorization` extension. It marks operations with no declared security as `AllowAnonymous`, and for every declared requirement calls `RequireAuthorization` with the requirement's `PolicyName`. You register one policy per `PolicyName` and wire the helper into the hook:
 
 ```csharp
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -548,9 +561,9 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthentication(/* your scheme(s) */);
 builder.Services.AddAuthorization(options =>
 {
-    // One policy per (scheme, scopes) your spec declares.
+    // One policy per canonical PolicyName your spec declares.
+    options.AddPolicy("bearerAuth", p => p.RequireAuthenticatedUser());
     options.AddPolicy("oauth2:read:pets", p => p.RequireClaim("scope", "read:pets"));
-    options.AddPolicy("oauth2:write:pets", p => p.RequireClaim("scope", "write:pets"));
 });
 
 WebApplication app = builder.Build();
@@ -559,24 +572,32 @@ app.UseAuthorization();
 
 PetsHandler petsHandler = new();
 app.MapApiEndpoints(petsHandler, static (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
+    builder.RequireDeclaredAuthorization(endpoint));
+
+app.Run();
+```
+
+> **Note on combining semantics.** `RequireDeclaredAuthorization` calls `RequireAuthorization` once per declared requirement, so multiple requirements on one operation are combined with **AND** semantics (every policy must pass). OpenAPI's OR-between-alternatives form (any one of several requirement objects satisfies the operation) is not yet represented; if you need OR semantics, write the mapping yourself using `SecurityRequirements` (see below).
+
+#### Writing the mapping yourself
+
+`RequireDeclaredAuthorization` is just a convenience over `SecurityRequirements`. When you need different policy names, OR semantics, or to branch on `SchemeType`, do the mapping inline:
+
+```csharp
+app.MapApiEndpoints(petsHandler, static (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
 {
-    // Operations with no declared security are explicitly anonymous.
     if (endpoint.SecurityRequirements.Count == 0)
     {
         builder.AllowAnonymous();
         return;
     }
 
-    // Map each declared (scheme, scopes) requirement to the matching app policy.
     foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
     {
-        string scopes = string.Join('+', requirement.Scopes);
-        builder.RequireAuthorization(
-            scopes.Length == 0 ? requirement.SchemeName : $"{requirement.SchemeName}:{scopes}");
+        // requirement.SchemeType is "oauth2", "apiKey", "http", or "openIdConnect".
+        builder.RequireAuthorization(requirement.PolicyName);
     }
 });
-
-app.Run();
 ```
 
 Because the callback just hands you an `IEndpointConventionBuilder`, every standard ASP.NET endpoint extension is available the same way — `RequireRateLimiting`, `CacheOutput`, `RequireCors`, `DisableAntiforgery`, and so on. See the `034-OpenApiCallbackServer` recipe for the hook applied to a callback/webhook server.

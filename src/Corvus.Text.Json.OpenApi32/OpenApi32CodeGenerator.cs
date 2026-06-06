@@ -192,7 +192,8 @@ public sealed class OpenApi32CodeGenerator
 
     private readonly record struct OperationSecurityRequirement(
         string SchemeName,
-        string[] Scopes);
+        string[] Scopes,
+        string? SchemeType = null);
 
     /// <summary>
     /// Walks the OpenAPI 3.2 specification and collects all schema
@@ -2658,25 +2659,60 @@ public sealed class OpenApi32CodeGenerator
 
     private static OperationSecurityRequirement[]? ExtractSecurityRequirements(
         OpenApiDocument.Operation operation,
-        OpenApiDocument doc)
+        JsonElement specRoot)
     {
+        OpenApiDocument doc = specRoot;
+        Dictionary<string, string> schemeTypes = BuildSecuritySchemeTypeLookup(specRoot);
+
         // Operation-level security overrides document-level
         if (operation.Security.IsNotUndefined())
         {
-            return ParseSecurityRequirements(operation.Security);
+            return ParseSecurityRequirements(operation.Security, schemeTypes);
         }
 
         // Fall back to document-level security
         if (doc.Security.IsNotUndefined())
         {
-            return ParseSecurityRequirements(doc.Security);
+            return ParseSecurityRequirements(doc.Security, schemeTypes);
         }
 
         return null;
     }
 
+    /// <summary>
+    /// Builds a map of security-scheme name to its OpenAPI <c>type</c> by reading
+    /// <c>components.securitySchemes</c> directly from the raw document. Reading raw JSON keeps this
+    /// version-agnostic and tolerant of the differing typed models across OpenAPI versions.
+    /// </summary>
+    private static Dictionary<string, string> BuildSecuritySchemeTypeLookup(JsonElement specRoot)
+    {
+        Dictionary<string, string> lookup = new(StringComparer.Ordinal);
+
+        if (specRoot.ValueKind != JsonValueKind.Object
+            || !specRoot.TryGetProperty("components"u8, out JsonElement components)
+            || components.ValueKind != JsonValueKind.Object
+            || !components.TryGetProperty("securitySchemes"u8, out JsonElement schemes)
+            || schemes.ValueKind != JsonValueKind.Object)
+        {
+            return lookup;
+        }
+
+        foreach (var scheme in schemes.EnumerateObject())
+        {
+            if (scheme.Value.ValueKind == JsonValueKind.Object
+                && scheme.Value.TryGetProperty("type"u8, out JsonElement schemeType)
+                && schemeType.ValueKind == JsonValueKind.String)
+            {
+                lookup[scheme.Name] = schemeType.GetString()!;
+            }
+        }
+
+        return lookup;
+    }
+
     private static OperationSecurityRequirement[]? ParseSecurityRequirements(
-        OpenApiDocument.Operation.SecurityRequirementArray securityArray)
+        OpenApiDocument.Operation.SecurityRequirementArray securityArray,
+        Dictionary<string, string> schemeTypes)
     {
         List<OperationSecurityRequirement> result = [];
 
@@ -2694,7 +2730,10 @@ public sealed class OpenApi32CodeGenerator
                     scopes.Add(scope.GetString()!);
                 }
 
-                result.Add(new OperationSecurityRequirement(schemeName, [.. scopes]));
+                result.Add(new OperationSecurityRequirement(
+                    schemeName,
+                    [.. scopes],
+                    schemeTypes.TryGetValue(schemeName, out string? schemeType) ? schemeType : null));
             }
         }
 
@@ -2702,7 +2741,8 @@ public sealed class OpenApi32CodeGenerator
     }
 
     private static OperationSecurityRequirement[]? ParseSecurityRequirements(
-        OpenApiDocument.SecurityRequirementArray securityArray)
+        OpenApiDocument.SecurityRequirementArray securityArray,
+        Dictionary<string, string> schemeTypes)
     {
         List<OperationSecurityRequirement> result = [];
 
@@ -2718,7 +2758,10 @@ public sealed class OpenApi32CodeGenerator
                     scopes.Add(scope.GetString()!);
                 }
 
-                result.Add(new OperationSecurityRequirement(schemeName, [.. scopes]));
+                result.Add(new OperationSecurityRequirement(
+                    schemeName,
+                    [.. scopes],
+                    schemeTypes.TryGetValue(schemeName, out string? schemeType) ? schemeType : null));
             }
         }
 
@@ -7969,7 +8012,10 @@ public sealed class OpenApi32CodeGenerator
             string scopes = req.Scopes is { Length: > 0 }
                 ? $"new[] {{ {string.Join(", ", req.Scopes.Select(CodeEmitHelpers.FormatStringLiteral))} }}"
                 : "System.Array.Empty<string>()";
-            return $"new EndpointSecurityRequirement({CodeEmitHelpers.FormatStringLiteral(req.SchemeName)}, {scopes})";
+            string schemeType = req.SchemeType is null
+                ? "null"
+                : CodeEmitHelpers.FormatStringLiteral(req.SchemeType);
+            return $"new EndpointSecurityRequirement({CodeEmitHelpers.FormatStringLiteral(req.SchemeName)}, {scopes}, {schemeType})";
         });
 
         return $"new EndpointSecurityRequirement[] {{ {string.Join(", ", entries)} }}";
@@ -8049,10 +8095,12 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine("/// </summary>");
         w.WriteLine("/// <param name=\"schemeName\">The name of the security scheme.</param>");
         w.WriteLine("/// <param name=\"scopes\">The scopes required by this requirement.</param>");
-        w.WriteLine("public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes)");
+        w.WriteLine("/// <param name=\"schemeType\">The OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword=\"null\"/> if the scheme is not declared in <c>components.securitySchemes</c>.</param>");
+        w.WriteLine("public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes, string? schemeType = null)");
         w.OpenBrace();
         w.WriteLine("this.SchemeName = schemeName;");
         w.WriteLine("this.Scopes = scopes;");
+        w.WriteLine("this.SchemeType = schemeType;");
         w.CloseBrace();
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the name of the security scheme.</summary>");
@@ -8060,6 +8108,64 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the scopes required by this requirement.</summary>");
         w.WriteLine("public System.Collections.Generic.IReadOnlyList<string> Scopes { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword=\"null\"/> if the scheme is not declared in <c>components.securitySchemes</c>.</summary>");
+        w.WriteLine("public string? SchemeType { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Gets the canonical authorization policy name for this requirement: the scheme name alone");
+        w.WriteLine("/// when no scopes are required, otherwise <c>{schemeName}:{scope+scope...}</c>. Use the same value");
+        w.WriteLine("/// when registering policies with <c>AddAuthorization</c> so endpoint mapping and policy registration stay in sync.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public string PolicyName => this.Scopes.Count == 0 ? this.SchemeName : this.SchemeName + \":\" + string.Join(\"+\", this.Scopes);");
+        w.CloseBrace();
+
+        EmitEndpointSecurityConventions(w);
+    }
+
+    /// <summary>
+    /// Emits the public <c>EndpointSecurityConventions</c> static class providing the
+    /// <c>RequireDeclaredAuthorization</c> extension method, which applies an operation's declared
+    /// security to a mapped endpoint using the canonical policy-name convention.
+    /// </summary>
+    private static void EmitEndpointSecurityConventions(IndentedWriter w)
+    {
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Extension methods that translate an <see cref=\"EndpointDescriptor\"/>'s declared OpenAPI security");
+        w.WriteLine("/// into ASP.NET Core authorization conventions.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public static class EndpointSecurityConventions");
+        w.OpenBrace();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Applies the endpoint's declared OpenAPI security to the route using the canonical policy-name");
+        w.WriteLine("/// convention (see <see cref=\"EndpointSecurityRequirement.PolicyName\"/>). When the operation declares");
+        w.WriteLine("/// no security the endpoint is marked <c>AllowAnonymous</c>; otherwise <c>RequireAuthorization</c> is");
+        w.WriteLine("/// called once per declared requirement.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"builder\">The endpoint convention builder for the mapped route.</param>");
+        w.WriteLine("/// <param name=\"endpoint\">The descriptor for the operation being mapped.</param>");
+        w.WriteLine("/// <returns>The same <paramref name=\"builder\"/>, for chaining.</returns>");
+        w.WriteLine("/// <remarks>");
+        w.WriteLine("/// You must register one authorization policy per declared <see cref=\"EndpointSecurityRequirement.PolicyName\"/>");
+        w.WriteLine("/// (and call <c>AddAuthentication</c>/<c>UseAuthentication</c>/<c>UseAuthorization</c>) for these conventions to take effect.");
+        w.WriteLine("/// Multiple requirements on one operation are combined with AND semantics (every policy must pass); the");
+        w.WriteLine("/// OpenAPI OR-between-alternatives form is not yet represented.");
+        w.WriteLine("/// </remarks>");
+        w.WriteLine("public static IEndpointConventionBuilder RequireDeclaredAuthorization(this IEndpointConventionBuilder builder, in EndpointDescriptor endpoint)");
+        w.OpenBrace();
+        w.WriteLine("if (endpoint.SecurityRequirements.Count == 0)");
+        w.OpenBrace();
+        w.WriteLine("return builder.AllowAnonymous();");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)");
+        w.OpenBrace();
+        w.WriteLine("builder.RequireAuthorization(requirement.PolicyName);");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return builder;");
+        w.CloseBrace();
         w.CloseBrace();
     }
 
