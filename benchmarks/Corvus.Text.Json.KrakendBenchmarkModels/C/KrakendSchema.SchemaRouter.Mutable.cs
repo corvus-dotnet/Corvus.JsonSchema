@@ -2077,7 +2077,7 @@ public readonly partial struct KrakendSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -2708,6 +2708,7 @@ public readonly partial struct KrakendSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 ObjectBuilder,
                 ArrayBuilder,
             }
@@ -2715,6 +2716,28 @@ public readonly partial struct KrakendSchema
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly ObjectBuilder.Build? _objectBuilder;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg1;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg2;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source _createArg3;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source _createArg4;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source _createArg5;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg6;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source _createArg7;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg8;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg9;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg10;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source _createArg11;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source _createArg12;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source _createArg13;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source _createArg14;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source _createArg15;
+            private readonly Corvus.KrakendBenchmark.Current.JsonInteger.Source _createArg16;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source _createArg17;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source _createArg18;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source _createArg19;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source _createArg20;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source _createArg21;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source _createArg22;
             private readonly ArrayBuilder.Build? _arrayBuilder;
 
             /// <summary>
@@ -2729,6 +2752,33 @@ public readonly partial struct KrakendSchema
             }
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ObjectBuilder.Build value) {_objectBuilder = value; _kind = Kind.ObjectBuilder; }
+
+            internal Source(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source arg15, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg21, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _kind = Kind.Create;
+            }
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ArrayBuilder.Build value) {_arrayBuilder = value; _kind = Kind.ArrayBuilder; }
 
@@ -2746,6 +2796,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
@@ -2767,6 +2824,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                         break;
@@ -2788,6 +2852,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                         break;
@@ -2809,6 +2880,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                         break;
@@ -2830,6 +2908,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            ObjectBuilder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddItem(_arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                         break;
@@ -2851,12 +2936,35 @@ public readonly partial struct KrakendSchema
                 Source,
                 ObjectBuilder,
                 ArrayBuilder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly ObjectBuilder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg1;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg2;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source _createArg3;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source _createArg4;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source _createArg5;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg6;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source _createArg7;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg8;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg9;
+            private readonly Corvus.KrakendBenchmark.Current.JsonBoolean.Source _createArg10;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> _createArg11;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source _createArg12;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source _createArg13;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source _createArg14;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> _createArg15;
+            private readonly Corvus.KrakendBenchmark.Current.JsonInteger.Source _createArg16;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source _createArg17;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> _createArg18;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source _createArg19;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source _createArg20;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> _createArg21;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source _createArg22;
             private readonly ArrayBuilder.Build<TContext>? _arrayBuilder;
 
             /// <summary>
@@ -2869,6 +2977,34 @@ public readonly partial struct KrakendSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ObjectBuilder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.ObjectBuilder; }
+
+            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> arg15, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg21, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _kind = Kind.Create;
+            }
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ArrayBuilder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.ArrayBuilder; }
 
@@ -2884,6 +3020,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
@@ -2905,6 +3048,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
@@ -2926,6 +3076,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
@@ -2947,6 +3104,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
@@ -2968,6 +3132,13 @@ public readonly partial struct KrakendSchema
                     case Kind.ObjectBuilder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            ObjectBuilder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     case Kind.ArrayBuilder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
@@ -3000,6 +3171,17 @@ public readonly partial struct KrakendSchema
             /// Add an item to the array.
             /// </summary>
             public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
+            {
+                value.AddAsItem(ref _builder);
+            }
+
+            /// <summary>
+            /// Add an item to the array.
+            /// </summary>
+            public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsItem(ref _builder);
             }
@@ -3233,6 +3415,19 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -3243,7 +3438,33 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -3268,6 +3489,77 @@ public readonly partial struct KrakendSchema
                 ObjectBuilder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source arg15, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg21, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> arg15, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg21, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22);
                 o.EndObject();
             }
         }
@@ -3299,6 +3591,73 @@ public readonly partial struct KrakendSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="appEngine">The value of the <c>"app_engine"</c> property.</param>
+        /// <param name="autoOptions">The value of the <c>"auto_options"</c> property.</param>
+        /// <param name="decompressGzip">The value of the <c>"decompress_gzip"</c> property.</param>
+        /// <param name="disableAccessLog">The value of the <c>"disable_access_log"</c> property.</param>
+        /// <param name="disableGzip">The value of the <c>"disable_gzip"</c> property.</param>
+        /// <param name="disableHandleMethodNotAllowed">The value of the <c>"disable_handle_method_not_allowed"</c> property.</param>
+        /// <param name="disableHealth">The value of the <c>"disable_health"</c> property.</param>
+        /// <param name="disablePathDecoding">The value of the <c>"disable_path_decoding"</c> property.</param>
+        /// <param name="disableRedirectFixedPath">The value of the <c>"disable_redirect_fixed_path"</c> property.</param>
+        /// <param name="disableRedirectTrailingSlash">The value of the <c>"disable_redirect_trailing_slash"</c> property.</param>
+        /// <param name="errorBody">The value of the <c>"error_body"</c> property.</param>
+        /// <param name="forwardedByClientIp">The value of the <c>"forwarded_by_client_ip"</c> property.</param>
+        /// <param name="healthPath">The value of the <c>"health_path"</c> property.</param>
+        /// <param name="hideVersionHeader">The value of the <c>"hide_version_header"</c> property.</param>
+        /// <param name="loggerSkipPaths">The value of the <c>"logger_skip_paths"</c> property.</param>
+        /// <param name="maxMultipartMemory">The value of the <c>"max_multipart_memory"</c> property.</param>
+        /// <param name="maxPayload">The value of the <c>"max_payload"</c> property.</param>
+        /// <param name="remoteIpHeaders">The value of the <c>"remote_ip_headers"</c> property.</param>
+        /// <param name="removeExtraSlash">The value of the <c>"remove_extra_slash"</c> property.</param>
+        /// <param name="returnErrorMsg">The value of the <c>"return_error_msg"</c> property.</param>
+        /// <param name="trustedProxies">The value of the <c>"trusted_proxies"</c> property.</param>
+        /// <param name="useH2c">The value of the <c>"use_h2c"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source useH2c = default)
+        {
+            return new Source(appEngine, autoOptions, decompressGzip, disableAccessLog, disableGzip, disableHandleMethodNotAllowed, disableHealth, disablePathDecoding, disableRedirectFixedPath, disableRedirectTrailingSlash, errorBody, forwardedByClientIp, healthPath, hideVersionHeader, loggerSkipPaths, maxMultipartMemory, maxPayload, remoteIpHeaders, removeExtraSlash, returnErrorMsg, trustedProxies, useH2c);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="appEngine">The value of the <c>"app_engine"</c> property.</param>
+        /// <param name="autoOptions">The value of the <c>"auto_options"</c> property.</param>
+        /// <param name="decompressGzip">The value of the <c>"decompress_gzip"</c> property.</param>
+        /// <param name="disableAccessLog">The value of the <c>"disable_access_log"</c> property.</param>
+        /// <param name="disableGzip">The value of the <c>"disable_gzip"</c> property.</param>
+        /// <param name="disableHandleMethodNotAllowed">The value of the <c>"disable_handle_method_not_allowed"</c> property.</param>
+        /// <param name="disableHealth">The value of the <c>"disable_health"</c> property.</param>
+        /// <param name="disablePathDecoding">The value of the <c>"disable_path_decoding"</c> property.</param>
+        /// <param name="disableRedirectFixedPath">The value of the <c>"disable_redirect_fixed_path"</c> property.</param>
+        /// <param name="disableRedirectTrailingSlash">The value of the <c>"disable_redirect_trailing_slash"</c> property.</param>
+        /// <param name="errorBody">The value of the <c>"error_body"</c> property.</param>
+        /// <param name="forwardedByClientIp">The value of the <c>"forwarded_by_client_ip"</c> property.</param>
+        /// <param name="healthPath">The value of the <c>"health_path"</c> property.</param>
+        /// <param name="hideVersionHeader">The value of the <c>"hide_version_header"</c> property.</param>
+        /// <param name="loggerSkipPaths">The value of the <c>"logger_skip_paths"</c> property.</param>
+        /// <param name="maxMultipartMemory">The value of the <c>"max_multipart_memory"</c> property.</param>
+        /// <param name="maxPayload">The value of the <c>"max_payload"</c> property.</param>
+        /// <param name="remoteIpHeaders">The value of the <c>"remote_ip_headers"</c> property.</param>
+        /// <param name="removeExtraSlash">The value of the <c>"remove_extra_slash"</c> property.</param>
+        /// <param name="returnErrorMsg">The value of the <c>"return_error_msg"</c> property.</param>
+        /// <param name="trustedProxies">The value of the <c>"trusted_proxies"</c> property.</param>
+        /// <param name="useH2c">The value of the <c>"use_h2c"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source useH2c = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, appEngine, autoOptions, decompressGzip, disableAccessLog, disableGzip, disableHandleMethodNotAllowed, disableHealth, disablePathDecoding, disableRedirectFixedPath, disableRedirectTrailingSlash, errorBody, forwardedByClientIp, healthPath, hideVersionHeader, loggerSkipPaths, maxMultipartMemory, maxPayload, remoteIpHeaders, removeExtraSlash, returnErrorMsg, trustedProxies, useH2c);
         }
 
         /// <summary>

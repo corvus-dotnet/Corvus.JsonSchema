@@ -451,7 +451,7 @@ public readonly partial struct Ui5ManifestSchema
                             /// <inheritdoc/>
                             public override string ToString()
                             {
-                                if (_parent == null || _documentVersion != _parent.Version)
+                                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                                 {
                                     return string.Empty;
                                 }
@@ -782,11 +782,11 @@ public readonly partial struct Ui5ManifestSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredName" />.
+                            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredName.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsRequiredName(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredName result)
+                            public bool TryGetAsRequiredName(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredName.Mutable result)
                             {
                                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredName.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -799,11 +799,11 @@ public readonly partial struct Ui5ManifestSchema
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredTypeAndUsage" />.
+                            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredTypeAndUsage.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsRequiredTypeAndUsage(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredTypeAndUsage result)
+                            public bool TryGetAsRequiredTypeAndUsage(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredTypeAndUsage.Mutable result)
                             {
                                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredTypeAndUsage.JsonSchema.Evaluate(_parent, _idx))
                                 {

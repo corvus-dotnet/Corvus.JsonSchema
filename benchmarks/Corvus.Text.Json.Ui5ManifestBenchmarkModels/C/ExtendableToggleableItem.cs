@@ -358,10 +358,13 @@ public readonly partial struct ExtendableToggleableItem
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ExtendableToggleableItem ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<ExtendableToggleableItem>(utf8Json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -381,10 +384,13 @@ public readonly partial struct ExtendableToggleableItem
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ExtendableToggleableItem ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<ExtendableToggleableItem>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -404,10 +410,13 @@ public readonly partial struct ExtendableToggleableItem
     /// <exception cref="JsonException">
     ///   A value could not be read from the text.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ExtendableToggleableItem ParseValue(string json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<ExtendableToggleableItem>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -445,9 +454,12 @@ public readonly partial struct ExtendableToggleableItem
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static ExtendableToggleableItem ParseValue(ref Utf8JsonReader reader)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<ExtendableToggleableItem>(ref reader);
+        #pragma warning restore CS0618
     }
 
     /// <summary>

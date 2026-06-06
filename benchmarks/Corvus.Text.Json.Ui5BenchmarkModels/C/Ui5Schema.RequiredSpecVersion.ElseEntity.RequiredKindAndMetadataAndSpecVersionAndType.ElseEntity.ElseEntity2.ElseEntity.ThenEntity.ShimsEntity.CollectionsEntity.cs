@@ -112,7 +112,7 @@ public readonly partial struct Ui5Schema
                                         /// <param name="value">The value of the property, if present.</param>
                                         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
                                         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                                        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement value)
+                                        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity value)
                                         {
                                             CheckValidInstance();
                                             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -125,7 +125,7 @@ public readonly partial struct Ui5Schema
                                         /// <param name="value">The value of the property, if present.</param>
                                         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
                                         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                                        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement value)
+                                        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity value)
                                         {
                                             CheckValidInstance();
                                             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -138,10 +138,108 @@ public readonly partial struct Ui5Schema
                                         /// <param name="value">The value of the property, if present.</param>
                                         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
                                         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                                        public bool TryGetProperty(string propertyName, out JsonElement value)
+                                        public bool TryGetProperty(string propertyName, out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity value)
                                         {
                                             CheckValidInstance();
                                             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+                                        }
+
+                                        /// <summary>
+                                        /// Determines if a property name matches '.+'
+                                        /// for the pattern property producing the type
+                                        /// <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity"/>.
+                                        /// </summary>
+                                        /// <param name="propertyName">The unescaped UTF-8 property name.</param>
+                                        /// <returns><see langword="true"/> if the property name matches the pattern, otherwise <see langword="false"/>.</returns>
+                                        public static bool MatchesPatternEntity(ReadOnlySpan<byte> propertyName)
+                                        {
+                                            return propertyName.Length > 0;
+                                        }
+
+                                        /// <summary>
+                                        /// Gets an instance of the type
+                                        /// <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity"/>
+                                        /// if the property name matches '.+'.
+                                        /// </summary>
+                                        /// <param name="propertyName">The unescaped UTF-8 property name.</param>
+                                        /// <param name="value">The property value.</param>
+                                        /// <param name="result">The typed property value, if the name matches.</param>
+                                        /// <returns><see langword="true"/> if the property name matches the pattern, otherwise <see langword="false"/>.</returns>
+                                        public static bool TryAsPatternEntity(ReadOnlySpan<byte> propertyName, in JsonElement value, out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity result)
+                                        {
+                                            if (MatchesPatternEntity(propertyName))
+                                            {
+                                                result = Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity.From(value);
+                                                return true;
+                                            }
+
+                                            result = default;
+                                            return false;
+                                        }
+
+                                        /// <summary>
+                                        /// Visits properties matched by generated pattern property helpers.
+                                        /// </summary>
+                                        /// <typeparam name="TState">The visitor state type.</typeparam>
+                                        public interface IPatternPropertyVisitor<TState>
+                                        {
+                                            /// <summary>
+                                            /// Visits a property matching '.+'.
+                                            /// </summary>
+                                            bool VisitPatternEntity(ReadOnlySpan<byte> name, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity value, ref TState state);
+
+                                            /// <summary>
+                                            /// Visits a property that did not match any generated pattern property.
+                                            /// </summary>
+                                            bool VisitUnmatched(ReadOnlySpan<byte> name, in JsonElement value, ref TState state);
+                                        }
+
+                                        /// <summary>
+                                        /// Matches each property against the generated pattern properties and dispatches to a visitor.
+                                        /// </summary>
+                                        /// <typeparam name="TState">The visitor state type.</typeparam>
+                                        /// <typeparam name="TVisitor">The visitor type.</typeparam>
+                                        /// <param name="state">The visitor state.</param>
+                                        /// <param name="visitor">The visitor to call for each matched or unmatched property.</param>
+                                        /// <param name="shortCircuit">If <see langword="true"/>, only the first matching pattern is visited for each property.</param>
+                                        /// <returns><see langword="true"/> if every visitor call returned <see langword="true"/>, otherwise <see langword="false"/>.</returns>
+                                        public bool MatchPatternProperties<TState, TVisitor>(ref TState state, TVisitor visitor, bool shortCircuit = false)
+                                            where TVisitor : IPatternPropertyVisitor<TState>
+                                        {
+                                            CheckValidInstance();
+
+                                            foreach (var property in EnumerateObject())
+                                            {
+                                                using UnescapedUtf8JsonString unescapedPropertyName = property.Utf8NameSpan;
+                                                ReadOnlySpan<byte> propertyName = unescapedPropertyName.Span;
+                                                bool matched = false;
+
+                                                if (MatchesPatternEntity(propertyName))
+                                                {
+                                                    matched = true;
+                                                    Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity typedValue = Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity.From(property.Value);
+                                                    if (!visitor.VisitPatternEntity(propertyName, in typedValue, ref state))
+                                                    {
+                                                        return false;
+                                                    }
+
+                                                    if (shortCircuit)
+                                                    {
+                                                        continue;
+                                                    }
+                                                }
+
+                                                if (!matched)
+                                                {
+                                                    JsonElement unmatchedValue = JsonElement.From(property.Value);
+                                                    if (!visitor.VisitUnmatched(propertyName, in unmatchedValue, ref state))
+                                                    {
+                                                        return false;
+                                                    }
+                                                }
+                                            }
+
+                                            return true;
                                         }
 
                                         /// <summary>
@@ -152,6 +250,16 @@ public readonly partial struct Ui5Schema
                                         {
                                             CheckValidInstance();
                                             return _parent.GetPropertyCount(_idx);
+                                        }
+
+                                        /// <summary>
+                                        /// Enumerates the object.
+                                        /// </summary>
+                                        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                                        public ObjectEnumerator<Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity> EnumerateObject()
+                                        {
+                                            CheckValidInstance();
+                                            return EnumeratorCreator.CreateObjectEnumerator<Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.CollectionsEntity.Entity>(_parent, _idx);
                                         }
 
                                         /// <inheritdoc/>
@@ -263,10 +371,13 @@ public readonly partial struct Ui5Schema
                                         /// <exception cref="JsonException">
                                         ///   A value could not be read from the span.
                                         /// </exception>
+                                        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                                         public static CollectionsEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
                                         {
+                                            #pragma warning disable CS0618 // Type or member is obsolete
                                             return JsonElementHelpers.ParseValue<CollectionsEntity>(utf8Json, options);
+                                            #pragma warning restore CS0618
                                         }
 
                                         /// <summary>
@@ -286,10 +397,13 @@ public readonly partial struct Ui5Schema
                                         /// <exception cref="JsonException">
                                         ///   A value could not be read from the span.
                                         /// </exception>
+                                        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                                         public static CollectionsEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
                                         {
+                                            #pragma warning disable CS0618 // Type or member is obsolete
                                             return JsonElementHelpers.ParseValue<CollectionsEntity>(json, options);
+                                            #pragma warning restore CS0618
                                         }
 
                                         /// <summary>
@@ -309,10 +423,13 @@ public readonly partial struct Ui5Schema
                                         /// <exception cref="JsonException">
                                         ///   A value could not be read from the text.
                                         /// </exception>
+                                        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                                         public static CollectionsEntity ParseValue(string json, JsonDocumentOptions options = default)
                                         {
+                                            #pragma warning disable CS0618 // Type or member is obsolete
                                             return JsonElementHelpers.ParseValue<CollectionsEntity>(json, options);
+                                            #pragma warning restore CS0618
                                         }
 
                                         /// <summary>
@@ -350,9 +467,12 @@ public readonly partial struct Ui5Schema
                                         /// <exception cref="JsonException">
                                         ///   A value could not be read from the reader.
                                         /// </exception>
+                                        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                                         public static CollectionsEntity ParseValue(ref Utf8JsonReader reader)
                                         {
+                                            #pragma warning disable CS0618 // Type or member is obsolete
                                             return JsonElementHelpers.ParseValue<CollectionsEntity>(ref reader);
+                                            #pragma warning restore CS0618
                                         }
 
                                         /// <summary>

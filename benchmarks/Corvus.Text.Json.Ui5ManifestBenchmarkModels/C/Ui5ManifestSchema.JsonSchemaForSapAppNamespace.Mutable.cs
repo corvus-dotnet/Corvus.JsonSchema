@@ -501,11 +501,11 @@ public readonly partial struct Ui5ManifestSchema
             /// Represents the name of the provider which owns the application
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.Mutable Provider
+            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.Mutable Provider
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProviderUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProviderUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.Mutable value))
                     {
                         return value;
                     }
@@ -1633,7 +1633,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>provider</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProvider(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.Source value)
+            public void SetProvider(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.Source value)
             {
                 CheckValidInstance();
 
@@ -2077,7 +2077,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -2452,7 +2452,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.Source offline = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OpenSourceArray.Source openSourceComponents = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.Source provider = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.Source provider = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ResourcesEntity.Source resources = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheTemplateFromWhichTheAppWasGenerated.Source sourceTemplate = default,
@@ -2505,7 +2505,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.Source offline = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OpenSourceArray.Source openSourceComponents = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.Source provider = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.Source provider = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ResourcesEntity.Source resources = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheTemplateFromWhichTheAppWasGenerated.Source sourceTemplate = default,
@@ -2538,7 +2538,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.Source offline = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OpenSourceArray.Source<TContext> openSourceComponents = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.Source provider = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.Source provider = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ResourcesEntity.Source resources = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheTemplateFromWhichTheAppWasGenerated.Source<TContext> sourceTemplate = default,
@@ -2595,7 +2595,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.Source offline = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OpenSourceArray.Source<TContext> openSourceComponents = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.Source provider = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.Source provider = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ResourcesEntity.Source resources = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheTemplateFromWhichTheAppWasGenerated.Source<TContext> sourceTemplate = default,
@@ -2635,6 +2635,18 @@ public readonly partial struct Ui5ManifestSchema
         /// <summary>
         /// Build an instance of the value.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+        /// overload with a <c>static</c> callback, capturing your source data in the context.
+        /// </para>
+        /// <para>
+        /// A <c>Build(...)</c> overload taking the individual property values directly is
+        /// intentionally not generated for this type, because its estimated captured-argument
+        /// footprint exceeds the configured build-parameters threshold. The threshold is
+        /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+        /// </para>
+        /// </remarks>
         /// <param name="buildValue">The callback that builds the value.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>The source from which to build the value.</returns>
@@ -2647,6 +2659,18 @@ public readonly partial struct Ui5ManifestSchema
         /// <summary>
         /// Build an instance of the value.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+        /// overload with a <c>static</c> callback, capturing your source data in the context.
+        /// </para>
+        /// <para>
+        /// A <c>Build(...)</c> overload taking the individual property values directly is
+        /// intentionally not generated for this type, because its estimated captured-argument
+        /// footprint exceeds the configured build-parameters threshold. The threshold is
+        /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+        /// </para>
+        /// </remarks>
         /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="buildValue">The callback that builds the value.</param>
@@ -2756,7 +2780,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="tags">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsMandatoryVersionOfTheApp.Source applicationVersion, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IdDef.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.TypeEntity.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsApplicationComponentHierarchy.Source ach = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.JsonStringArray.Source cdsViews = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.Source crossNavigation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsUsedDataSourcesWithAUniqueKeyAlias.Source dataSources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source description = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsASystemAlias.Source destination = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source embeddedBy = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.EmbedsJsonArray.Source embeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.Source i18n = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.Source offline = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OpenSourceArray.Source openSourceComponents = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.Source provider = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ResourcesEntity.Source resources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheTemplateFromWhichTheAppWasGenerated.Source sourceTemplate = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsArrayOfKeywords.Source tags = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsMandatoryVersionOfTheApp.Source applicationVersion, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IdDef.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.TypeEntity.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsApplicationComponentHierarchy.Source ach = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.JsonStringArray.Source cdsViews = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.Source crossNavigation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsUsedDataSourcesWithAUniqueKeyAlias.Source dataSources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source description = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsASystemAlias.Source destination = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source embeddedBy = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.EmbedsJsonArray.Source embeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.Source i18n = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.Source offline = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OpenSourceArray.Source openSourceComponents = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.Source provider = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ResourcesEntity.Source resources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheTemplateFromWhichTheAppWasGenerated.Source sourceTemplate = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsArrayOfKeywords.Source tags = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2800,7 +2824,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="tags">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsMandatoryVersionOfTheApp.Source<TContext> applicationVersion, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IdDef.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.TypeEntity.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsApplicationComponentHierarchy.Source ach = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.JsonStringArray.Source<TContext> cdsViews = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.Source<TContext> crossNavigation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsUsedDataSourcesWithAUniqueKeyAlias.Source<TContext> dataSources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source description = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsASystemAlias.Source<TContext> destination = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source embeddedBy = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.EmbedsJsonArray.Source<TContext> embeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.Source<TContext> i18n = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.Source offline = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OpenSourceArray.Source<TContext> openSourceComponents = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ProviderEntity.Source provider = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ResourcesEntity.Source resources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheTemplateFromWhichTheAppWasGenerated.Source<TContext> sourceTemplate = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsArrayOfKeywords.Source<TContext> tags = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsMandatoryVersionOfTheApp.Source<TContext> applicationVersion, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IdDef.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.TypeEntity.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsApplicationComponentHierarchy.Source ach = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.JsonStringArray.Source<TContext> cdsViews = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.Source<TContext> crossNavigation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsUsedDataSourcesWithAUniqueKeyAlias.Source<TContext> dataSources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source description = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsASystemAlias.Source<TContext> destination = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source embeddedBy = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.EmbedsJsonArray.Source<TContext> embeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.Source<TContext> i18n = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.Source offline = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OpenSourceArray.Source<TContext> openSourceComponents = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheNameOfTheProviderWhichOwnsTheApplication.Source provider = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.ResourcesEntity.Source resources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheTemplateFromWhichTheAppWasGenerated.Source<TContext> sourceTemplate = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsArrayOfKeywords.Source<TContext> tags = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -218,10 +218,13 @@ public readonly partial struct CspellSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static NoSuggestDictionariArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<NoSuggestDictionariArray>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -241,10 +244,13 @@ public readonly partial struct CspellSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static NoSuggestDictionariArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<NoSuggestDictionariArray>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -264,10 +270,13 @@ public readonly partial struct CspellSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static NoSuggestDictionariArray ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<NoSuggestDictionariArray>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -305,9 +314,12 @@ public readonly partial struct CspellSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static NoSuggestDictionariArray ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<NoSuggestDictionariArray>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>

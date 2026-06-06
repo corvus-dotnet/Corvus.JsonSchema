@@ -8,5 +8,6 @@
     <CompilerVisibleProperty Include="CorvusTextJsonDefaultAccessibility" />
     <CompilerVisibleProperty Include="CorvusTextJsonAddExplicitUsings" />
     <CompilerVisibleProperty Include="CorvusTextJsonUseImplicitOperatorString" />
+    <CompilerVisibleProperty Include="CorvusTextJsonBuildParametersThreshold" />
   </ItemGroup>
 </Project>

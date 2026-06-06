@@ -224,6 +224,24 @@ internal static partial class CodeGeneratorExtensions
             generator
                     .AppendLineIndent("break;")
                 .PopIndent();
+
+            if (EmitsCreateParamsBuildFor(typeDeclaration, forContext))
+            {
+                string createBuilderName = isArray ? generator.ObjectBuilderClassName() : generator.BuilderClassName();
+                generator
+                    .AppendLineIndent("case Kind.Create:")
+                    .PushIndent()
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();");
+                AppendBuildCreateValueCall(generator, typeDeclaration, createBuilderName, forContext);
+                generator
+                        .AppendLineIndent("valueBuilder.EndItem(handle);")
+                        .AppendLineIndent("break;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .PopIndent();
+            }
         }
 
         HashSet<string> numericArrayKinds = new(StringComparer.Ordinal);
@@ -638,6 +656,23 @@ internal static partial class CodeGeneratorExtensions
             generator
                     .AppendLineIndent("break;")
                 .PopIndent();
+
+            if (EmitsCreateParamsBuildFor(typeDeclaration, forContext))
+            {
+                generator
+                    .AppendLineIndent("case Kind.Create:")
+                    .PushIndent()
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);");
+                AppendBuildCreateValueCall(generator, typeDeclaration, localBuilderName, forContext);
+                generator
+                        .AppendLineIndent("valueBuilder.EndProperty(handle);")
+                        .AppendLineIndent("break;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .PopIndent();
+            }
         }
 
         if (isArray && (hasFallbackArrayType || !builders.Any(b => b.IsArray)))
@@ -1028,6 +1063,35 @@ internal static partial class CodeGeneratorExtensions
             generator
                     .AppendLineIndent("break;")
                 .PopIndent();
+
+            if (EmitsCreateParamsBuildFor(typeDeclaration, forContext))
+            {
+                generator
+                    .AppendLineIndent("case Kind.Create:")
+                    .PushIndent()
+                    .AppendLineIndent("{")
+                    .PushIndent();
+
+                if (includeEscaping)
+                {
+                    generator
+                        .AppendLineIndent("ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(", nameName, ", escapeName, nameRequiresUnescaping);");
+                }
+                else
+                {
+                    generator
+                        .AppendLineIndent("ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(", nameName, ");");
+                }
+
+                AppendBuildCreateValueCall(generator, typeDeclaration, builderName, forContext);
+
+                generator
+                        .AppendLineIndent("valueBuilder.EndProperty(handle);")
+                        .AppendLineIndent("break;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .PopIndent();
+            }
         }
 
         HashSet<string> numericArrayKinds = new(StringComparer.Ordinal);
@@ -1794,6 +1858,11 @@ internal static partial class CodeGeneratorExtensions
             .PopIndent()
             .AppendLineIndent("}");
 
+        if (forObject)
+        {
+            generator.AppendBuildCreateValue(typeDeclaration);
+        }
+
         return generator
             .EndClassStructOrEnumDeclaration();
     }
@@ -2476,7 +2545,9 @@ internal static partial class CodeGeneratorExtensions
 
             if (isObject && (hasFallbackObjectType || !builders.Any(b => b.IsObject)))
             {
-                AppendCreateBuild(generator, initialCapacity, sourceClassName, isArray ? generator.ObjectBuilderClassName() : generator.BuilderClassName());
+                bool paramsBuildSuppressed = CreateParamsBuildSuppressed(typeDeclaration);
+                AppendCreateBuild(generator, initialCapacity, sourceClassName, isArray ? generator.ObjectBuilderClassName() : generator.BuilderClassName(), paramsBuildSuppressed, paramsBuildSuppressed && InCreateParamCycle(typeDeclaration));
+                generator.AppendCreateParamsBuildFactory(typeDeclaration);
             }
 
             if (isArray && (hasFallbackArrayType || !builders.Any(b => b.IsArray)))
@@ -2620,15 +2691,19 @@ internal static partial class CodeGeneratorExtensions
 
         return generator;
 
-        static void AppendCreateBuild(CodeGenerator generator, int initialCapacity, string sourceClassName, string builderClassName)
+        static void AppendCreateBuild(CodeGenerator generator, int initialCapacity, string sourceClassName, string builderClassName, bool documentParamsBuildOmission = false, bool omittedDueToCycle = false)
         {
             generator
                 .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Build an instance of the value.")
+                .AppendLineIndent("/// </summary>");
+
+            AppendOmissionRemark(generator, documentParamsBuildOmission, omittedDueToCycle);
+
+            generator
                 .AppendBlockIndent(
                     $$"""
-                    /// <summary>
-                    /// Build an instance of the value.
-                    /// </summary>
                     /// <param name="buildValue">The callback that builds the value.</param>
                     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
                     /// <returns>The source from which to build the value.</returns>
@@ -2641,11 +2716,15 @@ internal static partial class CodeGeneratorExtensions
 
             generator
                 .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Build an instance of the value.")
+                .AppendLineIndent("/// </summary>");
+
+            AppendOmissionRemark(generator, documentParamsBuildOmission, omittedDueToCycle);
+
+            generator
                 .AppendBlockIndent(
                     $$"""
-                    /// <summary>
-                    /// Build an instance of the value.
-                    /// </summary>
                     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
                     /// <param name="context">The context to pass to the builder.</param>
                     /// <param name="buildValue">The callback that builds the value.</param>
@@ -2660,6 +2739,52 @@ internal static partial class CodeGeneratorExtensions
                         return new {{sourceClassName}}<TContext>(context, buildValue);
                     }
                     """);
+        }
+
+        static void AppendOmissionRemark(CodeGenerator generator, bool documentParamsBuildOmission, bool omittedDueToCycle)
+        {
+            if (!documentParamsBuildOmission)
+            {
+                return;
+            }
+
+            if (omittedDueToCycle)
+            {
+                generator
+                    .AppendBlockIndent(
+                        """
+                        /// <remarks>
+                        /// <para>
+                        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+                        /// overload with a <c>static</c> callback, capturing your source data in the context.
+                        /// </para>
+                        /// <para>
+                        /// A <c>Build(...)</c> overload taking the individual property values directly is
+                        /// intentionally not generated for this type, because it participates in a recursive
+                        /// reference cycle that would otherwise produce a self-referential value type.
+                        /// </para>
+                        /// </remarks>
+                        """);
+            }
+            else
+            {
+                generator
+                    .AppendBlockIndent(
+                        """
+                        /// <remarks>
+                        /// <para>
+                        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+                        /// overload with a <c>static</c> callback, capturing your source data in the context.
+                        /// </para>
+                        /// <para>
+                        /// A <c>Build(...)</c> overload taking the individual property values directly is
+                        /// intentionally not generated for this type, because its estimated captured-argument
+                        /// footprint exceeds the configured build-parameters threshold. The threshold is
+                        /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+                        /// </para>
+                        /// </remarks>
+                        """);
+            }
         }
     }
 
@@ -3523,6 +3648,46 @@ internal static partial class CodeGeneratorExtensions
                         ".", buildContextType, " value) {", forContext ? "_context = context; " : "", "_objectBuilder = value; _kind = Kind.",
                         isArray ? generator.ObjectBuilderClassName() : generator.BuilderClassName(),
                         "; }");
+
+                // Capturing constructor for the property-parameter Build(...) overload.
+                if (EmitsCreateParamsBuildFor(typeDeclaration, forContext))
+                {
+                    List<(string Type, bool IsOptional, string JsonName)> createArgs = CreateParamSourceTypes(generator, typeDeclaration, forContext);
+
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendIndent("internal ", generator.SourceClassName(), "(", forContext ? "scoped in TContext context" : "");
+
+                    if (createArgs.Count > 0)
+                    {
+                        if (forContext)
+                        {
+                            generator.Append(", ");
+                        }
+
+                        AppendCreateArgDeclarations(generator, createArgs, includeDefaults: false);
+                    }
+
+                    generator
+                        .AppendLine(")")
+                        .AppendLineIndent("{")
+                        .PushIndent();
+
+                    if (forContext)
+                    {
+                        generator.AppendLineIndent("_context = context;");
+                    }
+
+                    for (int i = 0; i < createArgs.Count; i++)
+                    {
+                        generator.AppendLineIndent("_createArg", (i + 1).ToString(), " = arg", (i + 1).ToString(), ";");
+                    }
+
+                    generator
+                            .AppendLineIndent("_kind = Kind.Create;")
+                        .PopIndent()
+                        .AppendLineIndent("}");
+                }
             }
 
             if (isArray && (hasFallbackArrayType || !builders.Any(b => b.IsArray)))
@@ -3935,6 +4100,18 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .ReserveNameIfNotReserved("_objectBuilder")
                 .AppendLineIndent("private readonly ", isArray ? generator.ObjectBuilderClassName() : generator.BuilderClassName(), ".", contextBuildType, "? _objectBuilder;");
+
+            // Add the captured Create(...) parameter fields for the property-parameter Build(...) overload.
+            if (EmitsCreateParamsBuildFor(typeDeclaration, forContext))
+            {
+                List<(string Type, bool IsOptional, string JsonName)> createArgs = CreateParamSourceTypes(generator, typeDeclaration, forContext);
+                for (int i = 0; i < createArgs.Count; i++)
+                {
+                    generator
+                        .ReserveNameIfNotReserved($"_createArg{i + 1}")
+                        .AppendLineIndent("private readonly ", createArgs[i].Type, " _createArg", (i + 1).ToString(), ";");
+                }
+            }
         }
 
         HashSet<string> seenArrayValues = new(StringComparer.Ordinal);
@@ -4114,6 +4291,554 @@ internal static partial class CodeGeneratorExtensions
                 .. typeDeclaration.PropertyDeclarations
                                         .Where(p => p.RequiredOrOptional == RequiredOrOptional.Optional && !p.ReducedPropertyType.IsBuiltInJsonNotAnyType()),
             ];
+    }
+
+    // Metadata keys used to memoize the gating decision for the property-parameter Build(...) overload.
+    private const string EmitsCreateParamsBuildKey = "CSharp_LanguageProvider_EmitsCreateParamsBuild";
+    private const string CreateParamCycleKey = "CSharp_LanguageProvider_CreateParamCycle";
+    private const string CreateParamWeightKey = "CSharp_LanguageProvider_CreateParamWeight";
+
+    /// <summary>
+    /// Gets the property declarations of <paramref name="typeDeclaration"/> that become parameters
+    /// of its <c>Create(...)</c> method (and hence of the property-parameter <c>Build(...)</c> overload).
+    /// </summary>
+    /// <remarks>
+    /// This must mirror the filtering in <see cref="BuildMethodParameters"/>: required, non-constant
+    /// properties and all optional properties, excluding <c>NotAny</c> property types and required
+    /// properties whose value is a single constant (those are pre-baked, not parameters).
+    /// </remarks>
+    private static IEnumerable<PropertyDeclaration> CreateParameterProperties(TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.PropertyDeclarations.Where(p =>
+            !p.ReducedPropertyType.IsBuiltInJsonNotAnyType() &&
+            (
+                (p.RequiredOrOptional != RequiredOrOptional.Optional && p.ReducedPropertyType.SingleConstantValue().ValueKind == JsonValueKind.Undefined) ||
+                p.RequiredOrOptional == RequiredOrOptional.Optional));
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether <paramref name="typeDeclaration"/> is an object type that
+    /// exposes at least one <c>Create(...)</c> parameter, and is therefore a candidate to emit (and
+    /// to be inlined by-value into) a property-parameter <c>Build(...)</c> overload.
+    /// </summary>
+    private static bool IsCreateParamsBuildCandidate(TypeDeclaration typeDeclaration)
+    {
+        return (typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.Object) != 0 &&
+            CreateParameterProperties(typeDeclaration).Any();
+    }
+
+    /// <summary>
+    /// Gets the distinct candidate object types that are the reduced types of
+    /// <paramref name="typeDeclaration"/>'s <c>Create(...)</c> parameters.
+    /// </summary>
+    /// <remarks>
+    /// These are the edges of the "create-parameter object" graph used to detect reference cycles.
+    /// Only candidate children matter: a non-candidate (e.g. a scalar or array) child can never emit
+    /// the overload, so it stores a fixed-size <c>Source</c> and terminates any containment chain.
+    /// </remarks>
+    private static IEnumerable<TypeDeclaration> CreateParamCandidateChildren(TypeDeclaration typeDeclaration)
+    {
+        HashSet<string> seen = new(StringComparer.Ordinal);
+        foreach (PropertyDeclaration p in CreateParameterProperties(typeDeclaration))
+        {
+            TypeDeclaration child = p.ReducedPropertyType;
+            if (IsCreateParamsBuildCandidate(child) && seen.Add(child.FullyQualifiedDotnetTypeName()))
+            {
+                yield return child;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether <paramref name="typeDeclaration"/> is reachable from itself
+    /// through the create-parameter object graph (i.e. it participates in a reference cycle).
+    /// </summary>
+    /// <remarks>
+    /// Such a type must not emit the property-parameter <c>Build(...)</c> overload: its <c>CreateArgs</c>
+    /// would store its own <c>Source</c> by value (transitively), producing an illegal self-containing
+    /// ref struct (CS0523). Excluding <em>every</em> type on a cycle keeps the emitting set acyclic by
+    /// construction. The result depends only on <paramref name="typeDeclaration"/>, so it is deterministic
+    /// regardless of the order in which types are generated.
+    /// </remarks>
+    private static bool InCreateParamCycle(TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(CreateParamCycleKey, out bool? cached) && cached is bool cachedValue)
+        {
+            return cachedValue;
+        }
+
+        string targetName = typeDeclaration.FullyQualifiedDotnetTypeName();
+        bool result = ReachesSelf(typeDeclaration, targetName, new HashSet<string>(StringComparer.Ordinal));
+        typeDeclaration.SetMetadata(CreateParamCycleKey, result);
+        return result;
+
+        static bool ReachesSelf(TypeDeclaration current, string targetName, HashSet<string> visited)
+        {
+            foreach (TypeDeclaration child in CreateParamCandidateChildren(current))
+            {
+                string childName = child.FullyQualifiedDotnetTypeName();
+                if (childName == targetName)
+                {
+                    return true;
+                }
+
+                if (visited.Add(childName) && ReachesSelf(child, targetName, visited))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the estimated number of captured value slots the property-parameter <c>Build(...)</c>
+    /// overload for <paramref name="typeDeclaration"/> would hold, counting nested emitting object
+    /// properties by-value (bottom-up) and everything else as a single fixed slot.
+    /// </summary>
+    /// <remarks>
+    /// Only ever invoked for acyclic types (emitting requires <see cref="InCreateParamCycle"/> to be
+    /// <see langword="false"/>), so the recursion terminates over the create-parameter object DAG.
+    /// </remarks>
+    private static int CreateParamWeight(TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(CreateParamWeightKey, out int? cached) && cached is int cachedValue)
+        {
+            return cachedValue;
+        }
+
+        int weight = 0;
+        foreach (PropertyDeclaration p in CreateParameterProperties(typeDeclaration))
+        {
+            TypeDeclaration child = p.ReducedPropertyType;
+            if (IsCreateParamsBuildCandidate(child) && EmitsCreateParamsBuild(child))
+            {
+                // The child inlines its own CreateArgs by value, so it contributes its expanded weight.
+                weight += 1 + CreateParamWeight(child);
+            }
+            else
+            {
+                // Scalars, arrays and non-emitting (cyclic or over-threshold) objects are a single fixed slot.
+                weight++;
+            }
+        }
+
+        typeDeclaration.SetMetadata(CreateParamWeightKey, weight);
+        return weight;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether <paramref name="typeDeclaration"/> emits the property-parameter
+    /// <c>Build(...)</c> overload that captures its <c>Create(...)</c> arguments directly.
+    /// </summary>
+    /// <remarks>
+    /// True when the type has at least one <c>Create(...)</c> parameter, does not participate in a
+    /// create-parameter reference cycle, and its estimated captured-slot weight is within the configured
+    /// <see cref="TypeDeclarationExtensions.BuildParametersThreshold"/>. Memoized per type.
+    /// </remarks>
+    private static bool EmitsCreateParamsBuild(TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(EmitsCreateParamsBuildKey, out bool? cached) && cached is bool cachedValue)
+        {
+            return cachedValue;
+        }
+
+        bool result;
+        if (!IsCreateParamsBuildCandidate(typeDeclaration) || InCreateParamCycle(typeDeclaration))
+        {
+            result = false;
+        }
+        else
+        {
+            result = CreateParamWeight(typeDeclaration) <= typeDeclaration.BuildParametersThreshold();
+        }
+
+        typeDeclaration.SetMetadata(EmitsCreateParamsBuildKey, result);
+        return result;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether <paramref name="typeDeclaration"/> would expose <c>Create(...)</c>
+    /// parameters but has the property-parameter <c>Build(...)</c> overload suppressed (by a cycle or the
+    /// size threshold). Used to decide whether to document the omission on the delegate <c>Build</c> overload.
+    /// </summary>
+    private static bool CreateParamsBuildSuppressed(TypeDeclaration typeDeclaration)
+    {
+        return IsCreateParamsBuildCandidate(typeDeclaration) && !EmitsCreateParamsBuild(typeDeclaration);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the property-parameter <c>Build(...)</c> machinery should be
+    /// emitted on the <c>Source</c> (<paramref name="forContext"/> is <see langword="false"/>) or
+    /// <c>Source&lt;TContext&gt;</c> (<paramref name="forContext"/> is <see langword="true"/>) ref struct.
+    /// </summary>
+    /// <remarks>
+    /// The context-flowing form additionally requires an object/array <c>Create(...)</c> parameter to
+    /// thread the context through; scalar-only objects emit only the non-context form.
+    /// </remarks>
+    private static bool EmitsCreateParamsBuildFor(TypeDeclaration typeDeclaration, bool forContext)
+    {
+        return EmitsCreateParamsBuild(typeDeclaration) && (!forContext || HasObjectOrArrayCreateParam(typeDeclaration));
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether <paramref name="typeDeclaration"/> has at least one
+    /// non-constant object or array <c>Create(...)</c> parameter, and therefore exposes a
+    /// context-flowing <c>Create&lt;TContext&gt;</c> (and matching <c>Build&lt;TContext&gt;</c>) overload.
+    /// </summary>
+    private static bool HasObjectOrArrayCreateParam(TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.PropertyDeclarations.Any(p =>
+            p.ReducedPropertyType.SingleConstantValue().ValueKind == JsonValueKind.Undefined &&
+            !p.ReducedPropertyType.IsBuiltInJsonNotAnyType() &&
+            (p.ReducedPropertyType.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0);
+    }
+
+    /// <summary>
+    /// Appends the <c>BuildCreateValue(...)</c> invocation for the <c>Kind.Create</c> apply arm,
+    /// passing the captured <c>_createArg</c> fields (and the context, when <paramref name="forContext"/>).
+    /// </summary>
+    private static void AppendBuildCreateValueCall(CodeGenerator generator, TypeDeclaration typeDeclaration, string builderName, bool forContext)
+    {
+        int argCount = CreateParameterProperties(typeDeclaration).Count();
+
+        generator.AppendIndent(builderName, ".BuildCreateValue(");
+
+        bool first = true;
+        if (forContext)
+        {
+            generator.Append("_context");
+            first = false;
+        }
+
+        for (int i = 1; i <= argCount; i++)
+        {
+            if (!first)
+            {
+                generator.Append(", ");
+            }
+
+            first = false;
+            generator.Append("_createArg").Append(i);
+        }
+
+        generator.AppendLine(", ref valueBuilder);");
+    }
+
+    /// <summary>
+    /// Gets the ordered source-type strings for the <c>Create(...)</c> parameters of
+    /// <paramref name="typeDeclaration"/> (required, non-constant properties first, then optional),
+    /// together with whether each is optional.
+    /// </summary>
+    /// <remarks>
+    /// This is the pure counterpart of <see cref="BuildMethodParameters"/>: it computes only the
+    /// parameter types and ordering and never reserves a parameter name, so it can be called freely
+    /// without perturbing the <c>Create</c>/<c>CreateBuilder</c> parameter-naming scope. The emitted
+    /// machinery uses fixed positional names (<c>arg1</c>, <c>arg2</c>, ...) instead.
+    /// </remarks>
+    private static List<(string Type, bool IsOptional, string JsonName)> CreateParamSourceTypes(CodeGenerator generator, TypeDeclaration typeDeclaration, bool forContext)
+    {
+        List<(string Type, bool IsOptional, string JsonName)> result = new();
+
+        foreach (PropertyDeclaration p in typeDeclaration.PropertyDeclarations.Where(p =>
+            p.RequiredOrOptional != RequiredOrOptional.Optional &&
+            p.ReducedPropertyType.SingleConstantValue().ValueKind == JsonValueKind.Undefined &&
+            !p.ReducedPropertyType.IsBuiltInJsonNotAnyType()))
+        {
+            result.Add((SourceTypeFor(generator, p.ReducedPropertyType, forContext), false, p.JsonPropertyName));
+        }
+
+        foreach (PropertyDeclaration p in typeDeclaration.PropertyDeclarations.Where(p =>
+            p.RequiredOrOptional == RequiredOrOptional.Optional &&
+            !p.ReducedPropertyType.IsBuiltInJsonNotAnyType()))
+        {
+            result.Add((SourceTypeFor(generator, p.ReducedPropertyType, forContext), true, p.JsonPropertyName));
+        }
+
+        return result;
+
+        static string SourceTypeFor(CodeGenerator generator, TypeDeclaration reducedType, bool forContext)
+        {
+            string fqdtn = reducedType.FullyQualifiedDotnetTypeName();
+            string source = fqdtn + "." + generator.SourceClassName(fqdtn);
+            if (forContext && (reducedType.ImpliedCoreTypesOrAny() & (CoreTypes.Array | CoreTypes.Object)) != 0)
+            {
+                source += "<TContext>";
+            }
+
+            return source;
+        }
+    }
+
+    private static void AppendCreateArgDeclarations(CodeGenerator generator, List<(string Type, bool IsOptional, string JsonName)> args, bool includeDefaults)
+    {
+        for (int i = 0; i < args.Count; i++)
+        {
+            if (i > 0)
+            {
+                generator.Append(", ");
+            }
+
+            generator.Append("in ").Append(args[i].Type).Append(" arg").Append(i + 1);
+
+            if (includeDefaults && args[i].IsOptional)
+            {
+                generator.Append(" = default");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Computes the user-facing parameter names (derived from the JSON property names) for the
+    /// property-parameter <c>Build(...)</c> factory, in a dedicated naming scope so they never
+    /// perturb the <c>Create</c>/<c>CreateBuilder</c> parameter-naming scope.
+    /// </summary>
+    private static List<string> FactoryParamNames(CodeGenerator generator, List<(string Type, bool IsOptional, string JsonName)> args, bool forContext)
+    {
+        string childScope = forContext ? "ParamsBuildContext" : "ParamsBuild";
+        List<string> names = new(args.Count);
+        foreach ((string Type, bool IsOptional, string JsonName) arg in args)
+        {
+            names.Add(generator.GetUniqueParameterNameInScope(arg.JsonName, childScope: childScope));
+        }
+
+        return names;
+    }
+
+    private static void AppendFactoryParamDeclarations(CodeGenerator generator, List<(string Type, bool IsOptional, string JsonName)> args, List<string> names)
+    {
+        for (int i = 0; i < args.Count; i++)
+        {
+            if (i > 0)
+            {
+                generator.Append(", ");
+            }
+
+            generator.Append("in ").Append(args[i].Type).Append(" ").Append(names[i]);
+
+            if (args[i].IsOptional)
+            {
+                generator.Append(" = default");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Appends the public <c>Build(...)</c> property-parameter factory overloads (non-generic and
+    /// context-flowing) that capture the <c>Create(...)</c> arguments directly into a <c>Source</c>.
+    /// </summary>
+    private static CodeGenerator AppendCreateParamsBuildFactory(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested || !EmitsCreateParamsBuild(typeDeclaration))
+        {
+            return generator;
+        }
+
+        string sourceClassName = generator.SourceClassName();
+
+        // Non-generic variant.
+        List<(string Type, bool IsOptional, string JsonName)> args = CreateParamSourceTypes(generator, typeDeclaration, forContext: false);
+        List<string> names = FactoryParamNames(generator, args, forContext: false);
+
+        generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Build an instance of the value directly from its property values.")
+            .AppendLineIndent("/// </summary>");
+
+        for (int i = 0; i < args.Count; i++)
+        {
+            generator.AppendLineIndent("/// <param name=\"", names[i], "\">The value of the <c>", Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatLiteral(args[i].JsonName, true), "</c> property.</param>");
+        }
+
+        generator
+            .AppendLineIndent("/// <returns>The source from which to build the value.</returns>")
+            .AppendIndent("public static ", sourceClassName, " Build(");
+
+        AppendFactoryParamDeclarations(generator, args, names);
+
+        generator
+            .AppendLine(")")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendIndent("return new ", sourceClassName, "(");
+
+        for (int i = 0; i < names.Count; i++)
+        {
+            if (i > 0)
+            {
+                generator.Append(", ");
+            }
+
+            generator.Append(names[i]);
+        }
+
+        generator
+                .AppendLine(");")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        // Context-flowing variant — only when there is an object/array property to thread the context through.
+        if (HasObjectOrArrayCreateParam(typeDeclaration))
+        {
+            List<(string Type, bool IsOptional, string JsonName)> contextArgs = CreateParamSourceTypes(generator, typeDeclaration, forContext: true);
+
+            // Reserve the synthetic context parameter name first so a property whose parameter name
+            // would also be "context" is uniquified away from it (avoiding a duplicate-parameter error).
+            string contextName = generator.GetUniqueParameterNameInScope("context", childScope: "ParamsBuildContext");
+            List<string> contextNames = FactoryParamNames(generator, contextArgs, forContext: true);
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Build an instance of the value directly from its property values.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent("/// <typeparam name=\"TContext\">The type of the context to pass to the builder.</typeparam>")
+                .AppendLineIndent("/// <param name=\"", contextName, "\">The context to pass to the builder.</param>");
+
+            for (int i = 0; i < contextArgs.Count; i++)
+            {
+                generator.AppendLineIndent("/// <param name=\"", contextNames[i], "\">The value of the <c>", Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatLiteral(contextArgs[i].JsonName, true), "</c> property.</param>");
+            }
+
+            generator
+                .AppendLineIndent("/// <returns>The source from which to build the value.</returns>")
+                .AppendIndent("public static ", sourceClassName, "<TContext> Build<TContext>(scoped in TContext ", contextName);
+
+            if (contextArgs.Count > 0)
+            {
+                generator.Append(", ");
+                AppendFactoryParamDeclarations(generator, contextArgs, contextNames);
+            }
+
+            generator
+                .AppendLine(")")
+                .PushIndent()
+                    .AppendLineIndent("#if NET9_0_OR_GREATER")
+                    .AppendLineIndent("where TContext : allows ref struct")
+                    .AppendLineIndent("#endif")
+                .PopIndent()
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendIndent("return new ", sourceClassName, "<TContext>(", contextName);
+
+            for (int i = 0; i < contextNames.Count; i++)
+            {
+                generator.Append(", ").Append(contextNames[i]);
+            }
+
+            generator
+                    .AppendLine(");")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends the <c>BuildCreateValue</c> helper(s) that materialize the captured <c>Create(...)</c>
+    /// arguments into a complex value builder (the property-parameter analogue of <c>BuildValue</c>).
+    /// </summary>
+    private static CodeGenerator AppendBuildCreateValue(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested || !EmitsCreateParamsBuild(typeDeclaration))
+        {
+            return generator;
+        }
+
+        // Non-generic variant.
+        List<(string Type, bool IsOptional, string JsonName)> args = CreateParamSourceTypes(generator, typeDeclaration, forContext: false);
+
+        generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Builds the object value directly from its captured property values into the given complex value builder.")
+            .AppendLineIndent("/// </summary>");
+
+        for (int i = 0; i < args.Count; i++)
+        {
+            generator.AppendLineIndent("/// <param name=\"arg", (i + 1).ToString(), "\">The value of the property.</param>");
+        }
+
+        generator
+            .AppendLineIndent("/// <param name=\"o\">The complex value builder into which to write the object.</param>")
+            .AppendIndent("internal static void BuildCreateValue(");
+
+        AppendCreateArgDeclarations(generator, args, includeDefaults: false);
+
+        generator
+            .AppendLine(", ref ComplexValueBuilder o)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("o.StartObject();")
+                .AppendIndent("Create(ref o");
+
+        for (int i = 0; i < args.Count; i++)
+        {
+            generator.Append(", arg").Append(i + 1);
+        }
+
+        generator
+                .AppendLine(");")
+                .AppendLineIndent("o.EndObject();")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        // Context-flowing variant.
+        if (HasObjectOrArrayCreateParam(typeDeclaration))
+        {
+            List<(string Type, bool IsOptional, string JsonName)> contextArgs = CreateParamSourceTypes(generator, typeDeclaration, forContext: true);
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Builds the object value directly from its captured property values into the given complex value builder.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent("/// <typeparam name=\"TContext\">The type of the context to pass to the builder.</typeparam>")
+                .AppendLineIndent("/// <param name=\"context\">The context to pass to the builder.</param>");
+
+            for (int i = 0; i < contextArgs.Count; i++)
+            {
+                generator.AppendLineIndent("/// <param name=\"arg", (i + 1).ToString(), "\">The value of the property.</param>");
+            }
+
+            generator
+                .AppendLineIndent("/// <param name=\"o\">The complex value builder into which to write the object.</param>")
+                .AppendIndent("internal static void BuildCreateValue<TContext>(scoped in TContext context");
+
+            if (contextArgs.Count > 0)
+            {
+                generator.Append(", ");
+                AppendCreateArgDeclarations(generator, contextArgs, includeDefaults: false);
+            }
+
+            generator
+                .AppendLine(", ref ComplexValueBuilder o)")
+                .AppendLine("#if NET9_0_OR_GREATER")
+                .PushIndent()
+                    .AppendLineIndent("where TContext : allows ref struct")
+                .PopIndent()
+                .AppendLine("#endif")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("o.StartObject();")
+                    .AppendIndent("Create(context, ref o");
+
+            for (int i = 0; i < contextArgs.Count; i++)
+            {
+                generator.Append(", arg").Append(i + 1);
+            }
+
+            generator
+                    .AppendLine(");")
+                    .AppendLineIndent("o.EndObject();")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
     }
 
     private static CodeGenerator CollectBuilderSourcesAndAppendKinds(this CodeGenerator generator, TypeDeclaration typeDeclaration, List<ComposedBuilder> builders)
@@ -4299,6 +5024,14 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("Tuple,");
         }
 
+        // Add the captured-create kind for the property-parameter Build(...) overload.
+        if (EmitsCreateParamsBuild(typeDeclaration))
+        {
+            generator
+                .ReserveName("Create")
+                .AppendLineIndent("Create,");
+        }
+
         CoreTypes rootCore = typeDeclaration.ImpliedCoreTypesOrAny();
 
         if ((rootCore & CoreTypes.String) != 0)
@@ -4412,6 +5145,14 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .ReserveName(builderKindName)
                 .AppendLineIndent(builderKindName, ",");
+        }
+
+        // Add the captured-create kind for the context-flowing property-parameter Build(...) overload.
+        if (EmitsCreateParamsBuildFor(typeDeclaration, forContext: true))
+        {
+            generator
+                .ReserveName("Create")
+                .AppendLineIndent("Create,");
         }
 
         return generator;

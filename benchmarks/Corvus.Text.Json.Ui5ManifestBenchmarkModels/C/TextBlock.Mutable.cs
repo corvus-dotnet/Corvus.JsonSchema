@@ -1705,7 +1705,7 @@ public readonly partial struct TextBlock
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -1802,11 +1802,11 @@ public readonly partial struct TextBlock
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ExtendableElement" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ExtendableElement.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsExtendableElement(out Corvus.Ui5ManifestBenchmark.Current.ExtendableElement result)
+        public bool TryGetAsExtendableElement(out Corvus.Ui5ManifestBenchmark.Current.ExtendableElement.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ExtendableElement.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1825,12 +1825,31 @@ public readonly partial struct TextBlock
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg1;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheColorOfTextBlockElements.Source _createArg2;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg3;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.TypeOfFontToUseForRendering.Source _createArg4;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg5;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.HorizontalAlignmentEntity.Source _createArg6;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg7;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.IsSubtleEntity.Source _createArg8;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg9;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source _createArg10;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg11;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg12;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsSizeOfText.Source _createArg13;
+        private readonly Corvus.Text.Json.JsonElement.Source _createArg14;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Source _createArg15;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.MustBeTextBlock.Source _createArg16;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheWeightOfTextBlockElements.Source _createArg17;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.IfTrueAllowTextToWrapOtherwiseTextIsClipped.Source _createArg18;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1844,6 +1863,29 @@ public readonly partial struct TextBlock
         }
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.TextBlock.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheColorOfTextBlockElements.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TypeOfFontToUseForRendering.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.HorizontalAlignmentEntity.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IsSubtleEntity.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsSizeOfText.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.MustBeTextBlock.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheWeightOfTextBlockElements.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IfTrueAllowTextToWrapOtherwiseTextIsClipped.Source arg18)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _createArg14 = arg14;
+            _createArg15 = arg15;
+            _createArg16 = arg16;
+            _createArg17 = arg17;
+            _createArg18 = arg18;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(TextBlock instance) => new(JsonElement.From(instance));
 
@@ -1859,6 +1901,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1877,6 +1926,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1895,6 +1951,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1913,6 +1976,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1931,6 +2001,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1948,12 +2025,31 @@ public readonly partial struct TextBlock
             Unknown,
             Source,
             Builder,
+            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg1;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheColorOfTextBlockElements.Source _createArg2;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg3;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.TypeOfFontToUseForRendering.Source _createArg4;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg5;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.HorizontalAlignmentEntity.Source _createArg6;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg7;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.IsSubtleEntity.Source _createArg8;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg9;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source _createArg10;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg11;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg12;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsSizeOfText.Source _createArg13;
+        private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg14;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Source _createArg15;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.MustBeTextBlock.Source _createArg16;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheWeightOfTextBlockElements.Source _createArg17;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextBlock.IfTrueAllowTextToWrapOtherwiseTextIsClipped.Source _createArg18;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1965,6 +2061,30 @@ public readonly partial struct TextBlock
         public static implicit operator Source<TContext>(Source source) => new (source);
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.TextBlock.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheColorOfTextBlockElements.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TypeOfFontToUseForRendering.Source arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.HorizontalAlignmentEntity.Source arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IsSubtleEntity.Source arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsSizeOfText.Source arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.MustBeTextBlock.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheWeightOfTextBlockElements.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IfTrueAllowTextToWrapOtherwiseTextIsClipped.Source arg18)
+        {
+            _context = context;
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _createArg14 = arg14;
+            _createArg15 = arg15;
+            _createArg16 = arg16;
+            _createArg17 = arg17;
+            _createArg18 = arg18;
+            _kind = Kind.Create;
+        }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1978,6 +2098,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1996,6 +2123,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2014,6 +2148,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2032,6 +2173,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2050,6 +2198,13 @@ public readonly partial struct TextBlock
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -2245,6 +2400,69 @@ public readonly partial struct TextBlock
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="arg14">The value of the property.</param>
+        /// <param name="arg15">The value of the property.</param>
+        /// <param name="arg16">The value of the property.</param>
+        /// <param name="arg17">The value of the property.</param>
+        /// <param name="arg18">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheColorOfTextBlockElements.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TypeOfFontToUseForRendering.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.HorizontalAlignmentEntity.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IsSubtleEntity.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsSizeOfText.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.MustBeTextBlock.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheWeightOfTextBlockElements.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IfTrueAllowTextToWrapOtherwiseTextIsClipped.Source arg18, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18);
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="arg14">The value of the property.</param>
+        /// <param name="arg15">The value of the property.</param>
+        /// <param name="arg16">The value of the property.</param>
+        /// <param name="arg17">The value of the property.</param>
+        /// <param name="arg18">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheColorOfTextBlockElements.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TypeOfFontToUseForRendering.Source arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.HorizontalAlignmentEntity.Source arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IsSubtleEntity.Source arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsSizeOfText.Source arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.MustBeTextBlock.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheWeightOfTextBlockElements.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IfTrueAllowTextToWrapOtherwiseTextIsClipped.Source arg18, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartObject();
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -2274,6 +2492,65 @@ public readonly partial struct TextBlock
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="text">The value of the <c>"text"</c> property.</param>
+    /// <param name="color">The value of the <c>"color"</c> property.</param>
+    /// <param name="fallback">The value of the <c>"fallback"</c> property.</param>
+    /// <param name="fontType">The value of the <c>"fontType"</c> property.</param>
+    /// <param name="height">The value of the <c>"height"</c> property.</param>
+    /// <param name="horizontalAlignment">The value of the <c>"horizontalAlignment"</c> property.</param>
+    /// <param name="id">The value of the <c>"id"</c> property.</param>
+    /// <param name="isSubtle">The value of the <c>"isSubtle"</c> property.</param>
+    /// <param name="isVisible">The value of the <c>"isVisible"</c> property.</param>
+    /// <param name="maxLines">The value of the <c>"maxLines"</c> property.</param>
+    /// <param name="requires">The value of the <c>"requires"</c> property.</param>
+    /// <param name="separator">The value of the <c>"separator"</c> property.</param>
+    /// <param name="size">The value of the <c>"size"</c> property.</param>
+    /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
+    /// <param name="style">The value of the <c>"style"</c> property.</param>
+    /// <param name="type">The value of the <c>"type"</c> property.</param>
+    /// <param name="weight">The value of the <c>"weight"</c> property.</param>
+    /// <param name="wrap">The value of the <c>"wrap"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheColorOfTextBlockElements.Source color = default, in Corvus.Text.Json.JsonElement.Source fallback = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TypeOfFontToUseForRendering.Source fontType = default, in Corvus.Text.Json.JsonElement.Source height = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.HorizontalAlignmentEntity.Source horizontalAlignment = default, in Corvus.Text.Json.JsonElement.Source id = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IsSubtleEntity.Source isSubtle = default, in Corvus.Text.Json.JsonElement.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source maxLines = default, in Corvus.Text.Json.JsonElement.Source requires = default, in Corvus.Text.Json.JsonElement.Source separator = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsSizeOfText.Source size = default, in Corvus.Text.Json.JsonElement.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.MustBeTextBlock.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheWeightOfTextBlockElements.Source weight = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IfTrueAllowTextToWrapOtherwiseTextIsClipped.Source wrap = default)
+    {
+        return new Source(text, color, fallback, fontType, height, horizontalAlignment, id, isSubtle, isVisible, maxLines, requires, separator, size, spacing, style, type, weight, wrap);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="text">The value of the <c>"text"</c> property.</param>
+    /// <param name="color">The value of the <c>"color"</c> property.</param>
+    /// <param name="fallback">The value of the <c>"fallback"</c> property.</param>
+    /// <param name="fontType">The value of the <c>"fontType"</c> property.</param>
+    /// <param name="height">The value of the <c>"height"</c> property.</param>
+    /// <param name="horizontalAlignment">The value of the <c>"horizontalAlignment"</c> property.</param>
+    /// <param name="id">The value of the <c>"id"</c> property.</param>
+    /// <param name="isSubtle">The value of the <c>"isSubtle"</c> property.</param>
+    /// <param name="isVisible">The value of the <c>"isVisible"</c> property.</param>
+    /// <param name="maxLines">The value of the <c>"maxLines"</c> property.</param>
+    /// <param name="requires">The value of the <c>"requires"</c> property.</param>
+    /// <param name="separator">The value of the <c>"separator"</c> property.</param>
+    /// <param name="size">The value of the <c>"size"</c> property.</param>
+    /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
+    /// <param name="style">The value of the <c>"style"</c> property.</param>
+    /// <param name="type">The value of the <c>"type"</c> property.</param>
+    /// <param name="weight">The value of the <c>"weight"</c> property.</param>
+    /// <param name="wrap">The value of the <c>"wrap"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheColorOfTextBlockElements.Source color = default, in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TypeOfFontToUseForRendering.Source fontType = default, in Corvus.Text.Json.JsonElement.Source<TContext> height = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.HorizontalAlignmentEntity.Source horizontalAlignment = default, in Corvus.Text.Json.JsonElement.Source<TContext> id = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IsSubtleEntity.Source isSubtle = default, in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source maxLines = default, in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsSizeOfText.Source size = default, in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.TheStyleOfThisTextBlockForAccessibilityPurposes.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.MustBeTextBlock.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.ControlsTheWeightOfTextBlockElements.Source weight = default, in Corvus.Ui5ManifestBenchmark.Current.TextBlock.IfTrueAllowTextToWrapOtherwiseTextIsClipped.Source wrap = default)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, text, color, fallback, fontType, height, horizontalAlignment, id, isSubtle, isVisible, maxLines, requires, separator, size, spacing, style, type, weight, wrap);
     }
 
     /// <summary>

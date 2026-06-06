@@ -493,7 +493,7 @@ public readonly partial struct JsconfigSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -852,11 +852,11 @@ public readonly partial struct JsconfigSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition" />.
+            /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsExcludeDefinition(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition result)
+            public bool TryGetAsExcludeDefinition(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Mutable result)
             {
                 if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -869,11 +869,11 @@ public readonly partial struct JsconfigSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition" />.
+            /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsFilesDefinition(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition result)
+            public bool TryGetAsFilesDefinition(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Mutable result)
             {
                 if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -886,11 +886,11 @@ public readonly partial struct JsconfigSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition" />.
+            /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsIncludeDefinition(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition result)
+            public bool TryGetAsIncludeDefinition(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Mutable result)
             {
                 if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -903,11 +903,11 @@ public readonly partial struct JsconfigSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition" />.
+            /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsReferencesDefinition(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition result)
+            public bool TryGetAsReferencesDefinition(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Mutable result)
             {
                 if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.JsonSchema.Evaluate(_parent, _idx))
                 {

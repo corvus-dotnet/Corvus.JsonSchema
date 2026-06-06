@@ -275,7 +275,7 @@ public readonly partial struct JsonInt32
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }

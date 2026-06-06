@@ -573,7 +573,7 @@ public readonly partial struct JsconfigSchema
                         /// <inheritdoc/>
                         public override string ToString()
                         {
-                            if (_parent == null || _documentVersion != _parent.Version)
+                            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                             {
                                 return string.Empty;
                             }
@@ -896,11 +896,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf0Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity result)
+                        public bool TryGetAsAnyOf0Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -913,11 +913,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf1Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity result)
+                        public bool TryGetAsAnyOf1Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -930,11 +930,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf10Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity result)
+                        public bool TryGetAsAnyOf10Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -947,11 +947,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf11Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity result)
+                        public bool TryGetAsAnyOf11Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -964,11 +964,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf12Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity result)
+                        public bool TryGetAsAnyOf12Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -981,11 +981,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf13Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity result)
+                        public bool TryGetAsAnyOf13Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -998,11 +998,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf2Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity result)
+                        public bool TryGetAsAnyOf2Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1015,11 +1015,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf3Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity result)
+                        public bool TryGetAsAnyOf3Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1032,11 +1032,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf4Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity result)
+                        public bool TryGetAsAnyOf4Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1049,11 +1049,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf5Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity result)
+                        public bool TryGetAsAnyOf5Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1066,11 +1066,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf6Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity result)
+                        public bool TryGetAsAnyOf6Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1083,11 +1083,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf7Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity result)
+                        public bool TryGetAsAnyOf7Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1100,11 +1100,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf8Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity result)
+                        public bool TryGetAsAnyOf8Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1117,11 +1117,11 @@ public readonly partial struct JsconfigSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity" />.
+                        /// Gets the value as a <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsAnyOf9Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity result)
+                        public bool TryGetAsAnyOf9Entity(out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity.Mutable result)
                         {
                             if (Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity.JsonSchema.Evaluate(_parent, _idx))
                             {

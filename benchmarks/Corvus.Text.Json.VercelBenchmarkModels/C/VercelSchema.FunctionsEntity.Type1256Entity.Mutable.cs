@@ -580,7 +580,7 @@ public readonly partial struct VercelSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -683,12 +683,18 @@ public readonly partial struct VercelSchema
                 {
                     Unknown,
                     JsonElement,
+                    Create,
                     Builder,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Builder.Build? _objectBuilder;
+                private readonly Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source _createArg1;
+                private readonly Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source _createArg2;
+                private readonly Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source _createArg3;
+                private readonly Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source _createArg4;
+                private readonly Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source _createArg5;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -702,6 +708,16 @@ public readonly partial struct VercelSchema
                 }
 
                 internal Source(Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+                internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source arg5)
+                {
+                    _createArg1 = arg1;
+                    _createArg2 = arg2;
+                    _createArg3 = arg3;
+                    _createArg4 = arg4;
+                    _createArg5 = arg5;
+                    _kind = Kind.Create;
+                }
 
                 public static implicit operator Source(Type1256Entity instance) => new(JsonElement.From(instance));
 
@@ -717,6 +733,13 @@ public readonly partial struct VercelSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -735,6 +758,13 @@ public readonly partial struct VercelSchema
                         case Kind.Builder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -753,6 +783,13 @@ public readonly partial struct VercelSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -771,6 +808,13 @@ public readonly partial struct VercelSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -789,6 +833,13 @@ public readonly partial struct VercelSchema
                         case Kind.Builder:
                             valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                                valueBuilder.EndItem(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -986,6 +1037,22 @@ public readonly partial struct VercelSchema
                     o = ovb._builder;
                     o.EndObject();
                 }
+
+                /// <summary>
+                /// Builds the object value directly from its captured property values into the given complex value builder.
+                /// </summary>
+                /// <param name="arg1">The value of the property.</param>
+                /// <param name="arg2">The value of the property.</param>
+                /// <param name="arg3">The value of the property.</param>
+                /// <param name="arg4">The value of the property.</param>
+                /// <param name="arg5">The value of the property.</param>
+                /// <param name="o">The complex value builder into which to write the object.</param>
+                internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source arg5, ref ComplexValueBuilder o)
+                {
+                    o.StartObject();
+                    Create(ref o, arg1, arg2, arg3, arg4, arg5);
+                    o.EndObject();
+                }
             }
 
             /// <summary>
@@ -1015,6 +1082,20 @@ public readonly partial struct VercelSchema
                 #endif
             {
                 return new Source<TContext>(context, buildValue);
+            }
+
+            /// <summary>
+            /// Build an instance of the value directly from its property values.
+            /// </summary>
+            /// <param name="excludeFiles">The value of the <c>"excludeFiles"</c> property.</param>
+            /// <param name="includeFiles">The value of the <c>"includeFiles"</c> property.</param>
+            /// <param name="maxDuration">The value of the <c>"maxDuration"</c> property.</param>
+            /// <param name="memory">The value of the <c>"memory"</c> property.</param>
+            /// <param name="runtime">The value of the <c>"runtime"</c> property.</param>
+            /// <returns>The source from which to build the value.</returns>
+            public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source excludeFiles = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source includeFiles = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source maxDuration = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source memory = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source runtime = default)
+            {
+                return new Source(excludeFiles, includeFiles, maxDuration, memory, runtime);
             }
 
             /// <summary>

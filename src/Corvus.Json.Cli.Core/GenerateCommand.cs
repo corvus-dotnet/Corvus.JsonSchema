@@ -110,6 +110,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [DefaultValue(false)]
         public bool AddExplicitUsings { get; init; }
 
+        [CommandOption("--buildParametersThreshold")]
+        [Description("The maximum estimated number of captured value slots an object type's property-parameter Build(...) overload may hold before it is omitted. Defaults to 32 when unset.")]
+        public int? BuildParametersThreshold { get; init; }
+
         [Description("The code generation engine to use. V4 uses Corvus.Json.ExtendedTypes. V5 uses Corvus.Text.Json. Default: V5 for corvusjson, V4 for generatejsonschematypes.")]
         [CommandOption("--engine")]
         public Engine? GenerationEngine { get; init; }
@@ -154,7 +158,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             useImplicitOperatorString: settings.UseImplicitOperatorString,
             useUnixLineEndings: settings.UseUnixLineEndings,
             supportYaml: settings.SupportYaml,
-            addExplicitUsings: settings.AddExplicitUsings);
+            addExplicitUsings: settings.AddExplicitUsings,
+            buildParametersThreshold: settings.BuildParametersThreshold.HasValue ? settings.BuildParametersThreshold.Value : default(long?));
 
         if (settings.DefaultAccessibility is CodeGeneration.GeneratedTypeAccessibility defaultAccessibility)
         {

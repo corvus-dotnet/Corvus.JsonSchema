@@ -528,7 +528,7 @@ public readonly partial struct Ui5Schema
                                     /// <inheritdoc/>
                                     public override string ToString()
                                     {
-                                        if (_parent == null || _documentVersion != _parent.Version)
+                                        if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                                         {
                                             return string.Empty;
                                         }
@@ -887,11 +887,11 @@ public readonly partial struct Ui5Schema
                                     }
 
                                     /// <summary>
-                                    /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity" />.
+                                    /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity.Mutable" />.
                                     /// </summary>
                                     /// <param name="result">The result of the conversions.</param>
                                     /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                                    public bool TryGetAsAnyOf0Entity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity result)
+                                    public bool TryGetAsAnyOf0Entity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity.Mutable result)
                                     {
                                         if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf0Entity.JsonSchema.Evaluate(_parent, _idx))
                                         {
@@ -904,11 +904,11 @@ public readonly partial struct Ui5Schema
                                     }
 
                                     /// <summary>
-                                    /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf1Entity" />.
+                                    /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf1Entity.Mutable" />.
                                     /// </summary>
                                     /// <param name="result">The result of the conversions.</param>
                                     /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                                    public bool TryGetAsAnyOf1Entity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf1Entity result)
+                                    public bool TryGetAsAnyOf1Entity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf1Entity.Mutable result)
                                     {
                                         if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf1Entity.JsonSchema.Evaluate(_parent, _idx))
                                         {
@@ -921,11 +921,11 @@ public readonly partial struct Ui5Schema
                                     }
 
                                     /// <summary>
-                                    /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf2Entity" />.
+                                    /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf2Entity.Mutable" />.
                                     /// </summary>
                                     /// <param name="result">The result of the conversions.</param>
                                     /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                                    public bool TryGetAsAnyOf2Entity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf2Entity result)
+                                    public bool TryGetAsAnyOf2Entity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf2Entity.Mutable result)
                                     {
                                         if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf2Entity.JsonSchema.Evaluate(_parent, _idx))
                                         {
@@ -938,11 +938,11 @@ public readonly partial struct Ui5Schema
                                     }
 
                                     /// <summary>
-                                    /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf3Entity" />.
+                                    /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf3Entity.Mutable" />.
                                     /// </summary>
                                     /// <param name="result">The result of the conversions.</param>
                                     /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                                    public bool TryGetAsAnyOf3Entity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf3Entity result)
+                                    public bool TryGetAsAnyOf3Entity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf3Entity.Mutable result)
                                     {
                                         if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.IfEntity.NotEntity.AnyOf3Entity.JsonSchema.Evaluate(_parent, _idx))
                                         {

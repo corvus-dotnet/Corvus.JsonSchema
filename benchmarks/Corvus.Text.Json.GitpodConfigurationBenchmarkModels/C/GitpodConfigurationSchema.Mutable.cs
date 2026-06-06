@@ -1416,7 +1416,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -1519,12 +1519,26 @@ public readonly partial struct GitpodConfigurationSchema
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source _createArg1;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source _createArg3;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source _createArg4;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source _createArg5;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source _createArg6;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source _createArg7;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source _createArg8;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source _createArg9;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source _createArg10;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source _createArg11;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source _createArg12;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source _createArg13;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1538,6 +1552,24 @@ public readonly partial struct GitpodConfigurationSchema
         }
 
         internal Source(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source arg7, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source arg8, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source arg10, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source arg11, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source arg12, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(GitpodConfigurationSchema instance) => new(JsonElement.From(instance));
 
@@ -1553,6 +1585,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1571,6 +1610,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1589,6 +1635,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1607,6 +1660,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1625,6 +1685,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1642,12 +1709,26 @@ public readonly partial struct GitpodConfigurationSchema
             Unknown,
             Source,
             Builder,
+            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> _createArg1;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> _createArg3;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source _createArg4;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> _createArg5;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> _createArg6;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> _createArg7;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> _createArg8;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source _createArg9;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> _createArg10;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> _createArg11;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> _createArg12;
+        private readonly Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source _createArg13;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1659,6 +1740,25 @@ public readonly partial struct GitpodConfigurationSchema
         public static implicit operator Source<TContext>(Source source) => new (source);
 
         internal Source(scoped in TContext context, Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> arg7, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> arg8, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> arg10, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> arg11, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> arg12, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13)
+        {
+            _context = context;
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _kind = Kind.Create;
+        }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1672,6 +1772,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1690,6 +1797,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1708,6 +1822,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1726,6 +1847,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1744,6 +1872,13 @@ public readonly partial struct GitpodConfigurationSchema
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1909,6 +2044,59 @@ public readonly partial struct GitpodConfigurationSchema
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source arg7, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source arg8, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source arg10, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source arg11, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source arg12, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> arg7, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> arg8, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> arg10, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> arg11, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> arg12, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartObject();
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -1938,6 +2126,55 @@ public readonly partial struct GitpodConfigurationSchema
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="additionalRepositories">The value of the <c>"additionalRepositories"</c> property.</param>
+    /// <param name="checkoutLocation">The value of the <c>"checkoutLocation"</c> property.</param>
+    /// <param name="coreDump">The value of the <c>"coreDump"</c> property.</param>
+    /// <param name="experimentalNetwork">The value of the <c>"experimentalNetwork"</c> property.</param>
+    /// <param name="gitConfig">The value of the <c>"gitConfig"</c> property.</param>
+    /// <param name="github">The value of the <c>"github"</c> property.</param>
+    /// <param name="image">The value of the <c>"image"</c> property.</param>
+    /// <param name="jetbrains">The value of the <c>"jetbrains"</c> property.</param>
+    /// <param name="mainConfiguration">The value of the <c>"mainConfiguration"</c> property.</param>
+    /// <param name="ports">The value of the <c>"ports"</c> property.</param>
+    /// <param name="tasks">The value of the <c>"tasks"</c> property.</param>
+    /// <param name="vscode">The value of the <c>"vscode"</c> property.</param>
+    /// <param name="workspaceLocation">The value of the <c>"workspaceLocation"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source additionalRepositories = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source checkoutLocation = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source coreDump = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source experimentalNetwork = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source gitConfig = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source github = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source image = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source jetbrains = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source mainConfiguration = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source ports = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source tasks = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source vscode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source workspaceLocation = default)
+    {
+        return new Source(additionalRepositories, checkoutLocation, coreDump, experimentalNetwork, gitConfig, github, image, jetbrains, mainConfiguration, ports, tasks, vscode, workspaceLocation);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="additionalRepositories">The value of the <c>"additionalRepositories"</c> property.</param>
+    /// <param name="checkoutLocation">The value of the <c>"checkoutLocation"</c> property.</param>
+    /// <param name="coreDump">The value of the <c>"coreDump"</c> property.</param>
+    /// <param name="experimentalNetwork">The value of the <c>"experimentalNetwork"</c> property.</param>
+    /// <param name="gitConfig">The value of the <c>"gitConfig"</c> property.</param>
+    /// <param name="github">The value of the <c>"github"</c> property.</param>
+    /// <param name="image">The value of the <c>"image"</c> property.</param>
+    /// <param name="jetbrains">The value of the <c>"jetbrains"</c> property.</param>
+    /// <param name="mainConfiguration">The value of the <c>"mainConfiguration"</c> property.</param>
+    /// <param name="ports">The value of the <c>"ports"</c> property.</param>
+    /// <param name="tasks">The value of the <c>"tasks"</c> property.</param>
+    /// <param name="vscode">The value of the <c>"vscode"</c> property.</param>
+    /// <param name="workspaceLocation">The value of the <c>"workspaceLocation"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> additionalRepositories = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source checkoutLocation = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> coreDump = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source experimentalNetwork = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> gitConfig = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> github = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> image = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> jetbrains = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source mainConfiguration = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> ports = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> tasks = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> vscode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source workspaceLocation = default)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, additionalRepositories, checkoutLocation, coreDump, experimentalNetwork, gitConfig, github, image, jetbrains, mainConfiguration, ports, tasks, vscode, workspaceLocation);
     }
 
     /// <summary>

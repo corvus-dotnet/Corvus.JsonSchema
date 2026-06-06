@@ -469,7 +469,7 @@ public readonly partial struct SemanticReleaseSchema
                     /// <inheritdoc/>
                     public override string ToString()
                     {
-                        if (_parent == null || _documentVersion != _parent.Version)
+                        if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                         {
                             return string.Empty;
                         }
@@ -800,11 +800,11 @@ public readonly partial struct SemanticReleaseSchema
                     }
 
                     /// <summary>
-                    /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject" />.
+                    /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Mutable" />.
                     /// </summary>
                     /// <param name="result">The result of the conversions.</param>
                     /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                    public bool TryGetAsBranchObject(out Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject result)
+                    public bool TryGetAsBranchObject(out Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Mutable result)
                     {
                         if (Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.JsonSchema.Evaluate(_parent, _idx))
                         {
@@ -817,11 +817,11 @@ public readonly partial struct SemanticReleaseSchema
                     }
 
                     /// <summary>
-                    /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString" />.
+                    /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString.Mutable" />.
                     /// </summary>
                     /// <param name="result">The result of the conversions.</param>
                     /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                    public bool TryGetAsJsonString(out Corvus.SemanticReleaseBenchmark.Current.JsonString result)
+                    public bool TryGetAsJsonString(out Corvus.SemanticReleaseBenchmark.Current.JsonString.Mutable result)
                     {
                         if (Corvus.SemanticReleaseBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                         {

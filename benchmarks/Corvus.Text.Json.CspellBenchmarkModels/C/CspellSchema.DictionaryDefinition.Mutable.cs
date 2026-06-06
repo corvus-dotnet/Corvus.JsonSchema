@@ -511,7 +511,7 @@ public readonly partial struct CspellSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -884,11 +884,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsDictionaryDefinitionAlternate(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate result)
+            public bool TryGetAsDictionaryDefinitionAlternate(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -901,11 +901,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsDictionaryDefinitionAugmented(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented result)
+            public bool TryGetAsDictionaryDefinitionAugmented(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -918,11 +918,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsDictionaryDefinitionCustom(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom result)
+            public bool TryGetAsDictionaryDefinitionCustom(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -935,11 +935,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsDictionaryDefinitionInline(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline result)
+            public bool TryGetAsDictionaryDefinitionInline(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -952,11 +952,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsDictionaryDefinitionPreferred(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred result)
+            public bool TryGetAsDictionaryDefinitionPreferred(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.JsonSchema.Evaluate(_parent, _idx))
                 {

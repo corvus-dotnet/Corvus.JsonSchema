@@ -312,10 +312,13 @@ public readonly partial struct VercelSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RequiredSizes ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<RequiredSizes>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -335,10 +338,13 @@ public readonly partial struct VercelSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RequiredSizes ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<RequiredSizes>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -358,10 +364,13 @@ public readonly partial struct VercelSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RequiredSizes ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<RequiredSizes>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -399,9 +408,12 @@ public readonly partial struct VercelSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static RequiredSizes ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<RequiredSizes>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>

@@ -245,10 +245,13 @@ public readonly partial struct CmakePresetsSchema
                     /// <exception cref="JsonException">
                     ///   A value could not be read from the span.
                     /// </exception>
+                    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Type1EntityArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
                     {
+                        #pragma warning disable CS0618 // Type or member is obsolete
                         return JsonElementHelpers.ParseValue<Type1EntityArray>(utf8Json, options);
+                        #pragma warning restore CS0618
                     }
 
                     /// <summary>
@@ -268,10 +271,13 @@ public readonly partial struct CmakePresetsSchema
                     /// <exception cref="JsonException">
                     ///   A value could not be read from the span.
                     /// </exception>
+                    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Type1EntityArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
                     {
+                        #pragma warning disable CS0618 // Type or member is obsolete
                         return JsonElementHelpers.ParseValue<Type1EntityArray>(json, options);
+                        #pragma warning restore CS0618
                     }
 
                     /// <summary>
@@ -291,10 +297,13 @@ public readonly partial struct CmakePresetsSchema
                     /// <exception cref="JsonException">
                     ///   A value could not be read from the text.
                     /// </exception>
+                    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Type1EntityArray ParseValue(string json, JsonDocumentOptions options = default)
                     {
+                        #pragma warning disable CS0618 // Type or member is obsolete
                         return JsonElementHelpers.ParseValue<Type1EntityArray>(json, options);
+                        #pragma warning restore CS0618
                     }
 
                     /// <summary>
@@ -332,9 +341,12 @@ public readonly partial struct CmakePresetsSchema
                     /// <exception cref="JsonException">
                     ///   A value could not be read from the reader.
                     /// </exception>
+                    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                     public static Type1EntityArray ParseValue(ref Utf8JsonReader reader)
                     {
+                        #pragma warning disable CS0618 // Type or member is obsolete
                         return JsonElementHelpers.ParseValue<Type1EntityArray>(ref reader);
+                        #pragma warning restore CS0618
                     }
 
                     /// <summary>

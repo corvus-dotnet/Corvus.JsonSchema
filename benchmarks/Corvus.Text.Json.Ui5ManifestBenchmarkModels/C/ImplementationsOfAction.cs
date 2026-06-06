@@ -498,10 +498,13 @@ public readonly partial struct ImplementationsOfAction
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ImplementationsOfAction ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<ImplementationsOfAction>(utf8Json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -521,10 +524,13 @@ public readonly partial struct ImplementationsOfAction
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ImplementationsOfAction ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<ImplementationsOfAction>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -544,10 +550,13 @@ public readonly partial struct ImplementationsOfAction
     /// <exception cref="JsonException">
     ///   A value could not be read from the text.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ImplementationsOfAction ParseValue(string json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<ImplementationsOfAction>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -585,9 +594,12 @@ public readonly partial struct ImplementationsOfAction
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static ImplementationsOfAction ParseValue(ref Utf8JsonReader reader)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<ImplementationsOfAction>(ref reader);
+        #pragma warning restore CS0618
     }
 
     /// <summary>

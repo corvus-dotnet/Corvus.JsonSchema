@@ -350,7 +350,7 @@ public readonly partial struct CspellSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -519,11 +519,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsLanguageIdMultiple(out Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple result)
+            public bool TryGetAsLanguageIdMultiple(out Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -536,11 +536,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsLanguageIdMultipleNeg(out Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg result)
+            public bool TryGetAsLanguageIdMultipleNeg(out Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -553,11 +553,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsLanguageIdSingle(out Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle result)
+            public bool TryGetAsLanguageIdSingle(out Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle.JsonSchema.Evaluate(_parent, _idx))
                 {

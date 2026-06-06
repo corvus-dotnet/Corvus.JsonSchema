@@ -14,6 +14,7 @@
     <AdditionalFiles Include="format-types-2020-12.json" />
     <AdditionalFiles Include="object-with-mixed-properties-2020-12.json" />
     <AdditionalFiles Include="nested-object-2020-12.json" />
+    <AdditionalFiles Include="context-named-property-2020-12.json" />
     <AdditionalFiles Include="array-of-items-2020-12.json" />
     <AdditionalFiles Include="object-with-array-property-2020-12.json" />
     <AdditionalFiles Include="composition-any-of-2020-12.json" />

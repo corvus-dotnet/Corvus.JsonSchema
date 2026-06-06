@@ -1580,7 +1580,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1683,12 +1683,28 @@ public readonly partial struct Ui5ManifestSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source _createArg4;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg12;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source _createArg13;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source _createArg14;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source _createArg15;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1702,6 +1718,26 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source arg15)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(ContentTypeAnalytical instance) => new(JsonElement.From(instance));
 
@@ -1717,6 +1753,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1735,6 +1778,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1753,6 +1803,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1771,6 +1828,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1789,6 +1853,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1806,12 +1877,28 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source _createArg4;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg12;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> _createArg13;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> _createArg14;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> _createArg15;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1823,6 +1910,27 @@ public readonly partial struct Ui5ManifestSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> arg15)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1836,6 +1944,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1854,6 +1969,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1872,6 +1994,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1890,6 +2019,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1908,6 +2044,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2085,6 +2228,63 @@ public readonly partial struct Ui5ManifestSchema
                 o = ovb._builder;
                 o.EndObject();
             }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source arg15, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> arg15, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+                o.EndObject();
+            }
         }
 
         /// <summary>
@@ -2114,6 +2314,59 @@ public readonly partial struct Ui5ManifestSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="actionableArea">The value of the <c>"actionableArea"</c> property.</param>
+        /// <param name="actions">The value of the <c>"actions"</c> property.</param>
+        /// <param name="chartProperties">The value of the <c>"chartProperties"</c> property.</param>
+        /// <param name="chartType">The value of the <c>"chartType"</c> property.</param>
+        /// <param name="data">The value of the <c>"data"</c> property.</param>
+        /// <param name="dimensionAxis">The value of the <c>"dimensionAxis"</c> property.</param>
+        /// <param name="dimensions">The value of the <c>"dimensions"</c> property.</param>
+        /// <param name="feeds">The value of the <c>"feeds"</c> property.</param>
+        /// <param name="legend">The value of the <c>"legend"</c> property.</param>
+        /// <param name="measureAxis">The value of the <c>"measureAxis"</c> property.</param>
+        /// <param name="measures">The value of the <c>"measures"</c> property.</param>
+        /// <param name="minHeight">The value of the <c>"minHeight"</c> property.</param>
+        /// <param name="plotArea">The value of the <c>"plotArea"</c> property.</param>
+        /// <param name="popover">The value of the <c>"popover"</c> property.</param>
+        /// <param name="title">The value of the <c>"title"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source actionableArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source chartType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dimensionAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source dimensions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source feeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source legend = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source measureAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source measures = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source plotArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source popover = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source title = default)
+        {
+            return new Source(actionableArea, actions, chartProperties, chartType, data, dimensionAxis, dimensions, feeds, legend, measureAxis, measures, minHeight, plotArea, popover, title);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="actionableArea">The value of the <c>"actionableArea"</c> property.</param>
+        /// <param name="actions">The value of the <c>"actions"</c> property.</param>
+        /// <param name="chartProperties">The value of the <c>"chartProperties"</c> property.</param>
+        /// <param name="chartType">The value of the <c>"chartType"</c> property.</param>
+        /// <param name="data">The value of the <c>"data"</c> property.</param>
+        /// <param name="dimensionAxis">The value of the <c>"dimensionAxis"</c> property.</param>
+        /// <param name="dimensions">The value of the <c>"dimensions"</c> property.</param>
+        /// <param name="feeds">The value of the <c>"feeds"</c> property.</param>
+        /// <param name="legend">The value of the <c>"legend"</c> property.</param>
+        /// <param name="measureAxis">The value of the <c>"measureAxis"</c> property.</param>
+        /// <param name="measures">The value of the <c>"measures"</c> property.</param>
+        /// <param name="minHeight">The value of the <c>"minHeight"</c> property.</param>
+        /// <param name="plotArea">The value of the <c>"plotArea"</c> property.</param>
+        /// <param name="popover">The value of the <c>"popover"</c> property.</param>
+        /// <param name="title">The value of the <c>"title"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source actionableArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source chartType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dimensionAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> dimensions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> feeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> legend = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source measureAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> measures = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> plotArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> popover = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> title = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, actionableArea, actions, chartProperties, chartType, data, dimensionAxis, dimensions, feeds, legend, measureAxis, measures, minHeight, plotArea, popover, title);
         }
 
         /// <summary>

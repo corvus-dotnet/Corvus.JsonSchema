@@ -1892,7 +1892,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1995,12 +1995,35 @@ public readonly partial struct Ui5ManifestSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source _createArg4;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source _createArg12;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source _createArg13;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source _createArg14;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source _createArg15;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source _createArg16;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source _createArg17;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source _createArg18;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source _createArg19;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source _createArg20;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source _createArg21;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source _createArg22;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2014,6 +2037,33 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source arg18, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source arg19, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source arg20, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source arg21, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source arg22)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(JsonSchemaForSapOvpNamespace instance) => new(JsonElement.From(instance));
 
@@ -2029,6 +2079,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2047,6 +2104,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2065,6 +2129,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2083,6 +2154,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2101,6 +2179,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2118,12 +2203,35 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source<TContext> _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source<TContext> _createArg4;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source<TContext> _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source<TContext> _createArg12;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source _createArg13;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source _createArg14;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source _createArg15;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source _createArg16;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source<TContext> _createArg17;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source<TContext> _createArg18;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source _createArg19;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source _createArg20;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source _createArg21;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source _createArg22;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2135,6 +2243,34 @@ public readonly partial struct Ui5ManifestSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source<TContext> arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source<TContext> arg17, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source<TContext> arg18, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source arg19, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source arg20, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source arg21, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source arg22)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -2148,6 +2284,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2166,6 +2309,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2184,6 +2334,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2202,6 +2359,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2220,6 +2384,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2439,6 +2610,77 @@ public readonly partial struct Ui5ManifestSchema
                 o = ovb._builder;
                 o.EndObject();
             }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source arg18, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source arg19, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source arg20, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source arg21, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source arg22, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source<TContext> arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source<TContext> arg17, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source<TContext> arg18, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source arg19, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source arg20, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source arg21, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source arg22, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22);
+                o.EndObject();
+            }
         }
 
         /// <summary>
@@ -2468,6 +2710,73 @@ public readonly partial struct Ui5ManifestSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="cards">The value of the <c>"cards"</c> property.</param>
+        /// <param name="version">The value of the <c>"_version"</c> property.</param>
+        /// <param name="bHeaderExpanded">The value of the <c>"bHeaderExpanded"</c> property.</param>
+        /// <param name="chartSettings">The value of the <c>"chartSettings"</c> property.</param>
+        /// <param name="considerAnalyticalParameters">The value of the <c>"considerAnalyticalParameters"</c> property.</param>
+        /// <param name="containerLayout">The value of the <c>"containerLayout"</c> property.</param>
+        /// <param name="dataLoadSettings">The value of the <c>"dataLoadSettings"</c> property.</param>
+        /// <param name="disableErrorPage">The value of the <c>"disableErrorPage"</c> property.</param>
+        /// <param name="disableTableCardFlexibility">The value of the <c>"disableTableCardFlexibility"</c> property.</param>
+        /// <param name="enableLazyRendering">The value of the <c>"enableLazyRendering"</c> property.</param>
+        /// <param name="enableLiveFilter">The value of the <c>"enableLiveFilter"</c> property.</param>
+        /// <param name="filterSettings">The value of the <c>"filterSettings"</c> property.</param>
+        /// <param name="globalFilterEntitySet">The value of the <c>"globalFilterEntitySet"</c> property.</param>
+        /// <param name="globalFilterEntityType">The value of the <c>"globalFilterEntityType"</c> property.</param>
+        /// <param name="globalFilterModel">The value of the <c>"globalFilterModel"</c> property.</param>
+        /// <param name="refreshIntervalInMinutes">The value of the <c>"refreshIntervalInMinutes"</c> property.</param>
+        /// <param name="refreshStrategyOnAppRestore">The value of the <c>"refreshStrategyOnAppRestore"</c> property.</param>
+        /// <param name="resizableLayout">The value of the <c>"resizableLayout"</c> property.</param>
+        /// <param name="showBasicSearch">The value of the <c>"showBasicSearch"</c> property.</param>
+        /// <param name="showDateInRelativeFormat">The value of the <c>"showDateInRelativeFormat"</c> property.</param>
+        /// <param name="smartVariantRequired">The value of the <c>"smartVariantRequired"</c> property.</param>
+        /// <param name="useDateRangeType">The value of the <c>"useDateRangeType"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source cards, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source bHeaderExpanded = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source chartSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source considerAnalyticalParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source containerLayout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source dataLoadSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source disableErrorPage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source disableTableCardFlexibility = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source enableLazyRendering = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source enableLiveFilter = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source filterSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source globalFilterEntitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source globalFilterEntityType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source globalFilterModel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source refreshIntervalInMinutes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source refreshStrategyOnAppRestore = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source resizableLayout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source showBasicSearch = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source showDateInRelativeFormat = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source smartVariantRequired = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source useDateRangeType = default)
+        {
+            return new Source(cards, version, bHeaderExpanded, chartSettings, considerAnalyticalParameters, containerLayout, dataLoadSettings, disableErrorPage, disableTableCardFlexibility, enableLazyRendering, enableLiveFilter, filterSettings, globalFilterEntitySet, globalFilterEntityType, globalFilterModel, refreshIntervalInMinutes, refreshStrategyOnAppRestore, resizableLayout, showBasicSearch, showDateInRelativeFormat, smartVariantRequired, useDateRangeType);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="cards">The value of the <c>"cards"</c> property.</param>
+        /// <param name="version">The value of the <c>"_version"</c> property.</param>
+        /// <param name="bHeaderExpanded">The value of the <c>"bHeaderExpanded"</c> property.</param>
+        /// <param name="chartSettings">The value of the <c>"chartSettings"</c> property.</param>
+        /// <param name="considerAnalyticalParameters">The value of the <c>"considerAnalyticalParameters"</c> property.</param>
+        /// <param name="containerLayout">The value of the <c>"containerLayout"</c> property.</param>
+        /// <param name="dataLoadSettings">The value of the <c>"dataLoadSettings"</c> property.</param>
+        /// <param name="disableErrorPage">The value of the <c>"disableErrorPage"</c> property.</param>
+        /// <param name="disableTableCardFlexibility">The value of the <c>"disableTableCardFlexibility"</c> property.</param>
+        /// <param name="enableLazyRendering">The value of the <c>"enableLazyRendering"</c> property.</param>
+        /// <param name="enableLiveFilter">The value of the <c>"enableLiveFilter"</c> property.</param>
+        /// <param name="filterSettings">The value of the <c>"filterSettings"</c> property.</param>
+        /// <param name="globalFilterEntitySet">The value of the <c>"globalFilterEntitySet"</c> property.</param>
+        /// <param name="globalFilterEntityType">The value of the <c>"globalFilterEntityType"</c> property.</param>
+        /// <param name="globalFilterModel">The value of the <c>"globalFilterModel"</c> property.</param>
+        /// <param name="refreshIntervalInMinutes">The value of the <c>"refreshIntervalInMinutes"</c> property.</param>
+        /// <param name="refreshStrategyOnAppRestore">The value of the <c>"refreshStrategyOnAppRestore"</c> property.</param>
+        /// <param name="resizableLayout">The value of the <c>"resizableLayout"</c> property.</param>
+        /// <param name="showBasicSearch">The value of the <c>"showBasicSearch"</c> property.</param>
+        /// <param name="showDateInRelativeFormat">The value of the <c>"showDateInRelativeFormat"</c> property.</param>
+        /// <param name="smartVariantRequired">The value of the <c>"smartVariantRequired"</c> property.</param>
+        /// <param name="useDateRangeType">The value of the <c>"useDateRangeType"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source<TContext> cards, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source bHeaderExpanded = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source<TContext> chartSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source considerAnalyticalParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source containerLayout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source<TContext> dataLoadSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source disableErrorPage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source disableTableCardFlexibility = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source enableLazyRendering = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source enableLiveFilter = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source<TContext> filterSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source globalFilterEntitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source globalFilterEntityType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source globalFilterModel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source refreshIntervalInMinutes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source<TContext> refreshStrategyOnAppRestore = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source<TContext> resizableLayout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source showBasicSearch = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source showDateInRelativeFormat = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source smartVariantRequired = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source useDateRangeType = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, cards, version, bHeaderExpanded, chartSettings, considerAnalyticalParameters, containerLayout, dataLoadSettings, disableErrorPage, disableTableCardFlexibility, enableLazyRendering, enableLiveFilter, filterSettings, globalFilterEntitySet, globalFilterEntityType, globalFilterModel, refreshIntervalInMinutes, refreshStrategyOnAppRestore, resizableLayout, showBasicSearch, showDateInRelativeFormat, smartVariantRequired, useDateRangeType);
         }
 
         /// <summary>

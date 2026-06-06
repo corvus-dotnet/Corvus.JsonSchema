@@ -355,7 +355,7 @@ public readonly partial struct SemanticReleaseSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -862,11 +862,11 @@ public readonly partial struct SemanticReleaseSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString" />.
+                /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJsonString(out Corvus.SemanticReleaseBenchmark.Current.JsonString result)
+                public bool TryGetAsJsonString(out Corvus.SemanticReleaseBenchmark.Current.JsonString.Mutable result)
                 {
                     if (Corvus.SemanticReleaseBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -879,11 +879,11 @@ public readonly partial struct SemanticReleaseSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonArray" />.
+                /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonArray.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJsonArray(out Corvus.SemanticReleaseBenchmark.Current.JsonArray result)
+                public bool TryGetAsJsonArray(out Corvus.SemanticReleaseBenchmark.Current.JsonArray.Mutable result)
                 {
                     if (Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -1255,6 +1255,17 @@ public readonly partial struct SemanticReleaseSchema
                 /// Add an item to the array.
                 /// </summary>
                 public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
+                {
+                    value.AddAsItem(ref _builder);
+                }
+
+                /// <summary>
+                /// Add an item to the array.
+                /// </summary>
+                public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
                 {
                     value.AddAsItem(ref _builder);
                 }

@@ -312,7 +312,7 @@ public readonly partial struct CmakePresetsSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -819,11 +819,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsTestPresetsItemsV2(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2 result)
+            public bool TryGetAsTestPresetsItemsV2(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -836,11 +836,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV3" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV3.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsTestPresetsItemsV3(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV3 result)
+            public bool TryGetAsTestPresetsItemsV3(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV3.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV3.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1113,6 +1113,17 @@ public readonly partial struct CmakePresetsSchema
             /// Add an item to the array.
             /// </summary>
             public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
+            {
+                value.AddAsItem(ref _builder);
+            }
+
+            /// <summary>
+            /// Add an item to the array.
+            /// </summary>
+            public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsItem(ref _builder);
             }

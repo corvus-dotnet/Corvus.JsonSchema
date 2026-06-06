@@ -1090,10 +1090,13 @@ public readonly partial struct Cql2Schema
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static ArgsEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<ArgsEntity>(utf8Json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -1113,10 +1116,13 @@ public readonly partial struct Cql2Schema
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static ArgsEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<ArgsEntity>(json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -1136,10 +1142,13 @@ public readonly partial struct Cql2Schema
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the text.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static ArgsEntity ParseValue(string json, JsonDocumentOptions options = default)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<ArgsEntity>(json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -1177,9 +1186,12 @@ public readonly partial struct Cql2Schema
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the reader.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 public static ArgsEntity ParseValue(ref Utf8JsonReader reader)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<ArgsEntity>(ref reader);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>

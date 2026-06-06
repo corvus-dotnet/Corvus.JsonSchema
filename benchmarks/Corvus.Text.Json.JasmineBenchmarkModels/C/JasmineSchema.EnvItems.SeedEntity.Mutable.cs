@@ -418,7 +418,7 @@ public readonly partial struct JasmineSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -587,11 +587,11 @@ public readonly partial struct JasmineSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JsonString" />.
+                /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JsonString.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJsonString(out Corvus.JasmineBenchmark.Current.JsonString result)
+                public bool TryGetAsJsonString(out Corvus.JasmineBenchmark.Current.JsonString.Mutable result)
                 {
                     if (Corvus.JasmineBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -604,11 +604,11 @@ public readonly partial struct JasmineSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JsonNumber" />.
+                /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JsonNumber.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJsonNumber(out Corvus.JasmineBenchmark.Current.JsonNumber result)
+                public bool TryGetAsJsonNumber(out Corvus.JasmineBenchmark.Current.JsonNumber.Mutable result)
                 {
                     if (Corvus.JasmineBenchmark.Current.JsonNumber.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -621,11 +621,11 @@ public readonly partial struct JasmineSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JsonNull" />.
+                /// Gets the value as a <see cref="Corvus.JasmineBenchmark.Current.JsonNull.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJsonNull(out Corvus.JasmineBenchmark.Current.JsonNull result)
+                public bool TryGetAsJsonNull(out Corvus.JasmineBenchmark.Current.JsonNull.Mutable result)
                 {
                     if (Corvus.JasmineBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
                     {

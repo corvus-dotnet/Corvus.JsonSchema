@@ -332,7 +332,7 @@ public readonly partial struct Cql2Schema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -487,11 +487,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.DateString" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.DateString.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsDateString(out Corvus.Cql2Benchmark.Current.Cql2Schema.DateString result)
+            public bool TryGetAsDateString(out Corvus.Cql2Benchmark.Current.Cql2Schema.DateString.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.DateString.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -504,11 +504,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampString" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampString.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsTimestampString(out Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampString result)
+            public bool TryGetAsTimestampString(out Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampString.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampString.JsonSchema.Evaluate(_parent, _idx))
                 {

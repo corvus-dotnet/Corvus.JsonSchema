@@ -251,11 +251,11 @@ public readonly partial struct ClangFormatSchema
             /// clang-format 3.5\r\r Language, this format style is targeted at.
             /// </para>
             /// </remarks>
-            public Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LanguageEntity Language
+            public Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt Language
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LanguageUtf8, out Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LanguageEntity value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LanguageUtf8, out Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt value))
                     {
                         return value;
                     }
@@ -393,10 +393,13 @@ public readonly partial struct ClangFormatSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static RawStringFormatsEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<RawStringFormatsEntity>(utf8Json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -416,10 +419,13 @@ public readonly partial struct ClangFormatSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static RawStringFormatsEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<RawStringFormatsEntity>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -439,10 +445,13 @@ public readonly partial struct ClangFormatSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the text.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static RawStringFormatsEntity ParseValue(string json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<RawStringFormatsEntity>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -480,9 +489,12 @@ public readonly partial struct ClangFormatSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the reader.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             public static RawStringFormatsEntity ParseValue(ref Utf8JsonReader reader)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<RawStringFormatsEntity>(ref reader);
+                #pragma warning restore CS0618
             }
 
             /// <summary>

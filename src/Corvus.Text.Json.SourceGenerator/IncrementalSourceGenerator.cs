@@ -197,6 +197,17 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             disabledNamingHeuristics = disabledNames.Select(d => d.Trim()).ToImmutableArray();
         }
 
+        int buildParametersThreshold = CSharpLanguageProvider.Options.DefaultBuildParametersThreshold;
+
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonBuildParametersThreshold", out string? buildParametersThresholdName) &&
+            !string.IsNullOrEmpty(buildParametersThresholdName))
+        {
+            if (!int.TryParse(buildParametersThresholdName, out buildParametersThreshold))
+            {
+                throw new InvalidOperationException($"Invalid build property value for 'CorvusTextJsonBuildParametersThreshold': '{buildParametersThresholdName}'. Expected an integer.");
+            }
+        }
+
         return new(
             fallbackVocabulary,
             optionalAsNullable,
@@ -206,7 +217,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             disabledNamingHeuristics ?? DefaultDisabledNamingHeuristics,
             defaultAccessibility,
             addExplicitUsings,
-            useImplicitOperatorString);
+            useImplicitOperatorString,
+            buildParametersThreshold);
     }
 
     private static void EmitGeneratorAttribute(IncrementalGeneratorInitializationContext initializationContext)
@@ -270,7 +282,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         ImmutableArray<string> disabledNamingHeuristics,
         Text.Json.CodeGeneration.GeneratedTypeAccessibility defaultAccessibility,
         bool addExplicitUsings,
-        bool useImplicitOperatorString) : IGlobalOptions
+        bool useImplicitOperatorString,
+        int buildParametersThreshold) : IGlobalOptions
     {
         private readonly List<CSharpLanguageProvider.NamedType> _namedTypes = [];
 
@@ -291,6 +304,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool AddExplicitUsings { get; } = addExplicitUsings;
 
         public bool UseImplicitOperatorString { get; } = useImplicitOperatorString;
+
+        public int BuildParametersThreshold { get; } = buildParametersThreshold;
 
         public bool EmitEvaluator { get; set; }
 
@@ -332,7 +347,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 fileExtension: ".g.cs",
                 defaultAccessibility: DefaultAccessibility,
                 codeGenerationMode: EmitEvaluator ? CodeGenerationMode.Both : CodeGenerationMode.TypeGeneration,
-                excludeNonNullDefaulted: ExcludeNonNullDefaulted);
+                excludeNonNullDefaulted: ExcludeNonNullDefaulted,
+                buildParametersThreshold: BuildParametersThreshold);
 
             return options;
         }

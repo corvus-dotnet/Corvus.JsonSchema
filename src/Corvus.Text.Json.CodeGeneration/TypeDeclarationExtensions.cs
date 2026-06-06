@@ -67,6 +67,7 @@ public static class TypeDeclarationExtensions
     private const string FullyQualifiedDotnetTypeNameKey = "CSharp_LanguageProvider_FullyQualifiedDotnetTypeName";
     private const string OptionalAsNullableKey = "CSharp_LanguageProvider_OptionalAsNullable";
     private const string ExcludeNonNullDefaultedKey = "CSharp_LanguageProvider_ExcludeNonNullDefaulted";
+    private const string BuildParametersThresholdKey = "CSharp_LanguageProvider_BuildParametersThreshold";
     private const string ParentKey = "CSharp_LanguageProvider_Parent";
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
     private const string UseImplicitOperatorStringKey = "CSharp_LanguageProvider_UseImplicitOperatorString";
@@ -545,6 +546,23 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the maximum estimated number of captured value slots an object type's
+    /// <c>Build(...)</c> property-parameter overload may hold before it is omitted.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns>The configured threshold, or <see cref="CSharpLanguageProvider.Options.DefaultBuildParametersThreshold"/> if not set.</returns>
+    public static int BuildParametersThreshold(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(BuildParametersThresholdKey, out int? buildParametersThreshold) &&
+            buildParametersThreshold is int value)
+        {
+            return value;
+        }
+
+        return CSharpLanguageProvider.Options.DefaultBuildParametersThreshold;
+    }
+
+    /// <summary>
     /// Gets the .NET namespace.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration.</param>
@@ -614,6 +632,7 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(AlwaysAssertFormatKey, options.AlwaysAssertFormat);
         typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
         typeDeclaration.SetMetadata(ExcludeNonNullDefaultedKey, options.ExcludeNonNullDefaulted);
+        typeDeclaration.SetMetadata(BuildParametersThresholdKey, options.BuildParametersThreshold);
         typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
         typeDeclaration.SetMetadata(AddExplicitUsingsKey, options.AddExplicitUsings);
         typeDeclaration.SetMetadata(DefaultAccessibilityKey, options.DefaultAccessibility);

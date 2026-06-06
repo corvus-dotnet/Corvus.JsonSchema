@@ -576,7 +576,7 @@ public readonly partial struct CmakePresetsSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1033,11 +1033,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonBoolean" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonBoolean(out Corvus.CmakePresetsBenchmark.Current.JsonBoolean result)
+            public bool TryGetAsJsonBoolean(out Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.JsonBoolean.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1050,11 +1050,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredTypeAndValue(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue result)
+            public bool TryGetAsRequiredTypeAndValue(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1067,11 +1067,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredConditionAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType result)
+            public bool TryGetAsRequiredConditionAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1084,11 +1084,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredLhsAndRhsAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType result)
+            public bool TryGetAsRequiredLhsAndRhsAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1101,11 +1101,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsConditionRequiredLhsAndRhsAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType result)
+            public bool TryGetAsConditionRequiredLhsAndRhsAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1118,11 +1118,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredListAndStringEntityAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType result)
+            public bool TryGetAsRequiredListAndStringEntityAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1135,11 +1135,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsConditionRequiredListAndStringEntityAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType result)
+            public bool TryGetAsConditionRequiredListAndStringEntityAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1152,11 +1152,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredRegexAndStringEntityAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType result)
+            public bool TryGetAsRequiredRegexAndStringEntityAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1169,11 +1169,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsConditionRequiredRegexAndStringEntityAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType result)
+            public bool TryGetAsConditionRequiredRegexAndStringEntityAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1186,11 +1186,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredConditionsAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType result)
+            public bool TryGetAsRequiredConditionsAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1203,11 +1203,11 @@ public readonly partial struct CmakePresetsSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType" />.
+            /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsConditionRequiredConditionsAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType result)
+            public bool TryGetAsConditionRequiredConditionsAndType(out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType.Mutable result)
             {
                 if (Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType.JsonSchema.Evaluate(_parent, _idx))
                 {

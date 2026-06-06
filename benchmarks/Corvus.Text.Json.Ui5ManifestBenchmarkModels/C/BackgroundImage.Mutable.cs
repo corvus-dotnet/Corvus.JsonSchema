@@ -561,7 +561,7 @@ public readonly partial struct BackgroundImage
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -664,12 +664,18 @@ public readonly partial struct BackgroundImage
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source _createArg1;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source _createArg2;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source _createArg3;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source _createArg4;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source _createArg5;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -683,6 +689,16 @@ public readonly partial struct BackgroundImage
         }
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source arg5)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(BackgroundImage instance) => new(JsonElement.From(instance));
 
@@ -698,6 +714,13 @@ public readonly partial struct BackgroundImage
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -716,6 +739,13 @@ public readonly partial struct BackgroundImage
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -734,6 +764,13 @@ public readonly partial struct BackgroundImage
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -752,6 +789,13 @@ public readonly partial struct BackgroundImage
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -770,6 +814,13 @@ public readonly partial struct BackgroundImage
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -967,6 +1018,22 @@ public readonly partial struct BackgroundImage
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source arg5, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -996,6 +1063,20 @@ public readonly partial struct BackgroundImage
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="url">The value of the <c>"url"</c> property.</param>
+    /// <param name="fillMode">The value of the <c>"fillMode"</c> property.</param>
+    /// <param name="horizontalAlignment">The value of the <c>"horizontalAlignment"</c> property.</param>
+    /// <param name="type">The value of the <c>"type"</c> property.</param>
+    /// <param name="verticalAlignment">The value of the <c>"verticalAlignment"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source url, in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source fillMode = default, in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source horizontalAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source verticalAlignment = default)
+    {
+        return new Source(url, fillMode, horizontalAlignment, type, verticalAlignment);
     }
 
     /// <summary>

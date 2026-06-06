@@ -136,16 +136,16 @@ public readonly partial struct Ui5ManifestSchema
         /// [Experimental] Limit the number of lines for the details text.
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity DetailsMaxLines
+        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText DetailsMaxLines
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DetailsMaxLinesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DetailsMaxLinesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText value))
                 {
                     return value;
                 }
 
-                return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.DefaultInstance;
+                return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.DefaultInstance;
             }
         }
 
@@ -505,10 +505,13 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static HeaderTypeNumeric ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<HeaderTypeNumeric>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -528,10 +531,13 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static HeaderTypeNumeric ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<HeaderTypeNumeric>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -551,10 +557,13 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static HeaderTypeNumeric ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<HeaderTypeNumeric>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -592,9 +601,12 @@ public readonly partial struct Ui5ManifestSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static HeaderTypeNumeric ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<HeaderTypeNumeric>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>

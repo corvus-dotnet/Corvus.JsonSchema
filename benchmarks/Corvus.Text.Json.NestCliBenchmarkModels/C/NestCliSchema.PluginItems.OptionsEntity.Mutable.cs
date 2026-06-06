@@ -462,7 +462,7 @@ public readonly partial struct NestCliSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -807,11 +807,11 @@ public readonly partial struct NestCliSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions" />.
+                /// Gets the value as a <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsGraphQlPluginOptions(out Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions result)
+                public bool TryGetAsGraphQlPluginOptions(out Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions.Mutable result)
                 {
                     if (Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -824,11 +824,11 @@ public readonly partial struct NestCliSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions" />.
+                /// Gets the value as a <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsPluginOptions(out Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions result)
+                public bool TryGetAsPluginOptions(out Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.Mutable result)
                 {
                     if (Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -841,11 +841,11 @@ public readonly partial struct NestCliSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions" />.
+                /// Gets the value as a <see cref="Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsSwaggerPluginOptions(out Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions result)
+                public bool TryGetAsSwaggerPluginOptions(out Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.Mutable result)
                 {
                     if (Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.JsonSchema.Evaluate(_parent, _idx))
                     {

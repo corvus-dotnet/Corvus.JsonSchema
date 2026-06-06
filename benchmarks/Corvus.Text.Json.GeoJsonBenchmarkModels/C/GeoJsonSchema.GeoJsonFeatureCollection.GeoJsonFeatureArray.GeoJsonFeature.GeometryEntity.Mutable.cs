@@ -616,7 +616,7 @@ public readonly partial struct GeoJsonSchema
                         /// <inheritdoc/>
                         public override string ToString()
                         {
-                            if (_parent == null || _documentVersion != _parent.Version)
+                            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                             {
                                 return string.Empty;
                             }
@@ -1031,11 +1031,11 @@ public readonly partial struct GeoJsonSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.JsonNull" />.
+                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.JsonNull.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsJsonNull(out Corvus.GeoJsonBenchmark.Current.JsonNull result)
+                        public bool TryGetAsJsonNull(out Corvus.GeoJsonBenchmark.Current.JsonNull.Mutable result)
                         {
                             if (Corvus.GeoJsonBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1048,11 +1048,11 @@ public readonly partial struct GeoJsonSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPoint" />.
+                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsGeoJsonPoint(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPoint result)
+                        public bool TryGetAsGeoJsonPoint(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Mutable result)
                         {
                             if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPoint.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1065,11 +1065,11 @@ public readonly partial struct GeoJsonSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonLineString" />.
+                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsGeoJsonLineString(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonLineString result)
+                        public bool TryGetAsGeoJsonLineString(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Mutable result)
                         {
                             if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonLineString.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1082,11 +1082,11 @@ public readonly partial struct GeoJsonSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPolygon" />.
+                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsGeoJsonPolygon(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPolygon result)
+                        public bool TryGetAsGeoJsonPolygon(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Mutable result)
                         {
                             if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1099,11 +1099,11 @@ public readonly partial struct GeoJsonSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint" />.
+                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsGeoJsonMultiPoint(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint result)
+                        public bool TryGetAsGeoJsonMultiPoint(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Mutable result)
                         {
                             if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1116,11 +1116,11 @@ public readonly partial struct GeoJsonSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString" />.
+                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsGeoJsonMultiLineString(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString result)
+                        public bool TryGetAsGeoJsonMultiLineString(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Mutable result)
                         {
                             if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1133,11 +1133,11 @@ public readonly partial struct GeoJsonSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon" />.
+                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsGeoJsonMultiPolygon(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon result)
+                        public bool TryGetAsGeoJsonMultiPolygon(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Mutable result)
                         {
                             if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.JsonSchema.Evaluate(_parent, _idx))
                             {
@@ -1150,11 +1150,11 @@ public readonly partial struct GeoJsonSchema
                         }
 
                         /// <summary>
-                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection" />.
+                        /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Mutable" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>
                         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                        public bool TryGetAsGeoJsonGeometryCollection(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection result)
+                        public bool TryGetAsGeoJsonGeometryCollection(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Mutable result)
                         {
                             if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.JsonSchema.Evaluate(_parent, _idx))
                             {

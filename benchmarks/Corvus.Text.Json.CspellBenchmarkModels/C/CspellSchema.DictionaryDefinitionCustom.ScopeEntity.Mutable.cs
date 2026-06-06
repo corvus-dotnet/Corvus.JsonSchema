@@ -389,7 +389,7 @@ public readonly partial struct CspellSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -896,11 +896,11 @@ public readonly partial struct CspellSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope" />.
+                /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsCustomDictionaryScope(out Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope result)
+                public bool TryGetAsCustomDictionaryScope(out Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope.Mutable result)
                 {
                     if (Corvus.CspellBenchmark.Current.CspellSchema.CustomDictionaryScope.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -913,11 +913,11 @@ public readonly partial struct CspellSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray" />.
+                /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsCustomDictionaryScopeArray(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray result)
+                public bool TryGetAsCustomDictionaryScopeArray(out Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray.Mutable result)
                 {
                     if (Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.ScopeEntity.CustomDictionaryScopeArray.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -1289,6 +1289,17 @@ public readonly partial struct CspellSchema
                 /// Add an item to the array.
                 /// </summary>
                 public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
+                {
+                    value.AddAsItem(ref _builder);
+                }
+
+                /// <summary>
+                /// Add an item to the array.
+                /// </summary>
+                public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
                 {
                     value.AddAsItem(ref _builder);
                 }

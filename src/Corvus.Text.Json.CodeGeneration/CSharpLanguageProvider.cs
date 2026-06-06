@@ -856,6 +856,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
     /// <param name="defaultAccessibility">Defines the accessibility of the generated types. Defaults to <see cref="GeneratedTypeAccessibility.Public"/>.</param>
     /// <param name="codeGenerationMode">The code generation mode to use.</param>
     /// <param name="excludeNonNullDefaulted">If true (and <paramref name="optionalAsNullable"/> is true), then optional properties that declare a non-null <c>default</c> are generated as non-nullable types.</param>
+    /// <param name="buildParametersThreshold">The maximum estimated number of captured value slots an object type's <c>Build(...)</c> property-parameter overload may hold before it is omitted (and callers fall back to the delegate/context <c>Build</c> form). See <see cref="DefaultBuildParametersThreshold"/>.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -870,8 +871,25 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
         bool addExplicitUsings = false,
         GeneratedTypeAccessibility defaultAccessibility = GeneratedTypeAccessibility.Public,
         CodeGenerationMode codeGenerationMode = CodeGenerationMode.TypeGeneration,
-        bool excludeNonNullDefaulted = false)
+        bool excludeNonNullDefaulted = false,
+        int buildParametersThreshold = 32)
     {
+        /// <summary>
+        /// The default value for <see cref="BuildParametersThreshold"/>.
+        /// </summary>
+        /// <remarks>
+        /// This bounds the estimated stack footprint that the property-parameter <c>Build(...)</c>
+        /// convenience overload adds to an object type's <c>Source</c> ref struct, by capping the
+        /// total number of captured value slots (transitively, counting nested emitting object
+        /// properties) the overload may hold. Object types whose estimate exceeds this value omit
+        /// the overload and keep the delegate/context <c>Build</c> form.
+        /// <para>
+        /// Must be kept in sync with the literal default of the <c>buildParametersThreshold</c>
+        /// constructor parameter (a primary-constructor default cannot reference this constant).
+        /// </para>
+        /// </remarks>
+        public const int DefaultBuildParametersThreshold = 32;
+
         private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
 
@@ -905,6 +923,15 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
         /// <c>default</c> are generated as non-nullable types when <see cref="OptionalAsNullable"/> is set.
         /// </summary>
         internal bool ExcludeNonNullDefaulted { get; } = excludeNonNullDefaulted;
+
+        /// <summary>
+        /// Gets the maximum estimated number of captured value slots an object type's
+        /// <c>Build(...)</c> property-parameter overload may hold before it is omitted.
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="DefaultBuildParametersThreshold"/> for the meaning of the estimate.
+        /// </remarks>
+        internal int BuildParametersThreshold { get; } = buildParametersThreshold;
 
         /// <summary>
         /// Gets the file extension (including the leading '.').

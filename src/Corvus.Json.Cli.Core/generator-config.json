@@ -70,6 +70,10 @@
         "addExplicitUsings": {
             "type": "boolean",
             "description":  "If true, then the generated files will include using statements for the standard implicit usings. You should use this when your project does not use implicit usings."
+        },
+        "buildParametersThreshold": {
+            "type": "integer",
+            "description": "The maximum estimated number of captured value slots an object type's property-parameter Build(...) overload may hold before it is omitted (and callers fall back to the delegate/context Build form). Defaults to 32 when unset."
         }
     },
     "$defs": {

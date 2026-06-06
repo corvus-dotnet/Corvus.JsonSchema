@@ -601,7 +601,7 @@ public readonly partial struct Cql2Schema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1002,11 +1002,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsGeometrycollection(out Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection result)
+            public bool TryGetAsGeometrycollection(out Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1019,11 +1019,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsLinestring(out Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring result)
+            public bool TryGetAsLinestring(out Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1036,11 +1036,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsMultilinestring(out Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring result)
+            public bool TryGetAsMultilinestring(out Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1053,11 +1053,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsMultipoint(out Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint result)
+            public bool TryGetAsMultipoint(out Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1070,11 +1070,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsMultipolygon(out Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon result)
+            public bool TryGetAsMultipolygon(out Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1087,11 +1087,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Point" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsPoint(out Corvus.Cql2Benchmark.Current.Cql2Schema.Point result)
+            public bool TryGetAsPoint(out Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.Point.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1104,11 +1104,11 @@ public readonly partial struct Cql2Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon" />.
+            /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsPolygon(out Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon result)
+            public bool TryGetAsPolygon(out Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Mutable result)
             {
                 if (Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.JsonSchema.Evaluate(_parent, _idx))
                 {

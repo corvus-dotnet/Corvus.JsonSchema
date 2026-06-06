@@ -243,11 +243,11 @@ public readonly partial struct Ui5ManifestSchema
             /// [Experimental] Limit the number of lines for the details text.
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.Mutable DetailsMaxLines
+            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Mutable DetailsMaxLines
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DetailsMaxLinesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DetailsMaxLinesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Mutable value))
                     {
                         return value;
                     }
@@ -733,7 +733,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>detailsMaxLines</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDetailsMaxLines(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.Source value)
+            public void SetDetailsMaxLines(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source value)
             {
                 CheckValidInstance();
 
@@ -1407,7 +1407,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1510,12 +1510,28 @@ public readonly partial struct Ui5ManifestSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg4;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source _createArg12;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source _createArg13;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg14;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source _createArg15;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1529,6 +1545,26 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source arg15)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(HeaderTypeNumeric instance) => new(JsonElement.From(instance));
 
@@ -1544,6 +1580,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1562,6 +1605,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1580,6 +1630,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1598,6 +1655,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1616,6 +1680,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1633,12 +1704,28 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source<TContext> _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg4;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source<TContext> _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source<TContext> _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source _createArg12;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source _createArg13;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg14;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source _createArg15;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1650,6 +1737,27 @@ public readonly partial struct Ui5ManifestSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source arg15)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1663,6 +1771,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1681,6 +1796,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1699,6 +1821,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1717,6 +1846,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1735,6 +1871,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1769,7 +1912,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source actions = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.Source detailsMaxLines = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source detailsMaxLines = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source mainIndicator = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source sideIndicators = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default,
@@ -1806,7 +1949,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source actions = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.Source detailsMaxLines = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source detailsMaxLines = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source mainIndicator = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source sideIndicators = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default,
@@ -1831,7 +1974,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source<TContext> actions = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.Source detailsMaxLines = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source detailsMaxLines = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source<TContext> mainIndicator = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source<TContext> sideIndicators = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default,
@@ -1872,7 +2015,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source<TContext> actions = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.Source detailsMaxLines = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source detailsMaxLines = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source<TContext> mainIndicator = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source<TContext> sideIndicators = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default,
@@ -1912,6 +2055,63 @@ public readonly partial struct Ui5ManifestSchema
                 o = ovb._builder;
                 o.EndObject();
             }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source arg15, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source arg15, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+                o.EndObject();
+            }
         }
 
         /// <summary>
@@ -1941,6 +2141,59 @@ public readonly partial struct Ui5ManifestSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="type">The value of the <c>"type"</c> property.</param>
+        /// <param name="actions">The value of the <c>"actions"</c> property.</param>
+        /// <param name="data">The value of the <c>"data"</c> property.</param>
+        /// <param name="details">The value of the <c>"details"</c> property.</param>
+        /// <param name="detailsMaxLines">The value of the <c>"detailsMaxLines"</c> property.</param>
+        /// <param name="mainIndicator">The value of the <c>"mainIndicator"</c> property.</param>
+        /// <param name="sideIndicators">The value of the <c>"sideIndicators"</c> property.</param>
+        /// <param name="sideIndicatorsAlignment">The value of the <c>"sideIndicatorsAlignment"</c> property.</param>
+        /// <param name="status">The value of the <c>"status"</c> property.</param>
+        /// <param name="subTitle">The value of the <c>"subTitle"</c> property.</param>
+        /// <param name="subTitleMaxLines">The value of the <c>"subTitleMaxLines"</c> property.</param>
+        /// <param name="title">The value of the <c>"title"</c> property.</param>
+        /// <param name="titleMaxLines">The value of the <c>"titleMaxLines"</c> property.</param>
+        /// <param name="unitOfMeasurement">The value of the <c>"unitOfMeasurement"</c> property.</param>
+        /// <param name="visible">The value of the <c>"visible"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source detailsMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source mainIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source sideIndicators = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source unitOfMeasurement = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source visible = default)
+        {
+            return new Source(type, actions, data, details, detailsMaxLines, mainIndicator, sideIndicators, sideIndicatorsAlignment, status, subTitle, subTitleMaxLines, title, titleMaxLines, unitOfMeasurement, visible);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="type">The value of the <c>"type"</c> property.</param>
+        /// <param name="actions">The value of the <c>"actions"</c> property.</param>
+        /// <param name="data">The value of the <c>"data"</c> property.</param>
+        /// <param name="details">The value of the <c>"details"</c> property.</param>
+        /// <param name="detailsMaxLines">The value of the <c>"detailsMaxLines"</c> property.</param>
+        /// <param name="mainIndicator">The value of the <c>"mainIndicator"</c> property.</param>
+        /// <param name="sideIndicators">The value of the <c>"sideIndicators"</c> property.</param>
+        /// <param name="sideIndicatorsAlignment">The value of the <c>"sideIndicatorsAlignment"</c> property.</param>
+        /// <param name="status">The value of the <c>"status"</c> property.</param>
+        /// <param name="subTitle">The value of the <c>"subTitle"</c> property.</param>
+        /// <param name="subTitleMaxLines">The value of the <c>"subTitleMaxLines"</c> property.</param>
+        /// <param name="title">The value of the <c>"title"</c> property.</param>
+        /// <param name="titleMaxLines">The value of the <c>"titleMaxLines"</c> property.</param>
+        /// <param name="unitOfMeasurement">The value of the <c>"unitOfMeasurement"</c> property.</param>
+        /// <param name="visible">The value of the <c>"visible"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source detailsMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source<TContext> mainIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source<TContext> sideIndicators = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source unitOfMeasurement = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source visible = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, type, actions, data, details, detailsMaxLines, mainIndicator, sideIndicators, sideIndicatorsAlignment, status, subTitle, subTitleMaxLines, title, titleMaxLines, unitOfMeasurement, visible);
         }
 
         /// <summary>
@@ -2030,7 +2283,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="visible">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.Source detailsMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source mainIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source sideIndicators = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source unitOfMeasurement = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source visible = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source detailsMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source mainIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source sideIndicators = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source unitOfMeasurement = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source visible = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2066,7 +2319,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="visible">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.DetailsMaxLinesEntity.Source detailsMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source<TContext> mainIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source<TContext> sideIndicators = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source unitOfMeasurement = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source visible = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.RepresentsTheTypeOfTheHeader.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheDetailsText.Source detailsMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericMainIndicator.Source<TContext> mainIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.HeaderTypeNumericSideIndicatorArray.Source<TContext> sideIndicators = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.TheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source unitOfMeasurement = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.ExperimentalVisibilityOfTheHeader.Source visible = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

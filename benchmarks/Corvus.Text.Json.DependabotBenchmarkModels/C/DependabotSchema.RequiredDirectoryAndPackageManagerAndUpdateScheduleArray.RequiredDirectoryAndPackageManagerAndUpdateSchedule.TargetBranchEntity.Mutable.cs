@@ -347,7 +347,7 @@ public readonly partial struct DependabotSchema
                     /// <inheritdoc/>
                     public override string ToString()
                     {
-                        if (_parent == null || _documentVersion != _parent.Version)
+                        if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                         {
                             return string.Empty;
                         }
@@ -1152,6 +1152,17 @@ public readonly partial struct DependabotSchema
                     /// Add an item to the array.
                     /// </summary>
                     public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
+                    {
+                        value.AddAsItem(ref _builder);
+                    }
+
+                    /// <summary>
+                    /// Add an item to the array.
+                    /// </summary>
+                    public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                        where TContext : allows ref struct
+#endif
                     {
                         value.AddAsItem(ref _builder);
                     }

@@ -392,16 +392,16 @@ public readonly partial struct JshintrcSchema
     /// Prohibits the use of `==` and `!=` in favor of `===` and `!==`
     /// </para>
     /// </remarks>
-    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.EqeqeqEntity Eqeqeq
+    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd Eqeqeq
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EqeqeqUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.EqeqeqEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EqeqeqUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd value))
             {
                 return value;
             }
 
-            return Corvus.JshintrcBenchmark.Current.JshintrcSchema.EqeqeqEntity.DefaultInstance;
+            return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.DefaultInstance;
         }
     }
 
@@ -938,16 +938,16 @@ public readonly partial struct JshintrcSchema
     /// Tells JSHint that your code uses Mozilla JavaScript extensions
     /// </para>
     /// </remarks>
-    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.MozEntity Moz
+    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions Moz
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MozUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.MozEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MozUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions value))
             {
                 return value;
             }
 
-            return Corvus.JshintrcBenchmark.Current.JshintrcSchema.MozEntity.DefaultInstance;
+            return Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.DefaultInstance;
         }
     }
 
@@ -959,16 +959,16 @@ public readonly partial struct JshintrcSchema
     /// Prohibits the use of `arguments.caller` and `arguments.callee`
     /// </para>
     /// </remarks>
-    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoargEntity Noarg
+    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee Noarg
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoargUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoargEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoargUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee value))
             {
                 return value;
             }
 
-            return Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoargEntity.DefaultInstance;
+            return Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.DefaultInstance;
         }
     }
 
@@ -1752,10 +1752,13 @@ public readonly partial struct JshintrcSchema
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JshintrcSchema ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JshintrcSchema>(utf8Json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -1775,10 +1778,13 @@ public readonly partial struct JshintrcSchema
     /// <exception cref="JsonException">
     ///   A value could not be read from the span.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JshintrcSchema ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JshintrcSchema>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -1798,10 +1804,13 @@ public readonly partial struct JshintrcSchema
     /// <exception cref="JsonException">
     ///   A value could not be read from the text.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JshintrcSchema ParseValue(string json, JsonDocumentOptions options = default)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JshintrcSchema>(json, options);
+        #pragma warning restore CS0618
     }
 
     /// <summary>
@@ -1839,9 +1848,12 @@ public readonly partial struct JshintrcSchema
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
+    [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static JshintrcSchema ParseValue(ref Utf8JsonReader reader)
     {
+        #pragma warning disable CS0618 // Type or member is obsolete
         return JsonElementHelpers.ParseValue<JshintrcSchema>(ref reader);
+        #pragma warning restore CS0618
     }
 
     /// <summary>

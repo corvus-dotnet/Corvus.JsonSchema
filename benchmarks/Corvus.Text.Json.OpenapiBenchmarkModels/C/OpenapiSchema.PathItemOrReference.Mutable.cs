@@ -1507,7 +1507,7 @@ public readonly partial struct OpenapiSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1832,11 +1832,11 @@ public readonly partial struct OpenapiSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItemOrReference.RequiredRef" />.
+            /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItemOrReference.RequiredRef.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsRequiredRef(out Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItemOrReference.RequiredRef result)
+            public bool TryGetAsRequiredRef(out Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItemOrReference.RequiredRef.Mutable result)
             {
                 if (Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItemOrReference.RequiredRef.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1849,11 +1849,11 @@ public readonly partial struct OpenapiSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.Reference" />.
+            /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.Reference.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsReference(out Corvus.OpenapiBenchmark.Current.OpenapiSchema.Reference result)
+            public bool TryGetAsReference(out Corvus.OpenapiBenchmark.Current.OpenapiSchema.Reference.Mutable result)
             {
                 if (Corvus.OpenapiBenchmark.Current.OpenapiSchema.Reference.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1866,11 +1866,11 @@ public readonly partial struct OpenapiSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItem" />.
+            /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItem.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsPathItem(out Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItem result)
+            public bool TryGetAsPathItem(out Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItem.Mutable result)
             {
                 if (Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItem.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -2272,6 +2272,19 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -2282,7 +2295,33 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -2314,6 +2353,18 @@ public readonly partial struct OpenapiSchema
         /// <summary>
         /// Build an instance of the value.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+        /// overload with a <c>static</c> callback, capturing your source data in the context.
+        /// </para>
+        /// <para>
+        /// A <c>Build(...)</c> overload taking the individual property values directly is
+        /// intentionally not generated for this type, because its estimated captured-argument
+        /// footprint exceeds the configured build-parameters threshold. The threshold is
+        /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+        /// </para>
+        /// </remarks>
         /// <param name="buildValue">The callback that builds the value.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>The source from which to build the value.</returns>
@@ -2326,6 +2377,18 @@ public readonly partial struct OpenapiSchema
         /// <summary>
         /// Build an instance of the value.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+        /// overload with a <c>static</c> callback, capturing your source data in the context.
+        /// </para>
+        /// <para>
+        /// A <c>Build(...)</c> overload taking the individual property values directly is
+        /// intentionally not generated for this type, because its estimated captured-argument
+        /// footprint exceeds the configured build-parameters threshold. The threshold is
+        /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+        /// </para>
+        /// </remarks>
         /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="buildValue">The callback that builds the value.</param>

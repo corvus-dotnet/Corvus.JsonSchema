@@ -231,10 +231,13 @@ public readonly partial struct OmnisharpSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static SpaceAfterMethodCallNameEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<SpaceAfterMethodCallNameEntity>(utf8Json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -254,10 +257,13 @@ public readonly partial struct OmnisharpSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static SpaceAfterMethodCallNameEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<SpaceAfterMethodCallNameEntity>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -277,10 +283,13 @@ public readonly partial struct OmnisharpSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the text.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static SpaceAfterMethodCallNameEntity ParseValue(string json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<SpaceAfterMethodCallNameEntity>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -318,9 +327,12 @@ public readonly partial struct OmnisharpSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the reader.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             public static SpaceAfterMethodCallNameEntity ParseValue(ref Utf8JsonReader reader)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<SpaceAfterMethodCallNameEntity>(ref reader);
+                #pragma warning restore CS0618
             }
 
             /// <summary>

@@ -356,10 +356,13 @@ public readonly partial struct KrakendSchema
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static RequiredDefaultForSchemeAndScope ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<RequiredDefaultForSchemeAndScope>(utf8Json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -379,10 +382,13 @@ public readonly partial struct KrakendSchema
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static RequiredDefaultForSchemeAndScope ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<RequiredDefaultForSchemeAndScope>(json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -402,10 +408,13 @@ public readonly partial struct KrakendSchema
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the text.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static RequiredDefaultForSchemeAndScope ParseValue(string json, JsonDocumentOptions options = default)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<RequiredDefaultForSchemeAndScope>(json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -443,9 +452,12 @@ public readonly partial struct KrakendSchema
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the reader.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 public static RequiredDefaultForSchemeAndScope ParseValue(ref Utf8JsonReader reader)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<RequiredDefaultForSchemeAndScope>(ref reader);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>

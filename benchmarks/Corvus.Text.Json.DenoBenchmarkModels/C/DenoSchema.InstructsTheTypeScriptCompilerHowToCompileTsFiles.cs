@@ -282,16 +282,16 @@ public readonly partial struct DenoSchema
         /// Enable experimental support for TC39 stage 2 draft decorators.
         /// </para>
         /// </remarks>
-        public Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity ExperimentalDecorators
+        public Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators ExperimentalDecorators
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalDecoratorsUtf8, out Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalDecoratorsUtf8, out Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators value))
                 {
                     return value;
                 }
 
-                return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExperimentalDecoratorsEntity.DefaultInstance;
+                return Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.DefaultInstance;
             }
         }
 
@@ -928,10 +928,13 @@ public readonly partial struct DenoSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static InstructsTheTypeScriptCompilerHowToCompileTsFiles ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<InstructsTheTypeScriptCompilerHowToCompileTsFiles>(utf8Json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -951,10 +954,13 @@ public readonly partial struct DenoSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the span.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static InstructsTheTypeScriptCompilerHowToCompileTsFiles ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<InstructsTheTypeScriptCompilerHowToCompileTsFiles>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -974,10 +980,13 @@ public readonly partial struct DenoSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the text.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static InstructsTheTypeScriptCompilerHowToCompileTsFiles ParseValue(string json, JsonDocumentOptions options = default)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<InstructsTheTypeScriptCompilerHowToCompileTsFiles>(json, options);
+            #pragma warning restore CS0618
         }
 
         /// <summary>
@@ -1015,9 +1024,12 @@ public readonly partial struct DenoSchema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
+        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         public static InstructsTheTypeScriptCompilerHowToCompileTsFiles ParseValue(ref Utf8JsonReader reader)
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             return JsonElementHelpers.ParseValue<InstructsTheTypeScriptCompilerHowToCompileTsFiles>(ref reader);
+            #pragma warning restore CS0618
         }
 
         /// <summary>

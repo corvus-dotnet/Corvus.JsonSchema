@@ -237,14 +237,14 @@ public readonly partial struct CypressSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext10 =
-                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.JsonSchema.PushChildContextUnescaped(
+                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.ExperimentalFetchPolyfillUtf8,
                         evaluationPath: ExperimentalFetchPolyfillSchemaEvaluationPath);
 
-                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
+                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
                 context.CommitChildContext(childContext10.IsMatch, ref childContext10);
             }
 

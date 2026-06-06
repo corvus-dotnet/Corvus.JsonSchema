@@ -319,7 +319,7 @@ public readonly partial struct CspellSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -488,11 +488,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.JsonString" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.JsonString.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsJsonString(out Corvus.CspellBenchmark.Current.JsonString result)
+            public bool TryGetAsJsonString(out Corvus.CspellBenchmark.Current.JsonString.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -505,11 +505,11 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.PredefinedPatterns" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.PredefinedPatterns.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsPredefinedPatterns(out Corvus.CspellBenchmark.Current.CspellSchema.PredefinedPatterns result)
+            public bool TryGetAsPredefinedPatterns(out Corvus.CspellBenchmark.Current.CspellSchema.PredefinedPatterns.Mutable result)
             {
                 if (Corvus.CspellBenchmark.Current.CspellSchema.PredefinedPatterns.JsonSchema.Evaluate(_parent, _idx))
                 {

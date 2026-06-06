@@ -190,11 +190,11 @@ public readonly partial struct Ui5ManifestSchema
                 /// The sorting direction in which the group items will be ordered
                 /// </para>
                 /// </remarks>
-                public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.DirEntity.Mutable Dir
+                public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Mutable Dir
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DirUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.DirEntity.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DirUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Mutable value))
                         {
                             return value;
                         }
@@ -257,7 +257,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>dir</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDir(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.DirEntity.Source value)
+                public void SetDir(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Source value)
                 {
                     CheckValidInstance();
 
@@ -387,7 +387,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -490,12 +490,15 @@ public readonly partial struct Ui5ManifestSchema
                 {
                     Unknown,
                     JsonElement,
+                    Create,
                     Builder,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Builder.Build? _objectBuilder;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Source _createArg1;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg2;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -509,6 +512,13 @@ public readonly partial struct Ui5ManifestSchema
                 }
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+                internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2)
+                {
+                    _createArg1 = arg1;
+                    _createArg2 = arg2;
+                    _kind = Kind.Create;
+                }
 
                 public static implicit operator Source(TheOrderByWhichTheGroupWillBeSorted instance) => new(JsonElement.From(instance));
 
@@ -524,6 +534,13 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -542,6 +559,13 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.Builder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -560,6 +584,13 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -578,6 +609,13 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -596,6 +634,13 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.Builder:
                             valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                                valueBuilder.EndItem(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -745,7 +790,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// </summary>
                 internal static void Create(
                     ref ComplexValueBuilder builder,
-                    in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.DirEntity.Source dir = default,
+                    in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Source dir = default,
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path = default)
                 {
                     dir.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dir, ref builder);
@@ -755,7 +800,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <summary>
                 /// Creates an instance of a <see cref="TheOrderByWhichTheGroupWillBeSorted"/>.
                 /// </summary>
-                public void Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.DirEntity.Source dir = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path = default)
+                public void Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Source dir = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path = default)
                 {
                     Create(ref _builder, dir, path);
                 }
@@ -780,6 +825,19 @@ public readonly partial struct Ui5ManifestSchema
                     Builder ovb = new(o);
                     value(context, ref ovb);
                     o = ovb._builder;
+                    o.EndObject();
+                }
+
+                /// <summary>
+                /// Builds the object value directly from its captured property values into the given complex value builder.
+                /// </summary>
+                /// <param name="arg1">The value of the property.</param>
+                /// <param name="arg2">The value of the property.</param>
+                /// <param name="o">The complex value builder into which to write the object.</param>
+                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
+                {
+                    o.StartObject();
+                    Create(ref o, arg1, arg2);
                     o.EndObject();
                 }
             }
@@ -811,6 +869,17 @@ public readonly partial struct Ui5ManifestSchema
                 #endif
             {
                 return new Source<TContext>(context, buildValue);
+            }
+
+            /// <summary>
+            /// Build an instance of the value directly from its property values.
+            /// </summary>
+            /// <param name="dir">The value of the <c>"dir"</c> property.</param>
+            /// <param name="path">The value of the <c>"path"</c> property.</param>
+            /// <returns>The source from which to build the value.</returns>
+            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Source dir = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path = default)
+            {
+                return new Source(dir, path);
             }
 
             /// <summary>
@@ -887,7 +956,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="path">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.DirEntity.Source dir = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.TheOrderByWhichTheGroupWillBeSorted.TheSortingDirectionInWhichTheGroupItemsWillBeOrdered.Source dir = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

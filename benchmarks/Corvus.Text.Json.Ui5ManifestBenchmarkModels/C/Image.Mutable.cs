@@ -1401,7 +1401,7 @@ public readonly partial struct Image
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -1504,12 +1504,29 @@ public readonly partial struct Image
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source _createArg1;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg3;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source _createArg4;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source _createArg5;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source _createArg6;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg7;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source _createArg8;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source _createArg9;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source _createArg10;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source _createArg11;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source _createArg12;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Spacing.Source _createArg13;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source _createArg14;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source _createArg15;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg16;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1523,6 +1540,27 @@ public readonly partial struct Image
         }
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.Image.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _createArg14 = arg14;
+            _createArg15 = arg15;
+            _createArg16 = arg16;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(Image instance) => new(JsonElement.From(instance));
 
@@ -1538,6 +1576,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1556,6 +1601,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1574,6 +1626,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1592,6 +1651,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1610,6 +1676,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1627,12 +1700,29 @@ public readonly partial struct Image
             Unknown,
             Source,
             Builder,
+            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source _createArg1;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg2;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg3;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> _createArg4;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source _createArg5;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source _createArg6;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg7;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source _createArg8;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> _createArg9;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> _createArg10;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source _createArg11;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source _createArg12;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Spacing.Source _createArg13;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source _createArg14;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source _createArg15;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg16;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1644,6 +1734,28 @@ public readonly partial struct Image
         public static implicit operator Source<TContext>(Source source) => new (source);
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Image.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16)
+        {
+            _context = context;
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
+            _createArg7 = arg7;
+            _createArg8 = arg8;
+            _createArg9 = arg9;
+            _createArg10 = arg10;
+            _createArg11 = arg11;
+            _createArg12 = arg12;
+            _createArg13 = arg13;
+            _createArg14 = arg14;
+            _createArg15 = arg15;
+            _createArg16 = arg16;
+            _kind = Kind.Create;
+        }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1657,6 +1769,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1675,6 +1794,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1693,6 +1819,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1711,6 +1844,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1729,6 +1869,13 @@ public readonly partial struct Image
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1912,6 +2059,65 @@ public readonly partial struct Image
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="arg14">The value of the property.</param>
+        /// <param name="arg15">The value of the property.</param>
+        /// <param name="arg16">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
+            o.EndObject();
+        }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
+        /// <param name="arg6">The value of the property.</param>
+        /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
+        /// <param name="arg10">The value of the property.</param>
+        /// <param name="arg11">The value of the property.</param>
+        /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
+        /// <param name="arg14">The value of the property.</param>
+        /// <param name="arg15">The value of the property.</param>
+        /// <param name="arg16">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            o.StartObject();
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -1941,6 +2147,61 @@ public readonly partial struct Image
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="url">The value of the <c>"url"</c> property.</param>
+    /// <param name="altText">The value of the <c>"altText"</c> property.</param>
+    /// <param name="backgroundColor">The value of the <c>"backgroundColor"</c> property.</param>
+    /// <param name="fallback">The value of the <c>"fallback"</c> property.</param>
+    /// <param name="height">The value of the <c>"height"</c> property.</param>
+    /// <param name="horizontalAlignment">The value of the <c>"horizontalAlignment"</c> property.</param>
+    /// <param name="id">The value of the <c>"id"</c> property.</param>
+    /// <param name="isVisible">The value of the <c>"isVisible"</c> property.</param>
+    /// <param name="requires">The value of the <c>"requires"</c> property.</param>
+    /// <param name="selectAction">The value of the <c>"selectAction"</c> property.</param>
+    /// <param name="separator">The value of the <c>"separator"</c> property.</param>
+    /// <param name="size">The value of the <c>"size"</c> property.</param>
+    /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
+    /// <param name="style">The value of the <c>"style"</c> property.</param>
+    /// <param name="type">The value of the <c>"type"</c> property.</param>
+    /// <param name="width">The value of the <c>"width"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source url, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source backgroundColor = default, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source fallback = default, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source height = default, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source horizontalAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source requires = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source size = default, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
+    {
+        return new Source(url, altText, backgroundColor, fallback, height, horizontalAlignment, id, isVisible, requires, selectAction, separator, size, spacing, style, type, width);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="url">The value of the <c>"url"</c> property.</param>
+    /// <param name="altText">The value of the <c>"altText"</c> property.</param>
+    /// <param name="backgroundColor">The value of the <c>"backgroundColor"</c> property.</param>
+    /// <param name="fallback">The value of the <c>"fallback"</c> property.</param>
+    /// <param name="height">The value of the <c>"height"</c> property.</param>
+    /// <param name="horizontalAlignment">The value of the <c>"horizontalAlignment"</c> property.</param>
+    /// <param name="id">The value of the <c>"id"</c> property.</param>
+    /// <param name="isVisible">The value of the <c>"isVisible"</c> property.</param>
+    /// <param name="requires">The value of the <c>"requires"</c> property.</param>
+    /// <param name="selectAction">The value of the <c>"selectAction"</c> property.</param>
+    /// <param name="separator">The value of the <c>"separator"</c> property.</param>
+    /// <param name="size">The value of the <c>"size"</c> property.</param>
+    /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
+    /// <param name="style">The value of the <c>"style"</c> property.</param>
+    /// <param name="type">The value of the <c>"type"</c> property.</param>
+    /// <param name="width">The value of the <c>"width"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source url, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source backgroundColor = default, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> fallback = default, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source height = default, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source horizontalAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> requires = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source size = default, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        return new Source<TContext>(context, url, altText, backgroundColor, fallback, height, horizontalAlignment, id, isVisible, requires, selectAction, separator, size, spacing, style, type, width);
     }
 
     /// <summary>

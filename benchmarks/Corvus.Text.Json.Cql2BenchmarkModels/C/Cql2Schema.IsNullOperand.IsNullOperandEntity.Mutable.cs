@@ -1281,7 +1281,7 @@ public readonly partial struct Cql2Schema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -1668,11 +1668,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsCql2Schema(out Corvus.Cql2Benchmark.Current.Cql2Schema result)
+                public bool TryGetAsCql2Schema(out Corvus.Cql2Benchmark.Current.Cql2Schema.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.Cql2Schema.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -1685,11 +1685,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.CharacterExpression" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.CharacterExpression.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsCharacterExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.CharacterExpression result)
+                public bool TryGetAsCharacterExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.CharacterExpression.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.Cql2Schema.CharacterExpression.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -1702,11 +1702,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsNumericExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression result)
+                public bool TryGetAsNumericExpression(out Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.Cql2Schema.NumericExpression.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -1719,11 +1719,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsPropertyRef(out Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef result)
+                public bool TryGetAsPropertyRef(out Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -1736,11 +1736,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialInstance" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialInstance.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsSpatialInstance(out Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialInstance result)
+                public bool TryGetAsSpatialInstance(out Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialInstance.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialInstance.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -1753,11 +1753,11 @@ public readonly partial struct Cql2Schema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalInstance" />.
+                /// Gets the value as a <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalInstance.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsTemporalInstance(out Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalInstance result)
+                public bool TryGetAsTemporalInstance(out Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalInstance.Mutable result)
                 {
                     if (Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalInstance.JsonSchema.Evaluate(_parent, _idx))
                     {

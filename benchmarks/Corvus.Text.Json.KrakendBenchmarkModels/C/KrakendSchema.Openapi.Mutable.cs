@@ -182,7 +182,7 @@ public readonly partial struct KrakendSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.Text.Json.JsonElement.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -195,7 +195,7 @@ public readonly partial struct KrakendSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.Text.Json.JsonElement.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -208,7 +208,7 @@ public readonly partial struct KrakendSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(string propertyName, out JsonElement.Mutable value)
+            public bool TryGetProperty(string propertyName, out Corvus.Text.Json.JsonElement.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -791,6 +791,16 @@ public readonly partial struct KrakendSchema
             {
                 CheckValidInstance();
                 return _parent.GetPropertyCount(_idx);
+            }
+
+            /// <summary>
+            /// Enumerates the object.
+            /// </summary>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public ObjectEnumerator<Corvus.Text.Json.JsonElement.Mutable> EnumerateObject()
+            {
+                CheckValidInstance();
+                return EnumeratorCreator.CreateObjectEnumerator<Corvus.Text.Json.JsonElement.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -2251,7 +2261,7 @@ public readonly partial struct KrakendSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -2312,7 +2322,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -2335,7 +2345,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2382,7 +2392,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2530,12 +2540,36 @@ public readonly partial struct KrakendSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source _createArg1;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg2;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ComponentSchemas.Source _createArg3;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg4;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg5;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg6;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg7;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Example.Source _createArg8;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg9;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.JwtKey.Source _createArg10;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg11;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg12;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg13;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ParametersArray.Source _createArg14;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.QueryStringsArray.Source _createArg15;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.RequiredContentTypeArray.Source _createArg16;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.DefinitionOfErrorsOas3Only.Source _createArg17;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.SupportedSchemes.Source _createArg18;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg19;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.TagsArray.Source _createArg20;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source _createArg21;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg22;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg23;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2549,6 +2583,34 @@ public readonly partial struct KrakendSchema
             }
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.KrakendBenchmark.Current.JsonArray.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ComponentSchemas.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.JsonString.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Example.Source arg8, in Corvus.KrakendBenchmark.Current.JsonString.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.JwtKey.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, in Corvus.KrakendBenchmark.Current.JsonString.Source arg12, in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ParametersArray.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.QueryStringsArray.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.RequiredContentTypeArray.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.DefinitionOfErrorsOas3Only.Source arg17, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.SupportedSchemes.Source arg18, in Corvus.KrakendBenchmark.Current.JsonString.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.TagsArray.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg21, in Corvus.KrakendBenchmark.Current.JsonString.Source arg22, in Corvus.KrakendBenchmark.Current.JsonString.Source arg23)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _createArg23 = arg23;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(Openapi instance) => new(JsonElement.From(instance));
 
@@ -2564,6 +2626,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2582,6 +2651,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2600,6 +2676,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2618,6 +2701,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2636,6 +2726,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2653,12 +2750,36 @@ public readonly partial struct KrakendSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> _createArg1;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg2;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ComponentSchemas.Source<TContext> _createArg3;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg4;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg5;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg6;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg7;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Example.Source<TContext> _createArg8;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg9;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.JwtKey.Source _createArg10;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg11;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg12;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg13;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ParametersArray.Source<TContext> _createArg14;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.QueryStringsArray.Source<TContext> _createArg15;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.RequiredContentTypeArray.Source<TContext> _createArg16;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.DefinitionOfErrorsOas3Only.Source<TContext> _createArg17;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.SupportedSchemes.Source<TContext> _createArg18;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg19;
+            private readonly Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.TagsArray.Source<TContext> _createArg20;
+            private readonly Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> _createArg21;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg22;
+            private readonly Corvus.KrakendBenchmark.Current.JsonString.Source _createArg23;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2670,6 +2791,35 @@ public readonly partial struct KrakendSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ComponentSchemas.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.JsonString.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Example.Source<TContext> arg8, in Corvus.KrakendBenchmark.Current.JsonString.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.JwtKey.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, in Corvus.KrakendBenchmark.Current.JsonString.Source arg12, in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ParametersArray.Source<TContext> arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.QueryStringsArray.Source<TContext> arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.RequiredContentTypeArray.Source<TContext> arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.DefinitionOfErrorsOas3Only.Source<TContext> arg17, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.SupportedSchemes.Source<TContext> arg18, in Corvus.KrakendBenchmark.Current.JsonString.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.TagsArray.Source<TContext> arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg21, in Corvus.KrakendBenchmark.Current.JsonString.Source arg22, in Corvus.KrakendBenchmark.Current.JsonString.Source arg23)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _createArg20 = arg20;
+                _createArg21 = arg21;
+                _createArg22 = arg22;
+                _createArg23 = arg23;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -2683,6 +2833,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2701,6 +2858,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2719,6 +2883,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2737,6 +2908,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2755,6 +2933,13 @@ public readonly partial struct KrakendSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, _createArg20, _createArg21, _createArg22, _createArg23, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2973,6 +3158,19 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -2983,7 +3181,33 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -3008,6 +3232,79 @@ public readonly partial struct KrakendSchema
                 Builder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="arg23">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonArray.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ComponentSchemas.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.JsonString.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Example.Source arg8, in Corvus.KrakendBenchmark.Current.JsonString.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.JwtKey.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, in Corvus.KrakendBenchmark.Current.JsonString.Source arg12, in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ParametersArray.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.QueryStringsArray.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.RequiredContentTypeArray.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.DefinitionOfErrorsOas3Only.Source arg17, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.SupportedSchemes.Source arg18, in Corvus.KrakendBenchmark.Current.JsonString.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.TagsArray.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg21, in Corvus.KrakendBenchmark.Current.JsonString.Source arg22, in Corvus.KrakendBenchmark.Current.JsonString.Source arg23, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="arg20">The value of the property.</param>
+            /// <param name="arg21">The value of the property.</param>
+            /// <param name="arg22">The value of the property.</param>
+            /// <param name="arg23">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ComponentSchemas.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.JsonString.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Example.Source<TContext> arg8, in Corvus.KrakendBenchmark.Current.JsonString.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.JwtKey.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, in Corvus.KrakendBenchmark.Current.JsonString.Source arg12, in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ParametersArray.Source<TContext> arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.QueryStringsArray.Source<TContext> arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.RequiredContentTypeArray.Source<TContext> arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.DefinitionOfErrorsOas3Only.Source<TContext> arg17, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.SupportedSchemes.Source<TContext> arg18, in Corvus.KrakendBenchmark.Current.JsonString.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.TagsArray.Source<TContext> arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg21, in Corvus.KrakendBenchmark.Current.JsonString.Source arg22, in Corvus.KrakendBenchmark.Current.JsonString.Source arg23, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23);
                 o.EndObject();
             }
         }
@@ -3039,6 +3336,75 @@ public readonly partial struct KrakendSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="audience">The value of the <c>"audience"</c> property.</param>
+        /// <param name="basePath">The value of the <c>"base_path"</c> property.</param>
+        /// <param name="componentsSchemas">The value of the <c>"components_schemas"</c> property.</param>
+        /// <param name="contactEmail">The value of the <c>"contact_email"</c> property.</param>
+        /// <param name="contactName">The value of the <c>"contact_name"</c> property.</param>
+        /// <param name="contactUrl">The value of the <c>"contact_url"</c> property.</param>
+        /// <param name="description">The value of the <c>"description"</c> property.</param>
+        /// <param name="example">The value of the <c>"example"</c> property.</param>
+        /// <param name="host">The value of the <c>"host"</c> property.</param>
+        /// <param name="jwtKey">The value of the <c>"jwt_key"</c> property.</param>
+        /// <param name="licenseName">The value of the <c>"license_name"</c> property.</param>
+        /// <param name="licenseUrl">The value of the <c>"license_url"</c> property.</param>
+        /// <param name="operationId">The value of the <c>"operation_id"</c> property.</param>
+        /// <param name="paramDefinition">The value of the <c>"param_definition"</c> property.</param>
+        /// <param name="queryDefinition">The value of the <c>"query_definition"</c> property.</param>
+        /// <param name="requestDefinition">The value of the <c>"request_definition"</c> property.</param>
+        /// <param name="responseDefinition">The value of the <c>"response_definition"</c> property.</param>
+        /// <param name="schemes">The value of the <c>"schemes"</c> property.</param>
+        /// <param name="summary">The value of the <c>"summary"</c> property.</param>
+        /// <param name="tagDefinition">The value of the <c>"tag_definition"</c> property.</param>
+        /// <param name="tags">The value of the <c>"tags"</c> property.</param>
+        /// <param name="termsOfService">The value of the <c>"terms_of_service"</c> property.</param>
+        /// <param name="version">The value of the <c>"version"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonArray.Source audience = default, in Corvus.KrakendBenchmark.Current.JsonString.Source basePath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ComponentSchemas.Source componentsSchemas = default, in Corvus.KrakendBenchmark.Current.JsonString.Source contactEmail = default, in Corvus.KrakendBenchmark.Current.JsonString.Source contactName = default, in Corvus.KrakendBenchmark.Current.JsonString.Source contactUrl = default, in Corvus.KrakendBenchmark.Current.JsonString.Source description = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Example.Source example = default, in Corvus.KrakendBenchmark.Current.JsonString.Source host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.JwtKey.Source jwtKey = default, in Corvus.KrakendBenchmark.Current.JsonString.Source licenseName = default, in Corvus.KrakendBenchmark.Current.JsonString.Source licenseUrl = default, in Corvus.KrakendBenchmark.Current.JsonString.Source operationId = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ParametersArray.Source paramDefinition = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.QueryStringsArray.Source queryDefinition = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.RequiredContentTypeArray.Source requestDefinition = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.DefinitionOfErrorsOas3Only.Source responseDefinition = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.SupportedSchemes.Source schemes = default, in Corvus.KrakendBenchmark.Current.JsonString.Source summary = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.TagsArray.Source tagDefinition = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source tags = default, in Corvus.KrakendBenchmark.Current.JsonString.Source termsOfService = default, in Corvus.KrakendBenchmark.Current.JsonString.Source version = default)
+        {
+            return new Source(audience, basePath, componentsSchemas, contactEmail, contactName, contactUrl, description, example, host, jwtKey, licenseName, licenseUrl, operationId, paramDefinition, queryDefinition, requestDefinition, responseDefinition, schemes, summary, tagDefinition, tags, termsOfService, version);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="audience">The value of the <c>"audience"</c> property.</param>
+        /// <param name="basePath">The value of the <c>"base_path"</c> property.</param>
+        /// <param name="componentsSchemas">The value of the <c>"components_schemas"</c> property.</param>
+        /// <param name="contactEmail">The value of the <c>"contact_email"</c> property.</param>
+        /// <param name="contactName">The value of the <c>"contact_name"</c> property.</param>
+        /// <param name="contactUrl">The value of the <c>"contact_url"</c> property.</param>
+        /// <param name="description">The value of the <c>"description"</c> property.</param>
+        /// <param name="example">The value of the <c>"example"</c> property.</param>
+        /// <param name="host">The value of the <c>"host"</c> property.</param>
+        /// <param name="jwtKey">The value of the <c>"jwt_key"</c> property.</param>
+        /// <param name="licenseName">The value of the <c>"license_name"</c> property.</param>
+        /// <param name="licenseUrl">The value of the <c>"license_url"</c> property.</param>
+        /// <param name="operationId">The value of the <c>"operation_id"</c> property.</param>
+        /// <param name="paramDefinition">The value of the <c>"param_definition"</c> property.</param>
+        /// <param name="queryDefinition">The value of the <c>"query_definition"</c> property.</param>
+        /// <param name="requestDefinition">The value of the <c>"request_definition"</c> property.</param>
+        /// <param name="responseDefinition">The value of the <c>"response_definition"</c> property.</param>
+        /// <param name="schemes">The value of the <c>"schemes"</c> property.</param>
+        /// <param name="summary">The value of the <c>"summary"</c> property.</param>
+        /// <param name="tagDefinition">The value of the <c>"tag_definition"</c> property.</param>
+        /// <param name="tags">The value of the <c>"tags"</c> property.</param>
+        /// <param name="termsOfService">The value of the <c>"terms_of_service"</c> property.</param>
+        /// <param name="version">The value of the <c>"version"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> audience = default, in Corvus.KrakendBenchmark.Current.JsonString.Source basePath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ComponentSchemas.Source<TContext> componentsSchemas = default, in Corvus.KrakendBenchmark.Current.JsonString.Source contactEmail = default, in Corvus.KrakendBenchmark.Current.JsonString.Source contactName = default, in Corvus.KrakendBenchmark.Current.JsonString.Source contactUrl = default, in Corvus.KrakendBenchmark.Current.JsonString.Source description = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Example.Source<TContext> example = default, in Corvus.KrakendBenchmark.Current.JsonString.Source host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.JwtKey.Source jwtKey = default, in Corvus.KrakendBenchmark.Current.JsonString.Source licenseName = default, in Corvus.KrakendBenchmark.Current.JsonString.Source licenseUrl = default, in Corvus.KrakendBenchmark.Current.JsonString.Source operationId = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.ParametersArray.Source<TContext> paramDefinition = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.QueryStringsArray.Source<TContext> queryDefinition = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.RequiredContentTypeArray.Source<TContext> requestDefinition = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.DefinitionOfErrorsOas3Only.Source<TContext> responseDefinition = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.SupportedSchemes.Source<TContext> schemes = default, in Corvus.KrakendBenchmark.Current.JsonString.Source summary = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.TagsArray.Source<TContext> tagDefinition = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tags = default, in Corvus.KrakendBenchmark.Current.JsonString.Source termsOfService = default, in Corvus.KrakendBenchmark.Current.JsonString.Source version = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, audience, basePath, componentsSchemas, contactEmail, contactName, contactUrl, description, example, host, jwtKey, licenseName, licenseUrl, operationId, paramDefinition, queryDefinition, requestDefinition, responseDefinition, schemes, summary, tagDefinition, tags, termsOfService, version);
         }
 
         /// <summary>

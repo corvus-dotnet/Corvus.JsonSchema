@@ -1420,14 +1420,14 @@ public readonly partial struct ClangFormatSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext82 =
-                Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LanguageEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.LanguageUtf8,
                     evaluationPath: LanguageSchemaEvaluationPath);
 
-            Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LanguageEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext82);
+            Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext82);
             context.CommitChildContext(childContext82.IsMatch, ref childContext82);
         }
 

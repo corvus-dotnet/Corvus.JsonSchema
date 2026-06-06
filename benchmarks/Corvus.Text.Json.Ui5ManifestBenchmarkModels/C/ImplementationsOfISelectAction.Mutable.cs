@@ -595,7 +595,7 @@ public readonly partial struct ImplementationsOfISelectAction
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -954,11 +954,11 @@ public readonly partial struct ImplementationsOfISelectAction
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType result)
+        public bool TryGetAsRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -971,11 +971,11 @@ public readonly partial struct ImplementationsOfISelectAction
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsImplementationsOfISelectActionRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType result)
+        public bool TryGetAsImplementationsOfISelectActionRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -988,11 +988,11 @@ public readonly partial struct ImplementationsOfISelectAction
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsImplementationsOfISelectActionRequiredType1(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1 result)
+        public bool TryGetAsImplementationsOfISelectActionRequiredType1(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1005,11 +1005,11 @@ public readonly partial struct ImplementationsOfISelectAction
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsImplementationsOfISelectActionRequiredType2(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2 result)
+        public bool TryGetAsImplementationsOfISelectActionRequiredType2(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.JsonSchema.Evaluate(_parent, _idx))
             {

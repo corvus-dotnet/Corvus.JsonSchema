@@ -418,7 +418,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -749,11 +749,11 @@ public readonly partial struct Ui5ManifestSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters" />.
+                /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsIbnActionParameters(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters result)
+                public bool TryGetAsIbnActionParameters(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Mutable result)
                 {
                     if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -766,11 +766,11 @@ public readonly partial struct Ui5ManifestSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters" />.
+                /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsParameters(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters result)
+                public bool TryGetAsParameters(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Mutable result)
                 {
                     if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.JsonSchema.Evaluate(_parent, _idx))
                     {

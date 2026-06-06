@@ -649,7 +649,7 @@ public readonly partial struct ImplementationsOfAction
         /// <inheritdoc/>
         public override string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -1022,11 +1022,11 @@ public readonly partial struct ImplementationsOfAction
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType result)
+        public bool TryGetAsRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.RequiredType.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1039,11 +1039,11 @@ public readonly partial struct ImplementationsOfAction
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsImplementationsOfActionRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType result)
+        public bool TryGetAsImplementationsOfActionRequiredType(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1056,11 +1056,11 @@ public readonly partial struct ImplementationsOfAction
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsImplementationsOfActionRequiredType1(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1 result)
+        public bool TryGetAsImplementationsOfActionRequiredType1(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType1.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1073,11 +1073,11 @@ public readonly partial struct ImplementationsOfAction
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsImplementationsOfActionRequiredType2(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2 result)
+        public bool TryGetAsImplementationsOfActionRequiredType2(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType2.JsonSchema.Evaluate(_parent, _idx))
             {
@@ -1090,11 +1090,11 @@ public readonly partial struct ImplementationsOfAction
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Mutable" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsImplementationsOfActionRequiredType3(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3 result)
+        public bool TryGetAsImplementationsOfActionRequiredType3(out Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Mutable result)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.JsonSchema.Evaluate(_parent, _idx))
             {

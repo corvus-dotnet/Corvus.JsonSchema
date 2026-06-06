@@ -2087,7 +2087,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <inheritdoc/>
                 public override string ToString()
                 {
-                    if (_parent == null || _documentVersion != _parent.Version)
+                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                     {
                         return string.Empty;
                     }
@@ -2190,12 +2190,32 @@ public readonly partial struct CmakePresetsSchema
                 {
                     Unknown,
                     JsonElement,
+                    Create,
                     Builder,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Builder.Build? _objectBuilder;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg1;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg2;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg3;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg4;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg5;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg6;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg7;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg8;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg9;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg10;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg11;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg12;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg13;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg14;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg15;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg16;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg17;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg18;
+                private readonly Corvus.Text.Json.JsonElement.Source _createArg19;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2209,6 +2229,30 @@ public readonly partial struct CmakePresetsSchema
                 }
 
                 internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.RequiredName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+                internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Text.Json.JsonElement.Source arg15, in Corvus.Text.Json.JsonElement.Source arg16, in Corvus.Text.Json.JsonElement.Source arg17, in Corvus.Text.Json.JsonElement.Source arg18, in Corvus.Text.Json.JsonElement.Source arg19)
+                {
+                    _createArg1 = arg1;
+                    _createArg2 = arg2;
+                    _createArg3 = arg3;
+                    _createArg4 = arg4;
+                    _createArg5 = arg5;
+                    _createArg6 = arg6;
+                    _createArg7 = arg7;
+                    _createArg8 = arg8;
+                    _createArg9 = arg9;
+                    _createArg10 = arg10;
+                    _createArg11 = arg11;
+                    _createArg12 = arg12;
+                    _createArg13 = arg13;
+                    _createArg14 = arg14;
+                    _createArg15 = arg15;
+                    _createArg16 = arg16;
+                    _createArg17 = arg17;
+                    _createArg18 = arg18;
+                    _createArg19 = arg19;
+                    _kind = Kind.Create;
+                }
 
                 public static implicit operator Source(RequiredName instance) => new(JsonElement.From(instance));
 
@@ -2224,6 +2268,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2242,6 +2293,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2260,6 +2318,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2278,6 +2343,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2296,6 +2368,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndItem(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2313,12 +2392,32 @@ public readonly partial struct CmakePresetsSchema
                     Unknown,
                     Source,
                     Builder,
+                    Create,
                 }
 
                 private readonly Kind _kind;
                 TContext _context;
                 Source _source;
                 private readonly Builder.Build<TContext>? _objectBuilder;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg1;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg2;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg3;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg4;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg5;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg6;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg7;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg8;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg9;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg10;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg11;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg12;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg13;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg14;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg15;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg16;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg17;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg18;
+                private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg19;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2330,6 +2429,31 @@ public readonly partial struct CmakePresetsSchema
                 public static implicit operator Source<TContext>(Source source) => new (source);
 
                 internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsV6.RequiredName.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+                internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Text.Json.JsonElement.Source<TContext> arg15, in Corvus.Text.Json.JsonElement.Source<TContext> arg16, in Corvus.Text.Json.JsonElement.Source<TContext> arg17, in Corvus.Text.Json.JsonElement.Source<TContext> arg18, in Corvus.Text.Json.JsonElement.Source<TContext> arg19)
+                {
+                    _context = context;
+                    _createArg1 = arg1;
+                    _createArg2 = arg2;
+                    _createArg3 = arg3;
+                    _createArg4 = arg4;
+                    _createArg5 = arg5;
+                    _createArg6 = arg6;
+                    _createArg7 = arg7;
+                    _createArg8 = arg8;
+                    _createArg9 = arg9;
+                    _createArg10 = arg10;
+                    _createArg11 = arg11;
+                    _createArg12 = arg12;
+                    _createArg13 = arg13;
+                    _createArg14 = arg14;
+                    _createArg15 = arg15;
+                    _createArg16 = arg16;
+                    _createArg17 = arg17;
+                    _createArg18 = arg18;
+                    _createArg19 = arg19;
+                    _kind = Kind.Create;
+                }
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -2343,6 +2467,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2361,6 +2492,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2379,6 +2517,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2397,6 +2542,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2415,6 +2567,13 @@ public readonly partial struct CmakePresetsSchema
                         case Kind.Builder:
                             valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                                valueBuilder.EndItem(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2616,6 +2775,71 @@ public readonly partial struct CmakePresetsSchema
                     o = ovb._builder;
                     o.EndObject();
                 }
+
+                /// <summary>
+                /// Builds the object value directly from its captured property values into the given complex value builder.
+                /// </summary>
+                /// <param name="arg1">The value of the property.</param>
+                /// <param name="arg2">The value of the property.</param>
+                /// <param name="arg3">The value of the property.</param>
+                /// <param name="arg4">The value of the property.</param>
+                /// <param name="arg5">The value of the property.</param>
+                /// <param name="arg6">The value of the property.</param>
+                /// <param name="arg7">The value of the property.</param>
+                /// <param name="arg8">The value of the property.</param>
+                /// <param name="arg9">The value of the property.</param>
+                /// <param name="arg10">The value of the property.</param>
+                /// <param name="arg11">The value of the property.</param>
+                /// <param name="arg12">The value of the property.</param>
+                /// <param name="arg13">The value of the property.</param>
+                /// <param name="arg14">The value of the property.</param>
+                /// <param name="arg15">The value of the property.</param>
+                /// <param name="arg16">The value of the property.</param>
+                /// <param name="arg17">The value of the property.</param>
+                /// <param name="arg18">The value of the property.</param>
+                /// <param name="arg19">The value of the property.</param>
+                /// <param name="o">The complex value builder into which to write the object.</param>
+                internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Text.Json.JsonElement.Source arg15, in Corvus.Text.Json.JsonElement.Source arg16, in Corvus.Text.Json.JsonElement.Source arg17, in Corvus.Text.Json.JsonElement.Source arg18, in Corvus.Text.Json.JsonElement.Source arg19, ref ComplexValueBuilder o)
+                {
+                    o.StartObject();
+                    Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19);
+                    o.EndObject();
+                }
+
+                /// <summary>
+                /// Builds the object value directly from its captured property values into the given complex value builder.
+                /// </summary>
+                /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                /// <param name="context">The context to pass to the builder.</param>
+                /// <param name="arg1">The value of the property.</param>
+                /// <param name="arg2">The value of the property.</param>
+                /// <param name="arg3">The value of the property.</param>
+                /// <param name="arg4">The value of the property.</param>
+                /// <param name="arg5">The value of the property.</param>
+                /// <param name="arg6">The value of the property.</param>
+                /// <param name="arg7">The value of the property.</param>
+                /// <param name="arg8">The value of the property.</param>
+                /// <param name="arg9">The value of the property.</param>
+                /// <param name="arg10">The value of the property.</param>
+                /// <param name="arg11">The value of the property.</param>
+                /// <param name="arg12">The value of the property.</param>
+                /// <param name="arg13">The value of the property.</param>
+                /// <param name="arg14">The value of the property.</param>
+                /// <param name="arg15">The value of the property.</param>
+                /// <param name="arg16">The value of the property.</param>
+                /// <param name="arg17">The value of the property.</param>
+                /// <param name="arg18">The value of the property.</param>
+                /// <param name="arg19">The value of the property.</param>
+                /// <param name="o">The complex value builder into which to write the object.</param>
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Text.Json.JsonElement.Source<TContext> arg15, in Corvus.Text.Json.JsonElement.Source<TContext> arg16, in Corvus.Text.Json.JsonElement.Source<TContext> arg17, in Corvus.Text.Json.JsonElement.Source<TContext> arg18, in Corvus.Text.Json.JsonElement.Source<TContext> arg19, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
+                {
+                    o.StartObject();
+                    Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19);
+                    o.EndObject();
+                }
             }
 
             /// <summary>
@@ -2645,6 +2869,67 @@ public readonly partial struct CmakePresetsSchema
                 #endif
             {
                 return new Source<TContext>(context, buildValue);
+            }
+
+            /// <summary>
+            /// Build an instance of the value directly from its property values.
+            /// </summary>
+            /// <param name="name">The value of the <c>"name"</c> property.</param>
+            /// <param name="condition">The value of the <c>"condition"</c> property.</param>
+            /// <param name="configFile">The value of the <c>"configFile"</c> property.</param>
+            /// <param name="configurations">The value of the <c>"configurations"</c> property.</param>
+            /// <param name="configurePreset">The value of the <c>"configurePreset"</c> property.</param>
+            /// <param name="description">The value of the <c>"description"</c> property.</param>
+            /// <param name="displayName">The value of the <c>"displayName"</c> property.</param>
+            /// <param name="environment">The value of the <c>"environment"</c> property.</param>
+            /// <param name="generators">The value of the <c>"generators"</c> property.</param>
+            /// <param name="hidden">The value of the <c>"hidden"</c> property.</param>
+            /// <param name="inheritConfigureEnvironment">The value of the <c>"inheritConfigureEnvironment"</c> property.</param>
+            /// <param name="inherits">The value of the <c>"inherits"</c> property.</param>
+            /// <param name="output">The value of the <c>"output"</c> property.</param>
+            /// <param name="packageDirectory">The value of the <c>"packageDirectory"</c> property.</param>
+            /// <param name="packageName">The value of the <c>"packageName"</c> property.</param>
+            /// <param name="packageVersion">The value of the <c>"packageVersion"</c> property.</param>
+            /// <param name="variables">The value of the <c>"variables"</c> property.</param>
+            /// <param name="vendor">The value of the <c>"vendor"</c> property.</param>
+            /// <param name="vendorName">The value of the <c>"vendorName"</c> property.</param>
+            /// <returns>The source from which to build the value.</returns>
+            public static Source Build(in Corvus.Text.Json.JsonElement.Source name, in Corvus.Text.Json.JsonElement.Source condition = default, in Corvus.Text.Json.JsonElement.Source configFile = default, in Corvus.Text.Json.JsonElement.Source configurations = default, in Corvus.Text.Json.JsonElement.Source configurePreset = default, in Corvus.Text.Json.JsonElement.Source description = default, in Corvus.Text.Json.JsonElement.Source displayName = default, in Corvus.Text.Json.JsonElement.Source environment = default, in Corvus.Text.Json.JsonElement.Source generators = default, in Corvus.Text.Json.JsonElement.Source hidden = default, in Corvus.Text.Json.JsonElement.Source inheritConfigureEnvironment = default, in Corvus.Text.Json.JsonElement.Source inherits = default, in Corvus.Text.Json.JsonElement.Source output = default, in Corvus.Text.Json.JsonElement.Source packageDirectory = default, in Corvus.Text.Json.JsonElement.Source packageName = default, in Corvus.Text.Json.JsonElement.Source packageVersion = default, in Corvus.Text.Json.JsonElement.Source variables = default, in Corvus.Text.Json.JsonElement.Source vendor = default, in Corvus.Text.Json.JsonElement.Source vendorName = default)
+            {
+                return new Source(name, condition, configFile, configurations, configurePreset, description, displayName, environment, generators, hidden, inheritConfigureEnvironment, inherits, output, packageDirectory, packageName, packageVersion, variables, vendor, vendorName);
+            }
+
+            /// <summary>
+            /// Build an instance of the value directly from its property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="name">The value of the <c>"name"</c> property.</param>
+            /// <param name="condition">The value of the <c>"condition"</c> property.</param>
+            /// <param name="configFile">The value of the <c>"configFile"</c> property.</param>
+            /// <param name="configurations">The value of the <c>"configurations"</c> property.</param>
+            /// <param name="configurePreset">The value of the <c>"configurePreset"</c> property.</param>
+            /// <param name="description">The value of the <c>"description"</c> property.</param>
+            /// <param name="displayName">The value of the <c>"displayName"</c> property.</param>
+            /// <param name="environment">The value of the <c>"environment"</c> property.</param>
+            /// <param name="generators">The value of the <c>"generators"</c> property.</param>
+            /// <param name="hidden">The value of the <c>"hidden"</c> property.</param>
+            /// <param name="inheritConfigureEnvironment">The value of the <c>"inheritConfigureEnvironment"</c> property.</param>
+            /// <param name="inherits">The value of the <c>"inherits"</c> property.</param>
+            /// <param name="output">The value of the <c>"output"</c> property.</param>
+            /// <param name="packageDirectory">The value of the <c>"packageDirectory"</c> property.</param>
+            /// <param name="packageName">The value of the <c>"packageName"</c> property.</param>
+            /// <param name="packageVersion">The value of the <c>"packageVersion"</c> property.</param>
+            /// <param name="variables">The value of the <c>"variables"</c> property.</param>
+            /// <param name="vendor">The value of the <c>"vendor"</c> property.</param>
+            /// <param name="vendorName">The value of the <c>"vendorName"</c> property.</param>
+            /// <returns>The source from which to build the value.</returns>
+            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> name, in Corvus.Text.Json.JsonElement.Source<TContext> condition = default, in Corvus.Text.Json.JsonElement.Source<TContext> configFile = default, in Corvus.Text.Json.JsonElement.Source<TContext> configurations = default, in Corvus.Text.Json.JsonElement.Source<TContext> configurePreset = default, in Corvus.Text.Json.JsonElement.Source<TContext> description = default, in Corvus.Text.Json.JsonElement.Source<TContext> displayName = default, in Corvus.Text.Json.JsonElement.Source<TContext> environment = default, in Corvus.Text.Json.JsonElement.Source<TContext> generators = default, in Corvus.Text.Json.JsonElement.Source<TContext> hidden = default, in Corvus.Text.Json.JsonElement.Source<TContext> inheritConfigureEnvironment = default, in Corvus.Text.Json.JsonElement.Source<TContext> inherits = default, in Corvus.Text.Json.JsonElement.Source<TContext> output = default, in Corvus.Text.Json.JsonElement.Source<TContext> packageDirectory = default, in Corvus.Text.Json.JsonElement.Source<TContext> packageName = default, in Corvus.Text.Json.JsonElement.Source<TContext> packageVersion = default, in Corvus.Text.Json.JsonElement.Source<TContext> variables = default, in Corvus.Text.Json.JsonElement.Source<TContext> vendor = default, in Corvus.Text.Json.JsonElement.Source<TContext> vendorName = default)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                return new Source<TContext>(context, name, condition, configFile, configurations, configurePreset, description, displayName, environment, generators, hidden, inheritConfigureEnvironment, inherits, output, packageDirectory, packageName, packageVersion, variables, vendor, vendorName);
             }
 
             /// <summary>

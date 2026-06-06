@@ -1144,7 +1144,7 @@ public readonly partial struct Ui5Schema
                                 /// <inheritdoc/>
                                 public override string ToString()
                                 {
-                                    if (_parent == null || _documentVersion != _parent.Version)
+                                    if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                                     {
                                         return string.Empty;
                                     }
@@ -1469,11 +1469,11 @@ public readonly partial struct Ui5Schema
                                 }
 
                                 /// <summary>
-                                /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2" />.
+                                /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.Mutable" />.
                                 /// </summary>
                                 /// <param name="result">The result of the conversions.</param>
                                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                                public bool TryGetAsElseEntity2(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2 result)
+                                public bool TryGetAsElseEntity2(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.Mutable result)
                                 {
                                     if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.JsonSchema.Evaluate(_parent, _idx))
                                     {
@@ -1486,11 +1486,11 @@ public readonly partial struct Ui5Schema
                                 }
 
                                 /// <summary>
-                                /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.IfEntity" />.
+                                /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.IfEntity.Mutable" />.
                                 /// </summary>
                                 /// <param name="result">The result of the conversions.</param>
                                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                                public bool TryGetAsIfEntity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.IfEntity result)
+                                public bool TryGetAsIfEntity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.IfEntity.Mutable result)
                                 {
                                     if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.IfEntity.JsonSchema.Evaluate(_parent, _idx))
                                     {
@@ -1503,11 +1503,11 @@ public readonly partial struct Ui5Schema
                                 }
 
                                 /// <summary>
-                                /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ThenEntity" />.
+                                /// Gets the value as a <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.Mutable" />.
                                 /// </summary>
                                 /// <param name="result">The result of the conversions.</param>
                                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                                public bool TryGetAsThenEntity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ThenEntity result)
+                                public bool TryGetAsThenEntity(out Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.Mutable result)
                                 {
                                     if (Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.JsonSchema.Evaluate(_parent, _idx))
                                     {
@@ -1885,6 +1885,19 @@ public readonly partial struct Ui5Schema
                                 /// </summary>
                                 /// <param name="propertyName">The name of the property to add.</param>
                                 /// <param name="value">The value of the property to add.</param>
+                                public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                                    where TContext : allows ref struct
+#endif
+                                {
+                                    value.AddAsProperty(propertyName, ref _builder);
+                                }
+
+                                /// <summary>
+                                /// Add a property to the object.
+                                /// </summary>
+                                /// <param name="propertyName">The name of the property to add.</param>
+                                /// <param name="value">The value of the property to add.</param>
                                 public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
                                 {
                                     value.AddAsProperty(propertyName, ref _builder);
@@ -1895,7 +1908,33 @@ public readonly partial struct Ui5Schema
                                 /// </summary>
                                 /// <param name="propertyName">The name of the property to add.</param>
                                 /// <param name="value">The value of the property to add.</param>
+                                public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                                    where TContext : allows ref struct
+#endif
+                                {
+                                    value.AddAsProperty(propertyName, ref _builder);
+                                }
+
+                                /// <summary>
+                                /// Add a property to the object.
+                                /// </summary>
+                                /// <param name="propertyName">The name of the property to add.</param>
+                                /// <param name="value">The value of the property to add.</param>
                                 public void AddProperty(string propertyName, in JsonElement.Source value)
+                                {
+                                    value.AddAsProperty(propertyName, ref _builder);
+                                }
+
+                                /// <summary>
+                                /// Add a property to the object.
+                                /// </summary>
+                                /// <param name="propertyName">The name of the property to add.</param>
+                                /// <param name="value">The value of the property to add.</param>
+                                public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                                    where TContext : allows ref struct
+#endif
                                 {
                                     value.AddAsProperty(propertyName, ref _builder);
                                 }
@@ -1927,6 +1966,18 @@ public readonly partial struct Ui5Schema
                             /// <summary>
                             /// Build an instance of the value.
                             /// </summary>
+                            /// <remarks>
+                            /// <para>
+                            /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+                            /// overload with a <c>static</c> callback, capturing your source data in the context.
+                            /// </para>
+                            /// <para>
+                            /// A <c>Build(...)</c> overload taking the individual property values directly is
+                            /// intentionally not generated for this type, because its estimated captured-argument
+                            /// footprint exceeds the configured build-parameters threshold. The threshold is
+                            /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+                            /// </para>
+                            /// </remarks>
                             /// <param name="buildValue">The callback that builds the value.</param>
                             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
                             /// <returns>The source from which to build the value.</returns>
@@ -1939,6 +1990,18 @@ public readonly partial struct Ui5Schema
                             /// <summary>
                             /// Build an instance of the value.
                             /// </summary>
+                            /// <remarks>
+                            /// <para>
+                            /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+                            /// overload with a <c>static</c> callback, capturing your source data in the context.
+                            /// </para>
+                            /// <para>
+                            /// A <c>Build(...)</c> overload taking the individual property values directly is
+                            /// intentionally not generated for this type, because its estimated captured-argument
+                            /// footprint exceeds the configured build-parameters threshold. The threshold is
+                            /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+                            /// </para>
+                            /// </remarks>
                             /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
                             /// <param name="context">The context to pass to the builder.</param>
                             /// <param name="buildValue">The callback that builds the value.</param>

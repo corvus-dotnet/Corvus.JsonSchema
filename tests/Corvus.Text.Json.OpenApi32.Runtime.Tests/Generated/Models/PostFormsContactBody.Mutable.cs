@@ -787,12 +787,16 @@ public readonly partial struct PostFormsContactBody
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly CanonTests32.Client.Models.JsonEmail.Source _createArg1;
+        private readonly CanonTests32.Client.Models.JsonString.Source _createArg2;
+        private readonly CanonTests32.Client.Models.JsonString.Source _createArg3;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -806,6 +810,14 @@ public readonly partial struct PostFormsContactBody
         }
 
         internal Source(CanonTests32.Client.Models.PostFormsContactBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in CanonTests32.Client.Models.JsonEmail.Source arg1, in CanonTests32.Client.Models.JsonString.Source arg2, in CanonTests32.Client.Models.JsonString.Source arg3)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(PostFormsContactBody instance) => new(JsonElement.From(instance));
 
@@ -821,6 +833,13 @@ public readonly partial struct PostFormsContactBody
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -839,6 +858,13 @@ public readonly partial struct PostFormsContactBody
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -857,6 +883,13 @@ public readonly partial struct PostFormsContactBody
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -875,6 +908,13 @@ public readonly partial struct PostFormsContactBody
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -893,6 +933,13 @@ public readonly partial struct PostFormsContactBody
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1153,6 +1200,20 @@ public readonly partial struct PostFormsContactBody
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in CanonTests32.Client.Models.JsonEmail.Source arg1, in CanonTests32.Client.Models.JsonString.Source arg2, in CanonTests32.Client.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -1182,6 +1243,18 @@ public readonly partial struct PostFormsContactBody
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="email">The value of the <c>"email"</c> property.</param>
+    /// <param name="name">The value of the <c>"name"</c> property.</param>
+    /// <param name="message">The value of the <c>"message"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in CanonTests32.Client.Models.JsonEmail.Source email, in CanonTests32.Client.Models.JsonString.Source name, in CanonTests32.Client.Models.JsonString.Source message = default)
+    {
+        return new Source(email, name, message);
     }
 
     /// <summary>

@@ -1553,7 +1553,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <inheritdoc/>
             public override string ToString()
             {
-                if (_parent == null || _documentVersion != _parent.Version)
+                if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
                 {
                     return string.Empty;
                 }
@@ -1820,11 +1820,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf0Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf0Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf0Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf0Entity result)
+            public bool TryGetAsAllOf0Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf0Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf0Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1837,11 +1837,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf1Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf1Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf1Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf1Entity result)
+            public bool TryGetAsAllOf1Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf1Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf1Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1854,11 +1854,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf2Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf2Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf2Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf2Entity result)
+            public bool TryGetAsAllOf2Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf2Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf2Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1871,11 +1871,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf3Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf3Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf3Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf3Entity result)
+            public bool TryGetAsAllOf3Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf3Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf3Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1888,11 +1888,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf4Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf4Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf4Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf4Entity result)
+            public bool TryGetAsAllOf4Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf4Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf4Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1905,11 +1905,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf5Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf5Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf5Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf5Entity result)
+            public bool TryGetAsAllOf5Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf5Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf5Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1922,11 +1922,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf6Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf6Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf6Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf6Entity result)
+            public bool TryGetAsAllOf6Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf6Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf6Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1939,11 +1939,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf7Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf7Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf7Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf7Entity result)
+            public bool TryGetAsAllOf7Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf7Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf7Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1956,11 +1956,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf8Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf8Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf8Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf8Entity result)
+            public bool TryGetAsAllOf8Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf8Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf8Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1973,11 +1973,11 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf9Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf9Entity.Mutable" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAllOf9Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf9Entity result)
+            public bool TryGetAsAllOf9Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf9Entity.Mutable result)
             {
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.AllOf9Entity.JsonSchema.Evaluate(_parent, _idx))
                 {
@@ -1996,12 +1996,25 @@ public readonly partial struct Ui5ManifestSchema
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source _createArg4;
+            private readonly Corvus.Text.Json.JsonElement.Source _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg12;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2015,6 +2028,23 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(JsonSchemaForSapCardNamespace instance) => new(JsonElement.From(instance));
 
@@ -2030,6 +2060,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2048,6 +2085,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2066,6 +2110,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2084,6 +2135,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2102,6 +2160,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2119,12 +2184,25 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> _createArg1;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source _createArg2;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source _createArg3;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> _createArg4;
+            private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg5;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> _createArg6;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg7;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg8;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> _createArg9;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source _createArg10;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg11;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.JsonString.Source _createArg12;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2136,6 +2214,24 @@ public readonly partial struct Ui5ManifestSchema
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -2149,6 +2245,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2167,6 +2270,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2185,6 +2295,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2203,6 +2320,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2221,6 +2345,13 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2380,6 +2511,57 @@ public readonly partial struct Ui5ManifestSchema
                 o = ovb._builder;
                 o.EndObject();
             }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                o.EndObject();
+            }
         }
 
         /// <summary>
@@ -2409,6 +2591,53 @@ public readonly partial struct Ui5ManifestSchema
             #endif
         {
             return new Source<TContext>(context, buildValue);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="header">The value of the <c>"header"</c> property.</param>
+        /// <param name="type">The value of the <c>"type"</c> property.</param>
+        /// <param name="version">The value of the <c>"_version"</c> property.</param>
+        /// <param name="configuration">The value of the <c>"configuration"</c> property.</param>
+        /// <param name="content">The value of the <c>"content"</c> property.</param>
+        /// <param name="data">The value of the <c>"data"</c> property.</param>
+        /// <param name="designtime">The value of the <c>"designtime"</c> property.</param>
+        /// <param name="extension">The value of the <c>"extension"</c> property.</param>
+        /// <param name="footer">The value of the <c>"footer"</c> property.</param>
+        /// <param name="headerPosition">The value of the <c>"headerPosition"</c> property.</param>
+        /// <param name="requiredHeight">The value of the <c>"requiredHeight"</c> property.</param>
+        /// <param name="requiredWidth">The value of the <c>"requiredWidth"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source header, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source configuration = default, in Corvus.Text.Json.JsonElement.Source content = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source designtime = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source extension = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source footer = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source headerPosition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredHeight = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredWidth = default)
+        {
+            return new Source(header, type, version, configuration, content, data, designtime, extension, footer, headerPosition, requiredHeight, requiredWidth);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="header">The value of the <c>"header"</c> property.</param>
+        /// <param name="type">The value of the <c>"type"</c> property.</param>
+        /// <param name="version">The value of the <c>"_version"</c> property.</param>
+        /// <param name="configuration">The value of the <c>"configuration"</c> property.</param>
+        /// <param name="content">The value of the <c>"content"</c> property.</param>
+        /// <param name="data">The value of the <c>"data"</c> property.</param>
+        /// <param name="designtime">The value of the <c>"designtime"</c> property.</param>
+        /// <param name="extension">The value of the <c>"extension"</c> property.</param>
+        /// <param name="footer">The value of the <c>"footer"</c> property.</param>
+        /// <param name="headerPosition">The value of the <c>"headerPosition"</c> property.</param>
+        /// <param name="requiredHeight">The value of the <c>"requiredHeight"</c> property.</param>
+        /// <param name="requiredWidth">The value of the <c>"requiredWidth"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> header, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> configuration = default, in Corvus.Text.Json.JsonElement.Source<TContext> content = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source designtime = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source extension = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> footer = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source headerPosition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredHeight = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredWidth = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, header, type, version, configuration, content, data, designtime, extension, footer, headerPosition, requiredHeight, requiredWidth);
         }
 
         /// <summary>

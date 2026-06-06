@@ -202,10 +202,13 @@ public readonly partial struct CypressSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static PathToFolderContainingIntegrationTestFiles ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<PathToFolderContainingIntegrationTestFiles>(utf8Json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -225,10 +228,13 @@ public readonly partial struct CypressSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static PathToFolderContainingIntegrationTestFiles ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<PathToFolderContainingIntegrationTestFiles>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -248,10 +254,13 @@ public readonly partial struct CypressSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the text.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static PathToFolderContainingIntegrationTestFiles ParseValue(string json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<PathToFolderContainingIntegrationTestFiles>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -289,9 +298,12 @@ public readonly partial struct CypressSchema
             /// <exception cref="JsonException">
             ///   A value could not be read from the reader.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             public static PathToFolderContainingIntegrationTestFiles ParseValue(ref Utf8JsonReader reader)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<PathToFolderContainingIntegrationTestFiles>(ref reader);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
