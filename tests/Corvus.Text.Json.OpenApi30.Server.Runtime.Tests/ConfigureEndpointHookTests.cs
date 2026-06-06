@@ -49,9 +49,9 @@ public class ConfigureEndpointHookTests
                 endpoint.RouteTemplate,
                 endpoint.IsCallback,
                 endpoint.SecurityRequirements.Count,
-                [.. endpoint.SecurityRequirements.Select(r => r.SchemeName)],
-                [.. endpoint.SecurityRequirements.Select(r => r.SchemeType)],
-                [.. endpoint.SecurityRequirements.Select(r => r.PolicyName)]));
+                [.. endpoint.SecurityRequirements.SelectMany(s => s.Requirements).Select(r => r.SchemeName)],
+                [.. endpoint.SecurityRequirements.SelectMany(s => s.Requirements).Select(r => r.SchemeType)],
+                [.. endpoint.SecurityRequirements.SelectMany(s => s.Requirements).Select(r => r.PolicyName)]));
         }
 
         using IHost host = await BuildHostAsync(Capture, withAuth: false);
@@ -65,8 +65,8 @@ public class ConfigureEndpointHookTests
         Assert.AreEqual("/items", listItems.RouteTemplate);
         Assert.IsFalse(listItems.IsCallback, "Operations from the main paths are not callbacks");
 
-        // Security requirements are surfaced (covspec declares bearerAuth + apiKeyAuth on listItems).
-        Assert.AreEqual(2, listItems.SecurityCount, "ListItems declares two security requirements");
+        // covspec declares `[{bearerAuth}, {apiKeyAuth}]` on listItems: two alternatives (bearerAuth OR apiKeyAuth).
+        Assert.AreEqual(2, listItems.SecurityCount, "ListItems declares two security alternatives (OR)");
         CollectionAssert.Contains(listItems.SchemeNames.ToList(), "bearerAuth");
         CollectionAssert.Contains(listItems.SchemeNames.ToList(), "apiKeyAuth");
 
@@ -100,6 +100,25 @@ public class ConfigureEndpointHookTests
     }
 
     [TestMethod]
+    public void EndpointSecurityRequirementSet_PolicyName_CombinesRequirementsWithAnd()
+    {
+        // A single-scheme alternative reuses the requirement's policy name.
+        EndpointSecurityRequirementSet single = new([new("bearerAuth", System.Array.Empty<string>(), "http")], false);
+        Assert.AreEqual("bearerAuth", single.PolicyName);
+
+        // A multi-scheme alternative ANDs the requirement policy names.
+        EndpointSecurityRequirementSet and = new(
+            [new("bearerAuth", System.Array.Empty<string>(), "http"), new("oauth2Auth", ["read"], "oauth2")],
+            false);
+        Assert.AreEqual("bearerAuth && oauth2Auth:read", and.PolicyName);
+
+        // The empty ({}) alternative is anonymous and has no policy name.
+        EndpointSecurityRequirementSet optional = new(System.Array.Empty<EndpointSecurityRequirement>(), true);
+        Assert.IsTrue(optional.IsOptional);
+        Assert.AreEqual(string.Empty, optional.PolicyName);
+    }
+
+    [TestMethod]
     public async Task RequireDeclaredAuthorization_EnforcesDeclaredSecurity()
     {
         // The generated helper applies the declared security using the canonical policy names.
@@ -109,7 +128,7 @@ public class ConfigureEndpointHookTests
         using IHost host = await BuildHostAsync(Apply, withAuth: true, registerDeclaredPolicies: true);
         using HttpClient client = host.GetTestClient();
 
-        // ListItems declares bearerAuth + apiKeyAuth -> the helper requires both policies -> challenged.
+        // ListItems declares bearerAuth OR apiKeyAuth -> the helper requires the combined OR policy -> challenged.
         HttpResponseMessage secured = await client.GetAsync("/items");
         Assert.AreEqual(
             HttpStatusCode.Unauthorized,
@@ -174,11 +193,10 @@ public class ConfigureEndpointHookTests
                         .AddScheme<AuthenticationSchemeOptions, UnauthenticatedHandler>("Test", _ => { });
                     if (registerDeclaredPolicies)
                     {
-                        // One policy per canonical EndpointSecurityRequirement.PolicyName the spec declares.
+                        // listItems is `bearerAuth OR apiKeyAuth`, so the helper requires the combined OR policy.
                         services.AddAuthorization(options =>
                         {
-                            options.AddPolicy("bearerAuth", p => p.RequireAuthenticatedUser());
-                            options.AddPolicy("apiKeyAuth", p => p.RequireAuthenticatedUser());
+                            options.AddPolicy("bearerAuth || apiKeyAuth", p => p.RequireAuthenticatedUser());
                         });
                     }
                     else

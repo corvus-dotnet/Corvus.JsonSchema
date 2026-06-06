@@ -102,17 +102,13 @@ app.MapApiEndpoints(
             builder.WithMetadata(new EndpointGroupNameAttribute("event-deliveries"));
         }
 
-        // For a spec that declares security, translate each requirement into the
-        // authorization policies your app registered. event-api.json declares no
-        // security, so this list is empty and the endpoints stay anonymous.
-        foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
-        {
-            builder.RequireAuthorization($"{requirement.SchemeName}:{string.Join('+', requirement.Scopes)}");
-        }
+        // Apply any declared OpenAPI security using the canonical policy-name convention.
+        // event-api.json declares no security, so every endpoint is AllowAnonymous.
+        builder.RequireDeclaredAuthorization(endpoint);
     });
 ```
 
-`EndpointDescriptor` carries the `OperationId`, `MethodName`, `HttpMethod`, `RouteTemplate`, `Tags`, `IsCallback`, and `SecurityRequirements` for the operation. See the "Customizing Generated Endpoints" section of the main OpenAPI guide (`docs/OpenApi.md`) for the full descriptor reference and a spec that wires `RequireAuthorization()` from declared security.
+`EndpointDescriptor` carries the `OperationId`, `MethodName`, `HttpMethod`, `RouteTemplate`, `Tags`, `IsCallback`, and `SecurityRequirements` (a list of OR alternatives) for the operation. See the "Applying OpenAPI Security as Authorization" section of the main OpenAPI guide (`docs/OpenApi.md`) for the full descriptor reference and the `RequireDeclaredAuthorization` helper.
 
 ## Running the Recipe
 

@@ -50,15 +50,12 @@ app.MapApiEndpoints(
             builder.WithMetadata(new EndpointGroupNameAttribute("event-deliveries"));
         }
 
-        // Translate any declared OpenAPI security into the authorization policies your
-        // app has registered. event-api.json declares no security, so this list is empty
-        // and the endpoints stay anonymous (the curl calls below return 200). For a spec
-        // that does declare security, this is where RequireAuthorization() is applied —
-        // see docs/OpenApi.md, "Customizing Generated Endpoints".
-        foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
-        {
-            builder.RequireAuthorization($"{requirement.SchemeName}:{string.Join('+', requirement.Scopes)}");
-        }
+        // Translate any declared OpenAPI security into authorization, using the canonical
+        // policy-name convention. event-api.json declares no security, so every endpoint is
+        // marked AllowAnonymous and the curl calls below return 200. For a spec that does
+        // declare security, register the matching policies and this one line applies them —
+        // see docs/OpenApi.md, "Applying OpenAPI Security as Authorization".
+        builder.RequireDeclaredAuthorization(endpoint);
     });
 
 app.Lifetime.ApplicationStarted.Register(() =>

@@ -524,7 +524,7 @@ The bare `MapApiEndpoints(petsHandler)` overload is preserved unchanged; the cal
 
 ### EndpointDescriptor
 
-`EndpointDescriptor`, `EndpointSecurityRequirement`, and the `ConfigureEndpoint` delegate are read-only types generated alongside `ApiEndpointRegistration` in your server's root namespace.
+`EndpointDescriptor`, `EndpointSecurityRequirementSet`, `EndpointSecurityRequirement`, and the `ConfigureEndpoint` delegate are read-only types generated alongside `ApiEndpointRegistration` in your server's root namespace.
 
 | Member | Type | Description |
 |---|---|---|
@@ -534,11 +534,23 @@ The bare `MapApiEndpoints(petsHandler)` overload is preserved unchanged; the cal
 | `RouteTemplate` | `string` | ASP.NET route template as registered |
 | `Tags` | `IReadOnlyList<string>` | OpenAPI tags for the operation |
 | `IsCallback` | `bool` | `true` for webhook/callback operations, `false` for main `paths` |
-| `SecurityRequirements` | `IReadOnlyList<EndpointSecurityRequirement>` | The operation's declared security (see below) |
+| `SecurityRequirements` | `IReadOnlyList<EndpointSecurityRequirementSet>` | The operation's declared security as a list of **alternatives** (see below) |
 
 `SecurityRequirements` is populated for all supported spec versions (OpenAPI 3.0, 3.1, and 3.2). Operation-level `security` takes precedence over the document-level default; operations that declare neither surface an empty list.
 
-Each `EndpointSecurityRequirement` carries:
+#### The OR/AND structure
+
+OpenAPI security mirrors the spec's `security` array exactly: it is a list of **alternatives**, and the operation is satisfied if **any one** alternative is met (OR). Each alternative — an `EndpointSecurityRequirementSet` — is a group of scheme requirements that must **all** be met together (AND). For example `[{bearerAuth: []}, {apiKeyAuth: []}]` means *bearerAuth OR apiKeyAuth*, whereas `[{bearerAuth: [], apiKeyAuth: []}]` means *bearerAuth AND apiKeyAuth*.
+
+`EndpointSecurityRequirementSet` (one alternative):
+
+| Member | Type | Description |
+|---|---|---|
+| `Requirements` | `IReadOnlyList<EndpointSecurityRequirement>` | The scheme requirements that must all be satisfied together (AND) |
+| `IsOptional` | `bool` | `true` when this alternative is the empty OpenAPI requirement (`{}`), which permits anonymous access |
+| `PolicyName` | `string` | The canonical policy name for the alternative: the single requirement's `PolicyName`, or the requirement policy names joined with ` && ` (empty for an anonymous alternative) |
+
+`EndpointSecurityRequirement` (one scheme within an alternative):
 
 | Member | Type | Description |
 |---|---|---|
@@ -549,11 +561,17 @@ Each `EndpointSecurityRequirement` carries:
 
 ### Applying OpenAPI Security as Authorization
 
-The generator parses `components.securitySchemes` and per-operation `security` and surfaces them on the descriptor, but it deliberately does **not** decide *how* a scheme maps to an authentication handler or how scopes are enforced — those are application concerns. It does, however, generate a small helper that applies the declared security using a sensible default convention, so the common case needs only one line.
+The generator surfaces `components.securitySchemes` and per-operation `security` on the descriptor, but it deliberately does **not** decide *how* a scheme maps to an authentication handler or how scopes are enforced — those are application concerns. It does, however, generate a small helper that applies the declared security using a sensible default convention, so the common case needs only one line.
 
 #### The generated `RequireDeclaredAuthorization` helper
 
-Alongside the registration types, the generator emits an `EndpointSecurityConventions.RequireDeclaredAuthorization` extension. It marks operations with no declared security as `AllowAnonymous`, and for every declared requirement calls `RequireAuthorization` with the requirement's `PolicyName`. You register one policy per `PolicyName` and wire the helper into the hook:
+Alongside the registration types, the generator emits an `EndpointSecurityConventions.RequireDeclaredAuthorization` extension. Its behaviour follows the alternatives:
+
+- No declared security, or any anonymous (`{}`) alternative → `AllowAnonymous`.
+- A single alternative → `RequireAuthorization` for each scheme in it (AND), using each requirement's `PolicyName`.
+- Multiple alternatives (OR) → a single `RequireAuthorization` with a combined name (the alternatives' `PolicyName`s joined by ` || `), because ASP.NET endpoint conventions cannot OR policies. You register that one policy with your own OR logic.
+
+You register the referenced policies and wire the helper into the hook:
 
 ```csharp
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -561,9 +579,12 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthentication(/* your scheme(s) */);
 builder.Services.AddAuthorization(options =>
 {
-    // One policy per canonical PolicyName your spec declares.
-    options.AddPolicy("bearerAuth", p => p.RequireAuthenticatedUser());
+    // Single-alternative operations require one policy per requirement PolicyName.
     options.AddPolicy("oauth2:read:pets", p => p.RequireClaim("scope", "read:pets"));
+
+    // An OR operation ([{bearerAuth}, {apiKeyAuth}]) requires the combined policy; you supply the OR logic.
+    options.AddPolicy("bearerAuth || apiKeyAuth", p => p.RequireAssertion(ctx =>
+        ctx.User.HasClaim(c => c.Type == "bearer") || ctx.User.HasClaim(c => c.Type == "apikey")));
 });
 
 WebApplication app = builder.Build();
@@ -577,11 +598,9 @@ app.MapApiEndpoints(petsHandler, static (in EndpointDescriptor endpoint, IEndpoi
 app.Run();
 ```
 
-> **Note on combining semantics.** `RequireDeclaredAuthorization` calls `RequireAuthorization` once per declared requirement, so multiple requirements on one operation are combined with **AND** semantics (every policy must pass). OpenAPI's OR-between-alternatives form (any one of several requirement objects satisfies the operation) is not yet represented; if you need OR semantics, write the mapping yourself using `SecurityRequirements` (see below).
-
 #### Writing the mapping yourself
 
-`RequireDeclaredAuthorization` is just a convenience over `SecurityRequirements`. When you need different policy names, OR semantics, or to branch on `SchemeType`, do the mapping inline:
+`RequireDeclaredAuthorization` is just a convenience over `SecurityRequirements`. When you need different policy names or to branch on `SchemeType`, walk the alternatives yourself:
 
 ```csharp
 app.MapApiEndpoints(petsHandler, static (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
@@ -592,11 +611,16 @@ app.MapApiEndpoints(petsHandler, static (in EndpointDescriptor endpoint, IEndpoi
         return;
     }
 
-    foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
+    foreach (EndpointSecurityRequirementSet alternative in endpoint.SecurityRequirements)
     {
-        // requirement.SchemeType is "oauth2", "apiKey", "http", or "openIdConnect".
-        builder.RequireAuthorization(requirement.PolicyName);
+        foreach (EndpointSecurityRequirement requirement in alternative.Requirements)
+        {
+            // requirement.SchemeType is "oauth2", "apiKey", "http", or "openIdConnect".
+            _ = requirement.PolicyName;
+        }
     }
+
+    // ...translate the OR-of-ANDs however your app enforces it.
 });
 ```
 

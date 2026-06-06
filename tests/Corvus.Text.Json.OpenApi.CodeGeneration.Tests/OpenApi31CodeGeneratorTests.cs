@@ -8309,7 +8309,7 @@ public class OpenApi31CodeGeneratorTests
         // OpenAPI 3.1 extracts security: operations without declared security surface an empty list,
         // while the secured listItems operation surfaces its requirements with the resolved scheme type.
         Assert.IsTrue(
-            registration.Content.Contains("securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()", StringComparison.Ordinal),
+            registration.Content.Contains("securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()", StringComparison.Ordinal),
             "Expected unsecured 3.1 endpoints to surface an empty security requirements list");
         Assert.IsTrue(
             registration.Content.Contains("new EndpointSecurityRequirement(\"bearerAuth\", System.Array.Empty<string>(), \"http\")", StringComparison.Ordinal),
@@ -8325,6 +8325,9 @@ public class OpenApi31CodeGeneratorTests
         Assert.IsTrue(
             registration.Content.Contains("public static class EndpointSecurityConventions", StringComparison.Ordinal),
             "Expected the EndpointSecurityConventions helper class to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public readonly struct EndpointSecurityRequirementSet", StringComparison.Ordinal),
+            "Expected the EndpointSecurityRequirementSet struct (the OR alternative) to be emitted");
         Assert.IsTrue(
             registration.Content.Contains("public static IEndpointConventionBuilder RequireDeclaredAuthorization(this IEndpointConventionBuilder builder, in EndpointDescriptor endpoint)", StringComparison.Ordinal),
             "Expected the RequireDeclaredAuthorization extension method to be emitted");

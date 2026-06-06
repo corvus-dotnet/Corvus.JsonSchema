@@ -1197,8 +1197,8 @@ public class OpenApi32CodeGeneratorTests
         // covspec declares security schemes; the operation's requirements must be surfaced on the
         // descriptor so consumers can apply authorization.
         Assert.IsTrue(
-            registration.Content.Contains("securityRequirements: new EndpointSecurityRequirement[]", StringComparison.Ordinal),
-            "Expected at least one operation to surface its security requirements");
+            registration.Content.Contains("securityRequirements: new EndpointSecurityRequirementSet[]", StringComparison.Ordinal),
+            "Expected at least one operation to surface its security requirement sets");
         Assert.IsTrue(
             registration.Content.Contains("new EndpointSecurityRequirement(\"bearerAuth\", System.Array.Empty<string>(), \"http\")", StringComparison.Ordinal),
             "Expected the bearerAuth scheme to be surfaced on the descriptor with its resolved scheme type");
@@ -1216,6 +1216,9 @@ public class OpenApi32CodeGeneratorTests
         Assert.IsTrue(
             registration.Content.Contains("public static class EndpointSecurityConventions", StringComparison.Ordinal),
             "Expected the EndpointSecurityConventions helper class to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public readonly struct EndpointSecurityRequirementSet", StringComparison.Ordinal),
+            "Expected the EndpointSecurityRequirementSet struct (the OR alternative) to be emitted");
         Assert.IsTrue(
             registration.Content.Contains("public static IEndpointConventionBuilder RequireDeclaredAuthorization(this IEndpointConventionBuilder builder, in EndpointDescriptor endpoint)", StringComparison.Ordinal),
             "Expected the RequireDeclaredAuthorization extension method to be emitted");
