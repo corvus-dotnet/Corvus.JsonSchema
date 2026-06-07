@@ -63,7 +63,9 @@ internal readonly struct Comparand
             ComparandKind.Null => true,
             ComparandKind.Boolean => this.Boolean == other.Boolean,
             ComparandKind.Number => this.Number.Equals(other.Number),
-            ComparandKind.String => string.Equals(this.Text, other.Text, StringComparison.Ordinal),
+
+            // Arazzo §Condition Evaluation: string comparisons MUST be case-insensitive.
+            ComparandKind.String => string.Equals(this.Text, other.Text, StringComparison.OrdinalIgnoreCase),
             ComparandKind.Json => string.Equals(this.Text, other.Text, StringComparison.Ordinal),
             _ => false,
         };
@@ -95,8 +97,15 @@ internal readonly struct Comparand
     /// <returns>The parsed comparand, or <see cref="Undefined"/> if the token is not a recognized literal.</returns>
     public static Comparand ParseLiteral(ReadOnlySpan<char> token)
     {
-        if (token.Length >= 2 && ((token[0] == '\'' && token[^1] == '\'') || (token[0] == '"' && token[^1] == '"')))
+        if (token.Length >= 2 && token[0] == '\'' && token[^1] == '\'')
         {
+            // Arazzo §Literals: single-quoted; a literal single quote is escaped by doubling ('').
+            return FromString(token[1..^1].ToString().Replace("''", "'", StringComparison.Ordinal));
+        }
+
+        if (token.Length >= 2 && token[0] == '"' && token[^1] == '"')
+        {
+            // Leniently accept double-quoted strings (the spec mandates single quotes).
             return FromString(token[1..^1].ToString());
         }
 
