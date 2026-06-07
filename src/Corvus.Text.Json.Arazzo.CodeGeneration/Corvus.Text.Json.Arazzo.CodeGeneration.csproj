@@ -20,6 +20,10 @@
     <ProjectReference Include="..\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo10\Corvus.Text.Json.Arazzo10.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi.CodeGeneration\Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi31\Corvus.Text.Json.OpenApi31.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi32\Corvus.Text.Json.OpenApi32.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
