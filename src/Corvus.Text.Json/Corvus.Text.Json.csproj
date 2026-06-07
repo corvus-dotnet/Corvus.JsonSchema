@@ -182,6 +182,7 @@
     <Compile Include="Corvus\Text\Json\Document\Internal\ArrayEnumerator.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\JsonDocument.PropertyMap.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\IJsonDocument.cs" />
+    <Compile Include="Corvus\Text\Json\Document\Internal\JsonDocumentCloning.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\IWorkspaceManagedDocument.cs" />
     <Compile Include="Corvus\Text\Json\Document\ArrayEnumerator{T}.cs" />
     <Compile Include="Corvus\Text\Json\Document\Utf8IriReferenceValue.cs" />

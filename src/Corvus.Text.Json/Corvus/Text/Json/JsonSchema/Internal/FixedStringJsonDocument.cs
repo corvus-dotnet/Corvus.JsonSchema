@@ -75,6 +75,8 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
 
     JsonElement IJsonDocument.CloneElement(int index) => new(this, 0);
 
+    JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace) => JsonDocumentCloning.CloneElementAsBuilderBySerialization(this, index, workspace);
+
     TElement IJsonDocument.CloneElement<TElement>(int index)
     {
 #if NET

@@ -578,6 +578,20 @@ public interface IJsonDocument : IDisposable
     JsonElement CloneElement(int index);
 
     /// <summary>
+    /// Creates a <em>standalone</em> copy of the element at the specified index as a new document
+    /// owned by <paramref name="workspace"/>.
+    /// </summary>
+    /// <param name="index">The index of the element to copy.</param>
+    /// <param name="workspace">The workspace that will own the cloned document.</param>
+    /// <returns>A workspace-owned builder containing the standalone copy.</returns>
+    /// <remarks>
+    /// The returned document is fully independent of this document and its backing storage (both the
+    /// metadata and the value bytes are copied), so this document may be disposed without affecting
+    /// the copy. The copy lives for the lifetime of <paramref name="workspace"/>.
+    /// </remarks>
+    JsonDocumentBuilder<JsonElement.Mutable> CloneElementAsBuilder(int index, JsonWorkspace workspace);
+
+    /// <summary>
     /// Clones the element at the specified index.
     /// </summary>
     /// <typeparam name="TElement">The type of the JSON element.</typeparam>
