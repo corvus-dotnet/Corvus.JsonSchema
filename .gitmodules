@@ -10,6 +10,12 @@
 [submodule "JMESPath-Test-Suite"]
 	path = JMESPath-Test-Suite
 	url = https://github.com/jmespath/jmespath.test
+# yaml-test-suite publishes its consumable directory-per-test data on the orphan
+# `data` branch, which upstream periodically REGENERATES and force-pushes. Do not
+# track that branch (its HEAD changes SHA without changing content, giving false
+# "behind" signals and non-diffable updates). The pin below is the immutable
+# `data-2022-01-17` tag (commit 6e6c296). When a newer dated `data-YYYY-MM-DD` tag
+# is published, update the gitlink to that tag's commit.
 [submodule "yaml-test-suite"]
 	path = yaml-test-suite
 	url = https://github.com/yaml/yaml-test-suite.git
