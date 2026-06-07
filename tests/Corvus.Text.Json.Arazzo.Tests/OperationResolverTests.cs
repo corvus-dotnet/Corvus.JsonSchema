@@ -2,9 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.OpenApi;
-using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -13,22 +13,47 @@ namespace Corvus.Text.Json.Arazzo.Tests;
 [TestClass]
 public class OperationResolverTests
 {
+    private const string Spec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Pets", "version": "1.0.0" },
+          "paths": {
+            "/pets": {
+              "get": { "operationId": "listPets", "responses": { "200": { "description": "ok" } } },
+              "post": { "operationId": "createPet", "responses": { "201": { "description": "made" } } }
+            },
+            "/pets/{petId}": {
+              "get": { "operationId": "getPet", "responses": { "200": { "description": "ok" } } }
+            },
+            "/pets/{petId}/~care": {
+              "get": { "responses": { "200": { "description": "ok" } } }
+            }
+          }
+        }
+        """;
+
+    private ParsedJsonDocument<JsonElement>? document;
+
     [TestMethod]
-    public void Resolves_operation_by_id_carrying_generator_descriptor()
+    public void Resolves_operation_by_id()
     {
         OperationResolver resolver = Create();
 
         resolver.TryResolveOperationId("getPet", out ResolvedOperation op).ShouldBeTrue();
         op.SourceName.ShouldBe("petstore");
-        op.Operation.Path.ShouldBe("/pets/{petId}");
-        op.Operation.Method.ShouldBe(OperationMethod.Get);
-        op.Operation.RequestTypeName.ShouldBe("Acme.Pets.GetPetRequest");
-        op.Operation.ResponseTypeName.ShouldBe("Acme.Pets.GetPetResponse");
+        op.Path.ShouldBe("/pets/{petId}");
+        op.Method.ShouldBe(OperationMethod.Get);
+        op.OperationId.ShouldBe("getPet");
+    }
 
-        op.Operation.RequestParameters.Count.ShouldBe(1);
-        op.Operation.RequestParameters[0].PropertyName.ShouldBe("PetId");
-        op.Operation.RequestParameters[0].TypeName.ShouldBe("Acme.Pets.JsonString");
-        op.Operation.RequestParameters[0].Location.ShouldBe(ParameterLocation.Path);
+    [TestMethod]
+    public void Resolves_post_operation_by_id()
+    {
+        OperationResolver resolver = Create();
+
+        resolver.TryResolveOperationId("createPet", out ResolvedOperation op).ShouldBeTrue();
+        op.Path.ShouldBe("/pets");
+        op.Method.ShouldBe(OperationMethod.Post);
     }
 
     [TestMethod]
@@ -51,8 +76,9 @@ public class OperationResolverTests
 
         resolved.ShouldBeTrue();
         op.SourceName.ShouldBe("petstore");
-        op.Operation.Path.ShouldBe("/pets/{petId}");
-        op.Operation.OperationId.ShouldBe("getPet");
+        op.Path.ShouldBe("/pets/{petId}");
+        op.Method.ShouldBe(OperationMethod.Get);
+        op.OperationId.ShouldBe("getPet");
     }
 
     [TestMethod]
@@ -67,8 +93,8 @@ public class OperationResolverTests
             out ResolvedOperation op);
 
         resolved.ShouldBeTrue();
-        op.Operation.Path.ShouldBe("/pets/{petId}/~care");
-        op.Operation.OperationId.ShouldBeNull();
+        op.Path.ShouldBe("/pets/{petId}/~care");
+        op.OperationId.ShouldBeNull();
     }
 
     [TestMethod]
@@ -80,60 +106,21 @@ public class OperationResolverTests
     }
 
     [TestMethod]
-    public void Operation_path_to_unknown_operation_does_not_resolve()
+    public void Operation_path_to_missing_node_does_not_resolve()
     {
         OperationResolver resolver = Create();
 
         resolver.TryResolveOperationPath("#/paths/~1missing/get", out _).ShouldBeFalse();
     }
 
-    private static OperationResolver Create()
-    {
-        // Build the generator's descriptors directly — the resolver's contract is over descriptors,
-        // not over a spec document.
-        OperationDescriptor[] operations =
-        [
-            new(
-                "/pets",
-                OperationMethod.Get,
-                "listPets",
-                "ListPets",
-                "Acme.Pets.ListPetsRequest",
-                "Acme.Pets.ListPetsResponse",
-                [],
-                false,
-                [],
-                "Acme.Pets.PetsClient",
-                "ListPetsAsync",
-                null),
-            new(
-                "/pets/{petId}",
-                OperationMethod.Get,
-                "getPet",
-                "GetPet",
-                "Acme.Pets.GetPetRequest",
-                "Acme.Pets.GetPetResponse",
-                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true, "petId")],
-                false,
-                [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")],
-                "Acme.Pets.PetsClient",
-                "GetPetAsync",
-                null),
-            new(
-                "/pets/{petId}/~care",
-                OperationMethod.Get,
-                null,
-                "GetPetsPetIdCare",
-                "Acme.Pets.GetPetsPetIdCareRequest",
-                "Acme.Pets.GetPetsPetIdCareResponse",
-                [],
-                false,
-                [],
-                "Acme.Pets.PetsClient",
-                "GetPetsPetIdCareAsync",
-                null),
-        ];
+    // The resolver holds a JsonElement into the document's memory, so the document must stay
+    // alive for the resolver's lifetime; dispose it after each test rather than inside Create.
+    [TestCleanup]
+    public void Cleanup() => this.document?.Dispose();
 
-        return OperationResolver.Create("petstore", operations);
+    private OperationResolver Create()
+    {
+        this.document = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(Spec));
+        return OperationResolver.Create("petstore", this.document.RootElement);
     }
 }
