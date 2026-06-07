@@ -7,11 +7,12 @@ using Corvus.Text.Json.Arazzo10;
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
-/// Binds a workflow step to the generated client types its target resolves to — the one piece of
-/// information the emitter cannot read from the typed Arazzo model itself (plan §3.1). The emitter
-/// reads a step's parameters, criteria, request body, and outputs directly from the strongly-typed
+/// Binds a workflow step to the operation it targets — the one piece of information the emitter
+/// cannot read from the typed Arazzo model itself (plan §3.1). The emitter reads a step's parameters,
+/// criteria, request body, and outputs directly from the strongly-typed
 /// <see cref="ArazzoDocument.StepObject"/>; it consults this binder only to turn an
-/// <c>operationId</c>/<c>operationPath</c> into the generated request/response types.
+/// <c>operationId</c>/<c>operationPath</c> into the generator's resolved operation (request/response
+/// types and request-parameter metadata).
 /// </summary>
 public sealed class WorkflowOperationBinder
 {
@@ -37,7 +38,7 @@ public sealed class WorkflowOperationBinder
     /// Binds a step to its target.
     /// </summary>
     /// <param name="step">The step.</param>
-    /// <returns>The binding: the generated operation types for an operation step, the sub-workflow id for a workflow step, or <see cref="StepTargetKind.None"/>.</returns>
+    /// <returns>The binding: the resolved operation for an operation step, the sub-workflow id for a workflow step, or <see cref="StepTargetKind.None"/>.</returns>
     /// <exception cref="InvalidOperationException">An operation step references an operation no source description defines.</exception>
     public StepBinding Bind(in ArazzoDocument.StepObject step)
         => step.Match(
@@ -68,10 +69,7 @@ public sealed class WorkflowOperationBinder
         {
             if (client.Resolver.TryResolveOperationId(operationId, out ResolvedOperation operation))
             {
-                return new StepBinding(
-                    StepTargetKind.OperationId,
-                    OperationTypeNameMapper.Map(operation, client.ClientNamespace),
-                    null);
+                return new StepBinding(StepTargetKind.OperationId, operation, null);
             }
         }
 
@@ -86,10 +84,7 @@ public sealed class WorkflowOperationBinder
         {
             if (named.Resolver.TryResolveOperationPath(operationPath, out ResolvedOperation operation))
             {
-                return new StepBinding(
-                    StepTargetKind.OperationPath,
-                    OperationTypeNameMapper.Map(operation, named.ClientNamespace),
-                    null);
+                return new StepBinding(StepTargetKind.OperationPath, operation, null);
             }
 
             throw new InvalidOperationException(
@@ -101,10 +96,7 @@ public sealed class WorkflowOperationBinder
         {
             if (client.Resolver.TryResolveOperationPath(operationPath, out ResolvedOperation operation))
             {
-                return new StepBinding(
-                    StepTargetKind.OperationPath,
-                    OperationTypeNameMapper.Map(operation, client.ClientNamespace),
-                    null);
+                return new StepBinding(StepTargetKind.OperationPath, operation, null);
             }
         }
 
@@ -117,9 +109,9 @@ public sealed class WorkflowOperationBinder
 /// The result of binding a step to its target (plan §3.1).
 /// </summary>
 /// <param name="Kind">The kind of target the step invokes.</param>
-/// <param name="Operation">The generated request/response types, for an operation step; otherwise <see langword="null"/>.</param>
+/// <param name="Operation">The resolved operation, for an operation step; otherwise <see langword="null"/>.</param>
 /// <param name="SubWorkflowId">The sub-workflow id, for a workflow step; otherwise <see langword="null"/>.</param>
 public readonly record struct StepBinding(
     StepTargetKind Kind,
-    GeneratedOperationTypes? Operation,
+    ResolvedOperation? Operation,
     string? SubWorkflowId);
