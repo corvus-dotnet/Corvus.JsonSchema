@@ -213,15 +213,19 @@ implementation must follow its house style:
   strings. Build-/generation-time work (e.g. parsing a runtime expression) may
   allocate; the per-step path must not. Code-generated executors bake property
   names and JSON Pointers as `"..."u8` literals so the hot path allocates nothing.
-- **Measured.** `benchmarks/Corvus.Text.Json.Arazzo.Benchmarks` (BenchmarkDotNet
+- **Measured — 0 B/op across the per-call hot path.**
+  `benchmarks/Corvus.Text.Json.Arazzo.Benchmarks` (BenchmarkDotNet
   `[MemoryDiagnoser]`, plus a fast `GC.GetAllocatedBytesForCurrentThread` probe)
-  confirms the foundational per-call paths are **0 B/op**: expression resolution
-  + JSON Pointer, numeric/boolean simple criteria, and JSONPath (pooled result).
-  The *interpreted* evaluator still materializes a managed string for string
-  comparisons (`GetString()`, ~32 B) and for `{$…}` interpolation (per-eval parse,
-  ~248 B); these are eliminated in the generated executor, which compares baked
-  UTF-8 literals via `JsonElement.ValueEquals(ReadOnlySpan<byte>)` and bakes
-  templates/expressions. Tracked as the zero-alloc contract for Phase 2.
+  confirms **0 B/op** for expression resolution + JSON Pointer, numeric/boolean
+  *and string* simple criteria, JSONPath, regex, and (compiled-template)
+  interpolation. Techniques: operands stay UTF-8 (JSON via `GetUtf8String()`,
+  literals/scalars baked); string equality uses an ASCII fast path
+  (`Ascii.IsValid` → `Ascii.EqualsIgnoreCase`) with a full-Unicode slow path
+  (transcode + `OrdinalIgnoreCase`, stack/`ArrayPool`); numeric coercion via
+  `Utf8Parser`; regex transcodes the UTF-8 context to a stack/pooled `Span<char>`
+  for `Regex.IsMatch(ReadOnlySpan<char>)`; interpolation parses once into a
+  `CompiledInterpolationTemplate` and appends via `Utf8ValueStringBuilder`.
+  Scalar context collections are built once at setup (not on the hot path).
 - **Compile criteria ahead-of-time.** Regular expressions and JSONPath queries
   must be compiled once, never per step. The generated executor (.NET 10+) emits
   criteria as ahead-of-time code: JSONPath via the Corvus JSONPath source

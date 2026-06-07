@@ -28,6 +28,7 @@ public class ArazzoRuntimeBenchmarks
     private CompiledCriterion jsonPath = null!;
     private CompiledCriterion regex = null!;
     private ArazzoExpression resolveExpression;
+    private CompiledInterpolationTemplate template = null!;
     private ArrayBufferWriter<byte> interpolationBuffer = null!;
 
     [GlobalSetup]
@@ -46,6 +47,7 @@ public class ArazzoRuntimeBenchmarks
         this.jsonPath = CompiledCriterion.Compile(CriterionType.JsonPath, "$.items[*]", "$response.body");
         this.regex = CompiledCriterion.Compile(CriterionType.Regex, "^ok$", "$response.body#/status");
         this.resolveExpression = ArazzoExpression.Parse("$response.body#/count");
+        this.template = CompiledInterpolationTemplate.Compile("Bearer {$steps.login.outputs.token}");
         this.interpolationBuffer = new ArrayBufferWriter<byte>(64);
     }
 
@@ -71,10 +73,10 @@ public class ArazzoRuntimeBenchmarks
     [Benchmark(Description = "Criterion: regex (^ok$)")]
     public bool Regex() => this.regex.Evaluate(this.context);
 
-    [Benchmark(Description = "Interpolate to UTF-8 buffer (one embedded expression)")]
+    [Benchmark(Description = "Interpolate compiled template to UTF-8 buffer")]
     public bool Interpolate()
     {
         this.interpolationBuffer.Clear();
-        return this.context.TryInterpolate("Bearer {$steps.login.outputs.token}", this.interpolationBuffer);
+        return this.context.TryInterpolate(this.template, this.interpolationBuffer);
     }
 }
