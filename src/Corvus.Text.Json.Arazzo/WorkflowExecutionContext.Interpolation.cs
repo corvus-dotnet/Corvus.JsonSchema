@@ -149,6 +149,42 @@ public sealed partial class WorkflowExecutionContext
         }
     }
 
+    /// <summary>
+    /// Interpolates a pre-compiled template to a UTF-8 buffer. Allocation-free on the hot path:
+    /// the template is already parsed, and values are appended as UTF-8.
+    /// </summary>
+    /// <param name="template">The compiled template.</param>
+    /// <param name="output">The buffer to receive the UTF-8 result.</param>
+    /// <returns><see langword="true"/> if every embedded expression resolved.</returns>
+    public bool TryInterpolate(CompiledInterpolationTemplate template, IBufferWriter<byte> output)
+    {
+        ArgumentNullException.ThrowIfNull(template);
+        ArgumentNullException.ThrowIfNull(output);
+
+        var builder = new Utf8ValueStringBuilder(64);
+        try
+        {
+            foreach (ref readonly CompiledInterpolationTemplate.Segment segment in template.Segments)
+            {
+                if (segment.IsLiteral)
+                {
+                    builder.Append(segment.Literal!);
+                }
+                else if (!this.TryAppendEmbedded(segment.Expression, ref builder))
+                {
+                    return false;
+                }
+            }
+
+            output.Write(builder.AsSpan());
+            return true;
+        }
+        finally
+        {
+            builder.Dispose();
+        }
+    }
+
     private static void Add(ref Dictionary<string, byte[]>? map, StringComparer comparer, string name, string value)
     {
         ArgumentNullException.ThrowIfNull(name);
