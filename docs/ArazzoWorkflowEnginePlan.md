@@ -410,3 +410,63 @@ unit-tested runtime library (expression evaluator + criterion evaluator +
 execution context). These are low-risk, high-leverage, and de-risk the hard
 parts (expression/criterion semantics) before committing to the generator
 integration in Phase 2.
+
+## 9. Phase 6 — out-of-process durability store packages
+
+The durability layer (§ durability discussion) needs a pluggable
+`IWorkflowStateStore`. Beyond the in-memory default, which out-of-process
+backends should we ship? This section captures the research.
+
+### What the engine actually needs from a store
+
+A checkpoint is a single JSON document keyed by a workflow run id, plus, for
+long-running suspension (Tier 2), an index to find runs that are *due* (durable
+timers / `retryAfter`) or *awaiting a correlation id* (AsyncAPI receive). So a
+backend must provide:
+
+1. **Key/value by run id** — save/load the checkpoint JSON. (All backends do this.)
+2. **Optimistic concurrency** — ETag/version, so a horizontally-scaled fleet never double-advances a run.
+3. **Single-owner lease** — only one worker resumes a given run.
+4. **A due/correlation index** *(Tier 2 only)* — query "runs due before T" and "run awaiting correlation X".
+
+Requirements 1–3 are easy everywhere; (4) is the discriminator, and different
+backends satisfy it very differently (SQL indexed column; Cosmos query +
+change-feed; Redis sorted-set scored by due-time; Azure Table partitioned by
+time-bucket; or *no* store query at all — durable timers as Service Bus
+scheduled messages). We therefore split the abstraction: a core
+`IWorkflowStateStore` (1–3) that any backend can implement, plus an optional
+`IWorkflowWaitIndex` / timer capability (4) that richer backends add. A
+blob-only store can implement the core and delegate timers to scheduled messages.
+
+### What the closest .NET analogs ship (evidence)
+
+| Engine | Persistence backends shipped |
+|---|---|
+| Durable Task Framework / Durable Functions | **Azure Storage** (blobs + tables + queues, blob leases for partitions); **MSSQL** (`microsoft/durabletask-mssql`); Netherite (Event Hubs + FASTER — *being retired ~2028, do not emulate*); plus the new managed *Durable Task Scheduler* |
+| Elsa Workflows 3 | **EF Core** (SQL Server, PostgreSQL, SQLite, MySQL); **MongoDB**; **Dapper** |
+| MassTransit sagas | **EF Core** (SQL); **MongoDB**; **Redis**; **Marten** (PostgreSQL); NHibernate; **Azure Cosmos DB** (Mongo + Document APIs) |
+| Temporal | **PostgreSQL**, **MySQL**, **Cassandra** (core); SQLite / Elasticsearch (visibility) |
+
+The consensus is clear: **relational (SQL Server + PostgreSQL, usually via EF
+Core)**, a **document store (Mongo / Cosmos)**, **Redis**, and — in the Azure
+ecosystem specifically — **Azure Storage** are the backends customers expect.
+
+### Recommended set (naming mirrors the AsyncAPI binding convention)
+
+- `Corvus.Text.Json.Arazzo.Durability` — abstractions + **in-memory** default (in the testing/runtime layer).
+- `Corvus.Text.Json.Arazzo.Durability.AzureStorage` — Blob for the checkpoint (with **blob leases** for single-owner), Table for the wait/correlation index; durable timers via **Service Bus scheduled messages** (reuses the existing ASB binding) or Storage Queue visibility delays. *Best fit for Corvus' Azure lean.* SDKs: `Azure.Storage.Blobs`, `Azure.Data.Tables`, `Azure.Messaging.ServiceBus`.
+- `Corvus.Text.Json.Arazzo.Durability.EntityFrameworkCore` — one package covering **SQL Server, PostgreSQL, SQLite (dev), MySQL** via the respective EF providers; the wait index is an indexed column. The most portable, on-prem-friendly option (cf. DTFx-MSSQL, Elsa, Temporal).
+- `Corvus.Text.Json.Arazzo.Durability.Cosmos` — JSON-native (stores the checkpoint document directly and queries it), **change feed** for timer/trigger dispatch, TTL. SDK: `Microsoft.Azure.Cosmos`.
+- `Corvus.Text.Json.Arazzo.Durability.Mongo` — ubiquitous document store; optimistic concurrency via a version field (the MassTransit/Elsa pattern). SDK: `MongoDB.Driver`.
+- `Corvus.Text.Json.Arazzo.Durability.Redis` — KV + **sorted-set timer index** (score = due-time) + streams for wake-ups; excellent as a *wait/timer index* even alongside another primary store. SDK: `StackExchange.Redis`.
+- *(Optional, cross-cloud, only on demand)* `…Durability.DynamoDb` (KV + TTL + streams) and `…Durability.Firestore`.
+
+### Suggested shipping order
+
+1. **First wave:** abstractions + in-memory; **Azure Storage**; **EF Core** (SQL Server + PostgreSQL + SQLite). Covers Azure-native, portable/on-prem, and local-dev.
+2. **Second wave:** **Cosmos**; **Redis**; **MongoDB**.
+3. **Optional:** DynamoDB; Firestore.
+
+Each is a thin adapter over the same JSON checkpoint, so adding a backend is
+low cost; we ship the first wave with the durability feature and add the rest
+based on demand.
