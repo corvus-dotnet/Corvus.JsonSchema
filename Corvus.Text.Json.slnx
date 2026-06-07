@@ -123,6 +123,12 @@
     <Project Path="src/Corvus.Text.Json.OpenApi.CodeGeneration/Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi.HttpTransport/Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
   </Folder>
+  <Folder Name="/v5/Arazzo/">
+    <Project Path="src/Corvus.Text.Json.Arazzo10/Corvus.Text.Json.Arazzo10.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo/Corvus.Text.Json.Arazzo.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Testing/Corvus.Text.Json.Arazzo.Testing.csproj" />
+  </Folder>
   <Folder Name="/v5/">
     <Project Path="src/Corvus.Text.Json.Analyzers/Corvus.Text.Json.Analyzers.csproj" />
     <Project Path="src/Corvus.Text.Json.CodeGeneration/Corvus.Text.Json.CodeGeneration.csproj" />
