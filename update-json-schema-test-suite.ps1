@@ -71,8 +71,9 @@ try {
     Push-Location "bin\Debug\net10.0"
     try {
         Write-Host "  Running V5 generator..."
-        # Run via `dotnet <dll>` so this works on every OS (the apphost is `.exe` on Windows only).
-        & dotnet .\Corvus.JsonSchemaTestSuite.CodeGenerator.dll > $null
+        # Run via `dotnet <dll>` (no `.\` prefix) so this works on every OS — the apphost is
+        # `.exe` on Windows only, and a backslash-prefixed path is not resolved by dotnet on Linux.
+        & dotnet Corvus.JsonSchemaTestSuite.CodeGenerator.dll > $null
         if ($LASTEXITCODE -ne 0) { throw "V5 generator failed" }
     }
     finally {
