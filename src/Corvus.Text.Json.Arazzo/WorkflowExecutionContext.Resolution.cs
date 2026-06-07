@@ -73,6 +73,47 @@ public sealed partial class WorkflowExecutionContext
     }
 
     /// <summary>
+    /// Resolves a runtime expression to its UTF-8 bytes without allocating a managed string, for
+    /// scalar sources and JSON string values. Returns <see langword="false"/> for non-string JSON
+    /// values and <c>$statusCode</c> (use <see cref="TryResolveString"/> for those).
+    /// </summary>
+    /// <param name="expression">The parsed expression.</param>
+    /// <param name="value">When this method returns <see langword="true"/>, the UTF-8 value (dispose it).</param>
+    /// <returns><see langword="true"/> if the value was resolved as UTF-8.</returns>
+    internal bool TryResolveUtf8(in ArazzoExpression expression, out ResolvedUtf8 value)
+    {
+        switch (expression.Source)
+        {
+            case ArazzoExpressionSource.Url:
+                return TryBytes(this.url, out value);
+            case ArazzoExpressionSource.Method:
+                return TryBytes(this.method, out value);
+            case ArazzoExpressionSource.RequestHeader:
+                return TryBytesFromMap(this.requestHeaders, expression.Name, out value);
+            case ArazzoExpressionSource.RequestQuery:
+                return TryBytesFromMap(this.requestQuery, expression.Name, out value);
+            case ArazzoExpressionSource.RequestPath:
+                return TryBytesFromMap(this.requestPath, expression.Name, out value);
+            case ArazzoExpressionSource.ResponseHeader:
+                return TryBytesFromMap(this.responseHeaders, expression.Name, out value);
+            case ArazzoExpressionSource.MessageHeader:
+                return TryBytesFromMap(this.messageHeaders, expression.Name, out value);
+            case ArazzoExpressionSource.StatusCode:
+                value = default;
+                return false;
+            default:
+                if (this.TryResolveValue(expression, out JsonElement element) && element.ValueKind == JsonValueKind.String)
+                {
+                    value = ResolvedUtf8.FromLease(element.GetUtf8String());
+                    return true;
+                }
+
+                value = default;
+                return false;
+        }
+    }
+
+    /// <summary>
     /// Resolves a runtime expression to a typed <see cref="Comparand"/> for <c>simple</c> criteria,
     /// optionally navigating into the resolved value with a JSON Pointer (for the <c>.</c>/<c>[]</c>
     /// operand operators).
@@ -155,6 +196,30 @@ public sealed partial class WorkflowExecutionContext
         => map is not null && name is not null && map.TryGetValue(name, out byte[]? value)
             ? Comparand.FromUtf8String(value)
             : Comparand.Undefined;
+
+    private static bool TryBytes(byte[]? candidate, out ResolvedUtf8 value)
+    {
+        if (candidate is null)
+        {
+            value = default;
+            return false;
+        }
+
+        value = ResolvedUtf8.FromBytes(candidate);
+        return true;
+    }
+
+    private static bool TryBytesFromMap(Dictionary<string, byte[]>? map, string? name, out ResolvedUtf8 value)
+    {
+        if (map is not null && name is not null && map.TryGetValue(name, out byte[]? found))
+        {
+            value = ResolvedUtf8.FromBytes(found);
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
 
     private static bool TryReturn(byte[]? candidate, out string value)
     {
