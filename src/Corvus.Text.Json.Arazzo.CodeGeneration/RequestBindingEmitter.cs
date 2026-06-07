@@ -68,12 +68,12 @@ public static class RequestBindingEmitter
             }
 
             string field = $"{fieldPrefix}{parameter.PropertyName}";
-            string local = $"{ToCamelCase(parameter.PropertyName)}Value";
+            string local = $"{EmitText.ToCamelCase(parameter.PropertyName)}Value";
 
             fields.Append("private static readonly ArazzoExpression ")
                 .Append(field)
                 .Append(" = ArazzoExpression.Parse(")
-                .Append(Quote(argument.Expression))
+                .Append(EmitText.Quote(argument.Expression))
                 .AppendLine(");");
 
             statements.Append(contextVariable)
@@ -120,14 +120,6 @@ public static class RequestBindingEmitter
 
         return new RequestBindingCode(fields.ToString(), statements.ToString());
     }
-
-    private static string ToCamelCase(string value)
-        => value.Length == 0 || char.IsLower(value[0])
-            ? value
-            : char.ToLowerInvariant(value[0]) + value[1..];
-
-    private static string Quote(string value)
-        => $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
 }
 
 /// <summary>
