@@ -27,7 +27,7 @@ public class RequestBindingEmitterTests
                 new RequestParameterInfo("limit", ParameterLocation.Query, "Limit", "Acme.Pets.JsonInt32", false),
             ],
             false,
-            [new ResponseDescriptor("200", "Acme.Pets.Pet")]));
+            [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")]));
 
     [TestMethod]
     public void Emits_compiled_expression_fields_for_each_argument()
