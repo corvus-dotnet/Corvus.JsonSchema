@@ -27,6 +27,8 @@ namespace Corvus.Text.Json.Arazzo;
 public sealed partial class WorkflowExecutionContext
 {
     private readonly Dictionary<string, JsonElement> stepOutputs = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, JsonElement> workflowInputsById = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, JsonElement> workflowOutputsById = new(StringComparer.Ordinal);
 
     private JsonElement inputs;
     private JsonElement workflowOutputs;
@@ -55,6 +57,28 @@ public sealed partial class WorkflowExecutionContext
     {
         ArgumentNullException.ThrowIfNull(stepId);
         this.stepOutputs[stepId] = outputs;
+    }
+
+    /// <summary>
+    /// Sets a referenced workflow's inputs object (resolved by <c>$workflows.&lt;workflowId&gt;.inputs.&lt;name&gt;</c>).
+    /// </summary>
+    /// <param name="workflowId">The workflow identifier.</param>
+    /// <param name="inputs">The workflow's inputs object.</param>
+    public void SetWorkflowInputs(string workflowId, in JsonElement inputs)
+    {
+        ArgumentNullException.ThrowIfNull(workflowId);
+        this.workflowInputsById[workflowId] = inputs;
+    }
+
+    /// <summary>
+    /// Sets a referenced workflow's outputs object (resolved by <c>$workflows.&lt;workflowId&gt;.outputs.&lt;name&gt;</c>).
+    /// </summary>
+    /// <param name="workflowId">The workflow identifier.</param>
+    /// <param name="outputs">The workflow's outputs object.</param>
+    public void SetWorkflowOutputs(string workflowId, in JsonElement outputs)
+    {
+        ArgumentNullException.ThrowIfNull(workflowId);
+        this.workflowOutputsById[workflowId] = outputs;
     }
 
     /// <summary>
@@ -103,6 +127,12 @@ public sealed partial class WorkflowExecutionContext
                 return expression.ContainerId is string stepId
                     && this.stepOutputs.TryGetValue(stepId, out JsonElement outputs)
                     && TryResolveMember(outputs, expression.Name, expression.JsonPointer, out value);
+
+            case ArazzoExpressionSource.Workflows:
+                return expression.ContainerId is string workflowId
+                    && (expression.Qualifier == "inputs" ? this.workflowInputsById : this.workflowOutputsById)
+                        .TryGetValue(workflowId, out JsonElement workflowValues)
+                    && TryResolveMember(workflowValues, expression.Name, expression.JsonPointer, out value);
 
             case ArazzoExpressionSource.RequestBody:
                 return TryResolveMember(this.requestBody, null, expression.JsonPointer, out value);
