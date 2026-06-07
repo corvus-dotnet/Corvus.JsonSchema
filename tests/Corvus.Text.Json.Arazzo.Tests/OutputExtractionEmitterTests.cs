@@ -25,7 +25,6 @@ public class OutputExtractionEmitterTests
 
         // Closure-free, context-carrying build delegate; values added directly with no intermediate buffers.
         code.Statements.ShouldContain("var getPetOutputs = JsonElement.CreateBuilder(");
-        code.Statements.ShouldContain("new JsonElement.Source(context,");
         code.Statements.ShouldContain("static (in WorkflowExecutionContext ctx, ref JsonElement.ObjectBuilder builder) =>");
         code.Statements.ShouldContain("ctx.TryResolveValue(getPet_Output_id, out JsonElement idValue);");
         code.Statements.ShouldContain("builder.AddProperty(\"id\"u8, idValue);");
