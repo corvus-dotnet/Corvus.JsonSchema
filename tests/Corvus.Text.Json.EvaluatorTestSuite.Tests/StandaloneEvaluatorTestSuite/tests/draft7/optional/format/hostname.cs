@@ -159,13 +159,6 @@ public class SuiteValidationOfHostNames
     }
 
     [TestMethod]
-    public void TestContainsInThe3rdAnd4thPosition()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"XN--aa---o47jg78q\"");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
     public void TestContainsUnderscore()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"host_name\"");
@@ -487,6 +480,13 @@ public class SuiteValidationOfALabelPunycodeHostNames
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"xn--ngba5hb2804a\"");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestContainsInThe3rdAnd4thPosition()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"XN--aa---o47jg78q\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     public class Fixture

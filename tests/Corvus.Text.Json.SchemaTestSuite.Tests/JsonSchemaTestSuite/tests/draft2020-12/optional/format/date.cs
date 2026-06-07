@@ -96,20 +96,6 @@ public class SuiteValidationOfDateStrings
     }
 
     [TestMethod]
-    public void TestAInvalidDateStringWith29DaysInFebruaryNormal()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2021-02-29\"");
-        Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestAValidDateStringWith29DaysInFebruaryLeap()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-02-29\"");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
     public void TestAInvalidDateStringWith30DaysInFebruaryLeap()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-02-30\"");
@@ -257,13 +243,6 @@ public class SuiteValidationOfDateStrings
     }
 
     [TestMethod]
-    public void TestAInvalidDateStringWithInvalidMonth()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-13-01\"");
-        Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
     public void TestAnInvalidDateString()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"06/19/1963\"");
@@ -295,13 +274,6 @@ public class SuiteValidationOfDateStrings
     public void TestInvalidMonth()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1998-13-01\"");
-        Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestInvalidMonthDayCombination()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1998-04-31\"");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -358,6 +330,153 @@ public class SuiteValidationOfDateStrings
     public void TestAnInvalidTimeStringInDateTimeFormat()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-11-28T23:55:45Z\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestYear0000IsALeapYear04000()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0000-02-29\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestCenturyYear0100IsNotALeapYear()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0100-02-29\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestCenturyYear0400IsALeapYear()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0400-02-29\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestCenturyYear2100IsNotALeapYear()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2100-02-29\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidLeadingWhitespaceIsNotPermitted()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\" 2024-01-15\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidTrailingWhitespaceIsNotPermitted()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2024-01-15 \"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidMonth00IsNotValidPerDateMonthRange0112()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2024-00-15\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidDay00IsNotValidPerDateMdayMinimumOf01()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2024-01-00\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidEmptyString()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidEmbeddedWhitespaceBetweenYearAndMonth()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020 -01-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidTrailingCharacterAfterValidFullDate()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-01-01X\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidTrailingZAfterFullDate()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-01-01Z\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidFullDateFollowedBySpaceAndTimeComponent()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"2020-01-01 00:00:00Z\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestValidFourDigitYear0001()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0001-01-01\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidTwoDigitYearN2Digits()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"20-01-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidThreeDigitYearN1Digits()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"998-01-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidFiveDigitYearN1Digits()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"12020-01-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidPositiveSignPrefixOnYear()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"+2020-01-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidNegativeSignPrefixOnYear()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"-2020-01-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidNonAsciiBengaliDigitInYearField()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"২020-01-01\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidAlphabeticCharactersInYearField()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"YYYY-01-01\"");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 

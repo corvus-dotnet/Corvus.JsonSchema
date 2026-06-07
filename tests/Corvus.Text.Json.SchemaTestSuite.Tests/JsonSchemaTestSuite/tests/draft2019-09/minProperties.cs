@@ -67,6 +67,20 @@ public class SuiteMinPropertiesValidation
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
+    [TestMethod]
+    public void TestIgnoresNull()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestIgnoresBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("true");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
