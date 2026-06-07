@@ -305,6 +305,7 @@
     <Compile Include="InvalidBufferWriter.cs" />
     <Compile Include="JsonBase64TestData.cs" />
     <Compile Include="JsonDateTimeTestData.cs" />
+    <Compile Include="CloneAsBuilderTests.cs" />
     <Compile Include="ParsedJsonDocumentTests.cs" />
     <Compile Include="DocumentStringAndFormatCoverageTests.cs" />
     <Compile Include="JsonElementTensorHelpersCoverageTests.cs" />

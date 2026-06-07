@@ -224,6 +224,7 @@ internal class DummyDocument : IJsonDocument
     }
 
     public JsonElement GetPropertyName(int index) => default;
+    JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace) => throw new NotImplementedException();
     void IJsonDocument.EnsurePropertyMap(int index) => throw new NotImplementedException();
     int IJsonDocument.GetHashCode(int index) => throw new NotImplementedException();
     string IJsonDocument.ToString(int index) => throw new NotImplementedException();

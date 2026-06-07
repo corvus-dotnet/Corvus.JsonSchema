@@ -1517,6 +1517,14 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
     }
 
     /// <inheritdoc />
+    JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace)
+    {
+        // TODO(perf): an immutable parsed document can blit the value segment (CopySegment + a copy
+        // of the contiguous value bytes) into the workspace instead of serialising and re-parsing.
+        return Internal.JsonDocumentCloning.CloneElementAsBuilderBySerialization(this, index, workspace);
+    }
+
+    /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     TElement IJsonDocument.CloneElement<TElement>(int index)
     {

@@ -362,6 +362,8 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
 #pragma warning restore CS0618
     }
 
+    JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace) => JsonDocumentCloning.CloneElementAsBuilderBySerialization(this, index, workspace);
+
     TElement IJsonDocument.CloneElement<TElement>(int index)
     {
 #pragma warning disable CS0618 // Type or member is obsolete
