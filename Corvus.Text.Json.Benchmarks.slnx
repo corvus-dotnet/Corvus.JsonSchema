@@ -12,6 +12,7 @@
   <Project Path="src-v4/Corvus.JsonPatch.Benchmarking/Corvus.JsonPatch.Benchmarking.csproj" />
 </Folder>
   <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Corvus.Text.Json.Arazzo.Benchmarks/Corvus.Text.Json.Arazzo.Benchmarks.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.OpenApi.Benchmarks/Corvus.Text.Json.OpenApi.Benchmarks.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.AsyncApi.Benchmarks/Corvus.Text.Json.AsyncApi.Benchmarks.csproj" />
   </Folder>

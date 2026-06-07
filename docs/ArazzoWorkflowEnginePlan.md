@@ -213,6 +213,15 @@ implementation must follow its house style:
   strings. Build-/generation-time work (e.g. parsing a runtime expression) may
   allocate; the per-step path must not. Code-generated executors bake property
   names and JSON Pointers as `"..."u8` literals so the hot path allocates nothing.
+- **Measured.** `benchmarks/Corvus.Text.Json.Arazzo.Benchmarks` (BenchmarkDotNet
+  `[MemoryDiagnoser]`, plus a fast `GC.GetAllocatedBytesForCurrentThread` probe)
+  confirms the foundational per-call paths are **0 B/op**: expression resolution
+  + JSON Pointer, numeric/boolean simple criteria, and JSONPath (pooled result).
+  The *interpreted* evaluator still materializes a managed string for string
+  comparisons (`GetString()`, ~32 B) and for `{$…}` interpolation (per-eval parse,
+  ~248 B); these are eliminated in the generated executor, which compares baked
+  UTF-8 literals via `JsonElement.ValueEquals(ReadOnlySpan<byte>)` and bakes
+  templates/expressions. Tracked as the zero-alloc contract for Phase 2.
 - **Compile criteria ahead-of-time.** Regular expressions and JSONPath queries
   must be compiled once, never per step. The generated executor (.NET 10+) emits
   criteria as ahead-of-time code: JSONPath via the Corvus JSONPath source
