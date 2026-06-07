@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo;
 /// interpolation are layered on in later increments.
 /// </para>
 /// </remarks>
-public sealed class WorkflowExecutionContext
+public sealed partial class WorkflowExecutionContext
 {
     private readonly Dictionary<string, JsonElement> stepOutputs = new(StringComparer.Ordinal);
 
