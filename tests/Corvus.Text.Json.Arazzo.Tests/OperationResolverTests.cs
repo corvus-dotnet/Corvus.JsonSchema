@@ -112,7 +112,7 @@ public class OperationResolverTests
                 "Acme.Pets.GetPetResponse",
                 [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true)],
                 false,
-                [new ResponseDescriptor("200", "Acme.Pets.Pet")]),
+                [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")]),
             new(
                 "/pets/{petId}/~care",
                 OperationMethod.Get,

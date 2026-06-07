@@ -454,7 +454,11 @@ public sealed class OpenApi30CodeGenerator
             for (int r = 0; r < op.Responses.Length; r++)
             {
                 ResponseInfo response = op.Responses[r];
-                responses[r] = new ResponseDescriptor(response.StatusCode, this.ResolveResponseTypeName(response));
+                string? bodyTypeName = this.ResolveResponseTypeName(response);
+                responses[r] = new ResponseDescriptor(
+                    response.StatusCode,
+                    bodyTypeName,
+                    bodyTypeName is null ? null : CodeEmitHelpers.ResponseBodyPropertyName(response.StatusCode));
             }
 
             result.Add(new OperationDescriptor(

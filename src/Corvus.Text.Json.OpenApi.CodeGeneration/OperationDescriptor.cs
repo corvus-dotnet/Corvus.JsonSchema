@@ -39,9 +39,11 @@ public readonly record struct OperationDescriptor(
 /// </summary>
 /// <param name="StatusCode">The response status code (e.g. <c>200</c>) or <c>default</c>.</param>
 /// <param name="BodyTypeName">The fully-qualified generated type of the JSON response body, or <see langword="null"/> if the response has no JSON body.</param>
+/// <param name="BodyPropertyName">The name of the generated response property that holds the JSON body (e.g. <c>OkBody</c>), or <see langword="null"/> if the response has no JSON body.</param>
 public readonly record struct ResponseDescriptor(
     string StatusCode,
-    string? BodyTypeName);
+    string? BodyTypeName,
+    string? BodyPropertyName);
 
 /// <summary>
 /// A request parameter of a generated operation, described by the names and type the generator

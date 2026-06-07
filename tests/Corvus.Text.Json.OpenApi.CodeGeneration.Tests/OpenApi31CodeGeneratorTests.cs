@@ -261,6 +261,7 @@ public class OpenApi31CodeGeneratorTests
 
         ResponseDescriptor ok = showPet.Responses.First(r => r.StatusCode == "200");
         Assert.AreEqual("Petstore.Client.Pet", ok.BodyTypeName);
+        Assert.AreEqual("OkBody", ok.BodyPropertyName);
     }
 
     [TestMethod]

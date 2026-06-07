@@ -248,6 +248,15 @@ public static class CodeEmitHelpers
         };
 
     /// <summary>
+    /// Gets the name of the generated property that holds a response's typed JSON body for a status
+    /// code (e.g. <c>200</c> → <c>OkBody</c>). The single source of truth for that convention, used
+    /// both when emitting the response struct and when describing it to downstream generators.
+    /// </summary>
+    /// <param name="statusCode">The response status code, or <c>default</c>.</param>
+    /// <returns>The generated body property name.</returns>
+    public static string ResponseBodyPropertyName(string statusCode) => $"{StatusCodeToName(statusCode)}Body";
+
+    /// <summary>
     /// Converts a header name (e.g. <c>X-Rate-Limit</c>) to a PascalCase property name.
     /// </summary>
     /// <param name="headerName">The HTTP header name.</param>
