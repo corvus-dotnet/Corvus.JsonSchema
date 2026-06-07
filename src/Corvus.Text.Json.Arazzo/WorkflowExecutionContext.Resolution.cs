@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo;
@@ -73,88 +72,19 @@ public sealed partial class WorkflowExecutionContext
     }
 
     /// <summary>
-    /// Resolves a runtime expression to its UTF-8 bytes without allocating a managed string, for
-    /// scalar sources and JSON string values. Returns <see langword="false"/> for non-string JSON
-    /// values and <c>$statusCode</c> (use <see cref="TryResolveString"/> for those).
+    /// Resolves a runtime expression to a typed <see cref="Comparand"/> for <c>simple</c> criteria.
     /// </summary>
     /// <param name="expression">The parsed expression.</param>
-    /// <param name="value">When this method returns <see langword="true"/>, the UTF-8 value (dispose it).</param>
-    /// <returns><see langword="true"/> if the value was resolved as UTF-8.</returns>
-    internal bool TryResolveUtf8(in ArazzoExpression expression, out ResolvedUtf8 value)
-    {
-        switch (expression.Source)
-        {
-            case ArazzoExpressionSource.Url:
-                return TryBytes(this.url, out value);
-            case ArazzoExpressionSource.Method:
-                return TryBytes(this.method, out value);
-            case ArazzoExpressionSource.RequestHeader:
-                return TryBytesFromMap(this.requestHeaders, expression.Name, out value);
-            case ArazzoExpressionSource.RequestQuery:
-                return TryBytesFromMap(this.requestQuery, expression.Name, out value);
-            case ArazzoExpressionSource.RequestPath:
-                return TryBytesFromMap(this.requestPath, expression.Name, out value);
-            case ArazzoExpressionSource.ResponseHeader:
-                return TryBytesFromMap(this.responseHeaders, expression.Name, out value);
-            case ArazzoExpressionSource.MessageHeader:
-                return TryBytesFromMap(this.messageHeaders, expression.Name, out value);
-            case ArazzoExpressionSource.StatusCode:
-                value = default;
-                return false;
-            default:
-                if (this.TryResolveValue(expression, out JsonElement element) && element.ValueKind == JsonValueKind.String)
-                {
-                    value = ResolvedUtf8.FromLease(element.GetUtf8String());
-                    return true;
-                }
-
-                value = default;
-                return false;
-        }
-    }
-
-    /// <summary>
-    /// Resolves a <c>$statusCode</c> expression to its integer value, for callers that format it
-    /// directly (e.g. a <c>regex</c> context) without allocating a managed string.
-    /// </summary>
-    /// <param name="expression">The parsed expression.</param>
-    /// <param name="statusCode">When this method returns <see langword="true"/>, the status code.</param>
-    /// <returns><see langword="true"/> if the expression is <c>$statusCode</c> and a status code is set.</returns>
-    internal bool TryGetStatusCode(in ArazzoExpression expression, out int statusCode)
-    {
-        if (expression.Source == ArazzoExpressionSource.StatusCode && this.statusCode is int code)
-        {
-            statusCode = code;
-            return true;
-        }
-
-        statusCode = 0;
-        return false;
-    }
-
-    /// <summary>
-    /// Resolves a runtime expression to a typed <see cref="Comparand"/> for <c>simple</c> criteria,
-    /// optionally navigating into the resolved value with a JSON Pointer (for the <c>.</c>/<c>[]</c>
-    /// operand operators).
-    /// </summary>
-    /// <param name="expression">The parsed expression.</param>
-    /// <param name="navigationPointer">An optional JSON Pointer to navigate into a JSON-valued result.</param>
     /// <returns>The resolved comparand, or <see cref="Comparand.Undefined"/> if it could not be resolved.</returns>
-    internal Comparand ResolveComparand(in ArazzoExpression expression, string? navigationPointer = null)
+    internal Comparand ResolveComparand(in ArazzoExpression expression)
     {
-        // Navigation (.property / [index]) only applies to JSON-valued sources, not scalars.
-        if (navigationPointer is not null && IsScalarSource(expression.Source))
-        {
-            return Comparand.Undefined;
-        }
-
         switch (expression.Source)
         {
             case ArazzoExpressionSource.Url:
-                return this.url is null ? Comparand.Undefined : Comparand.FromUtf8String(this.url);
+                return this.url is null ? Comparand.Undefined : Comparand.FromString(this.url);
 
             case ArazzoExpressionSource.Method:
-                return this.method is null ? Comparand.Undefined : Comparand.FromUtf8String(this.method);
+                return this.method is null ? Comparand.Undefined : Comparand.FromString(this.method);
 
             case ArazzoExpressionSource.StatusCode:
                 return this.statusCode is int code ? Comparand.FromNumber(code) : Comparand.Undefined;
@@ -175,72 +105,40 @@ public sealed partial class WorkflowExecutionContext
                 return ComparandFromMap(this.messageHeaders, expression.Name);
 
             default:
-                if (!this.TryResolveValue(expression, out JsonElement element))
-                {
-                    return Comparand.Undefined;
-                }
-
-                if (navigationPointer is not null && !element.TryResolvePointer(navigationPointer, out element))
-                {
-                    return Comparand.Undefined;
-                }
-
-                return ComparandFromJson(element);
+                return this.TryResolveValue(expression, out JsonElement element)
+                    ? ComparandFromJson(element)
+                    : Comparand.Undefined;
         }
     }
 
-    private static bool IsScalarSource(ArazzoExpressionSource source)
-        => source is ArazzoExpressionSource.Url
-            or ArazzoExpressionSource.Method
-            or ArazzoExpressionSource.StatusCode
-            or ArazzoExpressionSource.RequestHeader
-            or ArazzoExpressionSource.RequestQuery
-            or ArazzoExpressionSource.RequestPath
-            or ArazzoExpressionSource.ResponseHeader
-            or ArazzoExpressionSource.MessageHeader;
+    private static Comparand ComparandFromJson(in JsonElement element)
+        => element.ValueKind switch
+        {
+            JsonValueKind.String => Comparand.FromString(element.GetString()!),
+            JsonValueKind.Number => Comparand.FromNumber(element.GetDouble()),
+            JsonValueKind.True => Comparand.FromBoolean(true),
+            JsonValueKind.False => Comparand.FromBoolean(false),
+            JsonValueKind.Null => Comparand.Null,
+            JsonValueKind.Object or JsonValueKind.Array => Comparand.FromJson(element.GetRawText()),
+            _ => Comparand.Undefined,
+        };
 
-    private static Comparand ComparandFromJson(in JsonElement element) => Comparand.FromJsonElement(element);
-
-    private static Comparand ComparandFromMap(Dictionary<string, byte[]>? map, string? name)
-        => map is not null && name is not null && map.TryGetValue(name, out byte[]? value)
-            ? Comparand.FromUtf8String(value)
+    private static Comparand ComparandFromMap(Dictionary<string, string>? map, string? name)
+        => map is not null && name is not null && map.TryGetValue(name, out string? value)
+            ? Comparand.FromString(value)
             : Comparand.Undefined;
 
-    private static bool TryBytes(byte[]? candidate, out ResolvedUtf8 value)
+    private static bool TryReturn(string? candidate, out string value)
     {
-        if (candidate is null)
-        {
-            value = default;
-            return false;
-        }
-
-        value = ResolvedUtf8.FromBytes(candidate);
-        return true;
-    }
-
-    private static bool TryBytesFromMap(Dictionary<string, byte[]>? map, string? name, out ResolvedUtf8 value)
-    {
-        if (map is not null && name is not null && map.TryGetValue(name, out byte[]? found))
-        {
-            value = ResolvedUtf8.FromBytes(found);
-            return true;
-        }
-
-        value = default;
-        return false;
-    }
-
-    private static bool TryReturn(byte[]? candidate, out string value)
-    {
-        value = candidate is null ? string.Empty : Encoding.UTF8.GetString(candidate);
+        value = candidate ?? string.Empty;
         return candidate is not null;
     }
 
-    private static bool TryReturnFromMap(Dictionary<string, byte[]>? map, string? name, out string value)
+    private static bool TryReturnFromMap(Dictionary<string, string>? map, string? name, out string value)
     {
-        if (map is not null && name is not null && map.TryGetValue(name, out byte[]? found))
+        if (map is not null && name is not null && map.TryGetValue(name, out string? found))
         {
-            value = Encoding.UTF8.GetString(found);
+            value = found;
             return true;
         }
 

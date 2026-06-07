@@ -7,7 +7,7 @@ namespace Corvus.Text.Json.Arazzo;
 /// <summary>
 /// The kind of a resolved <see cref="Comparand"/>.
 /// </summary>
-public enum ComparandKind
+internal enum ComparandKind
 {
     /// <summary>The operand could not be resolved.</summary>
     Undefined,

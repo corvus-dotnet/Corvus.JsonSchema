@@ -213,6 +213,13 @@ implementation must follow its house style:
   strings. Build-/generation-time work (e.g. parsing a runtime expression) may
   allocate; the per-step path must not. Code-generated executors bake property
   names and JSON Pointers as `"..."u8` literals so the hot path allocates nothing.
+- **Compile criteria ahead-of-time.** Regular expressions and JSONPath queries
+  must be compiled once, never per step. The generated executor (.NET 10+) emits
+  criteria as ahead-of-time code: JSONPath via the Corvus JSONPath source
+  generator and regular expressions via `[GeneratedRegex]` — zero per-evaluation
+  overhead. The runtime library's interpreted `CompiledCriterion` is the
+  dynamic-mode fallback: it still compiles once (a cached `Regex`; the
+  `JsonPathEvaluator` query cache) and evaluates without re-parsing.
 
 ## 4. Proposed project layout (mirrors OpenApi/AsyncApi)
 
