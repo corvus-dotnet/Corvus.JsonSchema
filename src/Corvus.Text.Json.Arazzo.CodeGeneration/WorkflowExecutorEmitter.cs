@@ -171,11 +171,11 @@ public static class WorkflowExecutorEmitter
 
         body.AppendLine("            var workflowOutputs = JsonElement.CreateBuilder(");
         body.AppendLine("                workspace,");
-        body.AppendLine("                new JsonElement.Source(context,");
-        body.AppendLine("                    static (in WorkflowExecutionContext ctx, ref JsonElement.ObjectBuilder builder) =>");
-        body.AppendLine("                    {");
+        body.AppendLine("                context,");
+        body.AppendLine("                static (in WorkflowExecutionContext ctx, ref JsonElement.ObjectBuilder builder) =>");
+        body.AppendLine("                {");
         body.Append(build);
-        body.AppendLine("                    }));");
+        body.AppendLine("                });");
         body.AppendLine("            JsonElement workflowOutputsElement = workflowOutputs.RootElement;");
     }
 
@@ -211,6 +211,7 @@ public static class WorkflowExecutorEmitter
         writer.AppendLine();
         writer.AppendLine("#nullable enable");
         writer.AppendLine();
+        writer.AppendLine("using System;");
         writer.AppendLine("using System.Diagnostics;");
         writer.AppendLine("using System.Threading;");
         writer.AppendLine("using System.Threading.Tasks;");
