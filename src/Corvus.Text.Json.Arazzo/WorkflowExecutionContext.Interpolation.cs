@@ -168,12 +168,13 @@ public sealed partial class WorkflowExecutionContext
 
         while (i < span.Length)
         {
-            if (span[i] == '{')
+            // An embedded expression begins with "{$" (per spec, the braces wrap a runtime
+            // expression). A bare '{' — e.g. a regex quantifier like a{2,3} — is literal text.
+            if (span[i] == '{' && i + 1 < span.Length && span[i + 1] == '$')
             {
                 int relativeClose = span[i..].IndexOf('}');
                 if (relativeClose < 0)
                 {
-                    // No closing brace — emit the remainder literally.
                     AppendText(ref builder, span[i..]);
                     return true;
                 }
@@ -190,18 +191,31 @@ public sealed partial class WorkflowExecutionContext
                 continue;
             }
 
-            int relativeOpen = span[i..].IndexOf('{');
-            if (relativeOpen < 0)
+            int next = IndexOfEmbeddedStart(span, i);
+            if (next < 0)
             {
                 AppendText(ref builder, span[i..]);
                 break;
             }
 
-            AppendText(ref builder, span.Slice(i, relativeOpen));
-            i += relativeOpen;
+            AppendText(ref builder, span[i..next]);
+            i = next;
         }
 
         return true;
+    }
+
+    private static int IndexOfEmbeddedStart(ReadOnlySpan<char> span, int from)
+    {
+        for (int j = from; j < span.Length - 1; j++)
+        {
+            if (span[j] == '{' && span[j + 1] == '$')
+            {
+                return j;
+            }
+        }
+
+        return -1;
     }
 
     private bool TryAppendEmbedded(in ArazzoExpression expression, ref Utf8ValueStringBuilder builder)
