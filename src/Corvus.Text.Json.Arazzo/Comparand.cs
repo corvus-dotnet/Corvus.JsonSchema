@@ -72,16 +72,37 @@ internal readonly struct Comparand
     }
 
     /// <summary>
-    /// Compares two numeric comparands for ordering.
+    /// Gets this comparand as a number, coercing a numeric string per the Arazzo spec
+    /// ("Numeric strings SHOULD be coerced to numbers when compared with numeric operators").
+    /// </summary>
+    /// <param name="value">The numeric value, when this comparand is a number or numeric string.</param>
+    /// <returns><see langword="true"/> if a number was produced.</returns>
+    public bool TryAsNumber(out double value)
+    {
+        switch (this.Kind)
+        {
+            case ComparandKind.Number:
+                value = this.Number;
+                return true;
+            case ComparandKind.String when double.TryParse(this.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out value):
+                return true;
+            default:
+                value = 0;
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Compares two comparands for ordering, coercing numeric strings to numbers.
     /// </summary>
     /// <param name="other">The right-hand comparand.</param>
-    /// <param name="comparison">The sign of the comparison (this vs other) when both are numbers.</param>
-    /// <returns><see langword="true"/> if both operands are numbers and a comparison was produced.</returns>
+    /// <param name="comparison">The sign of the comparison (this vs other) when both are numeric.</param>
+    /// <returns><see langword="true"/> if both operands are numeric (or numeric strings) and a comparison was produced.</returns>
     public bool TryCompareNumeric(in Comparand other, out int comparison)
     {
-        if (this.Kind == ComparandKind.Number && other.Kind == ComparandKind.Number)
+        if (this.TryAsNumber(out double a) && other.TryAsNumber(out double b))
         {
-            comparison = this.Number.CompareTo(other.Number);
+            comparison = a.CompareTo(b);
             return true;
         }
 
