@@ -293,7 +293,6 @@
     <Compile Include="DebuggerTests.cs" />
     <Compile Include="EnumStringSetValidationTests.cs" />
     <Compile Include="CaseInsensitiveEnumTests.cs" />
-    <Compile Include="RefTupleTests.cs" />
     <Compile Include="ReservedPropertyNameTests.cs" />
     <Compile Include="StringMaxLengthEnumTests.cs" />
     <Compile Include="OneOfDiscriminatorValidationTests.cs" />
@@ -309,7 +308,6 @@
     <Compile Include="JsonBase64TestData.cs" />
     <Compile Include="JsonDateTimeTestData.cs" />
     <Compile Include="CloneAsBuilderTests.cs" />
-    <Compile Include="ValuelessJsonDocumentTests.cs" />
     <Compile Include="ParsedJsonDocumentTests.cs" />
     <Compile Include="DocumentStringAndFormatCoverageTests.cs" />
     <Compile Include="JsonElementTensorHelpersCoverageTests.cs" />
