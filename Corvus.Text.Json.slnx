@@ -126,6 +126,7 @@
   </Folder>
   <Folder Name="/v5/Arazzo/">
     <Project Path="src/Corvus.Text.Json.Arazzo10/Corvus.Text.Json.Arazzo10.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo11/Corvus.Text.Json.Arazzo11.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo/Corvus.Text.Json.Arazzo.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Testing/Corvus.Text.Json.Arazzo.Testing.csproj" />
