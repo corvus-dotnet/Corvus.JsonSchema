@@ -95,8 +95,7 @@ public sealed class SimpleConditionEvaluator
     {
         public override bool Evaluate(WorkflowExecutionContext context)
         {
-            Comparand value = operand.Resolve(context);
-            return value.Kind == ComparandKind.Boolean && value.Boolean;
+            return operand.Resolve(context).IsTrue;
         }
     }
 

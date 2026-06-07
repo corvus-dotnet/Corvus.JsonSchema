@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
@@ -31,10 +32,19 @@ public class ComparandTests
         Comparand.FromBoolean(true).ValueEquals(Comparand.FromBoolean(true)).ShouldBeTrue();
         Comparand.FromBoolean(true).ValueEquals(Comparand.FromBoolean(false)).ShouldBeFalse();
         Comparand.FromNumber(2).ValueEquals(Comparand.FromNumber(2)).ShouldBeTrue();
-        Comparand.FromString("AB").ValueEquals(Comparand.FromString("ab")).ShouldBeTrue();   // case-insensitive
-        Comparand.FromJson("""{"a":1}""").ValueEquals(Comparand.FromJson("""{"a":1}""")).ShouldBeTrue();
-        Comparand.FromJson("""{"a":1}""").ValueEquals(Comparand.FromJson("""{"a":2}""")).ShouldBeFalse();
-        Comparand.FromNumber(1).ValueEquals(Comparand.FromString("1")).ShouldBeFalse();        // differing kinds
+        Utf8("AB").ValueEquals(Utf8("ab")).ShouldBeTrue();   // case-insensitive
+        Comparand.FromNumber(1).ValueEquals(Utf8("1")).ShouldBeFalse();  // differing kinds
+    }
+
+    [TestMethod]
+    public void String_equality_works_across_literal_and_json_backing()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("\"OK\""u8.ToArray());
+        Comparand jsonBacked = Comparand.FromJsonString(doc.RootElement);
+
+        jsonBacked.ValueEquals(Utf8("ok")).ShouldBeTrue();          // json string vs literal, case-insensitive
+        Utf8("ok").ValueEquals(jsonBacked).ShouldBeTrue();          // literal vs json string
+        jsonBacked.ValueEquals(Utf8("nope")).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -42,11 +52,13 @@ public class ComparandTests
     {
         Comparand.FromNumber(3).TryAsNumber(out double a).ShouldBeTrue();
         a.ShouldBe(3);
-        Comparand.FromString("4.5").TryAsNumber(out double b).ShouldBeTrue();
+        Utf8("4.5").TryAsNumber(out double b).ShouldBeTrue();
         b.ShouldBe(4.5);
-        Comparand.FromString("abc").TryAsNumber(out _).ShouldBeFalse();
+        Utf8("abc").TryAsNumber(out _).ShouldBeFalse();
         Comparand.Null.TryAsNumber(out _).ShouldBeFalse();
     }
+
+    private static Comparand Utf8(string value) => Comparand.FromUtf8String(System.Text.Encoding.UTF8.GetBytes(value));
 
     [TestMethod]
     public void TryCompareNumeric_requires_two_numbers()
