@@ -164,16 +164,9 @@ public sealed partial class WorkflowExecutionContext
         var builder = new Utf8ValueStringBuilder(64);
         try
         {
-            foreach (ref readonly CompiledInterpolationTemplate.Segment segment in template.Segments)
+            if (!this.TryAppendTemplate(template, ref builder))
             {
-                if (segment.IsLiteral)
-                {
-                    builder.Append(segment.Literal!);
-                }
-                else if (!this.TryAppendEmbedded(segment.Expression, ref builder))
-                {
-                    return false;
-                }
+                return false;
             }
 
             output.Write(builder.AsSpan());
@@ -183,6 +176,30 @@ public sealed partial class WorkflowExecutionContext
         {
             builder.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Appends a compiled template's interpolation to a UTF-8 builder. Used by callers (e.g. dynamic
+    /// criteria) that want the UTF-8 span directly rather than copying to an <see cref="IBufferWriter{T}"/>.
+    /// </summary>
+    /// <param name="template">The compiled template.</param>
+    /// <param name="builder">The UTF-8 builder to append to.</param>
+    /// <returns><see langword="true"/> if every embedded expression resolved.</returns>
+    internal bool TryAppendTemplate(CompiledInterpolationTemplate template, ref Utf8ValueStringBuilder builder)
+    {
+        foreach (ref readonly CompiledInterpolationTemplate.Segment segment in template.Segments)
+        {
+            if (segment.IsLiteral)
+            {
+                builder.Append(segment.Literal!);
+            }
+            else if (!this.TryAppendEmbedded(segment.Expression, ref builder))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static void Add(ref Dictionary<string, byte[]>? map, StringComparer comparer, string name, string value)
