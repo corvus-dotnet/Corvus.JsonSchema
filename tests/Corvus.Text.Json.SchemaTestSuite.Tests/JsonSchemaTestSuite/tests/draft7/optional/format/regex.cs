@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft7.Optional.Format.Regex;
 public class SuiteValidationOfRegularExpressions
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfRegularExpressions
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -88,7 +88,7 @@ public class SuiteValidationOfRegularExpressions
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\format\\regex.json",
+                "tests/draft7/optional/format/regex.json",
                 "{ \"format\": \"regex\" }",
                 "JsonSchemaTestSuite.Draft7.Optional.Format.Regex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

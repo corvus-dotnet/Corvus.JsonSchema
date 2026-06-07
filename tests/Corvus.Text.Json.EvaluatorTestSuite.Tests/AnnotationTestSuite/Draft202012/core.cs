@@ -12,6 +12,7 @@ namespace AnnotationTestSuite.Draft202012.Core;
 public class SuiteRefAndDefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -22,7 +23,6 @@ public class SuiteRefAndDefs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -34,7 +34,7 @@ public class SuiteRefAndDefs
             "\"foo\"",
             "",
             "title",
-            "{\r\n                \"#/$defs/foo\": \"Foo\"\r\n              }");
+            "{\n                \"#/$defs/foo\": \"Foo\"\n              }");
     }
 
     public class Fixture
@@ -45,9 +45,9 @@ public class SuiteRefAndDefs
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/core.json",
-                "{\r\n        \"$ref\": \"#/$defs/foo\",\r\n        \"$defs\": {\r\n          \"foo\": { \"title\": \"Foo\" }\r\n        }\r\n      }",
+                "{\n        \"$ref\": \"#/$defs/foo\",\n        \"$defs\": {\n          \"foo\": { \"title\": \"Foo\" }\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Core",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -60,6 +60,7 @@ public class SuiteRefAndDefs
 public class SuiteDynamicRefResolvesToDynamicAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -70,7 +71,6 @@ public class SuiteDynamicRefResolvesToDynamicAnchor
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -82,7 +82,7 @@ public class SuiteDynamicRefResolvesToDynamicAnchor
             "\"bar\"",
             "",
             "title",
-            "{\r\n                \"#/$defs/foo\": \"Foo\"\r\n              }");
+            "{\n                \"#/$defs/foo\": \"Foo\"\n              }");
     }
 
     public class Fixture
@@ -93,9 +93,9 @@ public class SuiteDynamicRefResolvesToDynamicAnchor
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/core.json",
-                "{\r\n        \"$dynamicRef\": \"#foo\",\r\n        \"$defs\": {\r\n          \"foo\": {\r\n            \"$dynamicAnchor\": \"foo\",\r\n            \"title\": \"Foo\"\r\n          }\r\n        }\r\n      }",
+                "{\n        \"$dynamicRef\": \"#foo\",\n        \"$defs\": {\n          \"foo\": {\n            \"$dynamicAnchor\": \"foo\",\n            \"title\": \"Foo\"\n          }\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Core",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -108,6 +108,7 @@ public class SuiteDynamicRefResolvesToDynamicAnchor
 public class SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicPath
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -118,7 +119,6 @@ public class SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicP
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -130,7 +130,7 @@ public class SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicP
             "{ \"kindOfList\": \"numbers\", \"list\": [1] }",
             "/list/0",
             "title",
-            "{\r\n                \"#/$defs/numberList/$defs/itemType\": \"Number Item\"\r\n              }");
+            "{\n                \"#/$defs/numberList/$defs/itemType\": \"Number Item\"\n              }");
     }
 
     [TestMethod]
@@ -141,7 +141,7 @@ public class SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicP
             "{ \"kindOfList\": \"strings\", \"list\": [\"foo\"] }",
             "/list/0",
             "title",
-            "{\r\n                \"#/$defs/stringList/$defs/itemType\": \"String Item\"\r\n              }");
+            "{\n                \"#/$defs/stringList/$defs/itemType\": \"String Item\"\n              }");
     }
 
     public class Fixture
@@ -152,9 +152,9 @@ public class SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicP
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/core.json",
-                "{\r\n        \"$id\": \"https://test.json-schema.org/dynamic-ref-annotation/main\",\r\n        \"if\": {\r\n          \"properties\": { \"kindOfList\": { \"const\": \"numbers\" } },\r\n          \"required\": [\"kindOfList\"]\r\n        },\r\n        \"then\": { \"$ref\": \"numberList\" },\r\n        \"else\": { \"$ref\": \"stringList\" },\r\n        \"$defs\": {\r\n          \"genericList\": {\r\n            \"$id\": \"genericList\",\r\n            \"properties\": {\r\n              \"list\": {\r\n                \"items\": { \"$dynamicRef\": \"#itemType\" }\r\n              }\r\n            },\r\n            \"$defs\": {\r\n              \"defaultItemType\": {\r\n                \"$dynamicAnchor\": \"itemType\"\r\n              }\r\n            }\r\n          },\r\n          \"numberList\": {\r\n            \"$id\": \"numberList\",\r\n            \"$defs\": {\r\n              \"itemType\": {\r\n                \"$dynamicAnchor\": \"itemType\",\r\n                \"title\": \"Number Item\"\r\n              }\r\n            },\r\n            \"$ref\": \"genericList\"\r\n          },\r\n          \"stringList\": {\r\n            \"$id\": \"stringList\",\r\n            \"$defs\": {\r\n              \"itemType\": {\r\n                \"$dynamicAnchor\": \"itemType\",\r\n                \"title\": \"String Item\"\r\n              }\r\n            },\r\n            \"$ref\": \"genericList\"\r\n          }\r\n        }\r\n      }",
+                "{\n        \"$id\": \"https://test.json-schema.org/dynamic-ref-annotation/main\",\n        \"if\": {\n          \"properties\": { \"kindOfList\": { \"const\": \"numbers\" } },\n          \"required\": [\"kindOfList\"]\n        },\n        \"then\": { \"$ref\": \"numberList\" },\n        \"else\": { \"$ref\": \"stringList\" },\n        \"$defs\": {\n          \"genericList\": {\n            \"$id\": \"genericList\",\n            \"properties\": {\n              \"list\": {\n                \"items\": { \"$dynamicRef\": \"#itemType\" }\n              }\n            },\n            \"$defs\": {\n              \"defaultItemType\": {\n                \"$dynamicAnchor\": \"itemType\"\n              }\n            }\n          },\n          \"numberList\": {\n            \"$id\": \"numberList\",\n            \"$defs\": {\n              \"itemType\": {\n                \"$dynamicAnchor\": \"itemType\",\n                \"title\": \"Number Item\"\n              }\n            },\n            \"$ref\": \"genericList\"\n          },\n          \"stringList\": {\n            \"$id\": \"stringList\",\n            \"$defs\": {\n              \"itemType\": {\n                \"$dynamicAnchor\": \"itemType\",\n                \"title\": \"String Item\"\n              }\n            },\n            \"$ref\": \"genericList\"\n          }\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Core",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft4.MinItems;
 public class SuiteMinItemsValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMinItemsValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,7 +60,7 @@ public class SuiteMinItemsValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\minItems.json",
+                "tests/draft4/minItems.json",
                 "{\"minItems\": 1}",
                 "JsonSchemaTestSuite.Draft4.MinItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

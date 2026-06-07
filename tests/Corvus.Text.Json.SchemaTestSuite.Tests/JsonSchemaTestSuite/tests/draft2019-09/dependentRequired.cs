@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.DependentRequired;
 public class SuiteSingleDependency
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteSingleDependency
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -81,8 +81,8 @@ public class SuiteSingleDependency
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\dependentRequired.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependentRequired\": {\"bar\": [\"foo\"]}\r\n        }",
+                "tests/draft2019-09/dependentRequired.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependentRequired\": {\"bar\": [\"foo\"]}\n        }",
                 "JsonSchemaTestSuite.Draft201909.DependentRequired",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -100,6 +100,7 @@ public class SuiteSingleDependency
 public class SuiteEmptyDependents
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -110,7 +111,6 @@ public class SuiteEmptyDependents
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -142,8 +142,8 @@ public class SuiteEmptyDependents
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\dependentRequired.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependentRequired\": {\"bar\": []}\r\n        }",
+                "tests/draft2019-09/dependentRequired.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependentRequired\": {\"bar\": []}\n        }",
                 "JsonSchemaTestSuite.Draft201909.DependentRequired",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -161,6 +161,7 @@ public class SuiteEmptyDependents
 public class SuiteMultipleDependentsRequired
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -171,7 +172,6 @@ public class SuiteMultipleDependentsRequired
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -224,8 +224,8 @@ public class SuiteMultipleDependentsRequired
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\dependentRequired.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependentRequired\": {\"quux\": [\"foo\", \"bar\"]}\r\n        }",
+                "tests/draft2019-09/dependentRequired.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependentRequired\": {\"quux\": [\"foo\", \"bar\"]}\n        }",
                 "JsonSchemaTestSuite.Draft201909.DependentRequired",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -243,6 +243,7 @@ public class SuiteMultipleDependentsRequired
 public class SuiteDependenciesWithEscapedCharacters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -253,35 +254,34 @@ public class SuiteDependenciesWithEscapedCharacters
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestCrlf()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\\nbar\": 1,\r\n                    \"foo\\rbar\": 2\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": 1,\n                    \"foo\\rbar\": 2\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestQuotedQuotes()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo'bar\": 1,\r\n                    \"foo\\\"bar\": 2\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo'bar\": 1,\n                    \"foo\\\"bar\": 2\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestCrlfMissingDependent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\\nbar\": 1,\r\n                    \"foo\": 2\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": 1,\n                    \"foo\": 2\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestQuotedQuotesMissingDependent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\\\"bar\": 2\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\\"bar\": 2\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -292,8 +292,8 @@ public class SuiteDependenciesWithEscapedCharacters
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\dependentRequired.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependentRequired\": {\r\n                \"foo\\nbar\": [\"foo\\rbar\"],\r\n                \"foo\\\"bar\": [\"foo'bar\"]\r\n            }\r\n        }",
+                "tests/draft2019-09/dependentRequired.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependentRequired\": {\n                \"foo\\nbar\": [\"foo\\rbar\"],\n                \"foo\\\"bar\": [\"foo'bar\"]\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.DependentRequired",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

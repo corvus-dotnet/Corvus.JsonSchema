@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.Ref;
 public class SuiteRootPointerRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteRootPointerRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,8 +60,8 @@ public class SuiteRootPointerRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#\"}\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#\"}\n            },\n            \"additionalProperties\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -76,6 +76,7 @@ public class SuiteRootPointerRef
 public class SuiteRelativePointerRefToObject
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -86,7 +87,6 @@ public class SuiteRelativePointerRefToObject
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -111,8 +111,8 @@ public class SuiteRelativePointerRefToObject
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"properties\": {\r\n                \"foo\": {\"type\": \"integer\"},\r\n                \"bar\": {\"$ref\": \"#/properties/foo\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"properties\": {\n                \"foo\": {\"type\": \"integer\"},\n                \"bar\": {\"$ref\": \"#/properties/foo\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -127,6 +127,7 @@ public class SuiteRelativePointerRefToObject
 public class SuiteRelativePointerRefToArray
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -137,7 +138,6 @@ public class SuiteRelativePointerRefToArray
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -162,8 +162,8 @@ public class SuiteRelativePointerRefToArray
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"items\": [\r\n                {\"type\": \"integer\"},\r\n                {\"$ref\": \"#/items/0\"}\r\n            ]\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"items\": [\n                {\"type\": \"integer\"},\n                {\"$ref\": \"#/items/0\"}\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -178,6 +178,7 @@ public class SuiteRelativePointerRefToArray
 public class SuiteEscapedPointerRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -188,7 +189,6 @@ public class SuiteEscapedPointerRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -241,8 +241,8 @@ public class SuiteEscapedPointerRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"definitions\": {\r\n                \"tilde~field\": {\"type\": \"integer\"},\r\n                \"slash/field\": {\"type\": \"integer\"},\r\n                \"percent%field\": {\"type\": \"integer\"}\r\n            },\r\n            \"properties\": {\r\n                \"tilde\": {\"$ref\": \"#/definitions/tilde~0field\"},\r\n                \"slash\": {\"$ref\": \"#/definitions/slash~1field\"},\r\n                \"percent\": {\"$ref\": \"#/definitions/percent%25field\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"definitions\": {\n                \"tilde~field\": {\"type\": \"integer\"},\n                \"slash/field\": {\"type\": \"integer\"},\n                \"percent%field\": {\"type\": \"integer\"}\n            },\n            \"properties\": {\n                \"tilde\": {\"$ref\": \"#/definitions/tilde~0field\"},\n                \"slash\": {\"$ref\": \"#/definitions/slash~1field\"},\n                \"percent\": {\"$ref\": \"#/definitions/percent%25field\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -257,6 +257,7 @@ public class SuiteEscapedPointerRef
 public class SuiteNestedRefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -267,7 +268,6 @@ public class SuiteNestedRefs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -292,8 +292,8 @@ public class SuiteNestedRefs
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"definitions\": {\r\n                \"a\": {\"type\": \"integer\"},\r\n                \"b\": {\"$ref\": \"#/definitions/a\"},\r\n                \"c\": {\"$ref\": \"#/definitions/b\"}\r\n            },\r\n            \"allOf\": [{ \"$ref\": \"#/definitions/c\" }]\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"definitions\": {\n                \"a\": {\"type\": \"integer\"},\n                \"b\": {\"$ref\": \"#/definitions/a\"},\n                \"c\": {\"$ref\": \"#/definitions/b\"}\n            },\n            \"allOf\": [{ \"$ref\": \"#/definitions/c\" }]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -308,6 +308,7 @@ public class SuiteNestedRefs
 public class SuiteRefOverridesAnySiblingKeywords
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -318,7 +319,6 @@ public class SuiteRefOverridesAnySiblingKeywords
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -350,8 +350,8 @@ public class SuiteRefOverridesAnySiblingKeywords
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"definitions\": {\r\n                \"reffed\": {\r\n                    \"type\": \"array\"\r\n                }\r\n            },\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"$ref\": \"#/definitions/reffed\",\r\n                    \"maxItems\": 2\r\n                }\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"definitions\": {\n                \"reffed\": {\n                    \"type\": \"array\"\n                }\n            },\n            \"properties\": {\n                \"foo\": {\n                    \"$ref\": \"#/definitions/reffed\",\n                    \"maxItems\": 2\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -366,6 +366,7 @@ public class SuiteRefOverridesAnySiblingKeywords
 public class SuiteRefPreventsASiblingIdFromChangingTheBaseUri
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -376,7 +377,6 @@ public class SuiteRefPreventsASiblingIdFromChangingTheBaseUri
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -401,8 +401,8 @@ public class SuiteRefPreventsASiblingIdFromChangingTheBaseUri
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$id\": \"http://localhost:1234/sibling_id/base/\",\r\n            \"definitions\": {\r\n                \"foo\": {\r\n                    \"$id\": \"http://localhost:1234/sibling_id/foo.json\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"base_foo\": {\r\n                    \"$comment\": \"this canonical uri is http://localhost:1234/sibling_id/base/foo.json\",\r\n                    \"$id\": \"foo.json\",\r\n                    \"type\": \"number\"\r\n                }\r\n            },\r\n            \"allOf\": [\r\n                {\r\n                    \"$comment\": \"$ref resolves to http://localhost:1234/sibling_id/base/foo.json, not http://localhost:1234/sibling_id/foo.json\",\r\n                    \"$id\": \"http://localhost:1234/sibling_id/\",\r\n                    \"$ref\": \"foo.json\"\r\n                }\r\n            ]\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$id\": \"http://localhost:1234/sibling_id/base/\",\n            \"definitions\": {\n                \"foo\": {\n                    \"$id\": \"http://localhost:1234/sibling_id/foo.json\",\n                    \"type\": \"string\"\n                },\n                \"base_foo\": {\n                    \"$comment\": \"this canonical uri is http://localhost:1234/sibling_id/base/foo.json\",\n                    \"$id\": \"foo.json\",\n                    \"type\": \"number\"\n                }\n            },\n            \"allOf\": [\n                {\n                    \"$comment\": \"$ref resolves to http://localhost:1234/sibling_id/base/foo.json, not http://localhost:1234/sibling_id/foo.json\",\n                    \"$id\": \"http://localhost:1234/sibling_id/\",\n                    \"$ref\": \"foo.json\"\n                }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -417,6 +417,7 @@ public class SuiteRefPreventsASiblingIdFromChangingTheBaseUri
 public class SuiteRemoteRefContainingRefsItself
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -427,7 +428,6 @@ public class SuiteRemoteRefContainingRefsItself
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -452,7 +452,7 @@ public class SuiteRemoteRefContainingRefsItself
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
+                "tests/draft6/ref.json",
                 "{\"$ref\": \"http://json-schema.org/draft-06/schema#\"}",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -468,6 +468,7 @@ public class SuiteRemoteRefContainingRefsItself
 public class SuitePropertyNamedRefThatIsNotAReference
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -478,7 +479,6 @@ public class SuitePropertyNamedRefThatIsNotAReference
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -503,8 +503,8 @@ public class SuitePropertyNamedRefThatIsNotAReference
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"properties\": {\r\n                \"$ref\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"properties\": {\n                \"$ref\": {\"type\": \"string\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -519,6 +519,7 @@ public class SuitePropertyNamedRefThatIsNotAReference
 public class SuitePropertyNamedRefContainingAnActualRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -529,7 +530,6 @@ public class SuitePropertyNamedRefContainingAnActualRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -554,8 +554,8 @@ public class SuitePropertyNamedRefContainingAnActualRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"properties\": {\r\n                \"$ref\": {\"$ref\": \"#/definitions/is-string\"}\r\n            },\r\n            \"definitions\": {\r\n                \"is-string\": {\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"properties\": {\n                \"$ref\": {\"$ref\": \"#/definitions/is-string\"}\n            },\n            \"definitions\": {\n                \"is-string\": {\n                    \"type\": \"string\"\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -570,6 +570,7 @@ public class SuitePropertyNamedRefContainingAnActualRef
 public class SuiteRefToBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -580,7 +581,6 @@ public class SuiteRefToBooleanSchemaTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -598,8 +598,8 @@ public class SuiteRefToBooleanSchemaTrue
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"allOf\": [{ \"$ref\": \"#/definitions/bool\" }],\r\n            \"definitions\": {\r\n                \"bool\": true\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"allOf\": [{ \"$ref\": \"#/definitions/bool\" }],\n            \"definitions\": {\n                \"bool\": true\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -614,6 +614,7 @@ public class SuiteRefToBooleanSchemaTrue
 public class SuiteRefToBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -624,7 +625,6 @@ public class SuiteRefToBooleanSchemaFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -642,8 +642,8 @@ public class SuiteRefToBooleanSchemaFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"allOf\": [{ \"$ref\": \"#/definitions/bool\" }],\r\n            \"definitions\": {\r\n                \"bool\": false\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"allOf\": [{ \"$ref\": \"#/definitions/bool\" }],\n            \"definitions\": {\n                \"bool\": false\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -658,6 +658,7 @@ public class SuiteRefToBooleanSchemaFalse
 public class SuiteRecursiveReferencesBetweenSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -668,21 +669,20 @@ public class SuiteRecursiveReferencesBetweenSchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestValidTree()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \r\n                    \"meta\": \"root\",\r\n                    \"nodes\": [\r\n                        {\r\n                            \"value\": 1,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": 1.1},\r\n                                    {\"value\": 1.2}\r\n                                ]\r\n                            }\r\n                        },\r\n                        {\r\n                            \"value\": 2,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": 2.1},\r\n                                    {\"value\": 2.2}\r\n                                ]\r\n                            }\r\n                        }\r\n                    ]\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \n                    \"meta\": \"root\",\n                    \"nodes\": [\n                        {\n                            \"value\": 1,\n                            \"subtree\": {\n                                \"meta\": \"child\",\n                                \"nodes\": [\n                                    {\"value\": 1.1},\n                                    {\"value\": 1.2}\n                                ]\n                            }\n                        },\n                        {\n                            \"value\": 2,\n                            \"subtree\": {\n                                \"meta\": \"child\",\n                                \"nodes\": [\n                                    {\"value\": 2.1},\n                                    {\"value\": 2.2}\n                                ]\n                            }\n                        }\n                    ]\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInvalidTree()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \r\n                    \"meta\": \"root\",\r\n                    \"nodes\": [\r\n                        {\r\n                            \"value\": 1,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": \"string is invalid\"},\r\n                                    {\"value\": 1.2}\r\n                                ]\r\n                            }\r\n                        },\r\n                        {\r\n                            \"value\": 2,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": 2.1},\r\n                                    {\"value\": 2.2}\r\n                                ]\r\n                            }\r\n                        }\r\n                    ]\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \n                    \"meta\": \"root\",\n                    \"nodes\": [\n                        {\n                            \"value\": 1,\n                            \"subtree\": {\n                                \"meta\": \"child\",\n                                \"nodes\": [\n                                    {\"value\": \"string is invalid\"},\n                                    {\"value\": 1.2}\n                                ]\n                            }\n                        },\n                        {\n                            \"value\": 2,\n                            \"subtree\": {\n                                \"meta\": \"child\",\n                                \"nodes\": [\n                                    {\"value\": 2.1},\n                                    {\"value\": 2.2}\n                                ]\n                            }\n                        }\n                    ]\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -693,8 +693,8 @@ public class SuiteRecursiveReferencesBetweenSchemas
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$id\": \"http://localhost:1234/tree\",\r\n            \"description\": \"tree of nodes\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"meta\": {\"type\": \"string\"},\r\n                \"nodes\": {\r\n                    \"type\": \"array\",\r\n                    \"items\": {\"$ref\": \"node\"}\r\n                }\r\n            },\r\n            \"required\": [\"meta\", \"nodes\"],\r\n            \"definitions\": {\r\n                \"node\": {\r\n                    \"$id\": \"http://localhost:1234/node\",\r\n                    \"description\": \"node\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"value\": {\"type\": \"number\"},\r\n                        \"subtree\": {\"$ref\": \"tree\"}\r\n                    },\r\n                    \"required\": [\"value\"]\r\n                }\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$id\": \"http://localhost:1234/tree\",\n            \"description\": \"tree of nodes\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"meta\": {\"type\": \"string\"},\n                \"nodes\": {\n                    \"type\": \"array\",\n                    \"items\": {\"$ref\": \"node\"}\n                }\n            },\n            \"required\": [\"meta\", \"nodes\"],\n            \"definitions\": {\n                \"node\": {\n                    \"$id\": \"http://localhost:1234/node\",\n                    \"description\": \"node\",\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"value\": {\"type\": \"number\"},\n                        \"subtree\": {\"$ref\": \"tree\"}\n                    },\n                    \"required\": [\"value\"]\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -709,6 +709,7 @@ public class SuiteRecursiveReferencesBetweenSchemas
 public class SuiteRefsWithQuote
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -719,21 +720,20 @@ public class SuiteRefsWithQuote
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestObjectWithNumbersIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\\\"bar\": 1\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\\"bar\": 1\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectWithStringsIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\\\"bar\": \"1\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\\"bar\": \"1\"\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -744,8 +744,8 @@ public class SuiteRefsWithQuote
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"properties\": {\r\n                \"foo\\\"bar\": {\"$ref\": \"#/definitions/foo%22bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"foo\\\"bar\": {\"type\": \"number\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"properties\": {\n                \"foo\\\"bar\": {\"$ref\": \"#/definitions/foo%22bar\"}\n            },\n            \"definitions\": {\n                \"foo\\\"bar\": {\"type\": \"number\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -760,6 +760,7 @@ public class SuiteRefsWithQuote
 public class SuiteLocationIndependentIdentifier
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -770,7 +771,6 @@ public class SuiteLocationIndependentIdentifier
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -795,8 +795,8 @@ public class SuiteLocationIndependentIdentifier
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"allOf\": [{\r\n                \"$ref\": \"#foo\"\r\n            }],\r\n            \"definitions\": {\r\n                \"A\": {\r\n                    \"$id\": \"#foo\",\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"allOf\": [{\n                \"$ref\": \"#foo\"\n            }],\n            \"definitions\": {\n                \"A\": {\n                    \"$id\": \"#foo\",\n                    \"type\": \"integer\"\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -811,6 +811,7 @@ public class SuiteLocationIndependentIdentifier
 public class SuiteReferenceAnAnchorWithANonRelativeUri
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -821,7 +822,6 @@ public class SuiteReferenceAnAnchorWithANonRelativeUri
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -846,8 +846,8 @@ public class SuiteReferenceAnAnchorWithANonRelativeUri
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$id\": \"https://example.com/schema-with-anchor\",\r\n            \"allOf\": [{\r\n                \"$ref\": \"https://example.com/schema-with-anchor#foo\"\r\n            }],\r\n            \"definitions\": {\r\n                \"A\": {\r\n                    \"$id\": \"#foo\",\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$id\": \"https://example.com/schema-with-anchor\",\n            \"allOf\": [{\n                \"$ref\": \"https://example.com/schema-with-anchor#foo\"\n            }],\n            \"definitions\": {\n                \"A\": {\n                    \"$id\": \"#foo\",\n                    \"type\": \"integer\"\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -862,6 +862,7 @@ public class SuiteReferenceAnAnchorWithANonRelativeUri
 public class SuiteLocationIndependentIdentifierWithBaseUriChangeInSubschema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -872,7 +873,6 @@ public class SuiteLocationIndependentIdentifierWithBaseUriChangeInSubschema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -897,8 +897,8 @@ public class SuiteLocationIndependentIdentifierWithBaseUriChangeInSubschema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$id\": \"http://localhost:1234/root\",\r\n            \"allOf\": [{\r\n                \"$ref\": \"http://localhost:1234/nested.json#foo\"\r\n            }],\r\n            \"definitions\": {\r\n                \"A\": {\r\n                    \"$id\": \"nested.json\",\r\n                    \"definitions\": {\r\n                        \"B\": {\r\n                            \"$id\": \"#foo\",\r\n                            \"type\": \"integer\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$id\": \"http://localhost:1234/root\",\n            \"allOf\": [{\n                \"$ref\": \"http://localhost:1234/nested.json#foo\"\n            }],\n            \"definitions\": {\n                \"A\": {\n                    \"$id\": \"nested.json\",\n                    \"definitions\": {\n                        \"B\": {\n                            \"$id\": \"#foo\",\n                            \"type\": \"integer\"\n                        }\n                    }\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -913,6 +913,7 @@ public class SuiteLocationIndependentIdentifierWithBaseUriChangeInSubschema
 public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -923,7 +924,6 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -955,8 +955,8 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"definitions\": {\r\n                \"a_string\": { \"type\": \"string\" }\r\n            },\r\n            \"enum\": [\r\n                { \"$ref\": \"#/definitions/a_string\" }\r\n            ]\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"definitions\": {\n                \"a_string\": { \"type\": \"string\" }\n            },\n            \"enum\": [\n                { \"$ref\": \"#/definitions/a_string\" }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -971,6 +971,7 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
 public class SuiteRefsWithRelativeUrisAndDefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -981,28 +982,27 @@ public class SuiteRefsWithRelativeUrisAndDefs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestInvalidOnInnerField()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": 1\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {\n                        \"bar\": 1\n                    },\n                    \"bar\": \"a\"\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInvalidOnOuterField()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": 1\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {\n                        \"bar\": \"a\"\n                    },\n                    \"bar\": 1\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestValidOnBothFields()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {\n                        \"bar\": \"a\"\n                    },\n                    \"bar\": \"a\"\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1013,8 +1013,8 @@ public class SuiteRefsWithRelativeUrisAndDefs
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$id\": \"http://example.com/schema-relative-uri-defs1.json\",\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"$id\": \"schema-relative-uri-defs2.json\",\r\n                    \"definitions\": {\r\n                        \"inner\": {\r\n                            \"properties\": {\r\n                                \"bar\": { \"type\": \"string\" }\r\n                            }\r\n                        }\r\n                    },\r\n                    \"allOf\": [ { \"$ref\": \"#/definitions/inner\" } ]\r\n                }\r\n            },\r\n            \"allOf\": [ { \"$ref\": \"schema-relative-uri-defs2.json\" } ]\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$id\": \"http://example.com/schema-relative-uri-defs1.json\",\n            \"properties\": {\n                \"foo\": {\n                    \"$id\": \"schema-relative-uri-defs2.json\",\n                    \"definitions\": {\n                        \"inner\": {\n                            \"properties\": {\n                                \"bar\": { \"type\": \"string\" }\n                            }\n                        }\n                    },\n                    \"allOf\": [ { \"$ref\": \"#/definitions/inner\" } ]\n                }\n            },\n            \"allOf\": [ { \"$ref\": \"schema-relative-uri-defs2.json\" } ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1029,6 +1029,7 @@ public class SuiteRefsWithRelativeUrisAndDefs
 public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1039,28 +1040,27 @@ public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestInvalidOnInnerField()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": 1\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {\n                        \"bar\": 1\n                    },\n                    \"bar\": \"a\"\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInvalidOnOuterField()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": 1\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {\n                        \"bar\": \"a\"\n                    },\n                    \"bar\": 1\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestValidOnBothFields()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {\n                        \"bar\": \"a\"\n                    },\n                    \"bar\": \"a\"\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1071,8 +1071,8 @@ public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$id\": \"http://example.com/schema-refs-absolute-uris-defs1.json\",\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"$id\": \"http://example.com/schema-refs-absolute-uris-defs2.json\",\r\n                    \"definitions\": {\r\n                        \"inner\": {\r\n                            \"properties\": {\r\n                                \"bar\": { \"type\": \"string\" }\r\n                            }\r\n                        }\r\n                    },\r\n                    \"allOf\": [ { \"$ref\": \"#/definitions/inner\" } ]\r\n                }\r\n            },\r\n            \"allOf\": [ { \"$ref\": \"schema-refs-absolute-uris-defs2.json\" } ]\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$id\": \"http://example.com/schema-refs-absolute-uris-defs1.json\",\n            \"properties\": {\n                \"foo\": {\n                    \"$id\": \"http://example.com/schema-refs-absolute-uris-defs2.json\",\n                    \"definitions\": {\n                        \"inner\": {\n                            \"properties\": {\n                                \"bar\": { \"type\": \"string\" }\n                            }\n                        }\n                    },\n                    \"allOf\": [ { \"$ref\": \"#/definitions/inner\" } ]\n                }\n            },\n            \"allOf\": [ { \"$ref\": \"schema-refs-absolute-uris-defs2.json\" } ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1087,6 +1087,7 @@ public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
 public class SuiteSimpleUrnBaseUriWithRefViaTheUrn
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1097,7 +1098,6 @@ public class SuiteSimpleUrnBaseUriWithRefViaTheUrn
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1122,8 +1122,8 @@ public class SuiteSimpleUrnBaseUriWithRefViaTheUrn
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\r\n            \"$id\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\",\r\n            \"minimum\": 30,\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\n            \"$id\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\",\n            \"minimum\": 30,\n            \"properties\": {\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1138,6 +1138,7 @@ public class SuiteSimpleUrnBaseUriWithRefViaTheUrn
 public class SuiteSimpleUrnBaseUriWithJsonPointer
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1148,7 +1149,6 @@ public class SuiteSimpleUrnBaseUriWithJsonPointer
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1173,8 +1173,8 @@ public class SuiteSimpleUrnBaseUriWithJsonPointer
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\r\n            \"$id\": \"urn:uuid:deadbeef-1234-00ff-ff00-4321feebdaed\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\n            \"$id\": \"urn:uuid:deadbeef-1234-00ff-ff00-4321feebdaed\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\n            },\n            \"definitions\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1189,6 +1189,7 @@ public class SuiteSimpleUrnBaseUriWithJsonPointer
 public class SuiteUrnBaseUriWithNss
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1199,7 +1200,6 @@ public class SuiteUrnBaseUriWithNss
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1224,8 +1224,8 @@ public class SuiteUrnBaseUriWithNss
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$comment\": \"RFC 8141 §2.2\",\r\n            \"$id\": \"urn:example:1/406/47452/2\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$comment\": \"RFC 8141 §2.2\",\n            \"$id\": \"urn:example:1/406/47452/2\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\n            },\n            \"definitions\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1240,6 +1240,7 @@ public class SuiteUrnBaseUriWithNss
 public class SuiteUrnBaseUriWithRComponent
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1250,7 +1251,6 @@ public class SuiteUrnBaseUriWithRComponent
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1275,8 +1275,8 @@ public class SuiteUrnBaseUriWithRComponent
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$comment\": \"RFC 8141 §2.3.1\",\r\n            \"$id\": \"urn:example:foo-bar-baz-qux?+CCResolve:cc=uk\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$comment\": \"RFC 8141 §2.3.1\",\n            \"$id\": \"urn:example:foo-bar-baz-qux?+CCResolve:cc=uk\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\n            },\n            \"definitions\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1291,6 +1291,7 @@ public class SuiteUrnBaseUriWithRComponent
 public class SuiteUrnBaseUriWithQComponent
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1301,7 +1302,6 @@ public class SuiteUrnBaseUriWithQComponent
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1326,8 +1326,8 @@ public class SuiteUrnBaseUriWithQComponent
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$comment\": \"RFC 8141 §2.3.2\",\r\n            \"$id\": \"urn:example:weather?=op=map&lat=39.56&lon=-104.85&datetime=1969-07-21T02:56:15Z\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$comment\": \"RFC 8141 §2.3.2\",\n            \"$id\": \"urn:example:weather?=op=map&lat=39.56&lon=-104.85&datetime=1969-07-21T02:56:15Z\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\n            },\n            \"definitions\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1342,6 +1342,7 @@ public class SuiteUrnBaseUriWithQComponent
 public class SuiteUrnBaseUriWithUrnAndJsonPointerRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1352,7 +1353,6 @@ public class SuiteUrnBaseUriWithUrnAndJsonPointerRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1377,8 +1377,8 @@ public class SuiteUrnBaseUriWithUrnAndJsonPointerRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$id\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$id\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed#/definitions/bar\"}\n            },\n            \"definitions\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1393,6 +1393,7 @@ public class SuiteUrnBaseUriWithUrnAndJsonPointerRef
 public class SuiteUrnBaseUriWithUrnAndAnchorRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1403,7 +1404,6 @@ public class SuiteUrnBaseUriWithUrnAndAnchorRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1428,8 +1428,8 @@ public class SuiteUrnBaseUriWithUrnAndAnchorRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n            \"$id\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed#something\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\r\n                    \"$id\": \"#something\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft6/ref.json",
+                "{\n            \"$id\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed#something\"}\n            },\n            \"definitions\": {\n                \"bar\": {\n                    \"$id\": \"#something\",\n                    \"type\": \"string\"\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1444,6 +1444,7 @@ public class SuiteUrnBaseUriWithUrnAndAnchorRef
 public class SuiteRefWithAbsolutePathReference
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1454,7 +1455,6 @@ public class SuiteRefWithAbsolutePathReference
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1479,8 +1479,8 @@ public class SuiteRefWithAbsolutePathReference
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n             \"$id\": \"http://example.com/ref/absref.json\",\r\n             \"definitions\": {\r\n                 \"a\": {\r\n                     \"$id\": \"http://example.com/ref/absref/foobar.json\",\r\n                     \"type\": \"number\"\r\n                  },\r\n                  \"b\": {\r\n                      \"$id\": \"http://example.com/absref/foobar.json\",\r\n                      \"type\": \"string\"\r\n                  }\r\n             },\r\n             \"allOf\": [\r\n                 { \"$ref\": \"/absref/foobar.json\" }\r\n             ]\r\n         }",
+                "tests/draft6/ref.json",
+                "{\n             \"$id\": \"http://example.com/ref/absref.json\",\n             \"definitions\": {\n                 \"a\": {\n                     \"$id\": \"http://example.com/ref/absref/foobar.json\",\n                     \"type\": \"number\"\n                  },\n                  \"b\": {\n                      \"$id\": \"http://example.com/absref/foobar.json\",\n                      \"type\": \"string\"\n                  }\n             },\n             \"allOf\": [\n                 { \"$ref\": \"/absref/foobar.json\" }\n             ]\n         }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1495,6 +1495,7 @@ public class SuiteRefWithAbsolutePathReference
 public class SuiteIdWithFileUriStillResolvesPointersNix
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1505,7 +1506,6 @@ public class SuiteIdWithFileUriStillResolvesPointersNix
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1530,8 +1530,8 @@ public class SuiteIdWithFileUriStillResolvesPointersNix
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n             \"$id\": \"file:///folder/file.json\",\r\n             \"definitions\": {\r\n                 \"foo\": {\r\n                     \"type\": \"number\"\r\n                 }\r\n             },\r\n             \"allOf\": [\r\n                 {\r\n                     \"$ref\": \"#/definitions/foo\"\r\n                 }\r\n             ]\r\n         }",
+                "tests/draft6/ref.json",
+                "{\n             \"$id\": \"file:///folder/file.json\",\n             \"definitions\": {\n                 \"foo\": {\n                     \"type\": \"number\"\n                 }\n             },\n             \"allOf\": [\n                 {\n                     \"$ref\": \"#/definitions/foo\"\n                 }\n             ]\n         }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1546,6 +1546,7 @@ public class SuiteIdWithFileUriStillResolvesPointersNix
 public class SuiteIdWithFileUriStillResolvesPointersWindows
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1556,7 +1557,6 @@ public class SuiteIdWithFileUriStillResolvesPointersWindows
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1581,8 +1581,8 @@ public class SuiteIdWithFileUriStillResolvesPointersWindows
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n             \"$id\": \"file:///c:/folder/file.json\",\r\n             \"definitions\": {\r\n                 \"foo\": {\r\n                     \"type\": \"number\"\r\n                 }\r\n             },\r\n             \"allOf\": [\r\n                 {\r\n                     \"$ref\": \"#/definitions/foo\"\r\n                 }\r\n             ]\r\n         }",
+                "tests/draft6/ref.json",
+                "{\n             \"$id\": \"file:///c:/folder/file.json\",\n             \"definitions\": {\n                 \"foo\": {\n                     \"type\": \"number\"\n                 }\n             },\n             \"allOf\": [\n                 {\n                     \"$ref\": \"#/definitions/foo\"\n                 }\n             ]\n         }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -1597,6 +1597,7 @@ public class SuiteIdWithFileUriStillResolvesPointersWindows
 public class SuiteEmptyTokensInRefJsonPointer
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1607,7 +1608,6 @@ public class SuiteEmptyTokensInRefJsonPointer
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1632,8 +1632,8 @@ public class SuiteEmptyTokensInRefJsonPointer
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\ref.json",
-                "{\r\n             \"definitions\": {\r\n                 \"\": {\r\n                     \"definitions\": {\r\n                         \"\": { \"type\": \"number\" }\r\n                     }\r\n                 } \r\n             },\r\n             \"allOf\": [\r\n                 {\r\n                     \"$ref\": \"#/definitions//definitions/\"\r\n                 }\r\n             ]\r\n         }",
+                "tests/draft6/ref.json",
+                "{\n             \"definitions\": {\n                 \"\": {\n                     \"definitions\": {\n                         \"\": { \"type\": \"number\" }\n                     }\n                 } \n             },\n             \"allOf\": [\n                 {\n                     \"$ref\": \"#/definitions//definitions/\"\n                 }\n             ]\n         }",
                 "StandaloneEvaluatorTestSuite.Draft6.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",

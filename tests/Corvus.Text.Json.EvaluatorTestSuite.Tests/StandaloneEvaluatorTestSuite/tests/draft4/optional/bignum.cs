@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft4.Optional.Bignum;
 public class SuiteInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteInteger
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,7 +46,7 @@ public class SuiteInteger
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\optional\\bignum.json",
+                "tests/draft4/optional/bignum.json",
                 "{ \"type\": \"integer\" }",
                 "StandaloneEvaluatorTestSuite.Draft4.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -62,6 +62,7 @@ public class SuiteInteger
 public class SuiteNumber
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -72,7 +73,6 @@ public class SuiteNumber
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -97,7 +97,7 @@ public class SuiteNumber
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\optional\\bignum.json",
+                "tests/draft4/optional/bignum.json",
                 "{ \"type\": \"number\" }",
                 "StandaloneEvaluatorTestSuite.Draft4.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -113,6 +113,7 @@ public class SuiteNumber
 public class SuiteString
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -123,7 +124,6 @@ public class SuiteString
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -141,7 +141,7 @@ public class SuiteString
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\optional\\bignum.json",
+                "tests/draft4/optional/bignum.json",
                 "{ \"type\": \"string\" }",
                 "StandaloneEvaluatorTestSuite.Draft4.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -157,6 +157,7 @@ public class SuiteString
 public class SuiteMaximumIntegerComparison
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -167,7 +168,6 @@ public class SuiteMaximumIntegerComparison
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -185,7 +185,7 @@ public class SuiteMaximumIntegerComparison
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\optional\\bignum.json",
+                "tests/draft4/optional/bignum.json",
                 "{ \"maximum\": 18446744073709551615 }",
                 "StandaloneEvaluatorTestSuite.Draft4.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -201,6 +201,7 @@ public class SuiteMaximumIntegerComparison
 public class SuiteFloatComparisonWithHighPrecision
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -211,7 +212,6 @@ public class SuiteFloatComparisonWithHighPrecision
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -229,8 +229,8 @@ public class SuiteFloatComparisonWithHighPrecision
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\optional\\bignum.json",
-                "{\r\n            \"maximum\": 972783798187987123879878123.18878137,\r\n            \"exclusiveMaximum\": true\r\n        }",
+                "tests/draft4/optional/bignum.json",
+                "{\n            \"maximum\": 972783798187987123879878123.18878137,\n            \"exclusiveMaximum\": true\n        }",
                 "StandaloneEvaluatorTestSuite.Draft4.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -245,6 +245,7 @@ public class SuiteFloatComparisonWithHighPrecision
 public class SuiteMinimumIntegerComparison
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -255,7 +256,6 @@ public class SuiteMinimumIntegerComparison
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -273,7 +273,7 @@ public class SuiteMinimumIntegerComparison
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\optional\\bignum.json",
+                "tests/draft4/optional/bignum.json",
                 "{ \"minimum\": -18446744073709551615 }",
                 "StandaloneEvaluatorTestSuite.Draft4.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -289,6 +289,7 @@ public class SuiteMinimumIntegerComparison
 public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -299,7 +300,6 @@ public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -317,8 +317,8 @@ public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\optional\\bignum.json",
-                "{\r\n            \"minimum\": -972783798187987123879878123.18878137,\r\n            \"exclusiveMinimum\": true\r\n        }",
+                "tests/draft4/optional/bignum.json",
+                "{\n            \"minimum\": -972783798187987123879878123.18878137,\n            \"exclusiveMinimum\": true\n        }",
                 "StandaloneEvaluatorTestSuite.Draft4.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",

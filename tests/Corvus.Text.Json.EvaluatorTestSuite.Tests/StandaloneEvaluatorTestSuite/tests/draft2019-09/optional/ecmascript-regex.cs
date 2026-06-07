@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex;
 public class SuiteEcma262RegexDoesNotMatchTrailingNewline
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteEcma262RegexDoesNotMatchTrailingNewline
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteEcma262RegexDoesNotMatchTrailingNewline
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^abc$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^abc$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -62,6 +62,7 @@ public class SuiteEcma262RegexDoesNotMatchTrailingNewline
 public class SuiteEcma262RegexConvertsTToHorizontalTab
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -72,7 +73,6 @@ public class SuiteEcma262RegexConvertsTToHorizontalTab
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -97,8 +97,8 @@ public class SuiteEcma262RegexConvertsTToHorizontalTab
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\t$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\t$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -113,6 +113,7 @@ public class SuiteEcma262RegexConvertsTToHorizontalTab
 public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -123,7 +124,6 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -148,8 +148,8 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\cC$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\cC$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -164,6 +164,7 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter
 public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -174,7 +175,6 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -199,8 +199,8 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\cc$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\cc$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -215,6 +215,7 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter
 public class SuiteEcma262DMatchesAsciiDigitsOnly
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -225,7 +226,6 @@ public class SuiteEcma262DMatchesAsciiDigitsOnly
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -257,8 +257,8 @@ public class SuiteEcma262DMatchesAsciiDigitsOnly
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\d$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\d$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -273,6 +273,7 @@ public class SuiteEcma262DMatchesAsciiDigitsOnly
 public class SuiteEcma262DMatchesEverythingButAsciiDigits
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -283,7 +284,6 @@ public class SuiteEcma262DMatchesEverythingButAsciiDigits
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -315,8 +315,8 @@ public class SuiteEcma262DMatchesEverythingButAsciiDigits
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\D$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\D$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -331,6 +331,7 @@ public class SuiteEcma262DMatchesEverythingButAsciiDigits
 public class SuiteEcma262WMatchesAsciiLettersOnly
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -341,7 +342,6 @@ public class SuiteEcma262WMatchesAsciiLettersOnly
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -366,8 +366,8 @@ public class SuiteEcma262WMatchesAsciiLettersOnly
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\w$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\w$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -382,6 +382,7 @@ public class SuiteEcma262WMatchesAsciiLettersOnly
 public class SuiteEcma262WMatchesEverythingButAsciiLetters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -392,7 +393,6 @@ public class SuiteEcma262WMatchesEverythingButAsciiLetters
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -417,8 +417,8 @@ public class SuiteEcma262WMatchesEverythingButAsciiLetters
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\W$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\W$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -433,6 +433,7 @@ public class SuiteEcma262WMatchesEverythingButAsciiLetters
 public class SuiteEcma262SMatchesWhitespace
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -443,7 +444,6 @@ public class SuiteEcma262SMatchesWhitespace
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -531,8 +531,8 @@ public class SuiteEcma262SMatchesWhitespace
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\s$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\s$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -547,6 +547,7 @@ public class SuiteEcma262SMatchesWhitespace
 public class SuiteEcma262SMatchesEverythingButWhitespace
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -557,7 +558,6 @@ public class SuiteEcma262SMatchesEverythingButWhitespace
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -645,8 +645,8 @@ public class SuiteEcma262SMatchesEverythingButWhitespace
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\S$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\S$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -661,6 +661,7 @@ public class SuiteEcma262SMatchesEverythingButWhitespace
 public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -671,7 +672,6 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -710,8 +710,8 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"pattern\": \"\\\\p{Letter}cole\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"\\\\p{Letter}cole\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -726,6 +726,7 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
 public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -736,7 +737,6 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -775,8 +775,8 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"pattern\": \"\\\\wcole\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"\\\\wcole\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -791,6 +791,7 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
 public class SuitePatternWithAsciiRanges
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -801,7 +802,6 @@ public class SuitePatternWithAsciiRanges
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -833,8 +833,8 @@ public class SuitePatternWithAsciiRanges
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"pattern\": \"[a-z]cole\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"[a-z]cole\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -849,6 +849,7 @@ public class SuitePatternWithAsciiRanges
 public class SuiteDInPatternMatches09NotUnicodeDigits
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -859,7 +860,6 @@ public class SuiteDInPatternMatches09NotUnicodeDigits
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -891,8 +891,8 @@ public class SuiteDInPatternMatches09NotUnicodeDigits
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"pattern\": \"^\\\\d+$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"^\\\\d+$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -907,6 +907,7 @@ public class SuiteDInPatternMatches09NotUnicodeDigits
 public class SuitePatternWithNonAsciiDigits
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -917,7 +918,6 @@ public class SuitePatternWithNonAsciiDigits
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -949,8 +949,8 @@ public class SuitePatternWithNonAsciiDigits
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"pattern\": \"^\\\\p{digit}+$\"\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"^\\\\p{digit}+$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -965,6 +965,7 @@ public class SuitePatternWithNonAsciiDigits
 public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -975,7 +976,6 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1014,8 +1014,8 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"\\\\p{Letter}cole\": true\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"\\\\p{Letter}cole\": true\n            },\n            \"additionalProperties\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1030,6 +1030,7 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
 public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1040,7 +1041,6 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1079,8 +1079,8 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"\\\\wcole\": true\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"\\\\wcole\": true\n            },\n            \"additionalProperties\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1095,6 +1095,7 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
 public class SuitePatternPropertiesWithAsciiRanges
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1105,7 +1106,6 @@ public class SuitePatternPropertiesWithAsciiRanges
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1137,8 +1137,8 @@ public class SuitePatternPropertiesWithAsciiRanges
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"[a-z]cole\": true\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"[a-z]cole\": true\n            },\n            \"additionalProperties\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1153,6 +1153,7 @@ public class SuitePatternPropertiesWithAsciiRanges
 public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1163,7 +1164,6 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1195,8 +1195,8 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"^\\\\d+$\": true\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"^\\\\d+$\": true\n            },\n            \"additionalProperties\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1211,6 +1211,7 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
 public class SuitePatternPropertiesWithNonAsciiDigits
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1221,7 +1222,6 @@ public class SuitePatternPropertiesWithNonAsciiDigits
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1253,8 +1253,8 @@ public class SuitePatternPropertiesWithNonAsciiDigits
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\ecmascript-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"^\\\\p{digit}+$\": true\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft2019-09/optional/ecmascript-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"^\\\\p{digit}+$\": true\n            },\n            \"additionalProperties\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

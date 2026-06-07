@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.MaxContains;
 public class SuiteMaxContainsWithoutContainsIsIgnored
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaxContainsWithoutContainsIsIgnored
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteMaxContainsWithoutContainsIsIgnored
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\maxContains.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxContains\": 1\r\n        }",
+                "tests/draft2020-12/maxContains.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"maxContains\": 1\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.MaxContains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -62,6 +62,7 @@ public class SuiteMaxContainsWithoutContainsIsIgnored
 public class SuiteMaxContainsWithContains
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -72,7 +73,6 @@ public class SuiteMaxContainsWithContains
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -118,8 +118,8 @@ public class SuiteMaxContainsWithContains
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\maxContains.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"maxContains\": 1\r\n        }",
+                "tests/draft2020-12/maxContains.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contains\": {\"const\": 1},\n            \"maxContains\": 1\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.MaxContains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -134,6 +134,7 @@ public class SuiteMaxContainsWithContains
 public class SuiteMaxContainsWithContainsValueWithADecimal
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -144,7 +145,6 @@ public class SuiteMaxContainsWithContainsValueWithADecimal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -169,8 +169,8 @@ public class SuiteMaxContainsWithContainsValueWithADecimal
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\maxContains.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"maxContains\": 1.0\r\n        }",
+                "tests/draft2020-12/maxContains.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contains\": {\"const\": 1},\n            \"maxContains\": 1.0\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.MaxContains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -185,6 +185,7 @@ public class SuiteMaxContainsWithContainsValueWithADecimal
 public class SuiteMinContainsMaxContains
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -195,7 +196,6 @@ public class SuiteMinContainsMaxContains
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -227,8 +227,8 @@ public class SuiteMinContainsMaxContains
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\maxContains.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 1,\r\n            \"maxContains\": 3\r\n        }",
+                "tests/draft2020-12/maxContains.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contains\": {\"const\": 1},\n            \"minContains\": 1,\n            \"maxContains\": 3\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.MaxContains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -243,6 +243,7 @@ public class SuiteMinContainsMaxContains
 public class SuiteMaxContains0WithMinContains0
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -253,7 +254,6 @@ public class SuiteMaxContains0WithMinContains0
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -278,8 +278,8 @@ public class SuiteMaxContains0WithMinContains0
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\maxContains.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 0,\r\n            \"maxContains\": 0\r\n        }",
+                "tests/draft2020-12/maxContains.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contains\": {\"const\": 1},\n            \"minContains\": 0,\n            \"maxContains\": 0\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.MaxContains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

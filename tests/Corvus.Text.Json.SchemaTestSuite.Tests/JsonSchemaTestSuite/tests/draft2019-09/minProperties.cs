@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.MinProperties;
 public class SuiteMinPropertiesValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMinPropertiesValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -74,8 +74,8 @@ public class SuiteMinPropertiesValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\minProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"minProperties\": 1\r\n        }",
+                "tests/draft2019-09/minProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"minProperties\": 1\n        }",
                 "JsonSchemaTestSuite.Draft201909.MinProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -93,6 +93,7 @@ public class SuiteMinPropertiesValidation
 public class SuiteMinPropertiesValidationWithADecimal
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -103,7 +104,6 @@ public class SuiteMinPropertiesValidationWithADecimal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -128,8 +128,8 @@ public class SuiteMinPropertiesValidationWithADecimal
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\minProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"minProperties\": 1.0\r\n        }",
+                "tests/draft2019-09/minProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"minProperties\": 1.0\n        }",
                 "JsonSchemaTestSuite.Draft201909.MinProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft7.Items;
 public class SuiteASchemaGivenForItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteASchemaGivenForItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -49,7 +49,7 @@ public class SuiteASchemaGivenForItems
     [TestMethod]
     public void TestJavaScriptPseudoArrayIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"0\": \"invalid\",\r\n                    \"length\": 1\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"0\": \"invalid\",\n                    \"length\": 1\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -60,8 +60,8 @@ public class SuiteASchemaGivenForItems
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\items.json",
-                "{\r\n            \"items\": {\"type\": \"integer\"}\r\n        }",
+                "tests/draft7/items.json",
+                "{\n            \"items\": {\"type\": \"integer\"}\n        }",
                 "JsonSchemaTestSuite.Draft7.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -79,6 +79,7 @@ public class SuiteASchemaGivenForItems
 public class SuiteAnArrayOfSchemasForItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -89,7 +90,6 @@ public class SuiteAnArrayOfSchemasForItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -131,7 +131,7 @@ public class SuiteAnArrayOfSchemasForItems
     [TestMethod]
     public void TestJavaScriptPseudoArrayIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"0\": \"invalid\",\r\n                    \"1\": \"valid\",\r\n                    \"length\": 2\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"0\": \"invalid\",\n                    \"1\": \"valid\",\n                    \"length\": 2\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -142,8 +142,8 @@ public class SuiteAnArrayOfSchemasForItems
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\items.json",
-                "{\r\n            \"items\": [\r\n                {\"type\": \"integer\"},\r\n                {\"type\": \"string\"}\r\n            ]\r\n        }",
+                "tests/draft7/items.json",
+                "{\n            \"items\": [\n                {\"type\": \"integer\"},\n                {\"type\": \"string\"}\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft7.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -161,6 +161,7 @@ public class SuiteAnArrayOfSchemasForItems
 public class SuiteItemsWithBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -171,7 +172,6 @@ public class SuiteItemsWithBooleanSchemaTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -196,7 +196,7 @@ public class SuiteItemsWithBooleanSchemaTrue
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\items.json",
+                "tests/draft7/items.json",
                 "{\"items\": true}",
                 "JsonSchemaTestSuite.Draft7.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -215,6 +215,7 @@ public class SuiteItemsWithBooleanSchemaTrue
 public class SuiteItemsWithBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -225,7 +226,6 @@ public class SuiteItemsWithBooleanSchemaFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -250,7 +250,7 @@ public class SuiteItemsWithBooleanSchemaFalse
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\items.json",
+                "tests/draft7/items.json",
                 "{\"items\": false}",
                 "JsonSchemaTestSuite.Draft7.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -269,6 +269,7 @@ public class SuiteItemsWithBooleanSchemaFalse
 public class SuiteItemsWithBooleanSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -279,7 +280,6 @@ public class SuiteItemsWithBooleanSchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -311,8 +311,8 @@ public class SuiteItemsWithBooleanSchemas
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\items.json",
-                "{\r\n            \"items\": [true, false]\r\n        }",
+                "tests/draft7/items.json",
+                "{\n            \"items\": [true, false]\n        }",
                 "JsonSchemaTestSuite.Draft7.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -330,6 +330,7 @@ public class SuiteItemsWithBooleanSchemas
 public class SuiteItemsAndSubitems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -340,49 +341,48 @@ public class SuiteItemsAndSubitems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestValidItems()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestTooManyItems()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestTooManySubItems()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    [ {\"foo\": null}, {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    [ {\"foo\": null}, {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWrongItem()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    {\"foo\": null},\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    {\"foo\": null},\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWrongSubItem()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    [ {}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    [ {}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestFewerItemsIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    [ {\"foo\": null} ],\r\n                    [ {\"foo\": null} ]\r\n                ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    [ {\"foo\": null} ],\n                    [ {\"foo\": null} ]\n                ]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -393,8 +393,8 @@ public class SuiteItemsAndSubitems
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\items.json",
-                "{\r\n            \"definitions\": {\r\n                \"item\": {\r\n                    \"type\": \"array\",\r\n                    \"additionalItems\": false,\r\n                    \"items\": [\r\n                        { \"$ref\": \"#/definitions/sub-item\" },\r\n                        { \"$ref\": \"#/definitions/sub-item\" }\r\n                    ]\r\n                },\r\n                \"sub-item\": {\r\n                    \"type\": \"object\",\r\n                    \"required\": [\"foo\"]\r\n                }\r\n            },\r\n            \"type\": \"array\",\r\n            \"additionalItems\": false,\r\n            \"items\": [\r\n                { \"$ref\": \"#/definitions/item\" },\r\n                { \"$ref\": \"#/definitions/item\" },\r\n                { \"$ref\": \"#/definitions/item\" }\r\n            ]\r\n        }",
+                "tests/draft7/items.json",
+                "{\n            \"definitions\": {\n                \"item\": {\n                    \"type\": \"array\",\n                    \"additionalItems\": false,\n                    \"items\": [\n                        { \"$ref\": \"#/definitions/sub-item\" },\n                        { \"$ref\": \"#/definitions/sub-item\" }\n                    ]\n                },\n                \"sub-item\": {\n                    \"type\": \"object\",\n                    \"required\": [\"foo\"]\n                }\n            },\n            \"type\": \"array\",\n            \"additionalItems\": false,\n            \"items\": [\n                { \"$ref\": \"#/definitions/item\" },\n                { \"$ref\": \"#/definitions/item\" },\n                { \"$ref\": \"#/definitions/item\" }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft7.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -412,6 +412,7 @@ public class SuiteItemsAndSubitems
 public class SuiteNestedItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -422,7 +423,6 @@ public class SuiteNestedItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -454,8 +454,8 @@ public class SuiteNestedItems
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\items.json",
-                "{\r\n            \"type\": \"array\",\r\n            \"items\": {\r\n                \"type\": \"array\",\r\n                \"items\": {\r\n                    \"type\": \"array\",\r\n                    \"items\": {\r\n                        \"type\": \"array\",\r\n                        \"items\": {\r\n                            \"type\": \"number\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft7/items.json",
+                "{\n            \"type\": \"array\",\n            \"items\": {\n                \"type\": \"array\",\n                \"items\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"number\"\n                        }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft7.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -473,6 +473,7 @@ public class SuiteNestedItems
 public class SuiteSingleFormItemsWithNullInstanceElements
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -483,7 +484,6 @@ public class SuiteSingleFormItemsWithNullInstanceElements
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -501,8 +501,8 @@ public class SuiteSingleFormItemsWithNullInstanceElements
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\items.json",
-                "{\r\n            \"items\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+                "tests/draft7/items.json",
+                "{\n            \"items\": {\n                \"type\": \"null\"\n            }\n        }",
                 "JsonSchemaTestSuite.Draft7.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -520,6 +520,7 @@ public class SuiteSingleFormItemsWithNullInstanceElements
 public class SuiteArrayFormItemsWithNullInstanceElements
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -530,7 +531,6 @@ public class SuiteArrayFormItemsWithNullInstanceElements
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -548,8 +548,8 @@ public class SuiteArrayFormItemsWithNullInstanceElements
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\items.json",
-                "{\r\n            \"items\": [\r\n                {\r\n                    \"type\": \"null\"\r\n                }\r\n            ]\r\n        }",
+                "tests/draft7/items.json",
+                "{\n            \"items\": [\n                {\n                    \"type\": \"null\"\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft7.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",

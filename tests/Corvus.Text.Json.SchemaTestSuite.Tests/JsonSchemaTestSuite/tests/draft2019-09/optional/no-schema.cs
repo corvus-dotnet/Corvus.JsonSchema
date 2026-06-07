@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.Optional.NoSchema;
 public class SuiteValidationWithoutSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationWithoutSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -53,8 +53,8 @@ public class SuiteValidationWithoutSchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\optional\\no-schema.json",
-                "{\r\n            \"minLength\": 2\r\n        }",
+                "tests/draft2019-09/optional/no-schema.json",
+                "{\n            \"minLength\": 2\n        }",
                 "JsonSchemaTestSuite.Draft201909.Optional.NoSchema",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

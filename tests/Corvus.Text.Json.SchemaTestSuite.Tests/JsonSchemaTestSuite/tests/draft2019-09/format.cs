@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.Format;
 public class SuiteEmailFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteEmailFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -74,8 +74,8 @@ public class SuiteEmailFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"email\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"email\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -93,6 +93,7 @@ public class SuiteEmailFormat
 public class SuiteIdnEmailFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -103,7 +104,6 @@ public class SuiteIdnEmailFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -156,8 +156,8 @@ public class SuiteIdnEmailFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"idn-email\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"idn-email\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -175,6 +175,7 @@ public class SuiteIdnEmailFormat
 public class SuiteRegexFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -185,7 +186,6 @@ public class SuiteRegexFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -238,8 +238,8 @@ public class SuiteRegexFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"regex\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"regex\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -257,6 +257,7 @@ public class SuiteRegexFormat
 public class SuiteIpv4Format
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -267,7 +268,6 @@ public class SuiteIpv4Format
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -320,8 +320,8 @@ public class SuiteIpv4Format
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"ipv4\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"ipv4\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -339,6 +339,7 @@ public class SuiteIpv4Format
 public class SuiteIpv6Format
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -349,7 +350,6 @@ public class SuiteIpv6Format
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -402,8 +402,8 @@ public class SuiteIpv6Format
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"ipv6\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"ipv6\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -421,6 +421,7 @@ public class SuiteIpv6Format
 public class SuiteIdnHostnameFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -431,7 +432,6 @@ public class SuiteIdnHostnameFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -484,8 +484,8 @@ public class SuiteIdnHostnameFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"idn-hostname\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"idn-hostname\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -503,6 +503,7 @@ public class SuiteIdnHostnameFormat
 public class SuiteHostnameFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -513,7 +514,6 @@ public class SuiteHostnameFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -566,8 +566,8 @@ public class SuiteHostnameFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"hostname\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"hostname\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -585,6 +585,7 @@ public class SuiteHostnameFormat
 public class SuiteDateFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -595,7 +596,6 @@ public class SuiteDateFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -648,8 +648,8 @@ public class SuiteDateFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"date\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"date\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -667,6 +667,7 @@ public class SuiteDateFormat
 public class SuiteDateTimeFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -677,7 +678,6 @@ public class SuiteDateTimeFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -730,8 +730,8 @@ public class SuiteDateTimeFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"date-time\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"date-time\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -749,6 +749,7 @@ public class SuiteDateTimeFormat
 public class SuiteTimeFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -759,7 +760,6 @@ public class SuiteTimeFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -812,8 +812,8 @@ public class SuiteTimeFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"time\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"time\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -831,6 +831,7 @@ public class SuiteTimeFormat
 public class SuiteJsonPointerFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -841,7 +842,6 @@ public class SuiteJsonPointerFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -894,8 +894,8 @@ public class SuiteJsonPointerFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"json-pointer\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"json-pointer\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -913,6 +913,7 @@ public class SuiteJsonPointerFormat
 public class SuiteRelativeJsonPointerFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -923,7 +924,6 @@ public class SuiteRelativeJsonPointerFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -976,8 +976,8 @@ public class SuiteRelativeJsonPointerFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"relative-json-pointer\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"relative-json-pointer\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -995,6 +995,7 @@ public class SuiteRelativeJsonPointerFormat
 public class SuiteIriFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1005,7 +1006,6 @@ public class SuiteIriFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1058,8 +1058,8 @@ public class SuiteIriFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"iri\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"iri\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1077,6 +1077,7 @@ public class SuiteIriFormat
 public class SuiteIriReferenceFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1087,7 +1088,6 @@ public class SuiteIriReferenceFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1140,8 +1140,8 @@ public class SuiteIriReferenceFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"iri-reference\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"iri-reference\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1159,6 +1159,7 @@ public class SuiteIriReferenceFormat
 public class SuiteUriFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1169,7 +1170,6 @@ public class SuiteUriFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1222,8 +1222,8 @@ public class SuiteUriFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"uri\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"uri\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1241,6 +1241,7 @@ public class SuiteUriFormat
 public class SuiteUriReferenceFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1251,7 +1252,6 @@ public class SuiteUriReferenceFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1304,8 +1304,8 @@ public class SuiteUriReferenceFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"uri-reference\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"uri-reference\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1323,6 +1323,7 @@ public class SuiteUriReferenceFormat
 public class SuiteUriTemplateFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1333,7 +1334,6 @@ public class SuiteUriTemplateFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1386,8 +1386,8 @@ public class SuiteUriTemplateFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"uri-template\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"uri-template\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1405,6 +1405,7 @@ public class SuiteUriTemplateFormat
 public class SuiteUuidFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1415,7 +1416,6 @@ public class SuiteUuidFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1468,8 +1468,8 @@ public class SuiteUuidFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"uuid\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"uuid\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1487,6 +1487,7 @@ public class SuiteUuidFormat
 public class SuiteDurationFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1497,7 +1498,6 @@ public class SuiteDurationFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1550,8 +1550,8 @@ public class SuiteDurationFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\format.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"duration\"\r\n        }",
+                "tests/draft2019-09/format.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"duration\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Format",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.ExclusiveMinimum;
 public class SuiteExclusiveMinimumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteExclusiveMinimumValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,8 +60,8 @@ public class SuiteExclusiveMinimumValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\exclusiveMinimum.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"exclusiveMinimum\": 1.1\r\n        }",
+                "tests/draft2020-12/exclusiveMinimum.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"exclusiveMinimum\": 1.1\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.ExclusiveMinimum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

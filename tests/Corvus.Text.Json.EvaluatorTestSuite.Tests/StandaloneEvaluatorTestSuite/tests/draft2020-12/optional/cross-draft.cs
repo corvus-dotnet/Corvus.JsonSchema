@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.Optional.CrossDraft;
 public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -39,8 +39,8 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\optional\\cross-draft.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"array\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/ignore-prefixItems.json\"\r\n        }",
+                "tests/draft2020-12/optional/cross-draft.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"array\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/ignore-prefixItems.json\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Optional.CrossDraft",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft4.OneOf;
 public class SuiteOneOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteOneOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,8 +60,8 @@ public class SuiteOneOf
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\oneOf.json",
-                "{\r\n            \"oneOf\": [\r\n                {\r\n                    \"type\": \"integer\"\r\n                },\r\n                {\r\n                    \"minimum\": 2\r\n                }\r\n            ]\r\n        }",
+                "tests/draft4/oneOf.json",
+                "{\n            \"oneOf\": [\n                {\n                    \"type\": \"integer\"\n                },\n                {\n                    \"minimum\": 2\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft4.OneOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -79,6 +79,7 @@ public class SuiteOneOf
 public class SuiteOneOfWithBaseSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -89,7 +90,6 @@ public class SuiteOneOfWithBaseSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -121,8 +121,8 @@ public class SuiteOneOfWithBaseSchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\oneOf.json",
-                "{\r\n            \"type\": \"string\",\r\n            \"oneOf\" : [\r\n                {\r\n                    \"minLength\": 2\r\n                },\r\n                {\r\n                    \"maxLength\": 4\r\n                }\r\n            ]\r\n        }",
+                "tests/draft4/oneOf.json",
+                "{\n            \"type\": \"string\",\n            \"oneOf\" : [\n                {\n                    \"minLength\": 2\n                },\n                {\n                    \"maxLength\": 4\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft4.OneOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -140,6 +140,7 @@ public class SuiteOneOfWithBaseSchema
 public class SuiteOneOfComplexTypes
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -150,7 +151,6 @@ public class SuiteOneOfComplexTypes
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -189,8 +189,8 @@ public class SuiteOneOfComplexTypes
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\oneOf.json",
-                "{\r\n            \"oneOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": {\"type\": \"integer\"}\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"string\"}\r\n                    },\r\n                    \"required\": [\"foo\"]\r\n                }\r\n            ]\r\n        }",
+                "tests/draft4/oneOf.json",
+                "{\n            \"oneOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": {\"type\": \"integer\"}\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"string\"}\n                    },\n                    \"required\": [\"foo\"]\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft4.OneOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -208,6 +208,7 @@ public class SuiteOneOfComplexTypes
 public class SuiteOneOfWithEmptySchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -218,7 +219,6 @@ public class SuiteOneOfWithEmptySchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -243,8 +243,8 @@ public class SuiteOneOfWithEmptySchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\oneOf.json",
-                "{\r\n            \"oneOf\": [\r\n                { \"type\": \"number\" },\r\n                {}\r\n            ]\r\n        }",
+                "tests/draft4/oneOf.json",
+                "{\n            \"oneOf\": [\n                { \"type\": \"number\" },\n                {}\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft4.OneOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -262,6 +262,7 @@ public class SuiteOneOfWithEmptySchema
 public class SuiteOneOfWithRequired
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -272,7 +273,6 @@ public class SuiteOneOfWithRequired
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -311,8 +311,8 @@ public class SuiteOneOfWithRequired
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\oneOf.json",
-                "{\r\n            \"type\": \"object\",\r\n            \"oneOf\": [\r\n                { \"required\": [\"foo\", \"bar\"] },\r\n                { \"required\": [\"foo\", \"baz\"] }\r\n            ]\r\n        }",
+                "tests/draft4/oneOf.json",
+                "{\n            \"type\": \"object\",\n            \"oneOf\": [\n                { \"required\": [\"foo\", \"bar\"] },\n                { \"required\": [\"foo\", \"baz\"] }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft4.OneOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -330,6 +330,7 @@ public class SuiteOneOfWithRequired
 public class SuiteOneOfWithMissingOptionalProperty
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -340,7 +341,6 @@ public class SuiteOneOfWithMissingOptionalProperty
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -379,8 +379,8 @@ public class SuiteOneOfWithMissingOptionalProperty
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\oneOf.json",
-                "{\r\n            \"oneOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": {},\r\n                        \"baz\": {}\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": {}\r\n                    },\r\n                    \"required\": [\"foo\"]\r\n                }\r\n            ]\r\n        }",
+                "tests/draft4/oneOf.json",
+                "{\n            \"oneOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": {},\n                        \"baz\": {}\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"foo\": {}\n                    },\n                    \"required\": [\"foo\"]\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft4.OneOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -398,6 +398,7 @@ public class SuiteOneOfWithMissingOptionalProperty
 public class SuiteNestedOneOfToCheckValidationSemantics
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -408,7 +409,6 @@ public class SuiteNestedOneOfToCheckValidationSemantics
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -433,8 +433,8 @@ public class SuiteNestedOneOfToCheckValidationSemantics
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\oneOf.json",
-                "{\r\n            \"oneOf\": [\r\n                {\r\n                    \"oneOf\": [\r\n                        {\r\n                            \"type\": \"null\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }",
+                "tests/draft4/oneOf.json",
+                "{\n            \"oneOf\": [\n                {\n                    \"oneOf\": [\n                        {\n                            \"type\": \"null\"\n                        }\n                    ]\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft4.OneOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",

@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.Minimum;
 public class SuiteMinimumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMinimumValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,8 +60,8 @@ public class SuiteMinimumValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\minimum.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"minimum\": 1.1\r\n        }",
+                "tests/draft2020-12/minimum.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"minimum\": 1.1\n        }",
                 "JsonSchemaTestSuite.Draft202012.Minimum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -79,6 +79,7 @@ public class SuiteMinimumValidation
 public class SuiteMinimumValidationWithSignedInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -89,7 +90,6 @@ public class SuiteMinimumValidationWithSignedInteger
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -149,8 +149,8 @@ public class SuiteMinimumValidationWithSignedInteger
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\minimum.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"minimum\": -2\r\n        }",
+                "tests/draft2020-12/minimum.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"minimum\": -2\n        }",
                 "JsonSchemaTestSuite.Draft202012.Minimum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

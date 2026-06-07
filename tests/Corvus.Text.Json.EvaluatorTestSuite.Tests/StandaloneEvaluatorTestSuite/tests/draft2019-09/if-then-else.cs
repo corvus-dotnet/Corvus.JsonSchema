@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.IfThenElse;
 public class SuiteIgnoreIfWithoutThenOrElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteIgnoreIfWithoutThenOrElse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteIgnoreIfWithoutThenOrElse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": {\r\n                \"const\": 0\r\n            }\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": {\n                \"const\": 0\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -62,6 +62,7 @@ public class SuiteIgnoreIfWithoutThenOrElse
 public class SuiteIgnoreThenWithoutIf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -72,7 +73,6 @@ public class SuiteIgnoreThenWithoutIf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -97,8 +97,8 @@ public class SuiteIgnoreThenWithoutIf
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"then\": {\r\n                \"const\": 0\r\n            }\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"then\": {\n                \"const\": 0\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -113,6 +113,7 @@ public class SuiteIgnoreThenWithoutIf
 public class SuiteIgnoreElseWithoutIf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -123,7 +124,6 @@ public class SuiteIgnoreElseWithoutIf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -148,8 +148,8 @@ public class SuiteIgnoreElseWithoutIf
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"else\": {\r\n                \"const\": 0\r\n            }\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"else\": {\n                \"const\": 0\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -164,6 +164,7 @@ public class SuiteIgnoreElseWithoutIf
 public class SuiteIfAndThenWithoutElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -174,7 +175,6 @@ public class SuiteIfAndThenWithoutElse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -206,8 +206,8 @@ public class SuiteIfAndThenWithoutElse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": {\r\n                \"exclusiveMaximum\": 0\r\n            },\r\n            \"then\": {\r\n                \"minimum\": -10\r\n            }\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": {\n                \"exclusiveMaximum\": 0\n            },\n            \"then\": {\n                \"minimum\": -10\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -222,6 +222,7 @@ public class SuiteIfAndThenWithoutElse
 public class SuiteIfAndElseWithoutThen
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -232,7 +233,6 @@ public class SuiteIfAndElseWithoutThen
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -264,8 +264,8 @@ public class SuiteIfAndElseWithoutThen
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": {\r\n                \"exclusiveMaximum\": 0\r\n            },\r\n            \"else\": {\r\n                \"multipleOf\": 2\r\n            }\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": {\n                \"exclusiveMaximum\": 0\n            },\n            \"else\": {\n                \"multipleOf\": 2\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -280,6 +280,7 @@ public class SuiteIfAndElseWithoutThen
 public class SuiteValidateAgainstCorrectBranchThenVsElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -290,7 +291,6 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -329,8 +329,8 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": {\r\n                \"exclusiveMaximum\": 0\r\n            },\r\n            \"then\": {\r\n                \"minimum\": -10\r\n            },\r\n            \"else\": {\r\n                \"multipleOf\": 2\r\n            }\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": {\n                \"exclusiveMaximum\": 0\n            },\n            \"then\": {\n                \"minimum\": -10\n            },\n            \"else\": {\n                \"multipleOf\": 2\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -345,6 +345,7 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse
 public class SuiteNonInterferenceAcrossCombinedSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -355,7 +356,6 @@ public class SuiteNonInterferenceAcrossCombinedSchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -380,8 +380,8 @@ public class SuiteNonInterferenceAcrossCombinedSchemas
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"if\": {\r\n                        \"exclusiveMaximum\": 0\r\n                    }\r\n                },\r\n                {\r\n                    \"then\": {\r\n                        \"minimum\": -10\r\n                    }\r\n                },\r\n                {\r\n                    \"else\": {\r\n                        \"multipleOf\": 2\r\n                    }\r\n                }\r\n            ]\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"allOf\": [\n                {\n                    \"if\": {\n                        \"exclusiveMaximum\": 0\n                    }\n                },\n                {\n                    \"then\": {\n                        \"minimum\": -10\n                    }\n                },\n                {\n                    \"else\": {\n                        \"multipleOf\": 2\n                    }\n                }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -396,6 +396,7 @@ public class SuiteNonInterferenceAcrossCombinedSchemas
 public class SuiteIfWithBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -406,7 +407,6 @@ public class SuiteIfWithBooleanSchemaTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -431,8 +431,8 @@ public class SuiteIfWithBooleanSchemaTrue
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": true,\r\n            \"then\": { \"const\": \"then\" },\r\n            \"else\": { \"const\": \"else\" }\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": true,\n            \"then\": { \"const\": \"then\" },\n            \"else\": { \"const\": \"else\" }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -447,6 +447,7 @@ public class SuiteIfWithBooleanSchemaTrue
 public class SuiteIfWithBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -457,7 +458,6 @@ public class SuiteIfWithBooleanSchemaFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -482,8 +482,8 @@ public class SuiteIfWithBooleanSchemaFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": false,\r\n            \"then\": { \"const\": \"then\" },\r\n            \"else\": { \"const\": \"else\" }\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": false,\n            \"then\": { \"const\": \"then\" },\n            \"else\": { \"const\": \"else\" }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -498,6 +498,7 @@ public class SuiteIfWithBooleanSchemaFalse
 public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -508,7 +509,6 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -547,8 +547,8 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"then\": { \"const\": \"yes\" },\r\n            \"else\": { \"const\": \"other\" },\r\n            \"if\": { \"maxLength\": 4 }\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"then\": { \"const\": \"yes\" },\n            \"else\": { \"const\": \"other\" },\n            \"if\": { \"maxLength\": 4 }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -563,6 +563,7 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
 public class SuiteThenFalseFailsWhenConditionMatches
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -573,7 +574,6 @@ public class SuiteThenFalseFailsWhenConditionMatches
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -598,8 +598,8 @@ public class SuiteThenFalseFailsWhenConditionMatches
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"if\": { \"const\": 1 },\r\n            \"then\": false\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"if\": { \"const\": 1 },\n            \"then\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -614,6 +614,7 @@ public class SuiteThenFalseFailsWhenConditionMatches
 public class SuiteElseFalseFailsWhenConditionDoesNotMatch
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -624,7 +625,6 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -649,8 +649,8 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\if-then-else.json",
-                "{\r\n            \"if\": { \"const\": 1 },\r\n            \"else\": false\r\n        }",
+                "tests/draft2019-09/if-then-else.json",
+                "{\n            \"if\": { \"const\": 1 },\n            \"else\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

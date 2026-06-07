@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.DynamicRef;
 public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeA
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeA
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamicRef-dynamicAnchor-same-schema/root\",\r\n            \"type\": \"array\",\r\n            \"items\": { \"$dynamicRef\": \"#items\" },\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamicRef-dynamicAnchor-same-schema/root\",\n            \"type\": \"array\",\n            \"items\": { \"$dynamicRef\": \"#items\" },\n            \"$defs\": {\n                \"foo\": {\n                    \"$dynamicAnchor\": \"items\",\n                    \"type\": \"string\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -65,6 +65,7 @@ public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeA
 public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -75,7 +76,6 @@ public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -100,8 +100,8 @@ public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormal
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamicRef-anchor-same-schema/root\",\r\n            \"type\": \"array\",\r\n            \"items\": { \"$dynamicRef\": \"#items\" },\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$anchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamicRef-anchor-same-schema/root\",\n            \"type\": \"array\",\n            \"items\": { \"$dynamicRef\": \"#items\" },\n            \"$defs\": {\n                \"foo\": {\n                    \"$anchor\": \"items\",\n                    \"type\": \"string\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -119,6 +119,7 @@ public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormal
 public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -129,7 +130,6 @@ public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalR
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -154,8 +154,8 @@ public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalR
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/ref-dynamicAnchor-same-schema/root\",\r\n            \"type\": \"array\",\r\n            \"items\": { \"$ref\": \"#items\" },\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/ref-dynamicAnchor-same-schema/root\",\n            \"type\": \"array\",\n            \"items\": { \"$ref\": \"#items\" },\n            \"$defs\": {\n                \"foo\": {\n                    \"$dynamicAnchor\": \"items\",\n                    \"type\": \"string\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -173,6 +173,7 @@ public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalR
 public class SuiteADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEncounteredWhenTheSchemaIsEvaluated
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -183,7 +184,6 @@ public class SuiteADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEn
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -208,8 +208,8 @@ public class SuiteADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEn
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/typical-dynamic-resolution/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                      \"items\": {\r\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\r\n                          \"$dynamicAnchor\": \"items\"\r\n                      }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/typical-dynamic-resolution/root\",\n            \"$ref\": \"list\",\n            \"$defs\": {\n                \"foo\": {\n                    \"$dynamicAnchor\": \"items\",\n                    \"type\": \"string\"\n                },\n                \"list\": {\n                    \"$id\": \"list\",\n                    \"type\": \"array\",\n                    \"items\": { \"$dynamicRef\": \"#items\" },\n                    \"$defs\": {\n                      \"items\": {\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\n                          \"$dynamicAnchor\": \"items\"\n                      }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -227,6 +227,7 @@ public class SuiteADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEn
 public class SuiteADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -237,7 +238,6 @@ public class SuiteADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -262,8 +262,8 @@ public class SuiteADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamicRef-without-anchor/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#/$defs/items\" },\r\n                    \"$defs\": {\r\n                      \"items\": {\r\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\r\n                          \"$dynamicAnchor\": \"items\",\r\n                          \"type\": \"number\"\r\n                      }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamicRef-without-anchor/root\",\n            \"$ref\": \"list\",\n            \"$defs\": {\n                \"foo\": {\n                    \"$dynamicAnchor\": \"items\",\n                    \"type\": \"string\"\n                },\n                \"list\": {\n                    \"$id\": \"list\",\n                    \"type\": \"array\",\n                    \"items\": { \"$dynamicRef\": \"#/$defs/items\" },\n                    \"$defs\": {\n                      \"items\": {\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\n                          \"$dynamicAnchor\": \"items\",\n                          \"type\": \"number\"\n                      }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -281,6 +281,7 @@ public class SuiteADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef
 public class SuiteADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynamicAnchorDoesNotAffectDynamicScopeResolution
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -291,7 +292,6 @@ public class SuiteADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynam
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -316,8 +316,8 @@ public class SuiteADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynam
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-resolution-with-intermediate-scopes/root\",\r\n            \"$ref\": \"intermediate-scope\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"intermediate-scope\": {\r\n                    \"$id\": \"intermediate-scope\",\r\n                    \"$ref\": \"list\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                      \"items\": {\r\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\r\n                          \"$dynamicAnchor\": \"items\"\r\n                      }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamic-resolution-with-intermediate-scopes/root\",\n            \"$ref\": \"intermediate-scope\",\n            \"$defs\": {\n                \"foo\": {\n                    \"$dynamicAnchor\": \"items\",\n                    \"type\": \"string\"\n                },\n                \"intermediate-scope\": {\n                    \"$id\": \"intermediate-scope\",\n                    \"$ref\": \"list\"\n                },\n                \"list\": {\n                    \"$id\": \"list\",\n                    \"type\": \"array\",\n                    \"items\": { \"$dynamicRef\": \"#items\" },\n                    \"$defs\": {\n                      \"items\": {\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\n                          \"$dynamicAnchor\": \"items\"\n                      }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -335,6 +335,7 @@ public class SuiteADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynam
 public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScopeResolution
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -345,7 +346,6 @@ public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScop
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -363,8 +363,8 @@ public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScop
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-resolution-ignores-anchors/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$anchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                      \"items\": {\r\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\r\n                          \"$dynamicAnchor\": \"items\"\r\n                      }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamic-resolution-ignores-anchors/root\",\n            \"$ref\": \"list\",\n            \"$defs\": {\n                \"foo\": {\n                    \"$anchor\": \"items\",\n                    \"type\": \"string\"\n                },\n                \"list\": {\n                    \"$id\": \"list\",\n                    \"type\": \"array\",\n                    \"items\": { \"$dynamicRef\": \"#items\" },\n                    \"$defs\": {\n                      \"items\": {\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\n                          \"$dynamicAnchor\": \"items\"\n                      }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -382,6 +382,7 @@ public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScop
 public class SuiteADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -392,7 +393,6 @@ public class SuiteADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourc
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -410,8 +410,8 @@ public class SuiteADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourc
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-resolution-without-bookend/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                        \"items\": {\r\n                            \"$comment\": \"This is only needed to give the reference somewhere to resolve to when it behaves like $ref\",\r\n                            \"$anchor\": \"items\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamic-resolution-without-bookend/root\",\n            \"$ref\": \"list\",\n            \"$defs\": {\n                \"foo\": {\n                    \"$dynamicAnchor\": \"items\",\n                    \"type\": \"string\"\n                },\n                \"list\": {\n                    \"$id\": \"list\",\n                    \"type\": \"array\",\n                    \"items\": { \"$dynamicRef\": \"#items\" },\n                    \"$defs\": {\n                        \"items\": {\n                            \"$comment\": \"This is only needed to give the reference somewhere to resolve to when it behaves like $ref\",\n                            \"$anchor\": \"items\"\n                        }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -429,6 +429,7 @@ public class SuiteADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourc
 public class SuiteADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -439,7 +440,6 @@ public class SuiteADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourc
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -457,8 +457,8 @@ public class SuiteADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourc
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/unmatched-dynamic-anchor/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                        \"items\": {\r\n                            \"$comment\": \"This is only needed to give the reference somewhere to resolve to when it behaves like $ref\",\r\n                            \"$anchor\": \"items\",\r\n                            \"$dynamicAnchor\": \"foo\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/unmatched-dynamic-anchor/root\",\n            \"$ref\": \"list\",\n            \"$defs\": {\n                \"foo\": {\n                    \"$dynamicAnchor\": \"items\",\n                    \"type\": \"string\"\n                },\n                \"list\": {\n                    \"$id\": \"list\",\n                    \"type\": \"array\",\n                    \"items\": { \"$dynamicRef\": \"#items\" },\n                    \"$defs\": {\n                        \"items\": {\n                            \"$comment\": \"This is only needed to give the reference somewhere to resolve to when it behaves like $ref\",\n                            \"$anchor\": \"items\",\n                            \"$dynamicAnchor\": \"foo\"\n                        }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -476,6 +476,7 @@ public class SuiteADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourc
 public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicAnchorResolvesToTheFirstDynamicAnchorInTheDynamicScope
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -486,21 +487,20 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicA
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestTheRecursivePartIsValidAgainstTheRoot()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": \"pass\",\r\n                    \"bar\": {\r\n                        \"baz\": { \"foo\": \"pass\" }\r\n                    }\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"pass\",\n                    \"bar\": {\n                        \"baz\": { \"foo\": \"pass\" }\n                    }\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestTheRecursivePartIsNotValidAgainstTheRoot()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": \"pass\",\r\n                    \"bar\": {\r\n                        \"baz\": { \"foo\": \"fail\" }\r\n                    }\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"pass\",\n                    \"bar\": {\n                        \"baz\": { \"foo\": \"fail\" }\n                    }\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -511,8 +511,8 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicA
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/relative-dynamic-reference/root\",\r\n            \"$dynamicAnchor\": \"meta\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"const\": \"pass\" }\r\n            },\r\n            \"$ref\": \"extended\",\r\n            \"$defs\": {\r\n                \"extended\": {\r\n                    \"$id\": \"extended\",\r\n                    \"$dynamicAnchor\": \"meta\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"bar\": { \"$ref\": \"bar\" }\r\n                    }\r\n                },\r\n                \"bar\": {\r\n                    \"$id\": \"bar\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"baz\": { \"$dynamicRef\": \"extended#meta\" }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/relative-dynamic-reference/root\",\n            \"$dynamicAnchor\": \"meta\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"const\": \"pass\" }\n            },\n            \"$ref\": \"extended\",\n            \"$defs\": {\n                \"extended\": {\n                    \"$id\": \"extended\",\n                    \"$dynamicAnchor\": \"meta\",\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"bar\": { \"$ref\": \"bar\" }\n                    }\n                },\n                \"bar\": {\n                    \"$id\": \"bar\",\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"baz\": { \"$dynamicRef\": \"extended#meta\" }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -530,6 +530,7 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicA
 public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynamicAnchorBehavesLikeANormalRefToAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -540,14 +541,13 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynam
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestTheRecursivePartDoesnTNeedToValidateAgainstTheRoot()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": \"pass\",\r\n                    \"bar\": {\r\n                        \"baz\": { \"foo\": \"fail\" }\r\n                    }\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"pass\",\n                    \"bar\": {\n                        \"baz\": { \"foo\": \"fail\" }\n                    }\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -558,8 +558,8 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynam
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/relative-dynamic-reference-without-bookend/root\",\r\n            \"$dynamicAnchor\": \"meta\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"const\": \"pass\" }\r\n            },\r\n            \"$ref\": \"extended\",\r\n            \"$defs\": {\r\n                \"extended\": {\r\n                    \"$id\": \"extended\",\r\n                    \"$anchor\": \"meta\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"bar\": { \"$ref\": \"bar\" }\r\n                    }\r\n                },\r\n                \"bar\": {\r\n                    \"$id\": \"bar\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"baz\": { \"$dynamicRef\": \"extended#meta\" }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/relative-dynamic-reference-without-bookend/root\",\n            \"$dynamicAnchor\": \"meta\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"const\": \"pass\" }\n            },\n            \"$ref\": \"extended\",\n            \"$defs\": {\n                \"extended\": {\n                    \"$id\": \"extended\",\n                    \"$anchor\": \"meta\",\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"bar\": { \"$ref\": \"bar\" }\n                    }\n                },\n                \"bar\": {\n                    \"$id\": \"bar\",\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"baz\": { \"$dynamicRef\": \"extended#meta\" }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -577,6 +577,7 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynam
 public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -587,35 +588,34 @@ public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestNumberListWithNumberValues()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"kindOfList\": \"numbers\",\r\n                    \"list\": [1.1]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"kindOfList\": \"numbers\",\n                    \"list\": [1.1]\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestNumberListWithStringValues()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"kindOfList\": \"numbers\",\r\n                    \"list\": [\"foo\"]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"kindOfList\": \"numbers\",\n                    \"list\": [\"foo\"]\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestStringListWithNumberValues()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"kindOfList\": \"strings\",\r\n                    \"list\": [1.1]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"kindOfList\": \"strings\",\n                    \"list\": [1.1]\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestStringListWithStringValues()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"kindOfList\": \"strings\",\r\n                    \"list\": [\"foo\"]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"kindOfList\": \"strings\",\n                    \"list\": [\"foo\"]\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -626,8 +626,8 @@ public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-with-multiple-paths/main\",\r\n            \"if\": {\r\n                \"properties\": {\r\n                    \"kindOfList\": { \"const\": \"numbers\" }\r\n                },\r\n                \"required\": [\"kindOfList\"]\r\n            },\r\n            \"then\": { \"$ref\": \"numberList\" },\r\n            \"else\": { \"$ref\": \"stringList\" },\r\n\r\n            \"$defs\": {\r\n                \"genericList\": {\r\n                    \"$id\": \"genericList\",\r\n                    \"properties\": {\r\n                        \"list\": {\r\n                            \"items\": { \"$dynamicRef\": \"#itemType\" }\r\n                        }\r\n                    },\r\n                    \"$defs\": {\r\n                        \"defaultItemType\": {\r\n                            \"$comment\": \"Only needed to satisfy bookending requirement\",\r\n                            \"$dynamicAnchor\": \"itemType\"\r\n                        }\r\n                    }\r\n                },\r\n                \"numberList\": {\r\n                    \"$id\": \"numberList\",\r\n                    \"$defs\": {\r\n                        \"itemType\": {\r\n                            \"$dynamicAnchor\": \"itemType\",\r\n                            \"type\": \"number\"\r\n                        }\r\n                    },\r\n                    \"$ref\": \"genericList\"\r\n                },\r\n                \"stringList\": {\r\n                    \"$id\": \"stringList\",\r\n                    \"$defs\": {\r\n                        \"itemType\": {\r\n                            \"$dynamicAnchor\": \"itemType\",\r\n                            \"type\": \"string\"\r\n                        }\r\n                    },\r\n                    \"$ref\": \"genericList\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-with-multiple-paths/main\",\n            \"if\": {\n                \"properties\": {\n                    \"kindOfList\": { \"const\": \"numbers\" }\n                },\n                \"required\": [\"kindOfList\"]\n            },\n            \"then\": { \"$ref\": \"numberList\" },\n            \"else\": { \"$ref\": \"stringList\" },\n\n            \"$defs\": {\n                \"genericList\": {\n                    \"$id\": \"genericList\",\n                    \"properties\": {\n                        \"list\": {\n                            \"items\": { \"$dynamicRef\": \"#itemType\" }\n                        }\n                    },\n                    \"$defs\": {\n                        \"defaultItemType\": {\n                            \"$comment\": \"Only needed to satisfy bookending requirement\",\n                            \"$dynamicAnchor\": \"itemType\"\n                        }\n                    }\n                },\n                \"numberList\": {\n                    \"$id\": \"numberList\",\n                    \"$defs\": {\n                        \"itemType\": {\n                            \"$dynamicAnchor\": \"itemType\",\n                            \"type\": \"number\"\n                        }\n                    },\n                    \"$ref\": \"genericList\"\n                },\n                \"stringList\": {\n                    \"$id\": \"stringList\",\n                    \"$defs\": {\n                        \"itemType\": {\n                            \"$dynamicAnchor\": \"itemType\",\n                            \"type\": \"string\"\n                        }\n                    },\n                    \"$ref\": \"genericList\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -645,6 +645,7 @@ public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword
 public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -655,7 +656,6 @@ public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -687,8 +687,8 @@ public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-leaving-dynamic-scope/main\",\r\n            \"if\": {\r\n                \"$id\": \"first_scope\",\r\n                \"$defs\": {\r\n                    \"thingy\": {\r\n                        \"$comment\": \"this is first_scope#thingy\",\r\n                        \"$dynamicAnchor\": \"thingy\",\r\n                        \"type\": \"number\"\r\n                    }\r\n                }\r\n            },\r\n            \"then\": {\r\n                \"$id\": \"second_scope\",\r\n                \"$ref\": \"start\",\r\n                \"$defs\": {\r\n                    \"thingy\": {\r\n                        \"$comment\": \"this is second_scope#thingy, the final destination of the $dynamicRef\",\r\n                        \"$dynamicAnchor\": \"thingy\",\r\n                        \"type\": \"null\"\r\n                    }\r\n                }\r\n            },\r\n            \"$defs\": {\r\n                \"start\": {\r\n                    \"$comment\": \"this is the landing spot from $ref\",\r\n                    \"$id\": \"start\",\r\n                    \"$dynamicRef\": \"inner_scope#thingy\"\r\n                },\r\n                \"thingy\": {\r\n                    \"$comment\": \"this is the first stop for the $dynamicRef\",\r\n                    \"$id\": \"inner_scope\",\r\n                    \"$dynamicAnchor\": \"thingy\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-leaving-dynamic-scope/main\",\n            \"if\": {\n                \"$id\": \"first_scope\",\n                \"$defs\": {\n                    \"thingy\": {\n                        \"$comment\": \"this is first_scope#thingy\",\n                        \"$dynamicAnchor\": \"thingy\",\n                        \"type\": \"number\"\n                    }\n                }\n            },\n            \"then\": {\n                \"$id\": \"second_scope\",\n                \"$ref\": \"start\",\n                \"$defs\": {\n                    \"thingy\": {\n                        \"$comment\": \"this is second_scope#thingy, the final destination of the $dynamicRef\",\n                        \"$dynamicAnchor\": \"thingy\",\n                        \"type\": \"null\"\n                    }\n                }\n            },\n            \"$defs\": {\n                \"start\": {\n                    \"$comment\": \"this is the landing spot from $ref\",\n                    \"$id\": \"start\",\n                    \"$dynamicRef\": \"inner_scope#thingy\"\n                },\n                \"thingy\": {\n                    \"$comment\": \"this is the first stop for the $dynamicRef\",\n                    \"$id\": \"inner_scope\",\n                    \"$dynamicAnchor\": \"thingy\",\n                    \"type\": \"string\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -706,6 +706,7 @@ public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef
 public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -716,21 +717,20 @@ public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestInstanceWithMisspelledField()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"children\": [{\r\n                            \"daat\": 1\r\n                        }]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"children\": [{\n                            \"daat\": 1\n                        }]\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInstanceWithCorrectField()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"children\": [{\r\n                            \"data\": 1\r\n                        }]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"children\": [{\n                            \"data\": 1\n                        }]\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -741,8 +741,8 @@ public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-tree.json\",\r\n            \"$dynamicAnchor\": \"node\",\r\n\r\n            \"$ref\": \"tree.json\",\r\n            \"unevaluatedProperties\": false\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-tree.json\",\n            \"$dynamicAnchor\": \"node\",\n\n            \"$ref\": \"tree.json\",\n            \"unevaluatedProperties\": false\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -760,6 +760,7 @@ public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties
 public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -770,28 +771,27 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestIncorrectParentSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"a\": true\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"a\": true\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestIncorrectExtendedSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"elements\": [\r\n                        { \"b\": 1 }\r\n                    ]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"elements\": [\n                        { \"b\": 1 }\n                    ]\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestCorrectExtendedSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"elements\": [\r\n                        { \"a\": 1 }\r\n                    ]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"elements\": [\n                        { \"a\": 1 }\n                    ]\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -802,8 +802,8 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-extendible.json\",\r\n            \"$ref\": \"extendible-dynamic-ref.json\",\r\n            \"$defs\": {\r\n                \"elements\": {\r\n                    \"$dynamicAnchor\": \"elements\",\r\n                    \"properties\": {\r\n                        \"a\": true\r\n                    },\r\n                    \"required\": [\"a\"],\r\n                    \"additionalProperties\": false\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-extendible.json\",\n            \"$ref\": \"extendible-dynamic-ref.json\",\n            \"$defs\": {\n                \"elements\": {\n                    \"$dynamicAnchor\": \"elements\",\n                    \"properties\": {\n                        \"a\": true\n                    },\n                    \"required\": [\"a\"],\n                    \"additionalProperties\": false\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -821,6 +821,7 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink
 public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -831,28 +832,27 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestIncorrectParentSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"a\": true\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"a\": true\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestIncorrectExtendedSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"elements\": [\r\n                        { \"b\": 1 }\r\n                    ]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"elements\": [\n                        { \"b\": 1 }\n                    ]\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestCorrectExtendedSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"elements\": [\r\n                        { \"a\": 1 }\r\n                    ]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"elements\": [\n                        { \"a\": 1 }\n                    ]\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -863,8 +863,8 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-extendible-allof-defs-first.json\",\r\n            \"allOf\": [\r\n                {\r\n                    \"$ref\": \"extendible-dynamic-ref.json\"\r\n                },\r\n                {\r\n                    \"$defs\": {\r\n                        \"elements\": {\r\n                            \"$dynamicAnchor\": \"elements\",\r\n                            \"properties\": {\r\n                                \"a\": true\r\n                            },\r\n                            \"required\": [\"a\"],\r\n                            \"additionalProperties\": false\r\n                        }\r\n                    }\r\n                }\r\n            ]\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-extendible-allof-defs-first.json\",\n            \"allOf\": [\n                {\n                    \"$ref\": \"extendible-dynamic-ref.json\"\n                },\n                {\n                    \"$defs\": {\n                        \"elements\": {\n                            \"$dynamicAnchor\": \"elements\",\n                            \"properties\": {\n                                \"a\": true\n                            },\n                            \"required\": [\"a\"],\n                            \"additionalProperties\": false\n                        }\n                    }\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -882,6 +882,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst
 public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -892,28 +893,27 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestIncorrectParentSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"a\": true\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"a\": true\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestIncorrectExtendedSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"elements\": [\r\n                        { \"b\": 1 }\r\n                    ]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"elements\": [\n                        { \"b\": 1 }\n                    ]\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestCorrectExtendedSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"elements\": [\r\n                        { \"a\": 1 }\r\n                    ]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"elements\": [\n                        { \"a\": 1 }\n                    ]\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -924,8 +924,8 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-extendible-allof-ref-first.json\",\r\n            \"allOf\": [\r\n                {\r\n                    \"$defs\": {\r\n                        \"elements\": {\r\n                            \"$dynamicAnchor\": \"elements\",\r\n                            \"properties\": {\r\n                                \"a\": true\r\n                            },\r\n                            \"required\": [\"a\"],\r\n                            \"additionalProperties\": false\r\n                        }\r\n                    }\r\n                },\r\n                {\r\n                    \"$ref\": \"extendible-dynamic-ref.json\"\r\n                }\r\n            ]\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-extendible-allof-ref-first.json\",\n            \"allOf\": [\n                {\n                    \"$defs\": {\n                        \"elements\": {\n                            \"$dynamicAnchor\": \"elements\",\n                            \"properties\": {\n                                \"a\": true\n                            },\n                            \"required\": [\"a\"],\n                            \"additionalProperties\": false\n                        }\n                    }\n                },\n                {\n                    \"$ref\": \"extendible-dynamic-ref.json\"\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -943,6 +943,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst
 public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -953,7 +954,6 @@ public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -978,8 +978,8 @@ public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/detached-dynamicref.json#/$defs/foo\"\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$ref\": \"http://localhost:1234/draft2020-12/detached-dynamicref.json#/$defs/foo\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -997,6 +997,7 @@ public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor
 public class SuiteDynamicRefPointsToABooleanSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1007,7 +1008,6 @@ public class SuiteDynamicRefPointsToABooleanSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1032,8 +1032,8 @@ public class SuiteDynamicRefPointsToABooleanSchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$defs\": {\r\n                \"true\": true,\r\n                \"false\": false\r\n            },\r\n            \"properties\": {\r\n                \"true\": {\r\n                    \"$dynamicRef\": \"#/$defs/true\"\r\n                },\r\n                \"false\": {\r\n                    \"$dynamicRef\": \"#/$defs/false\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$defs\": {\n                \"true\": true,\n                \"false\": false\n            },\n            \"properties\": {\n                \"true\": {\n                    \"$dynamicRef\": \"#/$defs/true\"\n                },\n                \"false\": {\n                    \"$dynamicRef\": \"#/$defs/false\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -1051,6 +1051,7 @@ public class SuiteDynamicRefPointsToABooleanSchema
 public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1061,7 +1062,6 @@ public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1086,8 +1086,8 @@ public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-skips-intermediate-resource/main\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"bar-item\": {\r\n                    \"$ref\": \"item\"\r\n                }\r\n            },\r\n            \"$defs\": {\r\n                \"bar\": {\r\n                    \"$id\": \"bar\",\r\n                    \"type\": \"array\",\r\n                    \"items\": {\r\n                        \"$ref\": \"item\"\r\n                    },\r\n                    \"$defs\": {\r\n                        \"item\": {\r\n                            \"$id\": \"item\",\r\n                            \"type\": \"object\",\r\n                            \"properties\": {\r\n                                \"content\": {\r\n                                    \"$dynamicRef\": \"#content\"\r\n                                }\r\n                            },\r\n                            \"$defs\": {\r\n                                \"defaultContent\": {\r\n                                    \"$dynamicAnchor\": \"content\",\r\n                                    \"type\": \"integer\"\r\n                                }\r\n                            }\r\n                        },\r\n                        \"content\": {\r\n                            \"$dynamicAnchor\": \"content\",\r\n                            \"type\": \"string\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-skips-intermediate-resource/main\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"bar-item\": {\n                    \"$ref\": \"item\"\n                }\n            },\n            \"$defs\": {\n                \"bar\": {\n                    \"$id\": \"bar\",\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"item\"\n                    },\n                    \"$defs\": {\n                        \"item\": {\n                            \"$id\": \"item\",\n                            \"type\": \"object\",\n                            \"properties\": {\n                                \"content\": {\n                                    \"$dynamicRef\": \"#content\"\n                                }\n                            },\n                            \"$defs\": {\n                                \"defaultContent\": {\n                                    \"$dynamicAnchor\": \"content\",\n                                    \"type\": \"integer\"\n                                }\n                            }\n                        },\n                        \"content\": {\n                            \"$dynamicAnchor\": \"content\",\n                            \"type\": \"string\"\n                        }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -1105,6 +1105,7 @@ public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference
 public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1115,7 +1116,6 @@ public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1140,8 +1140,8 @@ public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\dynamicRef.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-avoids-root-of-each-schema/base\",\r\n            \"$ref\": \"first#/$defs/stuff\",\r\n            \"$defs\": {\r\n                \"first\": {\r\n                    \"$id\": \"first\",\r\n                    \"$defs\": {\r\n                        \"stuff\": {\r\n                            \"$ref\": \"second#/$defs/stuff\"\r\n                        },\r\n                        \"length\": {\r\n                            \"$comment\": \"unused, because there is no $dynamicAnchor here\",\r\n                            \"maxLength\": 1\r\n                        }\r\n                    }\r\n                },\r\n                \"second\": {\r\n                    \"$id\": \"second\",\r\n                    \"$defs\": {\r\n                        \"stuff\": {\r\n                            \"$ref\": \"third#/$defs/stuff\"\r\n                        },\r\n                        \"length\": {\r\n                            \"$dynamicAnchor\": \"length\",\r\n                            \"maxLength\": 2\r\n                        }\r\n                    }\r\n                },\r\n                \"third\": {\r\n                    \"$id\": \"third\",\r\n                    \"$defs\": {\r\n                        \"stuff\": {\r\n                            \"$dynamicRef\": \"#length\"\r\n                        },\r\n                        \"length\": {\r\n                            \"$dynamicAnchor\": \"length\",\r\n                            \"maxLength\": 3\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/dynamicRef.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-avoids-root-of-each-schema/base\",\n            \"$ref\": \"first#/$defs/stuff\",\n            \"$defs\": {\n                \"first\": {\n                    \"$id\": \"first\",\n                    \"$defs\": {\n                        \"stuff\": {\n                            \"$ref\": \"second#/$defs/stuff\"\n                        },\n                        \"length\": {\n                            \"$comment\": \"unused, because there is no $dynamicAnchor here\",\n                            \"maxLength\": 1\n                        }\n                    }\n                },\n                \"second\": {\n                    \"$id\": \"second\",\n                    \"$defs\": {\n                        \"stuff\": {\n                            \"$ref\": \"third#/$defs/stuff\"\n                        },\n                        \"length\": {\n                            \"$dynamicAnchor\": \"length\",\n                            \"maxLength\": 2\n                        }\n                    }\n                },\n                \"third\": {\n                    \"$id\": \"third\",\n                    \"$defs\": {\n                        \"stuff\": {\n                            \"$dynamicRef\": \"#length\"\n                        },\n                        \"length\": {\n                            \"$dynamicAnchor\": \"length\",\n                            \"maxLength\": 3\n                        }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.DynamicRef",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

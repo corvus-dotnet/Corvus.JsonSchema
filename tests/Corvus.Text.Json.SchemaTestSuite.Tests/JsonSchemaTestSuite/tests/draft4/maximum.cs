@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft4.Maximum;
 public class SuiteMaximumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaximumValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,7 +60,7 @@ public class SuiteMaximumValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\maximum.json",
+                "tests/draft4/maximum.json",
                 "{\"maximum\": 3.0}",
                 "JsonSchemaTestSuite.Draft4.Maximum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -79,6 +79,7 @@ public class SuiteMaximumValidation
 public class SuiteMaximumValidationWithUnsignedInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -89,7 +90,6 @@ public class SuiteMaximumValidationWithUnsignedInteger
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -128,7 +128,7 @@ public class SuiteMaximumValidationWithUnsignedInteger
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\maximum.json",
+                "tests/draft4/maximum.json",
                 "{\"maximum\": 300}",
                 "JsonSchemaTestSuite.Draft4.Maximum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -147,6 +147,7 @@ public class SuiteMaximumValidationWithUnsignedInteger
 public class SuiteMaximumValidationExplicitFalseExclusivity
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -157,7 +158,6 @@ public class SuiteMaximumValidationExplicitFalseExclusivity
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -196,7 +196,7 @@ public class SuiteMaximumValidationExplicitFalseExclusivity
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\maximum.json",
+                "tests/draft4/maximum.json",
                 "{\"maximum\": 3.0, \"exclusiveMaximum\": false}",
                 "JsonSchemaTestSuite.Draft4.Maximum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -215,6 +215,7 @@ public class SuiteMaximumValidationExplicitFalseExclusivity
 public class SuiteExclusiveMaximumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -225,7 +226,6 @@ public class SuiteExclusiveMaximumValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -250,8 +250,8 @@ public class SuiteExclusiveMaximumValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\maximum.json",
-                "{\r\n            \"maximum\": 3.0,\r\n            \"exclusiveMaximum\": true\r\n        }",
+                "tests/draft4/maximum.json",
+                "{\n            \"maximum\": 3.0,\n            \"exclusiveMaximum\": true\n        }",
                 "JsonSchemaTestSuite.Draft4.Maximum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",

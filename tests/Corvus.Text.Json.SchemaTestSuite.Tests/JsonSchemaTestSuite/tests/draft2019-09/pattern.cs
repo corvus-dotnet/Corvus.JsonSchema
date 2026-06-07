@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.Pattern;
 public class SuitePatternValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuitePatternValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -88,8 +88,8 @@ public class SuitePatternValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\pattern.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"pattern\": \"^a*$\"\r\n        }",
+                "tests/draft2019-09/pattern.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"^a*$\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Pattern",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -107,6 +107,7 @@ public class SuitePatternValidation
 public class SuitePatternIsNotAnchored
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -117,7 +118,6 @@ public class SuitePatternIsNotAnchored
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -135,8 +135,8 @@ public class SuitePatternIsNotAnchored
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\pattern.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"pattern\": \"a+\"\r\n        }",
+                "tests/draft2019-09/pattern.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"a+\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Pattern",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

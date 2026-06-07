@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.Items;
 public class SuiteASchemaGivenForItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteASchemaGivenForItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -49,7 +49,7 @@ public class SuiteASchemaGivenForItems
     [TestMethod]
     public void TestJavaScriptPseudoArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"0\": \"invalid\",\r\n                    \"length\": 1\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"0\": \"invalid\",\n                    \"length\": 1\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -60,8 +60,8 @@ public class SuiteASchemaGivenForItems
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\items.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": {\"type\": \"integer\"}\r\n        }",
+                "tests/draft2019-09/items.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"items\": {\"type\": \"integer\"}\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -76,6 +76,7 @@ public class SuiteASchemaGivenForItems
 public class SuiteAnArrayOfSchemasForItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -86,7 +87,6 @@ public class SuiteAnArrayOfSchemasForItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -128,7 +128,7 @@ public class SuiteAnArrayOfSchemasForItems
     [TestMethod]
     public void TestJavaScriptPseudoArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"0\": \"invalid\",\r\n                    \"1\": \"valid\",\r\n                    \"length\": 2\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"0\": \"invalid\",\n                    \"1\": \"valid\",\n                    \"length\": 2\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -139,8 +139,8 @@ public class SuiteAnArrayOfSchemasForItems
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\items.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": [\r\n                {\"type\": \"integer\"},\r\n                {\"type\": \"string\"}\r\n            ]\r\n        }",
+                "tests/draft2019-09/items.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"items\": [\n                {\"type\": \"integer\"},\n                {\"type\": \"string\"}\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -155,6 +155,7 @@ public class SuiteAnArrayOfSchemasForItems
 public class SuiteItemsWithBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -165,7 +166,6 @@ public class SuiteItemsWithBooleanSchemaTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -190,8 +190,8 @@ public class SuiteItemsWithBooleanSchemaTrue
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\items.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": true\r\n        }",
+                "tests/draft2019-09/items.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"items\": true\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -206,6 +206,7 @@ public class SuiteItemsWithBooleanSchemaTrue
 public class SuiteItemsWithBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -216,7 +217,6 @@ public class SuiteItemsWithBooleanSchemaFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -241,8 +241,8 @@ public class SuiteItemsWithBooleanSchemaFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\items.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": false\r\n        }",
+                "tests/draft2019-09/items.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"items\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -257,6 +257,7 @@ public class SuiteItemsWithBooleanSchemaFalse
 public class SuiteItemsWithBooleanSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -267,7 +268,6 @@ public class SuiteItemsWithBooleanSchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -299,8 +299,8 @@ public class SuiteItemsWithBooleanSchemas
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\items.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": [true, false]\r\n        }",
+                "tests/draft2019-09/items.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"items\": [true, false]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -315,6 +315,7 @@ public class SuiteItemsWithBooleanSchemas
 public class SuiteItemsAndSubitems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -325,49 +326,48 @@ public class SuiteItemsAndSubitems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestValidItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestTooManyItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestTooManySubItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    [ {\"foo\": null}, {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {\"foo\": null}, {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongItem()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    {\"foo\": null},\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": null},\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongSubItem()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    [ {}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ],\r\n                    [ {\"foo\": null}, {\"foo\": null} ]\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestFewerItemsIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    [ {\"foo\": null} ],\r\n                    [ {\"foo\": null} ]\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {\"foo\": null} ],\n                    [ {\"foo\": null} ]\n                ]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -378,8 +378,8 @@ public class SuiteItemsAndSubitems
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\items.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$defs\": {\r\n                \"item\": {\r\n                    \"type\": \"array\",\r\n                    \"additionalItems\": false,\r\n                    \"items\": [\r\n                        { \"$ref\": \"#/$defs/sub-item\" },\r\n                        { \"$ref\": \"#/$defs/sub-item\" }\r\n                    ]\r\n                },\r\n                \"sub-item\": {\r\n                    \"type\": \"object\",\r\n                    \"required\": [\"foo\"]\r\n                }\r\n            },\r\n            \"type\": \"array\",\r\n            \"additionalItems\": false,\r\n            \"items\": [\r\n                { \"$ref\": \"#/$defs/item\" },\r\n                { \"$ref\": \"#/$defs/item\" },\r\n                { \"$ref\": \"#/$defs/item\" }\r\n            ]\r\n        }",
+                "tests/draft2019-09/items.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$defs\": {\n                \"item\": {\n                    \"type\": \"array\",\n                    \"additionalItems\": false,\n                    \"items\": [\n                        { \"$ref\": \"#/$defs/sub-item\" },\n                        { \"$ref\": \"#/$defs/sub-item\" }\n                    ]\n                },\n                \"sub-item\": {\n                    \"type\": \"object\",\n                    \"required\": [\"foo\"]\n                }\n            },\n            \"type\": \"array\",\n            \"additionalItems\": false,\n            \"items\": [\n                { \"$ref\": \"#/$defs/item\" },\n                { \"$ref\": \"#/$defs/item\" },\n                { \"$ref\": \"#/$defs/item\" }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -394,6 +394,7 @@ public class SuiteItemsAndSubitems
 public class SuiteNestedItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -404,7 +405,6 @@ public class SuiteNestedItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -436,8 +436,8 @@ public class SuiteNestedItems
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\items.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"array\",\r\n            \"items\": {\r\n                \"type\": \"array\",\r\n                \"items\": {\r\n                    \"type\": \"array\",\r\n                    \"items\": {\r\n                        \"type\": \"array\",\r\n                        \"items\": {\r\n                            \"type\": \"number\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/items.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"array\",\n            \"items\": {\n                \"type\": \"array\",\n                \"items\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"number\"\n                        }\n                    }\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -452,6 +452,7 @@ public class SuiteNestedItems
 public class SuiteSingleFormItemsWithNullInstanceElements
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -462,7 +463,6 @@ public class SuiteSingleFormItemsWithNullInstanceElements
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -480,8 +480,8 @@ public class SuiteSingleFormItemsWithNullInstanceElements
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\items.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+                "tests/draft2019-09/items.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"items\": {\n                \"type\": \"null\"\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -496,6 +496,7 @@ public class SuiteSingleFormItemsWithNullInstanceElements
 public class SuiteArrayFormItemsWithNullInstanceElements
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -506,7 +507,6 @@ public class SuiteArrayFormItemsWithNullInstanceElements
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -524,8 +524,8 @@ public class SuiteArrayFormItemsWithNullInstanceElements
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\items.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": [\r\n                {\r\n                    \"type\": \"null\"\r\n                }\r\n            ]\r\n        }",
+                "tests/draft2019-09/items.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"items\": [\n                {\n                    \"type\": \"null\"\n                }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Items",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft7.MaxItems;
 public class SuiteMaxItemsValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaxItemsValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,7 +60,7 @@ public class SuiteMaxItemsValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\maxItems.json",
+                "tests/draft7/maxItems.json",
                 "{\"maxItems\": 2}",
                 "JsonSchemaTestSuite.Draft7.MaxItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -79,6 +79,7 @@ public class SuiteMaxItemsValidation
 public class SuiteMaxItemsValidationWithADecimal
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -89,7 +90,6 @@ public class SuiteMaxItemsValidationWithADecimal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -114,7 +114,7 @@ public class SuiteMaxItemsValidationWithADecimal
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\maxItems.json",
+                "tests/draft7/maxItems.json",
                 "{\"maxItems\": 2.0}",
                 "JsonSchemaTestSuite.Draft7.MaxItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

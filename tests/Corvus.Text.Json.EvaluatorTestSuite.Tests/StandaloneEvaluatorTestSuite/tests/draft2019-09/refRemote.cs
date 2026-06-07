@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.RefRemote;
 public class SuiteRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteRemoteRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/integer.json\"\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/integer.json\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -62,6 +62,7 @@ public class SuiteRemoteRef
 public class SuiteFragmentWithinRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -72,7 +73,6 @@ public class SuiteFragmentWithinRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -97,8 +97,8 @@ public class SuiteFragmentWithinRemoteRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/subSchemas.json#/$defs/integer\"\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/subSchemas.json#/$defs/integer\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -113,6 +113,7 @@ public class SuiteFragmentWithinRemoteRef
 public class SuiteAnchorWithinRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -123,7 +124,6 @@ public class SuiteAnchorWithinRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -148,8 +148,8 @@ public class SuiteAnchorWithinRemoteRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n             \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n             \"$ref\": \"http://localhost:1234/draft2019-09/locationIndependentIdentifier.json#foo\"\r\n         }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n             \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n             \"$ref\": \"http://localhost:1234/draft2019-09/locationIndependentIdentifier.json#foo\"\n         }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -164,6 +164,7 @@ public class SuiteAnchorWithinRemoteRef
 public class SuiteRefWithinRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -174,7 +175,6 @@ public class SuiteRefWithinRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -199,8 +199,8 @@ public class SuiteRefWithinRemoteRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/subSchemas.json#/$defs/refToInteger\"\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/subSchemas.json#/$defs/refToInteger\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -215,6 +215,7 @@ public class SuiteRefWithinRemoteRef
 public class SuiteBaseUriChange
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -225,7 +226,6 @@ public class SuiteBaseUriChange
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -250,8 +250,8 @@ public class SuiteBaseUriChange
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/\",\r\n            \"items\": {\r\n                \"$id\": \"baseUriChange/\",\r\n                \"items\": {\"$ref\": \"folderInteger.json\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://localhost:1234/draft2019-09/\",\n            \"items\": {\n                \"$id\": \"baseUriChange/\",\n                \"items\": {\"$ref\": \"folderInteger.json\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -266,6 +266,7 @@ public class SuiteBaseUriChange
 public class SuiteBaseUriChangeChangeFolder
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -276,7 +277,6 @@ public class SuiteBaseUriChangeChangeFolder
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -301,8 +301,8 @@ public class SuiteBaseUriChangeChangeFolder
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/scope_change_defs1.json\",\r\n            \"type\" : \"object\",\r\n            \"properties\": {\"list\": {\"$ref\": \"baseUriChangeFolder/\"}},\r\n            \"$defs\": {\r\n                \"baz\": {\r\n                    \"$id\": \"baseUriChangeFolder/\",\r\n                    \"type\": \"array\",\r\n                    \"items\": {\"$ref\": \"folderInteger.json\"}\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://localhost:1234/draft2019-09/scope_change_defs1.json\",\n            \"type\" : \"object\",\n            \"properties\": {\"list\": {\"$ref\": \"baseUriChangeFolder/\"}},\n            \"$defs\": {\n                \"baz\": {\n                    \"$id\": \"baseUriChangeFolder/\",\n                    \"type\": \"array\",\n                    \"items\": {\"$ref\": \"folderInteger.json\"}\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -317,6 +317,7 @@ public class SuiteBaseUriChangeChangeFolder
 public class SuiteBaseUriChangeChangeFolderInSubschema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -327,7 +328,6 @@ public class SuiteBaseUriChangeChangeFolderInSubschema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -352,8 +352,8 @@ public class SuiteBaseUriChangeChangeFolderInSubschema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/scope_change_defs2.json\",\r\n            \"type\" : \"object\",\r\n            \"properties\": {\"list\": {\"$ref\": \"baseUriChangeFolderInSubschema/#/$defs/bar\"}},\r\n            \"$defs\": {\r\n                \"baz\": {\r\n                    \"$id\": \"baseUriChangeFolderInSubschema/\",\r\n                    \"$defs\": {\r\n                        \"bar\": {\r\n                            \"type\": \"array\",\r\n                            \"items\": {\"$ref\": \"folderInteger.json\"}\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://localhost:1234/draft2019-09/scope_change_defs2.json\",\n            \"type\" : \"object\",\n            \"properties\": {\"list\": {\"$ref\": \"baseUriChangeFolderInSubschema/#/$defs/bar\"}},\n            \"$defs\": {\n                \"baz\": {\n                    \"$id\": \"baseUriChangeFolderInSubschema/\",\n                    \"$defs\": {\n                        \"bar\": {\n                            \"type\": \"array\",\n                            \"items\": {\"$ref\": \"folderInteger.json\"}\n                        }\n                    }\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -368,6 +368,7 @@ public class SuiteBaseUriChangeChangeFolderInSubschema
 public class SuiteRootRefInRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -378,28 +379,27 @@ public class SuiteRootRefInRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestStringIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"name\": \"foo\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"name\": \"foo\"\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNullIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"name\": null\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"name\": null\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"name\": {\r\n                        \"name\": null\r\n                    }\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"name\": {\n                        \"name\": null\n                    }\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -410,8 +410,8 @@ public class SuiteRootRefInRemoteRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/object\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"name\": {\"$ref\": \"name-defs.json#/$defs/orNull\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://localhost:1234/draft2019-09/object\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"name\": {\"$ref\": \"name-defs.json#/$defs/orNull\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -426,6 +426,7 @@ public class SuiteRootRefInRemoteRef
 public class SuiteRemoteRefWithRefToDefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -436,21 +437,20 @@ public class SuiteRemoteRefWithRefToDefs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"bar\": 1\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"bar\": 1\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"bar\": \"a\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"bar\": \"a\"\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -461,8 +461,8 @@ public class SuiteRemoteRefWithRefToDefs
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/schema-remote-ref-ref-defs1.json\",\r\n            \"$ref\": \"ref-and-defs.json\"\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://localhost:1234/draft2019-09/schema-remote-ref-ref-defs1.json\",\n            \"$ref\": \"ref-and-defs.json\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -477,6 +477,7 @@ public class SuiteRemoteRefWithRefToDefs
 public class SuiteLocationIndependentIdentifierInRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -487,7 +488,6 @@ public class SuiteLocationIndependentIdentifierInRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -512,8 +512,8 @@ public class SuiteLocationIndependentIdentifierInRemoteRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/locationIndependentIdentifier.json#/$defs/refToInteger\"\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/locationIndependentIdentifier.json#/$defs/refToInteger\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -528,6 +528,7 @@ public class SuiteLocationIndependentIdentifierInRemoteRef
 public class SuiteRetrievedNestedRefsResolveRelativeToTheirUriNotId
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -538,21 +539,20 @@ public class SuiteRetrievedNestedRefsResolveRelativeToTheirUriNotId
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestNumberIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"name\": {\"foo\":  1}\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"name\": {\"foo\":  1}\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestStringIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"name\": {\"foo\":  \"a\"}\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"name\": {\"foo\":  \"a\"}\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -563,8 +563,8 @@ public class SuiteRetrievedNestedRefsResolveRelativeToTheirUriNotId
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/some-id\",\r\n            \"properties\": {\r\n                \"name\": {\"$ref\": \"nested/foo-ref-string.json\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://localhost:1234/draft2019-09/some-id\",\n            \"properties\": {\n                \"name\": {\"$ref\": \"nested/foo-ref-string.json\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -579,6 +579,7 @@ public class SuiteRetrievedNestedRefsResolveRelativeToTheirUriNotId
 public class SuiteRemoteHttpRefWithDifferentId
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -589,7 +590,6 @@ public class SuiteRemoteHttpRefWithDifferentId
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -614,8 +614,8 @@ public class SuiteRemoteHttpRefWithDifferentId
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/different-id-ref-string.json\"\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/different-id-ref-string.json\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -630,6 +630,7 @@ public class SuiteRemoteHttpRefWithDifferentId
 public class SuiteRemoteHttpRefWithDifferentUrnId
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -640,7 +641,6 @@ public class SuiteRemoteHttpRefWithDifferentUrnId
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -665,8 +665,8 @@ public class SuiteRemoteHttpRefWithDifferentUrnId
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/urn-ref-string.json\"\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/urn-ref-string.json\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -681,6 +681,7 @@ public class SuiteRemoteHttpRefWithDifferentUrnId
 public class SuiteRemoteHttpRefWithNestedAbsoluteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -691,7 +692,6 @@ public class SuiteRemoteHttpRefWithNestedAbsoluteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -716,8 +716,8 @@ public class SuiteRemoteHttpRefWithNestedAbsoluteRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/nested-absolute-ref-to-string.json\"\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/nested-absolute-ref-to-string.json\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -732,6 +732,7 @@ public class SuiteRemoteHttpRefWithNestedAbsoluteRef
 public class SuiteRefToRefFindsDetachedAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -742,7 +743,6 @@ public class SuiteRefToRefFindsDetachedAnchor
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -767,8 +767,8 @@ public class SuiteRefToRefFindsDetachedAnchor
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\refRemote.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/detached-ref.json#/$defs/foo\"\r\n        }",
+                "tests/draft2019-09/refRemote.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/detached-ref.json#/$defs/foo\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

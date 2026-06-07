@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.MultipleOf;
 public class SuiteByInt
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteByInt
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -53,8 +53,8 @@ public class SuiteByInt
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"multipleOf\": 2\r\n        }",
+                "tests/draft2019-09/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"multipleOf\": 2\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -69,6 +69,7 @@ public class SuiteByInt
 public class SuiteByNumber
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -79,7 +80,6 @@ public class SuiteByNumber
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -118,8 +118,8 @@ public class SuiteByNumber
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"multipleOf\": 1.5\r\n        }",
+                "tests/draft2019-09/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"multipleOf\": 1.5\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -134,6 +134,7 @@ public class SuiteByNumber
 public class SuiteBySmallNumber
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -144,7 +145,6 @@ public class SuiteBySmallNumber
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -169,8 +169,8 @@ public class SuiteBySmallNumber
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"multipleOf\": 0.0001\r\n        }",
+                "tests/draft2019-09/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"multipleOf\": 0.0001\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -185,6 +185,7 @@ public class SuiteBySmallNumber
 public class SuiteFloatDivisionInf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -195,7 +196,6 @@ public class SuiteFloatDivisionInf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -213,8 +213,8 @@ public class SuiteFloatDivisionInf
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"integer\", \"multipleOf\": 0.123456789\r\n        }",
+                "tests/draft2019-09/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"integer\", \"multipleOf\": 0.123456789\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -229,6 +229,7 @@ public class SuiteFloatDivisionInf
 public class SuiteSmallMultipleOfLargeInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -239,7 +240,6 @@ public class SuiteSmallMultipleOfLargeInteger
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -257,8 +257,8 @@ public class SuiteSmallMultipleOfLargeInteger
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"integer\", \"multipleOf\": 1e-8\r\n        }",
+                "tests/draft2019-09/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"integer\", \"multipleOf\": 1e-8\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

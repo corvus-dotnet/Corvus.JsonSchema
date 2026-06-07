@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft7.Optional.Format.Iri;
 public class SuiteValidationOfIrIs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfIrIs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -137,7 +137,7 @@ public class SuiteValidationOfIrIs
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\format\\iri.json",
+                "tests/draft7/optional/format/iri.json",
                 "{ \"format\": \"iri\" }",
                 "JsonSchemaTestSuite.Draft7.Optional.Format.Iri",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

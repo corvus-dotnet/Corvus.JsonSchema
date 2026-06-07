@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.Optional.Format.DateTime;
 public class SuiteValidationOfDateTimeStrings
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfDateTimeStrings
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -200,7 +200,7 @@ public class SuiteValidationOfDateTimeStrings
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\optional\\format\\date-time.json",
+                "tests/draft6/optional/format/date-time.json",
                 "{ \"format\": \"date-time\" }",
                 "StandaloneEvaluatorTestSuite.Draft6.Optional.Format.DateTime",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

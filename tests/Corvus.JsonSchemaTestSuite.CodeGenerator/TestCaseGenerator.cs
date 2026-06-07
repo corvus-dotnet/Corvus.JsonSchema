@@ -118,7 +118,7 @@ internal static class TestCaseGenerator
                             .AppendLine("    [TestMethod]")
                             .AppendLine($"    public void Test{testName}()")
                             .AppendLine("    {")
-                            .AppendLine($"        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance({SymbolDisplay.FormatLiteral(test.Instance.ToString(), true)});")
+                            .AppendLine($"        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance({SymbolDisplay.FormatLiteral(EmbeddedLiteral.Json(test.Instance.ToString()), true)});")
                             .AppendLine($"        Assert.{(test.Expectation ? "IsTrue" : "IsFalse")}(dynamicInstance.EvaluateSchema());")
                             .AppendLine("    }");
                     }
@@ -132,10 +132,10 @@ internal static class TestCaseGenerator
                         .AppendLine("        public async Task InitializeAsync()")
                         .AppendLine("        {")
                         .AppendLine("            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(")
-                        .AppendLine($"                {SymbolDisplay.FormatLiteral(testFile.RelativePath, true)},")
-                        .AppendLine($"                {SymbolDisplay.FormatLiteral(testSuite.Schema.ToString(), true)},")
+                        .AppendLine($"                {SymbolDisplay.FormatLiteral(EmbeddedLiteral.ForwardSlash(testFile.RelativePath), true)},")
+                        .AppendLine($"                {SymbolDisplay.FormatLiteral(EmbeddedLiteral.Json(testSuite.Schema.ToString()), true)},")
                         .AppendLine($"                \"{namespaceValue}\",")
-                        .AppendLine($"                {SymbolDisplay.FormatLiteral(remotesDirectory, true)},")
+                        .AppendLine($"                {SymbolDisplay.FormatLiteral(EmbeddedLiteral.ForwardSlash(remotesDirectory), true)},")
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(testGroup.DefaultVocabulary, true)},")
                         .AppendLine($"                validateFormat: {(testSuite.ValidateFormat ? "true" : "false")},")
                         .AppendLine("                optionalAsNullable: false,")

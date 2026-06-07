@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft7.ExclusiveMaximum;
 public class SuiteExclusiveMaximumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteExclusiveMaximumValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,8 +60,8 @@ public class SuiteExclusiveMaximumValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\exclusiveMaximum.json",
-                "{\r\n            \"exclusiveMaximum\": 3.0\r\n        }",
+                "tests/draft7/exclusiveMaximum.json",
+                "{\n            \"exclusiveMaximum\": 3.0\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.ExclusiveMaximum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",

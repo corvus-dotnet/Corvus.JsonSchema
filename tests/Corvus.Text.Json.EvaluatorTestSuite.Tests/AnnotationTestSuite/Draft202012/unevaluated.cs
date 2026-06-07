@@ -12,6 +12,7 @@ namespace AnnotationTestSuite.Draft202012.Unevaluated;
 public class SuiteUnevaluatedPropertiesAlone
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -22,7 +23,6 @@ public class SuiteUnevaluatedPropertiesAlone
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -34,7 +34,7 @@ public class SuiteUnevaluatedPropertiesAlone
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     [TestMethod]
@@ -45,7 +45,7 @@ public class SuiteUnevaluatedPropertiesAlone
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -56,9 +56,9 @@ public class SuiteUnevaluatedPropertiesAlone
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -71,6 +71,7 @@ public class SuiteUnevaluatedPropertiesAlone
 public class SuiteUnevaluatedPropertiesWithProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -81,7 +82,6 @@ public class SuiteUnevaluatedPropertiesWithProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -93,7 +93,7 @@ public class SuiteUnevaluatedPropertiesWithProperties
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
-            "{\r\n                \"#/properties/foo\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/properties/foo\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -104,7 +104,7 @@ public class SuiteUnevaluatedPropertiesWithProperties
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -115,9 +115,9 @@ public class SuiteUnevaluatedPropertiesWithProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"properties\": {\r\n          \"foo\": { \"title\": \"Evaluated\" }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"properties\": {\n          \"foo\": { \"title\": \"Evaluated\" }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -130,6 +130,7 @@ public class SuiteUnevaluatedPropertiesWithProperties
 public class SuiteUnevaluatedPropertiesWithPatternProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -140,7 +141,6 @@ public class SuiteUnevaluatedPropertiesWithPatternProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -152,7 +152,7 @@ public class SuiteUnevaluatedPropertiesWithPatternProperties
             "{ \"apple\": 42, \"bar\": 24 }",
             "/apple",
             "title",
-            "{\r\n                \"#/patternProperties/%5Ea\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/patternProperties/%5Ea\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -163,7 +163,7 @@ public class SuiteUnevaluatedPropertiesWithPatternProperties
             "{ \"apple\": 42, \"bar\": 24 }",
             "/bar",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -174,9 +174,9 @@ public class SuiteUnevaluatedPropertiesWithPatternProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"patternProperties\": {\r\n          \"^a\": { \"title\": \"Evaluated\" }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"patternProperties\": {\n          \"^a\": { \"title\": \"Evaluated\" }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -189,6 +189,7 @@ public class SuiteUnevaluatedPropertiesWithPatternProperties
 public class SuiteUnevaluatedPropertiesWithAdditionalProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -199,7 +200,6 @@ public class SuiteUnevaluatedPropertiesWithAdditionalProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -211,7 +211,7 @@ public class SuiteUnevaluatedPropertiesWithAdditionalProperties
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
-            "{\r\n                \"#/additionalProperties\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/additionalProperties\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -222,7 +222,7 @@ public class SuiteUnevaluatedPropertiesWithAdditionalProperties
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
-            "{\r\n                \"#/additionalProperties\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/additionalProperties\": \"Evaluated\"\n              }");
     }
 
     public class Fixture
@@ -233,9 +233,9 @@ public class SuiteUnevaluatedPropertiesWithAdditionalProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"additionalProperties\": { \"title\": \"Evaluated\" },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"additionalProperties\": { \"title\": \"Evaluated\" },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -248,6 +248,7 @@ public class SuiteUnevaluatedPropertiesWithAdditionalProperties
 public class SuiteUnevaluatedPropertiesWithDependentSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -258,7 +259,6 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -270,7 +270,7 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     [TestMethod]
@@ -281,7 +281,7 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
-            "{\r\n                \"#/dependentSchemas/foo/properties/bar\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/dependentSchemas/foo/properties/bar\": \"Evaluated\"\n              }");
     }
 
     public class Fixture
@@ -292,9 +292,9 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"dependentSchemas\": {\r\n          \"foo\": {\r\n            \"properties\": {\r\n              \"bar\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"dependentSchemas\": {\n          \"foo\": {\n            \"properties\": {\n              \"bar\": { \"title\": \"Evaluated\" }\n            }\n          }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -307,6 +307,7 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
 public class SuiteUnevaluatedPropertiesWithIfThenAndElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -317,7 +318,6 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -329,7 +329,7 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse
             "{ \"foo\": \"\", \"bar\": 42 }",
             "/foo",
             "title",
-            "{\r\n                \"#/then/properties/foo\": \"Then\",\r\n                \"#/if/properties/foo\": \"If\"\r\n              }");
+            "{\n                \"#/then/properties/foo\": \"Then\",\n                \"#/if/properties/foo\": \"If\"\n              }");
     }
 
     [TestMethod]
@@ -340,7 +340,7 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse
             "{ \"foo\": \"\", \"bar\": 42 }",
             "/bar",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     [TestMethod]
@@ -351,7 +351,7 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse
             "{ \"foo\": 42, \"bar\": \"\" }",
             "/foo",
             "title",
-            "{\r\n                \"#/else/properties/foo\": \"Else\"\r\n              }");
+            "{\n                \"#/else/properties/foo\": \"Else\"\n              }");
     }
 
     [TestMethod]
@@ -362,7 +362,7 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse
             "{ \"foo\": 42, \"bar\": \"\" }",
             "/bar",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -373,9 +373,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"if\": {\r\n          \"properties\": {\r\n            \"foo\": {\r\n              \"type\": \"string\",\r\n              \"title\": \"If\"\r\n            }\r\n          }\r\n        },\r\n        \"then\": {\r\n          \"properties\": {\r\n            \"foo\": { \"title\": \"Then\" }\r\n          }\r\n        },\r\n        \"else\": {\r\n          \"properties\": {\r\n            \"foo\": { \"title\": \"Else\" }\r\n          }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"if\": {\n          \"properties\": {\n            \"foo\": {\n              \"type\": \"string\",\n              \"title\": \"If\"\n            }\n          }\n        },\n        \"then\": {\n          \"properties\": {\n            \"foo\": { \"title\": \"Then\" }\n          }\n        },\n        \"else\": {\n          \"properties\": {\n            \"foo\": { \"title\": \"Else\" }\n          }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -388,6 +388,7 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse
 public class SuiteUnevaluatedPropertiesWithAllOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -398,7 +399,6 @@ public class SuiteUnevaluatedPropertiesWithAllOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -410,7 +410,7 @@ public class SuiteUnevaluatedPropertiesWithAllOf
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
-            "{\r\n                \"#/allOf/0/properties/foo\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/allOf/0/properties/foo\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -421,7 +421,7 @@ public class SuiteUnevaluatedPropertiesWithAllOf
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -432,9 +432,9 @@ public class SuiteUnevaluatedPropertiesWithAllOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"allOf\": [\r\n          {\r\n            \"properties\": {\r\n              \"foo\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        ],\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"allOf\": [\n          {\n            \"properties\": {\n              \"foo\": { \"title\": \"Evaluated\" }\n            }\n          }\n        ],\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -447,6 +447,7 @@ public class SuiteUnevaluatedPropertiesWithAllOf
 public class SuiteUnevaluatedPropertiesWithAnyOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -457,7 +458,6 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -469,7 +469,7 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
-            "{\r\n                \"#/anyOf/0/properties/foo\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/anyOf/0/properties/foo\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -480,7 +480,7 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -491,9 +491,9 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"anyOf\": [\r\n          {\r\n            \"properties\": {\r\n              \"foo\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        ],\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"anyOf\": [\n          {\n            \"properties\": {\n              \"foo\": { \"title\": \"Evaluated\" }\n            }\n          }\n        ],\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -506,6 +506,7 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
 public class SuiteUnevaluatedPropertiesWithOneOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -516,7 +517,6 @@ public class SuiteUnevaluatedPropertiesWithOneOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -528,7 +528,7 @@ public class SuiteUnevaluatedPropertiesWithOneOf
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
-            "{\r\n                \"#/oneOf/0/properties/foo\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/oneOf/0/properties/foo\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -539,7 +539,7 @@ public class SuiteUnevaluatedPropertiesWithOneOf
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -550,9 +550,9 @@ public class SuiteUnevaluatedPropertiesWithOneOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"oneOf\": [\r\n          {\r\n            \"properties\": {\r\n              \"foo\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        ],\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"oneOf\": [\n          {\n            \"properties\": {\n              \"foo\": { \"title\": \"Evaluated\" }\n            }\n          }\n        ],\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -565,6 +565,7 @@ public class SuiteUnevaluatedPropertiesWithOneOf
 public class SuiteUnevaluatedPropertiesWithNot
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -575,7 +576,6 @@ public class SuiteUnevaluatedPropertiesWithNot
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -587,7 +587,7 @@ public class SuiteUnevaluatedPropertiesWithNot
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     [TestMethod]
@@ -598,7 +598,7 @@ public class SuiteUnevaluatedPropertiesWithNot
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
-            "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedProperties\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -609,9 +609,9 @@ public class SuiteUnevaluatedPropertiesWithNot
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"not\": {\r\n          \"not\": {\r\n            \"properties\": {\r\n              \"foo\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"not\": {\n          \"not\": {\n            \"properties\": {\n              \"foo\": { \"title\": \"Evaluated\" }\n            }\n          }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -624,6 +624,7 @@ public class SuiteUnevaluatedPropertiesWithNot
 public class SuiteUnevaluatedItemsAlone
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -634,7 +635,6 @@ public class SuiteUnevaluatedItemsAlone
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -646,7 +646,7 @@ public class SuiteUnevaluatedItemsAlone
             "[42, 24]",
             "/0",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     [TestMethod]
@@ -657,7 +657,7 @@ public class SuiteUnevaluatedItemsAlone
             "[42, 24]",
             "/1",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -668,9 +668,9 @@ public class SuiteUnevaluatedItemsAlone
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -683,6 +683,7 @@ public class SuiteUnevaluatedItemsAlone
 public class SuiteUnevaluatedItemsWithPrefixItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -693,7 +694,6 @@ public class SuiteUnevaluatedItemsWithPrefixItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -705,7 +705,7 @@ public class SuiteUnevaluatedItemsWithPrefixItems
             "[42, 24]",
             "/0",
             "title",
-            "{\r\n                \"#/prefixItems/0\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/prefixItems/0\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -716,7 +716,7 @@ public class SuiteUnevaluatedItemsWithPrefixItems
             "[42, 24]",
             "/1",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -727,9 +727,9 @@ public class SuiteUnevaluatedItemsWithPrefixItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"prefixItems\": [{ \"title\": \"Evaluated\" }],\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"prefixItems\": [{ \"title\": \"Evaluated\" }],\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -742,6 +742,7 @@ public class SuiteUnevaluatedItemsWithPrefixItems
 public class SuiteUnevaluatedItemsWithContains
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -752,7 +753,6 @@ public class SuiteUnevaluatedItemsWithContains
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -764,7 +764,7 @@ public class SuiteUnevaluatedItemsWithContains
             "[\"foo\", 42]",
             "/0",
             "title",
-            "{\r\n                \"#/contains\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/contains\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -775,7 +775,7 @@ public class SuiteUnevaluatedItemsWithContains
             "[\"foo\", 42]",
             "/1",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -786,9 +786,9 @@ public class SuiteUnevaluatedItemsWithContains
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"contains\": {\r\n          \"type\": \"string\",\r\n          \"title\": \"Evaluated\"\r\n        },\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"contains\": {\n          \"type\": \"string\",\n          \"title\": \"Evaluated\"\n        },\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -801,6 +801,7 @@ public class SuiteUnevaluatedItemsWithContains
 public class SuiteUnevaluatedItemsWithIfThenAndElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -811,7 +812,6 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -823,7 +823,7 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse
             "[\"\", 42]",
             "/0",
             "title",
-            "{\r\n                \"#/then/prefixItems/0\": \"Then\",\r\n                \"#/if/prefixItems/0\": \"If\"\r\n              }");
+            "{\n                \"#/then/prefixItems/0\": \"Then\",\n                \"#/if/prefixItems/0\": \"If\"\n              }");
     }
 
     [TestMethod]
@@ -834,7 +834,7 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse
             "[\"\", 42]",
             "/1",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     [TestMethod]
@@ -845,7 +845,7 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse
             "[42, \"\"]",
             "/0",
             "title",
-            "{\r\n                \"#/else/prefixItems/0\": \"Else\"\r\n              }");
+            "{\n                \"#/else/prefixItems/0\": \"Else\"\n              }");
     }
 
     [TestMethod]
@@ -856,7 +856,7 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse
             "[42, \"\"]",
             "/1",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -867,9 +867,9 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"if\": {\r\n          \"prefixItems\": [\r\n            {\r\n              \"type\": \"string\",\r\n              \"title\": \"If\"\r\n            }\r\n          ]\r\n        },\r\n        \"then\": {\r\n          \"prefixItems\": [\r\n            { \"title\": \"Then\" }\r\n          ]\r\n        },\r\n        \"else\": {\r\n          \"prefixItems\": [\r\n            { \"title\": \"Else\" }\r\n          ]\r\n        },\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"if\": {\n          \"prefixItems\": [\n            {\n              \"type\": \"string\",\n              \"title\": \"If\"\n            }\n          ]\n        },\n        \"then\": {\n          \"prefixItems\": [\n            { \"title\": \"Then\" }\n          ]\n        },\n        \"else\": {\n          \"prefixItems\": [\n            { \"title\": \"Else\" }\n          ]\n        },\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -882,6 +882,7 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse
 public class SuiteUnevaluatedItemsWithAllOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -892,7 +893,6 @@ public class SuiteUnevaluatedItemsWithAllOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -904,7 +904,7 @@ public class SuiteUnevaluatedItemsWithAllOf
             "[42, 24]",
             "/0",
             "title",
-            "{\r\n                \"#/allOf/0/prefixItems/0\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/allOf/0/prefixItems/0\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -915,7 +915,7 @@ public class SuiteUnevaluatedItemsWithAllOf
             "[42, 24]",
             "/1",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -926,9 +926,9 @@ public class SuiteUnevaluatedItemsWithAllOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"allOf\": [\r\n          {\r\n            \"prefixItems\": [\r\n              { \"title\": \"Evaluated\" }\r\n            ]\r\n          }\r\n        ],\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"allOf\": [\n          {\n            \"prefixItems\": [\n              { \"title\": \"Evaluated\" }\n            ]\n          }\n        ],\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -941,6 +941,7 @@ public class SuiteUnevaluatedItemsWithAllOf
 public class SuiteUnevaluatedItemsWithAnyOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -951,7 +952,6 @@ public class SuiteUnevaluatedItemsWithAnyOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -963,7 +963,7 @@ public class SuiteUnevaluatedItemsWithAnyOf
             "[42, 24]",
             "/0",
             "title",
-            "{\r\n                \"#/anyOf/0/prefixItems/0\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/anyOf/0/prefixItems/0\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -974,7 +974,7 @@ public class SuiteUnevaluatedItemsWithAnyOf
             "[42, 24]",
             "/1",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -985,9 +985,9 @@ public class SuiteUnevaluatedItemsWithAnyOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"anyOf\": [\r\n          {\r\n            \"prefixItems\": [\r\n              { \"title\": \"Evaluated\" }\r\n            ]\r\n          }\r\n        ],\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"anyOf\": [\n          {\n            \"prefixItems\": [\n              { \"title\": \"Evaluated\" }\n            ]\n          }\n        ],\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1000,6 +1000,7 @@ public class SuiteUnevaluatedItemsWithAnyOf
 public class SuiteUnevaluatedItemsWithOneOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1010,7 +1011,6 @@ public class SuiteUnevaluatedItemsWithOneOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1022,7 +1022,7 @@ public class SuiteUnevaluatedItemsWithOneOf
             "[42, 24]",
             "/0",
             "title",
-            "{\r\n                \"#/oneOf/0/prefixItems/0\": \"Evaluated\"\r\n              }");
+            "{\n                \"#/oneOf/0/prefixItems/0\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]
@@ -1033,7 +1033,7 @@ public class SuiteUnevaluatedItemsWithOneOf
             "[42, 24]",
             "/1",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -1044,9 +1044,9 @@ public class SuiteUnevaluatedItemsWithOneOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"oneOf\": [\r\n          {\r\n            \"prefixItems\": [\r\n              { \"title\": \"Evaluated\" }\r\n            ]\r\n          }\r\n        ],\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"oneOf\": [\n          {\n            \"prefixItems\": [\n              { \"title\": \"Evaluated\" }\n            ]\n          }\n        ],\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1059,6 +1059,7 @@ public class SuiteUnevaluatedItemsWithOneOf
 public class SuiteUnevaluatedItemsWithNot
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1069,7 +1070,6 @@ public class SuiteUnevaluatedItemsWithNot
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1081,7 +1081,7 @@ public class SuiteUnevaluatedItemsWithNot
             "[42, 24]",
             "/0",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     [TestMethod]
@@ -1092,7 +1092,7 @@ public class SuiteUnevaluatedItemsWithNot
             "[42, 24]",
             "/1",
             "title",
-            "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
+            "{\n                \"#/unevaluatedItems\": \"Unevaluated\"\n              }");
     }
 
     public class Fixture
@@ -1103,9 +1103,9 @@ public class SuiteUnevaluatedItemsWithNot
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unevaluated.json",
-                "{\r\n        \"not\": {\r\n          \"not\": {\r\n            \"prefixItems\": [\r\n              { \"title\": \"Evaluated\" }\r\n            ]\r\n          }\r\n        },\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
+                "{\n        \"not\": {\n          \"not\": {\n            \"prefixItems\": [\n              { \"title\": \"Evaluated\" }\n            ]\n          }\n        },\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

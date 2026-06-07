@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.EcmascriptReg
 public class SuiteAIsNotAnEcma262ControlEscape
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteAIsNotAnEcma262ControlEscape
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -39,8 +39,8 @@ public class SuiteAIsNotAnEcma262ControlEscape
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\optional\\format\\ecmascript-regex.json",
-                "{\r\n      \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n      \"format\": \"regex\"\r\n    }",
+                "tests/draft2020-12/optional/format/ecmascript-regex.json",
+                "{\n      \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n      \"format\": \"regex\"\n    }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.EcmascriptRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

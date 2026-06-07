@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.Optional.Format.Duration;
 public class SuiteValidationOfDurationStrings
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfDurationStrings
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -326,8 +326,8 @@ public class SuiteValidationOfDurationStrings
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\format\\duration.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"duration\"\r\n        }",
+                "tests/draft2019-09/optional/format/duration.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"duration\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.Format.Duration",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

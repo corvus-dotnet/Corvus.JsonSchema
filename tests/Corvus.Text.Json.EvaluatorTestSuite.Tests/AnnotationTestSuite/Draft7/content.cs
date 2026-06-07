@@ -12,6 +12,7 @@ namespace AnnotationTestSuite.Draft7.Content;
 public class SuiteContentMediaTypeIsAnAnnotationForStringInstances
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -22,7 +23,6 @@ public class SuiteContentMediaTypeIsAnAnnotationForStringInstances
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -34,7 +34,7 @@ public class SuiteContentMediaTypeIsAnAnnotationForStringInstances
             "\"{ \\\"foo\\\": \\\"bar\\\" }\"",
             "",
             "contentMediaType",
-            "{\r\n                \"#\": \"application/json\"\r\n              }");
+            "{\n                \"#\": \"application/json\"\n              }");
     }
 
     [TestMethod]
@@ -56,9 +56,9 @@ public class SuiteContentMediaTypeIsAnAnnotationForStringInstances
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/content.json",
-                "{\r\n        \"contentMediaType\": \"application/json\"\r\n      }",
+                "{\n        \"contentMediaType\": \"application/json\"\n      }",
                 "AnnotationTestSuite.Draft7.Content",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -71,6 +71,7 @@ public class SuiteContentMediaTypeIsAnAnnotationForStringInstances
 public class SuiteContentEncodingIsAnAnnotationForStringInstances
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -81,7 +82,6 @@ public class SuiteContentEncodingIsAnAnnotationForStringInstances
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -93,7 +93,7 @@ public class SuiteContentEncodingIsAnAnnotationForStringInstances
             "\"SGVsbG8gZnJvbSBKU09OIFNjaGVtYQ==\"",
             "",
             "contentEncoding",
-            "{\r\n                \"#\": \"base64\"\r\n              }");
+            "{\n                \"#\": \"base64\"\n              }");
     }
 
     [TestMethod]
@@ -115,9 +115,9 @@ public class SuiteContentEncodingIsAnAnnotationForStringInstances
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/content.json",
-                "{\r\n        \"contentEncoding\": \"base64\"\r\n      }",
+                "{\n        \"contentEncoding\": \"base64\"\n      }",
                 "AnnotationTestSuite.Draft7.Content",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft7.Optional.Format.JsonPointer;
 public class SuiteValidationOfJsonPointersJsonStringRepresentation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfJsonPointersJsonStringRepresentation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -312,7 +312,7 @@ public class SuiteValidationOfJsonPointersJsonStringRepresentation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\format\\json-pointer.json",
+                "tests/draft7/optional/format/json-pointer.json",
                 "{ \"format\": \"json-pointer\" }",
                 "JsonSchemaTestSuite.Draft7.Optional.Format.JsonPointer",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

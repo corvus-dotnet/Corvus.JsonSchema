@@ -28,7 +28,9 @@ internal static class AnnotationTestCaseGenerator
 
     public static void GenerateTests(string baseDirectory, string outputPath, Action<string> fileCallback)
     {
-        string annotationsDir = Path.Combine(baseDirectory, "annotations", "tests");
+        // Resolve to an absolute path for reading the annotation files; the embedded remotes
+        // path below stays relative (machine-independent) like the type/evaluator generators.
+        string annotationsDir = Path.Combine(Path.GetFullPath(baseDirectory), "annotations", "tests");
         if (!Directory.Exists(annotationsDir))
         {
             Console.WriteLine($"Annotations directory not found: {annotationsDir}");
@@ -140,10 +142,10 @@ internal static class AnnotationTestCaseGenerator
                                 .AppendLine("    {")
                                 .AppendLine($"        AnnotationTestHelper.AssertAnnotations(")
                                 .AppendLine($"            s_fixture!.Evaluator,")
-                                .AppendLine($"            {SymbolDisplay.FormatLiteral(instanceJson, true)},")
+                                .AppendLine($"            {SymbolDisplay.FormatLiteral(EmbeddedLiteral.Json(instanceJson), true)},")
                                 .AppendLine($"            {SymbolDisplay.FormatLiteral(location, true)},")
                                 .AppendLine($"            {SymbolDisplay.FormatLiteral(keyword, true)},")
-                                .AppendLine($"            {SymbolDisplay.FormatLiteral(expected.GetRawText(), true)});")
+                                .AppendLine($"            {SymbolDisplay.FormatLiteral(EmbeddedLiteral.Json(expected.GetRawText()), true)});")
                                 .AppendLine("    }");
 
                             assertionIndex++;
@@ -162,9 +164,9 @@ internal static class AnnotationTestCaseGenerator
                         .AppendLine("        {")
                         .AppendLine("            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(")
                         .AppendLine($"                {SymbolDisplay.FormatLiteral($"annotations/{fileName}.json", true)},")
-                        .AppendLine($"                {SymbolDisplay.FormatLiteral(schemaJson, true)},")
+                        .AppendLine($"                {SymbolDisplay.FormatLiteral(EmbeddedLiteral.Json(schemaJson), true)},")
                         .AppendLine($"                \"AnnotationTestSuite.{draftName}.{pascalFileName}\",")
-                        .AppendLine($"                {SymbolDisplay.FormatLiteral(remotesDirectory, true)},")
+                        .AppendLine($"                {SymbolDisplay.FormatLiteral(EmbeddedLiteral.ForwardSlash(remotesDirectory), true)},")
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(vocabulary, true)},")
                         .AppendLine("                validateFormat: false,")
                         .AppendLine("                Assembly.GetExecutingAssembly());")

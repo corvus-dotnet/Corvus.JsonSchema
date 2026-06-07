@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.Optional.Format.Time;
 public class SuiteValidationOfTimeStrings
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfTimeStrings
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -249,8 +249,8 @@ public class SuiteValidationOfTimeStrings
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\format\\time.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"time\"\r\n        }",
+                "tests/draft2019-09/optional/format/time.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"time\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.Format.Time",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

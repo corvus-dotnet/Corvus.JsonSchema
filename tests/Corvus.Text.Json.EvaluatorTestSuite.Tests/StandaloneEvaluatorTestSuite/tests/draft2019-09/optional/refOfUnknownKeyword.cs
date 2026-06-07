@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.Optional.RefOfUnknownKeyword;
 public class SuiteReferenceOfARootArbitraryKeyword
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteReferenceOfARootArbitraryKeyword
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteReferenceOfARootArbitraryKeyword
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\refOfUnknownKeyword.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"unknown-keyword\": {\"type\": \"integer\"},\r\n            \"properties\": {\r\n                \"bar\": {\"$ref\": \"#/unknown-keyword\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/optional/refOfUnknownKeyword.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"unknown-keyword\": {\"type\": \"integer\"},\n            \"properties\": {\n                \"bar\": {\"$ref\": \"#/unknown-keyword\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.RefOfUnknownKeyword",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -62,6 +62,7 @@ public class SuiteReferenceOfARootArbitraryKeyword
 public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -72,7 +73,6 @@ public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -97,8 +97,8 @@ public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\refOfUnknownKeyword.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"unknown/keyword\": {\"type\": \"integer\"},\r\n            \"properties\": {\r\n                \"bar\": {\"$ref\": \"#/unknown~1keyword\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/optional/refOfUnknownKeyword.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"unknown/keyword\": {\"type\": \"integer\"},\n            \"properties\": {\n                \"bar\": {\"$ref\": \"#/unknown~1keyword\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.RefOfUnknownKeyword",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -113,6 +113,7 @@ public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef
 public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -123,7 +124,6 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -148,8 +148,8 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\refOfUnknownKeyword.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\"unknown-keyword\": {\"type\": \"integer\"}},\r\n                \"bar\": {\"$ref\": \"#/properties/foo/unknown-keyword\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/optional/refOfUnknownKeyword.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\"unknown-keyword\": {\"type\": \"integer\"}},\n                \"bar\": {\"$ref\": \"#/properties/foo/unknown-keyword\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.RefOfUnknownKeyword",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -164,6 +164,7 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema
 public class SuiteReferenceInternalsOfKnownNonApplicator
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -174,7 +175,6 @@ public class SuiteReferenceInternalsOfKnownNonApplicator
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -199,8 +199,8 @@ public class SuiteReferenceInternalsOfKnownNonApplicator
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\refOfUnknownKeyword.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"examples\": [\r\n              { \"type\": \"string\" }\r\n            ],\r\n            \"$ref\": \"#/examples/0\"\r\n        }",
+                "tests/draft2019-09/optional/refOfUnknownKeyword.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"examples\": [\n              { \"type\": \"string\" }\n            ],\n            \"$ref\": \"#/examples/0\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.RefOfUnknownKeyword",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -215,6 +215,7 @@ public class SuiteReferenceInternalsOfKnownNonApplicator
 public class SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -225,7 +226,6 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -250,8 +250,8 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\optional\\refOfUnknownKeyword.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\"unknown/keyword\": {\"type\": \"integer\"}},\r\n                \"bar\": {\"$ref\": \"#/properties/foo/unknown~1keyword\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/optional/refOfUnknownKeyword.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\"unknown/keyword\": {\"type\": \"integer\"}},\n                \"bar\": {\"$ref\": \"#/properties/foo/unknown~1keyword\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.RefOfUnknownKeyword",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

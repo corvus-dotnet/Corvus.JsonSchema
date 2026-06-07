@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.Properties;
 public class SuiteObjectPropertiesValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteObjectPropertiesValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -74,8 +74,8 @@ public class SuiteObjectPropertiesValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\properties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\"type\": \"integer\"},\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/properties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\"type\": \"integer\"},\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Properties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -93,6 +93,7 @@ public class SuiteObjectPropertiesValidation
 public class SuitePropertiesPatternPropertiesAdditionalPropertiesInteraction
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -103,7 +104,6 @@ public class SuitePropertiesPatternPropertiesAdditionalPropertiesInteraction
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -170,8 +170,8 @@ public class SuitePropertiesPatternPropertiesAdditionalPropertiesInteraction
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\properties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\"type\": \"array\", \"maxItems\": 3},\r\n                \"bar\": {\"type\": \"array\"}\r\n            },\r\n            \"patternProperties\": {\"f.o\": {\"minItems\": 2}},\r\n            \"additionalProperties\": {\"type\": \"integer\"}\r\n        }",
+                "tests/draft2019-09/properties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\"type\": \"array\", \"maxItems\": 3},\n                \"bar\": {\"type\": \"array\"}\n            },\n            \"patternProperties\": {\"f.o\": {\"minItems\": 2}},\n            \"additionalProperties\": {\"type\": \"integer\"}\n        }",
                 "JsonSchemaTestSuite.Draft201909.Properties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -189,6 +189,7 @@ public class SuitePropertiesPatternPropertiesAdditionalPropertiesInteraction
 public class SuitePropertiesWithBooleanSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -199,7 +200,6 @@ public class SuitePropertiesWithBooleanSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -238,8 +238,8 @@ public class SuitePropertiesWithBooleanSchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\properties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": true,\r\n                \"bar\": false\r\n            }\r\n        }",
+                "tests/draft2019-09/properties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": true,\n                \"bar\": false\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Properties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -257,6 +257,7 @@ public class SuitePropertiesWithBooleanSchema
 public class SuitePropertiesWithEscapedCharacters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -267,21 +268,20 @@ public class SuitePropertiesWithEscapedCharacters
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestObjectWithAllNumbersIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\\nbar\": 1,\r\n                    \"foo\\\"bar\": 1,\r\n                    \"foo\\\\bar\": 1,\r\n                    \"foo\\rbar\": 1,\r\n                    \"foo\\tbar\": 1,\r\n                    \"foo\\fbar\": 1\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": 1,\n                    \"foo\\\"bar\": 1,\n                    \"foo\\\\bar\": 1,\n                    \"foo\\rbar\": 1,\n                    \"foo\\tbar\": 1,\n                    \"foo\\fbar\": 1\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectWithStringsIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\\nbar\": \"1\",\r\n                    \"foo\\\"bar\": \"1\",\r\n                    \"foo\\\\bar\": \"1\",\r\n                    \"foo\\rbar\": \"1\",\r\n                    \"foo\\tbar\": \"1\",\r\n                    \"foo\\fbar\": \"1\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": \"1\",\n                    \"foo\\\"bar\": \"1\",\n                    \"foo\\\\bar\": \"1\",\n                    \"foo\\rbar\": \"1\",\n                    \"foo\\tbar\": \"1\",\n                    \"foo\\fbar\": \"1\"\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -292,8 +292,8 @@ public class SuitePropertiesWithEscapedCharacters
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\properties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\\nbar\": {\"type\": \"number\"},\r\n                \"foo\\\"bar\": {\"type\": \"number\"},\r\n                \"foo\\\\bar\": {\"type\": \"number\"},\r\n                \"foo\\rbar\": {\"type\": \"number\"},\r\n                \"foo\\tbar\": {\"type\": \"number\"},\r\n                \"foo\\fbar\": {\"type\": \"number\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/properties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\\nbar\": {\"type\": \"number\"},\n                \"foo\\\"bar\": {\"type\": \"number\"},\n                \"foo\\\\bar\": {\"type\": \"number\"},\n                \"foo\\rbar\": {\"type\": \"number\"},\n                \"foo\\tbar\": {\"type\": \"number\"},\n                \"foo\\fbar\": {\"type\": \"number\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Properties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -311,6 +311,7 @@ public class SuitePropertiesWithEscapedCharacters
 public class SuitePropertiesWithNullValuedInstanceProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -321,7 +322,6 @@ public class SuitePropertiesWithNullValuedInstanceProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -339,8 +339,8 @@ public class SuitePropertiesWithNullValuedInstanceProperties
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\properties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\"type\": \"null\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/properties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\"type\": \"null\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Properties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -358,6 +358,7 @@ public class SuitePropertiesWithNullValuedInstanceProperties
 public class SuitePropertiesWhoseNamesAreJavascriptObjectPropertyNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -368,7 +369,6 @@ public class SuitePropertiesWhoseNamesAreJavascriptObjectPropertyNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -417,7 +417,7 @@ public class SuitePropertiesWhoseNamesAreJavascriptObjectPropertyNames
     [TestMethod]
     public void TestAllPresentAndValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \r\n                    \"__proto__\": 12,\r\n                    \"toString\": { \"length\": \"foo\" },\r\n                    \"constructor\": 37\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \n                    \"__proto__\": 12,\n                    \"toString\": { \"length\": \"foo\" },\n                    \"constructor\": 37\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -428,8 +428,8 @@ public class SuitePropertiesWhoseNamesAreJavascriptObjectPropertyNames
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\properties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"__proto__\": {\"type\": \"number\"},\r\n                \"toString\": {\r\n                    \"properties\": { \"length\": { \"type\": \"string\" } }\r\n                },\r\n                \"constructor\": {\"type\": \"number\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/properties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"__proto__\": {\"type\": \"number\"},\n                \"toString\": {\n                    \"properties\": { \"length\": { \"type\": \"string\" } }\n                },\n                \"constructor\": {\"type\": \"number\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Properties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

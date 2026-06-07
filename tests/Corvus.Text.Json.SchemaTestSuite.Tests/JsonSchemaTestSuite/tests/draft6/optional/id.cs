@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft6.Optional.Id;
 public class SuiteIdInsideAnEnumIsNotARealIdentifier
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,14 +22,13 @@ public class SuiteIdInsideAnEnumIsNotARealIdentifier
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestExactMatchToEnumAndTypeMatches()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"$id\": \"https://localhost:1234/id/my_identifier.json\",\r\n                    \"type\": \"null\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"$id\": \"https://localhost:1234/id/my_identifier.json\",\n                    \"type\": \"null\"\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -53,8 +53,8 @@ public class SuiteIdInsideAnEnumIsNotARealIdentifier
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\optional\\id.json",
-                "{\r\n            \"definitions\": {\r\n                \"id_in_enum\": {\r\n                    \"enum\": [\r\n                        {\r\n                          \"$id\": \"https://localhost:1234/id/my_identifier.json\",\r\n                          \"type\": \"null\"\r\n                        }\r\n                    ]\r\n                },\r\n                \"real_id_in_schema\": {\r\n                    \"$id\": \"https://localhost:1234/id/my_identifier.json\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"zzz_id_in_const\": {\r\n                    \"const\": {\r\n                        \"$id\": \"https://localhost:1234/id/my_identifier.json\",\r\n                        \"type\": \"null\"\r\n                    }\r\n                }\r\n            },\r\n            \"anyOf\": [\r\n                { \"$ref\": \"#/definitions/id_in_enum\" },\r\n                { \"$ref\": \"https://localhost:1234/id/my_identifier.json\" }\r\n            ]\r\n        }",
+                "tests/draft6/optional/id.json",
+                "{\n            \"definitions\": {\n                \"id_in_enum\": {\n                    \"enum\": [\n                        {\n                          \"$id\": \"https://localhost:1234/id/my_identifier.json\",\n                          \"type\": \"null\"\n                        }\n                    ]\n                },\n                \"real_id_in_schema\": {\n                    \"$id\": \"https://localhost:1234/id/my_identifier.json\",\n                    \"type\": \"string\"\n                },\n                \"zzz_id_in_const\": {\n                    \"const\": {\n                        \"$id\": \"https://localhost:1234/id/my_identifier.json\",\n                        \"type\": \"null\"\n                    }\n                }\n            },\n            \"anyOf\": [\n                { \"$ref\": \"#/definitions/id_in_enum\" },\n                { \"$ref\": \"https://localhost:1234/id/my_identifier.json\" }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft6.Optional.Id",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -72,6 +72,7 @@ public class SuiteIdInsideAnEnumIsNotARealIdentifier
 public class SuiteNonSchemaObjectContainingAPlainNameIdProperty
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -82,7 +83,6 @@ public class SuiteNonSchemaObjectContainingAPlainNameIdProperty
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -107,8 +107,8 @@ public class SuiteNonSchemaObjectContainingAPlainNameIdProperty
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\optional\\id.json",
-                "{\r\n            \"definitions\": {\r\n                \"const_not_anchor\": {\r\n                    \"const\": {\r\n                        \"$id\": \"#not_a_real_anchor\"\r\n                    }\r\n                }\r\n            },\r\n            \"oneOf\": [\r\n                {\r\n                    \"const\": \"skip not_a_real_anchor\"\r\n                },\r\n                {\r\n                    \"allOf\": [\r\n                        {\r\n                            \"not\": {\r\n                                \"const\": \"skip not_a_real_anchor\"\r\n                            }\r\n                        },\r\n                        {\r\n                            \"$ref\": \"#/definitions/const_not_anchor\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }",
+                "tests/draft6/optional/id.json",
+                "{\n            \"definitions\": {\n                \"const_not_anchor\": {\n                    \"const\": {\n                        \"$id\": \"#not_a_real_anchor\"\n                    }\n                }\n            },\n            \"oneOf\": [\n                {\n                    \"const\": \"skip not_a_real_anchor\"\n                },\n                {\n                    \"allOf\": [\n                        {\n                            \"not\": {\n                                \"const\": \"skip not_a_real_anchor\"\n                            }\n                        },\n                        {\n                            \"$ref\": \"#/definitions/const_not_anchor\"\n                        }\n                    ]\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft6.Optional.Id",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -126,6 +126,7 @@ public class SuiteNonSchemaObjectContainingAPlainNameIdProperty
 public class SuiteNonSchemaObjectContainingAnIdProperty
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -136,7 +137,6 @@ public class SuiteNonSchemaObjectContainingAnIdProperty
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -161,8 +161,8 @@ public class SuiteNonSchemaObjectContainingAnIdProperty
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\optional\\id.json",
-                "{\r\n            \"definitions\": {\r\n                \"const_not_id\": {\r\n                    \"const\": {\r\n                        \"$id\": \"not_a_real_id\"\r\n                    }\r\n                }\r\n            },\r\n            \"oneOf\": [\r\n                {\r\n                    \"const\":\"skip not_a_real_id\"\r\n                },\r\n                {\r\n                    \"allOf\": [\r\n                        {\r\n                            \"not\": {\r\n                                \"const\": \"skip not_a_real_id\"\r\n                            }\r\n                        },\r\n                        {\r\n                            \"$ref\": \"#/definitions/const_not_id\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }",
+                "tests/draft6/optional/id.json",
+                "{\n            \"definitions\": {\n                \"const_not_id\": {\n                    \"const\": {\n                        \"$id\": \"not_a_real_id\"\n                    }\n                }\n            },\n            \"oneOf\": [\n                {\n                    \"const\":\"skip not_a_real_id\"\n                },\n                {\n                    \"allOf\": [\n                        {\n                            \"not\": {\n                                \"const\": \"skip not_a_real_id\"\n                            }\n                        },\n                        {\n                            \"$ref\": \"#/definitions/const_not_id\"\n                        }\n                    ]\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft6.Optional.Id",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",

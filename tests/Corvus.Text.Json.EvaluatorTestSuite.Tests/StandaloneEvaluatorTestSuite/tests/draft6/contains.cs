@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.Contains;
 public class SuiteContainsKeywordValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteContainsKeywordValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -74,8 +74,8 @@ public class SuiteContainsKeywordValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\contains.json",
-                "{\r\n            \"contains\": {\"minimum\": 5}\r\n        }",
+                "tests/draft6/contains.json",
+                "{\n            \"contains\": {\"minimum\": 5}\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Contains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -90,6 +90,7 @@ public class SuiteContainsKeywordValidation
 public class SuiteContainsKeywordWithConstKeyword
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -100,7 +101,6 @@ public class SuiteContainsKeywordWithConstKeyword
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -132,8 +132,8 @@ public class SuiteContainsKeywordWithConstKeyword
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\contains.json",
-                "{\r\n            \"contains\": { \"const\": 5 }\r\n        }",
+                "tests/draft6/contains.json",
+                "{\n            \"contains\": { \"const\": 5 }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Contains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -148,6 +148,7 @@ public class SuiteContainsKeywordWithConstKeyword
 public class SuiteContainsKeywordWithBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -158,7 +159,6 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -183,7 +183,7 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\contains.json",
+                "tests/draft6/contains.json",
                 "{\"contains\": true}",
                 "StandaloneEvaluatorTestSuite.Draft6.Contains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -199,6 +199,7 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue
 public class SuiteContainsKeywordWithBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -209,7 +210,6 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -241,7 +241,7 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\contains.json",
+                "tests/draft6/contains.json",
                 "{\"contains\": false}",
                 "StandaloneEvaluatorTestSuite.Draft6.Contains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -257,6 +257,7 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
 public class SuiteItemsContains
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -267,7 +268,6 @@ public class SuiteItemsContains
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -306,8 +306,8 @@ public class SuiteItemsContains
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\contains.json",
-                "{\r\n            \"items\": { \"multipleOf\": 2 },\r\n            \"contains\": { \"multipleOf\": 3 }\r\n        }",
+                "tests/draft6/contains.json",
+                "{\n            \"items\": { \"multipleOf\": 2 },\n            \"contains\": { \"multipleOf\": 3 }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Contains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -322,6 +322,7 @@ public class SuiteItemsContains
 public class SuiteContainsWithNullInstanceElements
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -332,7 +333,6 @@ public class SuiteContainsWithNullInstanceElements
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -350,8 +350,8 @@ public class SuiteContainsWithNullInstanceElements
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\contains.json",
-                "{\r\n            \"contains\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+                "tests/draft6/contains.json",
+                "{\n            \"contains\": {\n                \"type\": \"null\"\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Contains",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",

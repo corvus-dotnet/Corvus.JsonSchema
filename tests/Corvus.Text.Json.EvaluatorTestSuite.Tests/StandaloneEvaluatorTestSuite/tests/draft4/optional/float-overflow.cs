@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft4.Optional.FloatOverflow;
 public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -39,7 +39,7 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\optional\\float-overflow.json",
+                "tests/draft4/optional/float-overflow.json",
                 "{\"type\": \"number\", \"multipleOf\": 0.5}",
                 "StandaloneEvaluatorTestSuite.Draft4.Optional.FloatOverflow",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

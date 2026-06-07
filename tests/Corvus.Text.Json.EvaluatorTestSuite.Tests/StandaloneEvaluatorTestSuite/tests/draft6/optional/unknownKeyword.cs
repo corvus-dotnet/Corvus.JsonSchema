@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.Optional.UnknownKeyword;
 public class SuiteIdInsideAnUnknownKeywordIsNotARealIdentifier
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteIdInsideAnUnknownKeywordIsNotARealIdentifier
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -53,8 +53,8 @@ public class SuiteIdInsideAnUnknownKeywordIsNotARealIdentifier
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\optional\\unknownKeyword.json",
-                "{\r\n            \"definitions\": {\r\n                \"id_in_unknown0\": {\r\n                    \"not\": {\r\n                        \"array_of_schemas\": [\r\n                            {\r\n                              \"$id\": \"https://localhost:1234/unknownKeyword/my_identifier.json\",\r\n                              \"type\": \"null\"\r\n                            }\r\n                        ]\r\n                    }\r\n                },\r\n                \"real_id_in_schema\": {\r\n                    \"$id\": \"https://localhost:1234/unknownKeyword/my_identifier.json\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"id_in_unknown1\": {\r\n                    \"not\": {\r\n                        \"object_of_schemas\": {\r\n                            \"foo\": {\r\n                              \"$id\": \"https://localhost:1234/unknownKeyword/my_identifier.json\",\r\n                              \"type\": \"integer\"\r\n                            }\r\n                        }\r\n                    }\r\n                }\r\n            },\r\n            \"anyOf\": [\r\n                { \"$ref\": \"#/definitions/id_in_unknown0\" },\r\n                { \"$ref\": \"#/definitions/id_in_unknown1\" },\r\n                { \"$ref\": \"https://localhost:1234/unknownKeyword/my_identifier.json\" }\r\n            ]\r\n        }",
+                "tests/draft6/optional/unknownKeyword.json",
+                "{\n            \"definitions\": {\n                \"id_in_unknown0\": {\n                    \"not\": {\n                        \"array_of_schemas\": [\n                            {\n                              \"$id\": \"https://localhost:1234/unknownKeyword/my_identifier.json\",\n                              \"type\": \"null\"\n                            }\n                        ]\n                    }\n                },\n                \"real_id_in_schema\": {\n                    \"$id\": \"https://localhost:1234/unknownKeyword/my_identifier.json\",\n                    \"type\": \"string\"\n                },\n                \"id_in_unknown1\": {\n                    \"not\": {\n                        \"object_of_schemas\": {\n                            \"foo\": {\n                              \"$id\": \"https://localhost:1234/unknownKeyword/my_identifier.json\",\n                              \"type\": \"integer\"\n                            }\n                        }\n                    }\n                }\n            },\n            \"anyOf\": [\n                { \"$ref\": \"#/definitions/id_in_unknown0\" },\n                { \"$ref\": \"#/definitions/id_in_unknown1\" },\n                { \"$ref\": \"https://localhost:1234/unknownKeyword/my_identifier.json\" }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Optional.UnknownKeyword",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",

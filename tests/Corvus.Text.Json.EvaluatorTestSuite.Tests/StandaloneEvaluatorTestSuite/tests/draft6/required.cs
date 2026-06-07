@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.Required;
 public class SuiteRequiredValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteRequiredValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -81,8 +81,8 @@ public class SuiteRequiredValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\required.json",
-                "{\r\n            \"properties\": {\r\n                \"foo\": {},\r\n                \"bar\": {}\r\n            },\r\n            \"required\": [\"foo\"]\r\n        }",
+                "tests/draft6/required.json",
+                "{\n            \"properties\": {\n                \"foo\": {},\n                \"bar\": {}\n            },\n            \"required\": [\"foo\"]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Required",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -97,6 +97,7 @@ public class SuiteRequiredValidation
 public class SuiteRequiredDefaultValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -107,7 +108,6 @@ public class SuiteRequiredDefaultValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -125,8 +125,8 @@ public class SuiteRequiredDefaultValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\required.json",
-                "{\r\n            \"properties\": {\r\n                \"foo\": {}\r\n            }\r\n        }",
+                "tests/draft6/required.json",
+                "{\n            \"properties\": {\n                \"foo\": {}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Required",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -141,6 +141,7 @@ public class SuiteRequiredDefaultValidation
 public class SuiteRequiredWithEmptyArray
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -151,7 +152,6 @@ public class SuiteRequiredWithEmptyArray
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -169,8 +169,8 @@ public class SuiteRequiredWithEmptyArray
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\required.json",
-                "{\r\n            \"properties\": {\r\n                \"foo\": {}\r\n            },\r\n            \"required\": []\r\n        }",
+                "tests/draft6/required.json",
+                "{\n            \"properties\": {\n                \"foo\": {}\n            },\n            \"required\": []\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Required",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -185,6 +185,7 @@ public class SuiteRequiredWithEmptyArray
 public class SuiteRequiredWithEscapedCharacters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -195,21 +196,20 @@ public class SuiteRequiredWithEscapedCharacters
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestObjectWithAllPropertiesPresentIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\\nbar\": 1,\r\n                    \"foo\\\"bar\": 1,\r\n                    \"foo\\\\bar\": 1,\r\n                    \"foo\\rbar\": 1,\r\n                    \"foo\\tbar\": 1,\r\n                    \"foo\\fbar\": 1\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\nbar\": 1,\n                    \"foo\\\"bar\": 1,\n                    \"foo\\\\bar\": 1,\n                    \"foo\\rbar\": 1,\n                    \"foo\\tbar\": 1,\n                    \"foo\\fbar\": 1\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectWithSomePropertiesMissingIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\\nbar\": \"1\",\r\n                    \"foo\\\"bar\": \"1\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\nbar\": \"1\",\n                    \"foo\\\"bar\": \"1\"\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -220,8 +220,8 @@ public class SuiteRequiredWithEscapedCharacters
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\required.json",
-                "{\r\n            \"required\": [\r\n                \"foo\\nbar\",\r\n                \"foo\\\"bar\",\r\n                \"foo\\\\bar\",\r\n                \"foo\\rbar\",\r\n                \"foo\\tbar\",\r\n                \"foo\\fbar\"\r\n            ]\r\n        }",
+                "tests/draft6/required.json",
+                "{\n            \"required\": [\n                \"foo\\nbar\",\n                \"foo\\\"bar\",\n                \"foo\\\\bar\",\n                \"foo\\rbar\",\n                \"foo\\tbar\",\n                \"foo\\fbar\"\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft6.Required",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -236,6 +236,7 @@ public class SuiteRequiredWithEscapedCharacters
 public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -246,7 +247,6 @@ public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -295,7 +295,7 @@ public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames
     [TestMethod]
     public void TestAllPresent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \r\n                    \"__proto__\": 12,\r\n                    \"toString\": { \"length\": \"foo\" },\r\n                    \"constructor\": 37\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \n                    \"__proto__\": 12,\n                    \"toString\": { \"length\": \"foo\" },\n                    \"constructor\": 37\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -306,7 +306,7 @@ public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\required.json",
+                "tests/draft6/required.json",
                 "{ \"required\": [\"__proto__\", \"toString\", \"constructor\"] }",
                 "StandaloneEvaluatorTestSuite.Draft6.Required",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

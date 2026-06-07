@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.Ipv6;
 public class SuiteValidationOfIPv6Addresses
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfIPv6Addresses
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -312,8 +312,8 @@ public class SuiteValidationOfIPv6Addresses
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\optional\\format\\ipv6.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"ipv6\"\r\n        }",
+                "tests/draft2020-12/optional/format/ipv6.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"format\": \"ipv6\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.Ipv6",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

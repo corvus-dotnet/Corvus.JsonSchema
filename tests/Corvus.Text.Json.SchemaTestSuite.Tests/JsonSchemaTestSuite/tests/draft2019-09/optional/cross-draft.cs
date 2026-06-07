@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.Optional.CrossDraft;
 public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\optional\\cross-draft.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"array\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/prefixItems.json\"\r\n        }",
+                "tests/draft2019-09/optional/cross-draft.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"array\",\n            \"$ref\": \"http://localhost:1234/draft2020-12/prefixItems.json\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Optional.CrossDraft",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -65,6 +65,7 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
 public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -75,7 +76,6 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -93,8 +93,8 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\optional\\cross-draft.json",
-                "{\r\n            \"type\": \"object\",\r\n            \"allOf\": [\r\n                { \"properties\": { \"foo\": true } },\r\n                { \"$ref\": \"http://localhost:1234/draft7/ignore-dependentRequired.json\" }\r\n            ]\r\n        }",
+                "tests/draft2019-09/optional/cross-draft.json",
+                "{\n            \"type\": \"object\",\n            \"allOf\": [\n                { \"properties\": { \"foo\": true } },\n                { \"$ref\": \"http://localhost:1234/draft7/ignore-dependentRequired.json\" }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft201909.Optional.CrossDraft",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

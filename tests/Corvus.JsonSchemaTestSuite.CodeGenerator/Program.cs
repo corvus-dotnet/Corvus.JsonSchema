@@ -12,8 +12,10 @@ Console.WriteLine();
 Console.WriteLine("=== Generating standalone evaluator test cases ===");
 EvaluatorTestCaseGenerator.GenerateTests(testFile => Console.WriteLine($"  Evaluator test: '{testFile}'"));
 
-string jsonSchemaTestSuiteBase = Path.GetFullPath(config["jsonSchemaTestSuite:baseDirectory"]
-    ?? throw new InvalidOperationException("Missing jsonSchemaTestSuite:baseDirectory"));
+// Pass the relative base (as configured) so the annotation generator embeds a relative,
+// machine-independent remotes path; it resolves an absolute path internally for reading.
+string jsonSchemaTestSuiteBase = config["jsonSchemaTestSuite:baseDirectory"]
+    ?? throw new InvalidOperationException("Missing jsonSchemaTestSuite:baseDirectory");
 
 string annotationOutputPath = Path.GetFullPath(config["annotationOutputPath"]
     ?? throw new InvalidOperationException("Missing annotationOutputPath"));

@@ -12,6 +12,7 @@ namespace AnnotationTestSuite.Draft6.MetaData;
 public class SuiteTitleIsAnAnnotation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -22,7 +23,6 @@ public class SuiteTitleIsAnAnnotation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -34,7 +34,7 @@ public class SuiteTitleIsAnAnnotation
             "42",
             "",
             "title",
-            "{\r\n                \"#\": \"Foo\"\r\n              }");
+            "{\n                \"#\": \"Foo\"\n              }");
     }
 
     public class Fixture
@@ -45,9 +45,9 @@ public class SuiteTitleIsAnAnnotation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/meta-data.json",
-                "{\r\n        \"title\": \"Foo\"\r\n      }",
+                "{\n        \"title\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -60,6 +60,7 @@ public class SuiteTitleIsAnAnnotation
 public class SuiteDescriptionIsAnAnnotation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -70,7 +71,6 @@ public class SuiteDescriptionIsAnAnnotation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -82,7 +82,7 @@ public class SuiteDescriptionIsAnAnnotation
             "42",
             "",
             "description",
-            "{\r\n                \"#\": \"Foo\"\r\n              }");
+            "{\n                \"#\": \"Foo\"\n              }");
     }
 
     public class Fixture
@@ -93,9 +93,9 @@ public class SuiteDescriptionIsAnAnnotation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/meta-data.json",
-                "{\r\n        \"description\": \"Foo\"\r\n      }",
+                "{\n        \"description\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -108,6 +108,7 @@ public class SuiteDescriptionIsAnAnnotation
 public class SuiteDefaultIsAnAnnotation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -118,7 +119,6 @@ public class SuiteDefaultIsAnAnnotation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -130,7 +130,7 @@ public class SuiteDefaultIsAnAnnotation
             "42",
             "",
             "default",
-            "{\r\n                \"#\": \"Foo\"\r\n              }");
+            "{\n                \"#\": \"Foo\"\n              }");
     }
 
     public class Fixture
@@ -141,9 +141,9 @@ public class SuiteDefaultIsAnAnnotation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/meta-data.json",
-                "{\r\n        \"default\": \"Foo\"\r\n      }",
+                "{\n        \"default\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -156,6 +156,7 @@ public class SuiteDefaultIsAnAnnotation
 public class SuiteExamplesIsAnAnnotation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -166,7 +167,6 @@ public class SuiteExamplesIsAnAnnotation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -178,7 +178,7 @@ public class SuiteExamplesIsAnAnnotation
             "\"Foo\"",
             "",
             "examples",
-            "{\r\n                \"#\": [\"Foo\", \"Bar\"]\r\n              }");
+            "{\n                \"#\": [\"Foo\", \"Bar\"]\n              }");
     }
 
     public class Fixture
@@ -189,9 +189,9 @@ public class SuiteExamplesIsAnAnnotation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/meta-data.json",
-                "{\r\n        \"examples\": [\"Foo\", \"Bar\"]\r\n      }",
+                "{\n        \"examples\": [\"Foo\", \"Bar\"]\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

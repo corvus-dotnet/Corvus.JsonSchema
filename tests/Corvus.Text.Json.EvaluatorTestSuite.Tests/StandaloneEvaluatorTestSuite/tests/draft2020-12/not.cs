@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.Not;
 public class SuiteNot
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteNot
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteNot
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\not.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"not\": {\"type\": \"integer\"}\r\n        }",
+                "tests/draft2020-12/not.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {\"type\": \"integer\"}\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -62,6 +62,7 @@ public class SuiteNot
 public class SuiteNotMultipleTypes
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -72,7 +73,6 @@ public class SuiteNotMultipleTypes
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -104,8 +104,8 @@ public class SuiteNotMultipleTypes
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\not.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"not\": {\"type\": [\"integer\", \"boolean\"]}\r\n        }",
+                "tests/draft2020-12/not.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {\"type\": [\"integer\", \"boolean\"]}\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -120,6 +120,7 @@ public class SuiteNotMultipleTypes
 public class SuiteNotMoreComplexSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -130,7 +131,6 @@ public class SuiteNotMoreComplexSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -162,8 +162,8 @@ public class SuiteNotMoreComplexSchema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\not.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"not\": {\r\n                \"type\": \"object\",\r\n                \"properties\": {\r\n                    \"foo\": {\r\n                        \"type\": \"string\"\r\n                    }\r\n                }\r\n             }\r\n        }",
+                "tests/draft2020-12/not.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": {\n                        \"type\": \"string\"\n                    }\n                }\n             }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -178,6 +178,7 @@ public class SuiteNotMoreComplexSchema
 public class SuiteForbiddenProperty
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -188,7 +189,6 @@ public class SuiteForbiddenProperty
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -213,8 +213,8 @@ public class SuiteForbiddenProperty
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\not.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \r\n                    \"not\": {}\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/not.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \n                    \"not\": {}\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -229,6 +229,7 @@ public class SuiteForbiddenProperty
 public class SuiteForbidEverythingWithEmptySchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -239,7 +240,6 @@ public class SuiteForbidEverythingWithEmptySchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -313,8 +313,8 @@ public class SuiteForbidEverythingWithEmptySchema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\not.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"not\": {}\r\n        }",
+                "tests/draft2020-12/not.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {}\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -329,6 +329,7 @@ public class SuiteForbidEverythingWithEmptySchema
 public class SuiteForbidEverythingWithBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -339,7 +340,6 @@ public class SuiteForbidEverythingWithBooleanSchemaTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -413,8 +413,8 @@ public class SuiteForbidEverythingWithBooleanSchemaTrue
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\not.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"not\": true\r\n        }",
+                "tests/draft2020-12/not.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": true\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -429,6 +429,7 @@ public class SuiteForbidEverythingWithBooleanSchemaTrue
 public class SuiteAllowEverythingWithBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -439,7 +440,6 @@ public class SuiteAllowEverythingWithBooleanSchemaFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -513,8 +513,8 @@ public class SuiteAllowEverythingWithBooleanSchemaFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\not.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"not\": false\r\n        }",
+                "tests/draft2020-12/not.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -529,6 +529,7 @@ public class SuiteAllowEverythingWithBooleanSchemaFalse
 public class SuiteDoubleNegation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -539,7 +540,6 @@ public class SuiteDoubleNegation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -557,8 +557,8 @@ public class SuiteDoubleNegation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\not.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"not\": { \"not\": {} }\r\n        }",
+                "tests/draft2020-12/not.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": { \"not\": {} }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -573,6 +573,7 @@ public class SuiteDoubleNegation
 public class SuiteCollectAnnotationsInsideANotEvenIfCollectionIsDisabled
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -583,7 +584,6 @@ public class SuiteCollectAnnotationsInsideANotEvenIfCollectionIsDisabled
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -608,8 +608,8 @@ public class SuiteCollectAnnotationsInsideANotEvenIfCollectionIsDisabled
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\not.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"not\": {\r\n                \"$comment\": \"this subschema must still produce annotations internally, even though the 'not' will ultimately discard them\",\r\n                \"anyOf\": [\r\n                    true,\r\n                    { \"properties\": { \"foo\": true } }\r\n                ],\r\n                \"unevaluatedProperties\": false\r\n            }\r\n        }",
+                "tests/draft2020-12/not.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {\n                \"$comment\": \"this subschema must still produce annotations internally, even though the 'not' will ultimately discard them\",\n                \"anyOf\": [\n                    true,\n                    { \"properties\": { \"foo\": true } }\n                ],\n                \"unevaluatedProperties\": false\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

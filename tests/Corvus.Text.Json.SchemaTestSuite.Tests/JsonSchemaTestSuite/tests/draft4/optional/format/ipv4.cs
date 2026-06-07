@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft4.Optional.Format.Ipv4;
 public class SuiteValidationOfIpAddresses
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfIpAddresses
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -263,7 +263,7 @@ public class SuiteValidationOfIpAddresses
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\optional\\format\\ipv4.json",
+                "tests/draft4/optional/format/ipv4.json",
                 "{ \"format\": \"ipv4\" }",
                 "JsonSchemaTestSuite.Draft4.Optional.Format.Ipv4",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

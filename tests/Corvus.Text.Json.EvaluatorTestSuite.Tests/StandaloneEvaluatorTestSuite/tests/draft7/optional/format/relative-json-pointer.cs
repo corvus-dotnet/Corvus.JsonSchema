@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft7.Optional.Format.RelativeJsonPointe
 public class SuiteValidationOfRelativeJsonPointersRjp
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfRelativeJsonPointersRjp
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -158,7 +158,7 @@ public class SuiteValidationOfRelativeJsonPointersRjp
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\optional\\format\\relative-json-pointer.json",
+                "tests/draft7/optional/format/relative-json-pointer.json",
                 "{ \"format\": \"relative-json-pointer\" }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.Format.RelativeJsonPointer",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
