@@ -102,7 +102,21 @@ public sealed class OpenApi30CodeGenerator
         ParameterInfo[] Parameters,
         RequestBodyInfo? RequestBody,
         ResponseInfo[] Responses,
-        ServerInfo? EffectiveServer);
+        ServerInfo? EffectiveServer,
+        OperationSecurityRequirementSet[]? SecurityRequirements = null);
+
+    // One element of an OpenAPI `security` array (a "Security Requirement Object"): an alternative
+    // that, on its own, satisfies the operation's security. The schemes within it are AND'd; the
+    // alternatives across the array are OR'd. An empty object ({}) marks anonymous access as an
+    // accepted alternative.
+    private readonly record struct OperationSecurityRequirementSet(
+        OperationSecurityRequirement[] Requirements,
+        bool IsOptional);
+
+    private readonly record struct OperationSecurityRequirement(
+        string SchemeName,
+        string[] Scopes,
+        string? SchemeType = null);
 
     private readonly record struct ServerInfo(
         string UrlTemplate,
@@ -373,7 +387,7 @@ public sealed class OpenApi30CodeGenerator
 
         foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
         {
-            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
         }
 
         List<GeneratedFile> files = [];
@@ -1235,7 +1249,8 @@ public sealed class OpenApi30CodeGenerator
     private OperationInfo PrepareOperation(
         OperationRef opRef,
         IOpenApiReferenceResolver referenceResolver,
-        ServerInfo? rootServer)
+        ServerInfo? rootServer,
+        JsonElement specRoot = default)
     {
         using UnescapedUtf8JsonString pathName = opRef.PathProp.Utf8NameSpan;
         ReadOnlySpan<byte> pathNameUtf8 = pathName.Span;
@@ -1265,6 +1280,10 @@ public sealed class OpenApi30CodeGenerator
         ServerInfo? effectiveServer = ResolveEffectiveServer(
             opRef.Operation, opRef.PathItem, rootServer);
 
+        OperationSecurityRequirementSet[]? securityRequirements = specRoot.ValueKind != JsonValueKind.Undefined
+            ? ExtractSecurityRequirements(opRef.Operation, specRoot)
+            : null;
+
         return new OperationInfo(
             pathTemplate,
             opRef.Method,
@@ -1277,7 +1296,117 @@ public sealed class OpenApi30CodeGenerator
             parameters,
             requestBody,
             responses,
-            effectiveServer);
+            effectiveServer,
+            securityRequirements);
+    }
+
+    private static OperationSecurityRequirementSet[]? ExtractSecurityRequirements(
+        OpenApiDocument.Operation operation,
+        JsonElement specRoot)
+    {
+        OpenApiDocument doc = specRoot;
+        Dictionary<string, string> schemeTypes = BuildSecuritySchemeTypeLookup(specRoot);
+
+        // Operation-level security overrides document-level.
+        if (operation.Security.IsNotUndefined())
+        {
+            return ParseSecurityRequirements(operation.Security, schemeTypes);
+        }
+
+        // Fall back to document-level security.
+        if (doc.Security.IsNotUndefined())
+        {
+            return ParseSecurityRequirements(doc.Security, schemeTypes);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Builds a map of security-scheme name to its OpenAPI <c>type</c> by reading
+    /// <c>components.securitySchemes</c> directly from the raw document. Reading raw JSON keeps this
+    /// version-agnostic and tolerant of the differing typed models across OpenAPI versions.
+    /// </summary>
+    private static Dictionary<string, string> BuildSecuritySchemeTypeLookup(JsonElement specRoot)
+    {
+        Dictionary<string, string> lookup = new(StringComparer.Ordinal);
+
+        if (specRoot.ValueKind != JsonValueKind.Object
+            || !specRoot.TryGetProperty("components"u8, out JsonElement components)
+            || components.ValueKind != JsonValueKind.Object
+            || !components.TryGetProperty("securitySchemes"u8, out JsonElement schemes)
+            || schemes.ValueKind != JsonValueKind.Object)
+        {
+            return lookup;
+        }
+
+        foreach (var scheme in schemes.EnumerateObject())
+        {
+            if (scheme.Value.ValueKind == JsonValueKind.Object
+                && scheme.Value.TryGetProperty("type"u8, out JsonElement schemeType)
+                && schemeType.ValueKind == JsonValueKind.String)
+            {
+                lookup[scheme.Name] = schemeType.GetString()!;
+            }
+        }
+
+        return lookup;
+    }
+
+    private static OperationSecurityRequirementSet[]? ParseSecurityRequirements(
+        OpenApiDocument.Operation.SecurityRequirementArray securityArray,
+        Dictionary<string, string> schemeTypes)
+    {
+        List<OperationSecurityRequirementSet> sets = [];
+
+        // Each element of the array is an alternative (OR); the schemes within it are AND'd.
+        foreach (OpenApiDocument.SecurityRequirement requirement in securityArray.EnumerateArray())
+        {
+            sets.Add(ParseSecurityRequirementSet(requirement, schemeTypes));
+        }
+
+        return sets.Count > 0 ? [.. sets] : null;
+    }
+
+    private static OperationSecurityRequirementSet[]? ParseSecurityRequirements(
+        OpenApiDocument.SecurityRequirementArray securityArray,
+        Dictionary<string, string> schemeTypes)
+    {
+        List<OperationSecurityRequirementSet> sets = [];
+
+        foreach (OpenApiDocument.SecurityRequirement requirement in securityArray.EnumerateArray())
+        {
+            sets.Add(ParseSecurityRequirementSet(requirement, schemeTypes));
+        }
+
+        return sets.Count > 0 ? [.. sets] : null;
+    }
+
+    private static OperationSecurityRequirementSet ParseSecurityRequirementSet(
+        OpenApiDocument.SecurityRequirement requirement,
+        Dictionary<string, string> schemeTypes)
+    {
+        List<OperationSecurityRequirement> requirements = [];
+
+        // Each property is one scheme: { "schemeName": ["scope1", "scope2"] }. An empty object marks
+        // anonymous access as an accepted alternative.
+        foreach (var schemeProp in requirement.EnumerateObject())
+        {
+            string schemeName = schemeProp.Name;
+            List<string> scopes = [];
+
+            foreach (var scope in schemeProp.Value.EnumerateArray())
+            {
+                scopes.Add(scope.GetString()!);
+            }
+
+            requirements.Add(new OperationSecurityRequirement(
+                schemeName,
+                [.. scopes],
+                schemeTypes.TryGetValue(schemeName, out string? schemeType) ? schemeType : null));
+        }
+
+        return new OperationSecurityRequirementSet([.. requirements], requirements.Count == 0);
     }
 
     private static ParameterInfo[] PrepareParameters(
@@ -4665,7 +4794,7 @@ public sealed class OpenApi30CodeGenerator
 
         foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
         {
-            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
         }
 
         List<GeneratedFile> files = [];
@@ -4709,7 +4838,7 @@ public sealed class OpenApi30CodeGenerator
 
         foreach (OperationRef opRef in WalkCallbackOperationRefs(specRoot, filter, referenceResolver))
         {
-            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
         }
 
         List<GeneratedFile> files = [];
@@ -4753,7 +4882,7 @@ public sealed class OpenApi30CodeGenerator
 
         foreach (OperationRef opRef in WalkCallbackOperationRefs(specRoot, filter, referenceResolver))
         {
-            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
         }
 
         List<GeneratedFile> files = [];
@@ -5771,8 +5900,7 @@ public sealed class OpenApi30CodeGenerator
 
     /// <summary>
     /// Emits the <c>configureEndpoint?.Invoke(...)</c> call for a single mapped operation, building
-    /// an <c>EndpointDescriptor</c> from the operation's metadata. OpenAPI 3.0 does not extract
-    /// security requirements, so they are always surfaced as an empty list.
+    /// an <c>EndpointDescriptor</c> from the operation's metadata.
     /// </summary>
     private static void EmitConfigureEndpointInvocation(
         IndentedWriter w,
@@ -5788,6 +5916,7 @@ public sealed class OpenApi30CodeGenerator
         string tagsLiteral = op.Tags is { Length: > 0 }
             ? $"new[] {{ {string.Join(", ", op.Tags.Select(CodeEmitHelpers.FormatStringLiteral))} }}"
             : "System.Array.Empty<string>()";
+        string securityLiteral = FormatSecurityRequirementsLiteral(op.SecurityRequirements);
 
         w.WriteLine("configureEndpoint?.Invoke(");
         w.PushIndent();
@@ -5799,10 +5928,43 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine($"routeTemplate: {routeExpression},");
         w.WriteLine($"tags: {tagsLiteral},");
         w.WriteLine($"isCallback: {(isCallbackServer ? "true" : "false")},");
-        w.WriteLine("securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),");
+        w.WriteLine($"securityRequirements: {securityLiteral}),");
         w.PopIndent();
         w.WriteLine($"{endpointVar});");
         w.PopIndent();
+    }
+
+    /// <summary>
+    /// Formats a C# expression for the <c>securityRequirements</c> constructor argument from the
+    /// operation's extracted security requirement sets (the OR alternatives).
+    /// </summary>
+    private static string FormatSecurityRequirementsLiteral(OperationSecurityRequirementSet[]? sets)
+    {
+        if (sets is not { Length: > 0 })
+        {
+            return "System.Array.Empty<EndpointSecurityRequirementSet>()";
+        }
+
+        IEnumerable<string> setEntries = sets.Select(set =>
+        {
+            string requirements = set.Requirements is { Length: > 0 }
+                ? $"new EndpointSecurityRequirement[] {{ {string.Join(", ", set.Requirements.Select(FormatSecurityRequirementLiteral))} }}"
+                : "System.Array.Empty<EndpointSecurityRequirement>()";
+            return $"new EndpointSecurityRequirementSet({requirements}, {(set.IsOptional ? "true" : "false")})";
+        });
+
+        return $"new EndpointSecurityRequirementSet[] {{ {string.Join(", ", setEntries)} }}";
+    }
+
+    private static string FormatSecurityRequirementLiteral(OperationSecurityRequirement req)
+    {
+        string scopes = req.Scopes is { Length: > 0 }
+            ? $"new[] {{ {string.Join(", ", req.Scopes.Select(CodeEmitHelpers.FormatStringLiteral))} }}"
+            : "System.Array.Empty<string>()";
+        string schemeType = req.SchemeType is null
+            ? "null"
+            : CodeEmitHelpers.FormatStringLiteral(req.SchemeType);
+        return $"new EndpointSecurityRequirement({CodeEmitHelpers.FormatStringLiteral(req.SchemeName)}, {scopes}, {schemeType})";
     }
 
     /// <summary>
@@ -5834,8 +5996,8 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine("/// <param name=\"routeTemplate\">The ASP.NET route template as registered.</param>");
         w.WriteLine("/// <param name=\"tags\">The OpenAPI tags for the operation.</param>");
         w.WriteLine("/// <param name=\"isCallback\">Whether the operation originates from a webhook/callback rather than the main paths.</param>");
-        w.WriteLine("/// <param name=\"securityRequirements\">The operation's security requirements (scheme name and required scopes).</param>");
-        w.WriteLine("public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> securityRequirements)");
+        w.WriteLine("/// <param name=\"securityRequirements\">The operation's declared security as a list of alternatives (any one satisfies the operation).</param>");
+        w.WriteLine("public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirementSet> securityRequirements)");
         w.OpenBrace();
         w.WriteLine("this.OperationId = operationId;");
         w.WriteLine("this.MethodName = methodName;");
@@ -5864,8 +6026,67 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine("/// <summary>Gets a value indicating whether the operation originates from a webhook/callback rather than the main paths.</summary>");
         w.WriteLine("public bool IsCallback { get; }");
         w.WriteLine();
-        w.WriteLine("/// <summary>Gets the operation's security requirements (scheme name and required scopes).</summary>");
-        w.WriteLine("public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> SecurityRequirements { get; }");
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Gets the operation's declared security as a list of alternatives. The operation is satisfied if");
+        w.WriteLine("/// <em>any one</em> alternative (an <see cref=\"EndpointSecurityRequirementSet\"/>) is satisfied (OR); an empty");
+        w.WriteLine("/// list means the operation declares no security.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirementSet> SecurityRequirements { get; }");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// A single alternative within an operation's declared security (one OpenAPI \"Security Requirement Object\").");
+        w.WriteLine("/// All of its <see cref=\"Requirements\"/> must be satisfied together (AND); any one set satisfying the");
+        w.WriteLine("/// operation is enough (OR across sets).");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public readonly struct EndpointSecurityRequirementSet");
+        w.OpenBrace();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Initializes a new instance of the <see cref=\"EndpointSecurityRequirementSet\"/> struct.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"requirements\">The scheme requirements that must all be satisfied together.</param>");
+        w.WriteLine("/// <param name=\"isOptional\">Whether this alternative is the empty OpenAPI requirement (<c>{}</c>), which permits anonymous access.</param>");
+        w.WriteLine("public EndpointSecurityRequirementSet(System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> requirements, bool isOptional)");
+        w.OpenBrace();
+        w.WriteLine("this.Requirements = requirements;");
+        w.WriteLine("this.IsOptional = isOptional;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the scheme requirements that must all be satisfied together (AND).</summary>");
+        w.WriteLine("public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> Requirements { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets a value indicating whether this alternative is the empty OpenAPI requirement (<c>{}</c>), which permits anonymous access.</summary>");
+        w.WriteLine("public bool IsOptional { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Gets the canonical authorization policy name for this alternative: the single requirement's");
+        w.WriteLine("/// <see cref=\"EndpointSecurityRequirement.PolicyName\"/> when it has one scheme, otherwise the scheme");
+        w.WriteLine("/// policy names joined with <c> &amp;&amp; </c> (all must pass). Empty for an anonymous (<c>{}</c>) alternative.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public string PolicyName");
+        w.OpenBrace();
+        w.WriteLine("get");
+        w.OpenBrace();
+        w.WriteLine("if (this.Requirements.Count == 0)");
+        w.OpenBrace();
+        w.WriteLine("return string.Empty;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("if (this.Requirements.Count == 1)");
+        w.OpenBrace();
+        w.WriteLine("return this.Requirements[0].PolicyName;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("string[] names = new string[this.Requirements.Count];");
+        w.WriteLine("for (int i = 0; i < this.Requirements.Count; i++)");
+        w.OpenBrace();
+        w.WriteLine("names[i] = this.Requirements[i].PolicyName;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return string.Join(\" && \", names);");
+        w.CloseBrace();
+        w.CloseBrace();
         w.CloseBrace();
         w.WriteLine();
 
@@ -5879,10 +6100,12 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine("/// </summary>");
         w.WriteLine("/// <param name=\"schemeName\">The name of the security scheme.</param>");
         w.WriteLine("/// <param name=\"scopes\">The scopes required by this requirement.</param>");
-        w.WriteLine("public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes)");
+        w.WriteLine("/// <param name=\"schemeType\">The OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword=\"null\"/> if the scheme is not declared in <c>components.securitySchemes</c>.</param>");
+        w.WriteLine("public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes, string? schemeType = null)");
         w.OpenBrace();
         w.WriteLine("this.SchemeName = schemeName;");
         w.WriteLine("this.Scopes = scopes;");
+        w.WriteLine("this.SchemeType = schemeType;");
         w.CloseBrace();
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the name of the security scheme.</summary>");
@@ -5890,6 +6113,92 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the scopes required by this requirement.</summary>");
         w.WriteLine("public System.Collections.Generic.IReadOnlyList<string> Scopes { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword=\"null\"/> if the scheme is not declared in <c>components.securitySchemes</c>.</summary>");
+        w.WriteLine("public string? SchemeType { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Gets the canonical authorization policy name for this requirement: the scheme name alone");
+        w.WriteLine("/// when no scopes are required, otherwise <c>{schemeName}:{scope+scope...}</c>. Use the same value");
+        w.WriteLine("/// when registering policies with <c>AddAuthorization</c> so endpoint mapping and policy registration stay in sync.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public string PolicyName => this.Scopes.Count == 0 ? this.SchemeName : this.SchemeName + \":\" + string.Join(\"+\", this.Scopes);");
+        w.CloseBrace();
+
+        EmitEndpointSecurityConventions(w);
+    }
+
+    /// <summary>
+    /// Emits the public <c>EndpointSecurityConventions</c> static class providing the
+    /// <c>RequireDeclaredAuthorization</c> extension method, which applies an operation's declared
+    /// security to a mapped endpoint using the canonical policy-name convention.
+    /// </summary>
+    private static void EmitEndpointSecurityConventions(IndentedWriter w)
+    {
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Extension methods that translate an <see cref=\"EndpointDescriptor\"/>'s declared OpenAPI security");
+        w.WriteLine("/// into ASP.NET Core authorization conventions.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public static class EndpointSecurityConventions");
+        w.OpenBrace();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Applies the endpoint's declared OpenAPI security to the route using the canonical policy-name");
+        w.WriteLine("/// convention (see <see cref=\"EndpointSecurityRequirement.PolicyName\"/>). When the operation declares");
+        w.WriteLine("/// no security the endpoint is marked <c>AllowAnonymous</c>; otherwise <c>RequireAuthorization</c> is");
+        w.WriteLine("/// called once per declared requirement.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"builder\">The endpoint convention builder for the mapped route.</param>");
+        w.WriteLine("/// <param name=\"endpoint\">The descriptor for the operation being mapped.</param>");
+        w.WriteLine("/// <returns>The same <paramref name=\"builder\"/>, for chaining.</returns>");
+        w.WriteLine("/// <remarks>");
+        w.WriteLine("/// <para>Behaviour follows the operation's declared OpenAPI security (a list of alternatives):</para>");
+        w.WriteLine("/// <list type=\"bullet\">");
+        w.WriteLine("/// <item>No declared security, or any anonymous (<c>{}</c>) alternative, marks the endpoint <c>AllowAnonymous</c>.</item>");
+        w.WriteLine("/// <item>A single alternative requires every scheme in it (AND), each via its <see cref=\"EndpointSecurityRequirement.PolicyName\"/>.</item>");
+        w.WriteLine("/// <item>Multiple alternatives (OR) require one combined policy named with the alternatives' <see cref=\"EndpointSecurityRequirementSet.PolicyName\"/> joined by <c> || </c>, since ASP.NET endpoint conventions cannot OR policies; register that policy with your own OR logic.</item>");
+        w.WriteLine("/// </list>");
+        w.WriteLine("/// <para>You must register the referenced policies (and call <c>AddAuthentication</c>/<c>UseAuthentication</c>/<c>UseAuthorization</c>) for these conventions to take effect.</para>");
+        w.WriteLine("/// </remarks>");
+        w.WriteLine("public static IEndpointConventionBuilder RequireDeclaredAuthorization(this IEndpointConventionBuilder builder, in EndpointDescriptor endpoint)");
+        w.OpenBrace();
+        w.WriteLine("System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirementSet> alternatives = endpoint.SecurityRequirements;");
+        w.WriteLine();
+        w.WriteLine("// No declared security, or an explicit anonymous ({}) alternative, leaves the endpoint open.");
+        w.WriteLine("if (alternatives.Count == 0)");
+        w.OpenBrace();
+        w.WriteLine("return builder.AllowAnonymous();");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("foreach (EndpointSecurityRequirementSet alternative in alternatives)");
+        w.OpenBrace();
+        w.WriteLine("if (alternative.IsOptional)");
+        w.OpenBrace();
+        w.WriteLine("return builder.AllowAnonymous();");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("if (alternatives.Count == 1)");
+        w.OpenBrace();
+        w.WriteLine("// Single alternative: every scheme in it must be satisfied (AND).");
+        w.WriteLine("foreach (EndpointSecurityRequirement requirement in alternatives[0].Requirements)");
+        w.OpenBrace();
+        w.WriteLine("builder.RequireAuthorization(requirement.PolicyName);");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return builder;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("// Multiple alternatives are OR'd. ASP.NET endpoint conventions cannot express OR across policies,");
+        w.WriteLine("// so require a single policy whose name combines the alternatives; register it with your OR logic.");
+        w.WriteLine("string[] alternativePolicyNames = new string[alternatives.Count];");
+        w.WriteLine("for (int i = 0; i < alternatives.Count; i++)");
+        w.OpenBrace();
+        w.WriteLine("alternativePolicyNames[i] = alternatives[i].PolicyName;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return builder.RequireAuthorization(string.Join(\" || \", alternativePolicyNames));");
+        w.CloseBrace();
         w.CloseBrace();
     }
 

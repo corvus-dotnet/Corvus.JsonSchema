@@ -175,7 +175,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/items",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("bearerAuth", System.Array.Empty<string>()), new EndpointSecurityRequirement("apiKeyAuth", System.Array.Empty<string>()) }),
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("bearerAuth", System.Array.Empty<string>(), "http") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("apiKeyAuth", System.Array.Empty<string>(), "apiKey") }, false) }),
             __ListItemsEndpoint);
 
         IEndpointConventionBuilder __CreateItemEndpoint = app.MapPost("/items", async (HttpContext context) =>
@@ -271,7 +271,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/items",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __CreateItemEndpoint);
 
         IEndpointConventionBuilder __OptionsItemsEndpoint = app.MapMethods("/items", new[] { "OPTIONS" }, async (HttpContext context) =>
@@ -328,7 +328,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/items",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __OptionsItemsEndpoint);
 
         IEndpointConventionBuilder __PurgeItemsEndpoint = app.MapMethods("/items", new[] { "PURGE" }, async (HttpContext context) =>
@@ -381,7 +381,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/items",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __PurgeItemsEndpoint);
 
         IEndpointConventionBuilder __GetItemEndpoint = app.MapGet("/items/{itemId}", async (HttpContext context) =>
@@ -464,7 +464,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/items/{itemId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetItemEndpoint);
 
         IEndpointConventionBuilder __PatchItemsItemIdEndpoint = app.MapPatch("/items/{itemId}", async (HttpContext context) =>
@@ -567,7 +567,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/items/{itemId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __PatchItemsItemIdEndpoint);
 
         IEndpointConventionBuilder __UpdateItemFormEndpoint = app.MapPost("/items/{itemId}/form", async (HttpContext context) =>
@@ -670,7 +670,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/items/{itemId}/form",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __UpdateItemFormEndpoint);
 
         IEndpointConventionBuilder __UploadItemDataEndpoint = app.MapPost("/items/{itemId}/upload", async (HttpContext context) =>
@@ -764,7 +764,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/items/{itemId}/upload",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __UploadItemDataEndpoint);
 
         IEndpointConventionBuilder __DownloadFileEndpoint = app.MapGet("/download", async (HttpContext context) =>
@@ -817,7 +817,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/download",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __DownloadFileEndpoint);
 
         IEndpointConventionBuilder __GetQuirkyEndpoint = app.MapGet("/quirky/{qid}", async (HttpContext context) =>
@@ -903,7 +903,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/quirky/{qid}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetQuirkyEndpoint);
 
         IEndpointConventionBuilder __GetStyledQuirkyEndpoint = app.MapGet("/quirky/{sid}/styled", async (HttpContext context) =>
@@ -997,7 +997,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/quirky/{sid}/styled",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetStyledQuirkyEndpoint);
 
         IEndpointConventionBuilder __ExportDataEndpoint = app.MapGet("/export", async (HttpContext context) =>
@@ -1050,7 +1050,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/export",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __ExportDataEndpoint);
 
         IEndpointConventionBuilder __GetEmptyServersEndpoint = app.MapGet("/empty-servers", async (HttpContext context) =>
@@ -1103,7 +1103,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/empty-servers",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetEmptyServersEndpoint);
 
         IEndpointConventionBuilder __HeadHealthEndpoint = app.MapMethods("/health", new[] { "HEAD" }, async (HttpContext context) =>
@@ -1156,7 +1156,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/health",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __HeadHealthEndpoint);
 
         IEndpointConventionBuilder __TraceHealthEndpoint = app.MapMethods("/health", new[] { "TRACE" }, async (HttpContext context) =>
@@ -1209,7 +1209,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/health",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __TraceHealthEndpoint);
 
         IEndpointConventionBuilder __GetAdvancedStylesEndpoint = app.MapGet("/advanced-styles/{ids}", async (HttpContext context) =>
@@ -1373,7 +1373,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/advanced-styles/{ids}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetAdvancedStylesEndpoint);
 
         IEndpointConventionBuilder __GetByMatrixCodesEndpoint = app.MapGet("/matrix-test/{codes}", async (HttpContext context) =>
@@ -1466,7 +1466,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/matrix-test/{codes}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetByMatrixCodesEndpoint);
 
         IEndpointConventionBuilder __GetByMatrixTagsEndpoint = app.MapGet("/matrix-no-explode/{tags}", async (HttpContext context) =>
@@ -1560,7 +1560,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/matrix-no-explode/{tags}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetByMatrixTagsEndpoint);
 
         IEndpointConventionBuilder __GetByLabelItemsEndpoint = app.MapGet("/label-no-explode/{items}", async (HttpContext context) =>
@@ -1653,7 +1653,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/label-no-explode/{items}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetByLabelItemsEndpoint);
 
         IEndpointConventionBuilder __GetByStyledObjectEndpoint = app.MapGet("/styled-object/{obj}", async (HttpContext context) =>
@@ -1752,7 +1752,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/styled-object/{obj}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetByStyledObjectEndpoint);
 
         IEndpointConventionBuilder __QueryItemsEndpoint = app.MapMethods("/query-endpoint", new[] { "QUERY" }, async (HttpContext context) =>
@@ -1848,7 +1848,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/query-endpoint",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __QueryItemsEndpoint);
 
         IEndpointConventionBuilder __GetResourceEndpoint = app.MapGet("/resources/{resourceId}", async (HttpContext context) =>
@@ -1927,7 +1927,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/resources/{resourceId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetResourceEndpoint);
 
         IEndpointConventionBuilder __CopyResourceEndpoint = app.MapMethods("/resources/{resourceId}", new[] { "COPY" }, async (HttpContext context) =>
@@ -2057,7 +2057,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/resources/{resourceId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __CopyResourceEndpoint);
 
         IEndpointConventionBuilder __PurgeResourceEndpoint = app.MapMethods("/resources/{resourceId}", new[] { "PURGE" }, async (HttpContext context) =>
@@ -2136,7 +2136,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/resources/{resourceId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __PurgeResourceEndpoint);
 
         IEndpointConventionBuilder __MoveResourceEndpoint = app.MapMethods("/resources/{resourceId}", new[] { "MOVE" }, async (HttpContext context) =>
@@ -2262,7 +2262,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/resources/{resourceId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __MoveResourceEndpoint);
 
         IEndpointConventionBuilder __BatchResourceEndpoint = app.MapMethods("/resources/{resourceId}", new[] { "BATCH" }, async (HttpContext context) =>
@@ -2365,7 +2365,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/resources/{resourceId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __BatchResourceEndpoint);
 
         IEndpointConventionBuilder __StreamEventsEndpoint = app.MapGet("/events/stream", async (HttpContext context) =>
@@ -2434,7 +2434,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/events/stream",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __StreamEventsEndpoint);
 
         IEndpointConventionBuilder __SearchWithQuerystringEndpoint = app.MapGet("/search-qs", async (HttpContext context) =>
@@ -2552,7 +2552,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/search-qs",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __SearchWithQuerystringEndpoint);
 
         IEndpointConventionBuilder __GetDocumentEndpoint = app.MapGet("/documents/{documentId}", async (HttpContext context) =>
@@ -2635,7 +2635,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/documents/{documentId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetDocumentEndpoint);
 
         IEndpointConventionBuilder __UpdateDocumentEndpoint = app.MapPut("/documents/{documentId}", async (HttpContext context) =>
@@ -2742,7 +2742,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/documents/{documentId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __UpdateDocumentEndpoint);
 
         IEndpointConventionBuilder __UploadRawFileEndpoint = app.MapPost("/upload-raw", async (HttpContext context) =>
@@ -2799,7 +2799,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/upload-raw",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __UploadRawFileEndpoint);
 
         IEndpointConventionBuilder __GetResourceVersionEndpoint = app.MapGet("/versions/{versionId}", async (HttpContext context) =>
@@ -2871,7 +2871,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/versions/{versionId}",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetResourceVersionEndpoint);
 
         IEndpointConventionBuilder __GetMonitoringStatusEndpoint = app.MapGet("/monitoring/status", async (HttpContext context) =>
@@ -2924,7 +2924,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/monitoring/status",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetMonitoringStatusEndpoint);
 
         IEndpointConventionBuilder __PutMonitoringStatusEndpoint = app.MapPut("/monitoring/status", async (HttpContext context) =>
@@ -3003,7 +3003,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/monitoring/status",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __PutMonitoringStatusEndpoint);
 
         IEndpointConventionBuilder __PostMonitoringStatusEndpoint = app.MapPost("/monitoring/status", async (HttpContext context) =>
@@ -3082,7 +3082,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/monitoring/status",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __PostMonitoringStatusEndpoint);
 
         IEndpointConventionBuilder __DeleteMonitoringStatusEndpoint = app.MapDelete("/monitoring/status", async (HttpContext context) =>
@@ -3135,7 +3135,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/monitoring/status",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __DeleteMonitoringStatusEndpoint);
 
         IEndpointConventionBuilder __QueryMonitoringStatusEndpoint = app.MapMethods("/monitoring/status", new[] { "QUERY" }, async (HttpContext context) =>
@@ -3214,7 +3214,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/monitoring/status",
                 tags: System.Array.Empty<string>(),
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __QueryMonitoringStatusEndpoint);
 
         IEndpointConventionBuilder __SearchItemsEndpoint = app.MapGet("/search", async (HttpContext context) =>
@@ -3434,7 +3434,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/search",
                 tags: new[] { "Items", "Search" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __SearchItemsEndpoint);
 
         IEndpointConventionBuilder __UploadFileEndpoint = app.MapPost("/upload", async (HttpContext context) =>
@@ -3516,7 +3516,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/upload",
                 tags: new[] { "Items" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __UploadFileEndpoint);
 
         IEndpointConventionBuilder __SubmitFeedbackEndpoint = app.MapPost("/feedback", async (HttpContext context) =>
@@ -3612,7 +3612,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/feedback",
                 tags: new[] { "Items" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __SubmitFeedbackEndpoint);
 
         IEndpointConventionBuilder __UploadAttachmentEndpoint = app.MapPost("/attachments", async (HttpContext context) =>
@@ -3707,7 +3707,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/attachments",
                 tags: new[] { "Items" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __UploadAttachmentEndpoint);
 
         IEndpointConventionBuilder __SubmitFeedbackEncodedEndpoint = app.MapPost("/feedback-encoded", async (HttpContext context) =>
@@ -3803,7 +3803,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/feedback-encoded",
                 tags: new[] { "Items" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __SubmitFeedbackEncodedEndpoint);
 
         IEndpointConventionBuilder __UploadAttachmentEncodedEndpoint = app.MapPost("/attachments-encoded", async (HttpContext context) =>
@@ -3890,7 +3890,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/attachments-encoded",
                 tags: new[] { "Items" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __UploadAttachmentEncodedEndpoint);
 
         IEndpointConventionBuilder __SearchItemsAdvancedEndpoint = app.MapPost("/search", async (HttpContext context) =>
@@ -3994,7 +3994,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/search",
                 tags: new[] { "Search" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __SearchItemsAdvancedEndpoint);
 
         return app;
@@ -4142,8 +4142,8 @@ public readonly struct EndpointDescriptor
     /// <param name="routeTemplate">The ASP.NET route template as registered.</param>
     /// <param name="tags">The OpenAPI tags for the operation.</param>
     /// <param name="isCallback">Whether the operation originates from a webhook/callback rather than the main paths.</param>
-    /// <param name="securityRequirements">The operation's security requirements (scheme name and required scopes).</param>
-    public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> securityRequirements)
+    /// <param name="securityRequirements">The operation's declared security as a list of alternatives (any one satisfies the operation).</param>
+    public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirementSet> securityRequirements)
     {
         this.OperationId = operationId;
         this.MethodName = methodName;
@@ -4172,8 +4172,66 @@ public readonly struct EndpointDescriptor
     /// <summary>Gets a value indicating whether the operation originates from a webhook/callback rather than the main paths.</summary>
     public bool IsCallback { get; }
 
-    /// <summary>Gets the operation's security requirements (scheme name and required scopes).</summary>
-    public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> SecurityRequirements { get; }
+    /// <summary>
+    /// Gets the operation's declared security as a list of alternatives. The operation is satisfied if
+    /// <em>any one</em> alternative (an <see cref="EndpointSecurityRequirementSet"/>) is satisfied (OR); an empty
+    /// list means the operation declares no security.
+    /// </summary>
+    public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirementSet> SecurityRequirements { get; }
+}
+
+/// <summary>
+/// A single alternative within an operation's declared security (one OpenAPI "Security Requirement Object").
+/// All of its <see cref="Requirements"/> must be satisfied together (AND); any one set satisfying the
+/// operation is enough (OR across sets).
+/// </summary>
+public readonly struct EndpointSecurityRequirementSet
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EndpointSecurityRequirementSet"/> struct.
+    /// </summary>
+    /// <param name="requirements">The scheme requirements that must all be satisfied together.</param>
+    /// <param name="isOptional">Whether this alternative is the empty OpenAPI requirement (<c>{}</c>), which permits anonymous access.</param>
+    public EndpointSecurityRequirementSet(System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> requirements, bool isOptional)
+    {
+        this.Requirements = requirements;
+        this.IsOptional = isOptional;
+    }
+
+    /// <summary>Gets the scheme requirements that must all be satisfied together (AND).</summary>
+    public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> Requirements { get; }
+
+    /// <summary>Gets a value indicating whether this alternative is the empty OpenAPI requirement (<c>{}</c>), which permits anonymous access.</summary>
+    public bool IsOptional { get; }
+
+    /// <summary>
+    /// Gets the canonical authorization policy name for this alternative: the single requirement's
+    /// <see cref="EndpointSecurityRequirement.PolicyName"/> when it has one scheme, otherwise the scheme
+    /// policy names joined with <c> &amp;&amp; </c> (all must pass). Empty for an anonymous (<c>{}</c>) alternative.
+    /// </summary>
+    public string PolicyName
+    {
+        get
+        {
+            if (this.Requirements.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            if (this.Requirements.Count == 1)
+            {
+                return this.Requirements[0].PolicyName;
+            }
+
+            string[] names = new string[this.Requirements.Count];
+            for (int i = 0; i < this.Requirements.Count; i++)
+            {
+                names[i] = this.Requirements[i].PolicyName;
+            }
+
+            return string.Join(" && ", names);
+        }
+    }
 }
 
 /// <summary>
@@ -4186,10 +4244,12 @@ public readonly struct EndpointSecurityRequirement
     /// </summary>
     /// <param name="schemeName">The name of the security scheme.</param>
     /// <param name="scopes">The scopes required by this requirement.</param>
-    public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes)
+    /// <param name="schemeType">The OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword="null"/> if the scheme is not declared in <c>components.securitySchemes</c>.</param>
+    public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes, string? schemeType = null)
     {
         this.SchemeName = schemeName;
         this.Scopes = scopes;
+        this.SchemeType = schemeType;
     }
 
     /// <summary>Gets the name of the security scheme.</summary>
@@ -4197,4 +4257,79 @@ public readonly struct EndpointSecurityRequirement
 
     /// <summary>Gets the scopes required by this requirement.</summary>
     public System.Collections.Generic.IReadOnlyList<string> Scopes { get; }
+
+    /// <summary>Gets the OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword="null"/> if the scheme is not declared in <c>components.securitySchemes</c>.</summary>
+    public string? SchemeType { get; }
+
+    /// <summary>
+    /// Gets the canonical authorization policy name for this requirement: the scheme name alone
+    /// when no scopes are required, otherwise <c>{schemeName}:{scope+scope...}</c>. Use the same value
+    /// when registering policies with <c>AddAuthorization</c> so endpoint mapping and policy registration stay in sync.
+    /// </summary>
+    public string PolicyName => this.Scopes.Count == 0 ? this.SchemeName : this.SchemeName + ":" + string.Join("+", this.Scopes);
+}
+
+/// <summary>
+/// Extension methods that translate an <see cref="EndpointDescriptor"/>'s declared OpenAPI security
+/// into ASP.NET Core authorization conventions.
+/// </summary>
+public static class EndpointSecurityConventions
+{
+    /// <summary>
+    /// Applies the endpoint's declared OpenAPI security to the route using the canonical policy-name
+    /// convention (see <see cref="EndpointSecurityRequirement.PolicyName"/>). When the operation declares
+    /// no security the endpoint is marked <c>AllowAnonymous</c>; otherwise <c>RequireAuthorization</c> is
+    /// called once per declared requirement.
+    /// </summary>
+    /// <param name="builder">The endpoint convention builder for the mapped route.</param>
+    /// <param name="endpoint">The descriptor for the operation being mapped.</param>
+    /// <returns>The same <paramref name="builder"/>, for chaining.</returns>
+    /// <remarks>
+    /// <para>Behaviour follows the operation's declared OpenAPI security (a list of alternatives):</para>
+    /// <list type="bullet">
+    /// <item>No declared security, or any anonymous (<c>{}</c>) alternative, marks the endpoint <c>AllowAnonymous</c>.</item>
+    /// <item>A single alternative requires every scheme in it (AND), each via its <see cref="EndpointSecurityRequirement.PolicyName"/>.</item>
+    /// <item>Multiple alternatives (OR) require one combined policy named with the alternatives' <see cref="EndpointSecurityRequirementSet.PolicyName"/> joined by <c> || </c>, since ASP.NET endpoint conventions cannot OR policies; register that policy with your own OR logic.</item>
+    /// </list>
+    /// <para>You must register the referenced policies (and call <c>AddAuthentication</c>/<c>UseAuthentication</c>/<c>UseAuthorization</c>) for these conventions to take effect.</para>
+    /// </remarks>
+    public static IEndpointConventionBuilder RequireDeclaredAuthorization(this IEndpointConventionBuilder builder, in EndpointDescriptor endpoint)
+    {
+        System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirementSet> alternatives = endpoint.SecurityRequirements;
+
+        // No declared security, or an explicit anonymous ({}) alternative, leaves the endpoint open.
+        if (alternatives.Count == 0)
+        {
+            return builder.AllowAnonymous();
+        }
+
+        foreach (EndpointSecurityRequirementSet alternative in alternatives)
+        {
+            if (alternative.IsOptional)
+            {
+                return builder.AllowAnonymous();
+            }
+        }
+
+        if (alternatives.Count == 1)
+        {
+            // Single alternative: every scheme in it must be satisfied (AND).
+            foreach (EndpointSecurityRequirement requirement in alternatives[0].Requirements)
+            {
+                builder.RequireAuthorization(requirement.PolicyName);
+            }
+
+            return builder;
+        }
+
+        // Multiple alternatives are OR'd. ASP.NET endpoint conventions cannot express OR across policies,
+        // so require a single policy whose name combines the alternatives; register it with your OR logic.
+        string[] alternativePolicyNames = new string[alternatives.Count];
+        for (int i = 0; i < alternatives.Count; i++)
+        {
+            alternativePolicyNames[i] = alternatives[i].PolicyName;
+        }
+
+        return builder.RequireAuthorization(string.Join(" || ", alternativePolicyNames));
+    }
 }

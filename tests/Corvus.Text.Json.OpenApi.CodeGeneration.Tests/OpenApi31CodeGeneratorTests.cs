@@ -8306,13 +8306,37 @@ public class OpenApi31CodeGeneratorTests
             registration.Content.Contains("isCallback: false", StringComparison.Ordinal),
             "Expected regular server endpoints to be flagged isCallback: false");
 
-        // OpenAPI 3.1 does not extract security: every descriptor surfaces an empty list.
+        // OpenAPI 3.1 extracts security: operations without declared security surface an empty list,
+        // while the secured listItems operation surfaces its requirements with the resolved scheme type.
         Assert.IsTrue(
-            registration.Content.Contains("securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()", StringComparison.Ordinal),
-            "Expected 3.1 endpoints to surface an empty security requirements list");
+            registration.Content.Contains("securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()", StringComparison.Ordinal),
+            "Expected unsecured 3.1 endpoints to surface an empty security requirements list");
+        Assert.IsTrue(
+            registration.Content.Contains("new EndpointSecurityRequirement(\"bearerAuth\", System.Array.Empty<string>(), \"http\")", StringComparison.Ordinal),
+            "Expected 3.1 to surface the bearerAuth requirement with its resolved scheme type");
+    }
+
+    [TestMethod]
+    public void GenerateServer_EndpointRegistration_EmitsRequireDeclaredAuthorizationHelper()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(
+            registration.Content.Contains("public static class EndpointSecurityConventions", StringComparison.Ordinal),
+            "Expected the EndpointSecurityConventions helper class to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public readonly struct EndpointSecurityRequirementSet", StringComparison.Ordinal),
+            "Expected the EndpointSecurityRequirementSet struct (the OR alternative) to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public static IEndpointConventionBuilder RequireDeclaredAuthorization(this IEndpointConventionBuilder builder, in EndpointDescriptor endpoint)", StringComparison.Ordinal),
+            "Expected the RequireDeclaredAuthorization extension method to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public string PolicyName =>", StringComparison.Ordinal),
+            "Expected EndpointSecurityRequirement to expose a PolicyName property");
         Assert.IsFalse(
-            registration.Content.Contains("new EndpointSecurityRequirement[]", StringComparison.Ordinal),
-            "OpenAPI 3.1 should not populate any security requirements");
+            registration.Content.Contains("Microsoft.AspNetCore.Authorization", StringComparison.Ordinal),
+            "Generated registration must not take a dependency on Microsoft.AspNetCore.Authorization");
     }
 
     [TestMethod]

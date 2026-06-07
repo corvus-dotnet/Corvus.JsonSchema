@@ -115,7 +115,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/pets",
                 tags: new[] { "pets" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __ListPetsEndpoint);
 
         IEndpointConventionBuilder __CreatePetEndpoint = app.MapPost("/pets", async (HttpContext context) =>
@@ -194,7 +194,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/pets",
                 tags: new[] { "pets" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __CreatePetEndpoint);
 
         IEndpointConventionBuilder __ShowPetByIdEndpoint = app.MapGet("/pets/{petId}", async (HttpContext context) =>
@@ -273,7 +273,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/pets/{petId}",
                 tags: new[] { "pets" },
                 isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirement>()),
+                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __ShowPetByIdEndpoint);
 
         return app;
@@ -301,8 +301,8 @@ public readonly struct EndpointDescriptor
     /// <param name="routeTemplate">The ASP.NET route template as registered.</param>
     /// <param name="tags">The OpenAPI tags for the operation.</param>
     /// <param name="isCallback">Whether the operation originates from a webhook/callback rather than the main paths.</param>
-    /// <param name="securityRequirements">The operation's security requirements (scheme name and required scopes).</param>
-    public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> securityRequirements)
+    /// <param name="securityRequirements">The operation's declared security as a list of alternatives (any one satisfies the operation).</param>
+    public EndpointDescriptor(string? operationId, string methodName, string httpMethod, string routeTemplate, System.Collections.Generic.IReadOnlyList<string> tags, bool isCallback, System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirementSet> securityRequirements)
     {
         this.OperationId = operationId;
         this.MethodName = methodName;
@@ -331,8 +331,66 @@ public readonly struct EndpointDescriptor
     /// <summary>Gets a value indicating whether the operation originates from a webhook/callback rather than the main paths.</summary>
     public bool IsCallback { get; }
 
-    /// <summary>Gets the operation's security requirements (scheme name and required scopes).</summary>
-    public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> SecurityRequirements { get; }
+    /// <summary>
+    /// Gets the operation's declared security as a list of alternatives. The operation is satisfied if
+    /// <em>any one</em> alternative (an <see cref="EndpointSecurityRequirementSet"/>) is satisfied (OR); an empty
+    /// list means the operation declares no security.
+    /// </summary>
+    public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirementSet> SecurityRequirements { get; }
+}
+
+/// <summary>
+/// A single alternative within an operation's declared security (one OpenAPI "Security Requirement Object").
+/// All of its <see cref="Requirements"/> must be satisfied together (AND); any one set satisfying the
+/// operation is enough (OR across sets).
+/// </summary>
+public readonly struct EndpointSecurityRequirementSet
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EndpointSecurityRequirementSet"/> struct.
+    /// </summary>
+    /// <param name="requirements">The scheme requirements that must all be satisfied together.</param>
+    /// <param name="isOptional">Whether this alternative is the empty OpenAPI requirement (<c>{}</c>), which permits anonymous access.</param>
+    public EndpointSecurityRequirementSet(System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> requirements, bool isOptional)
+    {
+        this.Requirements = requirements;
+        this.IsOptional = isOptional;
+    }
+
+    /// <summary>Gets the scheme requirements that must all be satisfied together (AND).</summary>
+    public System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirement> Requirements { get; }
+
+    /// <summary>Gets a value indicating whether this alternative is the empty OpenAPI requirement (<c>{}</c>), which permits anonymous access.</summary>
+    public bool IsOptional { get; }
+
+    /// <summary>
+    /// Gets the canonical authorization policy name for this alternative: the single requirement's
+    /// <see cref="EndpointSecurityRequirement.PolicyName"/> when it has one scheme, otherwise the scheme
+    /// policy names joined with <c> &amp;&amp; </c> (all must pass). Empty for an anonymous (<c>{}</c>) alternative.
+    /// </summary>
+    public string PolicyName
+    {
+        get
+        {
+            if (this.Requirements.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            if (this.Requirements.Count == 1)
+            {
+                return this.Requirements[0].PolicyName;
+            }
+
+            string[] names = new string[this.Requirements.Count];
+            for (int i = 0; i < this.Requirements.Count; i++)
+            {
+                names[i] = this.Requirements[i].PolicyName;
+            }
+
+            return string.Join(" && ", names);
+        }
+    }
 }
 
 /// <summary>
@@ -345,10 +403,12 @@ public readonly struct EndpointSecurityRequirement
     /// </summary>
     /// <param name="schemeName">The name of the security scheme.</param>
     /// <param name="scopes">The scopes required by this requirement.</param>
-    public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes)
+    /// <param name="schemeType">The OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword="null"/> if the scheme is not declared in <c>components.securitySchemes</c>.</param>
+    public EndpointSecurityRequirement(string schemeName, System.Collections.Generic.IReadOnlyList<string> scopes, string? schemeType = null)
     {
         this.SchemeName = schemeName;
         this.Scopes = scopes;
+        this.SchemeType = schemeType;
     }
 
     /// <summary>Gets the name of the security scheme.</summary>
@@ -356,4 +416,79 @@ public readonly struct EndpointSecurityRequirement
 
     /// <summary>Gets the scopes required by this requirement.</summary>
     public System.Collections.Generic.IReadOnlyList<string> Scopes { get; }
+
+    /// <summary>Gets the OpenAPI type of the security scheme (e.g. <c>oauth2</c>, <c>apiKey</c>, <c>http</c>, <c>openIdConnect</c>), or <see langword="null"/> if the scheme is not declared in <c>components.securitySchemes</c>.</summary>
+    public string? SchemeType { get; }
+
+    /// <summary>
+    /// Gets the canonical authorization policy name for this requirement: the scheme name alone
+    /// when no scopes are required, otherwise <c>{schemeName}:{scope+scope...}</c>. Use the same value
+    /// when registering policies with <c>AddAuthorization</c> so endpoint mapping and policy registration stay in sync.
+    /// </summary>
+    public string PolicyName => this.Scopes.Count == 0 ? this.SchemeName : this.SchemeName + ":" + string.Join("+", this.Scopes);
+}
+
+/// <summary>
+/// Extension methods that translate an <see cref="EndpointDescriptor"/>'s declared OpenAPI security
+/// into ASP.NET Core authorization conventions.
+/// </summary>
+public static class EndpointSecurityConventions
+{
+    /// <summary>
+    /// Applies the endpoint's declared OpenAPI security to the route using the canonical policy-name
+    /// convention (see <see cref="EndpointSecurityRequirement.PolicyName"/>). When the operation declares
+    /// no security the endpoint is marked <c>AllowAnonymous</c>; otherwise <c>RequireAuthorization</c> is
+    /// called once per declared requirement.
+    /// </summary>
+    /// <param name="builder">The endpoint convention builder for the mapped route.</param>
+    /// <param name="endpoint">The descriptor for the operation being mapped.</param>
+    /// <returns>The same <paramref name="builder"/>, for chaining.</returns>
+    /// <remarks>
+    /// <para>Behaviour follows the operation's declared OpenAPI security (a list of alternatives):</para>
+    /// <list type="bullet">
+    /// <item>No declared security, or any anonymous (<c>{}</c>) alternative, marks the endpoint <c>AllowAnonymous</c>.</item>
+    /// <item>A single alternative requires every scheme in it (AND), each via its <see cref="EndpointSecurityRequirement.PolicyName"/>.</item>
+    /// <item>Multiple alternatives (OR) require one combined policy named with the alternatives' <see cref="EndpointSecurityRequirementSet.PolicyName"/> joined by <c> || </c>, since ASP.NET endpoint conventions cannot OR policies; register that policy with your own OR logic.</item>
+    /// </list>
+    /// <para>You must register the referenced policies (and call <c>AddAuthentication</c>/<c>UseAuthentication</c>/<c>UseAuthorization</c>) for these conventions to take effect.</para>
+    /// </remarks>
+    public static IEndpointConventionBuilder RequireDeclaredAuthorization(this IEndpointConventionBuilder builder, in EndpointDescriptor endpoint)
+    {
+        System.Collections.Generic.IReadOnlyList<EndpointSecurityRequirementSet> alternatives = endpoint.SecurityRequirements;
+
+        // No declared security, or an explicit anonymous ({}) alternative, leaves the endpoint open.
+        if (alternatives.Count == 0)
+        {
+            return builder.AllowAnonymous();
+        }
+
+        foreach (EndpointSecurityRequirementSet alternative in alternatives)
+        {
+            if (alternative.IsOptional)
+            {
+                return builder.AllowAnonymous();
+            }
+        }
+
+        if (alternatives.Count == 1)
+        {
+            // Single alternative: every scheme in it must be satisfied (AND).
+            foreach (EndpointSecurityRequirement requirement in alternatives[0].Requirements)
+            {
+                builder.RequireAuthorization(requirement.PolicyName);
+            }
+
+            return builder;
+        }
+
+        // Multiple alternatives are OR'd. ASP.NET endpoint conventions cannot express OR across policies,
+        // so require a single policy whose name combines the alternatives; register it with your OR logic.
+        string[] alternativePolicyNames = new string[alternatives.Count];
+        for (int i = 0; i < alternatives.Count; i++)
+        {
+            alternativePolicyNames[i] = alternatives[i].PolicyName;
+        }
+
+        return builder.RequireAuthorization(string.Join(" || ", alternativePolicyNames));
+    }
 }

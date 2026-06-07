@@ -1197,11 +1197,37 @@ public class OpenApi32CodeGeneratorTests
         // covspec declares security schemes; the operation's requirements must be surfaced on the
         // descriptor so consumers can apply authorization.
         Assert.IsTrue(
-            registration.Content.Contains("securityRequirements: new EndpointSecurityRequirement[]", StringComparison.Ordinal),
-            "Expected at least one operation to surface its security requirements");
+            registration.Content.Contains("securityRequirements: new EndpointSecurityRequirementSet[]", StringComparison.Ordinal),
+            "Expected at least one operation to surface its security requirement sets");
         Assert.IsTrue(
-            registration.Content.Contains("new EndpointSecurityRequirement(\"bearerAuth\"", StringComparison.Ordinal),
-            "Expected the bearerAuth scheme to be surfaced on the descriptor");
+            registration.Content.Contains("new EndpointSecurityRequirement(\"bearerAuth\", System.Array.Empty<string>(), \"http\")", StringComparison.Ordinal),
+            "Expected the bearerAuth scheme to be surfaced on the descriptor with its resolved scheme type");
+    }
+
+    [TestMethod]
+    public void GenerateServer_EndpointRegistration_EmitsRequireDeclaredAuthorizationHelper()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(
+            registration.Content.Contains("public static class EndpointSecurityConventions", StringComparison.Ordinal),
+            "Expected the EndpointSecurityConventions helper class to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public readonly struct EndpointSecurityRequirementSet", StringComparison.Ordinal),
+            "Expected the EndpointSecurityRequirementSet struct (the OR alternative) to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public static IEndpointConventionBuilder RequireDeclaredAuthorization(this IEndpointConventionBuilder builder, in EndpointDescriptor endpoint)", StringComparison.Ordinal),
+            "Expected the RequireDeclaredAuthorization extension method to be emitted");
+        Assert.IsTrue(
+            registration.Content.Contains("public string PolicyName =>", StringComparison.Ordinal),
+            "Expected EndpointSecurityRequirement to expose a PolicyName property");
+        Assert.IsFalse(
+            registration.Content.Contains("Microsoft.AspNetCore.Authorization", StringComparison.Ordinal),
+            "Generated registration must not take a dependency on Microsoft.AspNetCore.Authorization");
     }
 
     [TestMethod]

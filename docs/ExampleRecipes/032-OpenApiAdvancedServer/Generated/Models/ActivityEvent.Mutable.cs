@@ -839,12 +839,17 @@ public readonly partial struct ActivityEvent
         {
             Unknown,
             JsonElement,
+            Create,
             Builder,
         }
 
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
+        private readonly Petstore.Extended.Server.Models.JsonString.Source _createArg1;
+        private readonly Petstore.Extended.Server.Models.JsonDateTime.Source _createArg2;
+        private readonly Petstore.Extended.Server.Models.ActivityEvent.TypeEntity.Source _createArg3;
+        private readonly Petstore.Extended.Server.Models.JsonString.Source _createArg4;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -858,6 +863,15 @@ public readonly partial struct ActivityEvent
         }
 
         internal Source(Petstore.Extended.Server.Models.ActivityEvent.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+        internal Source(in Petstore.Extended.Server.Models.JsonString.Source arg1, in Petstore.Extended.Server.Models.JsonDateTime.Source arg2, in Petstore.Extended.Server.Models.ActivityEvent.TypeEntity.Source arg3, in Petstore.Extended.Server.Models.JsonString.Source arg4)
+        {
+            _createArg1 = arg1;
+            _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
+            _kind = Kind.Create;
+        }
 
         public static implicit operator Source(ActivityEvent instance) => new(JsonElement.From(instance));
 
@@ -873,6 +887,13 @@ public readonly partial struct ActivityEvent
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -891,6 +912,13 @@ public readonly partial struct ActivityEvent
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -909,6 +937,13 @@ public readonly partial struct ActivityEvent
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -927,6 +962,13 @@ public readonly partial struct ActivityEvent
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        valueBuilder.EndProperty(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -945,6 +987,13 @@ public readonly partial struct ActivityEvent
                 case Kind.Builder:
                     valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                     break;
+                case Kind.Create:
+                    {
+                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        valueBuilder.EndItem(handle);
+                        break;
+                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1208,6 +1257,21 @@ public readonly partial struct ActivityEvent
             o = ovb._builder;
             o.EndObject();
         }
+
+        /// <summary>
+        /// Builds the object value directly from its captured property values into the given complex value builder.
+        /// </summary>
+        /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
+        /// <param name="o">The complex value builder into which to write the object.</param>
+        internal static void BuildCreateValue(in Petstore.Extended.Server.Models.JsonString.Source arg1, in Petstore.Extended.Server.Models.JsonDateTime.Source arg2, in Petstore.Extended.Server.Models.ActivityEvent.TypeEntity.Source arg3, in Petstore.Extended.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        {
+            o.StartObject();
+            Create(ref o, arg1, arg2, arg3, arg4);
+            o.EndObject();
+        }
     }
 
     /// <summary>
@@ -1237,6 +1301,19 @@ public readonly partial struct ActivityEvent
         #endif
     {
         return new Source<TContext>(context, buildValue);
+    }
+
+    /// <summary>
+    /// Build an instance of the value directly from its property values.
+    /// </summary>
+    /// <param name="eventId">The value of the <c>"eventId"</c> property.</param>
+    /// <param name="timestamp">The value of the <c>"timestamp"</c> property.</param>
+    /// <param name="type">The value of the <c>"type"</c> property.</param>
+    /// <param name="description">The value of the <c>"description"</c> property.</param>
+    /// <returns>The source from which to build the value.</returns>
+    public static Source Build(in Petstore.Extended.Server.Models.JsonString.Source eventId, in Petstore.Extended.Server.Models.JsonDateTime.Source timestamp, in Petstore.Extended.Server.Models.ActivityEvent.TypeEntity.Source type, in Petstore.Extended.Server.Models.JsonString.Source description = default)
+    {
+        return new Source(eventId, timestamp, type, description);
     }
 
     /// <summary>
