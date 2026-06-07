@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Text;
 using System.Text.RegularExpressions;
 using Corvus.Text.Json.JsonPath;
 
@@ -154,25 +156,63 @@ public sealed class CompiledCriterion
 
     private bool EvaluateRegex(WorkflowExecutionContext executionContext)
     {
+        // Zero-allocation path for string/scalar contexts: resolve as UTF-8, transcode to a
+        // stack/pooled char span, and match. Regex requires UTF-16 input.
+        if (executionContext.TryResolveUtf8(this.context, out ResolvedUtf8 resolved))
+        {
+            using (resolved)
+            {
+                return this.MatchUtf8(executionContext, resolved.Span);
+            }
+        }
+
+        // Fallback for non-string JSON / $statusCode contexts.
         if (!executionContext.TryResolveString(this.context, out string text))
         {
             return false;
         }
 
+        return this.Match(executionContext, text);
+    }
+
+    private bool MatchUtf8(WorkflowExecutionContext executionContext, ReadOnlySpan<byte> utf8)
+    {
+        const int StackThreshold = 256;
+
+        int charCount = Encoding.UTF8.GetCharCount(utf8);
+        char[]? rented = null;
+        Span<char> chars = charCount <= StackThreshold ? stackalloc char[StackThreshold] : (rented = ArrayPool<char>.Shared.Rent(charCount));
+
+        try
+        {
+            int written = Encoding.UTF8.GetChars(utf8, chars);
+            return this.Match(executionContext, chars[..written]);
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                ArrayPool<char>.Shared.Return(rented);
+            }
+        }
+    }
+
+    private bool Match(WorkflowExecutionContext executionContext, ReadOnlySpan<char> input)
+    {
         try
         {
             if (!this.isDynamic)
             {
-                return this.regex!.IsMatch(text);
+                return this.regex!.IsMatch(input);
             }
 
-            // Substitute embedded expressions, then match (the static overload caches the pattern).
+            // Substitute embedded expressions into the pattern, then match.
             if (!executionContext.TryInterpolate(this.condition!, out string pattern))
             {
                 return false;
             }
 
-            return Regex.IsMatch(text, pattern, RegexOptions.CultureInvariant, this.regexTimeout);
+            return new Regex(pattern, RegexOptions.CultureInvariant, this.regexTimeout).IsMatch(input);
         }
         catch (RegexMatchTimeoutException)
         {
