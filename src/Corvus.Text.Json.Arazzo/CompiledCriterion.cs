@@ -206,13 +206,16 @@ public sealed class CompiledCriterion
                 return this.regex!.IsMatch(input);
             }
 
-            // Substitute embedded expressions into the pattern, then match.
+            // Substitute embedded expressions into the pattern (built via Utf8ValueStringBuilder
+            // inside TryInterpolate). A managed string is required here only because Regex has no
+            // span pattern overload; the static IsMatch caches the compiled pattern, so a dynamic
+            // pattern is not recompiled every evaluation.
             if (!executionContext.TryInterpolate(this.condition!, out string pattern))
             {
                 return false;
             }
 
-            return new Regex(pattern, RegexOptions.CultureInvariant, this.regexTimeout).IsMatch(input);
+            return Regex.IsMatch(input, pattern, RegexOptions.CultureInvariant, this.regexTimeout);
         }
         catch (RegexMatchTimeoutException)
         {
