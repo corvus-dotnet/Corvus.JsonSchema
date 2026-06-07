@@ -55,6 +55,11 @@ public static class StepBodyEmitter
         var fields = new StringBuilder(request.Fields);
         var body = new StringBuilder(request.Statements);
 
+        // NOTE: the response is intentionally NOT disposed here. The output builder stores references
+        // to (not copies of) the response's JSON values, so the returned result transitively
+        // references each response's document; disposing the response would corrupt the result.
+        // Response lifetime is owned by the run and must be solved with the workspace lifetime model
+        // (see the plan's response-disposal item) — a copy-on-extract or workspace-managed response.
         body.Append("var ").Append(responseVar).Append(" = await ").Append(transportVariable)
             .Append(".SendAsync<").Append(operation.Operation.RequestTypeName).Append(", ")
             .Append(operation.Operation.ResponseTypeName).Append(">(").Append(requestVar)
@@ -96,7 +101,7 @@ public static class StepBodyEmitter
             // No criteria: per the engine's default, the step succeeds on an HTTP success status.
             body.Append("if (!").Append(responseVar).AppendLine(".IsSuccess)");
             body.AppendLine("{");
-            body.Append("    throw new InvalidOperationException(")
+            body.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
                 .Append(EmitText.Quote($"Step '{stepId}' returned an unsuccessful status."))
                 .AppendLine(");");
             body.AppendLine("}");
@@ -119,7 +124,7 @@ public static class StepBodyEmitter
 
         body.Append("if (!(").Append(string.Join(" && ", checks)).AppendLine("))");
         body.AppendLine("{");
-        body.Append("    throw new InvalidOperationException(")
+        body.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
             .Append(EmitText.Quote($"Step '{stepId}' did not satisfy its success criteria."))
             .AppendLine(");");
         body.AppendLine("}");

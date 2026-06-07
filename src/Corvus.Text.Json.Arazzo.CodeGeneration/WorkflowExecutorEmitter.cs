@@ -263,6 +263,8 @@ public static class WorkflowExecutorEmitter
             .Append("> ExecuteAsync(IApiTransport transport, JsonWorkspace workspace, ")
             .Append(options.InputsTypeName).AppendLine(" inputs, CancellationToken cancellationToken = default)");
         writer.AppendLine("    {");
+        writer.AppendLine("        ArgumentNullException.ThrowIfNull(transport);");
+        writer.AppendLine("        ArgumentNullException.ThrowIfNull(workspace);");
         writer.AppendLine("        var context = new WorkflowExecutionContext();");
         writer.AppendLine("        context.SetInputs(inputs);");
         writer.Append("        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId).AppendLine("\");");
@@ -273,8 +275,9 @@ public static class WorkflowExecutorEmitter
         writer.AppendLine("            ArazzoTelemetry.WorkflowsCompleted.Add(1);");
         writer.AppendLine("            return workflowOutputsElement;");
         writer.AppendLine("        }");
-        writer.AppendLine("        catch");
+        writer.AppendLine("        catch (Exception ex)");
         writer.AppendLine("        {");
+        writer.AppendLine("            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);");
         writer.AppendLine("            ArazzoTelemetry.WorkflowsFaulted.Add(1);");
         writer.AppendLine("            throw;");
         writer.AppendLine("        }");

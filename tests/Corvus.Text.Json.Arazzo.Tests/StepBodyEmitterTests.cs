@@ -51,7 +51,7 @@ public class StepBodyEmitterTests
         code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple, \"$statusCode == 200\");");
         code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath, \"$.id\", \"$response.body\");");
         code.Statements.ShouldContain("if (!(getPet_SuccessCriterion0.Evaluate(context) && getPet_SuccessCriterion1.Evaluate(context)))");
-        code.Statements.ShouldContain("did not satisfy its success criteria");
+        code.Statements.ShouldContain("throw new WorkflowStepFailedException(\"getPet\", \"Step 'getPet' did not satisfy its success criteria.\");");
     }
 
     [TestMethod]
@@ -60,7 +60,7 @@ public class StepBodyEmitterTests
         StepBodyCode code = Emit([]);
 
         code.Statements.ShouldContain("if (!getPetResponse.IsSuccess)");
-        code.Statements.ShouldContain("returned an unsuccessful status");
+        code.Statements.ShouldContain("throw new WorkflowStepFailedException(\"getPet\", \"Step 'getPet' returned an unsuccessful status.\");");
         code.Fields.ShouldNotContain("CompiledCriterion");
     }
 
