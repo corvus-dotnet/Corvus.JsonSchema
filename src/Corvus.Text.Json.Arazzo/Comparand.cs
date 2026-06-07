@@ -2,71 +2,88 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
+using System.Text;
 
 namespace Corvus.Text.Json.Arazzo;
 
 /// <summary>
 /// A resolved operand of a <c>simple</c> criterion — a JSON-comparable scalar (or an opaque JSON
-/// value, compared only for equality by its canonical text).
+/// value, compared only for equality).
 /// </summary>
+/// <remarks>
+/// String operands are held as UTF-8 — either a baked literal/scalar byte buffer or a JSON string
+/// element accessed via <see cref="JsonElement.GetUtf8String"/> — so equality and numeric coercion
+/// are performed over UTF-8 spans with no managed-string allocation on the hot path.
+/// </remarks>
 internal readonly struct Comparand
 {
-    private Comparand(ComparandKind kind, bool boolean, double number, string? text)
+    private readonly ComparandKind kind;
+    private readonly bool boolean;
+    private readonly double number;
+    private readonly byte[]? utf8;     // String kind, baked literal/scalar value.
+    private readonly JsonElement element; // String kind from JSON, or Json (object/array) kind.
+
+    private Comparand(ComparandKind kind, bool boolean, double number, byte[]? utf8, JsonElement element)
     {
-        this.Kind = kind;
-        this.Boolean = boolean;
-        this.Number = number;
-        this.Text = text;
+        this.kind = kind;
+        this.boolean = boolean;
+        this.number = number;
+        this.utf8 = utf8;
+        this.element = element;
     }
 
-    public ComparandKind Kind { get; }
+    public ComparandKind Kind => this.kind;
 
-    public bool Boolean { get; }
+    /// <summary>Gets a value indicating whether this comparand is boolean <c>true</c> (lone-operand truthiness).</summary>
+    public bool IsTrue => this.kind == ComparandKind.Boolean && this.boolean;
 
-    public double Number { get; }
+    public static Comparand Undefined => default;
 
-    public string? Text { get; }
+    public static Comparand Null => new(ComparandKind.Null, false, 0, null, default);
 
-    public static Comparand Undefined => new(ComparandKind.Undefined, false, 0, null);
+    public static Comparand FromBoolean(bool value) => new(ComparandKind.Boolean, value, 0, null, default);
 
-    public static Comparand Null => new(ComparandKind.Null, false, 0, null);
+    public static Comparand FromNumber(double value) => new(ComparandKind.Number, false, value, null, default);
 
-    public static Comparand FromBoolean(bool value) => new(ComparandKind.Boolean, value, 0, null);
+    /// <summary>Creates a string comparand from a baked UTF-8 buffer (a literal or scalar value).</summary>
+    /// <param name="value">The UTF-8 bytes.</param>
+    /// <returns>The comparand.</returns>
+    public static Comparand FromUtf8String(byte[] value) => new(ComparandKind.String, false, 0, value, default);
 
-    public static Comparand FromNumber(double value) => new(ComparandKind.Number, false, value, null);
+    /// <summary>Creates a string comparand backed by a JSON string element (no string is materialized).</summary>
+    /// <param name="value">The JSON string element.</param>
+    /// <returns>The comparand.</returns>
+    public static Comparand FromJsonString(in JsonElement value) => new(ComparandKind.String, false, 0, null, value);
 
-    public static Comparand FromString(string value) => new(ComparandKind.String, false, 0, value);
-
-    public static Comparand FromJson(string canonicalText) => new(ComparandKind.Json, false, 0, canonicalText);
+    /// <summary>Creates an opaque JSON (object/array) comparand, compared only for equality.</summary>
+    /// <param name="value">The JSON element.</param>
+    /// <returns>The comparand.</returns>
+    public static Comparand FromJson(in JsonElement value) => new(ComparandKind.Json, false, 0, null, value);
 
     /// <summary>
-    /// Evaluates equality (<c>==</c>) between two comparands. Differing kinds are never equal
-    /// (except that two undefined values are not equal — an undefined operand makes the comparison false).
+    /// Evaluates equality (<c>==</c>). Differing kinds are never equal; an undefined operand makes
+    /// the comparison false. String comparison is case-insensitive (Arazzo §Condition Evaluation),
+    /// performed over UTF-8 spans.
     /// </summary>
     /// <param name="other">The right-hand comparand.</param>
     /// <returns><see langword="true"/> if equal.</returns>
     public bool ValueEquals(in Comparand other)
     {
-        if (this.Kind == ComparandKind.Undefined || other.Kind == ComparandKind.Undefined)
+        if (this.kind == ComparandKind.Undefined || other.kind == ComparandKind.Undefined || this.kind != other.kind)
         {
             return false;
         }
 
-        if (this.Kind != other.Kind)
-        {
-            return false;
-        }
-
-        return this.Kind switch
+        return this.kind switch
         {
             ComparandKind.Null => true,
-            ComparandKind.Boolean => this.Boolean == other.Boolean,
-            ComparandKind.Number => this.Number.Equals(other.Number),
-
-            // Arazzo §Condition Evaluation: string comparisons MUST be case-insensitive.
-            ComparandKind.String => string.Equals(this.Text, other.Text, StringComparison.OrdinalIgnoreCase),
-            ComparandKind.Json => string.Equals(this.Text, other.Text, StringComparison.Ordinal),
+            ComparandKind.Boolean => this.boolean == other.boolean,
+            ComparandKind.Number => this.number.Equals(other.number),
+            ComparandKind.String => StringEquals(this, other),
+            ComparandKind.Json => JsonEquals(this.element, other.element),
             _ => false,
         };
     }
@@ -79,17 +96,25 @@ internal readonly struct Comparand
     /// <returns><see langword="true"/> if a number was produced.</returns>
     public bool TryAsNumber(out double value)
     {
-        switch (this.Kind)
+        if (this.kind == ComparandKind.Number)
         {
-            case ComparandKind.Number:
-                value = this.Number;
-                return true;
-            case ComparandKind.String when double.TryParse(this.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out value):
-                return true;
-            default:
-                value = 0;
-                return false;
+            value = this.number;
+            return true;
         }
+
+        if (this.kind == ComparandKind.String)
+        {
+            if (this.utf8 is not null)
+            {
+                return TryParseUtf8Number(this.utf8, out value);
+            }
+
+            using UnescapedUtf8JsonString unescaped = this.element.GetUtf8String();
+            return TryParseUtf8Number(unescaped.Span, out value);
+        }
+
+        value = 0;
+        return false;
     }
 
     /// <summary>
@@ -97,7 +122,7 @@ internal readonly struct Comparand
     /// </summary>
     /// <param name="other">The right-hand comparand.</param>
     /// <param name="comparison">The sign of the comparison (this vs other) when both are numeric.</param>
-    /// <returns><see langword="true"/> if both operands are numeric (or numeric strings) and a comparison was produced.</returns>
+    /// <returns><see langword="true"/> if both operands are numeric (or numeric strings).</returns>
     public bool TryCompareNumeric(in Comparand other, out int comparison)
     {
         if (this.TryAsNumber(out double a) && other.TryAsNumber(out double b))
@@ -112,7 +137,7 @@ internal readonly struct Comparand
 
     /// <summary>
     /// Parses a <c>simple</c>-condition literal token (number, single/double-quoted string,
-    /// <c>true</c>, <c>false</c>, or <c>null</c>) into a comparand.
+    /// <c>true</c>, <c>false</c>, or <c>null</c>) into a comparand. String literals are baked to UTF-8.
     /// </summary>
     /// <param name="token">The literal token.</param>
     /// <returns>The parsed comparand, or <see cref="Undefined"/> if the token is not a recognized literal.</returns>
@@ -120,14 +145,13 @@ internal readonly struct Comparand
     {
         if (token.Length >= 2 && token[0] == '\'' && token[^1] == '\'')
         {
-            // Arazzo §Literals: single-quoted; a literal single quote is escaped by doubling ('').
-            return FromString(token[1..^1].ToString().Replace("''", "'", StringComparison.Ordinal));
+            // Single-quoted; a literal single quote is escaped by doubling ('').
+            return FromUtf8String(Encoding.UTF8.GetBytes(token[1..^1].ToString().Replace("''", "'", StringComparison.Ordinal)));
         }
 
         if (token.Length >= 2 && token[0] == '"' && token[^1] == '"')
         {
-            // Leniently accept double-quoted strings (the spec mandates single quotes).
-            return FromString(token[1..^1].ToString());
+            return FromUtf8String(Encoding.UTF8.GetBytes(token[1..^1].ToString()));
         }
 
         if (token.SequenceEqual("true"))
@@ -145,11 +169,90 @@ internal readonly struct Comparand
             return Null;
         }
 
-        if (double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out double number))
+        if (double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
         {
-            return FromNumber(number);
+            return FromNumber(parsed);
         }
 
         return Undefined;
     }
+
+    private static bool StringEquals(in Comparand a, in Comparand b)
+    {
+        if (a.utf8 is not null)
+        {
+            return StringEqualsRight(a.utf8, b);
+        }
+
+        using UnescapedUtf8JsonString left = a.element.GetUtf8String();
+        return StringEqualsRight(left.Span, b);
+    }
+
+    private static bool StringEqualsRight(ReadOnlySpan<byte> left, in Comparand b)
+    {
+        if (b.utf8 is not null)
+        {
+            return Utf8EqualsIgnoreCase(left, b.utf8);
+        }
+
+        using UnescapedUtf8JsonString right = b.element.GetUtf8String();
+        return Utf8EqualsIgnoreCase(left, right.Span);
+    }
+
+    /// <summary>
+    /// Case-insensitive equality of two UTF-8 spans. Fast path: when both are ASCII, an ASCII
+    /// ordinal-ignore-case comparison (no allocation). Slow path (non-ASCII present): transcode to
+    /// UTF-16 and compare with <see cref="StringComparison.OrdinalIgnoreCase"/> for full-Unicode
+    /// case-insensitivity; large inputs use a pooled buffer, short inputs the stack.
+    /// </summary>
+    private static bool Utf8EqualsIgnoreCase(ReadOnlySpan<byte> left, ReadOnlySpan<byte> right)
+    {
+        if (Ascii.IsValid(left) && Ascii.IsValid(right))
+        {
+            return Ascii.EqualsIgnoreCase(left, right);
+        }
+
+        return EqualsIgnoreCaseUnicode(left, right);
+    }
+
+    private static bool EqualsIgnoreCaseUnicode(ReadOnlySpan<byte> left, ReadOnlySpan<byte> right)
+    {
+        const int StackThreshold = 128;
+
+        int leftChars = Encoding.UTF8.GetCharCount(left);
+        int rightChars = Encoding.UTF8.GetCharCount(right);
+
+        char[]? leftRented = null;
+        char[]? rightRented = null;
+        Span<char> leftBuffer = leftChars <= StackThreshold ? stackalloc char[StackThreshold] : (leftRented = ArrayPool<char>.Shared.Rent(leftChars));
+        Span<char> rightBuffer = rightChars <= StackThreshold ? stackalloc char[StackThreshold] : (rightRented = ArrayPool<char>.Shared.Rent(rightChars));
+
+        try
+        {
+            int l = Encoding.UTF8.GetChars(left, leftBuffer);
+            int r = Encoding.UTF8.GetChars(right, rightBuffer);
+            return leftBuffer[..l].Equals(rightBuffer[..r], StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (leftRented is not null)
+            {
+                ArrayPool<char>.Shared.Return(leftRented);
+            }
+
+            if (rightRented is not null)
+            {
+                ArrayPool<char>.Shared.Return(rightRented);
+            }
+        }
+    }
+
+    private static bool JsonEquals(in JsonElement a, in JsonElement b)
+    {
+        // Object/array equality is rare and off the hot path; compare canonical text.
+        return string.Equals(a.GetRawText(), b.GetRawText(), StringComparison.Ordinal);
+    }
+
+    private static bool TryParseUtf8Number(ReadOnlySpan<byte> utf8, out double value)
+        => Utf8Parser.TryParse(utf8, out value, out int consumed) && consumed == utf8.Length;
 }
