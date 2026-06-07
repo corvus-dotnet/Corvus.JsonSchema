@@ -410,6 +410,56 @@ public sealed class OpenApi32CodeGenerator
         return this.EmitClientFiles(operations, specRoot, referenceResolver);
     }
 
+    /// <summary>
+    /// Describes every operation for downstream generators: its identity, the generated
+    /// request/response type names, and the request parameters — the authoritative mapping the
+    /// generator emits, so callers never re-derive the naming or type convention.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter.</param>
+    /// <param name="referenceResolver">
+    /// Optional reference resolver. If <see langword="null"/>, a <see cref="LocalReferenceResolver"/> is used.
+    /// </param>
+    /// <returns>The operation descriptors.</returns>
+    public IReadOnlyList<OperationDescriptor> DescribeOperations(
+        JsonElement specRoot,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+        List<OperationDescriptor> result = [];
+
+        foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
+        {
+            OperationInfo op = PrepareOperation(opRef, referenceResolver, rootServer, specRoot);
+
+            var parameters = new RequestParameterInfo[op.Parameters.Length];
+            for (int i = 0; i < op.Parameters.Length; i++)
+            {
+                ParameterInfo parameter = op.Parameters[i];
+                parameters[i] = new RequestParameterInfo(
+                    parameter.Name,
+                    parameter.Location,
+                    CodeEmitHelpers.SanitizeIdentifier(parameter.Name),
+                    this.GetParameterTypeName(parameter),
+                    parameter.IsRequired);
+            }
+
+            result.Add(new OperationDescriptor(
+                op.PathTemplate,
+                op.Method,
+                op.OperationId,
+                op.MethodName,
+                $"{this.rootNamespace}.{GeneratedClientTypeNaming.RequestTypeName(op.MethodName)}",
+                $"{this.rootNamespace}.{GeneratedClientTypeNaming.ResponseTypeName(op.MethodName)}",
+                parameters,
+                op.RequestBody is not null));
+        }
+
+        return result;
+    }
+
     private IReadOnlyList<GeneratedFile> EmitClientFiles(
         List<OperationInfo> operations,
         JsonElement specRoot,

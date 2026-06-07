@@ -241,6 +241,39 @@ public class OpenApi31CodeGeneratorTests
     }
 
     [TestMethod]
+    public void DescribeOperations_SurfacesRequestPropertyMetadata()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<OperationDescriptor> operations = gen.DescribeOperations(petstoreRoot);
+
+        OperationDescriptor showPet = operations.First(o => o.OperationId == "showPetById");
+        Assert.AreEqual("/pets/{petId}", showPet.Path);
+        Assert.AreEqual(OperationMethod.Get, showPet.Method);
+        Assert.AreEqual("ShowPetById", showPet.MethodName);
+        Assert.AreEqual("Petstore.Client.ShowPetByIdRequest", showPet.RequestTypeName);
+        Assert.AreEqual("Petstore.Client.ShowPetByIdResponse", showPet.ResponseTypeName);
+
+        RequestParameterInfo petId = showPet.RequestParameters.First(p => p.Name == "petId");
+        Assert.AreEqual(ParameterLocation.Path, petId.Location);
+        Assert.AreEqual("PetId", petId.PropertyName);
+        Assert.AreEqual("Petstore.Client.JsonString", petId.TypeName);
+        Assert.IsTrue(petId.IsRequired);
+    }
+
+    [TestMethod]
+    public void DescribeOperations_MarksOptionalQueryParameter()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<OperationDescriptor> operations = gen.DescribeOperations(petstoreRoot);
+
+        OperationDescriptor listPets = operations.First(o => o.OperationId == "listPets");
+        RequestParameterInfo limit = listPets.RequestParameters.First();
+        Assert.AreEqual(ParameterLocation.Query, limit.Location);
+        Assert.IsFalse(limit.IsRequired);
+        Assert.AreEqual("Petstore.Client.JsonInt32", limit.TypeName);
+    }
+
+    [TestMethod]
     public void Generate_ProducesResponseFiles()
     {
         OpenApi31CodeGenerator gen = CreateGenerator();
