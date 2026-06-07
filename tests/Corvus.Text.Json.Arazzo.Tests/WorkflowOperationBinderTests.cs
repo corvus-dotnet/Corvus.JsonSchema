@@ -5,6 +5,8 @@
 using System.Text;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo10;
+using Corvus.Text.Json.OpenApi;
+using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -13,21 +15,6 @@ namespace Corvus.Text.Json.Arazzo.Tests;
 [TestClass]
 public class WorkflowOperationBinderTests
 {
-    private const string Spec = """
-        {
-          "openapi": "3.1.0",
-          "info": { "title": "Pets", "version": "1.0.0" },
-          "paths": {
-            "/pets": {
-              "get": { "operationId": "listPets", "responses": { "200": { "description": "ok" } } }
-            },
-            "/pets/{petId}": {
-              "get": { "operationId": "getPet", "responses": { "200": { "description": "ok" } } }
-            }
-          }
-        }
-        """;
-
     private const string Document = """
         {
           "arazzo": "1.0.1",
@@ -52,31 +39,32 @@ public class WorkflowOperationBinderTests
     public void Cleanup() => this.document?.Dispose();
 
     [TestMethod]
-    public void Binds_operation_id_step_to_generated_types()
+    public void Binds_operation_id_step_to_resolved_operation()
     {
-        WorkflowOperationBinder binder = CreateBinder("Acme.Pets");
+        WorkflowOperationBinder binder = CreateBinder();
         StepBinding binding = binder.Bind(this.Step(0));
 
         binding.Kind.ShouldBe(StepTargetKind.OperationId);
         binding.Operation.ShouldNotBeNull();
-        binding.Operation!.Value.RequestTypeName.ShouldBe("Acme.Pets.ListPetsRequest");
-        binding.Operation!.Value.ResponseTypeName.ShouldBe("Acme.Pets.ListPetsResponse");
+        binding.Operation!.Value.Operation.RequestTypeName.ShouldBe("Acme.Pets.ListPetsRequest");
+        binding.Operation!.Value.Operation.ResponseTypeName.ShouldBe("Acme.Pets.ListPetsResponse");
     }
 
     [TestMethod]
-    public void Binds_operation_path_step_to_generated_types()
+    public void Binds_operation_path_step_to_resolved_operation()
     {
-        WorkflowOperationBinder binder = CreateBinder("Acme.Pets");
+        WorkflowOperationBinder binder = CreateBinder();
         StepBinding binding = binder.Bind(this.Step(1));
 
         binding.Kind.ShouldBe(StepTargetKind.OperationPath);
-        binding.Operation!.Value.RequestTypeName.ShouldBe("Acme.Pets.GetPetRequest");
+        binding.Operation!.Value.Operation.RequestTypeName.ShouldBe("Acme.Pets.GetPetRequest");
+        binding.Operation!.Value.Operation.RequestParameters[0].PropertyName.ShouldBe("PetId");
     }
 
     [TestMethod]
     public void Binds_workflow_step_to_sub_workflow_id()
     {
-        WorkflowOperationBinder binder = CreateBinder("Acme.Pets");
+        WorkflowOperationBinder binder = CreateBinder();
         StepBinding binding = binder.Bind(this.Step(2));
 
         binding.Kind.ShouldBe(StepTargetKind.WorkflowId);
@@ -92,14 +80,33 @@ public class WorkflowOperationBinderTests
         Should.Throw<InvalidOperationException>(() => binder.Bind(this.Step(0)));
     }
 
-    private static OperationResolver CreateResolver()
+    private static WorkflowOperationBinder CreateBinder()
     {
-        using var spec = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(Spec));
-        return OperationResolver.Create("petstore", spec.RootElement);
-    }
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets",
+                OperationMethod.Get,
+                "listPets",
+                "ListPets",
+                "Acme.Pets.ListPetsRequest",
+                "Acme.Pets.ListPetsResponse",
+                [],
+                false),
+            new(
+                "/pets/{petId}",
+                OperationMethod.Get,
+                "getPet",
+                "GetPet",
+                "Acme.Pets.GetPetRequest",
+                "Acme.Pets.GetPetResponse",
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true)],
+                false),
+        ];
 
-    private WorkflowOperationBinder CreateBinder(string clientNamespace)
-        => new([new SourceDescriptionClient("petstore", CreateResolver(), clientNamespace)]);
+        var resolver = OperationResolver.Create("petstore", operations);
+        return new WorkflowOperationBinder([new SourceDescriptionClient("petstore", resolver)]);
+    }
 
     private ArazzoDocument.StepObject Step(int index)
     {
