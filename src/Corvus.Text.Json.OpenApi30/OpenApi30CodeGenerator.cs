@@ -36,7 +36,6 @@ public sealed class OpenApi30CodeGenerator
     private readonly string? clientNamePrefix;
     private readonly bool ignoreEmptyFormUrlEncodedBody;
     private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
-    private readonly IReadOnlySet<string> contextSourceBodyPointers;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OpenApi30CodeGenerator"/> class.
@@ -55,25 +54,16 @@ public sealed class OpenApi30CodeGenerator
     /// When <see langword="true"/>, form-urlencoded request bodies whose schema defines
     /// no properties are treated as if the body were absent.
     /// </param>
-    /// <param name="contextSourceBodyPointers">
-    /// The subset of <paramref name="schemaTypeMap"/> pointers whose type is an object or array — i.e. types for
-    /// which the model generator emits a context-threaded <c>Source&lt;TContext&gt;</c>. A server result factory emits
-    /// a closure-free, single-materialisation <c>Ok&lt;TContext&gt;</c> overload only for a response body in this set;
-    /// a scalar body (no <c>Source&lt;TContext&gt;</c>) falls back to the non-generic factory. When <see langword="null"/>
-    /// no generic overloads are emitted (the conservative default for client/model generation).
-    /// </param>
     public OpenApi30CodeGenerator(
         string rootNamespace,
         IReadOnlyDictionary<string, string> schemaTypeMap,
         string? clientNamePrefix = null,
-        bool ignoreEmptyFormUrlEncodedBody = false,
-        IReadOnlySet<string>? contextSourceBodyPointers = null)
+        bool ignoreEmptyFormUrlEncodedBody = false)
     {
         this.rootNamespace = rootNamespace;
         this.schemaTypeMap = schemaTypeMap;
         this.clientNamePrefix = clientNamePrefix;
         this.ignoreEmptyFormUrlEncodedBody = ignoreEmptyFormUrlEncodedBody;
-        this.contextSourceBodyPointers = contextSourceBodyPointers ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     // ── Walk-phase reference (typed model objects, no strings extracted) ──
@@ -457,27 +447,8 @@ public sealed class OpenApi30CodeGenerator
                     parameter.Location,
                     CodeEmitHelpers.SanitizeIdentifier(parameter.Name),
                     this.GetParameterTypeName(parameter),
-                    parameter.IsRequired,
-                    CodeEmitHelpers.EscapeCSharpKeyword(CodeEmitHelpers.SanitizeParameterName(parameter.Name)));
+                    parameter.IsRequired);
             }
-
-            var responses = new ResponseDescriptor[op.Responses.Length];
-            for (int r = 0; r < op.Responses.Length; r++)
-            {
-                ResponseInfo response = op.Responses[r];
-                string? bodyTypeName = this.ResolveResponseTypeName(response);
-                responses[r] = new ResponseDescriptor(
-                    response.StatusCode,
-                    bodyTypeName,
-                    bodyTypeName is null ? null : CodeEmitHelpers.ResponseBodyPropertyName(response.StatusCode));
-            }
-
-            ResponseHeaderInfo[] responseHeaders = this.DescribeResponseHeaders(op.Responses);
-
-            string clientTag = op.Tags.Length > 0 ? op.Tags[0] : "default";
-            string? requestBodyTypeName = op.RequestBody is { } rb && !IsRawStreamRequestBody(rb)
-                ? this.ResolveRequestBodyTypeName(rb)
-                : null;
 
             result.Add(new OperationDescriptor(
                 op.PathTemplate,
@@ -487,46 +458,10 @@ public sealed class OpenApi30CodeGenerator
                 $"{this.rootNamespace}.{GeneratedClientTypeNaming.RequestTypeName(op.MethodName)}",
                 $"{this.rootNamespace}.{GeneratedClientTypeNaming.ResponseTypeName(op.MethodName)}",
                 parameters,
-                op.RequestBody is not null,
-                responses,
-                $"{this.rootNamespace}.{this.GetClientName(clientTag)}Client",
-                $"{op.MethodName}Async",
-                requestBodyTypeName,
-                responseHeaders));
+                op.RequestBody is not null));
         }
 
         return result;
-    }
-
-    /// <summary>
-    /// Describes the response headers an operation declares — mirroring <see cref="EmitResponseHeaderProperties"/>'s
-    /// naming and typing so a caller can resolve <c>$response.header.&lt;name&gt;</c> against the generated
-    /// response property. Deduplicated by generated property name across all responses.
-    /// </summary>
-    /// <param name="responses">The operation's responses.</param>
-    /// <returns>The described response headers.</returns>
-    private ResponseHeaderInfo[] DescribeResponseHeaders(ResponseInfo[] responses)
-    {
-        var headers = new List<ResponseHeaderInfo>();
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-
-        foreach (ResponseInfo response in responses)
-        {
-            foreach (HeaderInfo header in response.Headers)
-            {
-                string propertyName = CodeEmitHelpers.HeaderNameToPropertyName(header.HeaderName) + "Header";
-                if (!seen.Add(propertyName))
-                {
-                    continue;
-                }
-
-                bool isString = header.SchemaPointer is null;
-                string typeName = isString ? "string" : this.ResolveSchemaTypeName(header.SchemaPointer);
-                headers.Add(new ResponseHeaderInfo(header.HeaderName, propertyName, typeName, isString));
-            }
-        }
-
-        return [.. headers];
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1391,11 +1326,11 @@ public sealed class OpenApi30CodeGenerator
         string methodName = GetMethodName(operationId, opRef.Method, pathTemplate);
 
         ParameterInfo[] parameters = PrepareParameters(
-            opRef.Operation, opRef.PathItem, pathNameUtf8, opRef.Method, referenceResolver, specRoot);
+            opRef.Operation, opRef.PathItem, pathNameUtf8, opRef.Method, referenceResolver);
         RequestBodyInfo? requestBody = PrepareRequestBody(
             opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver, this.ignoreEmptyFormUrlEncodedBody);
         ResponseInfo[] responses = PrepareResponses(
-            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver, specRoot);
+            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver);
 
         ServerInfo? effectiveServer = ResolveEffectiveServer(
             opRef.Operation, opRef.PathItem, rootServer);
@@ -1534,8 +1469,7 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.PathItem pathItem,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
-        IOpenApiReferenceResolver referenceResolver,
-        JsonElement specRoot)
+        IOpenApiReferenceResolver referenceResolver)
     {
         var merged = MergeParameters(operation, pathItem, referenceResolver);
 
@@ -1555,19 +1489,19 @@ public sealed class OpenApi30CodeGenerator
             bool hasSchema = param.Schema.IsNotUndefined();
             JsonElement schemaElement = hasSchema ? JsonElement.From(param.Schema) : default;
             ParameterSerializationKind serializationKind = hasSchema
-                ? SchemaClassifier.Classify(schemaElement, specRoot)
+                ? SchemaClassifier.Classify(schemaElement)
                 : ParameterSerializationKind.String;
 
             ParameterSerializationKind elementKind = serializationKind switch
             {
-                ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaElement, specRoot),
-                ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaElement, specRoot),
+                ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaElement),
+                ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaElement),
                 _ => ParameterSerializationKind.String,
             };
 
             bool deepNesting = hasSchema
                 && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
-                && SchemaClassifier.HasDeepNesting(schemaElement, specRoot);
+                && SchemaClassifier.HasDeepNesting(schemaElement);
 
             string? schemaPointer = hasSchema
                 ? SchemaPointerBuilder.BuildParameterSchemaPointer(
@@ -1705,8 +1639,7 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.Operation operation,
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
-        IOpenApiReferenceResolver referenceResolver,
-        JsonElement specRoot)
+        IOpenApiReferenceResolver referenceResolver)
     {
         if (operation.ResponsesValue.IsUndefined())
         {
@@ -1743,7 +1676,7 @@ public sealed class OpenApi30CodeGenerator
                     response.Content, pathNameUtf8, method, statusCodeUtf8.Span);
 
                 HeaderInfo[] headers = PrepareResponseHeaders(
-                    response.Headers, pathNameUtf8, method, statusCodeUtf8.Span, referenceResolver, specRoot);
+                    response.Headers, pathNameUtf8, method, statusCodeUtf8.Span, referenceResolver);
 
                 LinkInfo[] links = PrepareLinks(response.Links, referenceResolver, statusCode);
 
@@ -1862,8 +1795,7 @@ public sealed class OpenApi30CodeGenerator
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         ReadOnlySpan<byte> statusCodeUtf8,
-        IOpenApiReferenceResolver referenceResolver,
-        JsonElement specRoot)
+        IOpenApiReferenceResolver referenceResolver)
     {
         if (headersMap.IsUndefined())
         {
@@ -1907,19 +1839,19 @@ public sealed class OpenApi30CodeGenerator
 
                 JsonElement schemaEl = hasSchema ? JsonElement.From(header.Schema) : default;
                 ParameterSerializationKind serializationKind = hasSchema
-                    ? SchemaClassifier.Classify(schemaEl, specRoot)
+                    ? SchemaClassifier.Classify(schemaEl)
                     : ParameterSerializationKind.String;
 
                 ParameterSerializationKind elementKind = serializationKind switch
                 {
-                    ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaEl, specRoot),
-                    ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaEl, specRoot),
+                    ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaEl),
+                    ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaEl),
                     _ => ParameterSerializationKind.String,
                 };
 
                 bool deepNesting = hasSchema
                     && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
-                    && SchemaClassifier.HasDeepNesting(schemaEl, specRoot);
+                    && SchemaClassifier.HasDeepNesting(schemaEl);
 
                 // Extract header name at the emit boundary
                 string name = headerProp.Name;
@@ -2369,38 +2301,6 @@ public sealed class OpenApi30CodeGenerator
         }
 
         return null;
-    }
-
-    // The JSON response body's schema pointer (the key into contextSourceBodyPointers) — used to decide whether the body
-    // type carries a Source<TContext>, and so whether a closure-free Ok<TContext> overload can be emitted for it.
-    private string? ResolveResponseBodySchemaPointer(ResponseInfo resp)
-    {
-        foreach (ContentInfo content in resp.Content)
-        {
-            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
-            {
-                return content.SchemaPointer;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Returns <see langword="true"/> if the response's content is classified as
-    /// <see cref="ContentCategory.OctetStream"/> (raw binary).
-    /// </summary>
-    private static bool IsOctetStreamResponse(ResponseInfo resp)
-    {
-        foreach (ContentInfo content in resp.Content)
-        {
-            if (CodeEmitHelpers.ClassifyMediaType(content.MediaType) == ContentCategory.OctetStream)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /// <summary>
@@ -4319,12 +4219,6 @@ public sealed class OpenApi30CodeGenerator
             else if (hasBody)
             {
                 needsSendWithBody = true;
-
-                // An optional JSON body also emits a bodyless SendAsyncCore path for when the caller omits it.
-                if (!op.RequestBody!.Value.IsRequired && !HasRequestBasedExpressions(op))
-                {
-                    needsSendAsync = true;
-                }
             }
             else
             {
@@ -4370,14 +4264,6 @@ public sealed class OpenApi30CodeGenerator
         bool isFormUrlEncodedBody = hasBody && !isRawStreamBody && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
         bool isMultipartBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && IsMultipartRequestBody(op.RequestBody!.Value);
 
-        // An OPTIONAL JSON body the caller omitted (`body` is undefined) must go out as NO body — not as an empty
-        // object — because the server treats the body as optional too. We materialise/validate/send under a runtime
-        // `hasBodyValue` guard so an undefined Source is never built (a zero-member builder would fault) and the
-        // request is sent bodyless. Scoped to plain JSON bodies without request-expression links (the common case);
-        // required bodies and form/multipart bodies are unchanged.
-        bool optionalJsonBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && !isMultipartBody
-            && !hasRequestExprLinks && !op.RequestBody!.Value.IsRequired;
-
         w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
 
         // Materialise body from Source → immutable typed element (JSON and form-urlencoded).
@@ -4385,17 +4271,8 @@ public sealed class OpenApi30CodeGenerator
         if (hasBody && !isRawStreamBody)
         {
             bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
-            if (optionalJsonBody)
-            {
-                w.WriteLine("bool hasBodyValue = !body.IsUndefined;");
-                w.WriteLine(
-                    $"{bodyTypeName} bodyValue = hasBodyValue ? {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement : default;");
-            }
-            else
-            {
-                w.WriteLine(
-                    $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement;");
-            }
+            w.WriteLine(
+                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement;");
         }
 
         if (hasParams)
@@ -4457,17 +4334,10 @@ public sealed class OpenApi30CodeGenerator
         // Validate parameters.
         w.WriteLine("request.Validate(validationMode);");
 
-        // Validate JSON body if present (skip text/plain and stream bodies). An omitted optional body is not
-        // validated — there is nothing to validate, and the request goes out bodyless.
+        // Validate JSON body if present (skip text/plain and stream bodies).
         if (hasBody && !isRawStreamBody)
         {
             w.WriteLine();
-            if (optionalJsonBody)
-            {
-                w.WriteLine("if (hasBodyValue)");
-                w.OpenBrace();
-            }
-
             w.WriteLine("if (validationMode == ValidationMode.Detailed)");
             w.OpenBrace();
             w.WriteLine("using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
@@ -4480,11 +4350,6 @@ public sealed class OpenApi30CodeGenerator
             w.OpenBrace();
             w.WriteLine("ThrowHelper.ThrowRequestBodyValidationFailed();");
             w.CloseBrace();
-
-            if (optionalJsonBody)
-            {
-                w.CloseBrace();
-            }
         }
 
         w.WriteLine();
@@ -4628,21 +4493,6 @@ public sealed class OpenApi30CodeGenerator
                     $"return CaptureRequestAsync(" +
                     $"SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
                     $"{responseName}>(JsonWorkspace.CreateUnrented(), request, bodyValue, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
-            }
-            else if (optionalJsonBody)
-            {
-                // The caller supplied a body → send it; otherwise send the request bodyless (the server's
-                // optional-body path). This is the client counterpart to the optional request-body server fix.
-                w.WriteLine("if (hasBodyValue)");
-                w.OpenBrace();
-                w.WriteLine(
-                    $"return SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
-                    $"{responseName}>(workspace, request, bodyValue, responseValidationMode, cancellationToken);");
-                w.CloseBrace();
-                w.WriteLine();
-                w.WriteLine(
-                    $"return SendAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, responseValidationMode, cancellationToken);");
             }
             else
             {
@@ -5376,20 +5226,6 @@ public sealed class OpenApi30CodeGenerator
             w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(bodyDesc)}");
             w.WriteLine("/// </summary>");
             w.WriteLine($"public {bodyTypeName} Body {{ get; init; }}");
-
-            // For multipart/form-data bodies with format:binary parts, expose each binary part
-            // as a separate ReadOnlyMemory<byte> property so the handler can read the raw bytes.
-            if (IsMultipartRequestBody(rb))
-            {
-                foreach (BinaryPropertyInfo binaryProp in rb.BinaryProperties)
-                {
-                    w.WriteLine();
-                    w.WriteLine("/// <summary>");
-                    w.WriteLine($"/// Gets the binary content of the '{binaryProp.PropertyName}' part.");
-                    w.WriteLine("/// </summary>");
-                    w.WriteLine($"public ReadOnlyMemory<byte> {CodeEmitHelpers.ToPascalCase(binaryProp.PropertyName)} {{ get; init; }}");
-                }
-            }
         }
 
         w.CloseBrace();
@@ -5402,24 +5238,7 @@ public sealed class OpenApi30CodeGenerator
         string structName = $"{op.MethodName}Result";
         IndentedWriter w = new();
 
-        // Detect a 2xx octet-stream success response: the server must be able to write raw bytes.
-        // Computed before the header so the extra usings the binary writer needs can be emitted
-        // before the file-scoped namespace declaration.
-        bool hasOctetStreamResponse = op.Responses.Any(r =>
-            r.StatusCode.Length == 3 && r.StatusCode[0] == '2' && IsOctetStreamResponse(r));
-
         CodeEmitHelpers.EmitHeader(w);
-        if (hasOctetStreamResponse)
-        {
-            // The binary-body writer uses Func<Stream, CancellationToken, ValueTask>; the shared
-            // header does not emit these usings, so add them here (this file only).
-            w.WriteLine("using System;");
-            w.WriteLine("using System.IO;");
-            w.WriteLine("using System.Threading;");
-            w.WriteLine("using System.Threading.Tasks;");
-            w.WriteLine();
-        }
-
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
 
@@ -5457,11 +5276,6 @@ public sealed class OpenApi30CodeGenerator
         if (hasHeaders)
         {
             w.Write($"private {structName}(int statusCode, JsonElement body, string? contentType");
-            if (hasOctetStreamResponse)
-            {
-                w.Write(", bool hasBinaryBody, Func<Stream, CancellationToken, ValueTask>? binaryWriter");
-            }
-
             foreach (var (_, typeName, fieldName, _) in allHeaders)
             {
                 w.Write($", {typeName} {fieldName} = default");
@@ -5472,28 +5286,11 @@ public sealed class OpenApi30CodeGenerator
             w.WriteLine("this.StatusCode = statusCode;");
             w.WriteLine("this.Body = body;");
             w.WriteLine("this.ContentType = contentType;");
-            if (hasOctetStreamResponse)
-            {
-                w.WriteLine("this.HasBinaryBody = hasBinaryBody;");
-                w.WriteLine("this.binaryWriter = binaryWriter;");
-            }
-
             foreach (var (_, _, fieldName, propertyName) in allHeaders)
             {
                 w.WriteLine($"this.{propertyName} = {fieldName};");
             }
 
-            w.CloseBrace();
-        }
-        else if (hasOctetStreamResponse)
-        {
-            w.WriteLine($"private {structName}(int statusCode, JsonElement body, string? contentType, bool hasBinaryBody, Func<Stream, CancellationToken, ValueTask>? binaryWriter)");
-            w.OpenBrace();
-            w.WriteLine("this.StatusCode = statusCode;");
-            w.WriteLine("this.Body = body;");
-            w.WriteLine("this.ContentType = contentType;");
-            w.WriteLine("this.HasBinaryBody = hasBinaryBody;");
-            w.WriteLine("this.binaryWriter = binaryWriter;");
             w.CloseBrace();
         }
         else
@@ -5506,12 +5303,6 @@ public sealed class OpenApi30CodeGenerator
             w.CloseBrace();
         }
 
-        if (hasOctetStreamResponse)
-        {
-            w.WriteLine();
-            w.WriteLine("private readonly Func<Stream, CancellationToken, ValueTask>? binaryWriter;");
-        }
-
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the HTTP status code.</summary>");
         w.WriteLine("public int StatusCode { get; }");
@@ -5521,21 +5312,6 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the content type for the response body.</summary>");
         w.WriteLine("public string? ContentType { get; }");
-
-        if (hasOctetStreamResponse)
-        {
-            w.WriteLine();
-            w.WriteLine("/// <summary>Gets a value indicating whether the result carries a raw binary body.</summary>");
-            w.WriteLine("public bool HasBinaryBody { get; }");
-            w.WriteLine();
-            w.WriteLine("/// <summary>");
-            w.WriteLine("/// Writes the raw binary response body to the supplied stream.");
-            w.WriteLine("/// </summary>");
-            w.WriteLine("/// <param name=\"stream\">The stream to write the body to.</param>");
-            w.WriteLine("/// <param name=\"cancellationToken\">A token used to cancel the operation.</param>");
-            w.WriteLine("/// <returns>A <see cref=\"ValueTask\"/> that completes when the body has been written.</returns>");
-            w.WriteLine("public ValueTask WriteBinaryBodyAsync(Stream stream, CancellationToken cancellationToken) => this.binaryWriter is { } writer ? writer(stream, cancellationToken) : ValueTask.CompletedTask;");
-        }
 
         // Header properties
         foreach (var (header, typeName, _, propertyName) in allHeaders)
@@ -5553,32 +5329,6 @@ public sealed class OpenApi30CodeGenerator
             string factoryName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
             string? typeName = this.ResolveResponseTypeName(resp);
 
-            // For an octet-stream success response, emit a factory that takes raw bytes instead
-            // of the default no-arg/JSON factory, so the handler can return binary content.
-            bool isOctetStreamSuccess = resp.StatusCode.Length == 3
-                && resp.StatusCode[0] == '2'
-                && IsOctetStreamResponse(resp);
-            if (isOctetStreamSuccess)
-            {
-                w.WriteLine();
-                w.WriteLine("/// <summary>");
-                w.WriteLine($"/// Creates a {resp.StatusCode} {factoryName} result with a raw binary body.");
-                w.WriteLine("/// </summary>");
-                w.WriteLine("/// <param name=\"body\">The raw binary response body.</param>");
-                w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
-                w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {resp.StatusCode}.</returns>");
-                w.WriteLine($"public static {structName} {factoryName}(ReadOnlyMemory<byte> body, string? contentType = \"application/octet-stream\") => new({resp.StatusCode}, default, contentType, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));");
-                w.WriteLine();
-                w.WriteLine("/// <summary>");
-                w.WriteLine($"/// Creates a {resp.StatusCode} {factoryName} result that streams a raw binary body.");
-                w.WriteLine("/// </summary>");
-                w.WriteLine("/// <param name=\"writeBody\">A callback that writes the raw binary response body to the response stream.</param>");
-                w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
-                w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {resp.StatusCode}.</returns>");
-                w.WriteLine($"public static {structName} {factoryName}(Func<Stream, CancellationToken, ValueTask> writeBody, string? contentType = \"application/octet-stream\") => new({resp.StatusCode}, default, contentType, hasBinaryBody: true, binaryWriter: writeBody);");
-                continue;
-            }
-
             List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders = [];
             foreach (HeaderInfo header in resp.Headers)
             {
@@ -5594,7 +5344,7 @@ public sealed class OpenApi30CodeGenerator
                 w.WriteLine("/// Creates a default error result.");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders, hasOctetStreamResponse);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
             }
             else
             {
@@ -5603,7 +5353,7 @@ public sealed class OpenApi30CodeGenerator
                 w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(desc)}");
                 w.WriteLine("/// </summary>");
 
-                this.EmitServerResultFactory(w, structName, factoryName, typeName, resp, respHeaders, resp.StatusCode, hasHeaders, hasOctetStreamResponse);
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
             }
         }
 
@@ -5701,20 +5451,12 @@ public sealed class OpenApi30CodeGenerator
         string structName,
         string factoryName,
         string? bodyTypeName,
-        ResponseInfo response,
         List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
         string statusCode,
-        bool structHasHeaders,
-        bool structHasOctetStreamResponse)
+        bool structHasHeaders)
     {
         bool isDefault = statusCode == "default";
         bool hasBody = bodyTypeName is not null;
-
-        // The body carries a Source<TContext> (object/array type) iff its schema pointer is in the context-source set;
-        // only then can a closure-free, single-materialisation generic overload be emitted alongside the non-generic one.
-        bool bodyHasContextSource = hasBody
-            && this.ResolveResponseBodySchemaPointer(response) is { } bodySchemaPointer
-            && this.contextSourceBodyPointers.Contains(bodySchemaPointer);
 
         StringBuilder paramList = new();
         if (isDefault)
@@ -5779,15 +5521,10 @@ public sealed class OpenApi30CodeGenerator
             : "default";
         string contentTypeExpr = hasBody ? "\"application/json\"" : "null";
 
-        // When the struct exposes an octet-stream binary body, the private constructor has two
-        // extra required parameters (hasBinaryBody, binaryWriter) immediately after contentType.
-        // Non-binary factories pass false/null for those.
-        string binaryArgs = structHasOctetStreamResponse ? ", false, null" : string.Empty;
-
         if (structHasHeaders)
         {
             StringBuilder ctorArgs = new();
-            ctorArgs.Append($"{statusExpr}, {bodyExpr}, {contentTypeExpr}{binaryArgs}");
+            ctorArgs.Append($"{statusExpr}, {bodyExpr}, {contentTypeExpr}");
             foreach (var (_, typeName, fieldName, _) in respHeaders)
             {
                 ctorArgs.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
@@ -5797,58 +5534,7 @@ public sealed class OpenApi30CodeGenerator
         }
         else
         {
-            w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({statusExpr}, {bodyExpr}, {contentTypeExpr}{binaryArgs});");
-        }
-
-        // Closure-free, single-materialisation sibling: takes the response body already assembled as a context-threaded
-        // Source<TContext> (built via the model's Build<TContext>) and routes it straight through CreateBuilder<TContext>
-        // — no per-item closure on the caller side and no re-materialisation here. Only emitted for object/array bodies
-        // (bodyHasContextSource); a scalar body has no Source<TContext> and uses the non-generic factory above.
-        if (bodyHasContextSource)
-        {
-            string genericParamList = paramList.ToString().Replace($"{bodyTypeName}.Source body", $"{bodyTypeName}.Source<TContext> body");
-            string genericBodyExpr = $"{bodyTypeName}.CreateBuilder(workspace, in body, 30).RootElement";
-
-            w.WriteLine("/// <summary>");
-            w.WriteLine($"/// Creates a {statusCode} {factoryName} result from a context-threaded body, materialised in a single pass.");
-            w.WriteLine("/// </summary>");
-            w.WriteLine("/// <typeparam name=\"TContext\">The type of the context carried by the body.</typeparam>");
-            if (isDefault)
-            {
-                w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
-            }
-
-            w.WriteLine("/// <param name=\"body\">The context-threaded response body.</param>");
-            w.WriteLine("/// <param name=\"workspace\">The workspace for building the response value.</param>");
-            foreach (var (header, _, fieldName, _) in respHeaders)
-            {
-                w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
-            }
-
-            w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
-
-            string genericCtorArgs;
-            if (structHasHeaders)
-            {
-                StringBuilder ctorArgs = new();
-                ctorArgs.Append($"{statusExpr}, {genericBodyExpr}, {contentTypeExpr}{binaryArgs}");
-                foreach (var (_, typeName, fieldName, _) in respHeaders)
-                {
-                    ctorArgs.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
-                }
-
-                genericCtorArgs = ctorArgs.ToString();
-            }
-            else
-            {
-                genericCtorArgs = $"{statusExpr}, {genericBodyExpr}, {contentTypeExpr}{binaryArgs}";
-            }
-
-            w.WriteLine($"public static {structName} {factoryName}<TContext>({genericParamList})");
-            w.WriteLine("#if NET9_0_OR_GREATER");
-            w.WriteLine("    where TContext : allows ref struct");
-            w.WriteLine("#endif");
-            w.WriteLine($"    => new({genericCtorArgs});");
+            w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({statusExpr}, {bodyExpr}, {contentTypeExpr});");
         }
     }
 
@@ -6042,10 +5728,6 @@ public sealed class OpenApi30CodeGenerator
                 // (mirrors client response pattern: workspace manages param/header document lifetimes)
                 bool isRawStreamBody = hasBody && IsRawStreamRequestBody(op.RequestBody!.Value);
                 string? bodyTypeName = hasBody && !isRawStreamBody ? this.ResolveRequestBodyTypeName(op.RequestBody!.Value) : null;
-
-                // An optional (required: false) non-raw-stream request body is read only when the request actually
-                // carries one; an absent body must leave the body parameter undefined, not fail on an empty stream.
-                bool bodyOptional = hasBody && !isRawStreamBody && !op.RequestBody!.Value.IsRequired;
                 w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
                 if (hasBody && !isRawStreamBody)
                 {
@@ -6110,14 +5792,6 @@ public sealed class OpenApi30CodeGenerator
                         w.WriteLine();
                     }
 
-                    if (bodyOptional)
-                    {
-                        w.WriteLine("// An optional request body is read only when the request actually carries one;");
-                        w.WriteLine("// an absent body leaves the body parameter undefined rather than failing to parse.");
-                        w.WriteLine("if ((context.Request.ContentLength ?? 0) > 0 || context.Request.Headers.ContainsKey(\"Transfer-Encoding\"))");
-                        w.OpenBrace();
-                    }
-
                     if (IsRawStreamRequestBody(op.RequestBody!.Value))
                     {
                         // Raw stream body — no parsing needed, pass context.Request.Body directly.
@@ -6138,37 +5812,9 @@ public sealed class OpenApi30CodeGenerator
                     }
                     else if (IsMultipartRequestBody(op.RequestBody!.Value))
                     {
-                        BinaryPropertyInfo[] binaryParts = op.RequestBody!.Value.BinaryProperties;
-                        if (binaryParts.Length > 0)
-                        {
-                            foreach (BinaryPropertyInfo binaryPart in binaryParts)
-                            {
-                                w.WriteLine($"byte[]? __binary_{binaryPart.PropertyName} = null;");
-                            }
-                        }
-
                         w.WriteLine("try");
                         w.OpenBrace();
-                        if (binaryParts.Length > 0)
-                        {
-                            w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
-                            w.OpenBrace();
-                            bool first = true;
-                            foreach (BinaryPropertyInfo binaryPart in binaryParts)
-                            {
-                                string keyword = first ? "if" : "else if";
-                                first = false;
-                                w.WriteLine($"{keyword} (part.Name.SequenceEqual(\"{binaryPart.PropertyName}\"u8)) {{ __binary_{binaryPart.PropertyName} = part.Data.ToArray(); }}");
-                            }
-
-                            w.CloseBraceNoNewline().Write(", cancellationToken: context.RequestAborted).ConfigureAwait(false);");
-                            w.WriteLine();
-                        }
-                        else
-                        {
-                            w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
-                        }
-
+                        w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
                         w.CloseBrace();
                         w.WriteLine("catch");
                         w.OpenBrace();
@@ -6194,11 +5840,6 @@ public sealed class OpenApi30CodeGenerator
                         w.WriteLine();
                         EmitRequestBodySchemaValidation(w, bodyTypeName);
                     }
-
-                    if (bodyOptional)
-                    {
-                        w.CloseBrace();
-                    }
                 }
 
                 w.WriteLine();
@@ -6221,22 +5862,9 @@ public sealed class OpenApi30CodeGenerator
                         {
                             w.WriteLine("Body = context.Request.Body,");
                         }
-                        else if (bodyOptional)
-                        {
-                            w.WriteLine("Body = bodyDoc is null ? default : bodyDoc.RootElement,");
-                        }
                         else
                         {
                             w.WriteLine("Body = bodyDoc!.RootElement,");
-                        }
-
-                        // Bind any multipart binary parts captured by the deserializer callback.
-                        if (!isRawStreamBody && IsMultipartRequestBody(op.RequestBody!.Value))
-                        {
-                            foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
-                            {
-                                w.WriteLine($"{CodeEmitHelpers.ToPascalCase(binaryPart.PropertyName)} = __binary_{binaryPart.PropertyName} ?? ReadOnlyMemory<byte>.Empty,");
-                            }
                         }
                     }
 
@@ -6278,23 +5906,7 @@ public sealed class OpenApi30CodeGenerator
                     w.WriteLine();
                 }
 
-                // For operations with an octet-stream success response, write raw bytes directly.
-                bool opHasOctetStreamResponse = op.Responses.Any(r =>
-                    r.StatusCode.Length == 3 && r.StatusCode[0] == '2' && IsOctetStreamResponse(r));
-                if (opHasOctetStreamResponse)
-                {
-                    w.WriteLine("if (result.HasBinaryBody)");
-                    w.OpenBrace();
-                    w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/octet-stream\";");
-                    w.WriteLine("await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);");
-                    w.CloseBrace();
-                    w.WriteLine("else if (!result.Body.IsUndefined())");
-                }
-                else
-                {
-                    w.WriteLine("if (!result.Body.IsUndefined())");
-                }
-
+                w.WriteLine("if (!result.Body.IsUndefined())");
                 w.OpenBrace();
                 w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
                 w.WriteLine("Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);");
