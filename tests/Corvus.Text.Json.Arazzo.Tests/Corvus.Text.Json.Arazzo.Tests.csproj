@@ -9,24 +9,12 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
-    <!-- Required so the runtime JSON Schema validator (Corvus.Text.Json.Validator) can dynamically compile
-         generated model types against this project's compilation context (defines + reference assemblies). -->
-    <PreserveCompilationContext>true</PreserveCompilationContext>
     <NoWarn>$(NoWarn);NU1504;IDE0065;IDE0290;IDE0079;IDE0130;CS1591;CS1572;CS1573</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.CodeGeneration\Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Testing\Corvus.Text.Json.AsyncApi.Testing.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.Patch\Corvus.Text.Json.Patch.csproj" />
   </ItemGroup>
 </Project>
