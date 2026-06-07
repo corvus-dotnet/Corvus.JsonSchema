@@ -258,6 +258,9 @@ public class OpenApi31CodeGeneratorTests
         Assert.AreEqual("PetId", petId.PropertyName);
         Assert.AreEqual("Petstore.Client.JsonString", petId.TypeName);
         Assert.IsTrue(petId.IsRequired);
+
+        ResponseDescriptor ok = showPet.Responses.First(r => r.StatusCode == "200");
+        Assert.AreEqual("Petstore.Client.Pet", ok.BodyTypeName);
     }
 
     [TestMethod]

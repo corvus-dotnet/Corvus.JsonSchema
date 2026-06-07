@@ -92,7 +92,8 @@ public class WorkflowOperationBinderTests
                 "Acme.Pets.ListPetsRequest",
                 "Acme.Pets.ListPetsResponse",
                 [],
-                false),
+                false,
+                []),
             new(
                 "/pets/{petId}",
                 OperationMethod.Get,
@@ -101,7 +102,8 @@ public class WorkflowOperationBinderTests
                 "Acme.Pets.GetPetRequest",
                 "Acme.Pets.GetPetResponse",
                 [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true)],
-                false),
+                false,
+                [new ResponseDescriptor("200", "Acme.Pets.Pet")]),
         ];
 
         var resolver = OperationResolver.Create("petstore", operations);
