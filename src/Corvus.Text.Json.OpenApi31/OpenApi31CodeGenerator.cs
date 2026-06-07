@@ -434,6 +434,13 @@ public sealed class OpenApi31CodeGenerator
                     parameter.IsRequired);
             }
 
+            var responses = new ResponseDescriptor[op.Responses.Length];
+            for (int r = 0; r < op.Responses.Length; r++)
+            {
+                ResponseInfo response = op.Responses[r];
+                responses[r] = new ResponseDescriptor(response.StatusCode, this.ResolveResponseTypeName(response));
+            }
+
             result.Add(new OperationDescriptor(
                 op.PathTemplate,
                 op.Method,
@@ -442,7 +449,8 @@ public sealed class OpenApi31CodeGenerator
                 $"{this.rootNamespace}.{GeneratedClientTypeNaming.RequestTypeName(op.MethodName)}",
                 $"{this.rootNamespace}.{GeneratedClientTypeNaming.ResponseTypeName(op.MethodName)}",
                 parameters,
-                op.RequestBody is not null));
+                op.RequestBody is not null,
+                responses));
         }
 
         return result;

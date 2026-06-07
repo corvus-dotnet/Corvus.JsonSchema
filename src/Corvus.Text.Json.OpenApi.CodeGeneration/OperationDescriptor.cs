@@ -20,6 +20,7 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <param name="ResponseTypeName">The fully-qualified generated response type name.</param>
 /// <param name="RequestParameters">The request parameters, in document order.</param>
 /// <param name="HasRequestBody">Whether the operation declares a request body.</param>
+/// <param name="Responses">The operation's responses, in document order.</param>
 public readonly record struct OperationDescriptor(
     string Path,
     OperationMethod Method,
@@ -28,7 +29,19 @@ public readonly record struct OperationDescriptor(
     string RequestTypeName,
     string ResponseTypeName,
     IReadOnlyList<RequestParameterInfo> RequestParameters,
-    bool HasRequestBody);
+    bool HasRequestBody,
+    IReadOnlyList<ResponseDescriptor> Responses);
+
+/// <summary>
+/// A response of a generated operation, described by the generated type of its JSON body — so a
+/// caller can infer the type of a value projected from <c>$response.body</c> without introspecting
+/// the emitted struct.
+/// </summary>
+/// <param name="StatusCode">The response status code (e.g. <c>200</c>) or <c>default</c>.</param>
+/// <param name="BodyTypeName">The fully-qualified generated type of the JSON response body, or <see langword="null"/> if the response has no JSON body.</param>
+public readonly record struct ResponseDescriptor(
+    string StatusCode,
+    string? BodyTypeName);
 
 /// <summary>
 /// A request parameter of a generated operation, described by the names and type the generator
