@@ -15,13 +15,16 @@ namespace Corvus.Text.Json.Arazzo;
 /// </summary>
 public sealed partial class WorkflowExecutionContext
 {
-    private Dictionary<string, string>? requestHeaders;
-    private Dictionary<string, string>? requestQuery;
-    private Dictionary<string, string>? requestPath;
-    private Dictionary<string, string>? responseHeaders;
-    private Dictionary<string, string>? messageHeaders;
-    private string? url;
-    private string? method;
+    // Scalar values are stored as UTF-8 (converted once when set) so that interpolation appends them
+    // directly to the builder and criterion comparands compare them as UTF-8 spans — no managed
+    // string is materialized on the hot path.
+    private Dictionary<string, byte[]>? requestHeaders;
+    private Dictionary<string, byte[]>? requestQuery;
+    private Dictionary<string, byte[]>? requestPath;
+    private Dictionary<string, byte[]>? responseHeaders;
+    private Dictionary<string, byte[]>? messageHeaders;
+    private byte[]? url;
+    private byte[]? method;
     private int? statusCode;
 
     /// <summary>
@@ -31,8 +34,10 @@ public sealed partial class WorkflowExecutionContext
     /// <param name="httpMethod">The HTTP method.</param>
     public void SetRequest(string requestUrl, string httpMethod)
     {
-        this.url = requestUrl;
-        this.method = httpMethod;
+        ArgumentNullException.ThrowIfNull(requestUrl);
+        ArgumentNullException.ThrowIfNull(httpMethod);
+        this.url = Encoding.UTF8.GetBytes(requestUrl);
+        this.method = Encoding.UTF8.GetBytes(httpMethod);
     }
 
     /// <summary>
@@ -144,10 +149,11 @@ public sealed partial class WorkflowExecutionContext
         }
     }
 
-    private static void Add(ref Dictionary<string, string>? map, StringComparer comparer, string name, string value)
+    private static void Add(ref Dictionary<string, byte[]>? map, StringComparer comparer, string name, string value)
     {
         ArgumentNullException.ThrowIfNull(name);
-        (map ??= new Dictionary<string, string>(comparer))[name] = value;
+        ArgumentNullException.ThrowIfNull(value);
+        (map ??= new Dictionary<string, byte[]>(comparer))[name] = Encoding.UTF8.GetBytes(value);
     }
 
     private static void AppendText(ref Utf8ValueStringBuilder builder, ReadOnlySpan<char> text)
@@ -267,35 +273,37 @@ public sealed partial class WorkflowExecutionContext
         }
     }
 
-    private static bool TryAppendScalar(ref Utf8ValueStringBuilder builder, string? value)
+    private static bool TryAppendScalar(ref Utf8ValueStringBuilder builder, byte[]? value)
     {
         if (value is null)
         {
             return false;
         }
 
-        AppendText(ref builder, value);
+        builder.Append(value);
         return true;
     }
 
-    private static bool TryAppendFromMap(ref Utf8ValueStringBuilder builder, Dictionary<string, string>? map, string? name)
+    private static bool TryAppendFromMap(ref Utf8ValueStringBuilder builder, Dictionary<string, byte[]>? map, string? name)
     {
-        if (map is null || name is null || !map.TryGetValue(name, out string? value))
+        if (map is null || name is null || !map.TryGetValue(name, out byte[]? value))
         {
             return false;
         }
 
-        AppendText(ref builder, value);
+        builder.Append(value);
         return true;
     }
 
     private static void AppendJsonEmbedded(ref Utf8ValueStringBuilder builder, in JsonElement value)
     {
         // Per the Arazzo spec, embedded scalar values convert to (unquoted) strings, while objects
-        // and arrays are serialized as JSON (RFC 8259).
+        // and arrays are serialized as JSON (RFC 8259). Strings are appended as UTF-8 without
+        // materializing a managed string.
         if (value.ValueKind == JsonValueKind.String)
         {
-            AppendText(ref builder, value.GetString());
+            using UnescapedUtf8JsonString unescaped = value.GetUtf8String();
+            builder.Append(unescaped.Span);
             return;
         }
 

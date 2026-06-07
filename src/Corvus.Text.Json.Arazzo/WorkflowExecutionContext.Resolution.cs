@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo;
@@ -90,10 +91,10 @@ public sealed partial class WorkflowExecutionContext
         switch (expression.Source)
         {
             case ArazzoExpressionSource.Url:
-                return this.url is null ? Comparand.Undefined : Comparand.FromString(this.url);
+                return this.url is null ? Comparand.Undefined : Comparand.FromUtf8String(this.url);
 
             case ArazzoExpressionSource.Method:
-                return this.method is null ? Comparand.Undefined : Comparand.FromString(this.method);
+                return this.method is null ? Comparand.Undefined : Comparand.FromUtf8String(this.method);
 
             case ArazzoExpressionSource.StatusCode:
                 return this.statusCode is int code ? Comparand.FromNumber(code) : Comparand.Undefined;
@@ -141,31 +142,31 @@ public sealed partial class WorkflowExecutionContext
     private static Comparand ComparandFromJson(in JsonElement element)
         => element.ValueKind switch
         {
-            JsonValueKind.String => Comparand.FromString(element.GetString()!),
+            JsonValueKind.String => Comparand.FromJsonString(element),
             JsonValueKind.Number => Comparand.FromNumber(element.GetDouble()),
             JsonValueKind.True => Comparand.FromBoolean(true),
             JsonValueKind.False => Comparand.FromBoolean(false),
             JsonValueKind.Null => Comparand.Null,
-            JsonValueKind.Object or JsonValueKind.Array => Comparand.FromJson(element.GetRawText()),
+            JsonValueKind.Object or JsonValueKind.Array => Comparand.FromJson(element),
             _ => Comparand.Undefined,
         };
 
-    private static Comparand ComparandFromMap(Dictionary<string, string>? map, string? name)
-        => map is not null && name is not null && map.TryGetValue(name, out string? value)
-            ? Comparand.FromString(value)
+    private static Comparand ComparandFromMap(Dictionary<string, byte[]>? map, string? name)
+        => map is not null && name is not null && map.TryGetValue(name, out byte[]? value)
+            ? Comparand.FromUtf8String(value)
             : Comparand.Undefined;
 
-    private static bool TryReturn(string? candidate, out string value)
+    private static bool TryReturn(byte[]? candidate, out string value)
     {
-        value = candidate ?? string.Empty;
+        value = candidate is null ? string.Empty : Encoding.UTF8.GetString(candidate);
         return candidate is not null;
     }
 
-    private static bool TryReturnFromMap(Dictionary<string, string>? map, string? name, out string value)
+    private static bool TryReturnFromMap(Dictionary<string, byte[]>? map, string? name, out string value)
     {
-        if (map is not null && name is not null && map.TryGetValue(name, out string? found))
+        if (map is not null && name is not null && map.TryGetValue(name, out byte[]? found))
         {
-            value = found;
+            value = Encoding.UTF8.GetString(found);
             return true;
         }
 
