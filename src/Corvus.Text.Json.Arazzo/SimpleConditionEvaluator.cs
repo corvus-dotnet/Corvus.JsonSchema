@@ -241,14 +241,22 @@ public sealed class SimpleConditionEvaluator
             {
                 char quote = this.span[this.position];
                 this.position++;
-                while (this.position < this.span.Length && this.span[this.position] != quote)
+                while (this.position < this.span.Length)
                 {
-                    this.position++;
-                }
+                    if (this.span[this.position] == quote)
+                    {
+                        // A doubled quote ('') is an escaped quote, not the terminator.
+                        if (this.position + 1 < this.span.Length && this.span[this.position + 1] == quote)
+                        {
+                            this.position += 2;
+                            continue;
+                        }
 
-                if (this.position < this.span.Length)
-                {
-                    this.position++; // closing quote
+                        this.position++; // closing quote
+                        break;
+                    }
+
+                    this.position++;
                 }
 
                 return this.span[start..this.position];
