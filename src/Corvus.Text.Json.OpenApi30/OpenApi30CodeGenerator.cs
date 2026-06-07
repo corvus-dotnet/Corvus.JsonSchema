@@ -296,6 +296,8 @@ public sealed class OpenApi30CodeGenerator
 
             bool hasBody = opRef.Operation.RequestBody.IsNotUndefined();
 
+            string methodName = GetMethodName(operationId, opRef.Method, path);
+
             result.Add(new OperationSummary(
                 path,
                 opRef.Method,
@@ -304,7 +306,10 @@ public sealed class OpenApi30CodeGenerator
                 isDeprecated,
                 paramCount,
                 hasBody,
-                summary));
+                summary,
+                methodName,
+                GeneratedClientTypeNaming.RequestTypeName(methodName),
+                GeneratedClientTypeNaming.ResponseTypeName(methodName)));
         }
 
         return [.. result];
@@ -2262,7 +2267,7 @@ public sealed class OpenApi30CodeGenerator
     // ── Request struct emission ─────────────────────────────────────────
     private GeneratedFile EmitRequestStruct(OperationInfo op)
     {
-        string structName = $"{op.MethodName}Request";
+        string structName = $"{op.MethodName}{GeneratedClientTypeNaming.RequestSuffix}";
         IndentedWriter w = new();
 
         CodeEmitHelpers.EmitHeader(w);
@@ -2801,7 +2806,7 @@ public sealed class OpenApi30CodeGenerator
     // ── Response struct emission ────────────────────────────────────────
     private GeneratedFile EmitResponseStruct(OperationInfo op, List<OperationInfo> allOperations)
     {
-        string structName = $"{op.MethodName}Response";
+        string structName = $"{op.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
         IndentedWriter w = new();
 
         CodeEmitHelpers.EmitHeader(w);
@@ -3106,8 +3111,8 @@ public sealed class OpenApi30CodeGenerator
         }
 
         OperationInfo target = targetOp.Value;
-        string targetResponseType = $"{target.MethodName}Response";
-        string targetRequestType = $"{target.MethodName}Request";
+        string targetResponseType = $"{target.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
+        string targetRequestType = $"{target.MethodName}{GeneratedClientTypeNaming.RequestSuffix}";
 
         // Determine which target parameters are NOT satisfied by link bindings.
         HashSet<string> boundParams = new(StringComparer.OrdinalIgnoreCase);
@@ -4080,7 +4085,7 @@ public sealed class OpenApi30CodeGenerator
 
     private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op)
     {
-        string responseName = $"{op.MethodName}Response";
+        string responseName = $"{op.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
 
         EmitMethodDoc(w, op);
 
@@ -4181,8 +4186,8 @@ public sealed class OpenApi30CodeGenerator
 
     private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames)
     {
-        string requestName = $"{op.MethodName}Request";
-        string responseName = $"{op.MethodName}Response";
+        string requestName = $"{op.MethodName}{GeneratedClientTypeNaming.RequestSuffix}";
+        string responseName = $"{op.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
 
         EmitMethodDoc(w, op);
 
@@ -5046,6 +5051,8 @@ public sealed class OpenApi30CodeGenerator
 
             bool hasBody = opRef.Operation.RequestBody.IsNotUndefined();
 
+            string methodName = GetMethodName(operationId, opRef.Method, path);
+
             result.Add(new OperationSummary(
                 path,
                 opRef.Method,
@@ -5054,7 +5061,10 @@ public sealed class OpenApi30CodeGenerator
                 isDeprecated,
                 paramCount,
                 hasBody,
-                summary));
+                summary,
+                methodName,
+                GeneratedClientTypeNaming.RequestTypeName(methodName),
+                GeneratedClientTypeNaming.ResponseTypeName(methodName)));
         }
 
         return [.. result];

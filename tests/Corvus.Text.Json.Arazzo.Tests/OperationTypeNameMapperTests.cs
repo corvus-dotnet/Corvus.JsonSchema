@@ -13,9 +13,16 @@ namespace Corvus.Text.Json.Arazzo.Tests;
 public class OperationTypeNameMapperTests
 {
     [TestMethod]
-    public void Maps_operation_id_to_pascal_cased_request_response_types()
+    public void Qualifies_generated_type_names_with_the_client_namespace()
     {
-        var operation = new ResolvedOperation("petstore", "/pets/{petId}", OperationMethod.Get, "getPet");
+        var operation = new ResolvedOperation(
+            "petstore",
+            "/pets/{petId}",
+            OperationMethod.Get,
+            "getPet",
+            "GetPet",
+            "GetPetRequest",
+            "GetPetResponse");
 
         GeneratedOperationTypes types = OperationTypeNameMapper.Map(operation, "Acme.Pets");
 
@@ -25,31 +32,35 @@ public class OperationTypeNameMapperTests
     }
 
     [TestMethod]
-    public void Pascal_cases_snake_and_kebab_operation_ids()
+    public void Passes_generator_supplied_names_through_verbatim()
     {
-        var operation = new ResolvedOperation("petstore", "/pets", OperationMethod.Post, "create-new_pet");
+        // The mapper applies no heuristic — whatever simple names the generator assigned are used.
+        var operation = new ResolvedOperation(
+            "petstore",
+            "/pets",
+            OperationMethod.Post,
+            null,
+            "PostPets",
+            "PostPetsRequest",
+            "PostPetsResponse");
 
         GeneratedOperationTypes types = OperationTypeNameMapper.Map(operation, "Acme.Pets");
 
-        types.MethodName.ShouldBe("CreateNewPet");
-    }
-
-    [TestMethod]
-    public void Derives_method_name_from_method_and_path_when_no_operation_id()
-    {
-        var operation = new ResolvedOperation("petstore", "/pets/{petId}", OperationMethod.Delete, null);
-
-        GeneratedOperationTypes types = OperationTypeNameMapper.Map(operation, "Acme.Pets");
-
-        types.MethodName.ShouldBe("DeletePetsPetId");
-        types.RequestTypeName.ShouldBe("Acme.Pets.DeletePetsPetIdRequest");
-        types.ResponseTypeName.ShouldBe("Acme.Pets.DeletePetsPetIdResponse");
+        types.RequestTypeName.ShouldBe("Acme.Pets.PostPetsRequest");
+        types.ResponseTypeName.ShouldBe("Acme.Pets.PostPetsResponse");
     }
 
     [TestMethod]
     public void Empty_namespace_is_rejected()
     {
-        var operation = new ResolvedOperation("petstore", "/pets", OperationMethod.Get, "listPets");
+        var operation = new ResolvedOperation(
+            "petstore",
+            "/pets",
+            OperationMethod.Get,
+            "listPets",
+            "ListPets",
+            "ListPetsRequest",
+            "ListPetsResponse");
 
         Should.Throw<ArgumentException>(() => OperationTypeNameMapper.Map(operation, string.Empty));
     }

@@ -12,20 +12,25 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
 /// Resolves the operations a workflow step targets against a single source description's OpenAPI
-/// document, mapping a step's <c>operationId</c> or <c>operationPath</c> to the (path, method) pair
-/// the generator binds to a generated request/response type (plan §3.1).
+/// document, mapping a step's <c>operationId</c> or <c>operationPath</c> to the operation — and the
+/// generated request/response type names — the OpenAPI generator produced for it (plan §3.1).
 /// </summary>
+/// <remarks>
+/// The resolver is built from the OpenAPI generator's own <see cref="OperationSummary"/> records, so
+/// it holds only the resolved strings; it does not retain the parsed document and is unaffected by
+/// the document's lifetime once created.
+/// </remarks>
 public sealed class OperationResolver
 {
     private readonly string sourceName;
-    private readonly JsonElement specRoot;
     private readonly Dictionary<string, OperationSummary> byOperationId;
+    private readonly Dictionary<PathMethod, OperationSummary> byPathMethod;
 
-    private OperationResolver(string sourceName, JsonElement specRoot, OperationSummary[] operations)
+    private OperationResolver(string sourceName, OperationSummary[] operations)
     {
         this.sourceName = sourceName;
-        this.specRoot = specRoot;
         this.byOperationId = new Dictionary<string, OperationSummary>(StringComparer.Ordinal);
+        this.byPathMethod = new Dictionary<PathMethod, OperationSummary>();
         foreach (OperationSummary operation in operations)
         {
             if (operation.OperationId is { } id)
@@ -34,6 +39,8 @@ public sealed class OperationResolver
                 // first declaration wins, matching how clients resolve duplicates.
                 this.byOperationId.TryAdd(id, operation);
             }
+
+            this.byPathMethod.TryAdd(new PathMethod(operation.Path, operation.Method), operation);
         }
     }
 
@@ -58,7 +65,7 @@ public sealed class OperationResolver
             _ => OpenApi31CodeGenerator.ListOperations(specRoot),
         };
 
-        return new OperationResolver(sourceName, specRoot, operations);
+        return new OperationResolver(sourceName, operations);
     }
 
     /// <summary>
@@ -72,7 +79,7 @@ public sealed class OperationResolver
         ArgumentNullException.ThrowIfNull(operationId);
         if (this.byOperationId.TryGetValue(operationId, out OperationSummary summary))
         {
-            operation = new ResolvedOperation(this.sourceName, summary.Path, summary.Method, summary.OperationId);
+            operation = this.ToResolved(summary);
             return true;
         }
 
@@ -83,11 +90,11 @@ public sealed class OperationResolver
     /// <summary>
     /// Resolves a step's <c>operationPath</c> to its operation. The value is a runtime expression of
     /// the form <c>{$sourceDescriptions.&lt;name&gt;.url}#/paths/&lt;json-pointer-escaped-path&gt;/&lt;method&gt;</c>;
-    /// only the JSON Pointer fragment is interpreted here (the source is already bound to this resolver).
+    /// the JSON Pointer fragment identifies the operation within the (already bound) source description.
     /// </summary>
     /// <param name="operationPath">The <c>operationPath</c> expression.</param>
     /// <param name="operation">When this method returns <see langword="true"/>, the resolved operation.</param>
-    /// <returns><see langword="true"/> if the pointer resolves to an operation in the document; otherwise <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if the pointer addresses an operation in the document; otherwise <see langword="false"/>.</returns>
     public bool TryResolveOperationPath(string operationPath, out ResolvedOperation operation)
     {
         ArgumentNullException.ThrowIfNull(operationPath);
@@ -105,15 +112,8 @@ public sealed class OperationResolver
             return false;
         }
 
-        // Confirm the pointer actually addresses a node in the document.
-        if (!this.specRoot.TryResolvePointer(pointer.ToString(), out JsonElement target)
-            || target.ValueKind != JsonValueKind.Object)
-        {
-            return false;
-        }
-
         // Expect /paths/<escaped-path>/<method> — derive the path template and method from the
-        // last two tokens (the method token names the operation within the path item).
+        // tokens, then resolve against the generator's operation list for the authoritative binding.
         ReadOnlySpan<char> rest = pointer[1..];
         int firstSlash = rest.IndexOf('/');
         if (firstSlash < 0 || !rest[..firstSlash].SequenceEqual("paths"))
@@ -129,19 +129,18 @@ public sealed class OperationResolver
         }
 
         string path = UnescapePointerToken(rest[..methodSlash]);
-        ReadOnlySpan<char> methodToken = rest[(methodSlash + 1)..];
-        if (!TryParseMethod(methodToken, out OperationMethod method))
+        if (!TryParseMethod(rest[(methodSlash + 1)..], out OperationMethod method))
         {
             return false;
         }
 
-        string? operationId = target.TryGetProperty("operationId"u8, out JsonElement idElement)
-            && idElement.ValueKind == JsonValueKind.String
-                ? idElement.GetString()
-                : null;
+        if (this.byPathMethod.TryGetValue(new PathMethod(path, method), out OperationSummary summary))
+        {
+            operation = this.ToResolved(summary);
+            return true;
+        }
 
-        operation = new ResolvedOperation(this.sourceName, path, method, operationId);
-        return true;
+        return false;
     }
 
     private static bool TryParseMethod(ReadOnlySpan<char> token, out OperationMethod method)
@@ -190,4 +189,16 @@ public sealed class OperationResolver
 
         return "3.1";
     }
+
+    private ResolvedOperation ToResolved(in OperationSummary summary)
+        => new(
+            this.sourceName,
+            summary.Path,
+            summary.Method,
+            summary.OperationId,
+            summary.MethodName,
+            summary.RequestTypeName,
+            summary.ResponseTypeName);
+
+    private readonly record struct PathMethod(string Path, OperationMethod Method);
 }

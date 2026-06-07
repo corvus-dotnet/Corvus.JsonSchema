@@ -19,7 +19,7 @@ public class OperationResolverTests
           "info": { "title": "Pets", "version": "1.0.0" },
           "paths": {
             "/pets": {
-              "get": { "operationId": "listPets", "responses": { "200": { "description": "ok" } } },
+              "get": { "operationId": "list-pets", "responses": { "200": { "description": "ok" } } },
               "post": { "operationId": "createPet", "responses": { "201": { "description": "made" } } }
             },
             "/pets/{petId}": {
@@ -32,10 +32,8 @@ public class OperationResolverTests
         }
         """;
 
-    private ParsedJsonDocument<JsonElement>? document;
-
     [TestMethod]
-    public void Resolves_operation_by_id()
+    public void Resolves_operation_by_id_with_authoritative_generated_names()
     {
         OperationResolver resolver = Create();
 
@@ -44,6 +42,21 @@ public class OperationResolverTests
         op.Path.ShouldBe("/pets/{petId}");
         op.Method.ShouldBe(OperationMethod.Get);
         op.OperationId.ShouldBe("getPet");
+
+        // The names come straight from the OpenAPI generator — no Arazzo-side heuristic.
+        op.MethodName.ShouldBe("GetPet");
+        op.RequestTypeName.ShouldBe("GetPetRequest");
+        op.ResponseTypeName.ShouldBe("GetPetResponse");
+    }
+
+    [TestMethod]
+    public void Generated_method_name_pascal_cases_a_kebab_operation_id()
+    {
+        OperationResolver resolver = Create();
+
+        resolver.TryResolveOperationId("list-pets", out ResolvedOperation op).ShouldBeTrue();
+        op.MethodName.ShouldBe("ListPets");
+        op.RequestTypeName.ShouldBe("ListPetsRequest");
     }
 
     [TestMethod]
@@ -54,6 +67,7 @@ public class OperationResolverTests
         resolver.TryResolveOperationId("createPet", out ResolvedOperation op).ShouldBeTrue();
         op.Path.ShouldBe("/pets");
         op.Method.ShouldBe(OperationMethod.Post);
+        op.ResponseTypeName.ShouldBe("CreatePetResponse");
     }
 
     [TestMethod]
@@ -79,6 +93,7 @@ public class OperationResolverTests
         op.Path.ShouldBe("/pets/{petId}");
         op.Method.ShouldBe(OperationMethod.Get);
         op.OperationId.ShouldBe("getPet");
+        op.MethodName.ShouldBe("GetPet");
     }
 
     [TestMethod]
@@ -106,21 +121,18 @@ public class OperationResolverTests
     }
 
     [TestMethod]
-    public void Operation_path_to_missing_node_does_not_resolve()
+    public void Operation_path_to_unknown_operation_does_not_resolve()
     {
         OperationResolver resolver = Create();
 
         resolver.TryResolveOperationPath("#/paths/~1missing/get", out _).ShouldBeFalse();
     }
 
-    // The resolver holds a JsonElement into the document's memory, so the document must stay
-    // alive for the resolver's lifetime; dispose it after each test rather than inside Create.
-    [TestCleanup]
-    public void Cleanup() => this.document?.Dispose();
-
-    private OperationResolver Create()
+    private static OperationResolver Create()
     {
-        this.document = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(Spec));
-        return OperationResolver.Create("petstore", this.document.RootElement);
+        // The resolver retains only strings from the generator's operation list, not the document,
+        // so it is safe to dispose the parsed document immediately after creation.
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(Spec));
+        return OperationResolver.Create("petstore", doc.RootElement);
     }
 }
