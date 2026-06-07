@@ -2560,3 +2560,111 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocation
         }
     }
 }
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWithPatternProperties
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestWithOnlyTheNestedEvaluatedProperty()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": { \"bar\": \"foo\" }\n                }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft2020-12/unevaluatedProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"patternProperties\": {\n                        \"^bar$\": { \"type\": \"string\" }\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "JsonSchemaTestSuite.Draft202012.UnevaluatedProperties",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWithAdditionalProperties
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestWithOnlyTheNestedEvaluatedProperty()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": { \"bar\": \"foo\" }\n                }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft2020-12/unevaluatedProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"additionalProperties\": { \"type\": \"string\" }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "JsonSchemaTestSuite.Draft202012.UnevaluatedProperties",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

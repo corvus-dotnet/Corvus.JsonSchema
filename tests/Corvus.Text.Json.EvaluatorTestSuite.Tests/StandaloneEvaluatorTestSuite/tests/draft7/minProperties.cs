@@ -67,6 +67,20 @@ public class SuiteMinPropertiesValidation
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [TestMethod]
+    public void TestIgnoresNull()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("null");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestIgnoresBooleans()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("true");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }

@@ -159,13 +159,6 @@ public class SuiteValidationOfHostNames
     }
 
     [TestMethod]
-    public void TestContainsInThe3rdAnd4thPosition()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"XN--aa---o47jg78q\"");
-        Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
     public void TestContainsUnderscore()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"host_name\"");
@@ -490,6 +483,13 @@ public class SuiteValidationOfALabelPunycodeHostNames
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"xn--ngba5hb2804a\"");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestContainsInThe3rdAnd4thPosition()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"XN--aa---o47jg78q\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     public class Fixture

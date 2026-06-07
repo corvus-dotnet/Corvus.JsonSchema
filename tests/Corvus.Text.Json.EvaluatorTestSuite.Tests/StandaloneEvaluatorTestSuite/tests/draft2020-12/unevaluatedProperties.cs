@@ -2434,3 +2434,105 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocation
         }
     }
 }
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWithPatternProperties
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestWithOnlyTheNestedEvaluatedProperty()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": { \"bar\": \"foo\" }\n                }");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/unevaluatedProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"patternProperties\": {\n                        \"^bar$\": { \"type\": \"string\" }\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWithAdditionalProperties
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestWithOnlyTheNestedEvaluatedProperty()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": { \"bar\": \"foo\" }\n                }");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/unevaluatedProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"additionalProperties\": { \"type\": \"string\" }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

@@ -96,20 +96,6 @@ public class SuiteValidationOfDateStrings
     }
 
     [TestMethod]
-    public void TestAInvalidDateStringWith29DaysInFebruaryNormal()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2021-02-29\"");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestAValidDateStringWith29DaysInFebruaryLeap()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2020-02-29\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
     public void TestAInvalidDateStringWith30DaysInFebruaryLeap()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2020-02-30\"");
@@ -257,13 +243,6 @@ public class SuiteValidationOfDateStrings
     }
 
     [TestMethod]
-    public void TestAInvalidDateStringWithInvalidMonth()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2020-13-01\"");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
     public void TestAnInvalidDateString()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"06/19/1963\"");
@@ -295,13 +274,6 @@ public class SuiteValidationOfDateStrings
     public void TestInvalidMonth()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-13-01\"");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestInvalidMonthDayCombination()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-04-31\"");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -358,6 +330,153 @@ public class SuiteValidationOfDateStrings
     public void TestAnInvalidTimeStringInDateTimeFormat()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2020-11-28T23:55:45Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestYear0000IsALeapYear04000()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0000-02-29\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestCenturyYear0100IsNotALeapYear()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0100-02-29\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestCenturyYear0400IsALeapYear()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0400-02-29\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestCenturyYear2100IsNotALeapYear()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2100-02-29\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidLeadingWhitespaceIsNotPermitted()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\" 2024-01-15\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidTrailingWhitespaceIsNotPermitted()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2024-01-15 \"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidMonth00IsNotValidPerDateMonthRange0112()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2024-00-15\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidDay00IsNotValidPerDateMdayMinimumOf01()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2024-01-00\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidEmptyString()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidEmbeddedWhitespaceBetweenYearAndMonth()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2020 -01-01\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidTrailingCharacterAfterValidFullDate()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2020-01-01X\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidTrailingZAfterFullDate()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2020-01-01Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidFullDateFollowedBySpaceAndTimeComponent()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2020-01-01 00:00:00Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestValidFourDigitYear0001()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0001-01-01\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidTwoDigitYearN2Digits()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"20-01-01\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidThreeDigitYearN1Digits()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"998-01-01\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidFiveDigitYearN1Digits()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"12020-01-01\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidPositiveSignPrefixOnYear()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"+2020-01-01\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidNegativeSignPrefixOnYear()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"-2020-01-01\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidNonAsciiBengaliDigitInYearField()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"২020-01-01\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidAlphabeticCharactersInYearField()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"YYYY-01-01\"");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
