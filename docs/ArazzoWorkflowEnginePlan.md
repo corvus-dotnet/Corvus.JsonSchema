@@ -225,7 +225,11 @@ implementation must follow its house style:
   `Utf8Parser`; regex transcodes the UTF-8 context to a stack/pooled `Span<char>`
   for `Regex.IsMatch(ReadOnlySpan<char>)`; interpolation parses once into a
   `CompiledInterpolationTemplate` and appends via `Utf8ValueStringBuilder`.
-  Scalar context collections are built once at setup (not on the hot path).
+  Scalar context collections are built once at setup (not on the hot path). A full
+  BenchmarkDotNet run (net10, i7-13800H) confirms **0 allocated bytes/op** across
+  all six paths, with means ≈ 8 ns (numeric criterion), 40 ns (resolve), 46 ns
+  (compiled-template interpolation), 58 ns (string criterion), 65 ns (jsonpath),
+  97 ns (regex).
 - **Compile criteria ahead-of-time.** Regular expressions and JSONPath queries
   must be compiled once, never per step. The generated executor (.NET 10+) emits
   criteria as ahead-of-time code: JSONPath via the Corvus JSONPath source
