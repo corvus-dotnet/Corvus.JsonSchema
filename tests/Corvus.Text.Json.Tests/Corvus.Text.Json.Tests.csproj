@@ -200,6 +200,7 @@
     <Compile Include="JsonSchemaAdditionalTests\draft2020-12\benchmarkRepro.cs" />
     <Compile Include="JsonSchemaAdditionalTests\draft2020-12\largeNumbersOfRequiredProperties.cs" />
     <Compile Include="JsonSchemaAdditionalTests\draft2020-12\typeAndFormat.cs" />
+    <Compile Include="FormatAssertionModeTests.cs" />
     <Compile Include="JsonSchemaCodeGeneratorTests.cs" />
     <Compile Include="JsonRegexValidatorTests.cs" />
     <Compile Include="JsonSchemaContextTests.cs" />

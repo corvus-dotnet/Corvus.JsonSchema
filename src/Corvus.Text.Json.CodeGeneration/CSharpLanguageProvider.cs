@@ -857,6 +857,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
     /// <param name="codeGenerationMode">The code generation mode to use.</param>
     /// <param name="excludeNonNullDefaulted">If true (and <paramref name="optionalAsNullable"/> is true), then optional properties that declare a non-null <c>default</c> are generated as non-nullable types.</param>
     /// <param name="buildParametersThreshold">The maximum estimated number of captured value slots an object type's <c>Build(...)</c> property-parameter overload may hold before it is omitted (and callers fall back to the delegate/context <c>Build</c> form). See <see cref="DefaultBuildParametersThreshold"/>.</param>
+    /// <param name="formatModeOverrides">Per-format assertion mode overrides, keyed by format name (e.g. <c>date-time</c>). An override takes precedence over both the vocabulary's format-assertion behaviour and <paramref name="alwaysAssertFormat"/>.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -872,7 +873,8 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
         GeneratedTypeAccessibility defaultAccessibility = GeneratedTypeAccessibility.Public,
         CodeGenerationMode codeGenerationMode = CodeGenerationMode.TypeGeneration,
         bool excludeNonNullDefaulted = false,
-        int buildParametersThreshold = 32)
+        int buildParametersThreshold = 32,
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null)
     {
         /// <summary>
         /// The default value for <see cref="BuildParametersThreshold"/>.
@@ -912,6 +914,18 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
         /// Gets a value indicating whether to always assert the format validation, regardless of the vocabulary.
         /// </summary>
         internal bool AlwaysAssertFormat { get; } = alwaysAssertFormat;
+
+        /// <summary>
+        /// Gets the per-format assertion mode overrides, keyed by format name (e.g. <c>date-time</c>).
+        /// </summary>
+        /// <remarks>
+        /// An override takes precedence over both the vocabulary's format-assertion behaviour
+        /// and <see cref="AlwaysAssertFormat"/>.
+        /// </remarks>
+        internal FrozenDictionary<string, FormatAssertionMode> FormatModeOverrides { get; } =
+            formatModeOverrides is { Count: > 0 }
+                ? formatModeOverrides.ToFrozenDictionary(StringComparer.Ordinal)
+                : FrozenDictionary<string, FormatAssertionMode>.Empty;
 
         /// <summary>
         /// Gets a value indicating whether to generate nullable types for optional parameters.

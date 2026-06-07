@@ -28,198 +28,50 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
     public uint Priority => 100_000;
 
     /// <inheritdoc/>
-    public bool AppendFormatAssertion(CodeGenerator generator, string format, string formatKeywordProviderExpression, string valueIdentifier, string validationContextIdentifier)
+    public bool AppendFormatAssertion(CodeGenerator generator, string format, string formatKeywordProviderExpression, string valueIdentifier, string validationContextIdentifier, bool warn = false)
     {
-        switch (format)
+        string? methodSuffix = format switch
         {
-            case "date":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchDate(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
+            "date" => "Date",
+            "date-time" => "DateTime",
+            "time" => "Time",
+            "duration" => "Duration",
+            "email" => "Email",
+            "idn-email" => "IdnEmail",
+            "hostname" => "Hostname",
+            "idn-hostname" => "IdnHostname",
+            "ipv4" => "IPV4",
+            "ipv6" => "IPV6",
+            "uuid" => "Uuid",
+            "uri" => "Uri",
+            "uri-template" => "UriTemplate",
+            "uri-reference" => "UriReference",
+            "iri" => "Iri",
+            "iri-reference" => "IriReference",
+            "json-pointer" => "JsonPointer",
+            "relative-json-pointer" => "RelativeJsonPointer",
+            "regex" => "Regex",
+            "corvus-base64-content-pre201909" => "Base64Content",
+            "corvus-base64-string-pre201909" => "Base64String",
+            "corvus-json-content-pre201909" => "JsonContent",
+            _ => null,
+        };
 
-            case "date-time":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchDateTime(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "time":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchTime(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "duration":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchDuration(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "email":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchEmail(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "idn-email":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchIdnEmail(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "hostname":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchHostname(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "idn-hostname":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchIdnHostname(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "ipv4":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchIPV4(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "ipv6":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchIPV6(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "uuid":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchUuid(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "uri":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchUri(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "uri-template":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchUriTemplate(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "uri-reference":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchUriReference(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "iri":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchIri(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "iri-reference":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchIriReference(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "json-pointer":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchJsonPointer(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "relative-json-pointer":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchRelativeJsonPointer(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "regex":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchRegex(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "corvus-base64-content":
-                return false;
-
-            case "corvus-base64-content-pre201909":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchBase64Content(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "corvus-base64-string":
-                return false;
-
-            case "corvus-base64-string-pre201909":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchBase64String(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            case "corvus-json-content":
-                return false;
-
-            case "corvus-json-content-pre201909":
-                generator.AppendIndent(
-                   "JsonSchemaEvaluation.MatchJsonContent(",
-                   valueIdentifier, ", ",
-                   formatKeywordProviderExpression, ", ",
-                   "ref ", validationContextIdentifier, ")");
-                return true;
-
-            default:
-                return false;
+        if (methodSuffix is null)
+        {
+            // Includes the Draft 2019-09+ content formats (corvus-base64-content,
+            // corvus-base64-string, corvus-json-content), which are handled elsewhere.
+            return false;
         }
+
+        generator.AppendIndent(
+           warn ? "JsonSchemaEvaluation.Warn" : "JsonSchemaEvaluation.Match",
+           methodSuffix,
+           "(",
+           valueIdentifier, ", ",
+           formatKeywordProviderExpression, ", ",
+           "ref ", validationContextIdentifier, ")");
+        return true;
     }
 
     /// <inheritdoc/>

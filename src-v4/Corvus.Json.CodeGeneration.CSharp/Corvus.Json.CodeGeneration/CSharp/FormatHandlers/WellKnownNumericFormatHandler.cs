@@ -21,8 +21,10 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
     public uint Priority => 100_000;
 
     /// <inheritdoc/>
-    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod)
+    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod, bool warn = false)
     {
+        // Warning mode is not supported for numeric formats; the caller emits a diagnostic and
+        // this falls back to assertion. The 'warn' parameter is intentionally ignored here.
         string validator = includeType ? "Validate" : "ValidateWithoutCoreType";
 
         string typeKeywordDisplay = typeKeyword is IKeyword t ? SymbolDisplay.FormatLiteral(t.Keyword, true) : "null";

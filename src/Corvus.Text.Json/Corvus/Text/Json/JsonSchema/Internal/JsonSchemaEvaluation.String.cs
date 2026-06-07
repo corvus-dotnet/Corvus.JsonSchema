@@ -92,6 +92,50 @@ public static partial class JsonSchemaEvaluation
 
     private static readonly JsonSchemaMessageProvider<int> ExpectedStringLengthGreaterThanOrEquals = static (length, buffer, out written) => ExpectedLengthGreaterThanOrEquals(length, buffer, out written);
 
+    private static readonly JsonSchemaMessageProvider WarningDate = static (buffer, out written) => WriteWarning(ExpectedDate, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningDateTime = static (buffer, out written) => WriteWarning(ExpectedDateTime, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningDuration = static (buffer, out written) => WriteWarning(ExpectedDuration, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningEmail = static (buffer, out written) => WriteWarning(ExpectedEmail, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningHostname = static (buffer, out written) => WriteWarning(ExpectedHostname, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningIdnEmail = static (buffer, out written) => WriteWarning(ExpectedIdnEmail, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningIdnHostname = static (buffer, out written) => WriteWarning(ExpectedIdnHostname, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningIPV4 = static (buffer, out written) => WriteWarning(ExpectedIPV4, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningIPV6 = static (buffer, out written) => WriteWarning(ExpectedIPV6, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningIri = static (buffer, out written) => WriteWarning(ExpectedIri, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningIriReference = static (buffer, out written) => WriteWarning(ExpectedIriReference, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningJsonPointer = static (buffer, out written) => WriteWarning(ExpectedJsonPointer, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningRegex = static (buffer, out written) => WriteWarning(ExpectedRegex, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningRelativeJsonPointer = static (buffer, out written) => WriteWarning(ExpectedRelativeJsonPointer, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningTime = static (buffer, out written) => WriteWarning(ExpectedTime, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningUri = static (buffer, out written) => WriteWarning(ExpectedUri, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningUriReference = static (buffer, out written) => WriteWarning(ExpectedUriReference, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningUriTemplate = static (buffer, out written) => WriteWarning(ExpectedUriTemplate, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningUuid = static (buffer, out written) => WriteWarning(ExpectedUuid, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningBase64String = static (buffer, out written) => WriteWarning(ExpectedBase64String, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningJsonContent = static (buffer, out written) => WriteWarning(ExpectedJsonContent, buffer, out written);
+
+    private static readonly JsonSchemaMessageProvider WarningBase64Content = static (buffer, out written) => WriteWarning(ExpectedBase64Content, buffer, out written);
+
     /// <summary>
     /// Gets the allowed characters for the local part of an email address.
     /// </summary>
@@ -905,6 +949,474 @@ public static partial class JsonSchemaEvaluation
         {
             context.EvaluatedKeyword(false, messageProvider: ExpectedBase64Content, keyword);
             return false;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedBase64Content, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Writes a <c>WARNING: </c> prefix followed by the message produced by the
+    /// supplied inner message provider. Used by the warning-mode format methods.
+    /// </summary>
+    /// <param name="inner">The inner message provider supplying the format-specific message.</param>
+    /// <param name="buffer">The buffer into which to write the message.</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the message was written; otherwise, <see langword="false"/>.</returns>
+    private static bool WriteWarning(JsonSchemaMessageProvider inner, Span<byte> buffer, out int bytesWritten)
+    {
+        ReadOnlySpan<byte> prefix = "WARNING: "u8;
+        if (buffer.Length < prefix.Length)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        prefix.CopyTo(buffer);
+        if (!inner(buffer.Slice(prefix.Length), out int innerWritten))
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        bytesWritten = prefix.Length + innerWritten;
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an ISO 8601 date.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnDate(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!JsonElementHelpers.TryParseLocalDate(value, out _))
+        {
+            context.EvaluatedKeyword(true, WarningDate, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedDate, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an ISO 8601 offset date-time.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnDateTime(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!JsonElementHelpers.TryParseOffsetDateTime(value, out _))
+        {
+            context.EvaluatedKeyword(true, WarningDateTime, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedDateTime, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an ISO 8601 duration.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnDuration(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!JsonElementHelpers.TryParsePeriod(value, out _))
+        {
+            context.EvaluatedKeyword(true, WarningDuration, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedDuration, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an email address.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnEmail(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchEmail(value))
+        {
+            context.EvaluatedKeyword(true, WarningEmail, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedEmail, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is a hostname.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnHostname(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchHostname(value))
+        {
+            context.EvaluatedKeyword(true, WarningHostname, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedHostname, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an internationalized (IDN) email address.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnIdnEmail(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchIdnEmail(value))
+        {
+            context.EvaluatedKeyword(true, WarningIdnEmail, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedIdnEmail, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an internationalized (IDN) hostname.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnIdnHostname(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchIdnHostname(value))
+        {
+            context.EvaluatedKeyword(true, WarningIdnHostname, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedIdnHostname, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an IPv4 address.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnIPV4(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchIPV4(value))
+        {
+            context.EvaluatedKeyword(true, WarningIPV4, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedIPV4, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an IPv6 address.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnIPV6(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchIPV6(value))
+        {
+            context.EvaluatedKeyword(true, WarningIPV6, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedIPV6, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an IRI.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnIri(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchIri(value))
+        {
+            context.EvaluatedKeyword(true, WarningIri, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedIri, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an IRI reference.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnIriReference(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchIriReference(value))
+        {
+            context.EvaluatedKeyword(true, WarningIriReference, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedIriReference, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is a JSON Pointer.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnJsonPointer(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchJsonPointer(value))
+        {
+            context.EvaluatedKeyword(true, WarningJsonPointer, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedJsonPointer, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an ECMAScript regular expression.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnRegex(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchRegex(value))
+        {
+            context.EvaluatedKeyword(true, WarningRegex, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedRegex, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is a relative JSON Pointer.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnRelativeJsonPointer(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchRelativeJsonPointer(value))
+        {
+            context.EvaluatedKeyword(true, WarningRelativeJsonPointer, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedRelativeJsonPointer, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is an ISO 8601 offset time.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnTime(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!JsonElementHelpers.TryParseOffsetTime(value, out _))
+        {
+            context.EvaluatedKeyword(true, WarningTime, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedTime, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is a URI.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnUri(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchUri(value))
+        {
+            context.EvaluatedKeyword(true, WarningUri, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedUri, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is a URI reference.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnUriReference(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchUriReference(value))
+        {
+            context.EvaluatedKeyword(true, WarningUriReference, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedUriReference, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is a URI template.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnUriTemplate(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchUriTemplate(value))
+        {
+            context.EvaluatedKeyword(true, WarningUriTemplate, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedUriTemplate, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is a UUID.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnUuid(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchUuid(value))
+        {
+            context.EvaluatedKeyword(true, WarningUuid, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedUuid, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is a Base64-encoded string.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnBase64String(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchBase64String(value))
+        {
+            context.EvaluatedKeyword(true, WarningBase64String, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedBase64String, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is valid JSON content.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnJsonContent(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchJsonContent(value))
+        {
+            context.EvaluatedKeyword(true, WarningJsonContent, keyword);
+            return true;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedJsonContent, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates, in warning mode, that a string value is a Base64-encoded JSON document.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns>Always <see langword="true"/>; a non-conformant value records a <c>WARNING</c> annotation rather than failing validation.</returns>
+    [CLSCompliant(false)]
+    public static bool WarnBase64Content(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchBase64Content(value))
+        {
+            context.EvaluatedKeyword(true, WarningBase64Content, keyword);
+            return true;
         }
 
         context.EvaluatedKeyword(true, ExpectedBase64Content, keyword);

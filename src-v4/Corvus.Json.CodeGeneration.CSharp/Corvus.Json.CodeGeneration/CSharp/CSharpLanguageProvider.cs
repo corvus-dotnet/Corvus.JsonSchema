@@ -657,6 +657,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="addExplicitUsings">If true, then the generated files will include using statements for the standard implicit usings. You should use this when your project does not use implicit usings.</param>
     /// <param name="defaultAccessibility">Defines the accessibility of the generated types. Defaults to <see cref="GeneratedTypeAccessibility.Public"/>.</param>
     /// <param name="excludeNonNullDefaulted">If true (and <paramref name="optionalAsNullable"/> is true), then optional properties that declare a non-null <c>default</c> are generated as non-nullable types.</param>
+    /// <param name="formatModeOverrides">Per-format assertion mode overrides, keyed by format name (e.g. <c>date-time</c>). An override takes precedence over both the vocabulary's format-assertion behaviour and <paramref name="alwaysAssertFormat"/>.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -670,7 +671,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         string lineEndSequence = "\r\n",
         bool addExplicitUsings = false,
         GeneratedTypeAccessibility defaultAccessibility = GeneratedTypeAccessibility.Public,
-        bool excludeNonNullDefaulted = false)
+        bool excludeNonNullDefaulted = false,
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null)
     {
         private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -694,6 +696,18 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// Gets a value indicating whether to always assert the format validation, regardless of the vocabulary.
         /// </summary>
         internal bool AlwaysAssertFormat { get; } = alwaysAssertFormat;
+
+        /// <summary>
+        /// Gets the per-format assertion mode overrides, keyed by format name (e.g. <c>date-time</c>).
+        /// </summary>
+        /// <remarks>
+        /// An override takes precedence over both the vocabulary's format-assertion behaviour
+        /// and <see cref="AlwaysAssertFormat"/>.
+        /// </remarks>
+        internal FrozenDictionary<string, FormatAssertionMode> FormatModeOverrides { get; } =
+            formatModeOverrides is { Count: > 0 }
+                ? formatModeOverrides.ToFrozenDictionary(StringComparer.Ordinal)
+                : FrozenDictionary<string, FormatAssertionMode>.Empty;
 
         /// <summary>
         /// Gets a value indicating whether to generate nullable types for optional parameters.

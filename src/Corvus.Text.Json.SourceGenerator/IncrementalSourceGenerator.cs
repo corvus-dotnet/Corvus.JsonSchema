@@ -171,6 +171,14 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             }
         }
 
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null;
+
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonFormatMode", out string? formatModeSpec) &&
+            !string.IsNullOrWhiteSpace(formatModeSpec))
+        {
+            formatModeOverrides = FormatAssertionModeParser.ParseSpecification(formatModeSpec, ';', ',');
+        }
+
         Text.Json.CodeGeneration.GeneratedTypeAccessibility defaultAccessibility = Text.Json.CodeGeneration.GeneratedTypeAccessibility.Public;
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonDefaultAccessibility", out string? defaultAccessibilityName))
@@ -218,7 +226,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             defaultAccessibility,
             addExplicitUsings,
             useImplicitOperatorString,
-            buildParametersThreshold);
+            buildParametersThreshold,
+            formatModeOverrides);
     }
 
     private static void EmitGeneratorAttribute(IncrementalGeneratorInitializationContext initializationContext)
@@ -283,7 +292,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         Text.Json.CodeGeneration.GeneratedTypeAccessibility defaultAccessibility,
         bool addExplicitUsings,
         bool useImplicitOperatorString,
-        int buildParametersThreshold) : IGlobalOptions
+        int buildParametersThreshold,
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides) : IGlobalOptions
     {
         private readonly List<CSharpLanguageProvider.NamedType> _namedTypes = [];
 
@@ -306,6 +316,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool UseImplicitOperatorString { get; } = useImplicitOperatorString;
 
         public int BuildParametersThreshold { get; } = buildParametersThreshold;
+
+        public IReadOnlyDictionary<string, FormatAssertionMode>? FormatModeOverrides { get; } = formatModeOverrides;
 
         public bool EmitEvaluator { get; set; }
 
@@ -348,7 +360,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 defaultAccessibility: DefaultAccessibility,
                 codeGenerationMode: EmitEvaluator ? CodeGenerationMode.Both : CodeGenerationMode.TypeGeneration,
                 excludeNonNullDefaulted: ExcludeNonNullDefaulted,
-                buildParametersThreshold: BuildParametersThreshold);
+                buildParametersThreshold: BuildParametersThreshold,
+                formatModeOverrides: FormatModeOverrides);
 
             return options;
         }

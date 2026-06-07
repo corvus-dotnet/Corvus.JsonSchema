@@ -58,7 +58,8 @@ corvusjson jsonschema <schemaFile> [OPTIONS]
 | `--rootPath` | — | JSON Pointer to the root element (e.g., `#/definitions/Person`) |
 | `--rebaseToRootPath` | `false` | Rebase the document as if rooted at `--rootPath` |
 | `--useSchema` | Auto-detect | Fallback schema draft: `Draft4`, `Draft6`, `Draft7`, `Draft201909`, `Draft202012`, `OpenApi30` |
-| `--assertFormat` | `true` | Enforce `format` keyword as a validation assertion |
+| `--assertFormat` | `true` | Enforce `format` keyword as a validation assertion (global default) |
+| `--formatMode` | — | Per-format assertion mode overrides as comma-separated `format=mode` pairs, where `mode` is `assert`, `disable`, or `warning` (e.g. `date-time=disable,time=warning`). Repeatable. An override takes precedence over `--assertFormat`. Warning mode applies to string formats only. |
 | `--optionalAsNullable` | `None` | How to handle optional properties: `None` or `NullOrUndefined` |
 | `--useImplicitOperatorString` | `false` | Use implicit (vs explicit) conversion to `string` |
 | `--disableOptionalNamingHeuristics` | `false` | Disable all optional naming heuristics at once (see [Naming Heuristics](#naming-heuristics)) |
@@ -109,6 +110,7 @@ corvusjson config myconfig.json [--engine V5]
     "outputPath": "Generated/",
     "useSchema": "Draft202012",
     "assertFormat": true,
+    "formatMode": { "date-time": "disable", "time": "warning" },
     "optionalAsNullable": "None",
     "typesToGenerate": [
         {
@@ -152,6 +154,7 @@ The `config` command is ideal when you have multiple schemas to generate from, s
 | `outputMapFile` | No | — | Path for a JSON manifest listing every generated file, useful for build systems that need to track outputs. |
 | `useSchema` | No | `Draft202012` | Fallback schema draft when vocabulary analysis cannot determine the draft from the `$schema` keyword. Values: `Draft4`, `Draft6`, `Draft7`, `Draft201909`, `Draft202012`, `OpenApi30`. |
 | `assertFormat` | No | `true` | When `true`, the `format` keyword is enforced as a validation assertion. When `false`, `format` is treated as an annotation only (per the JSON Schema specification). |
+| `formatMode` | No | — | A dictionary of per-format assertion mode overrides. Keys are format names (e.g. `date-time`); values are `assert`, `disable`, or `warning`. An override takes precedence over `assertFormat` and the vocabulary's format-assertion behaviour. `assert` validates and fails on a non-conformant value; `disable` makes the format annotation-only; `warning` validates but always succeeds, emitting a `WARNING` annotation on a mismatch. Warning mode applies to string formats only; for a numeric format it falls back to `assert`. |
 | `optionalAsNullable` | No | `None` | Controls how optional properties are represented in generated types. `None`: optional properties use the same type as required properties — you check for `Undefined` explicitly. `NullOrUndefined`: optional properties generate as .NET nullable types (`T?`), and both JSON `null` and missing properties map to C# `null`. |
 | `additionalFiles` | No | — | Pre-load external schema files so `$ref` references can resolve without network access (see below). |
 | `namedTypes` | No | — | Explicitly assign .NET names to specific schema definitions that would otherwise get auto-generated names (see below). |

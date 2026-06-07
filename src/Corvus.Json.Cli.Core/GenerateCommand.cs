@@ -9,7 +9,9 @@
 
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Corvus.Json;
+using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGenerator;
 using Corvus.Text.Json.CodeGeneration;
 using Spectre.Console.Cli;
@@ -70,6 +72,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("If --assertFormat is specified, assert format specifications.")]
         [DefaultValue(true)]
         public bool AssertFormat { get; init; }
+
+        [CommandOption("--formatMode")]
+        [Description("Per-format assertion mode overrides as comma-separated '<format>=<assert|disable|warning>' pairs (e.g. 'date-time=disable,time=warning'). May be specified more than once. An override takes precedence over --assertFormat.")]
+        public string[]? FormatMode { get; init; }
 
         [Description("The path to the schema file to process.")]
         [CommandArgument(0, "<schemaFile>")]
@@ -166,6 +172,26 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             config = config.SetProperty("defaultAccessibility", new JsonString(defaultAccessibility.ToString()));
         }
 
+        if (settings.FormatMode is string[] formatModeSpecs && formatModeSpecs.Length > 0)
+        {
+            IReadOnlyDictionary<string, FormatAssertionMode> overrides =
+                FormatAssertionModeParser.ParseSpecification(string.Join(",", formatModeSpecs), ',');
+
+            if (overrides.Count > 0)
+            {
+                config = config.SetProperty(
+                    "formatMode",
+                    JsonObject.FromProperties(overrides.Select(kvp => ((JsonPropertyName)kvp.Key, new JsonString(FormatModeToString(kvp.Value)).AsAny)).ToArray()));
+            }
+        }
+
         return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, cancellationToken);
     }
+
+    private static string FormatModeToString(FormatAssertionMode mode) => mode switch
+    {
+        FormatAssertionMode.Disable => "disable",
+        FormatAssertionMode.Warning => "warning",
+        _ => "assert",
+    };
 }

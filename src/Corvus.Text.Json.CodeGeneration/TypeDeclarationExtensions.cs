@@ -7,6 +7,7 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -57,6 +58,7 @@ public static class TypeDeclarationExtensions
     private const string AccessibilityKey = "CSharp_LanguageProvider_AccessibilityKey";
     private const string AddExplicitUsingsKey = "CSharp_LanguageProvider_AddExplicitUsings";
     private const string AlwaysAssertFormatKey = "CSharp_LanguageProvider_AlwaysAssertFormat";
+    private const string FormatModeOverridesKey = "CSharp_LanguageProvider_FormatModeOverrides";
     private const string BuilderSourcesKey = "CSharp_LanguageProvider_BuilderSources";
     private const string ChildrenKey = "CSharp_LanguageProvider_Children";
     private const string DefaultAccessibilityKey = "CSharp_LanguageProvider_DefaultAccessibilityKey";
@@ -105,6 +107,56 @@ public static class TypeDeclarationExtensions
             return value;
         }
 
+        return false;
+    }
+
+    /// <summary>
+    /// Gets the effective <see cref="FormatAssertionMode"/> for the given format on this
+    /// type declaration.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <param name="format">The format name (e.g. <c>date-time</c>).</param>
+    /// <returns>The effective <see cref="FormatAssertionMode"/>.</returns>
+    /// <remarks>
+    /// Resolution order: a per-format override (if present) takes precedence, then the
+    /// vocabulary's format-assertion behaviour or the global
+    /// <see cref="AlwaysAssertFormat(TypeDeclaration)"/> setting (either of which yields
+    /// <see cref="FormatAssertionMode.Assert"/>), otherwise <see cref="FormatAssertionMode.Disable"/>.
+    /// </remarks>
+    public static FormatAssertionMode GetEffectiveFormatMode(this TypeDeclaration typeDeclaration, string format)
+    {
+        if (typeDeclaration.TryGetMetadata(FormatModeOverridesKey, out FrozenDictionary<string, FormatAssertionMode>? overrides) &&
+            overrides is not null &&
+            overrides.TryGetValue(format, out FormatAssertionMode mode))
+        {
+            return mode;
+        }
+
+        if (typeDeclaration.IsFormatAssertion() || typeDeclaration.AlwaysAssertFormat())
+        {
+            return FormatAssertionMode.Assert;
+        }
+
+        return FormatAssertionMode.Disable;
+    }
+
+    /// <summary>
+    /// Tries to get an explicit per-format assertion mode override for the given format.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <param name="format">The format name (e.g. <c>date-time</c>).</param>
+    /// <param name="mode">When this method returns <see langword="true"/>, contains the override mode.</param>
+    /// <returns><see langword="true"/> if an explicit override was configured for the format.</returns>
+    public static bool GetFormatModeOverride(this TypeDeclaration typeDeclaration, string format, out FormatAssertionMode mode)
+    {
+        if (typeDeclaration.TryGetMetadata(FormatModeOverridesKey, out FrozenDictionary<string, FormatAssertionMode>? overrides) &&
+            overrides is not null &&
+            overrides.TryGetValue(format, out mode))
+        {
+            return true;
+        }
+
+        mode = FormatAssertionMode.Disable;
         return false;
     }
 
@@ -630,6 +682,7 @@ public static class TypeDeclarationExtensions
     public static void SetCSharpOptions(this TypeDeclaration typeDeclaration, CSharpLanguageProvider.Options options)
     {
         typeDeclaration.SetMetadata(AlwaysAssertFormatKey, options.AlwaysAssertFormat);
+        typeDeclaration.SetMetadata(FormatModeOverridesKey, options.FormatModeOverrides);
         typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
         typeDeclaration.SetMetadata(ExcludeNonNullDefaultedKey, options.ExcludeNonNullDefaulted);
         typeDeclaration.SetMetadata(BuildParametersThresholdKey, options.BuildParametersThreshold);

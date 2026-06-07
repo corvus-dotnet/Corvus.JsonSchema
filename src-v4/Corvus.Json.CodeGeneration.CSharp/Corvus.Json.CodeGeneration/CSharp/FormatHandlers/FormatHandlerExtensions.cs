@@ -421,6 +421,7 @@ public static class FormatHandlerExtensions
     /// <param name="formatKeyword">The format keyword.</param>
     /// <param name="returnFromMethod"><see langword="true"/> if you should return from the method, otherwise it updates the <paramref name="validationContextIdentifier"/>.</param>
     /// <param name="includeType"><see langword="true"/> if you should also include type assertion.</param>
+    /// <param name="warn">If <see langword="true"/>, emit the warning-mode variant that records a <c>WARNING</c> annotation on mismatch instead of failing validation.</param>
     /// <returns><see langword="true"/> if the assertion was appended successfully.</returns>
     public static bool AppendFormatAssertion<T>(
         this IEnumerable<T> handlers,
@@ -431,7 +432,8 @@ public static class FormatHandlerExtensions
         IKeyword? typeKeyword,
         IKeyword? formatKeyword,
         bool returnFromMethod,
-        bool includeType = false)
+        bool includeType = false,
+        bool warn = false)
         where T : notnull, IFormatHandler
     {
         foreach (T handler in handlers)
@@ -441,7 +443,7 @@ public static class FormatHandlerExtensions
                 return false;
             }
 
-            if (handler.AppendFormatAssertion(generator, format, valueIdentifier, validationContextIdentifier, includeType, typeKeyword, formatKeyword, returnFromMethod))
+            if (handler.AppendFormatAssertion(generator, format, valueIdentifier, validationContextIdentifier, includeType, typeKeyword, formatKeyword, returnFromMethod, warn))
             {
                 return true;
             }

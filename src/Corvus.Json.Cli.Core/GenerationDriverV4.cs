@@ -247,7 +247,31 @@ public static class GenerationDriverV4
             lineEndSequence: (generatorConfig.UseUnixLineEndings ?? false) ? "\n" : "\r\n",
             addExplicitUsings: generatorConfig.AddExplicitUsings ?? false,
             defaultAccessibility: defaultAccessibility,
-            excludeNonNullDefaulted: excludeNonNullDefaulted);
+            excludeNonNullDefaulted: excludeNonNullDefaulted,
+            formatModeOverrides: GetFormatModeOverrides(generatorConfig));
+    }
+
+    private static IReadOnlyDictionary<string, FormatAssertionMode>? GetFormatModeOverrides(in GeneratorConfig generatorConfig)
+    {
+        if (!generatorConfig.TryGetProperty("formatMode", out JsonAny propertyValue) || propertyValue.IsNullOrUndefined())
+        {
+            return null;
+        }
+
+        Dictionary<string, FormatAssertionMode> overrides = new(StringComparer.Ordinal);
+        foreach (JsonObjectProperty property in propertyValue.As<JsonObject>().EnumerateObject())
+        {
+            string format = property.Name.GetString();
+            string modeText = (string)property.Value.As<JsonString>();
+            if (!FormatAssertionModeParser.TryParseMode(modeText, out FormatAssertionMode mode))
+            {
+                throw new FormatException($"Invalid format mode '{modeText}' for format '{format}' in 'formatMode'. Expected 'assert', 'disable' or 'warning'.");
+            }
+
+            overrides[format] = mode;
+        }
+
+        return overrides.Count > 0 ? overrides : null;
     }
 
     private static GeneratedTypeAccessibility GetDefaultAccessibility(in GeneratorConfig generatorConfig)

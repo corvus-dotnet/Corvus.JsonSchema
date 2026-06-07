@@ -33,10 +33,13 @@ public class TestEvaluatorHelper
 
     private readonly bool _validateFormat;
 
+    private readonly IReadOnlyDictionary<string, FormatAssertionMode>? _formatModeOverrides;
+
     private TestEvaluatorHelper(
         string remotesBaseDirectory,
         IVocabulary? defaultVocabulary = null,
-        bool validateFormat = true)
+        bool validateFormat = true,
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null)
     {
         _remotesBaseDirectory = remotesBaseDirectory;
         _documentResolver =
@@ -50,6 +53,7 @@ public class TestEvaluatorHelper
 
         _jsonSchemaTypeBuilder = new(_documentResolver, _vocabularyRegistry);
         _validateFormat = validateFormat;
+        _formatModeOverrides = formatModeOverrides;
         _defaultVocabulary = defaultVocabulary ?? Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
     }
 
@@ -147,6 +151,38 @@ public class TestEvaluatorHelper
         return s_cache.GetOrAdd(key, _ => result);
     }
 
+    /// <summary>
+    /// Generate a compiled standalone evaluator for the given virtual file, applying the supplied
+    /// per-format assertion mode overrides.
+    /// </summary>
+    /// <param name="virtualFilename">The virtual file name.</param>
+    /// <param name="schemaText">The text of the virtual schema file.</param>
+    /// <param name="defaultNamespace">The default namespace for code generation.</param>
+    /// <param name="remotesBaseDirectory">The remotes base directory for the test suite.</param>
+    /// <param name="defaultVocabulary">The default vocabulary for the test run.</param>
+    /// <param name="validateFormat">Whether to assert format globally (maps to <c>alwaysAssertFormat</c>).</param>
+    /// <param name="formatModeOverrides">The per-format assertion mode overrides, keyed by format name.</param>
+    /// <param name="hostAssembly">The host assembly with preserved compilation context.</param>
+    /// <returns>A <see cref="CompiledEvaluator"/> for the schema.</returns>
+    public static async ValueTask<CompiledEvaluator> GenerateEvaluatorForVirtualFileAsync(
+        string virtualFilename,
+        string schemaText,
+        string defaultNamespace,
+        string remotesBaseDirectory,
+        IVocabulary defaultVocabulary,
+        bool validateFormat,
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides,
+        Assembly hostAssembly)
+    {
+        var helper = new TestEvaluatorHelper(
+            remotesBaseDirectory,
+            defaultVocabulary: defaultVocabulary,
+            validateFormat: validateFormat,
+            formatModeOverrides: formatModeOverrides);
+
+        return await helper.GenerateAndCompileAsync(virtualFilename, schemaText, TestJsonSchemaCodeGenerator.ToPascalCase(defaultNamespace), hostAssembly);
+    }
+
     private void RegisterVocabularies()
     {
         Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(_documentResolver, _vocabularyRegistry);
@@ -169,7 +205,8 @@ public class TestEvaluatorHelper
             defaultNamespace,
             alwaysAssertFormat: _validateFormat,
             addExplicitUsings: true,
-            codeGenerationMode: CodeGenerationMode.SchemaEvaluationOnly);
+            codeGenerationMode: CodeGenerationMode.SchemaEvaluationOnly,
+            formatModeOverrides: _formatModeOverrides);
 
         _jsonSchemaTypeBuilder.AddDocument(path, System.Text.Json.JsonDocument.Parse(jsonSchema));
 

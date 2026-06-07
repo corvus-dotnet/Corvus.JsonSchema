@@ -603,15 +603,37 @@ public static partial class ValidationCodeGeneratorExtensions
                         .AppendLineIndent("result = validationContext;");
                     break;
                 default:
+                    string extendedFormat = typeDeclaration.ExplicitFormat() ?? throw new InvalidOperationException("There should be an explicit format for a JSON extended type that is not one of the Core types.");
+
+                    // An explicit per-format override can disable the assertion or downgrade it to a
+                    // warning. Without an override, the extended type asserts its format as before.
+                    if (typeDeclaration.GetFormatModeOverride(extendedFormat, out FormatAssertionMode extendedFormatMode) &&
+                        extendedFormatMode == FormatAssertionMode.Disable)
+                    {
+                        generator
+                            .AppendLineIndent("result = validationContext;");
+                        break;
+                    }
+
+                    bool extendedWarn = extendedFormatMode == FormatAssertionMode.Warning;
+                    if (extendedWarn && FormatHandlerRegistry.Instance.FormatHandlers.GetExpectedValueKind(extendedFormat) != System.Text.Json.JsonValueKind.String)
+                    {
+                        // Warning mode is only supported for string formats; assert numeric formats.
+                        generator
+                            .AppendLineIndent("// NOTE: 'warning' format mode is not supported for the numeric format '", extendedFormat, "'; asserting instead.");
+                        extendedWarn = false;
+                    }
+
                     FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(
                         generator,
-                        typeDeclaration.ExplicitFormat() ?? throw new InvalidOperationException("There should be an explicit format for a JSON extended type that is not one of the Core types."),
+                        extendedFormat,
                         "this",
                         "result",
                         typeKeyword,
                         formatKeyword,
                         returnFromMethod: false,
-                        includeType: true);
+                        includeType: true,
+                        warn: extendedWarn);
                     break;
             }
 

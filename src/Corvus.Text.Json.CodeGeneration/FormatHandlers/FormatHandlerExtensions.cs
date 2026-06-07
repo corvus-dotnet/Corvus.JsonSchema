@@ -220,6 +220,8 @@ internal static class FormatHandlerExtensions
     /// <param name="formatKeywordProviderExpression">The expression that provides the format keyword.</param>
     /// <param name="valueIdentifier">The identifier for the string value to validate.</param>
     /// <param name="validationContextIdentifier">The identifier for the validation context.</param>
+    /// <param name="warn">If <see langword="true"/>, emit the warning-mode variant that records a
+    /// <c>WARNING</c> annotation on mismatch instead of failing validation.</param>
     /// <returns><see langword="true"/> if a handler was found and emitted code; otherwise, <see langword="false"/>.</returns>
     public static bool AppendFormatAssertion<T>(
         this IEnumerable<T> handlers,
@@ -227,12 +229,13 @@ internal static class FormatHandlerExtensions
         string format,
         string formatKeywordProviderExpression,
         string valueIdentifier,
-        string validationContextIdentifier)
+        string validationContextIdentifier,
+        bool warn = false)
         where T : notnull, IStringFormatHandler
     {
         foreach (T handler in handlers)
         {
-            if (handler.AppendFormatAssertion(generator, format, formatKeywordProviderExpression, valueIdentifier, validationContextIdentifier))
+            if (handler.AppendFormatAssertion(generator, format, formatKeywordProviderExpression, valueIdentifier, validationContextIdentifier, warn))
             {
                 return true;
             }

@@ -135,18 +135,31 @@ file static class FormatValidationHandlerExtensions
         generator
             .PrependChildValidationCode(typeDeclaration, childHandlers, validationPriority);
 
-        if (typeDeclaration.IsFormatAssertion() || typeDeclaration.AlwaysAssertFormat())
+        FormatAssertionMode formatMode = typeDeclaration.GetEffectiveFormatMode(explicitFormat);
+
+        if (formatMode is FormatAssertionMode.Assert or FormatAssertionMode.Warning)
         {
+            bool warn = formatMode == FormatAssertionMode.Warning;
+
             if (expectedTokenType is JsonTokenType.String)
             {
                 generator
                     .AppendSeparatorLine()
                     .AppendUnescapedUtf8JsonStringIfNotAppended(typeDeclaration, includeTokenTypeCheck: false);
-                FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatAssertion(generator, explicitFormat, $"{SymbolDisplay.FormatLiteral(keyword.Keyword, true)}u8", "unescapedUtf8JsonString.Span", "context");
+                FormatHandlerRegistry.Instance.StringFormatHandlers.AppendFormatAssertion(generator, explicitFormat, $"{SymbolDisplay.FormatLiteral(keyword.Keyword, true)}u8", "unescapedUtf8JsonString.Span", "context", warn);
                 generator.AppendLine(";");
             }
             else
             {
+                if (warn)
+                {
+                    // Warning mode is only supported for string formats. Numeric formats fall back
+                    // to assertion; emit a visible note in the generated code.
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("// NOTE: 'warning' format mode is not supported for the numeric format '", explicitFormat, "'; asserting instead.");
+                }
+
                 generator
                     .AppendSeparatorLine()
                     .AppendNormalizedJsonNumberIfNotAppended(typeDeclaration, includeTokenTypeCheck: false);
