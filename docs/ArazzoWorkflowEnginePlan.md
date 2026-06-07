@@ -186,6 +186,34 @@ contract**, not best-effort.
   telemetry are the same model, so the in-memory exporter *is* the call-path
   oracle.
 
+### 3.4 Runtime engineering principles (how the code is written)
+
+The engine is part of a high-performance, zero-reflection library, so the
+implementation must follow its house style:
+
+- **Strongly-typed accessors first.** Consume generated model types via their
+  typed getters; use `IsNotUndefined()`/`IsUndefined()` for presence and
+  `GetString()`/typed getters for values — never `ValueKind`-sniffing or
+  `(string)` casts where a typed accessor exists.
+- **`Match()` for unions and enums.** Resolve discriminated shapes (e.g. a
+  step's `operationId`/`operationPath`/`workflowId`, or a closed enum) with the
+  generated `Match(...)` overloads, which hand back a view where the matched
+  member is guaranteed present — not hand-rolled `if`/`IsNotUndefined` ladders.
+- **Zero allocation on the per-execution hot path.** Stay in **UTF-8**
+  (`ReadOnlySpan<byte>`) end-to-end; prefer UTF-8 overloads
+  (`TryGetProperty(ReadOnlySpan<byte>)`, `TryResolvePointer(ReadOnlySpan<byte>)`).
+  Build output with rented buffers (`ArrayPool<byte>`, `ArrayBufferWriter<byte>`,
+  `Utf8JsonWriter`) and the repository's own internal `System.Text.Utf8ValueStringBuilder`
+  (`Common/src/System/Text/Utf8ValueStringBuilder.cs`, *linked* into the
+  consuming project via `<Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.cs"/>`,
+  as `Corvus.Text.Json.JsonLogic`/`.Toon`/`.Jsonata` do — **not** an external
+  package) — not `string` concatenation. Operate on the struct value type
+  `Corvus.Text.Json.JsonElement` over pooled `ParsedJsonDocument` memory; use
+  `JsonElement.WriteTo(Utf8JsonWriter)` to splice values without materializing
+  strings. Build-/generation-time work (e.g. parsing a runtime expression) may
+  allocate; the per-step path must not. Code-generated executors bake property
+  names and JSON Pointers as `"..."u8` literals so the hot path allocates nothing.
+
 ## 4. Proposed project layout (mirrors OpenApi/AsyncApi)
 
 | Project | Contents |
