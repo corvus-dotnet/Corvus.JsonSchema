@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Text.Json.Arazzo11;
+using Corvus.Text.Json.Arazzo10;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
@@ -81,24 +81,11 @@ public sealed class ArazzoReferences
     }
 
     private static (StepTargetKind Kind, string? Target) Classify(in ArazzoDocument.StepObject step)
-    {
-        if (step.OperationId.IsNotUndefined())
-        {
-            return (StepTargetKind.OperationId, step.OperationId.GetString());
-        }
-
-        if (step.OperationPath.IsNotUndefined())
-        {
-            return (StepTargetKind.OperationPath, step.OperationPath.GetString());
-        }
-
-        if (step.WorkflowId.IsNotUndefined())
-        {
-            return (StepTargetKind.WorkflowId, step.WorkflowId.GetString());
-        }
-
-        return (StepTargetKind.None, null);
-    }
+        => step.Match(
+            static (in ArazzoDocument.StepObject.RequiredOperationId s) => (StepTargetKind.OperationId, s.OperationId.GetString()),
+            static (in ArazzoDocument.StepObject.RequiredOperationPath s) => (StepTargetKind.OperationPath, s.OperationPath.GetString()),
+            static (in ArazzoDocument.StepObject.RequiredWorkflowId s) => (StepTargetKind.WorkflowId, s.WorkflowId.GetString()),
+            static (in ArazzoDocument.StepObject _) => (StepTargetKind.None, (string?)null));
 
     private sealed class OrderedSet
     {
