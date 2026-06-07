@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Corvus.Text;
@@ -168,8 +169,14 @@ public sealed class CompiledCriterion
 
     private bool EvaluateRegex(WorkflowExecutionContext executionContext)
     {
-        // Zero-allocation path for string/scalar contexts: resolve as UTF-8, transcode to a
-        // stack/pooled char span, and match. Regex requires UTF-16 input.
+        // A compile-time literal context is already an unescaped string on the expression.
+        if (this.context.Source == ArazzoExpressionSource.Literal)
+        {
+            return this.Match(executionContext, this.context.LiteralValue ?? string.Empty);
+        }
+
+        // Zero-allocation path for string/scalar contexts: resolve as the *unescaped* UTF-8 string
+        // (GetUtf8String), transcode to a stack/pooled char span, and match. Regex requires UTF-16.
         if (executionContext.TryResolveUtf8(this.context, out ResolvedUtf8 resolved))
         {
             using (resolved)
@@ -178,13 +185,17 @@ public sealed class CompiledCriterion
             }
         }
 
-        // Fallback for non-string JSON / $statusCode contexts.
-        if (!executionContext.TryResolveString(this.context, out string text))
+        // $statusCode is an integer with no resident string; format it straight into a char buffer
+        // rather than allocating a managed string on the hot path.
+        if (executionContext.TryGetStatusCode(this.context, out int status))
         {
-            return false;
+            Span<char> buffer = stackalloc char[16];
+            status.TryFormat(buffer, out int written, default, CultureInfo.InvariantCulture);
+            return this.Match(executionContext, buffer[..written]);
         }
 
-        return this.Match(executionContext, text);
+        // A regex criterion needs textual context; a non-string JSON value does not match.
+        return false;
     }
 
     private bool MatchUtf8(WorkflowExecutionContext executionContext, ReadOnlySpan<byte> utf8)

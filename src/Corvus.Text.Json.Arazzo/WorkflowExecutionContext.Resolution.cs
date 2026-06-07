@@ -114,6 +114,25 @@ public sealed partial class WorkflowExecutionContext
     }
 
     /// <summary>
+    /// Resolves a <c>$statusCode</c> expression to its integer value, for callers that format it
+    /// directly (e.g. a <c>regex</c> context) without allocating a managed string.
+    /// </summary>
+    /// <param name="expression">The parsed expression.</param>
+    /// <param name="statusCode">When this method returns <see langword="true"/>, the status code.</param>
+    /// <returns><see langword="true"/> if the expression is <c>$statusCode</c> and a status code is set.</returns>
+    internal bool TryGetStatusCode(in ArazzoExpression expression, out int statusCode)
+    {
+        if (expression.Source == ArazzoExpressionSource.StatusCode && this.statusCode is int code)
+        {
+            statusCode = code;
+            return true;
+        }
+
+        statusCode = 0;
+        return false;
+    }
+
+    /// <summary>
     /// Resolves a runtime expression to a typed <see cref="Comparand"/> for <c>simple</c> criteria,
     /// optionally navigating into the resolved value with a JSON Pointer (for the <c>.</c>/<c>[]</c>
     /// operand operators).
