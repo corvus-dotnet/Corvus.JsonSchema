@@ -61,6 +61,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi31\Corvus.Text.Json.OpenApi31.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi.CodeGeneration\Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo10\Corvus.Text.Json.Arazzo10.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="metaschema\corvus\meta\corvus-extensions.json">
