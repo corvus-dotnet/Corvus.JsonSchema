@@ -4,39 +4,19 @@
 
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
-/// Emits the body of a single operation step of a generated workflow executor (plan §3.1): resolve
-/// the arguments (<see cref="RequestBindingEmitter"/>), invoke the operation through the
-/// <em>generated client method</em> — which builds and validates the request, sends it, and validates
-/// the response, so the OpenAPI protocol is managed for us — record the step metric, feed the response
-/// body into the workflow context, gate on the step's success criteria, and dispose the response.
+/// Emits the body of a single operation step of a generated workflow executor (plan §3.1): construct
+/// the request (<see cref="RequestBindingEmitter"/>), send it, record the step metric, feed the
+/// response into the workflow context, and gate on the step's success criteria.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The response is an <see cref="System.IAsyncDisposable"/> whose JSON values are backed by its own
-/// transport buffer, independent of the request. Each declared JSON body is therefore <em>cloned into
-/// the run's <c>JsonWorkspace</c></em> (<c>CloneAsBuilder</c>) before being fed to the context — so the
-/// step's outputs, which reference (not copy) those values, remain valid for the whole run — and the
-/// response is then disposed in a <c>finally</c>, leaking nothing.
-/// </para>
-/// <para>
-/// Success criteria are inlined where possible: a pure <c>$statusCode &lt;op&gt; &lt;int&gt;</c>
-/// comparison becomes a direct status-code comparison, and a <c>simple</c> condition — the whole
-/// grammar (<c>||</c>, <c>&amp;&amp;</c>, <c>!</c>, grouping, comparisons, lone truthy operands) — is
-/// inlined (via <see cref="SimpleCriterionInliner"/>) to evaluate directly against the live response /
-/// inputs / prior-step outputs, reusing <see cref="Corvus.Text.Json.Arazzo.Comparand"/> for the operand
-/// semantics. A <c>regex</c> criterion with a static pattern is inlined (via
-/// <see cref="RegexCriterionInliner"/>) as a <c>[GeneratedRegex]</c> partial method matching the
-/// statically-resolved context value. A criterion the inliners cannot resolve statically (an
-/// unsupported source, a dynamic regex pattern, or <c>jsonpath</c>) is compiled once into a
-/// <c>static readonly</c> <c>CompiledCriterion</c> field. A step with no <c>successCriteria</c> defaults
-/// to requiring an HTTP success status.
-/// </para>
+/// Success criteria are compiled once into <c>static readonly</c> <c>CompiledCriterion</c> fields; a
+/// step with no <c>successCriteria</c> defaults to requiring an HTTP success status. Output
+/// extraction is layered on by a later stage.
 /// </remarks>
 public static class StepBodyEmitter
 {
@@ -47,214 +27,66 @@ public static class StepBodyEmitter
     /// <param name="operation">The resolved operation the step targets.</param>
     /// <param name="arguments">The step's arguments (parameter name → runtime-expression value).</param>
     /// <param name="successCriteria">The step's success criteria, in document order.</param>
-    /// <param name="outputs">The step's outputs, projected into the step-outputs product inside the step while the response is alive.</param>
     /// <param name="transportVariable">The in-scope <c>IApiTransport</c> variable name.</param>
-    /// <param name="workspaceVariable">The in-scope <c>JsonWorkspace</c> variable name (owns the cloned response bodies).</param>
     /// <param name="contextVariable">The in-scope <c>WorkflowExecutionContext</c> variable name.</param>
     /// <param name="cancellationTokenVariable">The in-scope <c>CancellationToken</c> variable name.</param>
-    /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
-    /// <param name="inputsVariable">The in-scope workflow inputs variable name (for static <c>$inputs</c> navigation).</param>
-    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
-    /// <param name="namespaceName">The executor's namespace (for sibling types emitted for <c>jsonpath</c> criteria).</param>
-    /// <param name="requestBody">The step's request body (expression or literal), or <see langword="null"/> when the step declares no (supported) request body.</param>
-    /// <param name="bindResponseBody">
-    /// Whether to feed the response body into the context. Set <see langword="false"/> when nothing in
-    /// the step references <c>$response.body</c> — the body is then never cloned into the workspace,
-    /// saving the clone (a document allocation) for status-only steps.
-    /// </param>
     /// <returns>The emitted static field declarations and the in-method statements.</returns>
     public static StepBodyCode Emit(
         string stepId,
         in ResolvedOperation operation,
         IReadOnlyList<StepArgument> arguments,
         IReadOnlyList<StepCriterion> successCriteria,
-        IReadOnlyList<OutputMapping> outputs,
         string transportVariable,
-        string workspaceVariable,
         string contextVariable,
-        string cancellationTokenVariable,
-        IReadOnlyDictionary<string, string> stepOutputLocals,
-        string inputsVariable,
-        IReadOnlyDictionary<string, string>? inputAccessors,
-        string namespaceName,
-        StepBody? requestBody = null,
-        bool bindResponseBody = true)
+        string cancellationTokenVariable)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
         ArgumentNullException.ThrowIfNull(successCriteria);
-        ArgumentNullException.ThrowIfNull(stepOutputLocals);
-        ArgumentException.ThrowIfNullOrEmpty(workspaceVariable);
 
         string identifier = EmitText.SanitizeIdentifier(stepId);
         string prefix = $"{identifier}_";
-        string camel = EmitText.ToCamelCase(identifier);
-        string clientVar = $"{camel}Client";
-        string responseVar = $"{camel}Response";
+        string requestVar = $"{EmitText.ToCamelCase(identifier)}Request";
+        string responseVar = $"{EmitText.ToCamelCase(identifier)}Response";
 
-        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, prefix, stepOutputLocals, inputsVariable, inputAccessors, requestBody);
+        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, requestVar, prefix);
 
         var fields = new StringBuilder(request.Fields);
         var body = new StringBuilder(request.Statements);
-        var auxiliaryTypes = new StringBuilder();
 
-        string responseBodyLocal = $"{camel}ResponseBody";
-        bool hasOutputs = outputs.Count > 0;
-        bool referencesUrl = RequestUrlEmitter.ReferencesUrl(successCriteria);
-        string urlLocal = RequestUrlEmitter.UrlLocal(prefix);
+        body.Append("var ").Append(responseVar).Append(" = await ").Append(transportVariable)
+            .Append(".SendAsync<").Append(operation.Operation.RequestTypeName).Append(", ")
+            .Append(operation.Operation.ResponseTypeName).Append(">(").Append(requestVar)
+            .Append(", ").Append(cancellationTokenVariable).AppendLine(").ConfigureAwait(false);");
 
-        // Build the success gate and output extraction first, so we can detect whether anything still
-        // consumes the WorkflowExecutionContext (a non-inlined CompiledCriterion, or a context-fallback
-        // output) and whether the $url criterion was inlined. When nothing uses the context, the
-        // context-population calls (and the context object itself) are omitted entirely.
-        var gate = new StringBuilder();
-        var requestContext = new StepRequestContext(
-            operation.Operation.Method.ToString().ToUpperInvariant(), arguments, requestBody, referencesUrl ? urlLocal : null);
-        EmitSuccessGate(
-            fields, gate, auxiliaryTypes, successCriteria, prefix, contextVariable, responseVar,
-            new CriterionSources(bindResponseBody ? responseBodyLocal : null), inputsVariable, stepOutputLocals, inputAccessors, operation.Operation.ResponseHeaders, requestContext, namespaceName, stepId);
+        body.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
+        body.Append(contextVariable).Append(".SetResponseStatusCode(").Append(responseVar).AppendLine(".StatusCode);");
 
-        string outputStatements = string.Empty;
-        if (hasOutputs)
+        // Feed each declared JSON body into the context, guarded by the matching status, so
+        // $response.body resolves for criteria and outputs.
+        foreach (ResponseDescriptor response in operation.Operation.Responses)
         {
-            OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
-                stepId, outputs, workspaceVariable, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
-                bindResponseBody ? responseBodyLocal : null);
-            fields.Append(outputCode.Fields);
-            outputStatements = outputCode.Statements;
-        }
-
-        bool usesContext = gate.ToString().Contains(contextVariable, StringComparison.Ordinal)
-            || outputStatements.Contains(contextVariable, StringComparison.Ordinal);
-        bool urlInlined = referencesUrl && gate.ToString().Contains(urlLocal, StringComparison.Ordinal);
-
-        // A $url criterion resolves against the request's relative URL, rebuilt from the resolved Sources
-        // before the client call (while the bound Sources / pooled buffers are still live). When the
-        // criterion was inlined it compares an executor-owned byte[] (no context); a non-inlined $url (one
-        // that fell back to a CompiledCriterion, which already forces the context) resolves via the context.
-        if (urlInlined)
-        {
-            body.Append(RequestUrlEmitter.Emit(operation, request.ParameterBindings, prefix, workspaceVariable, fields));
-        }
-        else if (referencesUrl)
-        {
-            body.Append(RequestUrlEmitter.EmitToContext(operation, request.ParameterBindings, prefix, workspaceVariable, contextVariable));
-        }
-
-        // Invoke through the generated client: it constructs and validates the request, sends it via
-        // the transport, and validates the response — we never touch the request type or the raw
-        // transport, so the protocol stays in the generated code.
-        var callArguments = new List<string>(request.NamedArguments)
-        {
-            $"cancellationToken: {cancellationTokenVariable}",
-        };
-
-        body.Append("var ").Append(clientVar).Append(" = new ").Append(operation.Operation.ClientTypeName)
-            .Append('(').Append(transportVariable).AppendLine(");");
-        body.Append("var ").Append(responseVar).Append(" = await ").Append(clientVar).Append('.')
-            .Append(operation.Operation.ClientMethodName).Append('(')
-            .Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
-
-        // Return any pooled buffers whose spans were passed as a Source: the client materialised them
-        // synchronously while building the request, so they are no longer referenced once the call
-        // above has returned.
-        body.Append(request.Cleanup);
-
-        // The step-outputs product is declared BEFORE the try so later steps can reference it, but
-        // built INSIDE the try while the response is still alive — so its $response.body values are
-        // projected (and only those copied) without cloning the whole body. The response is then
-        // disposed in the finally.
-        if (hasOutputs)
-        {
-            body.Append("JsonElement ").Append(EmitText.StepOutputsElementLocal(stepId)).AppendLine(" = default;");
-        }
-
-        body.AppendLine("try");
-        body.AppendLine("{");
-
-        var inner = new StringBuilder();
-        inner.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
-
-        // The status code only ever feeds the context, so it is recorded only when the context is used.
-        if (usesContext)
-        {
-            inner.Append(contextVariable).Append(".SetResponseStatusCode(").Append(responseVar).AppendLine(".StatusCode);");
-        }
-
-        // Bind the matched-status body as a LIVE reference (no clone) — used by inlined criteria and
-        // projected into outputs, all while the response is alive. The body is fed to the context only
-        // when a non-inlined criterion still resolves $response.body through it.
-        if (bindResponseBody)
-        {
-            inner.Append("JsonElement ").Append(responseBodyLocal).AppendLine(" = default;");
-            foreach (ResponseDescriptor response in operation.Operation.Responses)
+            if (response.BodyPropertyName is { } bodyProperty
+                && int.TryParse(response.StatusCode, NumberStyles.Integer, CultureInfo.InvariantCulture, out int statusCode))
             {
-                if (response.BodyPropertyName is { } bodyProperty
-                    && int.TryParse(response.StatusCode, NumberStyles.Integer, CultureInfo.InvariantCulture, out int statusCode))
-                {
-                    inner.Append("if (").Append(responseVar).Append(".StatusCode == ")
-                        .Append(statusCode.ToString(CultureInfo.InvariantCulture)).Append(") { ")
-                        .Append(responseBodyLocal).Append(" = (JsonElement)").Append(responseVar).Append('.').Append(bodyProperty)
-                        .AppendLine("; }");
-                }
-            }
-
-            if (usesContext)
-            {
-                inner.Append(contextVariable).Append(".SetResponseBody(").Append(responseBodyLocal).AppendLine(");");
+                body.Append("if (").Append(responseVar).Append(".StatusCode == ")
+                    .Append(statusCode.ToString(CultureInfo.InvariantCulture)).Append(") { ")
+                    .Append(contextVariable).Append(".SetResponseBody(").Append(responseVar).Append('.').Append(bodyProperty)
+                    .AppendLine("); }");
             }
         }
 
-        inner.Append(gate);
-        inner.Append(outputStatements);
+        EmitSuccessGate(fields, body, successCriteria, prefix, contextVariable, responseVar, stepId);
 
-        AppendIndented(body, inner.ToString(), 4);
-
-        body.AppendLine("}");
-        body.AppendLine("finally");
-        body.AppendLine("{");
-        body.Append("    await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
-        body.AppendLine("}");
-
-        return new StepBodyCode(fields.ToString(), body.ToString(), auxiliaryTypes.ToString(), usesContext);
-    }
-
-    private static void AppendIndented(StringBuilder target, string text, int indent)
-    {
-        if (text.Length == 0)
-        {
-            return;
-        }
-
-        string pad = new(' ', indent);
-        foreach (string line in text.Split('\n'))
-        {
-            string trimmed = line.TrimEnd('\r');
-            if (trimmed.Length == 0)
-            {
-                target.AppendLine();
-            }
-            else
-            {
-                target.Append(pad).AppendLine(trimmed);
-            }
-        }
+        return new StepBodyCode(fields.ToString(), body.ToString());
     }
 
     private static void EmitSuccessGate(
         StringBuilder fields,
         StringBuilder body,
-        StringBuilder auxiliaryTypes,
         IReadOnlyList<StepCriterion> successCriteria,
         string prefix,
         string contextVariable,
         string responseVar,
-        CriterionSources sources,
-        string inputsVariable,
-        IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors,
-        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
-        in StepRequestContext requestContext,
-        string namespaceName,
         string stepId)
     {
         if (successCriteria.Count == 0)
@@ -262,112 +94,18 @@ public static class StepBodyEmitter
             // No criteria: per the engine's default, the step succeeds on an HTTP success status.
             body.Append("if (!").Append(responseVar).AppendLine(".IsSuccess)");
             body.AppendLine("{");
-            body.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
+            body.Append("    throw new InvalidOperationException(")
                 .Append(EmitText.Quote($"Step '{stepId}' returned an unsuccessful status."))
                 .AppendLine(");");
             body.AppendLine("}");
             return;
         }
 
-        string expression = EmitCriteriaExpression(
-            successCriteria, fields, body, auxiliaryTypes, prefix, contextVariable, responseVar,
-            sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, namespaceName);
-
-        body.Append("if (!(").Append(expression).AppendLine("))");
-        body.AppendLine("{");
-        body.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
-            .Append(EmitText.Quote($"Step '{stepId}' did not satisfy its success criteria."))
-            .AppendLine(");");
-        body.AppendLine("}");
-    }
-
-    /// <summary>
-    /// Emits the operand-resolution statements for a list of criteria and returns the combined boolean
-    /// expression (an AND of each criterion's inlined check). An empty list yields <c>"true"</c> (an
-    /// empty criteria set is satisfied, per the Arazzo spec). Each criterion is inlined where possible
-    /// (<c>$statusCode</c> / <c>simple</c> / <c>regex</c> / <c>jsonpath</c>) and otherwise falls back to
-    /// a <c>CompiledCriterion</c> field evaluated against the context. Shared by the success gate and the
-    /// success/failure action gates, which pass a distinct <paramref name="prefix"/> so temporaries and
-    /// fields never collide.
-    /// </summary>
-    internal static string EmitCriteriaExpression(
-        IReadOnlyList<StepCriterion> criteria,
-        StringBuilder fields,
-        StringBuilder body,
-        StringBuilder auxiliaryTypes,
-        string prefix,
-        string contextVariable,
-        string responseVar,
-        CriterionSources sources,
-        string inputsVariable,
-        IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors,
-        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
-        in StepRequestContext requestContext,
-        string namespaceName)
-    {
-        if (criteria.Count == 0)
+        var checks = new List<string>(successCriteria.Count);
+        for (int i = 0; i < successCriteria.Count; i++)
         {
-            return "true";
-        }
-
-        var checks = new List<string>(criteria.Count);
-        for (int i = 0; i < criteria.Count; i++)
-        {
-            StepCriterion criterion = criteria[i];
-            string index = i.ToString(CultureInfo.InvariantCulture);
-
-            // A pure `$statusCode <op> <int>` simple criterion is evaluated at generation time into a
-            // direct comparison against the response's status code — no CompiledCriterion field, no
-            // context, no allocation.
-            if (TryEmitStatusCodeCheck(criterion, responseVar, out string inlineCheck))
-            {
-                checks.Add(inlineCheck);
-                continue;
-            }
-
-            // A simple criterion (full grammar: ||, &&, !, grouping, comparisons, lone truthy operands)
-            // is inlined to evaluate directly against the live response / inputs / prior-step outputs
-            // (reusing Comparand for operand semantics) — its operand-resolution statements are emitted
-            // before the gate.
-            if (MapCriterionType(criterion.Type) == "Simple"
-                && SimpleCriterionInliner.TryEmit(
-                    criterion.Condition, responseVar, sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext,
-                    $"{prefix}C{index}", fields, out string inlineStatements, out string inlineExpression))
-            {
-                body.Append(inlineStatements);
-                checks.Add(inlineExpression);
-                continue;
-            }
-
-            // A regex criterion with a static pattern is inlined via a [GeneratedRegex] partial method
-            // (compiled ahead-of-time) matching the statically-resolved context value.
-            if (MapCriterionType(criterion.Type) == "Regex"
-                && RegexCriterionInliner.TryEmit(
-                    criterion.Condition, criterion.Context, responseVar, sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext,
-                    $"{prefix}C{index}", fields, out string regexStatements, out string regexExpression))
-            {
-                body.Append(regexStatements);
-                checks.Add(regexExpression);
-                continue;
-            }
-
-            // A jsonpath criterion with a static query is inlined by compiling the query ahead-of-time
-            // into a sibling class (emitted into auxiliaryTypes) and testing for at least one match
-            // against the statically-resolved context value.
-            if (MapCriterionType(criterion.Type) == "JsonPath"
-                && JsonPathCriterionInliner.TryEmit(
-                    criterion.Condition, criterion.Context, sources, inputsVariable, stepOutputLocals, inputAccessors,
-                    namespaceName, $"{prefix}C{index}", auxiliaryTypes, out string jsonPathStatements, out string jsonPathExpression))
-            {
-                body.Append(jsonPathStatements);
-                checks.Add(jsonPathExpression);
-                continue;
-            }
-
-            // Anything the inliner cannot resolve statically (an unsupported source, regex, jsonpath)
-            // falls back to the compiled-criterion runtime.
-            string field = $"{prefix}SuccessCriterion{index}";
+            StepCriterion criterion = successCriteria[i];
+            string field = $"{prefix}SuccessCriterion{i.ToString(CultureInfo.InvariantCulture)}";
             string contextArgument = criterion.Context is null ? string.Empty : $", {EmitText.Quote(criterion.Context)}";
 
             fields.Append("private static readonly CompiledCriterion ").Append(field)
@@ -377,7 +115,12 @@ public static class StepBodyEmitter
             checks.Add($"{field}.Evaluate({contextVariable})");
         }
 
-        return string.Join(" && ", checks);
+        body.Append("if (!(").Append(string.Join(" && ", checks)).AppendLine("))");
+        body.AppendLine("{");
+        body.Append("    throw new InvalidOperationException(")
+            .Append(EmitText.Quote($"Step '{stepId}' did not satisfy its success criteria."))
+            .AppendLine(");");
+        body.AppendLine("}");
     }
 
     private static string MapCriterionType(string type)
@@ -387,40 +130,6 @@ public static class StepBodyEmitter
             "jsonpath" => "JsonPath",
             _ => "Simple",
         };
-
-    /// <summary>
-    /// Recognises a pure <c>$statusCode &lt;op&gt; &lt;int&gt;</c> <c>simple</c> criterion and emits it as
-    /// a direct comparison against the response's status code, evaluated entirely at generation time.
-    /// </summary>
-    /// <param name="criterion">The criterion to inspect.</param>
-    /// <param name="responseVar">The in-scope response variable name.</param>
-    /// <param name="check">The emitted inline boolean expression when recognised; otherwise empty.</param>
-    /// <returns><see langword="true"/> when the criterion was emitted inline.</returns>
-    private static bool TryEmitStatusCodeCheck(in StepCriterion criterion, string responseVar, out string check)
-    {
-        check = string.Empty;
-
-        // Only a context-free simple criterion can be a bare $statusCode comparison.
-        if (criterion.Context is not null || MapCriterionType(criterion.Type) != "Simple")
-        {
-            return false;
-        }
-
-        Match match = StatusCodeCriterion.Match(criterion.Condition);
-        if (!match.Success)
-        {
-            return false;
-        }
-
-        string op = match.Groups[1].Value;
-        string number = match.Groups[2].Value;
-        check = $"{responseVar}.StatusCode {op} {number}";
-        return true;
-    }
-
-    private static readonly Regex StatusCodeCriterion = new(
-        @"^\s*\$statusCode\s*(==|!=|<=|>=|<|>)\s*(\d+)\s*$",
-        RegexOptions.CultureInvariant | RegexOptions.Compiled);
 }
 
 /// <summary>
@@ -436,6 +145,4 @@ public readonly record struct StepCriterion(string Type, string Condition, strin
 /// </summary>
 /// <param name="Fields">The <c>static readonly</c> field declarations to place on the executor class.</param>
 /// <param name="Statements">The in-method statements implementing the step.</param>
-/// <param name="AuxiliaryTypes">Top-level sibling type declarations (e.g. ahead-of-time-compiled <c>jsonpath</c> query classes) to place after the executor class, in the same namespace.</param>
-/// <param name="UsesContext">Whether the step still consumes the <c>WorkflowExecutionContext</c> (a non-inlined criterion or a context-fallback output).</param>
-public readonly record struct StepBodyCode(string Fields, string Statements, string AuxiliaryTypes, bool UsesContext);
+public readonly record struct StepBodyCode(string Fields, string Statements);

@@ -13,8 +13,6 @@ namespace Corvus.Text.Json.Arazzo.Tests;
 [TestClass]
 public class StepBodyEmitterTests
 {
-    private static readonly Dictionary<string, string> NoSteps = new(StringComparer.Ordinal);
-
     private static readonly ResolvedOperation GetPet = new(
         "petstore",
         new OperationDescriptor(
@@ -24,151 +22,23 @@ public class StepBodyEmitterTests
             "GetPet",
             "Acme.Pets.GetPetRequest",
             "Acme.Pets.GetPetResponse",
-            [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true, "petId")],
+            [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true)],
             false,
-            [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")],
-            "Acme.Pets.PetsClient",
-            "GetPetAsync",
-            null,
-            [
-                new ResponseHeaderInfo("X-Flag", "XFlagHeader", "string", true),
-                new ResponseHeaderInfo("X-Count", "XCountHeader", "Acme.Pets.JsonInt32", false),
-            ]));
-
-    private static readonly ResolvedOperation CreatePet = new(
-        "petstore",
-        new OperationDescriptor(
-            "/pets",
-            OperationMethod.Post,
-            "createPet",
-            "CreatePet",
-            "Acme.Pets.CreatePetRequest",
-            "Acme.Pets.CreatePetResponse",
-            [],
-            true,
-            [new ResponseDescriptor("201", "Acme.Pets.Pet", "CreatedBody")],
-            "Acme.Pets.PetsClient",
-            "CreatePetAsync",
-            "Acme.Pets.Pet",
-            null));
+            [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")]));
 
     [TestMethod]
-    public void Builds_a_composite_template_request_body_from_inputs()
-    {
-        // A request body that embeds runtime expressions in an object template is assembled into the
-        // workspace and passed as the client method's body Source.
-        StepBodyCode code = StepBodyEmitter.Emit(
-            "createPet",
-            CreatePet,
-            [],
-            [],
-            [],
-            "transport",
-            "workspace",
-            "context",
-            "cancellationToken",
-            NoSteps,
-            "inputs",
-            null,
-            "Acme.Pets",
-            new StepBody("""{"name":"$inputs.name","status":"available"}""", ArgumentValueKind.CompositeTemplate));
-
-        code.Statements.ShouldContain("JsonElement.ObjectBuilder builder");
-        code.Statements.ShouldContain("builder.AddProperty(\"name\"u8");
-        code.Statements.ShouldContain("builder.AddProperty(\"status\"u8");
-        code.Statements.ShouldContain("CreatePetAsync(body:");
-    }
-
-    [TestMethod]
-    public void Binds_a_literal_null_request_body()
-    {
-        StepBodyCode code = StepBodyEmitter.Emit(
-            "createPet",
-            CreatePet,
-            [],
-            [],
-            [],
-            "transport",
-            "workspace",
-            "context",
-            "cancellationToken",
-            NoSteps,
-            "inputs",
-            null,
-            "Acme.Pets",
-            new StepBody(string.Empty, ArgumentValueKind.LiteralNull));
-
-        code.Statements.ShouldContain("Acme.Pets.Pet.Source.Null()");
-    }
-
-    [TestMethod]
-    public void Invokes_the_generated_client_method_with_named_arguments()
+    public void Emits_send_telemetry_and_response_feed()
     {
         StepBodyCode code = Emit([]);
 
-        code.Statements.ShouldContain("var getPetClient = new Acme.Pets.PetsClient(transport);");
-        code.Statements.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: Acme.Pets.JsonString.From(getPet_PetIdValue), cancellationToken: cancellationToken).ConfigureAwait(false);");
+        code.Statements.ShouldContain("var getPetResponse = await transport.SendAsync<Acme.Pets.GetPetRequest, Acme.Pets.GetPetResponse>(getPetRequest, cancellationToken).ConfigureAwait(false);");
         code.Statements.ShouldContain("ArazzoTelemetry.StepsExecuted.Add(1);");
-
-        // A step with no context consumer never populates the context.
-        code.UsesContext.ShouldBeFalse();
-        code.Statements.ShouldNotContain("context.SetResponseStatusCode");
+        code.Statements.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
+        code.Statements.ShouldContain("if (getPetResponse.StatusCode == 200) { context.SetResponseBody(getPetResponse.OkBody); }");
     }
 
     [TestMethod]
-    public void Binds_the_response_body_as_a_live_reference_without_cloning()
-    {
-        StepBodyCode code = Emit([]);
-
-        // The matched-status body is a live reference (used by criteria while the response is alive);
-        // the whole-body CloneAsBuilder is gone.
-        code.Statements.ShouldContain("if (getPetResponse.StatusCode == 200) { getPetResponseBody = (JsonElement)getPetResponse.OkBody; }");
-        code.Statements.ShouldNotContain("CloneAsBuilder");
-
-        // With no context consumer the live body is never fed to the context.
-        code.Statements.ShouldNotContain("context.SetResponseBody");
-    }
-
-    [TestMethod]
-    public void Disposes_the_response_in_a_finally()
-    {
-        StepBodyCode code = Emit([]);
-
-        code.Statements.ShouldContain("finally");
-        code.Statements.ShouldContain("await getPetResponse.DisposeAsync().ConfigureAwait(false);");
-    }
-
-    [TestMethod]
-    public void Skips_the_response_body_clone_when_the_body_is_not_referenced()
-    {
-        StepBodyCode code = StepBodyEmitter.Emit(
-            "getPet",
-            GetPet,
-            [new StepArgument("petId", "$inputs.petId")],
-            [],
-            [],
-            "transport",
-            "workspace",
-            "context",
-            "cancellationToken",
-            NoSteps,
-            "inputs",
-            null,
-            "Acme.Pets",
-            requestBody: null,
-            bindResponseBody: false);
-
-        // No body clone is emitted at all …
-        code.Statements.ShouldNotContain("SetResponseBody");
-        code.Statements.ShouldNotContain("CloneAsBuilder");
-
-        // … and with no context consumer, neither is the status recorded; the response is still disposed.
-        code.Statements.ShouldNotContain("context.SetResponseStatusCode");
-        code.Statements.ShouldContain("await getPetResponse.DisposeAsync().ConfigureAwait(false);");
-    }
-
-    [TestMethod]
-    public void Gates_on_a_mix_of_inlined_criteria()
+    public void Compiles_success_criteria_into_static_fields_and_gates_on_them()
     {
         StepBodyCode code = Emit(
         [
@@ -176,335 +46,10 @@ public class StepBodyEmitterTests
             new StepCriterion("jsonpath", "$.id", "$response.body"),
         ]);
 
-        // Both criteria inline: the bare $statusCode is a direct comparison and the jsonpath compiles to
-        // a sibling query class — no CompiledCriterion, and the gate ANDs the two inline checks.
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.AuxiliaryTypes.ShouldContain("internal static class getPet_C1JsonPath");
-        code.Statements.ShouldContain("if (!(getPetResponse.StatusCode == 200 && getPet_C1Match))");
-        code.Statements.ShouldContain("throw new WorkflowStepFailedException(\"getPet\", \"Step 'getPet' did not satisfy its success criteria.\");");
-    }
-
-    [TestMethod]
-    public void Emits_a_bare_status_code_criterion_inline_without_a_compiled_field()
-    {
-        StepBodyCode code = Emit([new StepCriterion("simple", "$statusCode != 500", null)]);
-
-        // A pure $statusCode comparison needs neither a CompiledCriterion field nor the context.
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.Statements.ShouldContain("if (!(getPetResponse.StatusCode != 500))");
-        code.Statements.ShouldContain("throw new WorkflowStepFailedException(\"getPet\", \"Step 'getPet' did not satisfy its success criteria.\");");
-    }
-
-    [TestMethod]
-    public void Inlines_a_body_comparison_simple_criterion_against_the_live_body()
-    {
-        StepBodyCode code = Emit([new StepCriterion("simple", "$response.body#/status == 'ok'", null)]);
-
-        // No CompiledCriterion: the operand is navigated from the live body to a JsonElement and read as
-        // a Comparand, with the string literal baked once into a static readonly byte[].
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.Fields.ShouldContain("\"ok\"u8.ToArray();");
-        code.Statements.ShouldContain("JsonElement getPet_C0o0 = default;");
-        code.Statements.ShouldContain("getPetResponseBody.TryResolvePointer(\"/status\"u8, out JsonElement getPet_C0o0n0)");
-        code.Statements.ShouldContain("getPet_C0o0 = getPet_C0o0n0;");
-        code.Statements.ShouldContain("if (!(Comparand.FromJsonElement(getPet_C0o0).ValueEquals(Comparand.FromUtf8String(getPet_C0o1Lit))))");
-    }
-
-    [TestMethod]
-    public void Inlines_a_numeric_body_comparison_and_a_lone_truthy_operand()
-    {
-        StepBodyCode code = Emit(
-        [
-            new StepCriterion("simple", "$response.body#/count > 5", null),
-            new StepCriterion("simple", "$response.body#/active", null),
-        ]);
-
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        // Numeric comparison → GreaterThan against a Comparand.FromNumber literal.
-        code.Statements.ShouldContain("Comparand.FromJsonElement(getPet_C0o0).GreaterThan(Comparand.FromNumber(5))");
-        // Lone operand → IsTrue.
-        code.Statements.ShouldContain("Comparand.FromJsonElement(getPet_C1o0).IsTrue");
-        code.Statements.ShouldContain("if (!(Comparand.FromJsonElement(getPet_C0o0).GreaterThan(Comparand.FromNumber(5)) && Comparand.FromJsonElement(getPet_C1o0).IsTrue))");
-    }
-
-    [TestMethod]
-    public void Inlines_a_compound_simple_condition_with_logical_operators()
-    {
-        // The full grammar (||, &&, !, grouping) is inlined — operands within one criterion share its
-        // index and the logical structure is emitted as a C# boolean expression.
-        StepBodyCode code = Emit([new StepCriterion("simple", "($response.body#/count > 5 || $response.body#/count == 0) && !$response.body#/error", null)]);
-
-        code.Fields.ShouldNotContain("CompiledCriterion");
-
-        // Operand bases are numbered per operand encountered (literals consume a slot too), so the
-        // navigated body operands here are o0 (count), o2 (count), o4 (error).
-        code.Statements.ShouldContain(
-            "if (!(((Comparand.FromJsonElement(getPet_C0o0).GreaterThan(Comparand.FromNumber(5)) || Comparand.FromJsonElement(getPet_C0o2).ValueEquals(Comparand.FromNumber(0))) && !(Comparand.FromJsonElement(getPet_C0o4).IsTrue))))");
-    }
-
-    [TestMethod]
-    public void Inlines_a_regex_criterion_as_a_generated_regex()
-    {
-        StepBodyCode code = Emit([new StepCriterion("regex", "^Fido$", "$response.body#/name")]);
-
-        // The pattern is compiled ahead-of-time via [GeneratedRegex]; the context is resolved
-        // statically and matched through the RegexCriterion runtime helper — no CompiledCriterion.
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.Fields.ShouldContain("[GeneratedRegex(\"^Fido$\", RegexOptions.CultureInvariant, 1000)]");
-        code.Fields.ShouldContain("private static partial Regex getPet_C0Regex();");
-        code.Statements.ShouldContain("getPetResponseBody.TryResolvePointer(\"/name\"u8, out JsonElement getPet_C0ctxn0)");
-        code.Statements.ShouldContain("if (!(RegexCriterion.IsMatch(getPet_C0Regex(), getPet_C0ctx)))");
-    }
-
-    [TestMethod]
-    public void Inlines_a_regex_criterion_against_the_status_code()
-    {
-        StepBodyCode code = Emit([new StepCriterion("regex", "^4", "$statusCode")]);
-
-        code.Fields.ShouldContain("[GeneratedRegex(\"^4\", RegexOptions.CultureInvariant, 1000)]");
-        code.Statements.ShouldContain("if (!(RegexCriterion.IsMatch(getPet_C0Regex(), getPetResponse.StatusCode)))");
-    }
-
-    [TestMethod]
-    public void Inlines_a_regex_criterion_against_the_method()
-    {
-        StepBodyCode code = Emit([new StepCriterion("regex", "^G", "$method")]);
-
-        code.Fields.ShouldContain("[GeneratedRegex(\"^G\", RegexOptions.CultureInvariant, 1000)]");
-        code.Statements.ShouldContain("RegexCriterion.IsMatch(getPet_C0Regex(), \"GET\")");
-    }
-
-    [TestMethod]
-    public void Inlines_two_regex_criteria_as_separate_generated_methods()
-    {
-        StepBodyCode code = Emit(
-        [
-            new StepCriterion("regex", "^Fi", "$response.body#/name"),
-            new StepCriterion("regex", "o$", "$response.body#/name"),
-        ]);
-
-        code.Fields.ShouldContain("private static partial Regex getPet_C0Regex();");
-        code.Fields.ShouldContain("private static partial Regex getPet_C1Regex();");
-    }
-
-    [TestMethod]
-    public void Falls_back_to_a_compiled_criterion_for_a_regex_without_a_context()
-    {
-        // A regex needs a context expression; without one the inliner bails to the runtime criterion.
-        StepBodyCode code = Emit([new StepCriterion("regex", "^x", null)]);
-
-        code.Fields.ShouldNotContain("GeneratedRegex");
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Regex,");
-    }
-
-    [TestMethod]
-    public void Falls_back_to_a_compiled_criterion_for_a_dynamic_regex_pattern()
-    {
-        // An embedded {expression} makes the pattern dynamic — [GeneratedRegex] needs a constant, so it
-        // compiles to a CompiledCriterion instead.
-        StepBodyCode code = Emit([new StepCriterion("regex", "^{$inputs.prefix}-", "$response.body#/name")]);
-
-        code.Fields.ShouldNotContain("GeneratedRegex");
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Regex,");
-        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
-    }
-
-    [TestMethod]
-    public void Inlines_a_jsonpath_criterion_as_a_generated_sibling_class()
-    {
-        StepBodyCode code = Emit([new StepCriterion("jsonpath", "$.items[*]", "$response.body")]);
-
-        // The query is compiled ahead-of-time into a sibling class (auxiliary type), queried against the
-        // live body, and tested for at least one match — no CompiledCriterion, no runtime interpreter.
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.AuxiliaryTypes.ShouldContain("internal static class getPet_C0JsonPath");
-        code.AuxiliaryTypes.ShouldContain("public static void EvaluateNodes(in JsonElement data, JsonWorkspace workspace, ref JsonPathResult result)");
-        // The query runs against the live body local using the RUN workspace (not a per-call one) and a
-        // pool-rented result buffer disposed in a finally — no internal JsonWorkspace.Create per eval.
-        code.Statements.ShouldContain("JsonPathResult getPet_C0Result = JsonPathResult.CreatePooled(16);");
-        code.Statements.ShouldContain("getPet_C0JsonPath.EvaluateNodes(getPetResponseBody, workspace, ref getPet_C0Result);");
-        code.Statements.ShouldContain("getPet_C0Match = getPet_C0Result.Count > 0;");
-        code.Statements.ShouldContain("getPet_C0Result.Dispose();");
-        code.Statements.ShouldContain("if (!(getPet_C0Match))");
-    }
-
-    [TestMethod]
-    public void Inlines_two_jsonpath_criteria_as_separate_sibling_classes()
-    {
-        StepBodyCode code = Emit(
-        [
-            new StepCriterion("jsonpath", "$.name", "$response.body"),
-            new StepCriterion("jsonpath", "$.tags[*]", "$response.body"),
-        ]);
-
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.AuxiliaryTypes.ShouldContain("internal static class getPet_C0JsonPath");
-        code.AuxiliaryTypes.ShouldContain("internal static class getPet_C1JsonPath");
-    }
-
-    [TestMethod]
-    public void Falls_back_to_a_compiled_criterion_for_an_invalid_jsonpath_query()
-    {
-        // A malformed query makes the JSONPath generator throw — the criterion falls back.
-        StepBodyCode code = Emit([new StepCriterion("jsonpath", "$.items[", "$response.body")]);
-
-        code.AuxiliaryTypes.ShouldBeEmpty();
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath,");
-    }
-
-    [TestMethod]
-    public void Falls_back_to_a_compiled_criterion_for_a_jsonpath_over_an_unnavigable_context()
-    {
-        // $statusCode is not a navigable JSON value, so the jsonpath context can't be resolved.
-        StepBodyCode code = Emit([new StepCriterion("jsonpath", "$.x", "$statusCode")]);
-
-        code.AuxiliaryTypes.ShouldBeEmpty();
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath,");
-    }
-
-    [TestMethod]
-    public void Inlines_a_body_operand_with_a_pointer_as_a_navigation_chain()
-    {
-        // $inputs.petId#/sub navigates a property then a pointer — a two-step chain.
-        StepBodyCode code = Emit([new StepCriterion("simple", "$inputs.petId#/sub == 'x'", null)]);
-
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"petId\"u8, out JsonElement getPet_C0o0n0)");
-        code.Statements.ShouldContain("getPet_C0o0n0.TryResolvePointer(\"/sub\"u8, out JsonElement getPet_C0o0n1)");
-    }
-
-    [TestMethod]
-    public void Falls_back_to_a_compiled_criterion_for_a_dynamic_jsonpath_query()
-    {
-        // An embedded {expression} makes the query dynamic — it compiles to a CompiledCriterion.
-        StepBodyCode code = Emit([new StepCriterion("jsonpath", "$[?@.id == '{$inputs.id}']", "$response.body")]);
-
-        code.AuxiliaryTypes.ShouldBeEmpty();
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath,");
-        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
-    }
-
-    [TestMethod]
-    public void Inlines_a_response_header_simple_criterion()
-    {
-        // A schema-less header is read as a string?; a typed header is read as a JsonElement — both
-        // against the generated response property, with no CompiledCriterion and no context.
-        StepBodyCode code = Emit(
-        [
-            new StepCriterion("simple", "$response.header.X-Flag == 'on'", null),
-            new StepCriterion("simple", "$response.header.X-Count > 5", null),
-        ]);
-
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.UsesContext.ShouldBeFalse();
-        code.Statements.ShouldContain("Comparand.FromString(getPetResponse.XFlagHeader).ValueEquals(");
-        code.Statements.ShouldContain("Comparand.FromJsonElement((JsonElement)getPetResponse.XCountHeader).GreaterThan(Comparand.FromNumber(5))");
-    }
-
-    [TestMethod]
-    public void Inlines_a_regex_criterion_against_a_response_header()
-    {
-        StepBodyCode code = Emit([new StepCriterion("regex", "^v\\d", "$response.header.X-Flag")]);
-
-        code.Fields.ShouldContain("[GeneratedRegex(");
-        code.Statements.ShouldContain("RegexCriterion.IsMatch(getPet_C0Regex(), getPetResponse.XFlagHeader)");
-    }
-
-    [TestMethod]
-    public void Falls_back_to_a_compiled_criterion_for_an_undeclared_response_header()
-    {
-        // A header not declared on the operation has no generated property — fall back to the runtime.
-        StepBodyCode code = Emit([new StepCriterion("simple", "$response.header.X-Unknown == 'y'", null)]);
-
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple,");
-        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
-    }
-
-    [TestMethod]
-    public void Inlines_each_comparison_operator()
-    {
-        StepBodyCode code = Emit(
-        [
-            new StepCriterion("simple", "$response.body#/a != 1", null),
-            new StepCriterion("simple", "$response.body#/b < 2", null),
-            new StepCriterion("simple", "$response.body#/c <= 3", null),
-            new StepCriterion("simple", "$response.body#/d > 4", null),
-            new StepCriterion("simple", "$response.body#/e >= 5", null),
-        ]);
-
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.Statements.ShouldContain(".ValueNotEquals(Comparand.FromNumber(1))");
-        code.Statements.ShouldContain(".LessThan(Comparand.FromNumber(2))");
-        code.Statements.ShouldContain(".LessThanOrEqual(Comparand.FromNumber(3))");
-        code.Statements.ShouldContain(".GreaterThan(Comparand.FromNumber(4))");
-        code.Statements.ShouldContain(".GreaterThanOrEqual(Comparand.FromNumber(5))");
-    }
-
-    [TestMethod]
-    public void Inlines_each_literal_operand_kind()
-    {
-        StepBodyCode code = Emit(
-        [
-            new StepCriterion("simple", "$response.body#/s == \"hi\"", null),
-            new StepCriterion("simple", "$response.body#/active == true", null),
-            new StepCriterion("simple", "$response.body#/gone == false", null),
-            new StepCriterion("simple", "$response.body#/maybe == null", null),
-            new StepCriterion("simple", "$response.body#/ratio > 1.5", null),
-        ]);
-
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.Fields.ShouldContain("\"hi\"u8.ToArray();");                    // double-quoted string literal
-        code.Statements.ShouldContain("Comparand.FromBoolean(true)");
-        code.Statements.ShouldContain("Comparand.FromBoolean(false)");
-        code.Statements.ShouldContain("Comparand.Null");
-        code.Statements.ShouldContain("Comparand.FromNumber(1.5)");
-    }
-
-    [TestMethod]
-    public void Inlines_a_method_criterion_as_a_constant()
-    {
-        // $method is the operation's HTTP method (GET here) — a compile-time constant baked as a string.
-        StepBodyCode code = Emit([new StepCriterion("simple", "$method == 'GET'", null)]);
-
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.Fields.ShouldContain("\"GET\"u8.ToArray();");
-        code.Statements.ShouldContain(".ValueEquals(");
-    }
-
-    [TestMethod]
-    public void Inlines_a_request_parameter_criterion_via_the_bound_argument()
-    {
-        // $request.path.petId resolves to the value the step bound to petId ($inputs.petId), so the
-        // operand is resolved exactly like $inputs.petId would be — no CompiledCriterion.
-        StepBodyCode code = Emit([new StepCriterion("simple", "$request.path.petId == '42'", null)]);
-
-        code.Fields.ShouldNotContain("CompiledCriterion");
-        code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"petId\"u8, out JsonElement getPet_C0o0n0)");
-        code.Statements.ShouldContain("Comparand.FromJsonElement(getPet_C0o0).ValueEquals(");
-    }
-
-    [TestMethod]
-    public void Falls_back_to_a_compiled_criterion_for_an_unbound_request_parameter()
-    {
-        // No step argument named 'missing' — the request operand can't be resolved, so it falls back.
-        StepBodyCode code = Emit([new StepCriterion("simple", "$request.query.missing == '1'", null)]);
-
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple,");
-        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
-    }
-
-    [TestMethod]
-    public void Falls_back_to_a_compiled_criterion_for_an_unsupported_source()
-    {
-        // $response.header is not statically navigable yet — the criterion compiles to a CompiledCriterion.
-        StepBodyCode code = Emit([new StepCriterion("simple", "$response.header.foo == 'bar'", null)]);
-
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple,");
-        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
-
-        // Because a CompiledCriterion consumes the context, the context IS populated for this step.
-        code.UsesContext.ShouldBeTrue();
-        code.Statements.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple, \"$statusCode == 200\");");
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath, \"$.id\", \"$response.body\");");
+        code.Statements.ShouldContain("if (!(getPet_SuccessCriterion0.Evaluate(context) && getPet_SuccessCriterion1.Evaluate(context)))");
+        code.Statements.ShouldContain("did not satisfy its success criteria");
     }
 
     [TestMethod]
@@ -513,7 +58,7 @@ public class StepBodyEmitterTests
         StepBodyCode code = Emit([]);
 
         code.Statements.ShouldContain("if (!getPetResponse.IsSuccess)");
-        code.Statements.ShouldContain("throw new WorkflowStepFailedException(\"getPet\", \"Step 'getPet' returned an unsuccessful status.\");");
+        code.Statements.ShouldContain("returned an unsuccessful status");
         code.Fields.ShouldNotContain("CompiledCriterion");
     }
 
@@ -523,13 +68,7 @@ public class StepBodyEmitterTests
             GetPet,
             [new StepArgument("petId", "$inputs.petId")],
             criteria,
-            [],
             "transport",
-            "workspace",
             "context",
-            "cancellationToken",
-            NoSteps,
-            "inputs",
-            null,
-            "Acme.Pets");
+            "cancellationToken");
 }
