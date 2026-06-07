@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Arazzo10;
 
@@ -40,6 +41,10 @@ public static class WorkflowExecutorEmitter
         var fields = new StringBuilder();
         var body = new StringBuilder();
 
+        // Maps a (preceding) step id to the local that holds its built outputs object, so
+        // $steps.<id>.outputs references resolve statically — no runtime dictionary.
+        var stepOutputLocals = new Dictionary<string, string>(StringComparer.Ordinal);
+
         foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
         {
             string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw new InvalidOperationException("A step is missing its required stepId.");
@@ -51,21 +56,28 @@ public static class WorkflowExecutorEmitter
                     $"Step '{stepId}' targets {binding.Kind}; only operation steps are supported by the current generator.");
             }
 
+            List<OutputMapping> stepOutputs = ReadOutputs(step);
+
             body.Append("            // ── step: ").Append(stepId).AppendLine(" ──");
 
             StepBodyCode stepBody = StepBodyEmitter.Emit(
-                stepId, operation, ReadArguments(step), ReadCriteria(step), "transport", "context", "cancellationToken");
+                stepId, operation, ReadArguments(step), ReadCriteria(step), "transport", "context", "cancellationToken", stepOutputLocals);
             fields.Append(stepBody.Fields);
             AppendIndented(body, stepBody.Statements, 12);
 
-            OutputExtractionCode outputs = OutputExtractionEmitter.Emit(stepId, ReadOutputs(step), "workspace", "context");
+            OutputExtractionCode outputs = OutputExtractionEmitter.Emit(stepId, stepOutputs, "workspace", "context", stepOutputLocals);
             fields.Append(outputs.Fields);
             AppendIndented(body, outputs.Statements, 12);
+
+            if (stepOutputs.Count > 0)
+            {
+                stepOutputLocals[stepId] = EmitText.StepOutputsElementLocal(stepId);
+            }
 
             body.AppendLine();
         }
 
-        AppendWorkflowOutputs(fields, body, workflow);
+        AppendWorkflowOutputs(fields, body, workflow, stepOutputLocals);
 
         return Compose(options, workflowId, fields.ToString(), body.ToString());
     }
@@ -147,36 +159,52 @@ public static class WorkflowExecutorEmitter
         return "simple";
     }
 
-    private static void AppendWorkflowOutputs(StringBuilder fields, StringBuilder body, in ArazzoDocument.WorkflowObject workflow)
+    private static void AppendWorkflowOutputs(
+        StringBuilder fields,
+        StringBuilder body,
+        in ArazzoDocument.WorkflowObject workflow,
+        IReadOnlyDictionary<string, string> stepOutputLocals)
     {
-        var build = new StringBuilder();
+        var names = new List<string>();
+        var expressions = new List<string>();
         if (workflow.Outputs.IsNotUndefined())
         {
             foreach (JsonProperty<JsonElement> property in workflow.Outputs.EnumerateObject())
             {
-                if (property.Value.ValueKind != JsonValueKind.String)
+                if (property.Value.ValueKind == JsonValueKind.String)
                 {
-                    continue;
+                    names.Add(property.Name);
+                    expressions.Add(property.Value.GetString()!);
                 }
-
-                string field = $"Workflow_Output_{EmitText.SanitizeIdentifier(property.Name)}";
-                string local = $"{EmitText.ToCamelCase(EmitText.SanitizeIdentifier(property.Name))}Value";
-                fields.Append("private static readonly ArazzoExpression ").Append(field)
-                    .Append(" = ArazzoExpression.Parse(").Append(EmitText.Quote(property.Value.GetString()!)).AppendLine(");");
-
-                build.Append("                ctx.TryResolveValue(").Append(field).Append(", out JsonElement ").Append(local).AppendLine(");");
-                build.Append("                builder.AddProperty(").Append(EmitText.Quote(property.Name)).Append("u8, ").Append(local).AppendLine(");");
             }
         }
 
-        body.AppendLine("            var workflowOutputs = JsonElement.CreateBuilder(");
-        body.AppendLine("                workspace,");
-        body.AppendLine("                context,");
-        body.AppendLine("                static (in WorkflowExecutionContext ctx, ref JsonElement.ObjectBuilder builder) =>");
-        body.AppendLine("                {");
-        body.Append(build);
-        body.AppendLine("                });");
-        body.AppendLine("            JsonElement workflowOutputsElement = workflowOutputs.RootElement;");
+        var statements = new StringBuilder();
+        var valueLocals = new List<string>(names.Count);
+        for (int i = 0; i < names.Count; i++)
+        {
+            string local = $"workflowOutput{i.ToString(CultureInfo.InvariantCulture)}";
+            string field = $"Workflow_Output_{EmitText.SanitizeIdentifier(names[i])}";
+            ValueResolution.Emit(fields, statements, expressions[i], local, "context", stepOutputLocals, field);
+            valueLocals.Add(local);
+        }
+
+        statements.Append("Span<JsonElement> workflowOutputValues = [").Append(string.Join(", ", valueLocals)).AppendLine("];");
+        statements.AppendLine("var workflowOutputs = JsonElement.CreateBuilder(");
+        statements.AppendLine("    workspace,");
+        statements.AppendLine("    (ReadOnlySpan<JsonElement>)workflowOutputValues,");
+        statements.AppendLine("    static (in ReadOnlySpan<JsonElement> values, ref JsonElement.ObjectBuilder builder) =>");
+        statements.AppendLine("    {");
+        for (int i = 0; i < names.Count; i++)
+        {
+            statements.Append("        builder.AddProperty(").Append(EmitText.Quote(names[i]))
+                .Append("u8, values[").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine("]);");
+        }
+
+        statements.AppendLine("    });");
+        statements.AppendLine("JsonElement workflowOutputsElement = workflowOutputs.RootElement;");
+
+        AppendIndented(body, statements.ToString(), 12);
     }
 
     private static void AppendIndented(StringBuilder target, string text, int indent)
