@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.MaxLength;
 public class SuiteMaxLengthValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaxLengthValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -67,8 +67,8 @@ public class SuiteMaxLengthValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\maxLength.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxLength\": 2\r\n        }",
+                "tests/draft2020-12/maxLength.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"maxLength\": 2\n        }",
                 "JsonSchemaTestSuite.Draft202012.MaxLength",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -86,6 +86,7 @@ public class SuiteMaxLengthValidation
 public class SuiteMaxLengthValidationWithADecimal
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -96,7 +97,6 @@ public class SuiteMaxLengthValidationWithADecimal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -121,8 +121,8 @@ public class SuiteMaxLengthValidationWithADecimal
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\maxLength.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxLength\": 2.0\r\n        }",
+                "tests/draft2020-12/maxLength.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"maxLength\": 2.0\n        }",
                 "JsonSchemaTestSuite.Draft202012.MaxLength",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft7.Optional.Format.IdnHostname;
 public class SuiteValidationOfInternationalizedHostNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfInternationalizedHostNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -424,7 +424,7 @@ public class SuiteValidationOfInternationalizedHostNames
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\optional\\format\\idn-hostname.json",
+                "tests/draft7/optional/format/idn-hostname.json",
                 "{ \"format\": \"idn-hostname\" }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.Format.IdnHostname",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -440,6 +440,7 @@ public class SuiteValidationOfInternationalizedHostNames
 public class SuiteValidationOfSeparatorsInInternationalizedHostNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -450,7 +451,6 @@ public class SuiteValidationOfSeparatorsInInternationalizedHostNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -601,7 +601,7 @@ public class SuiteValidationOfSeparatorsInInternationalizedHostNames
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\optional\\format\\idn-hostname.json",
+                "tests/draft7/optional/format/idn-hostname.json",
                 "{ \"format\": \"idn-hostname\" }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.Format.IdnHostname",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

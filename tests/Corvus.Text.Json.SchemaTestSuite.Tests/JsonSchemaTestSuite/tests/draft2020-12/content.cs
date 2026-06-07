@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.Content;
 public class SuiteValidationOfStringEncodedContentBasedOnMediaType
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -53,8 +53,8 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\content.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contentMediaType\": \"application/json\"\r\n        }",
+                "tests/draft2020-12/content.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentMediaType\": \"application/json\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Content",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -72,6 +72,7 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
 public class SuiteValidationOfBinaryStringEncoding
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -82,7 +83,6 @@ public class SuiteValidationOfBinaryStringEncoding
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -114,8 +114,8 @@ public class SuiteValidationOfBinaryStringEncoding
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\content.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contentEncoding\": \"base64\"\r\n        }",
+                "tests/draft2020-12/content.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentEncoding\": \"base64\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Content",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -133,6 +133,7 @@ public class SuiteValidationOfBinaryStringEncoding
 public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -143,7 +144,6 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -182,8 +182,8 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\content.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contentMediaType\": \"application/json\",\r\n            \"contentEncoding\": \"base64\"\r\n        }",
+                "tests/draft2020-12/content.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentMediaType\": \"application/json\",\n            \"contentEncoding\": \"base64\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Content",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -201,6 +201,7 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
 public class SuiteValidationOfBinaryEncodedMediaTypeDocumentsWithSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -211,7 +212,6 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocumentsWithSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -278,8 +278,8 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocumentsWithSchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\content.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contentMediaType\": \"application/json\",\r\n            \"contentEncoding\": \"base64\",\r\n            \"contentSchema\": { \"type\": \"object\", \"required\": [\"foo\"], \"properties\": { \"foo\": { \"type\": \"string\" } } }\r\n        }",
+                "tests/draft2020-12/content.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentMediaType\": \"application/json\",\n            \"contentEncoding\": \"base64\",\n            \"contentSchema\": { \"type\": \"object\", \"required\": [\"foo\"], \"properties\": { \"foo\": { \"type\": \"string\" } } }\n        }",
                 "JsonSchemaTestSuite.Draft202012.Content",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

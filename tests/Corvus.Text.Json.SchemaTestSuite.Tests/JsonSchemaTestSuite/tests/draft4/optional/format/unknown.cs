@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft4.Optional.Format.Unknown;
 public class SuiteUnknownFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteUnknownFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -81,7 +81,7 @@ public class SuiteUnknownFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\optional\\format\\unknown.json",
+                "tests/draft4/optional/format/unknown.json",
                 "{ \"format\": \"unknown\" }",
                 "JsonSchemaTestSuite.Draft4.Optional.Format.Unknown",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

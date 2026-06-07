@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft6.Enum;
 public class SuiteSimpleEnumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteSimpleEnumValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,7 +46,7 @@ public class SuiteSimpleEnumValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [1, 2, 3]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -65,6 +65,7 @@ public class SuiteSimpleEnumValidation
 public class SuiteHeterogeneousEnumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -75,7 +76,6 @@ public class SuiteHeterogeneousEnumValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -121,7 +121,7 @@ public class SuiteHeterogeneousEnumValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [6, \"foo\", [], true, {\"foo\": 12}]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -140,6 +140,7 @@ public class SuiteHeterogeneousEnumValidation
 public class SuiteHeterogeneousEnumWithNullValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -150,7 +151,6 @@ public class SuiteHeterogeneousEnumWithNullValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -182,7 +182,7 @@ public class SuiteHeterogeneousEnumWithNullValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{ \"enum\": [6, null] }",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -201,6 +201,7 @@ public class SuiteHeterogeneousEnumWithNullValidation
 public class SuiteEnumsInProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -211,7 +212,6 @@ public class SuiteEnumsInProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -264,8 +264,8 @@ public class SuiteEnumsInProperties
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
-                "{\r\n            \"type\":\"object\",\r\n            \"properties\": {\r\n                \"foo\": {\"enum\":[\"foo\"]},\r\n                \"bar\": {\"enum\":[\"bar\"]}\r\n            },\r\n            \"required\": [\"bar\"]\r\n        }",
+                "tests/draft6/enum.json",
+                "{\n            \"type\":\"object\",\n            \"properties\": {\n                \"foo\": {\"enum\":[\"foo\"]},\n                \"bar\": {\"enum\":[\"bar\"]}\n            },\n            \"required\": [\"bar\"]\n        }",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -283,6 +283,7 @@ public class SuiteEnumsInProperties
 public class SuiteEnumWithEscapedCharacters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -293,7 +294,6 @@ public class SuiteEnumWithEscapedCharacters
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -325,8 +325,8 @@ public class SuiteEnumWithEscapedCharacters
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
-                "{\r\n            \"enum\": [\"foo\\nbar\", \"foo\\rbar\"]\r\n        }",
+                "tests/draft6/enum.json",
+                "{\n            \"enum\": [\"foo\\nbar\", \"foo\\rbar\"]\n        }",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -344,6 +344,7 @@ public class SuiteEnumWithEscapedCharacters
 public class SuiteEnumWithFalseDoesNotMatch0
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -354,7 +355,6 @@ public class SuiteEnumWithFalseDoesNotMatch0
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -386,7 +386,7 @@ public class SuiteEnumWithFalseDoesNotMatch0
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [false]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -405,6 +405,7 @@ public class SuiteEnumWithFalseDoesNotMatch0
 public class SuiteEnumWithFalseDoesNotMatch01
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -415,7 +416,6 @@ public class SuiteEnumWithFalseDoesNotMatch01
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -447,7 +447,7 @@ public class SuiteEnumWithFalseDoesNotMatch01
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [[false]]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -466,6 +466,7 @@ public class SuiteEnumWithFalseDoesNotMatch01
 public class SuiteEnumWithTrueDoesNotMatch1
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -476,7 +477,6 @@ public class SuiteEnumWithTrueDoesNotMatch1
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -508,7 +508,7 @@ public class SuiteEnumWithTrueDoesNotMatch1
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [true]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -527,6 +527,7 @@ public class SuiteEnumWithTrueDoesNotMatch1
 public class SuiteEnumWithTrueDoesNotMatch11
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -537,7 +538,6 @@ public class SuiteEnumWithTrueDoesNotMatch11
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -569,7 +569,7 @@ public class SuiteEnumWithTrueDoesNotMatch11
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [[true]]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -588,6 +588,7 @@ public class SuiteEnumWithTrueDoesNotMatch11
 public class SuiteEnumWith0DoesNotMatchFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -598,7 +599,6 @@ public class SuiteEnumWith0DoesNotMatchFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -630,7 +630,7 @@ public class SuiteEnumWith0DoesNotMatchFalse
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [0]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -649,6 +649,7 @@ public class SuiteEnumWith0DoesNotMatchFalse
 public class SuiteEnumWith0DoesNotMatchFalse1
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -659,7 +660,6 @@ public class SuiteEnumWith0DoesNotMatchFalse1
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -691,7 +691,7 @@ public class SuiteEnumWith0DoesNotMatchFalse1
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [[0]]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -710,6 +710,7 @@ public class SuiteEnumWith0DoesNotMatchFalse1
 public class SuiteEnumWith1DoesNotMatchTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -720,7 +721,6 @@ public class SuiteEnumWith1DoesNotMatchTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -752,7 +752,7 @@ public class SuiteEnumWith1DoesNotMatchTrue
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [1]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -771,6 +771,7 @@ public class SuiteEnumWith1DoesNotMatchTrue
 public class SuiteEnumWith1DoesNotMatchTrue1
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -781,7 +782,6 @@ public class SuiteEnumWith1DoesNotMatchTrue1
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -813,7 +813,7 @@ public class SuiteEnumWith1DoesNotMatchTrue1
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{\"enum\": [[1]]}",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -832,6 +832,7 @@ public class SuiteEnumWith1DoesNotMatchTrue1
 public class SuiteNulCharactersInStrings
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -842,7 +843,6 @@ public class SuiteNulCharactersInStrings
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -867,7 +867,7 @@ public class SuiteNulCharactersInStrings
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\enum.json",
+                "tests/draft6/enum.json",
                 "{ \"enum\": [ \"hello\\u0000there\" ] }",
                 "JsonSchemaTestSuite.Draft6.Enum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

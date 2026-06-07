@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft7.AllOf;
 public class SuiteAllOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteAllOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,8 +60,8 @@ public class SuiteAllOf
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
-                "{\r\n            \"allOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": {\"type\": \"integer\"}\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"string\"}\r\n                    },\r\n                    \"required\": [\"foo\"]\r\n                }\r\n            ]\r\n        }",
+                "tests/draft7/allOf.json",
+                "{\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": {\"type\": \"integer\"}\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"string\"}\n                    },\n                    \"required\": [\"foo\"]\n                }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -76,6 +76,7 @@ public class SuiteAllOf
 public class SuiteAllOfWithBaseSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -86,7 +87,6 @@ public class SuiteAllOfWithBaseSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -132,8 +132,8 @@ public class SuiteAllOfWithBaseSchema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
-                "{\r\n            \"properties\": {\"bar\": {\"type\": \"integer\"}},\r\n            \"required\": [\"bar\"],\r\n            \"allOf\" : [\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"string\"}\r\n                    },\r\n                    \"required\": [\"foo\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"baz\": {\"type\": \"null\"}\r\n                    },\r\n                    \"required\": [\"baz\"]\r\n                }\r\n            ]\r\n        }",
+                "tests/draft7/allOf.json",
+                "{\n            \"properties\": {\"bar\": {\"type\": \"integer\"}},\n            \"required\": [\"bar\"],\n            \"allOf\" : [\n                {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"string\"}\n                    },\n                    \"required\": [\"foo\"]\n                },\n                {\n                    \"properties\": {\n                        \"baz\": {\"type\": \"null\"}\n                    },\n                    \"required\": [\"baz\"]\n                }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -148,6 +148,7 @@ public class SuiteAllOfWithBaseSchema
 public class SuiteAllOfSimpleTypes
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -158,7 +159,6 @@ public class SuiteAllOfSimpleTypes
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -183,8 +183,8 @@ public class SuiteAllOfSimpleTypes
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
-                "{\r\n            \"allOf\": [\r\n                {\"maximum\": 30},\r\n                {\"minimum\": 20}\r\n            ]\r\n        }",
+                "tests/draft7/allOf.json",
+                "{\n            \"allOf\": [\n                {\"maximum\": 30},\n                {\"minimum\": 20}\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -199,6 +199,7 @@ public class SuiteAllOfSimpleTypes
 public class SuiteAllOfWithBooleanSchemasAllTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -209,7 +210,6 @@ public class SuiteAllOfWithBooleanSchemasAllTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -227,7 +227,7 @@ public class SuiteAllOfWithBooleanSchemasAllTrue
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
+                "tests/draft7/allOf.json",
                 "{\"allOf\": [true, true]}",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -243,6 +243,7 @@ public class SuiteAllOfWithBooleanSchemasAllTrue
 public class SuiteAllOfWithBooleanSchemasSomeFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -253,7 +254,6 @@ public class SuiteAllOfWithBooleanSchemasSomeFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -271,7 +271,7 @@ public class SuiteAllOfWithBooleanSchemasSomeFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
+                "tests/draft7/allOf.json",
                 "{\"allOf\": [true, false]}",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -287,6 +287,7 @@ public class SuiteAllOfWithBooleanSchemasSomeFalse
 public class SuiteAllOfWithBooleanSchemasAllFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -297,7 +298,6 @@ public class SuiteAllOfWithBooleanSchemasAllFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -315,7 +315,7 @@ public class SuiteAllOfWithBooleanSchemasAllFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
+                "tests/draft7/allOf.json",
                 "{\"allOf\": [false, false]}",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -331,6 +331,7 @@ public class SuiteAllOfWithBooleanSchemasAllFalse
 public class SuiteAllOfWithOneEmptySchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -341,7 +342,6 @@ public class SuiteAllOfWithOneEmptySchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -359,8 +359,8 @@ public class SuiteAllOfWithOneEmptySchema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
-                "{\r\n            \"allOf\": [\r\n                {}\r\n            ]\r\n        }",
+                "tests/draft7/allOf.json",
+                "{\n            \"allOf\": [\n                {}\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -375,6 +375,7 @@ public class SuiteAllOfWithOneEmptySchema
 public class SuiteAllOfWithTwoEmptySchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -385,7 +386,6 @@ public class SuiteAllOfWithTwoEmptySchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -403,8 +403,8 @@ public class SuiteAllOfWithTwoEmptySchemas
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
-                "{\r\n            \"allOf\": [\r\n                {},\r\n                {}\r\n            ]\r\n        }",
+                "tests/draft7/allOf.json",
+                "{\n            \"allOf\": [\n                {},\n                {}\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -419,6 +419,7 @@ public class SuiteAllOfWithTwoEmptySchemas
 public class SuiteAllOfWithTheFirstEmptySchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -429,7 +430,6 @@ public class SuiteAllOfWithTheFirstEmptySchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -454,8 +454,8 @@ public class SuiteAllOfWithTheFirstEmptySchema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
-                "{\r\n            \"allOf\": [\r\n                {},\r\n                { \"type\": \"number\" }\r\n            ]\r\n        }",
+                "tests/draft7/allOf.json",
+                "{\n            \"allOf\": [\n                {},\n                { \"type\": \"number\" }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -470,6 +470,7 @@ public class SuiteAllOfWithTheFirstEmptySchema
 public class SuiteAllOfWithTheLastEmptySchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -480,7 +481,6 @@ public class SuiteAllOfWithTheLastEmptySchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -505,8 +505,8 @@ public class SuiteAllOfWithTheLastEmptySchema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
-                "{\r\n            \"allOf\": [\r\n                { \"type\": \"number\" },\r\n                {}\r\n            ]\r\n        }",
+                "tests/draft7/allOf.json",
+                "{\n            \"allOf\": [\n                { \"type\": \"number\" },\n                {}\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -521,6 +521,7 @@ public class SuiteAllOfWithTheLastEmptySchema
 public class SuiteNestedAllOfToCheckValidationSemantics
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -531,7 +532,6 @@ public class SuiteNestedAllOfToCheckValidationSemantics
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -556,8 +556,8 @@ public class SuiteNestedAllOfToCheckValidationSemantics
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
-                "{\r\n            \"allOf\": [\r\n                {\r\n                    \"allOf\": [\r\n                        {\r\n                            \"type\": \"null\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }",
+                "tests/draft7/allOf.json",
+                "{\n            \"allOf\": [\n                {\n                    \"allOf\": [\n                        {\n                            \"type\": \"null\"\n                        }\n                    ]\n                }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -572,6 +572,7 @@ public class SuiteNestedAllOfToCheckValidationSemantics
 public class SuiteAllOfCombinedWithAnyOfOneOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -582,7 +583,6 @@ public class SuiteAllOfCombinedWithAnyOfOneOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -649,8 +649,8 @@ public class SuiteAllOfCombinedWithAnyOfOneOf
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\allOf.json",
-                "{\r\n            \"allOf\": [ { \"multipleOf\": 2 } ],\r\n            \"anyOf\": [ { \"multipleOf\": 3 } ],\r\n            \"oneOf\": [ { \"multipleOf\": 5 } ]\r\n        }",
+                "tests/draft7/allOf.json",
+                "{\n            \"allOf\": [ { \"multipleOf\": 2 } ],\n            \"anyOf\": [ { \"multipleOf\": 3 } ],\n            \"oneOf\": [ { \"multipleOf\": 5 } ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.AllOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",

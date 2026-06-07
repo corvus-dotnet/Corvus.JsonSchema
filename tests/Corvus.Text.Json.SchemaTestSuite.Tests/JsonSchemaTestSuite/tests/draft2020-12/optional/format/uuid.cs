@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.Format.Uuid;
 public class SuiteUuidFormat
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteUuidFormat
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -186,8 +186,8 @@ public class SuiteUuidFormat
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\optional\\format\\uuid.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"uuid\"\r\n        }",
+                "tests/draft2020-12/optional/format/uuid.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"format\": \"uuid\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Optional.Format.Uuid",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

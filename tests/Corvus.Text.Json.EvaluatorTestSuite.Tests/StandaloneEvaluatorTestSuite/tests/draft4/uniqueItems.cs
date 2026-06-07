@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft4.UniqueItems;
 public class SuiteUniqueItemsValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteUniqueItemsValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -105,14 +105,14 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestUniqueArrayOfNestedObjectsIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\n                ]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNonUniqueArrayOfNestedObjectsIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\n                ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -228,7 +228,7 @@ public class SuiteUniqueItemsValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\uniqueItems.json",
+                "tests/draft4/uniqueItems.json",
                 "{\"uniqueItems\": true}",
                 "StandaloneEvaluatorTestSuite.Draft4.UniqueItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -244,6 +244,7 @@ public class SuiteUniqueItemsValidation
 public class SuiteUniqueItemsWithAnArrayOfItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -254,7 +255,6 @@ public class SuiteUniqueItemsWithAnArrayOfItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -321,8 +321,8 @@ public class SuiteUniqueItemsWithAnArrayOfItems
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\uniqueItems.json",
-                "{\r\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": true\r\n        }",
+                "tests/draft4/uniqueItems.json",
+                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": true\n        }",
                 "StandaloneEvaluatorTestSuite.Draft4.UniqueItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -337,6 +337,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems
 public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -347,7 +348,6 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -393,8 +393,8 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\uniqueItems.json",
-                "{\r\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": true,\r\n            \"additionalItems\": false\r\n        }",
+                "tests/draft4/uniqueItems.json",
+                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": true,\n            \"additionalItems\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft4.UniqueItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -409,6 +409,7 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
 public class SuiteUniqueItemsFalseValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -419,7 +420,6 @@ public class SuiteUniqueItemsFalseValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -475,14 +475,14 @@ public class SuiteUniqueItemsFalseValidation
     [TestMethod]
     public void TestUniqueArrayOfNestedObjectsIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\n                ]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNonUniqueArrayOfNestedObjectsIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\n                ]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -535,7 +535,7 @@ public class SuiteUniqueItemsFalseValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\uniqueItems.json",
+                "tests/draft4/uniqueItems.json",
                 "{ \"uniqueItems\": false }",
                 "StandaloneEvaluatorTestSuite.Draft4.UniqueItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -551,6 +551,7 @@ public class SuiteUniqueItemsFalseValidation
 public class SuiteUniqueItemsFalseWithAnArrayOfItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -561,7 +562,6 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -628,8 +628,8 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\uniqueItems.json",
-                "{\r\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": false\r\n        }",
+                "tests/draft4/uniqueItems.json",
+                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft4.UniqueItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -644,6 +644,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems
 public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -654,7 +655,6 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -700,8 +700,8 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\uniqueItems.json",
-                "{\r\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": false,\r\n            \"additionalItems\": false\r\n        }",
+                "tests/draft4/uniqueItems.json",
+                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": false,\n            \"additionalItems\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft4.UniqueItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",

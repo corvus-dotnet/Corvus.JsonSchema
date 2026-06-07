@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.MaxProperties;
 public class SuiteMaxPropertiesValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaxPropertiesValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -74,8 +74,8 @@ public class SuiteMaxPropertiesValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\maxProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxProperties\": 2\r\n        }",
+                "tests/draft2020-12/maxProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"maxProperties\": 2\n        }",
                 "JsonSchemaTestSuite.Draft202012.MaxProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -93,6 +93,7 @@ public class SuiteMaxPropertiesValidation
 public class SuiteMaxPropertiesValidationWithADecimal
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -103,7 +104,6 @@ public class SuiteMaxPropertiesValidationWithADecimal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -128,8 +128,8 @@ public class SuiteMaxPropertiesValidationWithADecimal
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\maxProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxProperties\": 2.0\r\n        }",
+                "tests/draft2020-12/maxProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"maxProperties\": 2.0\n        }",
                 "JsonSchemaTestSuite.Draft202012.MaxProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -147,6 +147,7 @@ public class SuiteMaxPropertiesValidationWithADecimal
 public class SuiteMaxProperties0MeansTheObjectIsEmpty
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -157,7 +158,6 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -182,8 +182,8 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\maxProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxProperties\": 0\r\n        }",
+                "tests/draft2020-12/maxProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"maxProperties\": 0\n        }",
                 "JsonSchemaTestSuite.Draft202012.MaxProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

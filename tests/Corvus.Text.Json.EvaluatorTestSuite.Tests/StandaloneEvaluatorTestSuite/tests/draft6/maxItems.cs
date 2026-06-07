@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.MaxItems;
 public class SuiteMaxItemsValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaxItemsValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,7 +60,7 @@ public class SuiteMaxItemsValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\maxItems.json",
+                "tests/draft6/maxItems.json",
                 "{\"maxItems\": 2}",
                 "StandaloneEvaluatorTestSuite.Draft6.MaxItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -76,6 +76,7 @@ public class SuiteMaxItemsValidation
 public class SuiteMaxItemsValidationWithADecimal
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -86,7 +87,6 @@ public class SuiteMaxItemsValidationWithADecimal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -111,7 +111,7 @@ public class SuiteMaxItemsValidationWithADecimal
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\maxItems.json",
+                "tests/draft6/maxItems.json",
                 "{\"maxItems\": 2.0}",
                 "StandaloneEvaluatorTestSuite.Draft6.MaxItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

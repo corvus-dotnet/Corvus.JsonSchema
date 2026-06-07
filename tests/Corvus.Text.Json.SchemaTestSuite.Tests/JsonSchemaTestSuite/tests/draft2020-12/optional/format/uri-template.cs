@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.Format.UriTemplate;
 public class SuiteFormatUriTemplate
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteFormatUriTemplate
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -102,8 +102,8 @@ public class SuiteFormatUriTemplate
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\optional\\format\\uri-template.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"uri-template\"\r\n        }",
+                "tests/draft2020-12/optional/format/uri-template.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"format\": \"uri-template\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Optional.Format.UriTemplate",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

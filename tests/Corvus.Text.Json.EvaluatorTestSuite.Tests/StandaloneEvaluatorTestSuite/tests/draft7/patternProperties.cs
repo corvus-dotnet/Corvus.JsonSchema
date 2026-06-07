@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft7.PatternProperties;
 public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -81,8 +81,8 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\patternProperties.json",
-                "{\r\n            \"patternProperties\": {\r\n                \"f.*o\": {\"type\": \"integer\"}\r\n            }\r\n        }",
+                "tests/draft7/patternProperties.json",
+                "{\n            \"patternProperties\": {\n                \"f.*o\": {\"type\": \"integer\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.PatternProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -97,6 +97,7 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
 public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -107,7 +108,6 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -160,8 +160,8 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\patternProperties.json",
-                "{\r\n            \"patternProperties\": {\r\n                \"a*\": {\"type\": \"integer\"},\r\n                \"aaa*\": {\"maximum\": 20}\r\n            }\r\n        }",
+                "tests/draft7/patternProperties.json",
+                "{\n            \"patternProperties\": {\n                \"a*\": {\"type\": \"integer\"},\n                \"aaa*\": {\"maximum\": 20}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.PatternProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -176,6 +176,7 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
 public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -186,7 +187,6 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -225,8 +225,8 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\patternProperties.json",
-                "{\r\n            \"patternProperties\": {\r\n                \"[0-9]{2,}\": { \"type\": \"boolean\" },\r\n                \"X_\": { \"type\": \"string\" }\r\n            }\r\n        }",
+                "tests/draft7/patternProperties.json",
+                "{\n            \"patternProperties\": {\n                \"[0-9]{2,}\": { \"type\": \"boolean\" },\n                \"X_\": { \"type\": \"string\" }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.PatternProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -241,6 +241,7 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
 public class SuitePatternPropertiesWithBooleanSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -251,7 +252,6 @@ public class SuitePatternPropertiesWithBooleanSchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -297,8 +297,8 @@ public class SuitePatternPropertiesWithBooleanSchemas
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\patternProperties.json",
-                "{\r\n            \"patternProperties\": {\r\n                \"f.*\": true,\r\n                \"b.*\": false\r\n            }\r\n        }",
+                "tests/draft7/patternProperties.json",
+                "{\n            \"patternProperties\": {\n                \"f.*\": true,\n                \"b.*\": false\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.PatternProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -313,6 +313,7 @@ public class SuitePatternPropertiesWithBooleanSchemas
 public class SuitePatternPropertiesWithNullValuedInstanceProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -323,7 +324,6 @@ public class SuitePatternPropertiesWithNullValuedInstanceProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -341,8 +341,8 @@ public class SuitePatternPropertiesWithNullValuedInstanceProperties
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\patternProperties.json",
-                "{\r\n            \"patternProperties\": {\r\n                \"^.*bar$\": {\"type\": \"null\"}\r\n            }\r\n        }",
+                "tests/draft7/patternProperties.json",
+                "{\n            \"patternProperties\": {\n                \"^.*bar$\": {\"type\": \"null\"}\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.PatternProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",

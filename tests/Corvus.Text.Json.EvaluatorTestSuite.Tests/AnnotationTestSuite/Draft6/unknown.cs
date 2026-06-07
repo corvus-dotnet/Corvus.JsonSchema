@@ -12,6 +12,7 @@ namespace AnnotationTestSuite.Draft6.Unknown;
 public class SuiteUnknownKeywordIsAnAnnotation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -22,7 +23,6 @@ public class SuiteUnknownKeywordIsAnAnnotation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -34,7 +34,7 @@ public class SuiteUnknownKeywordIsAnAnnotation
             "42",
             "",
             "x-unknownKeyword",
-            "{\r\n                \"#\": \"Foo\"\r\n              }");
+            "{\n                \"#\": \"Foo\"\n              }");
     }
 
     public class Fixture
@@ -45,9 +45,9 @@ public class SuiteUnknownKeywordIsAnAnnotation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/unknown.json",
-                "{\r\n        \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n        \"x-unknownKeyword\": \"Foo\"\r\n      }",
+                "{\n        \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n        \"x-unknownKeyword\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft6.Unknown",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

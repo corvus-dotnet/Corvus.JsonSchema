@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.IriReference;
 public class SuiteValidationOfIriReferences
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfIriReferences
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -123,8 +123,8 @@ public class SuiteValidationOfIriReferences
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\optional\\format\\iri-reference.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"iri-reference\"\r\n        }",
+                "tests/draft2020-12/optional/format/iri-reference.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"format\": \"iri-reference\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.IriReference",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

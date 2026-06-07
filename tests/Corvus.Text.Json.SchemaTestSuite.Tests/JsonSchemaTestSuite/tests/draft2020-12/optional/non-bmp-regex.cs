@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.NonBmpRegex;
 public class SuiteProperUtf16SurrogatePairHandlingPattern
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteProperUtf16SurrogatePairHandlingPattern
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -81,8 +81,8 @@ public class SuiteProperUtf16SurrogatePairHandlingPattern
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\optional\\non-bmp-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"pattern\": \"^🐲*$\"\r\n        }",
+                "tests/draft2020-12/optional/non-bmp-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"^🐲*$\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Optional.NonBmpRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -100,6 +100,7 @@ public class SuiteProperUtf16SurrogatePairHandlingPattern
 public class SuiteProperUtf16SurrogatePairHandlingPatternProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -110,7 +111,6 @@ public class SuiteProperUtf16SurrogatePairHandlingPatternProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -156,8 +156,8 @@ public class SuiteProperUtf16SurrogatePairHandlingPatternProperties
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\optional\\non-bmp-regex.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"patternProperties\": {\r\n                \"^🐲*$\": {\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2020-12/optional/non-bmp-regex.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"patternProperties\": {\n                \"^🐲*$\": {\n                    \"type\": \"integer\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.Optional.NonBmpRegex",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

@@ -12,6 +12,7 @@ namespace AnnotationTestSuite.Draft4.Applicators;
 public class SuitePropertiesPatternPropertiesAndAdditionalProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -22,7 +23,6 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -64,10 +64,10 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "{\r\n            \"foo\": {},\r\n            \"apple\": {},\r\n            \"baz\": {}\r\n          }",
+            "{\n            \"foo\": {},\n            \"apple\": {},\n            \"baz\": {}\n          }",
             "/foo",
             "title",
-            "{\r\n                \"#/properties/foo\": \"Foo\"\r\n              }");
+            "{\n                \"#/properties/foo\": \"Foo\"\n              }");
     }
 
     [TestMethod]
@@ -75,10 +75,10 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "{\r\n            \"foo\": {},\r\n            \"apple\": {},\r\n            \"baz\": {}\r\n          }",
+            "{\n            \"foo\": {},\n            \"apple\": {},\n            \"baz\": {}\n          }",
             "/apple",
             "title",
-            "{\r\n                \"#/patternProperties/%5Ea\": \"Bar\"\r\n              }");
+            "{\n                \"#/patternProperties/%5Ea\": \"Bar\"\n              }");
     }
 
     [TestMethod]
@@ -86,10 +86,10 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "{\r\n            \"foo\": {},\r\n            \"apple\": {},\r\n            \"baz\": {}\r\n          }",
+            "{\n            \"foo\": {},\n            \"apple\": {},\n            \"baz\": {}\n          }",
             "/baz",
             "title",
-            "{\r\n                \"#/additionalProperties\": \"Baz\"\r\n              }");
+            "{\n                \"#/additionalProperties\": \"Baz\"\n              }");
     }
 
     public class Fixture
@@ -100,9 +100,9 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"properties\": {\r\n          \"foo\": {\r\n            \"title\": \"Foo\"\r\n          }\r\n        },\r\n        \"patternProperties\": {\r\n          \"^a\": {\r\n            \"title\": \"Bar\"\r\n          }\r\n        },\r\n        \"additionalProperties\": {\r\n          \"title\": \"Baz\"\r\n        }\r\n      }",
+                "{\n        \"properties\": {\n          \"foo\": {\n            \"title\": \"Foo\"\n          }\n        },\n        \"patternProperties\": {\n          \"^a\": {\n            \"title\": \"Bar\"\n          }\n        },\n        \"additionalProperties\": {\n          \"title\": \"Baz\"\n        }\n      }",
                 "AnnotationTestSuite.Draft4.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

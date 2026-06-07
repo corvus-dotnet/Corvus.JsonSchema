@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.IdnHostname;
 public class SuiteValidationOfInternationalizedHostNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfInternationalizedHostNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -431,8 +431,8 @@ public class SuiteValidationOfInternationalizedHostNames
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\optional\\format\\idn-hostname.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"idn-hostname\"\r\n        }",
+                "tests/draft2020-12/optional/format/idn-hostname.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"format\": \"idn-hostname\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.IdnHostname",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -447,6 +447,7 @@ public class SuiteValidationOfInternationalizedHostNames
 public class SuiteValidationOfSeparatorsInInternationalizedHostNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -457,7 +458,6 @@ public class SuiteValidationOfSeparatorsInInternationalizedHostNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -608,8 +608,8 @@ public class SuiteValidationOfSeparatorsInInternationalizedHostNames
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\optional\\format\\idn-hostname.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"idn-hostname\"\r\n        }",
+                "tests/draft2020-12/optional/format/idn-hostname.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"format\": \"idn-hostname\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.IdnHostname",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

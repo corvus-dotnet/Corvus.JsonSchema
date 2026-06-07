@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft4.MaxLength;
 public class SuiteMaxLengthValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaxLengthValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -67,7 +67,7 @@ public class SuiteMaxLengthValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\maxLength.json",
+                "tests/draft4/maxLength.json",
                 "{\"maxLength\": 2}",
                 "StandaloneEvaluatorTestSuite.Draft4.MaxLength",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft6.Optional.Format.UriReference;
 public class SuiteValidationOfUriReferences
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfUriReferences
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -151,7 +151,7 @@ public class SuiteValidationOfUriReferences
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\optional\\format\\uri-reference.json",
+                "tests/draft6/optional/format/uri-reference.json",
                 "{ \"format\": \"uri-reference\" }",
                 "JsonSchemaTestSuite.Draft6.Optional.Format.UriReference",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

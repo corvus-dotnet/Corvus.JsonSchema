@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.Optional.Anchor;
 public class SuiteAnchorInsideAnEnumIsNotARealIdentifier
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,21 +22,20 @@ public class SuiteAnchorInsideAnEnumIsNotARealIdentifier
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestExactMatchToEnumAndTypeMatches()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"$anchor\": \"my_anchor\",\r\n                    \"type\": \"null\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"$anchor\": \"my_anchor\",\n                    \"type\": \"null\"\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInImplementationsThatStripAnchorThisMayMatchEitherDef()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"type\": \"null\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"type\": \"null\"\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -60,8 +60,8 @@ public class SuiteAnchorInsideAnEnumIsNotARealIdentifier
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\optional\\anchor.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$defs\": {\r\n                \"anchor_in_enum\": {\r\n                    \"enum\": [\r\n                        {\r\n                            \"$anchor\": \"my_anchor\",\r\n                            \"type\": \"null\"\r\n                        }\r\n                    ]\r\n                },\r\n                \"real_identifier_in_schema\": {\r\n                    \"$anchor\": \"my_anchor\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"zzz_anchor_in_const\": {\r\n                    \"const\": {\r\n                        \"$anchor\": \"my_anchor\",\r\n                        \"type\": \"null\"\r\n                    }\r\n                }\r\n            },\r\n            \"anyOf\": [\r\n                { \"$ref\": \"#/$defs/anchor_in_enum\" },\r\n                { \"$ref\": \"#my_anchor\" }\r\n            ]\r\n        }",
+                "tests/draft2020-12/optional/anchor.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$defs\": {\n                \"anchor_in_enum\": {\n                    \"enum\": [\n                        {\n                            \"$anchor\": \"my_anchor\",\n                            \"type\": \"null\"\n                        }\n                    ]\n                },\n                \"real_identifier_in_schema\": {\n                    \"$anchor\": \"my_anchor\",\n                    \"type\": \"string\"\n                },\n                \"zzz_anchor_in_const\": {\n                    \"const\": {\n                        \"$anchor\": \"my_anchor\",\n                        \"type\": \"null\"\n                    }\n                }\n            },\n            \"anyOf\": [\n                { \"$ref\": \"#/$defs/anchor_in_enum\" },\n                { \"$ref\": \"#my_anchor\" }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Optional.Anchor",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

@@ -12,6 +12,7 @@ namespace AnnotationTestSuite.Draft201909.Core;
 public class SuiteRefAndDefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -22,7 +23,6 @@ public class SuiteRefAndDefs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -34,7 +34,7 @@ public class SuiteRefAndDefs
             "\"foo\"",
             "",
             "title",
-            "{\r\n                \"#/$defs/foo\": \"Foo\"\r\n              }");
+            "{\n                \"#/$defs/foo\": \"Foo\"\n              }");
     }
 
     public class Fixture
@@ -45,9 +45,9 @@ public class SuiteRefAndDefs
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/core.json",
-                "{\r\n        \"$ref\": \"#/$defs/foo\",\r\n        \"$defs\": {\r\n          \"foo\": { \"title\": \"Foo\" }\r\n        }\r\n      }",
+                "{\n        \"$ref\": \"#/$defs/foo\",\n        \"$defs\": {\n          \"foo\": { \"title\": \"Foo\" }\n        }\n      }",
                 "AnnotationTestSuite.Draft201909.Core",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

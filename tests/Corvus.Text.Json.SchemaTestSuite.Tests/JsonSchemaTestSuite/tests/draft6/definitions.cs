@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft6.Definitions;
 public class SuiteValidateDefinitionAgainstMetaschema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,21 +22,20 @@ public class SuiteValidateDefinitionAgainstMetaschema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestValidDefinitionSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"definitions\": {\r\n                        \"foo\": {\"type\": \"integer\"}\r\n                    }\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"definitions\": {\n                        \"foo\": {\"type\": \"integer\"}\n                    }\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInvalidDefinitionSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"definitions\": {\r\n                        \"foo\": {\"type\": 1}\r\n                    }\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"definitions\": {\n                        \"foo\": {\"type\": 1}\n                    }\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -46,7 +46,7 @@ public class SuiteValidateDefinitionAgainstMetaschema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\definitions.json",
+                "tests/draft6/definitions.json",
                 "{\"$ref\": \"http://json-schema.org/draft-06/schema#\"}",
                 "JsonSchemaTestSuite.Draft6.Definitions",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

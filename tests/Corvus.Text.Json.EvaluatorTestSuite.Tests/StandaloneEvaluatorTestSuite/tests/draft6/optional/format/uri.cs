@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.Optional.Format.Uri;
 public class SuiteValidationOfUrIs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfUrIs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -340,7 +340,7 @@ public class SuiteValidationOfUrIs
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\optional\\format\\uri.json",
+                "tests/draft6/optional/format/uri.json",
                 "{ \"format\": \"uri\" }",
                 "StandaloneEvaluatorTestSuite.Draft6.Optional.Format.Uri",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

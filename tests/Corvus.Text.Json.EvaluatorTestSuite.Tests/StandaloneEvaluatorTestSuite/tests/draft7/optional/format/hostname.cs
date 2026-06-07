@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft7.Optional.Format.Hostname;
 public class SuiteValidationOfHostNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfHostNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -200,7 +200,7 @@ public class SuiteValidationOfHostNames
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\optional\\format\\hostname.json",
+                "tests/draft7/optional/format/hostname.json",
                 "{ \"format\": \"hostname\" }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.Format.Hostname",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -216,6 +216,7 @@ public class SuiteValidationOfHostNames
 public class SuiteValidationOfALabelPunycodeHostNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -226,7 +227,6 @@ public class SuiteValidationOfALabelPunycodeHostNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -496,7 +496,7 @@ public class SuiteValidationOfALabelPunycodeHostNames
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\optional\\format\\hostname.json",
+                "tests/draft7/optional/format/hostname.json",
                 "{ \"format\": \"hostname\" }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.Format.Hostname",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

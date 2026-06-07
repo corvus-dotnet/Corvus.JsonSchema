@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft4.MultipleOf;
 public class SuiteByInt
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteByInt
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -53,7 +53,7 @@ public class SuiteByInt
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\multipleOf.json",
+                "tests/draft4/multipleOf.json",
                 "{\"multipleOf\": 2}",
                 "StandaloneEvaluatorTestSuite.Draft4.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -69,6 +69,7 @@ public class SuiteByInt
 public class SuiteByNumber
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -79,7 +80,6 @@ public class SuiteByNumber
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -118,7 +118,7 @@ public class SuiteByNumber
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\multipleOf.json",
+                "tests/draft4/multipleOf.json",
                 "{\"multipleOf\": 1.5}",
                 "StandaloneEvaluatorTestSuite.Draft4.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -134,6 +134,7 @@ public class SuiteByNumber
 public class SuiteBySmallNumber
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -144,7 +145,6 @@ public class SuiteBySmallNumber
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -169,7 +169,7 @@ public class SuiteBySmallNumber
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\multipleOf.json",
+                "tests/draft4/multipleOf.json",
                 "{\"multipleOf\": 0.0001}",
                 "StandaloneEvaluatorTestSuite.Draft4.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -185,6 +185,7 @@ public class SuiteBySmallNumber
 public class SuiteFloatDivisionInf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -195,7 +196,6 @@ public class SuiteFloatDivisionInf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -213,7 +213,7 @@ public class SuiteFloatDivisionInf
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\multipleOf.json",
+                "tests/draft4/multipleOf.json",
                 "{\"type\": \"integer\", \"multipleOf\": 0.123456789}",
                 "StandaloneEvaluatorTestSuite.Draft4.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -229,6 +229,7 @@ public class SuiteFloatDivisionInf
 public class SuiteSmallMultipleOfLargeInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -239,7 +240,6 @@ public class SuiteSmallMultipleOfLargeInteger
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -257,7 +257,7 @@ public class SuiteSmallMultipleOfLargeInteger
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\multipleOf.json",
+                "tests/draft4/multipleOf.json",
                 "{\"type\": \"integer\", \"multipleOf\": 1e-8}",
                 "StandaloneEvaluatorTestSuite.Draft4.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

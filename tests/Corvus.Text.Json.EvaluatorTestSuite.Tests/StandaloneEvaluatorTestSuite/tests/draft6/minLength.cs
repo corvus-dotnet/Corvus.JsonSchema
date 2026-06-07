@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.MinLength;
 public class SuiteMinLengthValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMinLengthValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -67,7 +67,7 @@ public class SuiteMinLengthValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\minLength.json",
+                "tests/draft6/minLength.json",
                 "{\"minLength\": 2}",
                 "StandaloneEvaluatorTestSuite.Draft6.MinLength",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -83,6 +83,7 @@ public class SuiteMinLengthValidation
 public class SuiteMinLengthValidationWithADecimal
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -93,7 +94,6 @@ public class SuiteMinLengthValidationWithADecimal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -118,7 +118,7 @@ public class SuiteMinLengthValidationWithADecimal
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\minLength.json",
+                "tests/draft6/minLength.json",
                 "{\"minLength\": 2.0}",
                 "StandaloneEvaluatorTestSuite.Draft6.MinLength",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

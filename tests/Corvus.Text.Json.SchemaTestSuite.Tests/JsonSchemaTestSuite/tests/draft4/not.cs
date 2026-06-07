@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft4.Not;
 public class SuiteNot
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteNot
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteNot
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\not.json",
-                "{\r\n            \"not\": {\"type\": \"integer\"}\r\n        }",
+                "tests/draft4/not.json",
+                "{\n            \"not\": {\"type\": \"integer\"}\n        }",
                 "JsonSchemaTestSuite.Draft4.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -65,6 +65,7 @@ public class SuiteNot
 public class SuiteNotMultipleTypes
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -75,7 +76,6 @@ public class SuiteNotMultipleTypes
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -107,8 +107,8 @@ public class SuiteNotMultipleTypes
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\not.json",
-                "{\r\n            \"not\": {\"type\": [\"integer\", \"boolean\"]}\r\n        }",
+                "tests/draft4/not.json",
+                "{\n            \"not\": {\"type\": [\"integer\", \"boolean\"]}\n        }",
                 "JsonSchemaTestSuite.Draft4.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -126,6 +126,7 @@ public class SuiteNotMultipleTypes
 public class SuiteNotMoreComplexSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -136,7 +137,6 @@ public class SuiteNotMoreComplexSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -168,8 +168,8 @@ public class SuiteNotMoreComplexSchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\not.json",
-                "{\r\n            \"not\": {\r\n                \"type\": \"object\",\r\n                \"properties\": {\r\n                    \"foo\": {\r\n                        \"type\": \"string\"\r\n                    }\r\n                }\r\n             }\r\n        }",
+                "tests/draft4/not.json",
+                "{\n            \"not\": {\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": {\n                        \"type\": \"string\"\n                    }\n                }\n             }\n        }",
                 "JsonSchemaTestSuite.Draft4.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -187,6 +187,7 @@ public class SuiteNotMoreComplexSchema
 public class SuiteForbiddenProperty
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -197,7 +198,6 @@ public class SuiteForbiddenProperty
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -222,8 +222,8 @@ public class SuiteForbiddenProperty
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\not.json",
-                "{\r\n            \"properties\": {\r\n                \"foo\": { \r\n                    \"not\": {}\r\n                }\r\n            }\r\n        }",
+                "tests/draft4/not.json",
+                "{\n            \"properties\": {\n                \"foo\": { \n                    \"not\": {}\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft4.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -241,6 +241,7 @@ public class SuiteForbiddenProperty
 public class SuiteForbidEverythingWithEmptySchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -251,7 +252,6 @@ public class SuiteForbidEverythingWithEmptySchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -325,7 +325,7 @@ public class SuiteForbidEverythingWithEmptySchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\not.json",
+                "tests/draft4/not.json",
                 "{ \"not\": {} }",
                 "JsonSchemaTestSuite.Draft4.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -344,6 +344,7 @@ public class SuiteForbidEverythingWithEmptySchema
 public class SuiteDoubleNegation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -354,7 +355,6 @@ public class SuiteDoubleNegation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -372,7 +372,7 @@ public class SuiteDoubleNegation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\not.json",
+                "tests/draft4/not.json",
                 "{ \"not\": { \"not\": {} } }",
                 "JsonSchemaTestSuite.Draft4.Not",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

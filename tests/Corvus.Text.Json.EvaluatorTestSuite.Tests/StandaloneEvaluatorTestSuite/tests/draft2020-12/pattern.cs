@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.Pattern;
 public class SuitePatternValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuitePatternValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -88,8 +88,8 @@ public class SuitePatternValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\pattern.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"pattern\": \"^a*$\"\r\n        }",
+                "tests/draft2020-12/pattern.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"^a*$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Pattern",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -104,6 +104,7 @@ public class SuitePatternValidation
 public class SuitePatternIsNotAnchored
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -114,7 +115,6 @@ public class SuitePatternIsNotAnchored
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -132,8 +132,8 @@ public class SuitePatternIsNotAnchored
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\pattern.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"pattern\": \"a+\"\r\n        }",
+                "tests/draft2020-12/pattern.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"a+\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Pattern",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -148,6 +148,7 @@ public class SuitePatternIsNotAnchored
 public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -158,7 +159,6 @@ public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -190,8 +190,8 @@ public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\pattern.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\p{Letter}+$\"\r\n        }",
+                "tests/draft2020-12/pattern.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\p{Letter}+$\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Pattern",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

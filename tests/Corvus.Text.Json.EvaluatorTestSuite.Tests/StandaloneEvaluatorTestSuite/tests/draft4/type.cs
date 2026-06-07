@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft4.Type;
 public class SuiteIntegerTypeMatchesIntegers
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteIntegerTypeMatchesIntegers
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -88,7 +88,7 @@ public class SuiteIntegerTypeMatchesIntegers
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
+                "tests/draft4/type.json",
                 "{\"type\": \"integer\"}",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -104,6 +104,7 @@ public class SuiteIntegerTypeMatchesIntegers
 public class SuiteNumberTypeMatchesNumbers
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -114,7 +115,6 @@ public class SuiteNumberTypeMatchesNumbers
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -188,7 +188,7 @@ public class SuiteNumberTypeMatchesNumbers
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
+                "tests/draft4/type.json",
                 "{\"type\": \"number\"}",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -204,6 +204,7 @@ public class SuiteNumberTypeMatchesNumbers
 public class SuiteStringTypeMatchesStrings
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -214,7 +215,6 @@ public class SuiteStringTypeMatchesStrings
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -288,7 +288,7 @@ public class SuiteStringTypeMatchesStrings
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
+                "tests/draft4/type.json",
                 "{\"type\": \"string\"}",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -304,6 +304,7 @@ public class SuiteStringTypeMatchesStrings
 public class SuiteObjectTypeMatchesObjects
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -314,7 +315,6 @@ public class SuiteObjectTypeMatchesObjects
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -374,7 +374,7 @@ public class SuiteObjectTypeMatchesObjects
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
+                "tests/draft4/type.json",
                 "{\"type\": \"object\"}",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -390,6 +390,7 @@ public class SuiteObjectTypeMatchesObjects
 public class SuiteArrayTypeMatchesArrays
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -400,7 +401,6 @@ public class SuiteArrayTypeMatchesArrays
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -460,7 +460,7 @@ public class SuiteArrayTypeMatchesArrays
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
+                "tests/draft4/type.json",
                 "{\"type\": \"array\"}",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -476,6 +476,7 @@ public class SuiteArrayTypeMatchesArrays
 public class SuiteBooleanTypeMatchesBooleans
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -486,7 +487,6 @@ public class SuiteBooleanTypeMatchesBooleans
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -567,7 +567,7 @@ public class SuiteBooleanTypeMatchesBooleans
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
+                "tests/draft4/type.json",
                 "{\"type\": \"boolean\"}",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -583,6 +583,7 @@ public class SuiteBooleanTypeMatchesBooleans
 public class SuiteNullTypeMatchesOnlyTheNullObject
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -593,7 +594,6 @@ public class SuiteNullTypeMatchesOnlyTheNullObject
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -674,7 +674,7 @@ public class SuiteNullTypeMatchesOnlyTheNullObject
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
+                "tests/draft4/type.json",
                 "{\"type\": \"null\"}",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -690,6 +690,7 @@ public class SuiteNullTypeMatchesOnlyTheNullObject
 public class SuiteMultipleTypesCanBeSpecifiedInAnArray
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -700,7 +701,6 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -760,7 +760,7 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
+                "tests/draft4/type.json",
                 "{\"type\": [\"integer\", \"string\"]}",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -776,6 +776,7 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray
 public class SuiteTypeAsArrayWithOneItem
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -786,7 +787,6 @@ public class SuiteTypeAsArrayWithOneItem
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -811,8 +811,8 @@ public class SuiteTypeAsArrayWithOneItem
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
-                "{\r\n            \"type\": [\"string\"]\r\n        }",
+                "tests/draft4/type.json",
+                "{\n            \"type\": [\"string\"]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -827,6 +827,7 @@ public class SuiteTypeAsArrayWithOneItem
 public class SuiteTypeArrayOrObject
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -837,7 +838,6 @@ public class SuiteTypeArrayOrObject
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -883,8 +883,8 @@ public class SuiteTypeArrayOrObject
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
-                "{\r\n            \"type\": [\"array\", \"object\"]\r\n        }",
+                "tests/draft4/type.json",
+                "{\n            \"type\": [\"array\", \"object\"]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",
@@ -899,6 +899,7 @@ public class SuiteTypeArrayOrObject
 public class SuiteTypeArrayObjectOrNull
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -909,7 +910,6 @@ public class SuiteTypeArrayObjectOrNull
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -955,8 +955,8 @@ public class SuiteTypeArrayObjectOrNull
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\type.json",
-                "{\r\n            \"type\": [\"array\", \"object\", \"null\"]\r\n        }",
+                "tests/draft4/type.json",
+                "{\n            \"type\": [\"array\", \"object\", \"null\"]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-04/schema#",

@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.FormatAssertion;
 public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\optional\\format-assertion.json",
-                "{\r\n            \"$id\": \"https://schema/using/format-assertion/false\",\r\n            \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-false.json\",\r\n            \"format\": \"ipv4\"\r\n        }",
+                "tests/draft2020-12/optional/format-assertion.json",
+                "{\n            \"$id\": \"https://schema/using/format-assertion/false\",\n            \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-false.json\",\n            \"format\": \"ipv4\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Optional.FormatAssertion",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -65,6 +65,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse
 public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -75,7 +76,6 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -100,8 +100,8 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\optional\\format-assertion.json",
-                "{\r\n            \"$id\": \"https://schema/using/format-assertion/true\",\r\n            \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-true.json\",\r\n            \"format\": \"ipv4\"\r\n        }",
+                "tests/draft2020-12/optional/format-assertion.json",
+                "{\n            \"$id\": \"https://schema/using/format-assertion/true\",\n            \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-true.json\",\n            \"format\": \"ipv4\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Optional.FormatAssertion",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

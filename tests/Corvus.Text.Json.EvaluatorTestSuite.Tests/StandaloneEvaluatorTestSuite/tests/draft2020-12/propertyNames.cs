@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.PropertyNames;
 public class SuitePropertyNamesValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,21 +22,20 @@ public class SuitePropertyNamesValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestAllPropertyNamesValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"f\": {},\r\n                    \"foo\": {}\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"f\": {},\n                    \"foo\": {}\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestSomePropertyNamesInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": {},\r\n                    \"foobar\": {}\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {},\n                    \"foobar\": {}\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -74,8 +74,8 @@ public class SuitePropertyNamesValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\propertyNames.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": {\"maxLength\": 3}\r\n        }",
+                "tests/draft2020-12/propertyNames.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"propertyNames\": {\"maxLength\": 3}\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PropertyNames",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -90,6 +90,7 @@ public class SuitePropertyNamesValidation
 public class SuitePropertyNamesValidationWithPattern
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -100,21 +101,20 @@ public class SuitePropertyNamesValidationWithPattern
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestMatchingPropertyNamesValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"a\": {},\r\n                    \"aa\": {},\r\n                    \"aaa\": {}\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"a\": {},\n                    \"aa\": {},\n                    \"aaa\": {}\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNonMatchingPropertyNameIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"aaA\": {}\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"aaA\": {}\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -132,8 +132,8 @@ public class SuitePropertyNamesValidationWithPattern
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\propertyNames.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": { \"pattern\": \"^a+$\" }\r\n        }",
+                "tests/draft2020-12/propertyNames.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"propertyNames\": { \"pattern\": \"^a+$\" }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PropertyNames",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -148,6 +148,7 @@ public class SuitePropertyNamesValidationWithPattern
 public class SuitePropertyNamesWithBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -158,7 +159,6 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -183,8 +183,8 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\propertyNames.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": true\r\n        }",
+                "tests/draft2020-12/propertyNames.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"propertyNames\": true\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PropertyNames",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -199,6 +199,7 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
 public class SuitePropertyNamesWithBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -209,7 +210,6 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -234,8 +234,8 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\propertyNames.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": false\r\n        }",
+                "tests/draft2020-12/propertyNames.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"propertyNames\": false\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PropertyNames",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -250,6 +250,7 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
 public class SuitePropertyNamesWithConst
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -260,7 +261,6 @@ public class SuitePropertyNamesWithConst
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -292,8 +292,8 @@ public class SuitePropertyNamesWithConst
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\propertyNames.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": {\"const\": \"foo\"}\r\n        }",
+                "tests/draft2020-12/propertyNames.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"propertyNames\": {\"const\": \"foo\"}\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PropertyNames",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -308,6 +308,7 @@ public class SuitePropertyNamesWithConst
 public class SuitePropertyNamesWithEnum
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -318,7 +319,6 @@ public class SuitePropertyNamesWithEnum
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -357,8 +357,8 @@ public class SuitePropertyNamesWithEnum
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\propertyNames.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": {\"enum\": [\"foo\", \"bar\"]}\r\n        }",
+                "tests/draft2020-12/propertyNames.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"propertyNames\": {\"enum\": [\"foo\", \"bar\"]}\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PropertyNames",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

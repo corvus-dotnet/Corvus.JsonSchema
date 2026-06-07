@@ -12,6 +12,7 @@ namespace AnnotationTestSuite.Draft6.Format;
 public class SuiteFormatIsAnAnnotation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -22,7 +23,6 @@ public class SuiteFormatIsAnAnnotation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -34,7 +34,7 @@ public class SuiteFormatIsAnAnnotation
             "\"foo@bar.com\"",
             "",
             "format",
-            "{\r\n                \"#\": \"email\"\r\n              }");
+            "{\n                \"#\": \"email\"\n              }");
     }
 
     public class Fixture
@@ -45,9 +45,9 @@ public class SuiteFormatIsAnAnnotation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/format.json",
-                "{\r\n        \"format\": \"email\"\r\n      }",
+                "{\n        \"format\": \"email\"\n      }",
                 "AnnotationTestSuite.Draft6.Format",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

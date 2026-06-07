@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft7.Optional.Bignum;
 public class SuiteInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteInteger
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,7 +46,7 @@ public class SuiteInteger
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\bignum.json",
+                "tests/draft7/optional/bignum.json",
                 "{ \"type\": \"integer\" }",
                 "JsonSchemaTestSuite.Draft7.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -65,6 +65,7 @@ public class SuiteInteger
 public class SuiteNumber
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -75,7 +76,6 @@ public class SuiteNumber
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -100,7 +100,7 @@ public class SuiteNumber
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\bignum.json",
+                "tests/draft7/optional/bignum.json",
                 "{ \"type\": \"number\" }",
                 "JsonSchemaTestSuite.Draft7.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -119,6 +119,7 @@ public class SuiteNumber
 public class SuiteString
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -129,7 +130,6 @@ public class SuiteString
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -147,7 +147,7 @@ public class SuiteString
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\bignum.json",
+                "tests/draft7/optional/bignum.json",
                 "{ \"type\": \"string\" }",
                 "JsonSchemaTestSuite.Draft7.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -166,6 +166,7 @@ public class SuiteString
 public class SuiteMaximumIntegerComparison
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -176,7 +177,6 @@ public class SuiteMaximumIntegerComparison
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -194,7 +194,7 @@ public class SuiteMaximumIntegerComparison
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\bignum.json",
+                "tests/draft7/optional/bignum.json",
                 "{ \"maximum\": 18446744073709551615 }",
                 "JsonSchemaTestSuite.Draft7.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -213,6 +213,7 @@ public class SuiteMaximumIntegerComparison
 public class SuiteFloatComparisonWithHighPrecision
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -223,7 +224,6 @@ public class SuiteFloatComparisonWithHighPrecision
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -241,8 +241,8 @@ public class SuiteFloatComparisonWithHighPrecision
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\bignum.json",
-                "{\r\n            \"exclusiveMaximum\": 972783798187987123879878123.18878137\r\n        }",
+                "tests/draft7/optional/bignum.json",
+                "{\n            \"exclusiveMaximum\": 972783798187987123879878123.18878137\n        }",
                 "JsonSchemaTestSuite.Draft7.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -260,6 +260,7 @@ public class SuiteFloatComparisonWithHighPrecision
 public class SuiteMinimumIntegerComparison
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -270,7 +271,6 @@ public class SuiteMinimumIntegerComparison
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -288,7 +288,7 @@ public class SuiteMinimumIntegerComparison
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\bignum.json",
+                "tests/draft7/optional/bignum.json",
                 "{ \"minimum\": -18446744073709551615 }",
                 "JsonSchemaTestSuite.Draft7.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -307,6 +307,7 @@ public class SuiteMinimumIntegerComparison
 public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -317,7 +318,6 @@ public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -335,8 +335,8 @@ public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\bignum.json",
-                "{\r\n            \"exclusiveMinimum\": -972783798187987123879878123.18878137\r\n        }",
+                "tests/draft7/optional/bignum.json",
+                "{\n            \"exclusiveMinimum\": -972783798187987123879878123.18878137\n        }",
                 "JsonSchemaTestSuite.Draft7.Optional.Bignum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",

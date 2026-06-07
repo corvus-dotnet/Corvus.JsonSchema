@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.Anchor;
 public class SuiteLocationIndependentIdentifier
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteLocationIndependentIdentifier
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteLocationIndependentIdentifier
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\anchor.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"#foo\",\r\n            \"$defs\": {\r\n                \"A\": {\r\n                    \"$anchor\": \"foo\",\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/anchor.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"#foo\",\n            \"$defs\": {\n                \"A\": {\n                    \"$anchor\": \"foo\",\n                    \"type\": \"integer\"\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Anchor",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -62,6 +62,7 @@ public class SuiteLocationIndependentIdentifier
 public class SuiteLocationIndependentIdentifierWithAbsoluteUri
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -72,7 +73,6 @@ public class SuiteLocationIndependentIdentifierWithAbsoluteUri
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -97,8 +97,8 @@ public class SuiteLocationIndependentIdentifierWithAbsoluteUri
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\anchor.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/bar#foo\",\r\n            \"$defs\": {\r\n                \"A\": {\r\n                    \"$id\": \"http://localhost:1234/draft2019-09/bar\",\r\n                    \"$anchor\": \"foo\",\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/anchor.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/bar#foo\",\n            \"$defs\": {\n                \"A\": {\n                    \"$id\": \"http://localhost:1234/draft2019-09/bar\",\n                    \"$anchor\": \"foo\",\n                    \"type\": \"integer\"\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Anchor",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -113,6 +113,7 @@ public class SuiteLocationIndependentIdentifierWithAbsoluteUri
 public class SuiteLocationIndependentIdentifierWithBaseUriChangeInSubschema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -123,7 +124,6 @@ public class SuiteLocationIndependentIdentifierWithBaseUriChangeInSubschema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -148,8 +148,8 @@ public class SuiteLocationIndependentIdentifierWithBaseUriChangeInSubschema
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\anchor.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/root\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/nested.json#foo\",\r\n            \"$defs\": {\r\n                \"A\": {\r\n                    \"$id\": \"nested.json\",\r\n                    \"$defs\": {\r\n                        \"B\": {\r\n                            \"$anchor\": \"foo\",\r\n                            \"type\": \"integer\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/anchor.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://localhost:1234/draft2019-09/root\",\n            \"$ref\": \"http://localhost:1234/draft2019-09/nested.json#foo\",\n            \"$defs\": {\n                \"A\": {\n                    \"$id\": \"nested.json\",\n                    \"$defs\": {\n                        \"B\": {\n                            \"$anchor\": \"foo\",\n                            \"type\": \"integer\"\n                        }\n                    }\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Anchor",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -164,6 +164,7 @@ public class SuiteLocationIndependentIdentifierWithBaseUriChangeInSubschema
 public class SuiteSameAnchorWithDifferentBaseUri
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -174,7 +175,6 @@ public class SuiteSameAnchorWithDifferentBaseUri
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -199,8 +199,8 @@ public class SuiteSameAnchorWithDifferentBaseUri
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\anchor.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/foobar\",\r\n            \"$defs\": {\r\n                \"A\": {\r\n                    \"$id\": \"child1\",\r\n                    \"allOf\": [\r\n                        {\r\n                            \"$id\": \"child2\",\r\n                            \"$anchor\": \"my_anchor\",\r\n                            \"type\": \"number\"\r\n                        },\r\n                        {\r\n                            \"$anchor\": \"my_anchor\",\r\n                            \"type\": \"string\"\r\n                        }\r\n                    ]\r\n                }\r\n            },\r\n            \"$ref\": \"child1#my_anchor\"\r\n        }",
+                "tests/draft2019-09/anchor.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://localhost:1234/draft2019-09/foobar\",\n            \"$defs\": {\n                \"A\": {\n                    \"$id\": \"child1\",\n                    \"allOf\": [\n                        {\n                            \"$id\": \"child2\",\n                            \"$anchor\": \"my_anchor\",\n                            \"type\": \"number\"\n                        },\n                        {\n                            \"$anchor\": \"my_anchor\",\n                            \"type\": \"string\"\n                        }\n                    ]\n                }\n            },\n            \"$ref\": \"child1#my_anchor\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Anchor",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

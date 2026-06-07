@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft4.MinLength;
 public class SuiteMinLengthValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMinLengthValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -67,7 +67,7 @@ public class SuiteMinLengthValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\minLength.json",
+                "tests/draft4/minLength.json",
                 "{\"minLength\": 2}",
                 "StandaloneEvaluatorTestSuite.Draft4.MinLength",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

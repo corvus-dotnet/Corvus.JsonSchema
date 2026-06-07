@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.MultipleOf;
 public class SuiteByInt
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteByInt
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -53,8 +53,8 @@ public class SuiteByInt
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"multipleOf\": 2\r\n        }",
+                "tests/draft2020-12/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"multipleOf\": 2\n        }",
                 "JsonSchemaTestSuite.Draft202012.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -72,6 +72,7 @@ public class SuiteByInt
 public class SuiteByNumber
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -82,7 +83,6 @@ public class SuiteByNumber
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -121,8 +121,8 @@ public class SuiteByNumber
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"multipleOf\": 1.5\r\n        }",
+                "tests/draft2020-12/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"multipleOf\": 1.5\n        }",
                 "JsonSchemaTestSuite.Draft202012.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -140,6 +140,7 @@ public class SuiteByNumber
 public class SuiteBySmallNumber
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -150,7 +151,6 @@ public class SuiteBySmallNumber
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -175,8 +175,8 @@ public class SuiteBySmallNumber
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"multipleOf\": 0.0001\r\n        }",
+                "tests/draft2020-12/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"multipleOf\": 0.0001\n        }",
                 "JsonSchemaTestSuite.Draft202012.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -194,6 +194,7 @@ public class SuiteBySmallNumber
 public class SuiteFloatDivisionInf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -204,7 +205,6 @@ public class SuiteFloatDivisionInf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -222,8 +222,8 @@ public class SuiteFloatDivisionInf
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"integer\", \"multipleOf\": 0.123456789\r\n        }",
+                "tests/draft2020-12/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"integer\", \"multipleOf\": 0.123456789\n        }",
                 "JsonSchemaTestSuite.Draft202012.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -241,6 +241,7 @@ public class SuiteFloatDivisionInf
 public class SuiteSmallMultipleOfLargeInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -251,7 +252,6 @@ public class SuiteSmallMultipleOfLargeInteger
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -269,8 +269,8 @@ public class SuiteSmallMultipleOfLargeInteger
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\multipleOf.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"integer\", \"multipleOf\": 1e-8\r\n        }",
+                "tests/draft2020-12/multipleOf.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"integer\", \"multipleOf\": 1e-8\n        }",
                 "JsonSchemaTestSuite.Draft202012.MultipleOf",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

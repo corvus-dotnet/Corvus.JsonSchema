@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft7.MaxProperties;
 public class SuiteMaxPropertiesValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaxPropertiesValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -74,7 +74,7 @@ public class SuiteMaxPropertiesValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\maxProperties.json",
+                "tests/draft7/maxProperties.json",
                 "{\"maxProperties\": 2}",
                 "JsonSchemaTestSuite.Draft7.MaxProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -93,6 +93,7 @@ public class SuiteMaxPropertiesValidation
 public class SuiteMaxPropertiesValidationWithADecimal
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -103,7 +104,6 @@ public class SuiteMaxPropertiesValidationWithADecimal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -128,7 +128,7 @@ public class SuiteMaxPropertiesValidationWithADecimal
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\maxProperties.json",
+                "tests/draft7/maxProperties.json",
                 "{\"maxProperties\": 2.0}",
                 "JsonSchemaTestSuite.Draft7.MaxProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -147,6 +147,7 @@ public class SuiteMaxPropertiesValidationWithADecimal
 public class SuiteMaxProperties0MeansTheObjectIsEmpty
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -157,7 +158,6 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -182,7 +182,7 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\maxProperties.json",
+                "tests/draft7/maxProperties.json",
                 "{ \"maxProperties\": 0 }",
                 "JsonSchemaTestSuite.Draft7.MaxProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

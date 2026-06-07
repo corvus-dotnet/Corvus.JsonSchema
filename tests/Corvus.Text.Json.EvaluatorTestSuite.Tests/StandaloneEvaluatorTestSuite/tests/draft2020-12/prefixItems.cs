@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft202012.PrefixItems;
 public class SuiteASchemaGivenForPrefixItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteASchemaGivenForPrefixItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -63,7 +63,7 @@ public class SuiteASchemaGivenForPrefixItems
     [TestMethod]
     public void TestJavaScriptPseudoArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"0\": \"invalid\",\r\n                    \"1\": \"valid\",\r\n                    \"length\": 2\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"0\": \"invalid\",\n                    \"1\": \"valid\",\n                    \"length\": 2\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -74,8 +74,8 @@ public class SuiteASchemaGivenForPrefixItems
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\prefixItems.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [\r\n                {\"type\": \"integer\"},\r\n                {\"type\": \"string\"}\r\n            ]\r\n        }",
+                "tests/draft2020-12/prefixItems.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                {\"type\": \"integer\"},\n                {\"type\": \"string\"}\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PrefixItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -90,6 +90,7 @@ public class SuiteASchemaGivenForPrefixItems
 public class SuitePrefixItemsWithBooleanSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -100,7 +101,6 @@ public class SuitePrefixItemsWithBooleanSchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -132,8 +132,8 @@ public class SuitePrefixItemsWithBooleanSchemas
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\prefixItems.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [true, false]\r\n        }",
+                "tests/draft2020-12/prefixItems.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [true, false]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PrefixItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -148,6 +148,7 @@ public class SuitePrefixItemsWithBooleanSchemas
 public class SuiteAdditionalItemsAreAllowedByDefault
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -158,7 +159,6 @@ public class SuiteAdditionalItemsAreAllowedByDefault
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -176,8 +176,8 @@ public class SuiteAdditionalItemsAreAllowedByDefault
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\prefixItems.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [{\"type\": \"integer\"}]\r\n        }",
+                "tests/draft2020-12/prefixItems.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [{\"type\": \"integer\"}]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PrefixItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -192,6 +192,7 @@ public class SuiteAdditionalItemsAreAllowedByDefault
 public class SuitePrefixItemsWithNullInstanceElements
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -202,7 +203,6 @@ public class SuitePrefixItemsWithNullInstanceElements
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -220,8 +220,8 @@ public class SuitePrefixItemsWithNullInstanceElements
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2020-12\\prefixItems.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [\r\n                {\r\n                    \"type\": \"null\"\r\n                }\r\n            ]\r\n        }",
+                "tests/draft2020-12/prefixItems.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                {\n                    \"type\": \"null\"\n                }\n            ]\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.PrefixItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

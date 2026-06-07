@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.Format.Hostname;
 public class SuiteValidationOfHostNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfHostNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -200,8 +200,8 @@ public class SuiteValidationOfHostNames
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\optional\\format\\hostname.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"hostname\"\r\n        }",
+                "tests/draft2020-12/optional/format/hostname.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"format\": \"hostname\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Optional.Format.Hostname",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -219,6 +219,7 @@ public class SuiteValidationOfHostNames
 public class SuiteValidationOfALabelPunycodeHostNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -229,7 +230,6 @@ public class SuiteValidationOfALabelPunycodeHostNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -499,8 +499,8 @@ public class SuiteValidationOfALabelPunycodeHostNames
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\optional\\format\\hostname.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"hostname\"\r\n        }",
+                "tests/draft2020-12/optional/format/hostname.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"format\": \"hostname\"\n        }",
                 "JsonSchemaTestSuite.Draft202012.Optional.Format.Hostname",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

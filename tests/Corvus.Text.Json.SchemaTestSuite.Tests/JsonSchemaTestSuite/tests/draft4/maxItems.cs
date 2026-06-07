@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft4.MaxItems;
 public class SuiteMaxItemsValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaxItemsValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,7 +60,7 @@ public class SuiteMaxItemsValidation
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft4\\maxItems.json",
+                "tests/draft4/maxItems.json",
                 "{\"maxItems\": 2}",
                 "JsonSchemaTestSuite.Draft4.MaxItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

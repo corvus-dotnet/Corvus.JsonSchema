@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.Ref;
 public class SuiteRootPointerRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteRootPointerRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,8 +60,8 @@ public class SuiteRootPointerRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#\"}\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#\"}\n            },\n            \"additionalProperties\": false\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -79,6 +79,7 @@ public class SuiteRootPointerRef
 public class SuiteRelativePointerRefToObject
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -89,7 +90,6 @@ public class SuiteRelativePointerRefToObject
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -114,8 +114,8 @@ public class SuiteRelativePointerRefToObject
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\"type\": \"integer\"},\r\n                \"bar\": {\"$ref\": \"#/properties/foo\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\"type\": \"integer\"},\n                \"bar\": {\"$ref\": \"#/properties/foo\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -133,6 +133,7 @@ public class SuiteRelativePointerRefToObject
 public class SuiteRelativePointerRefToArray
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -143,7 +144,6 @@ public class SuiteRelativePointerRefToArray
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -168,8 +168,8 @@ public class SuiteRelativePointerRefToArray
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": [\r\n                {\"type\": \"integer\"},\r\n                {\"$ref\": \"#/items/0\"}\r\n            ]\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"items\": [\n                {\"type\": \"integer\"},\n                {\"$ref\": \"#/items/0\"}\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -187,6 +187,7 @@ public class SuiteRelativePointerRefToArray
 public class SuiteEscapedPointerRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -197,7 +198,6 @@ public class SuiteEscapedPointerRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -250,8 +250,8 @@ public class SuiteEscapedPointerRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$defs\": {\r\n                \"tilde~field\": {\"type\": \"integer\"},\r\n                \"slash/field\": {\"type\": \"integer\"},\r\n                \"percent%field\": {\"type\": \"integer\"}\r\n            },\r\n            \"properties\": {\r\n                \"tilde\": {\"$ref\": \"#/$defs/tilde~0field\"},\r\n                \"slash\": {\"$ref\": \"#/$defs/slash~1field\"},\r\n                \"percent\": {\"$ref\": \"#/$defs/percent%25field\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$defs\": {\n                \"tilde~field\": {\"type\": \"integer\"},\n                \"slash/field\": {\"type\": \"integer\"},\n                \"percent%field\": {\"type\": \"integer\"}\n            },\n            \"properties\": {\n                \"tilde\": {\"$ref\": \"#/$defs/tilde~0field\"},\n                \"slash\": {\"$ref\": \"#/$defs/slash~1field\"},\n                \"percent\": {\"$ref\": \"#/$defs/percent%25field\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -269,6 +269,7 @@ public class SuiteEscapedPointerRef
 public class SuiteNestedRefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -279,7 +280,6 @@ public class SuiteNestedRefs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -304,8 +304,8 @@ public class SuiteNestedRefs
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$defs\": {\r\n                \"a\": {\"type\": \"integer\"},\r\n                \"b\": {\"$ref\": \"#/$defs/a\"},\r\n                \"c\": {\"$ref\": \"#/$defs/b\"}\r\n            },\r\n            \"$ref\": \"#/$defs/c\"\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$defs\": {\n                \"a\": {\"type\": \"integer\"},\n                \"b\": {\"$ref\": \"#/$defs/a\"},\n                \"c\": {\"$ref\": \"#/$defs/b\"}\n            },\n            \"$ref\": \"#/$defs/c\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -323,6 +323,7 @@ public class SuiteNestedRefs
 public class SuiteRefAppliesAlongsideSiblingKeywords
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -333,7 +334,6 @@ public class SuiteRefAppliesAlongsideSiblingKeywords
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -365,8 +365,8 @@ public class SuiteRefAppliesAlongsideSiblingKeywords
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$defs\": {\r\n                \"reffed\": {\r\n                    \"type\": \"array\"\r\n                }\r\n            },\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"$ref\": \"#/$defs/reffed\",\r\n                    \"maxItems\": 2\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$defs\": {\n                \"reffed\": {\n                    \"type\": \"array\"\n                }\n            },\n            \"properties\": {\n                \"foo\": {\n                    \"$ref\": \"#/$defs/reffed\",\n                    \"maxItems\": 2\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -384,6 +384,7 @@ public class SuiteRefAppliesAlongsideSiblingKeywords
 public class SuiteRemoteRefContainingRefsItself
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -394,7 +395,6 @@ public class SuiteRemoteRefContainingRefsItself
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -419,8 +419,8 @@ public class SuiteRemoteRefContainingRefsItself
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"https://json-schema.org/draft/2019-09/schema\"\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"https://json-schema.org/draft/2019-09/schema\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -438,6 +438,7 @@ public class SuiteRemoteRefContainingRefsItself
 public class SuitePropertyNamedRefThatIsNotAReference
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -448,7 +449,6 @@ public class SuitePropertyNamedRefThatIsNotAReference
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -473,8 +473,8 @@ public class SuitePropertyNamedRefThatIsNotAReference
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"$ref\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"$ref\": {\"type\": \"string\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -492,6 +492,7 @@ public class SuitePropertyNamedRefThatIsNotAReference
 public class SuitePropertyNamedRefContainingAnActualRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -502,7 +503,6 @@ public class SuitePropertyNamedRefContainingAnActualRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -527,8 +527,8 @@ public class SuitePropertyNamedRefContainingAnActualRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"$ref\": {\"$ref\": \"#/$defs/is-string\"}\r\n            },\r\n            \"$defs\": {\r\n                \"is-string\": {\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"$ref\": {\"$ref\": \"#/$defs/is-string\"}\n            },\n            \"$defs\": {\n                \"is-string\": {\n                    \"type\": \"string\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -546,6 +546,7 @@ public class SuitePropertyNamedRefContainingAnActualRef
 public class SuiteRefToBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -556,7 +557,6 @@ public class SuiteRefToBooleanSchemaTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -574,8 +574,8 @@ public class SuiteRefToBooleanSchemaTrue
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"#/$defs/bool\",\r\n            \"$defs\": {\r\n                \"bool\": true\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"#/$defs/bool\",\n            \"$defs\": {\n                \"bool\": true\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -593,6 +593,7 @@ public class SuiteRefToBooleanSchemaTrue
 public class SuiteRefToBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -603,7 +604,6 @@ public class SuiteRefToBooleanSchemaFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -621,8 +621,8 @@ public class SuiteRefToBooleanSchemaFalse
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"#/$defs/bool\",\r\n            \"$defs\": {\r\n                \"bool\": false\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"#/$defs/bool\",\n            \"$defs\": {\n                \"bool\": false\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -640,6 +640,7 @@ public class SuiteRefToBooleanSchemaFalse
 public class SuiteRecursiveReferencesBetweenSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -650,21 +651,20 @@ public class SuiteRecursiveReferencesBetweenSchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestValidTree()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"meta\": \"root\",\r\n                    \"nodes\": [\r\n                        {\r\n                            \"value\": 1,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": 1.1},\r\n                                    {\"value\": 1.2}\r\n                                ]\r\n                            }\r\n                        },\r\n                        {\r\n                            \"value\": 2,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": 2.1},\r\n                                    {\"value\": 2.2}\r\n                                ]\r\n                            }\r\n                        }\r\n                    ]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"meta\": \"root\",\n                    \"nodes\": [\n                        {\n                            \"value\": 1,\n                            \"subtree\": {\n                                \"meta\": \"child\",\n                                \"nodes\": [\n                                    {\"value\": 1.1},\n                                    {\"value\": 1.2}\n                                ]\n                            }\n                        },\n                        {\n                            \"value\": 2,\n                            \"subtree\": {\n                                \"meta\": \"child\",\n                                \"nodes\": [\n                                    {\"value\": 2.1},\n                                    {\"value\": 2.2}\n                                ]\n                            }\n                        }\n                    ]\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInvalidTree()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"meta\": \"root\",\r\n                    \"nodes\": [\r\n                        {\r\n                            \"value\": 1,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": \"string is invalid\"},\r\n                                    {\"value\": 1.2}\r\n                                ]\r\n                            }\r\n                        },\r\n                        {\r\n                            \"value\": 2,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": 2.1},\r\n                                    {\"value\": 2.2}\r\n                                ]\r\n                            }\r\n                        }\r\n                    ]\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"meta\": \"root\",\n                    \"nodes\": [\n                        {\n                            \"value\": 1,\n                            \"subtree\": {\n                                \"meta\": \"child\",\n                                \"nodes\": [\n                                    {\"value\": \"string is invalid\"},\n                                    {\"value\": 1.2}\n                                ]\n                            }\n                        },\n                        {\n                            \"value\": 2,\n                            \"subtree\": {\n                                \"meta\": \"child\",\n                                \"nodes\": [\n                                    {\"value\": 2.1},\n                                    {\"value\": 2.2}\n                                ]\n                            }\n                        }\n                    ]\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -675,8 +675,8 @@ public class SuiteRecursiveReferencesBetweenSchemas
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/tree\",\r\n            \"description\": \"tree of nodes\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"meta\": {\"type\": \"string\"},\r\n                \"nodes\": {\r\n                    \"type\": \"array\",\r\n                    \"items\": {\"$ref\": \"node\"}\r\n                }\r\n            },\r\n            \"required\": [\"meta\", \"nodes\"],\r\n            \"$defs\": {\r\n                \"node\": {\r\n                    \"$id\": \"http://localhost:1234/draft2019-09/node\",\r\n                    \"description\": \"node\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"value\": {\"type\": \"number\"},\r\n                        \"subtree\": {\"$ref\": \"tree\"}\r\n                    },\r\n                    \"required\": [\"value\"]\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://localhost:1234/draft2019-09/tree\",\n            \"description\": \"tree of nodes\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"meta\": {\"type\": \"string\"},\n                \"nodes\": {\n                    \"type\": \"array\",\n                    \"items\": {\"$ref\": \"node\"}\n                }\n            },\n            \"required\": [\"meta\", \"nodes\"],\n            \"$defs\": {\n                \"node\": {\n                    \"$id\": \"http://localhost:1234/draft2019-09/node\",\n                    \"description\": \"node\",\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"value\": {\"type\": \"number\"},\n                        \"subtree\": {\"$ref\": \"tree\"}\n                    },\n                    \"required\": [\"value\"]\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -694,6 +694,7 @@ public class SuiteRecursiveReferencesBetweenSchemas
 public class SuiteRefsWithQuote
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -704,21 +705,20 @@ public class SuiteRefsWithQuote
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestObjectWithNumbersIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\\\"bar\": 1\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\\"bar\": 1\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectWithStringsIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\\\"bar\": \"1\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\\"bar\": \"1\"\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -729,8 +729,8 @@ public class SuiteRefsWithQuote
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\\\"bar\": {\"$ref\": \"#/$defs/foo%22bar\"}\r\n            },\r\n            \"$defs\": {\r\n                \"foo\\\"bar\": {\"type\": \"number\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\\\"bar\": {\"$ref\": \"#/$defs/foo%22bar\"}\n            },\n            \"$defs\": {\n                \"foo\\\"bar\": {\"type\": \"number\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -748,6 +748,7 @@ public class SuiteRefsWithQuote
 public class SuiteRefCreatesNewScopeWhenAdjacentToKeywords
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -758,14 +759,13 @@ public class SuiteRefCreatesNewScopeWhenAdjacentToKeywords
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestReferencedSubschemaDoesnTSeeAnnotationsFromProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"prop1\": \"match\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"prop1\": \"match\"\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -776,8 +776,8 @@ public class SuiteRefCreatesNewScopeWhenAdjacentToKeywords
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$defs\": {\r\n                \"A\": {\r\n                    \"unevaluatedProperties\": false\r\n                }\r\n            },\r\n            \"properties\": {\r\n                \"prop1\": {\r\n                    \"type\": \"string\"\r\n                }\r\n            },\r\n            \"$ref\": \"#/$defs/A\"\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$defs\": {\n                \"A\": {\n                    \"unevaluatedProperties\": false\n                }\n            },\n            \"properties\": {\n                \"prop1\": {\n                    \"type\": \"string\"\n                }\n            },\n            \"$ref\": \"#/$defs/A\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -795,6 +795,7 @@ public class SuiteRefCreatesNewScopeWhenAdjacentToKeywords
 public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -805,7 +806,6 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -837,8 +837,8 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$defs\": {\r\n                \"a_string\": { \"type\": \"string\" }\r\n            },\r\n            \"enum\": [\r\n                { \"$ref\": \"#/$defs/a_string\" }\r\n            ]\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$defs\": {\n                \"a_string\": { \"type\": \"string\" }\n            },\n            \"enum\": [\n                { \"$ref\": \"#/$defs/a_string\" }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -856,6 +856,7 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
 public class SuiteRefsWithRelativeUrisAndDefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -866,28 +867,27 @@ public class SuiteRefsWithRelativeUrisAndDefs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestInvalidOnInnerField()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": {\r\n                        \"bar\": 1\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": {\n                        \"bar\": 1\n                    },\n                    \"bar\": \"a\"\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInvalidOnOuterField()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": 1\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": {\n                        \"bar\": \"a\"\n                    },\n                    \"bar\": 1\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestValidOnBothFields()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": {\n                        \"bar\": \"a\"\n                    },\n                    \"bar\": \"a\"\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -898,8 +898,8 @@ public class SuiteRefsWithRelativeUrisAndDefs
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://example.com/schema-relative-uri-defs1.json\",\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"$id\": \"schema-relative-uri-defs2.json\",\r\n                    \"$defs\": {\r\n                        \"inner\": {\r\n                            \"properties\": {\r\n                                \"bar\": { \"type\": \"string\" }\r\n                            }\r\n                        }\r\n                    },\r\n                    \"$ref\": \"#/$defs/inner\"\r\n                }\r\n            },\r\n            \"$ref\": \"schema-relative-uri-defs2.json\"\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://example.com/schema-relative-uri-defs1.json\",\n            \"properties\": {\n                \"foo\": {\n                    \"$id\": \"schema-relative-uri-defs2.json\",\n                    \"$defs\": {\n                        \"inner\": {\n                            \"properties\": {\n                                \"bar\": { \"type\": \"string\" }\n                            }\n                        }\n                    },\n                    \"$ref\": \"#/$defs/inner\"\n                }\n            },\n            \"$ref\": \"schema-relative-uri-defs2.json\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -917,6 +917,7 @@ public class SuiteRefsWithRelativeUrisAndDefs
 public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -927,28 +928,27 @@ public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestInvalidOnInnerField()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": {\r\n                        \"bar\": 1\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": {\n                        \"bar\": 1\n                    },\n                    \"bar\": \"a\"\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInvalidOnOuterField()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": 1\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": {\n                        \"bar\": \"a\"\n                    },\n                    \"bar\": 1\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestValidOnBothFields()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": {\n                        \"bar\": \"a\"\n                    },\n                    \"bar\": \"a\"\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -959,8 +959,8 @@ public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://example.com/schema-refs-absolute-uris-defs1.json\",\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"$id\": \"http://example.com/schema-refs-absolute-uris-defs2.json\",\r\n                    \"$defs\": {\r\n                        \"inner\": {\r\n                            \"properties\": {\r\n                                \"bar\": { \"type\": \"string\" }\r\n                            }\r\n                        }\r\n                    },\r\n                    \"$ref\": \"#/$defs/inner\"\r\n                }\r\n            },\r\n            \"$ref\": \"schema-refs-absolute-uris-defs2.json\"\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://example.com/schema-refs-absolute-uris-defs1.json\",\n            \"properties\": {\n                \"foo\": {\n                    \"$id\": \"http://example.com/schema-refs-absolute-uris-defs2.json\",\n                    \"$defs\": {\n                        \"inner\": {\n                            \"properties\": {\n                                \"bar\": { \"type\": \"string\" }\n                            }\n                        }\n                    },\n                    \"$ref\": \"#/$defs/inner\"\n                }\n            },\n            \"$ref\": \"schema-refs-absolute-uris-defs2.json\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -978,6 +978,7 @@ public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
 public class SuiteIdMustBeResolvedAgainstNearestParentNotJustImmediateParent
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -988,7 +989,6 @@ public class SuiteIdMustBeResolvedAgainstNearestParentNotJustImmediateParent
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1013,8 +1013,8 @@ public class SuiteIdMustBeResolvedAgainstNearestParentNotJustImmediateParent
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://example.com/a.json\",\r\n            \"$defs\": {\r\n                \"x\": {\r\n                    \"$id\": \"http://example.com/b/c.json\",\r\n                    \"not\": {\r\n                        \"$defs\": {\r\n                            \"y\": {\r\n                                \"$id\": \"d.json\",\r\n                                \"type\": \"number\"\r\n                            }\r\n                        }\r\n                    }\r\n                }\r\n            },\r\n            \"allOf\": [\r\n                {\r\n                    \"$ref\": \"http://example.com/b/d.json\"\r\n                }\r\n            ]\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"http://example.com/a.json\",\n            \"$defs\": {\n                \"x\": {\n                    \"$id\": \"http://example.com/b/c.json\",\n                    \"not\": {\n                        \"$defs\": {\n                            \"y\": {\n                                \"$id\": \"d.json\",\n                                \"type\": \"number\"\n                            }\n                        }\n                    }\n                }\n            },\n            \"allOf\": [\n                {\n                    \"$ref\": \"http://example.com/b/d.json\"\n                }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1032,6 +1032,7 @@ public class SuiteIdMustBeResolvedAgainstNearestParentNotJustImmediateParent
 public class SuiteOrderOfEvaluationIdAndRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1042,7 +1043,6 @@ public class SuiteOrderOfEvaluationIdAndRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1067,8 +1067,8 @@ public class SuiteOrderOfEvaluationIdAndRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$comment\": \"$id must be evaluated before $ref to get the proper $ref destination\",\r\n            \"$id\": \"https://example.com/draft2019-09/ref-and-id1/base.json\",\r\n            \"$ref\": \"int.json\",\r\n            \"$defs\": {\r\n                \"bigint\": {\r\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id1/int.json\",\r\n                    \"$id\": \"int.json\",\r\n                    \"maximum\": 10\r\n                },\r\n                \"smallint\": {\r\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id1-int.json\",\r\n                    \"$id\": \"/draft2019-09/ref-and-id1-int.json\",\r\n                    \"maximum\": 2\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$comment\": \"$id must be evaluated before $ref to get the proper $ref destination\",\n            \"$id\": \"https://example.com/draft2019-09/ref-and-id1/base.json\",\n            \"$ref\": \"int.json\",\n            \"$defs\": {\n                \"bigint\": {\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id1/int.json\",\n                    \"$id\": \"int.json\",\n                    \"maximum\": 10\n                },\n                \"smallint\": {\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id1-int.json\",\n                    \"$id\": \"/draft2019-09/ref-and-id1-int.json\",\n                    \"maximum\": 2\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1086,6 +1086,7 @@ public class SuiteOrderOfEvaluationIdAndRef
 public class SuiteOrderOfEvaluationIdAndAnchorAndRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1096,7 +1097,6 @@ public class SuiteOrderOfEvaluationIdAndAnchorAndRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1121,8 +1121,8 @@ public class SuiteOrderOfEvaluationIdAndAnchorAndRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$comment\": \"$id must be evaluated before $ref to get the proper $ref destination\",\r\n            \"$id\": \"https://example.com/draft2019-09/ref-and-id2/base.json\",\r\n            \"$ref\": \"#bigint\",\r\n            \"$defs\": {\r\n                \"bigint\": {\r\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id2/base.json#/$defs/bigint; another valid uri for this location: https://example.com/ref-and-id2/base.json#bigint\",\r\n                    \"$anchor\": \"bigint\",\r\n                    \"maximum\": 10\r\n                },\r\n                \"smallint\": {\r\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id2#/$defs/smallint; another valid uri for this location: https://example.com/ref-and-id2/#bigint\",\r\n                    \"$id\": \"/draft2019-09/ref-and-id2/\",\r\n                    \"$anchor\": \"bigint\",\r\n                    \"maximum\": 2\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$comment\": \"$id must be evaluated before $ref to get the proper $ref destination\",\n            \"$id\": \"https://example.com/draft2019-09/ref-and-id2/base.json\",\n            \"$ref\": \"#bigint\",\n            \"$defs\": {\n                \"bigint\": {\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id2/base.json#/$defs/bigint; another valid uri for this location: https://example.com/ref-and-id2/base.json#bigint\",\n                    \"$anchor\": \"bigint\",\n                    \"maximum\": 10\n                },\n                \"smallint\": {\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id2#/$defs/smallint; another valid uri for this location: https://example.com/ref-and-id2/#bigint\",\n                    \"$id\": \"/draft2019-09/ref-and-id2/\",\n                    \"$anchor\": \"bigint\",\n                    \"maximum\": 2\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1140,6 +1140,7 @@ public class SuiteOrderOfEvaluationIdAndAnchorAndRef
 public class SuiteOrderOfEvaluationIdAndRefOnNestedSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1150,7 +1151,6 @@ public class SuiteOrderOfEvaluationIdAndRefOnNestedSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1175,8 +1175,8 @@ public class SuiteOrderOfEvaluationIdAndRefOnNestedSchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$comment\": \"$id must be evaluated before $ref to get the proper $ref destination\",\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"https://example.com/draft2019-09/ref-and-id3/base.json\",\r\n            \"$ref\": \"nested/foo.json\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id3/nested/foo.json\",\r\n                    \"$id\": \"nested/foo.json\",\r\n                    \"$ref\": \"./bar.json\"\r\n                },\r\n                \"bar\": {\r\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id3/nested/bar.json\",\r\n                    \"$id\": \"nested/bar.json\",\r\n                    \"type\": \"number\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$comment\": \"$id must be evaluated before $ref to get the proper $ref destination\",\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"https://example.com/draft2019-09/ref-and-id3/base.json\",\n            \"$ref\": \"nested/foo.json\",\n            \"$defs\": {\n                \"foo\": {\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id3/nested/foo.json\",\n                    \"$id\": \"nested/foo.json\",\n                    \"$ref\": \"./bar.json\"\n                },\n                \"bar\": {\n                    \"$comment\": \"canonical uri: https://example.com/draft2019-09/ref-and-id3/nested/bar.json\",\n                    \"$id\": \"nested/bar.json\",\n                    \"type\": \"number\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1194,6 +1194,7 @@ public class SuiteOrderOfEvaluationIdAndRefOnNestedSchema
 public class SuiteSimpleUrnBaseUriWithRefViaTheUrn
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1204,7 +1205,6 @@ public class SuiteSimpleUrnBaseUriWithRefViaTheUrn
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1229,8 +1229,8 @@ public class SuiteSimpleUrnBaseUriWithRefViaTheUrn
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\r\n            \"$id\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\",\r\n            \"minimum\": 30,\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\n            \"$id\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\",\n            \"minimum\": 30,\n            \"properties\": {\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1248,6 +1248,7 @@ public class SuiteSimpleUrnBaseUriWithRefViaTheUrn
 public class SuiteSimpleUrnBaseUriWithJsonPointer
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1258,7 +1259,6 @@ public class SuiteSimpleUrnBaseUriWithJsonPointer
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1283,8 +1283,8 @@ public class SuiteSimpleUrnBaseUriWithJsonPointer
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\r\n            \"$id\": \"urn:uuid:deadbeef-1234-00ff-ff00-4321feebdaed\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/$defs/bar\"}\r\n            },\r\n            \"$defs\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\n            \"$id\": \"urn:uuid:deadbeef-1234-00ff-ff00-4321feebdaed\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#/$defs/bar\"}\n            },\n            \"$defs\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1302,6 +1302,7 @@ public class SuiteSimpleUrnBaseUriWithJsonPointer
 public class SuiteUrnBaseUriWithNss
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1312,7 +1313,6 @@ public class SuiteUrnBaseUriWithNss
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1337,8 +1337,8 @@ public class SuiteUrnBaseUriWithNss
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$comment\": \"RFC 8141 §2.2\",\r\n            \"$id\": \"urn:example:1/406/47452/2\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/$defs/bar\"}\r\n            },\r\n            \"$defs\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$comment\": \"RFC 8141 §2.2\",\n            \"$id\": \"urn:example:1/406/47452/2\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#/$defs/bar\"}\n            },\n            \"$defs\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1356,6 +1356,7 @@ public class SuiteUrnBaseUriWithNss
 public class SuiteUrnBaseUriWithRComponent
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1366,7 +1367,6 @@ public class SuiteUrnBaseUriWithRComponent
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1391,8 +1391,8 @@ public class SuiteUrnBaseUriWithRComponent
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$comment\": \"RFC 8141 §2.3.1\",\r\n            \"$id\": \"urn:example:foo-bar-baz-qux?+CCResolve:cc=uk\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/$defs/bar\"}\r\n            },\r\n            \"$defs\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$comment\": \"RFC 8141 §2.3.1\",\n            \"$id\": \"urn:example:foo-bar-baz-qux?+CCResolve:cc=uk\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#/$defs/bar\"}\n            },\n            \"$defs\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1410,6 +1410,7 @@ public class SuiteUrnBaseUriWithRComponent
 public class SuiteUrnBaseUriWithQComponent
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1420,7 +1421,6 @@ public class SuiteUrnBaseUriWithQComponent
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1445,8 +1445,8 @@ public class SuiteUrnBaseUriWithQComponent
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$comment\": \"RFC 8141 §2.3.2\",\r\n            \"$id\": \"urn:example:weather?=op=map&lat=39.56&lon=-104.85&datetime=1969-07-21T02:56:15Z\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/$defs/bar\"}\r\n            },\r\n            \"$defs\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$comment\": \"RFC 8141 §2.3.2\",\n            \"$id\": \"urn:example:weather?=op=map&lat=39.56&lon=-104.85&datetime=1969-07-21T02:56:15Z\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"#/$defs/bar\"}\n            },\n            \"$defs\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1464,6 +1464,7 @@ public class SuiteUrnBaseUriWithQComponent
 public class SuiteUrnBaseUriWithUrnAndJsonPointerRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1474,7 +1475,6 @@ public class SuiteUrnBaseUriWithUrnAndJsonPointerRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1499,8 +1499,8 @@ public class SuiteUrnBaseUriWithUrnAndJsonPointerRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed#/$defs/bar\"}\r\n            },\r\n            \"$defs\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed#/$defs/bar\"}\n            },\n            \"$defs\": {\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1518,6 +1518,7 @@ public class SuiteUrnBaseUriWithUrnAndJsonPointerRef
 public class SuiteUrnBaseUriWithUrnAndAnchorRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1528,7 +1529,6 @@ public class SuiteUrnBaseUriWithUrnAndAnchorRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1553,8 +1553,8 @@ public class SuiteUrnBaseUriWithUrnAndAnchorRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed#something\"}\r\n            },\r\n            \"$defs\": {\r\n                \"bar\": {\r\n                    \"$anchor\": \"something\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed\",\n            \"properties\": {\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed#something\"}\n            },\n            \"$defs\": {\n                \"bar\": {\n                    \"$anchor\": \"something\",\n                    \"type\": \"string\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1572,6 +1572,7 @@ public class SuiteUrnBaseUriWithUrnAndAnchorRef
 public class SuiteUrnRefWithNestedPointerRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1582,7 +1583,6 @@ public class SuiteUrnRefWithNestedPointerRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1607,8 +1607,8 @@ public class SuiteUrnRefWithNestedPointerRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"urn:uuid:deadbeef-4321-ffff-ffff-1234feebdaed\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$id\": \"urn:uuid:deadbeef-4321-ffff-ffff-1234feebdaed\",\r\n                    \"$defs\": {\"bar\": {\"type\": \"string\"}},\r\n                    \"$ref\": \"#/$defs/bar\"\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"urn:uuid:deadbeef-4321-ffff-ffff-1234feebdaed\",\n            \"$defs\": {\n                \"foo\": {\n                    \"$id\": \"urn:uuid:deadbeef-4321-ffff-ffff-1234feebdaed\",\n                    \"$defs\": {\"bar\": {\"type\": \"string\"}},\n                    \"$ref\": \"#/$defs/bar\"\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1626,6 +1626,7 @@ public class SuiteUrnRefWithNestedPointerRef
 public class SuiteRefToIf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1636,7 +1637,6 @@ public class SuiteRefToIf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1661,8 +1661,8 @@ public class SuiteRefToIf
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://example.com/ref/if\",\r\n            \"if\": {\r\n                \"$id\": \"http://example.com/ref/if\",\r\n                \"type\": \"integer\"\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://example.com/ref/if\",\n            \"if\": {\n                \"$id\": \"http://example.com/ref/if\",\n                \"type\": \"integer\"\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1680,6 +1680,7 @@ public class SuiteRefToIf
 public class SuiteRefToThen
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1690,7 +1691,6 @@ public class SuiteRefToThen
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1715,8 +1715,8 @@ public class SuiteRefToThen
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://example.com/ref/then\",\r\n            \"then\": {\r\n                \"$id\": \"http://example.com/ref/then\",\r\n                \"type\": \"integer\"\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://example.com/ref/then\",\n            \"then\": {\n                \"$id\": \"http://example.com/ref/then\",\n                \"type\": \"integer\"\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1734,6 +1734,7 @@ public class SuiteRefToThen
 public class SuiteRefToElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1744,7 +1745,6 @@ public class SuiteRefToElse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1769,8 +1769,8 @@ public class SuiteRefToElse
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://example.com/ref/else\",\r\n            \"else\": {\r\n                \"$id\": \"http://example.com/ref/else\",\r\n                \"type\": \"integer\"\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$ref\": \"http://example.com/ref/else\",\n            \"else\": {\n                \"$id\": \"http://example.com/ref/else\",\n                \"type\": \"integer\"\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1788,6 +1788,7 @@ public class SuiteRefToElse
 public class SuiteRefWithAbsolutePathReference
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1798,7 +1799,6 @@ public class SuiteRefWithAbsolutePathReference
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1823,8 +1823,8 @@ public class SuiteRefWithAbsolutePathReference
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n             \"$id\": \"http://example.com/ref/absref.json\",\r\n             \"$defs\": {\r\n                 \"a\": {\r\n                     \"$id\": \"http://example.com/ref/absref/foobar.json\",\r\n                     \"type\": \"number\"\r\n                 },\r\n                 \"b\": {\r\n                     \"$id\": \"http://example.com/absref/foobar.json\",\r\n                     \"type\": \"string\"\r\n                 }\r\n             },\r\n             \"$ref\": \"/absref/foobar.json\"\r\n         }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n             \"$id\": \"http://example.com/ref/absref.json\",\n             \"$defs\": {\n                 \"a\": {\n                     \"$id\": \"http://example.com/ref/absref/foobar.json\",\n                     \"type\": \"number\"\n                 },\n                 \"b\": {\n                     \"$id\": \"http://example.com/absref/foobar.json\",\n                     \"type\": \"string\"\n                 }\n             },\n             \"$ref\": \"/absref/foobar.json\"\n         }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1842,6 +1842,7 @@ public class SuiteRefWithAbsolutePathReference
 public class SuiteIdWithFileUriStillResolvesPointersNix
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1852,7 +1853,6 @@ public class SuiteIdWithFileUriStillResolvesPointersNix
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1877,8 +1877,8 @@ public class SuiteIdWithFileUriStillResolvesPointersNix
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n             \"$id\": \"file:///folder/file.json\",\r\n             \"$defs\": {\r\n                 \"foo\": {\r\n                     \"type\": \"number\"\r\n                 }\r\n             },\r\n             \"$ref\": \"#/$defs/foo\"\r\n         }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n             \"$id\": \"file:///folder/file.json\",\n             \"$defs\": {\n                 \"foo\": {\n                     \"type\": \"number\"\n                 }\n             },\n             \"$ref\": \"#/$defs/foo\"\n         }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1896,6 +1896,7 @@ public class SuiteIdWithFileUriStillResolvesPointersNix
 public class SuiteIdWithFileUriStillResolvesPointersWindows
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1906,7 +1907,6 @@ public class SuiteIdWithFileUriStillResolvesPointersWindows
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1931,8 +1931,8 @@ public class SuiteIdWithFileUriStillResolvesPointersWindows
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n             \"$id\": \"file:///c:/folder/file.json\",\r\n             \"$defs\": {\r\n                 \"foo\": {\r\n                     \"type\": \"number\"\r\n                 }\r\n             },\r\n             \"$ref\": \"#/$defs/foo\"\r\n         }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n             \"$id\": \"file:///c:/folder/file.json\",\n             \"$defs\": {\n                 \"foo\": {\n                     \"type\": \"number\"\n                 }\n             },\n             \"$ref\": \"#/$defs/foo\"\n         }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -1950,6 +1950,7 @@ public class SuiteIdWithFileUriStillResolvesPointersWindows
 public class SuiteEmptyTokensInRefJsonPointer
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -1960,7 +1961,6 @@ public class SuiteEmptyTokensInRefJsonPointer
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1985,8 +1985,8 @@ public class SuiteEmptyTokensInRefJsonPointer
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n             \"$defs\": {\r\n                 \"\": {\r\n                     \"$defs\": {\r\n                         \"\": { \"type\": \"number\" }\r\n                     }\r\n                 } \r\n             },\r\n             \"allOf\": [\r\n                 {\r\n                     \"$ref\": \"#/$defs//$defs/\"\r\n                 }\r\n             ]\r\n         }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n             \"$defs\": {\n                 \"\": {\n                     \"$defs\": {\n                         \"\": { \"type\": \"number\" }\n                     }\n                 } \n             },\n             \"allOf\": [\n                 {\n                     \"$ref\": \"#/$defs//$defs/\"\n                 }\n             ]\n         }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -2004,6 +2004,7 @@ public class SuiteEmptyTokensInRefJsonPointer
 public class SuiteRefWithRecursiveAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -2014,7 +2015,6 @@ public class SuiteRefWithRecursiveAnchor
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -2039,8 +2039,8 @@ public class SuiteRefWithRecursiveAnchor
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\ref.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"https://example.com/schemas/unevaluated-items-are-disallowed\",\r\n            \"$ref\": \"/schemas/unevaluated-items-are-allowed\",\r\n            \"$recursiveAnchor\": true,\r\n            \"unevaluatedItems\": false,\r\n            \"$defs\": {\r\n                \"/schemas/unevaluated-items-are-allowed\": {\r\n                    \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n                    \"$id\": \"/schemas/unevaluated-items-are-allowed\",\r\n                    \"$recursiveAnchor\": true,\r\n                    \"type\": \"array\",\r\n                    \"items\": [\r\n                        {\r\n                            \"type\": \"string\"\r\n                        },\r\n                        {\r\n                            \"$ref\": \"#\"\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/ref.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"https://example.com/schemas/unevaluated-items-are-disallowed\",\n            \"$ref\": \"/schemas/unevaluated-items-are-allowed\",\n            \"$recursiveAnchor\": true,\n            \"unevaluatedItems\": false,\n            \"$defs\": {\n                \"/schemas/unevaluated-items-are-allowed\": {\n                    \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n                    \"$id\": \"/schemas/unevaluated-items-are-allowed\",\n                    \"$recursiveAnchor\": true,\n                    \"type\": \"array\",\n                    \"items\": [\n                        {\n                            \"type\": \"string\"\n                        },\n                        {\n                            \"$ref\": \"#\"\n                        }\n                    ]\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft201909.Ref",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

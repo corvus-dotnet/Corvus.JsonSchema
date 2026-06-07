@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft7.Const;
 public class SuiteConstValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteConstValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -53,7 +53,7 @@ public class SuiteConstValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": 2}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -69,6 +69,7 @@ public class SuiteConstValidation
 public class SuiteConstWithObject
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -79,7 +80,6 @@ public class SuiteConstWithObject
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -118,7 +118,7 @@ public class SuiteConstWithObject
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": {\"foo\": \"bar\", \"baz\": \"bax\"}}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -134,6 +134,7 @@ public class SuiteConstWithObject
 public class SuiteConstWithArray
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -144,7 +145,6 @@ public class SuiteConstWithArray
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -176,7 +176,7 @@ public class SuiteConstWithArray
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": [{ \"foo\": \"bar\" }]}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -192,6 +192,7 @@ public class SuiteConstWithArray
 public class SuiteConstWithNull
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -202,7 +203,6 @@ public class SuiteConstWithNull
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -227,7 +227,7 @@ public class SuiteConstWithNull
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": null}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -243,6 +243,7 @@ public class SuiteConstWithNull
 public class SuiteConstWithFalseDoesNotMatch0
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -253,7 +254,6 @@ public class SuiteConstWithFalseDoesNotMatch0
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -285,7 +285,7 @@ public class SuiteConstWithFalseDoesNotMatch0
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": false}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -301,6 +301,7 @@ public class SuiteConstWithFalseDoesNotMatch0
 public class SuiteConstWithTrueDoesNotMatch1
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -311,7 +312,6 @@ public class SuiteConstWithTrueDoesNotMatch1
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -343,7 +343,7 @@ public class SuiteConstWithTrueDoesNotMatch1
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": true}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -359,6 +359,7 @@ public class SuiteConstWithTrueDoesNotMatch1
 public class SuiteConstWithFalseDoesNotMatch01
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -369,7 +370,6 @@ public class SuiteConstWithFalseDoesNotMatch01
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -401,7 +401,7 @@ public class SuiteConstWithFalseDoesNotMatch01
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": [false]}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -417,6 +417,7 @@ public class SuiteConstWithFalseDoesNotMatch01
 public class SuiteConstWithTrueDoesNotMatch11
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -427,7 +428,6 @@ public class SuiteConstWithTrueDoesNotMatch11
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -459,7 +459,7 @@ public class SuiteConstWithTrueDoesNotMatch11
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": [true]}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -475,6 +475,7 @@ public class SuiteConstWithTrueDoesNotMatch11
 public class SuiteConstWithAFalseDoesNotMatchA0
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -485,7 +486,6 @@ public class SuiteConstWithAFalseDoesNotMatchA0
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -517,7 +517,7 @@ public class SuiteConstWithAFalseDoesNotMatchA0
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": {\"a\": false}}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -533,6 +533,7 @@ public class SuiteConstWithAFalseDoesNotMatchA0
 public class SuiteConstWithATrueDoesNotMatchA1
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -543,7 +544,6 @@ public class SuiteConstWithATrueDoesNotMatchA1
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -575,7 +575,7 @@ public class SuiteConstWithATrueDoesNotMatchA1
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": {\"a\": true}}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -591,6 +591,7 @@ public class SuiteConstWithATrueDoesNotMatchA1
 public class SuiteConstWith0DoesNotMatchOtherZeroLikeTypes
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -601,7 +602,6 @@ public class SuiteConstWith0DoesNotMatchOtherZeroLikeTypes
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -654,7 +654,7 @@ public class SuiteConstWith0DoesNotMatchOtherZeroLikeTypes
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": 0}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -670,6 +670,7 @@ public class SuiteConstWith0DoesNotMatchOtherZeroLikeTypes
 public class SuiteConstWith1DoesNotMatchTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -680,7 +681,6 @@ public class SuiteConstWith1DoesNotMatchTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -712,7 +712,7 @@ public class SuiteConstWith1DoesNotMatchTrue
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": 1}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -728,6 +728,7 @@ public class SuiteConstWith1DoesNotMatchTrue
 public class SuiteConstWith20MatchesIntegerAndFloatTypes
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -738,7 +739,6 @@ public class SuiteConstWith20MatchesIntegerAndFloatTypes
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -784,7 +784,7 @@ public class SuiteConstWith20MatchesIntegerAndFloatTypes
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": -2.0}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -800,6 +800,7 @@ public class SuiteConstWith20MatchesIntegerAndFloatTypes
 public class SuiteFloatAndIntegersAreEqualUpTo64BitRepresentationLimits
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -810,7 +811,6 @@ public class SuiteFloatAndIntegersAreEqualUpTo64BitRepresentationLimits
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -849,7 +849,7 @@ public class SuiteFloatAndIntegersAreEqualUpTo64BitRepresentationLimits
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{\"const\": 9007199254740992}",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -865,6 +865,7 @@ public class SuiteFloatAndIntegersAreEqualUpTo64BitRepresentationLimits
 public class SuiteNulCharactersInStrings
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -875,7 +876,6 @@ public class SuiteNulCharactersInStrings
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -900,7 +900,7 @@ public class SuiteNulCharactersInStrings
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
+                "tests/draft7/const.json",
                 "{ \"const\": \"hello\\u0000there\" }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -916,6 +916,7 @@ public class SuiteNulCharactersInStrings
 public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -926,7 +927,6 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -951,8 +951,8 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
-                "{\r\n            \"const\": \"μ\",\r\n            \"$comment\": \"U+03BC\"\r\n        }",
+                "tests/draft7/const.json",
+                "{\n            \"const\": \"μ\",\n            \"$comment\": \"U+03BC\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -967,6 +967,7 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
 public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfCodepoints
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -977,7 +978,6 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfC
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -1002,8 +1002,8 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfC
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft7\\const.json",
-                "{\r\n            \"const\": \"ä\",\r\n            \"$comment\": \"U+00E4\"\r\n        }",
+                "tests/draft7/const.json",
+                "{\n            \"const\": \"ä\",\n            \"$comment\": \"U+00E4\"\n        }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",

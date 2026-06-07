@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft6.RefRemote;
 public class SuiteRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,7 +46,7 @@ public class SuiteRemoteRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
+                "tests/draft6/refRemote.json",
                 "{\"$ref\": \"http://localhost:1234/integer.json\"}",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -65,6 +65,7 @@ public class SuiteRemoteRef
 public class SuiteFragmentWithinRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -75,7 +76,6 @@ public class SuiteFragmentWithinRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -100,7 +100,7 @@ public class SuiteFragmentWithinRemoteRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
+                "tests/draft6/refRemote.json",
                 "{\"$ref\": \"http://localhost:1234/draft6/subSchemas.json#/definitions/integer\"}",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -119,6 +119,7 @@ public class SuiteFragmentWithinRemoteRef
 public class SuiteRefWithinRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -129,7 +130,6 @@ public class SuiteRefWithinRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -154,8 +154,8 @@ public class SuiteRefWithinRemoteRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
-                "{\r\n            \"$ref\": \"http://localhost:1234/draft6/subSchemas.json#/definitions/refToInteger\"\r\n        }",
+                "tests/draft6/refRemote.json",
+                "{\n            \"$ref\": \"http://localhost:1234/draft6/subSchemas.json#/definitions/refToInteger\"\n        }",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -173,6 +173,7 @@ public class SuiteRefWithinRemoteRef
 public class SuiteBaseUriChange
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -183,7 +184,6 @@ public class SuiteBaseUriChange
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -208,8 +208,8 @@ public class SuiteBaseUriChange
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
-                "{\r\n            \"$id\": \"http://localhost:1234/\",\r\n            \"items\": {\r\n                \"$id\": \"baseUriChange/\",\r\n                \"items\": {\"$ref\": \"folderInteger.json\"}\r\n            }\r\n        }",
+                "tests/draft6/refRemote.json",
+                "{\n            \"$id\": \"http://localhost:1234/\",\n            \"items\": {\n                \"$id\": \"baseUriChange/\",\n                \"items\": {\"$ref\": \"folderInteger.json\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -227,6 +227,7 @@ public class SuiteBaseUriChange
 public class SuiteBaseUriChangeChangeFolder
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -237,7 +238,6 @@ public class SuiteBaseUriChangeChangeFolder
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -262,8 +262,8 @@ public class SuiteBaseUriChangeChangeFolder
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
-                "{\r\n            \"$id\": \"http://localhost:1234/scope_change_defs1.json\",\r\n            \"type\" : \"object\",\r\n            \"properties\": {\r\n                \"list\": {\"$ref\": \"#/definitions/baz\"}\r\n            },\r\n            \"definitions\": {\r\n                \"baz\": {\r\n                    \"$id\": \"baseUriChangeFolder/\",\r\n                    \"type\": \"array\",\r\n                    \"items\": {\"$ref\": \"folderInteger.json\"}\r\n                }\r\n            }\r\n        }",
+                "tests/draft6/refRemote.json",
+                "{\n            \"$id\": \"http://localhost:1234/scope_change_defs1.json\",\n            \"type\" : \"object\",\n            \"properties\": {\n                \"list\": {\"$ref\": \"#/definitions/baz\"}\n            },\n            \"definitions\": {\n                \"baz\": {\n                    \"$id\": \"baseUriChangeFolder/\",\n                    \"type\": \"array\",\n                    \"items\": {\"$ref\": \"folderInteger.json\"}\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -281,6 +281,7 @@ public class SuiteBaseUriChangeChangeFolder
 public class SuiteBaseUriChangeChangeFolderInSubschema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -291,7 +292,6 @@ public class SuiteBaseUriChangeChangeFolderInSubschema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -316,8 +316,8 @@ public class SuiteBaseUriChangeChangeFolderInSubschema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
-                "{\r\n            \"$id\": \"http://localhost:1234/scope_change_defs2.json\",\r\n            \"type\" : \"object\",\r\n            \"properties\": {\r\n                \"list\": {\"$ref\": \"#/definitions/baz/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"baz\": {\r\n                    \"$id\": \"baseUriChangeFolderInSubschema/\",\r\n                    \"definitions\": {\r\n                        \"bar\": {\r\n                            \"type\": \"array\",\r\n                            \"items\": {\"$ref\": \"folderInteger.json\"}\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+                "tests/draft6/refRemote.json",
+                "{\n            \"$id\": \"http://localhost:1234/scope_change_defs2.json\",\n            \"type\" : \"object\",\n            \"properties\": {\n                \"list\": {\"$ref\": \"#/definitions/baz/definitions/bar\"}\n            },\n            \"definitions\": {\n                \"baz\": {\n                    \"$id\": \"baseUriChangeFolderInSubschema/\",\n                    \"definitions\": {\n                        \"bar\": {\n                            \"type\": \"array\",\n                            \"items\": {\"$ref\": \"folderInteger.json\"}\n                        }\n                    }\n                }\n            }\n        }",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -335,6 +335,7 @@ public class SuiteBaseUriChangeChangeFolderInSubschema
 public class SuiteRootRefInRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -345,28 +346,27 @@ public class SuiteRootRefInRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestStringIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"name\": \"foo\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"name\": \"foo\"\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestNullIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"name\": null\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"name\": null\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"name\": {\r\n                        \"name\": null\r\n                    }\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"name\": {\n                        \"name\": null\n                    }\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -377,8 +377,8 @@ public class SuiteRootRefInRemoteRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
-                "{\r\n            \"$id\": \"http://localhost:1234/object\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"name\": {\"$ref\": \"draft6/name.json#/definitions/orNull\"}\r\n            }\r\n        }",
+                "tests/draft6/refRemote.json",
+                "{\n            \"$id\": \"http://localhost:1234/object\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"name\": {\"$ref\": \"draft6/name.json#/definitions/orNull\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -396,6 +396,7 @@ public class SuiteRootRefInRemoteRef
 public class SuiteRemoteRefWithRefToDefinitions
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -406,21 +407,20 @@ public class SuiteRemoteRefWithRefToDefinitions
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"bar\": 1\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"bar\": 1\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"bar\": \"a\"\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"bar\": \"a\"\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -431,8 +431,8 @@ public class SuiteRemoteRefWithRefToDefinitions
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
-                "{\r\n            \"$id\": \"http://localhost:1234/schema-remote-ref-ref-defs1.json\",\r\n            \"allOf\": [\r\n                { \"$ref\": \"draft6/ref-and-definitions.json\" }\r\n            ]\r\n        }",
+                "tests/draft6/refRemote.json",
+                "{\n            \"$id\": \"http://localhost:1234/schema-remote-ref-ref-defs1.json\",\n            \"allOf\": [\n                { \"$ref\": \"draft6/ref-and-definitions.json\" }\n            ]\n        }",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -450,6 +450,7 @@ public class SuiteRemoteRefWithRefToDefinitions
 public class SuiteLocationIndependentIdentifierInRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -460,7 +461,6 @@ public class SuiteLocationIndependentIdentifierInRemoteRef
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -485,8 +485,8 @@ public class SuiteLocationIndependentIdentifierInRemoteRef
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
-                "{\r\n            \"$ref\": \"http://localhost:1234/draft6/locationIndependentIdentifier.json#/definitions/refToInteger\"\r\n        }",
+                "tests/draft6/refRemote.json",
+                "{\n            \"$ref\": \"http://localhost:1234/draft6/locationIndependentIdentifier.json#/definitions/refToInteger\"\n        }",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -504,6 +504,7 @@ public class SuiteLocationIndependentIdentifierInRemoteRef
 public class SuiteRetrievedNestedRefsResolveRelativeToTheirUriNotId
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -514,21 +515,20 @@ public class SuiteRetrievedNestedRefsResolveRelativeToTheirUriNotId
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestNumberIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"name\": {\"foo\":  1}\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"name\": {\"foo\":  1}\n                }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestStringIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"name\": {\"foo\":  \"a\"}\r\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"name\": {\"foo\":  \"a\"}\n                }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -539,8 +539,8 @@ public class SuiteRetrievedNestedRefsResolveRelativeToTheirUriNotId
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
-                "{\r\n            \"$id\": \"http://localhost:1234/some-id\",\r\n            \"properties\": {\r\n                \"name\": {\"$ref\": \"nested/foo-ref-string.json\"}\r\n            }\r\n        }",
+                "tests/draft6/refRemote.json",
+                "{\n            \"$id\": \"http://localhost:1234/some-id\",\n            \"properties\": {\n                \"name\": {\"$ref\": \"nested/foo-ref-string.json\"}\n            }\n        }",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",
@@ -558,6 +558,7 @@ public class SuiteRetrievedNestedRefsResolveRelativeToTheirUriNotId
 public class SuiteRefToRefFindsLocationIndependentId
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -568,7 +569,6 @@ public class SuiteRefToRefFindsLocationIndependentId
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -593,8 +593,8 @@ public class SuiteRefToRefFindsLocationIndependentId
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\refRemote.json",
-                "{\r\n            \"$ref\": \"http://localhost:1234/draft6/detached-ref.json#/definitions/foo\"\r\n        }",
+                "tests/draft6/refRemote.json",
+                "{\n            \"$ref\": \"http://localhost:1234/draft6/detached-ref.json#/definitions/foo\"\n        }",
                 "JsonSchemaTestSuite.Draft6.RefRemote",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-06/schema#",

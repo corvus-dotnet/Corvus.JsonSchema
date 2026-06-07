@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft4.Optional.Format.Email;
 public class SuiteValidationOfEMailAddresses
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfEMailAddresses
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -172,7 +172,7 @@ public class SuiteValidationOfEMailAddresses
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft4\\optional\\format\\email.json",
+                "tests/draft4/optional/format/email.json",
                 "{ \"format\": \"email\" }",
                 "StandaloneEvaluatorTestSuite.Draft4.Optional.Format.Email",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

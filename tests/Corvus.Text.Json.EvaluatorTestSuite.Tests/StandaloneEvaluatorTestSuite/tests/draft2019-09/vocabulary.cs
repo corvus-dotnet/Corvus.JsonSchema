@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.Vocabulary;
 public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,28 +22,27 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
     [TestMethod]
     public void TestApplicatorVocabularyStillWorks()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"badProperty\": \"this property should not exist\"\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"badProperty\": \"this property should not exist\"\n                }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNoValidationValidNumber()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"numberProperty\": 20\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"numberProperty\": 20\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNoValidationInvalidNumberButItStillValidates()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"numberProperty\": 1\r\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"numberProperty\": 1\n                }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -53,8 +53,8 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\vocabulary.json",
-                "{\r\n            \"$id\": \"https://schema/using/no/validation\",\r\n            \"$schema\": \"http://localhost:1234/draft2019-09/metaschema-no-validation.json\",\r\n            \"properties\": {\r\n                \"badProperty\": false,\r\n                \"numberProperty\": {\r\n                    \"minimum\": 10\r\n                }\r\n            }\r\n        }",
+                "tests/draft2019-09/vocabulary.json",
+                "{\n            \"$id\": \"https://schema/using/no/validation\",\n            \"$schema\": \"http://localhost:1234/draft2019-09/metaschema-no-validation.json\",\n            \"properties\": {\n                \"badProperty\": false,\n                \"numberProperty\": {\n                    \"minimum\": 10\n                }\n            }\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Vocabulary",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -69,6 +69,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary
 public class SuiteIgnoreUnrecognizedOptionalVocabulary
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -79,7 +80,6 @@ public class SuiteIgnoreUnrecognizedOptionalVocabulary
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -104,8 +104,8 @@ public class SuiteIgnoreUnrecognizedOptionalVocabulary
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\vocabulary.json",
-                "{\r\n             \"$schema\": \"http://localhost:1234/draft2019-09/metaschema-optional-vocabulary.json\",\r\n             \"type\": \"number\"\r\n         }",
+                "tests/draft2019-09/vocabulary.json",
+                "{\n             \"$schema\": \"http://localhost:1234/draft2019-09/metaschema-optional-vocabulary.json\",\n             \"type\": \"number\"\n         }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Vocabulary",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

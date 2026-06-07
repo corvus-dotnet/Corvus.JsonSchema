@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.AdditionalProperties;
 public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -74,8 +74,8 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\additionalProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\"foo\": {}, \"bar\": {}},\r\n            \"patternProperties\": { \"^v\": {} },\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft2020-12/additionalProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\"foo\": {}, \"bar\": {}},\n            \"patternProperties\": { \"^v\": {} },\n            \"additionalProperties\": false\n        }",
                 "JsonSchemaTestSuite.Draft202012.AdditionalProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -93,6 +93,7 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
 public class SuiteNonAsciiPatternWithAdditionalProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -103,7 +104,6 @@ public class SuiteNonAsciiPatternWithAdditionalProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -128,8 +128,8 @@ public class SuiteNonAsciiPatternWithAdditionalProperties
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\additionalProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"patternProperties\": {\"^á\": {}},\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft2020-12/additionalProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"patternProperties\": {\"^á\": {}},\n            \"additionalProperties\": false\n        }",
                 "JsonSchemaTestSuite.Draft202012.AdditionalProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -147,6 +147,7 @@ public class SuiteNonAsciiPatternWithAdditionalProperties
 public class SuiteAdditionalPropertiesWithSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -157,7 +158,6 @@ public class SuiteAdditionalPropertiesWithSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -189,8 +189,8 @@ public class SuiteAdditionalPropertiesWithSchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\additionalProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\"foo\": {}, \"bar\": {}},\r\n            \"additionalProperties\": {\"type\": \"boolean\"}\r\n        }",
+                "tests/draft2020-12/additionalProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\"foo\": {}, \"bar\": {}},\n            \"additionalProperties\": {\"type\": \"boolean\"}\n        }",
                 "JsonSchemaTestSuite.Draft202012.AdditionalProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -208,6 +208,7 @@ public class SuiteAdditionalPropertiesWithSchema
 public class SuiteAdditionalPropertiesCanExistByItself
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -218,7 +219,6 @@ public class SuiteAdditionalPropertiesCanExistByItself
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -243,8 +243,8 @@ public class SuiteAdditionalPropertiesCanExistByItself
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\additionalProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"additionalProperties\": {\"type\": \"boolean\"}\r\n        }",
+                "tests/draft2020-12/additionalProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"additionalProperties\": {\"type\": \"boolean\"}\n        }",
                 "JsonSchemaTestSuite.Draft202012.AdditionalProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -262,6 +262,7 @@ public class SuiteAdditionalPropertiesCanExistByItself
 public class SuiteAdditionalPropertiesAreAllowedByDefault
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -272,7 +273,6 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -290,8 +290,8 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\additionalProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\"foo\": {}, \"bar\": {}}\r\n        }",
+                "tests/draft2020-12/additionalProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\"foo\": {}, \"bar\": {}}\n        }",
                 "JsonSchemaTestSuite.Draft202012.AdditionalProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -309,6 +309,7 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
 public class SuiteAdditionalPropertiesDoesNotLookInApplicators
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -319,7 +320,6 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -337,8 +337,8 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\additionalProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"allOf\": [\r\n                {\"properties\": {\"foo\": {}}}\r\n            ],\r\n            \"additionalProperties\": {\"type\": \"boolean\"}\r\n        }",
+                "tests/draft2020-12/additionalProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\"properties\": {\"foo\": {}}}\n            ],\n            \"additionalProperties\": {\"type\": \"boolean\"}\n        }",
                 "JsonSchemaTestSuite.Draft202012.AdditionalProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -356,6 +356,7 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
 public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -366,7 +367,6 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -384,8 +384,8 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\additionalProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"additionalProperties\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+                "tests/draft2020-12/additionalProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"additionalProperties\": {\n                \"type\": \"null\"\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.AdditionalProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -403,6 +403,7 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
 public class SuiteAdditionalPropertiesWithPropertyNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -413,7 +414,6 @@ public class SuiteAdditionalPropertiesWithPropertyNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -438,8 +438,8 @@ public class SuiteAdditionalPropertiesWithPropertyNames
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\additionalProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": {\r\n                \"maxLength\": 5\r\n            },\r\n            \"additionalProperties\": {\r\n                \"type\": \"number\"\r\n            }\r\n        }",
+                "tests/draft2020-12/additionalProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"propertyNames\": {\n                \"maxLength\": 5\n            },\n            \"additionalProperties\": {\n                \"type\": \"number\"\n            }\n        }",
                 "JsonSchemaTestSuite.Draft202012.AdditionalProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -457,6 +457,7 @@ public class SuiteAdditionalPropertiesWithPropertyNames
 public class SuiteDependentSchemasWithAdditionalProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -467,7 +468,6 @@ public class SuiteDependentSchemasWithAdditionalProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -499,8 +499,8 @@ public class SuiteDependentSchemasWithAdditionalProperties
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\additionalProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\"foo2\": {}},\r\n            \"dependentSchemas\": {\r\n                \"foo\" : {},\r\n                \"foo2\": {\r\n                    \"properties\": {\r\n                        \"bar\": {}\r\n                    }\r\n                }\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+                "tests/draft2020-12/additionalProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\"foo2\": {}},\n            \"dependentSchemas\": {\n                \"foo\" : {},\n                \"foo2\": {\n                    \"properties\": {\n                        \"bar\": {}\n                    }\n                }\n            },\n            \"additionalProperties\": false\n        }",
                 "JsonSchemaTestSuite.Draft202012.AdditionalProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

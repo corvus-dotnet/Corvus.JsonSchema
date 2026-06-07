@@ -12,6 +12,7 @@ namespace AnnotationTestSuite.Draft202012.Applicators;
 public class SuitePropertiesPatternPropertiesAndAdditionalProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -22,7 +23,6 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -64,10 +64,10 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "{\r\n            \"foo\": {},\r\n            \"apple\": {},\r\n            \"baz\": {}\r\n          }",
+            "{\n            \"foo\": {},\n            \"apple\": {},\n            \"baz\": {}\n          }",
             "/foo",
             "title",
-            "{\r\n                \"#/properties/foo\": \"Foo\"\r\n              }");
+            "{\n                \"#/properties/foo\": \"Foo\"\n              }");
     }
 
     [TestMethod]
@@ -75,10 +75,10 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "{\r\n            \"foo\": {},\r\n            \"apple\": {},\r\n            \"baz\": {}\r\n          }",
+            "{\n            \"foo\": {},\n            \"apple\": {},\n            \"baz\": {}\n          }",
             "/apple",
             "title",
-            "{\r\n                \"#/patternProperties/%5Ea\": \"Bar\"\r\n              }");
+            "{\n                \"#/patternProperties/%5Ea\": \"Bar\"\n              }");
     }
 
     [TestMethod]
@@ -86,10 +86,10 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "{\r\n            \"foo\": {},\r\n            \"apple\": {},\r\n            \"baz\": {}\r\n          }",
+            "{\n            \"foo\": {},\n            \"apple\": {},\n            \"baz\": {}\n          }",
             "/baz",
             "title",
-            "{\r\n                \"#/additionalProperties\": \"Baz\"\r\n              }");
+            "{\n                \"#/additionalProperties\": \"Baz\"\n              }");
     }
 
     public class Fixture
@@ -100,9 +100,9 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"properties\": {\r\n          \"foo\": {\r\n            \"title\": \"Foo\"\r\n          }\r\n        },\r\n        \"patternProperties\": {\r\n          \"^a\": {\r\n            \"title\": \"Bar\"\r\n          }\r\n        },\r\n        \"additionalProperties\": {\r\n          \"title\": \"Baz\"\r\n        }\r\n      }",
+                "{\n        \"properties\": {\n          \"foo\": {\n            \"title\": \"Foo\"\n          }\n        },\n        \"patternProperties\": {\n          \"^a\": {\n            \"title\": \"Bar\"\n          }\n        },\n        \"additionalProperties\": {\n          \"title\": \"Baz\"\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -115,6 +115,7 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
 public class SuitePropertyNamesDoesnTAnnotatePropertyValues
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -125,7 +126,6 @@ public class SuitePropertyNamesDoesnTAnnotatePropertyValues
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -134,7 +134,7 @@ public class SuitePropertyNamesDoesnTAnnotatePropertyValues
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "{\r\n            \"foo\": 42\r\n          }",
+            "{\n            \"foo\": 42\n          }",
             "/foo",
             "title",
             "{}");
@@ -148,9 +148,9 @@ public class SuitePropertyNamesDoesnTAnnotatePropertyValues
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"propertyNames\": {\r\n          \"const\": \"foo\",\r\n          \"title\": \"Foo\"\r\n        }\r\n      }",
+                "{\n        \"propertyNames\": {\n          \"const\": \"foo\",\n          \"title\": \"Foo\"\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -163,6 +163,7 @@ public class SuitePropertyNamesDoesnTAnnotatePropertyValues
 public class SuitePrefixItemsAndItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -173,7 +174,6 @@ public class SuitePrefixItemsAndItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -182,10 +182,10 @@ public class SuitePrefixItemsAndItems
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "[\r\n            \"foo\",\r\n            \"bar\"\r\n          ]",
+            "[\n            \"foo\",\n            \"bar\"\n          ]",
             "/0",
             "title",
-            "{\r\n                \"#/prefixItems/0\": \"Foo\"\r\n              }");
+            "{\n                \"#/prefixItems/0\": \"Foo\"\n              }");
     }
 
     [TestMethod]
@@ -193,10 +193,10 @@ public class SuitePrefixItemsAndItems
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "[\r\n            \"foo\",\r\n            \"bar\"\r\n          ]",
+            "[\n            \"foo\",\n            \"bar\"\n          ]",
             "/1",
             "title",
-            "{\r\n                \"#/items\": \"Bar\"\r\n              }");
+            "{\n                \"#/items\": \"Bar\"\n              }");
     }
 
     [TestMethod]
@@ -204,7 +204,7 @@ public class SuitePrefixItemsAndItems
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "[\r\n            \"foo\",\r\n            \"bar\"\r\n          ]",
+            "[\n            \"foo\",\n            \"bar\"\n          ]",
             "/2",
             "title",
             "{}");
@@ -218,9 +218,9 @@ public class SuitePrefixItemsAndItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"prefixItems\": [\r\n          {\r\n            \"title\": \"Foo\"\r\n          }\r\n        ],\r\n        \"items\": {\r\n          \"title\": \"Bar\"\r\n        }\r\n      }",
+                "{\n        \"prefixItems\": [\n          {\n            \"title\": \"Foo\"\n          }\n        ],\n        \"items\": {\n          \"title\": \"Bar\"\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -233,6 +233,7 @@ public class SuitePrefixItemsAndItems
 public class SuiteContains
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -243,7 +244,6 @@ public class SuiteContains
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -252,7 +252,7 @@ public class SuiteContains
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "[\r\n            \"foo\",\r\n            42,\r\n            true\r\n          ]",
+            "[\n            \"foo\",\n            42,\n            true\n          ]",
             "/0",
             "title",
             "{}");
@@ -263,10 +263,10 @@ public class SuiteContains
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "[\r\n            \"foo\",\r\n            42,\r\n            true\r\n          ]",
+            "[\n            \"foo\",\n            42,\n            true\n          ]",
             "/1",
             "title",
-            "{\r\n                \"#/contains\": \"Foo\"\r\n              }");
+            "{\n                \"#/contains\": \"Foo\"\n              }");
     }
 
     [TestMethod]
@@ -274,7 +274,7 @@ public class SuiteContains
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "[\r\n            \"foo\",\r\n            42,\r\n            true\r\n          ]",
+            "[\n            \"foo\",\n            42,\n            true\n          ]",
             "/2",
             "title",
             "{}");
@@ -285,7 +285,7 @@ public class SuiteContains
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "[\r\n            \"foo\",\r\n            42,\r\n            true\r\n          ]",
+            "[\n            \"foo\",\n            42,\n            true\n          ]",
             "/3",
             "title",
             "{}");
@@ -299,9 +299,9 @@ public class SuiteContains
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"contains\": {\r\n          \"type\": \"number\",\r\n          \"title\": \"Foo\"\r\n        }\r\n      }",
+                "{\n        \"contains\": {\n          \"type\": \"number\",\n          \"title\": \"Foo\"\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -314,6 +314,7 @@ public class SuiteContains
 public class SuiteAllOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -324,7 +325,6 @@ public class SuiteAllOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -336,7 +336,7 @@ public class SuiteAllOf
             "\"foo\"",
             "",
             "title",
-            "{\r\n                \"#/allOf/1\": \"Bar\",\r\n                \"#/allOf/0\": \"Foo\"\r\n              }");
+            "{\n                \"#/allOf/1\": \"Bar\",\n                \"#/allOf/0\": \"Foo\"\n              }");
     }
 
     public class Fixture
@@ -347,9 +347,9 @@ public class SuiteAllOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"allOf\": [\r\n          {\r\n            \"title\": \"Foo\"\r\n          },\r\n          {\r\n            \"title\": \"Bar\"\r\n          }\r\n        ]\r\n      }",
+                "{\n        \"allOf\": [\n          {\n            \"title\": \"Foo\"\n          },\n          {\n            \"title\": \"Bar\"\n          }\n        ]\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -362,6 +362,7 @@ public class SuiteAllOf
 public class SuiteAnyOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -372,7 +373,6 @@ public class SuiteAnyOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -384,7 +384,7 @@ public class SuiteAnyOf
             "42",
             "",
             "title",
-            "{\r\n                \"#/anyOf/1\": \"Bar\",\r\n                \"#/anyOf/0\": \"Foo\"\r\n              }");
+            "{\n                \"#/anyOf/1\": \"Bar\",\n                \"#/anyOf/0\": \"Foo\"\n              }");
     }
 
     [TestMethod]
@@ -395,7 +395,7 @@ public class SuiteAnyOf
             "4.2",
             "",
             "title",
-            "{\r\n                \"#/anyOf/1\": \"Bar\"\r\n              }");
+            "{\n                \"#/anyOf/1\": \"Bar\"\n              }");
     }
 
     public class Fixture
@@ -406,9 +406,9 @@ public class SuiteAnyOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"anyOf\": [\r\n          {\r\n            \"type\": \"integer\",\r\n            \"title\": \"Foo\"\r\n          },\r\n          {\r\n            \"type\": \"number\",\r\n            \"title\": \"Bar\"\r\n          }\r\n        ]\r\n      }",
+                "{\n        \"anyOf\": [\n          {\n            \"type\": \"integer\",\n            \"title\": \"Foo\"\n          },\n          {\n            \"type\": \"number\",\n            \"title\": \"Bar\"\n          }\n        ]\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -421,6 +421,7 @@ public class SuiteAnyOf
 public class SuiteOneOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -431,7 +432,6 @@ public class SuiteOneOf
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -443,7 +443,7 @@ public class SuiteOneOf
             "\"foo\"",
             "",
             "title",
-            "{\r\n                \"#/oneOf/0\": \"Foo\"\r\n              }");
+            "{\n                \"#/oneOf/0\": \"Foo\"\n              }");
     }
 
     [TestMethod]
@@ -454,7 +454,7 @@ public class SuiteOneOf
             "42",
             "",
             "title",
-            "{\r\n                \"#/oneOf/1\": \"Bar\"\r\n              }");
+            "{\n                \"#/oneOf/1\": \"Bar\"\n              }");
     }
 
     public class Fixture
@@ -465,9 +465,9 @@ public class SuiteOneOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"oneOf\": [\r\n          {\r\n            \"type\": \"string\",\r\n            \"title\": \"Foo\"\r\n          },\r\n          {\r\n            \"type\": \"number\",\r\n            \"title\": \"Bar\"\r\n          }\r\n        ]\r\n      }",
+                "{\n        \"oneOf\": [\n          {\n            \"type\": \"string\",\n            \"title\": \"Foo\"\n          },\n          {\n            \"type\": \"number\",\n            \"title\": \"Bar\"\n          }\n        ]\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -480,6 +480,7 @@ public class SuiteOneOf
 public class SuiteNot
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -490,7 +491,6 @@ public class SuiteNot
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -502,7 +502,7 @@ public class SuiteNot
             "{}",
             "",
             "title",
-            "{\r\n                \"#\": \"Foo\"\r\n              }");
+            "{\n                \"#\": \"Foo\"\n              }");
     }
 
     public class Fixture
@@ -513,9 +513,9 @@ public class SuiteNot
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"title\": \"Foo\",\r\n        \"not\": {\r\n          \"not\": {\r\n            \"title\": \"Bar\"\r\n          }\r\n        }\r\n      }",
+                "{\n        \"title\": \"Foo\",\n        \"not\": {\n          \"not\": {\n            \"title\": \"Bar\"\n          }\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -528,6 +528,7 @@ public class SuiteNot
 public class SuiteDependentSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -538,7 +539,6 @@ public class SuiteDependentSchemas
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -547,10 +547,10 @@ public class SuiteDependentSchemas
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "{\r\n            \"foo\": 42\r\n          }",
+            "{\n            \"foo\": 42\n          }",
             "",
             "title",
-            "{\r\n                \"#/dependentSchemas/foo\": \"Foo\"\r\n              }");
+            "{\n                \"#/dependentSchemas/foo\": \"Foo\"\n              }");
     }
 
     [TestMethod]
@@ -558,7 +558,7 @@ public class SuiteDependentSchemas
     {
         AnnotationTestHelper.AssertAnnotations(
             s_fixture!.Evaluator,
-            "{\r\n            \"foo\": 42\r\n          }",
+            "{\n            \"foo\": 42\n          }",
             "/foo",
             "title",
             "{}");
@@ -572,9 +572,9 @@ public class SuiteDependentSchemas
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"dependentSchemas\": {\r\n          \"foo\": {\r\n            \"title\": \"Foo\"\r\n          }\r\n        }\r\n      }",
+                "{\n        \"dependentSchemas\": {\n          \"foo\": {\n            \"title\": \"Foo\"\n          }\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -587,6 +587,7 @@ public class SuiteDependentSchemas
 public class SuiteIfThenAndElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -597,7 +598,6 @@ public class SuiteIfThenAndElse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -609,7 +609,7 @@ public class SuiteIfThenAndElse
             "\"foo\"",
             "",
             "title",
-            "{\r\n                \"#/then\": \"Then\",\r\n                \"#/if\": \"If\"\r\n              }");
+            "{\n                \"#/then\": \"Then\",\n                \"#/if\": \"If\"\n              }");
     }
 
     [TestMethod]
@@ -620,7 +620,7 @@ public class SuiteIfThenAndElse
             "42",
             "",
             "title",
-            "{\r\n                \"#/else\": \"Else\"\r\n              }");
+            "{\n                \"#/else\": \"Else\"\n              }");
     }
 
     public class Fixture
@@ -631,9 +631,9 @@ public class SuiteIfThenAndElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "annotations/applicators.json",
-                "{\r\n        \"if\": {\r\n          \"title\": \"If\",\r\n          \"type\": \"string\"\r\n        },\r\n        \"then\": {\r\n          \"title\": \"Then\"\r\n        },\r\n        \"else\": {\r\n          \"title\": \"Else\"\r\n        }\r\n      }",
+                "{\n        \"if\": {\n          \"title\": \"If\",\n          \"type\": \"string\"\n        },\n        \"then\": {\n          \"title\": \"Then\"\n        },\n        \"else\": {\n          \"title\": \"Else\"\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Applicators",
-                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

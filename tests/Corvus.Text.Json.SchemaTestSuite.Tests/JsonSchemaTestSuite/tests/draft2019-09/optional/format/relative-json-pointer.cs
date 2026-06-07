@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.Optional.Format.RelativeJsonPointer;
 public class SuiteValidationOfRelativeJsonPointersRjp
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfRelativeJsonPointersRjp
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -158,8 +158,8 @@ public class SuiteValidationOfRelativeJsonPointersRjp
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\optional\\format\\relative-json-pointer.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"relative-json-pointer\"\r\n        }",
+                "tests/draft2019-09/optional/format/relative-json-pointer.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"format\": \"relative-json-pointer\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Optional.Format.RelativeJsonPointer",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

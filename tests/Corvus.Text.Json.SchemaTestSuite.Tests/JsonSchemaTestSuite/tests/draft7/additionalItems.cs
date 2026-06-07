@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft7.AdditionalItems;
 public class SuiteAdditionalItemsAsSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteAdditionalItemsAsSchema
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -46,8 +46,8 @@ public class SuiteAdditionalItemsAsSchema
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
-                "{\r\n            \"items\": [{}],\r\n            \"additionalItems\": {\"type\": \"integer\"}\r\n        }",
+                "tests/draft7/additionalItems.json",
+                "{\n            \"items\": [{}],\n            \"additionalItems\": {\"type\": \"integer\"}\n        }",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -65,6 +65,7 @@ public class SuiteAdditionalItemsAsSchema
 public class SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -75,7 +76,6 @@ public class SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -100,8 +100,8 @@ public class SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
-                "{\r\n            \"items\": {\r\n                \"type\": \"integer\"\r\n            },\r\n            \"additionalItems\": {\r\n                \"type\": \"string\"\r\n            }\r\n        }",
+                "tests/draft7/additionalItems.json",
+                "{\n            \"items\": {\n                \"type\": \"integer\"\n            },\n            \"additionalItems\": {\n                \"type\": \"string\"\n            }\n        }",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -119,6 +119,7 @@ public class SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing
 public class SuiteWhenItemsIsSchemaBooleanAdditionalItemsDoesNothing
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -129,7 +130,6 @@ public class SuiteWhenItemsIsSchemaBooleanAdditionalItemsDoesNothing
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -147,8 +147,8 @@ public class SuiteWhenItemsIsSchemaBooleanAdditionalItemsDoesNothing
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
-                "{\r\n            \"items\": {},\r\n            \"additionalItems\": false\r\n        }",
+                "tests/draft7/additionalItems.json",
+                "{\n            \"items\": {},\n            \"additionalItems\": false\n        }",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -166,6 +166,7 @@ public class SuiteWhenItemsIsSchemaBooleanAdditionalItemsDoesNothing
 public class SuiteArrayOfItemsWithNoAdditionalItemsPermitted
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -176,7 +177,6 @@ public class SuiteArrayOfItemsWithNoAdditionalItemsPermitted
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -222,8 +222,8 @@ public class SuiteArrayOfItemsWithNoAdditionalItemsPermitted
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
-                "{\r\n            \"items\": [{}, {}, {}],\r\n            \"additionalItems\": false\r\n        }",
+                "tests/draft7/additionalItems.json",
+                "{\n            \"items\": [{}, {}, {}],\n            \"additionalItems\": false\n        }",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -241,6 +241,7 @@ public class SuiteArrayOfItemsWithNoAdditionalItemsPermitted
 public class SuiteAdditionalItemsAsFalseWithoutItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -251,7 +252,6 @@ public class SuiteAdditionalItemsAsFalseWithoutItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -276,7 +276,7 @@ public class SuiteAdditionalItemsAsFalseWithoutItems
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
+                "tests/draft7/additionalItems.json",
                 "{\"additionalItems\": false}",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -295,6 +295,7 @@ public class SuiteAdditionalItemsAsFalseWithoutItems
 public class SuiteAdditionalItemsAreAllowedByDefault
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -305,7 +306,6 @@ public class SuiteAdditionalItemsAreAllowedByDefault
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -323,7 +323,7 @@ public class SuiteAdditionalItemsAreAllowedByDefault
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
+                "tests/draft7/additionalItems.json",
                 "{\"items\": [{\"type\": \"integer\"}]}",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -342,6 +342,7 @@ public class SuiteAdditionalItemsAreAllowedByDefault
 public class SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -352,7 +353,6 @@ public class SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -370,8 +370,8 @@ public class SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
-                "{\r\n            \"allOf\": [\r\n                { \"items\": [ { \"type\": \"integer\" }, { \"type\": \"string\" } ] }\r\n            ],\r\n            \"items\": [ {\"type\": \"integer\" } ],\r\n            \"additionalItems\": { \"type\": \"boolean\" }\r\n        }",
+                "tests/draft7/additionalItems.json",
+                "{\n            \"allOf\": [\n                { \"items\": [ { \"type\": \"integer\" }, { \"type\": \"string\" } ] }\n            ],\n            \"items\": [ {\"type\": \"integer\" } ],\n            \"additionalItems\": { \"type\": \"boolean\" }\n        }",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -389,6 +389,7 @@ public class SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase
 public class SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -399,7 +400,6 @@ public class SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -424,8 +424,8 @@ public class SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
-                "{\r\n            \"items\": [ { \"type\": \"string\" } ],\r\n            \"additionalItems\": { \"type\": \"integer\" }\r\n        }",
+                "tests/draft7/additionalItems.json",
+                "{\n            \"items\": [ { \"type\": \"string\" } ],\n            \"additionalItems\": { \"type\": \"integer\" }\n        }",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -443,6 +443,7 @@ public class SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems
 public class SuiteAdditionalItemsWithHeterogeneousArray
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -453,7 +454,6 @@ public class SuiteAdditionalItemsWithHeterogeneousArray
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -478,8 +478,8 @@ public class SuiteAdditionalItemsWithHeterogeneousArray
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
-                "{\r\n            \"items\": [{}],\r\n            \"additionalItems\": false\r\n        }",
+                "tests/draft7/additionalItems.json",
+                "{\n            \"items\": [{}],\n            \"additionalItems\": false\n        }",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",
@@ -497,6 +497,7 @@ public class SuiteAdditionalItemsWithHeterogeneousArray
 public class SuiteAdditionalItemsWithNullInstanceElements
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -507,7 +508,6 @@ public class SuiteAdditionalItemsWithNullInstanceElements
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -525,8 +525,8 @@ public class SuiteAdditionalItemsWithNullInstanceElements
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\additionalItems.json",
-                "{\r\n            \"additionalItems\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+                "tests/draft7/additionalItems.json",
+                "{\n            \"additionalItems\": {\n                \"type\": \"null\"\n            }\n        }",
                 "JsonSchemaTestSuite.Draft7.AdditionalItems",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "http://json-schema.org/draft-07/schema#",

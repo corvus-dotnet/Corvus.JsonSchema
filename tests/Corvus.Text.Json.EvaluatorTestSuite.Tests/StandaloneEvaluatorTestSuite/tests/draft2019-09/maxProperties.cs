@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.MaxProperties;
 public class SuiteMaxPropertiesValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMaxPropertiesValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -74,8 +74,8 @@ public class SuiteMaxPropertiesValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\maxProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"maxProperties\": 2\r\n        }",
+                "tests/draft2019-09/maxProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"maxProperties\": 2\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MaxProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -90,6 +90,7 @@ public class SuiteMaxPropertiesValidation
 public class SuiteMaxPropertiesValidationWithADecimal
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -100,7 +101,6 @@ public class SuiteMaxPropertiesValidationWithADecimal
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -125,8 +125,8 @@ public class SuiteMaxPropertiesValidationWithADecimal
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\maxProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"maxProperties\": 2.0\r\n        }",
+                "tests/draft2019-09/maxProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"maxProperties\": 2.0\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MaxProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -141,6 +141,7 @@ public class SuiteMaxPropertiesValidationWithADecimal
 public class SuiteMaxProperties0MeansTheObjectIsEmpty
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -151,7 +152,6 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -176,8 +176,8 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft2019-09\\maxProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"maxProperties\": 0\r\n        }",
+                "tests/draft2019-09/maxProperties.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"maxProperties\": 0\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MaxProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

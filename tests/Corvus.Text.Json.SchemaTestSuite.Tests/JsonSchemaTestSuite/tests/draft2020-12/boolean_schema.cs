@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.BooleanSchema;
 public class SuiteBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteBooleanSchemaTrue
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -95,7 +95,7 @@ public class SuiteBooleanSchemaTrue
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\boolean_schema.json",
+                "tests/draft2020-12/boolean_schema.json",
                 "true",
                 "JsonSchemaTestSuite.Draft202012.BooleanSchema",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -114,6 +114,7 @@ public class SuiteBooleanSchemaTrue
 public class SuiteBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -124,7 +125,6 @@ public class SuiteBooleanSchemaFalse
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -198,7 +198,7 @@ public class SuiteBooleanSchemaFalse
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2020-12\\boolean_schema.json",
+                "tests/draft2020-12/boolean_schema.json",
                 "false",
                 "JsonSchemaTestSuite.Draft202012.BooleanSchema",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

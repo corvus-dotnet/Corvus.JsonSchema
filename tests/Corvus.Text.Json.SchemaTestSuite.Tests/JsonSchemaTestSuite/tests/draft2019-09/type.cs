@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft201909.Type;
 public class SuiteIntegerTypeMatchesIntegers
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteIntegerTypeMatchesIntegers
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -95,8 +95,8 @@ public class SuiteIntegerTypeMatchesIntegers
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"integer\"\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"integer\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -114,6 +114,7 @@ public class SuiteIntegerTypeMatchesIntegers
 public class SuiteNumberTypeMatchesNumbers
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -124,7 +125,6 @@ public class SuiteNumberTypeMatchesNumbers
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -198,8 +198,8 @@ public class SuiteNumberTypeMatchesNumbers
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"number\"\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"number\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -217,6 +217,7 @@ public class SuiteNumberTypeMatchesNumbers
 public class SuiteStringTypeMatchesStrings
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -227,7 +228,6 @@ public class SuiteStringTypeMatchesStrings
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -301,8 +301,8 @@ public class SuiteStringTypeMatchesStrings
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"string\"\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -320,6 +320,7 @@ public class SuiteStringTypeMatchesStrings
 public class SuiteObjectTypeMatchesObjects
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -330,7 +331,6 @@ public class SuiteObjectTypeMatchesObjects
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -390,8 +390,8 @@ public class SuiteObjectTypeMatchesObjects
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\"\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -409,6 +409,7 @@ public class SuiteObjectTypeMatchesObjects
 public class SuiteArrayTypeMatchesArrays
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -419,7 +420,6 @@ public class SuiteArrayTypeMatchesArrays
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -479,8 +479,8 @@ public class SuiteArrayTypeMatchesArrays
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"array\"\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"array\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -498,6 +498,7 @@ public class SuiteArrayTypeMatchesArrays
 public class SuiteBooleanTypeMatchesBooleans
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -508,7 +509,6 @@ public class SuiteBooleanTypeMatchesBooleans
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -589,8 +589,8 @@ public class SuiteBooleanTypeMatchesBooleans
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"boolean\"\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"boolean\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -608,6 +608,7 @@ public class SuiteBooleanTypeMatchesBooleans
 public class SuiteNullTypeMatchesOnlyTheNullObject
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -618,7 +619,6 @@ public class SuiteNullTypeMatchesOnlyTheNullObject
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -699,8 +699,8 @@ public class SuiteNullTypeMatchesOnlyTheNullObject
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"null\"\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"null\"\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -718,6 +718,7 @@ public class SuiteNullTypeMatchesOnlyTheNullObject
 public class SuiteMultipleTypesCanBeSpecifiedInAnArray
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -728,7 +729,6 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -788,8 +788,8 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": [\"integer\", \"string\"]\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": [\"integer\", \"string\"]\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -807,6 +807,7 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray
 public class SuiteTypeAsArrayWithOneItem
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -817,7 +818,6 @@ public class SuiteTypeAsArrayWithOneItem
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -842,8 +842,8 @@ public class SuiteTypeAsArrayWithOneItem
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": [\"string\"]\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": [\"string\"]\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -861,6 +861,7 @@ public class SuiteTypeAsArrayWithOneItem
 public class SuiteTypeArrayOrObject
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -871,7 +872,6 @@ public class SuiteTypeArrayOrObject
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -917,8 +917,8 @@ public class SuiteTypeArrayOrObject
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": [\"array\", \"object\"]\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": [\"array\", \"object\"]\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",
@@ -936,6 +936,7 @@ public class SuiteTypeArrayOrObject
 public class SuiteTypeArrayObjectOrNull
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -946,7 +947,6 @@ public class SuiteTypeArrayObjectOrNull
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -992,8 +992,8 @@ public class SuiteTypeArrayObjectOrNull
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft2019-09\\type.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": [\"array\", \"object\", \"null\"]\r\n        }",
+                "tests/draft2019-09/type.json",
+                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": [\"array\", \"object\", \"null\"]\n        }",
                 "JsonSchemaTestSuite.Draft201909.Type",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

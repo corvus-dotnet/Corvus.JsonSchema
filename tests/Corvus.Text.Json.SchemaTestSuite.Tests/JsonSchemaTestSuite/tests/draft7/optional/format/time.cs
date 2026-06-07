@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft7.Optional.Format.Time;
 public class SuiteValidationOfTimeStrings
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfTimeStrings
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -249,7 +249,7 @@ public class SuiteValidationOfTimeStrings
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft7\\optional\\format\\time.json",
+                "tests/draft7/optional/format/time.json",
                 "{ \"format\": \"time\" }",
                 "JsonSchemaTestSuite.Draft7.Optional.Format.Time",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

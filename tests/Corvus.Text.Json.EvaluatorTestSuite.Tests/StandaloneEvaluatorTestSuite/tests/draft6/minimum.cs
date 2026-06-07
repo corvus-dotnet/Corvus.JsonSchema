@@ -11,6 +11,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.Minimum;
 public class SuiteMinimumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteMinimumValidation
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -60,7 +60,7 @@ public class SuiteMinimumValidation
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\minimum.json",
+                "tests/draft6/minimum.json",
                 "{\"minimum\": 1.1}",
                 "StandaloneEvaluatorTestSuite.Draft6.Minimum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
@@ -76,6 +76,7 @@ public class SuiteMinimumValidation
 public class SuiteMinimumValidationWithSignedInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -86,7 +87,6 @@ public class SuiteMinimumValidationWithSignedInteger
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -146,7 +146,7 @@ public class SuiteMinimumValidationWithSignedInteger
         public async Task InitializeAsync()
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests\\draft6\\minimum.json",
+                "tests/draft6/minimum.json",
                 "{\"minimum\": -2}",
                 "StandaloneEvaluatorTestSuite.Draft6.Minimum",
                 "../../../../../JSON-Schema-Test-Suite/remotes",

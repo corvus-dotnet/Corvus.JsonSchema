@@ -11,6 +11,7 @@ namespace JsonSchemaTestSuite.Draft6.Optional.Format.Hostname;
 public class SuiteValidationOfHostNames
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
     public static async Task ClassInit(TestContext _)
     {
@@ -21,7 +22,6 @@ public class SuiteValidationOfHostNames
     [ClassCleanup]
     public static void ClassCleanupMethod()
     {
-        (s_fixture as IDisposable)?.Dispose();
         s_fixture = null;
     }
 
@@ -228,7 +228,7 @@ public class SuiteValidationOfHostNames
         public async Task InitializeAsync()
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests\\draft6\\optional\\format\\hostname.json",
+                "tests/draft6/optional/format/hostname.json",
                 "{ \"format\": \"hostname\" }",
                 "JsonSchemaTestSuite.Draft6.Optional.Format.Hostname",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
