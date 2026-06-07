@@ -30,6 +30,15 @@ internal static class EmitText
             : char.ToLowerInvariant(value[0]) + value[1..];
 
     /// <summary>
+    /// Gets the name of the local that holds a step's built outputs object — the target of static
+    /// <c>$steps.&lt;id&gt;.outputs</c> resolution.
+    /// </summary>
+    /// <param name="stepId">The step id.</param>
+    /// <returns>The local name.</returns>
+    public static string StepOutputsElementLocal(string stepId)
+        => $"{ToCamelCase(SanitizeIdentifier(stepId))}OutputsElement";
+
+    /// <summary>
     /// Produces a valid C# identifier from an arbitrary token (e.g. a step id), replacing characters
     /// that are not letters/digits with <c>_</c> and prefixing a leading digit.
     /// </summary>

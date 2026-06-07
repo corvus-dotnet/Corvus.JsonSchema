@@ -36,9 +36,11 @@ public static class RequestBindingEmitter
         IReadOnlyList<StepArgument> arguments,
         string contextVariable,
         string requestVariable,
-        string fieldPrefix)
+        string fieldPrefix,
+        IReadOnlyDictionary<string, string> stepOutputLocals)
     {
         ArgumentNullException.ThrowIfNull(arguments);
+        ArgumentNullException.ThrowIfNull(stepOutputLocals);
         ArgumentException.ThrowIfNullOrEmpty(contextVariable);
         ArgumentException.ThrowIfNullOrEmpty(requestVariable);
         ArgumentException.ThrowIfNullOrEmpty(fieldPrefix);
@@ -70,18 +72,7 @@ public static class RequestBindingEmitter
             string field = $"{fieldPrefix}{parameter.PropertyName}";
             string local = $"{EmitText.ToCamelCase(parameter.PropertyName)}Value";
 
-            fields.Append("private static readonly ArazzoExpression ")
-                .Append(field)
-                .Append(" = ArazzoExpression.Parse(")
-                .Append(EmitText.Quote(argument.Expression))
-                .AppendLine(");");
-
-            statements.Append(contextVariable)
-                .Append(".TryResolveValue(")
-                .Append(field)
-                .Append(", out JsonElement ")
-                .Append(local)
-                .AppendLine(");");
+            ValueResolution.Emit(fields, statements, argument.Expression, local, contextVariable, stepOutputLocals, field);
 
             string bound = $"{parameter.TypeName}.From({local})";
             if (parameter.IsRequired)
