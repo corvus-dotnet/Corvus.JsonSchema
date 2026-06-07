@@ -2,10 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Globalization;
-using System.Linq;
 using System.Text;
-using Corvus.Text.Json.Arazzo11;
+using Corvus.Text.Json.Arazzo10;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
@@ -29,13 +27,11 @@ public static class WorkflowExecutorEmitter
     /// <param name="workflow">The workflow to emit.</param>
     /// <param name="binder">The operation binder for the document's source descriptions.</param>
     /// <param name="options">The emission options (namespace, class name, inputs/outputs type names).</param>
-    /// <param name="components">The document's <c>components</c> object, for resolving reusable <c>$ref</c> actions and parameters; <see langword="default"/> when there are none.</param>
     /// <returns>The C# source of the generated executor class.</returns>
     public static string Emit(
         in ArazzoDocument.WorkflowObject workflow,
         WorkflowOperationBinder binder,
-        in WorkflowExecutorOptions options,
-        JsonElement components = default)
+        in WorkflowExecutorOptions options)
     {
         ArgumentNullException.ThrowIfNull(binder);
 
@@ -43,509 +39,71 @@ public static class WorkflowExecutorEmitter
 
         var fields = new StringBuilder();
         var body = new StringBuilder();
-        var auxiliaryTypes = new StringBuilder();
-
-        // Maps a (preceding) step id to the local that holds its built outputs object, so
-        // $steps.<id>.outputs references resolve statically — no runtime dictionary.
-        var stepOutputLocals = new Dictionary<string, string>(StringComparer.Ordinal);
-
-        // Bind every step up front; a workflow that declares any onSuccess/onFailure action is emitted
-        // as a labelled-loop executor (control flow), otherwise as the straight-line form.
-        var boundSteps = new List<ControlFlowStep>();
-
-        // Durable mode always uses the labelled-loop state machine: the cursor (__state) is the resume point,
-        // so the executor must be the loop form even for an otherwise straight-line workflow.
-        bool usesControlFlow = options.Durable;
-        bool hasChannelStep = false;
-
-        // Workflow-level success/failure actions apply to every step as defaults (a step's own action
-        // with the same name overrides). Both these and a step's actions may be reusable $ref entries.
-        List<StepActionInfo> workflowSuccessActions = ReadActions(workflow.SuccessActions, components);
-        List<StepActionInfo> workflowFailureActions = ReadActions(workflow.FailureActions, components);
-
-        // Workflow-level parameters apply to every step as defaults (a step's own parameter of the same
-        // name overrides). Reusable $ref parameters are resolved the same way as step parameters.
-        List<StepArgument> workflowParameters = ReadArguments(workflow.Parameters, components);
 
         foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
         {
             string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw new InvalidOperationException("A step is missing its required stepId.");
             StepBinding binding = binder.Bind(step);
 
-            // A step timeout (ms) bounds the step's async work; like onSuccess/onFailure it promotes the
-            // workflow into the control-flow loop, where a timeout routes to the step's onFailure path.
-            int? timeout = ReadTimeout(step);
-            usesControlFlow |= timeout.HasValue;
-
-            List<OutputMapping> stepOutputs = ReadOutputs(step);
-            List<StepCriterion> criteria = ReadCriteria(step);
-            List<StepActionInfo> onSuccess = MergeActions(ReadActions(step.OnSuccess, components), workflowSuccessActions);
-            List<StepActionInfo> onFailure = MergeActions(ReadActions(step.OnFailure, components), workflowFailureActions);
-            List<string> dependsOn = ReadDependsOn(step);
-
-            // A sub-workflow step invokes another generated workflow. Its criteria (success and action)
-            // run against the sub-workflow's outputs / the inputs — never an HTTP response — so they may
-            // only reference $inputs and $steps; an action or criterion makes the workflow control-flow.
-            if (binding.Kind == StepTargetKind.WorkflowId && binding.SubWorkflowId is { } subWorkflowId)
-            {
-                ValidateSubWorkflowCriteria(stepId, criteria, onSuccess, onFailure);
-                usesControlFlow |= criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0;
-                boundSteps.Add(new ControlFlowStep(stepId, null, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId, dependsOn, TimeoutMs: timeout, SubWorkflowSource: binding.SubWorkflowSource));
-                continue;
-            }
-
-            // A channel step sends/receives on an AsyncAPI channel via the generated producer. First
-            // increment: a straight-line 'send' step with no criteria/actions.
-            if (binding.Kind == StepTargetKind.ChannelPath && binding.Channel is { } channel)
-            {
-                bool isReceive = channel.Channel.Action == AsyncApi.CodeGeneration.OperationAction.Receive;
-                bool isRequestReply = !isReceive && channel.Channel.ReplyPayloadTypeName is not null;
-                if (criteria.Count > 0 && !isReceive && !isRequestReply)
-                {
-                    throw new NotSupportedException($"Channel step '{stepId}' has success criteria on a fire-and-forget send step; only receive and request/reply channel steps support success criteria (against $message.*).");
-                }
-
-                if (isRequestReply && (onSuccess.Count > 0 || onFailure.Count > 0))
-                {
-                    throw new NotSupportedException($"Channel step '{stepId}' is a request/reply send with onSuccess/onFailure actions; control flow on a request/reply step is a later phase.");
-                }
-
-                // onSuccess/onFailure actions promote the channel step into the control-flow loop.
-                usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
-                hasChannelStep = true;
-
-                // A receive step may declare a correlationId (1.1) naming an AsyncAPI Correlation ID, so it
-                // only accepts a message carrying the token a prior send registered under that name. The
-                // token's location comes from the channel message's correlation id in the AsyncAPI document.
-                string? correlationName = ReadCorrelationId(step);
-                string? correlationLocation = null;
-                if (correlationName is not null)
-                {
-                    if (!isReceive)
-                    {
-                        throw new NotSupportedException(
-                            $"Channel step '{stepId}' declares a correlationId but is not a receive step; per the Arazzo specification correlationId applies only to AsyncAPI steps with action 'receive'.");
-                    }
-
-                    if (isRequestReply)
-                    {
-                        throw new NotSupportedException(
-                            $"Channel step '{stepId}' declares a correlationId on a request/reply (responder) step; request/reply correlation is handled by the transport, so a step-level correlationId applies only to plain receive steps.");
-                    }
-
-                    string rawLocation = ResolveCorrelationLocation(channel.Channel, correlationName)
-                        ?? throw new NotSupportedException(
-                            $"Channel step '{stepId}' declares correlationId '{correlationName}', but the channel's message defines no correlation id of that name (it must be in-sync with a correlationId defined in the AsyncAPI document).");
-
-                    // The correlation token must live in the message payload: the matching send step publishes
-                    // a payload (its requestBody) the engine can read the token from, but it does not set
-                    // message headers — so a header-located correlation cannot be captured.
-                    AsyncApi.CodeGeneration.AsyncApiRuntimeExpression locationExpression = AsyncApi.CodeGeneration.AsyncApiRuntimeExpression.Parse(rawLocation);
-                    if (locationExpression.Kind != AsyncApi.CodeGeneration.AsyncApiRuntimeExpressionKind.MessagePayload || locationExpression.JsonPointer is not { } pointer)
-                    {
-                        throw new NotSupportedException(
-                            $"Channel step '{stepId}' correlationId '{correlationName}' has location '{rawLocation}'; only $message.payload#/… correlation locations are supported (the workflow's send step cannot set message headers).");
-                    }
-
-                    correlationLocation = pointer;
-                }
-
-                // A channel step's parameters supply the channel address placeholders (parameterised
-                // channels); workflow-level parameter defaults apply here too.
-                List<StepArgument> channelArguments = MergeArguments(ReadArguments(step.Parameters, components), workflowParameters);
-                boundSteps.Add(new ControlFlowStep(stepId, null, channelArguments, criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel, timeout, correlationName, correlationLocation));
-                continue;
-            }
-
             if (binding.Kind is not (StepTargetKind.OperationId or StepTargetKind.OperationPath) || binding.Operation is not { } operation)
             {
                 throw new InvalidOperationException(
-                    $"Step '{stepId}' targets {binding.Kind}; only operation, sub-workflow, and channel steps are supported by the current generator.");
+                    $"Step '{stepId}' targets {binding.Kind}; only operation steps are supported by the current generator.");
             }
 
-            usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
+            body.Append("            // ── step: ").Append(stepId).AppendLine(" ──");
 
-            // Only clone the response body into the workspace when the step actually consumes it
-            // (success criteria, outputs, or an action's criteria).
-            bool bindResponseBody = ReferencesResponseBody(criteria, stepOutputs, onSuccess, onFailure);
+            StepBodyCode stepBody = StepBodyEmitter.Emit(
+                stepId, operation, ReadArguments(step), ReadCriteria(step), "transport", "context", "cancellationToken");
+            fields.Append(stepBody.Fields);
+            AppendIndented(body, stepBody.Statements, 12);
 
-            boundSteps.Add(new ControlFlowStep(
-                stepId, operation, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure, null, dependsOn, TimeoutMs: timeout));
+            OutputExtractionCode outputs = OutputExtractionEmitter.Emit(stepId, ReadOutputs(step), "workspace", "context");
+            fields.Append(outputs.Fields);
+            AppendIndented(body, outputs.Statements, 12);
+
+            body.AppendLine();
         }
 
-        // A step may declare dependsOn (1.1): order steps so each step's same-workflow dependencies
-        // precede it. Sequential executors must honour this; document order is used as the tie-break.
-        boundSteps = TopologicallyOrder(boundSteps);
+        AppendWorkflowOutputs(fields, body, workflow);
 
-        // A multi-source document (more than one API source declared) passes a source→transport map and
-        // selects the transport per operation step; a single-source document keeps the original single
-        // `transport` parameter (no map, no per-run dictionary). The choice is document-level so a workflow
-        // can hand the whole map to a sub-workflow that uses a different source.
-        var selection = new TransportSelection((options.Sources?.Count ?? 0) > 1);
-
-        // In multi-source mode the executor hoists one transport local per API source that THIS workflow's
-        // own operation steps call (sub-workflow sources are reached via the map it forwards).
-        var usedApiSources = new List<string>();
-        if (selection.MultiSource)
-        {
-            var seenSources = new HashSet<string>(StringComparer.Ordinal);
-            foreach (ControlFlowStep boundStep in boundSteps)
-            {
-                if (boundStep.Operation is { } boundOperation && seenSources.Add(boundOperation.SourceName))
-                {
-                    usedApiSources.Add(boundOperation.SourceName);
-                }
-            }
-        }
-
-        // When a receive step correlates (1.1 correlationId), a per-execution register links the token a
-        // prior send published to the response this receive waits for; it is keyed by correlation id name.
-        bool usesCorrelation = false;
-        foreach (ControlFlowStep boundStep in boundSteps)
-        {
-            if (boundStep.CorrelationName is not null)
-            {
-                usesCorrelation = true;
-                break;
-            }
-        }
-
-        if (usesCorrelation)
-        {
-            // In durable mode the correlation register is the run's (restored from the checkpoint and
-            // checkpointed in place); otherwise it is a fresh per-run dictionary.
-            body.Append("            System.Collections.Generic.Dictionary<string, byte[]> correlationTokens = ")
-                .AppendLine(options.Durable
-                    ? "run is not null ? run.CorrelationTokens : new(System.StringComparer.Ordinal);"
-                    : "new(System.StringComparer.Ordinal);");
-        }
-
-        if (usesControlFlow)
-        {
-            ControlFlowEmitter.Emit(boundSteps, workflow, options, fields, body, auxiliaryTypes, stepOutputLocals, selection, usesCorrelation);
-        }
-        else
-        {
-            foreach (ControlFlowStep step in boundSteps)
-            {
-                body.Append("            // ── step: ").Append(step.StepId).AppendLine(" ──");
-
-                if (step.Channel is { } channelStep)
-                {
-                    if (channelStep.Channel.Action == AsyncApi.CodeGeneration.OperationAction.Receive)
-                    {
-                        string receiveStatements = ReceiveChannelStepEmitter.Emit(
-                            step.StepId, channelStep, "messageTransport", step.Outputs, step.SuccessCriteria, step.RequestBody, step.Arguments, "workspace",
-                            stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, step.CorrelationName, step.CorrelationLocation);
-                        AppendIndented(body, receiveStatements, 12);
-                        stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
-                        body.AppendLine();
-                        continue;
-                    }
-
-                    string sendStatements = SendChannelStepEmitter.Emit(
-                        step.StepId, channelStep, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, "messageTransport", "workspace",
-                        stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, captureCorrelation: usesCorrelation);
-                    AppendIndented(body, sendStatements, 12);
-
-                    // A request/reply send captures the reply as the step's outputs.
-                    if (channelStep.Channel.ReplyPayloadTypeName is not null)
-                    {
-                        stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
-                    }
-
-                    body.AppendLine();
-                    continue;
-                }
-
-                if (step.SubWorkflowId is { } subWorkflowId)
-                {
-                    SubWorkflowStepCode subStep = SubWorkflowStepEmitter.Emit(
-                        step.StepId, subWorkflowId, step.Arguments, ResolveSubWorkflowNamespace(options, step.SubWorkflowSource), stepOutputLocals, "inputs", options.InputAccessors, selection.SubWorkflowArgument);
-                    fields.Append(subStep.Fields);
-                    AppendIndented(body, subStep.Statements, 12);
-                    string subWorkflowOutputsLocal = EmitText.StepOutputsElementLocal(step.StepId);
-                    stepOutputLocals[step.StepId] = subWorkflowOutputsLocal;
-
-                    // Also key the outputs local by sub-workflow id, and each bound argument's value local by
-                    // sub-workflow id + parameter name, so $workflows.<id>.outputs.<name> /
-                    // $workflows.<id>.inputs.<name> resolve statically (no context). The inputs keys point at
-                    // the stable resolved argument values rather than the transient inputs builder.
-                    stepOutputLocals["$workflows:" + subWorkflowId] = subWorkflowOutputsLocal;
-                    foreach (KeyValuePair<string, string> inputValueLocal in subStep.InputValueLocals)
-                    {
-                        stepOutputLocals["$workflows-input:" + subWorkflowId + ":" + inputValueLocal.Key] = inputValueLocal.Value;
-                    }
-
-                    body.AppendLine();
-                    continue;
-                }
-
-                // The step body builds the step's outputs product inside the step (while the response
-                // is alive), so output extraction is not a separate post-step pass.
-                StepBodyCode stepBody = StepBodyEmitter.Emit(
-                    step.StepId, step.Operation!.Value, step.Arguments, step.SuccessCriteria, step.Outputs, selection.ForSource(step.Operation!.Value.SourceName), "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", options.InputAccessors, options.Namespace, step.RequestBody, step.BindResponseBody);
-                fields.Append(stepBody.Fields);
-                AppendIndented(body, stepBody.Statements, 12);
-                auxiliaryTypes.Append(stepBody.AuxiliaryTypes);
-
-                if (step.Outputs.Count > 0)
-                {
-                    stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
-                }
-
-                body.AppendLine();
-            }
-
-            AppendWorkflowOutputs(fields, body, workflow, stepOutputLocals, options.InputAccessors);
-        }
-
-        string bodyText = body.ToString();
-
-        // The WorkflowExecutionContext is created only when something still resolves through it — a
-        // non-inlined criterion or a context-fallback output/workflow-output. Once every criterion is
-        // inlined and every value resolves statically, the context leaves the value path entirely.
-        bool needsContext = bodyText.Contains("context", StringComparison.Ordinal);
-
-        return Compose(options, workflowId, fields.ToString(), bodyText, auxiliaryTypes.ToString(), needsContext, ReadWorkflowDependsOn(workflow), hasChannelStep, selection, usedApiSources);
+        return Compose(options, workflowId, fields.ToString(), body.ToString());
     }
 
-    private static List<StepArgument> ReadArguments(in JsonElement parameters, in JsonElement components)
+    private static List<StepArgument> ReadArguments(in ArazzoDocument.StepObject step)
     {
         var arguments = new List<StepArgument>();
-        if (parameters.IsNotUndefined())
+        if (step.Parameters.IsNotUndefined())
         {
-            foreach (JsonElement element in parameters.EnumerateArray())
+            foreach (JsonElement element in step.Parameters.EnumerateArray())
             {
-                // A reusable-parameter reference ({reference:"$components.parameters.x", value?:…}):
-                // resolve the component parameter (name + value), letting a value on the reference
-                // override the component's value.
-                if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("reference"u8, out JsonElement referenceElement) && referenceElement.ValueKind == JsonValueKind.String)
-                {
-                    string reference = referenceElement.GetString()!;
-                    if (ResolveComponentReference(components, reference) is not { } resolved
-                        || !resolved.TryGetProperty("name"u8, out JsonElement resolvedName) || resolvedName.ValueKind != JsonValueKind.String)
-                    {
-                        throw new InvalidOperationException($"Could not resolve reusable parameter reference '{reference}'.");
-                    }
-
-                    JsonElement valueSource = element.TryGetProperty("value"u8, out JsonElement overrideValue)
-                        ? overrideValue
-                        : resolved.TryGetProperty("value"u8, out JsonElement componentValue) ? componentValue : default;
-                    if (valueSource.ValueKind == JsonValueKind.Undefined)
-                    {
-                        // No value on the reference or the component — nothing to bind.
-                        continue;
-                    }
-
-                    ArgumentValueKind referencedKind = Classify(valueSource, out string referencedText);
-                    arguments.Add(new StepArgument(resolvedName.GetString()!, referencedText, referencedKind));
-                    continue;
-                }
-
                 ArazzoDocument.ParameterObject parameter = element;
                 if (!parameter.Name.IsNotUndefined())
                 {
+                    // A reusable-parameter reference ({reference:…}); component resolution is a later phase.
                     continue;
                 }
 
-                string name = parameter.Name.GetString()!;
-                ArgumentValueKind kind = Classify(parameter.Value, out string text);
-                arguments.Add(new StepArgument(name, text, kind));
+                JsonElement value = (JsonElement)parameter.Value;
+                if (value.ValueKind == JsonValueKind.String)
+                {
+                    arguments.Add(new StepArgument(parameter.Name.GetString()!, value.GetString()!));
+                }
+
+                // Non-string (literal) parameter values are bound in a later stage.
             }
         }
 
         return arguments;
     }
 
-    /// <summary>
-    /// Classifies a parameter/payload value as a runtime expression, an interpolation template, or a
-    /// constant of a particular JSON kind, returning the text the emitter needs (the expression/template,
-    /// the unescaped string content, or the raw JSON).
-    /// </summary>
-    private static ArgumentValueKind Classify(in JsonElement value, out string text)
-    {
-        if (value.ValueKind == JsonValueKind.String && value.GetString() is { } s)
-        {
-            if (s.Contains("{$", StringComparison.Ordinal))
-            {
-                text = s;
-                return ArgumentValueKind.Interpolation;
-            }
-
-            if (s.StartsWith('$'))
-            {
-                text = s;
-                return ArgumentValueKind.Expression;
-            }
-
-            text = s;
-            return ArgumentValueKind.LiteralString;
-        }
-
-        switch (value.ValueKind)
-        {
-            case JsonValueKind.Number:
-                text = value.GetRawText();
-                return ArgumentValueKind.LiteralNumber;
-            case JsonValueKind.True:
-                text = "true";
-                return ArgumentValueKind.LiteralBoolean;
-            case JsonValueKind.False:
-                text = "false";
-                return ArgumentValueKind.LiteralBoolean;
-            case JsonValueKind.Null:
-                text = string.Empty;
-                return ArgumentValueKind.LiteralNull;
-            default:
-                text = value.GetRawText();
-                return ArgumentValueKind.LiteralComposite;
-        }
-    }
-
-    private static bool ReferencesResponseBody(
-        IReadOnlyList<StepCriterion> criteria,
-        IReadOnlyList<OutputMapping> outputs,
-        IReadOnlyList<StepActionInfo> onSuccess,
-        IReadOnlyList<StepActionInfo> onFailure)
-    {
-        const string token = "$response.body";
-
-        static bool AnyCriterion(IReadOnlyList<StepCriterion> criteria, string token)
-        {
-            foreach (StepCriterion criterion in criteria)
-            {
-                if (criterion.Condition.Contains(token, StringComparison.Ordinal)
-                    || (criterion.Context is { } context && context.Contains(token, StringComparison.Ordinal)))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        if (AnyCriterion(criteria, token))
-        {
-            return true;
-        }
-
-        foreach (OutputMapping output in outputs)
-        {
-            if (output.Expression.Contains(token, StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-
-        foreach (StepActionInfo action in onSuccess)
-        {
-            if (AnyCriterion(action.Criteria, token))
-            {
-                return true;
-            }
-        }
-
-        foreach (StepActionInfo action in onFailure)
-        {
-            if (AnyCriterion(action.Criteria, token))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static int? ReadTimeout(in ArazzoDocument.StepObject step)
-        => step.Timeout.IsNotUndefined() && ((JsonElement)step.Timeout).TryGetInt32(out int milliseconds) ? milliseconds : null;
-
-    private static string? ReadCorrelationId(in ArazzoDocument.StepObject step)
-        => step.CorrelationId.IsNotUndefined() ? step.CorrelationId.GetString() : null;
-
-    // Resolves the correlation token's location runtime expression for a receive step's correlationId by
-    // finding the channel message that declares an AsyncAPI Correlation ID of that name.
-    private static string? ResolveCorrelationLocation(in AsyncApi.CodeGeneration.AsyncApiChannelDescriptor channel, string correlationName)
-    {
-        foreach (AsyncApi.CodeGeneration.AsyncApiChannelMessageDescriptor message in channel.Messages)
-        {
-            if (string.Equals(message.CorrelationIdName, correlationName, StringComparison.Ordinal) && message.CorrelationIdLocation is { } location)
-            {
-                return location;
-            }
-        }
-
-        return null;
-    }
-
-    private static StepBody? ReadRequestBody(in ArazzoDocument.StepObject step)
-    {
-        if (!step.RequestBody.IsNotUndefined())
-        {
-            return null;
-        }
-
-        ArazzoDocument.RequestBodyObject requestBody = step.RequestBody;
-        if (!requestBody.Payload.IsNotUndefined())
-        {
-            return null;
-        }
-
-        ArgumentValueKind kind = Classify(requestBody.Payload, out string text);
-
-        // A composite (object/array) literal that embeds runtime expressions is a template to substitute
-        // (supported on a request/reply receive step's reply; rejected on operation/send steps). Detect it
-        // conservatively (any '$' in its raw JSON) and carry it as a distinct kind.
-        if (kind == ArgumentValueKind.LiteralComposite && requestBody.Payload.GetRawText().Contains('$'))
-        {
-            kind = ArgumentValueKind.CompositeTemplate;
-            text = requestBody.Payload.GetRawText();
-        }
-
-        // Payload replacements overlay values onto the base payload at JSON Pointer targets.
-        return new StepBody(text, kind, ReadReplacements(requestBody.Replacements));
-    }
-
-    private static IReadOnlyList<PayloadReplacement>? ReadReplacements(in JsonElement replacements)
-    {
-        if (!replacements.IsNotUndefined() || replacements.ValueKind != JsonValueKind.Array)
-        {
-            return null;
-        }
-
-        var list = new List<PayloadReplacement>();
-        foreach (JsonElement element in replacements.EnumerateArray())
-        {
-            if (!element.TryGetProperty("target"u8, out JsonElement target) || target.ValueKind != JsonValueKind.String
-                || !element.TryGetProperty("value"u8, out JsonElement value))
-            {
-                continue;
-            }
-
-            ArgumentValueKind kind = Classify(value, out string valueText);
-            if (kind == ArgumentValueKind.LiteralComposite && value.GetRawText().Contains('$'))
-            {
-                kind = ArgumentValueKind.CompositeTemplate;
-                valueText = value.GetRawText();
-            }
-
-            list.Add(new PayloadReplacement(target.GetString()!, valueText, kind));
-        }
-
-        return list.Count > 0 ? list : null;
-    }
-
     private static List<StepCriterion> ReadCriteria(in ArazzoDocument.StepObject step)
-        => step.SuccessCriteria.IsNotUndefined() ? ReadCriteriaArray(step.SuccessCriteria) : [];
-
-    private static List<StepCriterion> ReadCriteriaArray(in JsonElement criteriaArray)
     {
         var criteria = new List<StepCriterion>();
-        if (criteriaArray.ValueKind == JsonValueKind.Array)
+        if (step.SuccessCriteria.IsNotUndefined())
         {
-            foreach (JsonElement element in criteriaArray.EnumerateArray())
+            foreach (ArazzoDocument.CriterionObject criterion in step.SuccessCriteria.EnumerateArray())
             {
-                ArazzoDocument.CriterionObject criterion = element;
                 string condition = criterion.Condition.GetString()!;
                 string? context = criterion.Context.IsNotUndefined() ? criterion.Context.GetString() : null;
                 criteria.Add(new StepCriterion(ResolveCriterionType(criterion.Type), condition, context));
@@ -553,345 +111,6 @@ public static class WorkflowExecutorEmitter
         }
 
         return criteria;
-    }
-
-    /// <summary>
-    /// Reads an <c>onSuccess</c>/<c>onFailure</c> (or workflow-level <c>successActions</c>/<c>failureActions</c>)
-    /// array into a list of <see cref="StepActionInfo"/>. Inline action objects are read directly; a
-    /// reusable-action reference (<c>{reference:"$components.successActions.x"}</c>) is resolved against
-    /// <paramref name="components"/>.
-    /// </summary>
-    private static List<StepActionInfo> ReadActions(in JsonElement actions, in JsonElement components)
-    {
-        var list = new List<StepActionInfo>();
-        if (actions.ValueKind != JsonValueKind.Array)
-        {
-            return list;
-        }
-
-        foreach (JsonElement entity in actions.EnumerateArray())
-        {
-            if (entity.ValueKind != JsonValueKind.Object)
-            {
-                continue;
-            }
-
-            if (entity.TryGetProperty("reference"u8, out JsonElement referenceElement) && referenceElement.ValueKind == JsonValueKind.String)
-            {
-                string reference = referenceElement.GetString()!;
-                if (ResolveComponentReference(components, reference) is not { } resolved || ReadInlineAction(resolved) is not { } resolvedAction)
-                {
-                    throw new InvalidOperationException($"Could not resolve reusable action reference '{reference}'.");
-                }
-
-                list.Add(resolvedAction);
-                continue;
-            }
-
-            if (ReadInlineAction(entity) is { } action)
-            {
-                list.Add(action);
-            }
-        }
-
-        return list;
-    }
-
-    /// <summary>Reads a single inline success/failure action object, or <see langword="null"/> if it lacks the required name/type.</summary>
-    private static StepActionInfo? ReadInlineAction(in JsonElement entity)
-    {
-        if (!entity.TryGetProperty("name"u8, out JsonElement nameElement) || nameElement.ValueKind != JsonValueKind.String
-            || !entity.TryGetProperty("type"u8, out JsonElement typeElement) || typeElement.ValueKind != JsonValueKind.String)
-        {
-            return null;
-        }
-
-        StepActionKind kind = typeElement.GetString() switch
-        {
-            "end" => StepActionKind.End,
-            "goto" => StepActionKind.Goto,
-            "retry" => StepActionKind.Retry,
-            _ => StepActionKind.End,
-        };
-
-        string? targetStepId = entity.TryGetProperty("stepId"u8, out JsonElement stepIdElement) && stepIdElement.ValueKind == JsonValueKind.String
-            ? stepIdElement.GetString() : null;
-        string? targetWorkflowId = entity.TryGetProperty("workflowId"u8, out JsonElement workflowIdElement) && workflowIdElement.ValueKind == JsonValueKind.String
-            ? workflowIdElement.GetString() : null;
-
-        // A cross-document goto/retry target uses the source-qualified runtime expression
-        // $sourceDescriptions.<name>.<workflowId> (§5.5.2); a plain id is same-document.
-        string? targetWorkflowSource = null;
-        if (targetWorkflowId is not null
-            && WorkflowOperationBinder.TryExtractSourceQualifiedId(targetWorkflowId, out string? workflowSource, out string? bareWorkflowId))
-        {
-            targetWorkflowSource = workflowSource;
-            targetWorkflowId = bareWorkflowId;
-        }
-
-        double? retryAfter = entity.TryGetProperty("retryAfter"u8, out JsonElement retryAfterElement) && retryAfterElement.ValueKind == JsonValueKind.Number
-            ? retryAfterElement.GetDouble() : null;
-        int? retryLimit = entity.TryGetProperty("retryLimit"u8, out JsonElement retryLimitElement) && retryLimitElement.ValueKind == JsonValueKind.Number
-            ? retryLimitElement.GetInt32() : null;
-        List<StepCriterion> criteria = entity.TryGetProperty("criteria"u8, out JsonElement criteriaElement)
-            ? ReadCriteriaArray(criteriaElement) : [];
-
-        return new StepActionInfo(nameElement.GetString()!, kind, targetStepId, targetWorkflowId, retryAfter, retryLimit, criteria, targetWorkflowSource);
-    }
-
-    /// <summary>
-    /// Resolves a <c>$components.&lt;section&gt;.&lt;name&gt;</c> reusable-action reference against the
-    /// document's <c>components</c> object, returning the referenced action object or <see langword="null"/>.
-    /// </summary>
-    private static JsonElement? ResolveComponentReference(in JsonElement components, string reference)
-    {
-        const string prefix = "$components.";
-        if (components.ValueKind != JsonValueKind.Object || !reference.StartsWith(prefix, StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        string rest = reference[prefix.Length..];
-        int dot = rest.IndexOf('.', StringComparison.Ordinal);
-        if (dot <= 0)
-        {
-            return null;
-        }
-
-        string section = rest[..dot];
-        string name = rest[(dot + 1)..];
-
-        foreach (JsonProperty<JsonElement> sectionProperty in components.EnumerateObject())
-        {
-            if (sectionProperty.Name == section && sectionProperty.Value.ValueKind == JsonValueKind.Object)
-            {
-                foreach (JsonProperty<JsonElement> actionProperty in sectionProperty.Value.EnumerateObject())
-                {
-                    if (actionProperty.Name == name)
-                    {
-                        return actionProperty.Value;
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Merges workflow-level default actions into a step's actions: the step's own actions take
-    /// precedence (matched first), then any workflow-level action whose name the step did not override.
-    /// </summary>
-    private static List<StepActionInfo> MergeActions(List<StepActionInfo> stepActions, IReadOnlyList<StepActionInfo> workflowDefaults)
-    {
-        if (workflowDefaults.Count == 0)
-        {
-            return stepActions;
-        }
-
-        var names = new HashSet<string>(StringComparer.Ordinal);
-        foreach (StepActionInfo action in stepActions)
-        {
-            names.Add(action.Name);
-        }
-
-        foreach (StepActionInfo action in workflowDefaults)
-        {
-            if (names.Add(action.Name))
-            {
-                stepActions.Add(action);
-            }
-        }
-
-        return stepActions;
-    }
-
-    /// <summary>
-    /// Merges workflow-level parameter defaults into a step's arguments. A step's own argument for a given
-    /// name wins; a workflow-level default applies only when the step does not bind that name (Arazzo: a
-    /// workflow's <c>parameters</c> are "applicable for all steps").
-    /// </summary>
-    private static List<StepArgument> MergeArguments(List<StepArgument> stepArguments, IReadOnlyList<StepArgument> workflowDefaults)
-    {
-        if (workflowDefaults.Count == 0)
-        {
-            return stepArguments;
-        }
-
-        var names = new HashSet<string>(StringComparer.Ordinal);
-        foreach (StepArgument argument in stepArguments)
-        {
-            names.Add(argument.Name);
-        }
-
-        foreach (StepArgument argument in workflowDefaults)
-        {
-            if (names.Add(argument.Name))
-            {
-                stepArguments.Add(argument);
-            }
-        }
-
-        return stepArguments;
-    }
-
-    /// <summary>
-    /// Validates that a sub-workflow step's criteria (success and action) reference only sources that
-    /// exist for a workflow invocation — <c>$inputs</c> and <c>$steps</c>. A sub-workflow step has no
-    /// HTTP response or request, so <c>$statusCode</c>/<c>$response</c>/<c>$request</c>/<c>$method</c>/<c>$url</c>
-    /// cannot resolve and are rejected up front rather than emitted as broken code.
-    /// </summary>
-    private static void ValidateSubWorkflowCriteria(
-        string stepId,
-        IReadOnlyList<StepCriterion> successCriteria,
-        IReadOnlyList<StepActionInfo> onSuccess,
-        IReadOnlyList<StepActionInfo> onFailure)
-    {
-        static void Check(string stepId, IReadOnlyList<StepCriterion> criteria)
-        {
-            ReadOnlySpan<string> forbidden = ["$statusCode", "$response", "$request", "$method", "$url"];
-            foreach (StepCriterion criterion in criteria)
-            {
-                string text = criterion.Context is { } context ? $"{criterion.Condition} {context}" : criterion.Condition;
-                foreach (string token in forbidden)
-                {
-                    if (text.Contains(token, StringComparison.Ordinal))
-                    {
-                        throw new NotSupportedException(
-                            $"Sub-workflow step '{stepId}' has a criterion referencing '{token}'; a sub-workflow step's criteria may reference only $inputs and $steps.");
-                    }
-                }
-            }
-        }
-
-        Check(stepId, successCriteria);
-        foreach (StepActionInfo action in onSuccess)
-        {
-            Check(stepId, action.Criteria);
-        }
-
-        foreach (StepActionInfo action in onFailure)
-        {
-            Check(stepId, action.Criteria);
-        }
-    }
-
-    private static List<string> ReadDependsOn(in ArazzoDocument.StepObject step)
-    {
-        var list = new List<string>();
-        if (step.DependsOn.IsNotUndefined())
-        {
-            foreach (Arazzo11.JsonString dependency in step.DependsOn.EnumerateArray())
-            {
-                if (dependency.IsNotUndefined())
-                {
-                    list.Add(dependency.GetString()!);
-                }
-            }
-        }
-
-        return list;
-    }
-
-    /// <summary>Reads a workflow's workflow-level <c>dependsOn</c> (the workflows that must complete before it).</summary>
-    internal static List<string> ReadWorkflowDependsOn(in ArazzoDocument.WorkflowObject workflow)
-    {
-        var list = new List<string>();
-        if (workflow.DependsOn.IsNotUndefined())
-        {
-            foreach (Arazzo11.JsonString dependency in workflow.DependsOn.EnumerateArray())
-            {
-                if (dependency.IsNotUndefined())
-                {
-                    list.Add(dependency.GetString()!);
-                }
-            }
-        }
-
-        return list;
-    }
-
-    /// <summary>
-    /// Orders steps so each step's same-workflow <c>dependsOn</c> dependencies precede it (a stable
-    /// topological sort — Kahn's algorithm with document order as the tie-break). Cross-workflow or
-    /// unknown dependency references are ignored (a sequential single-workflow executor cannot enforce
-    /// them); a cycle is a generation-time error. Returns the input unchanged when no step declares
-    /// <c>dependsOn</c>.
-    /// </summary>
-    private static List<ControlFlowStep> TopologicallyOrder(List<ControlFlowStep> steps)
-    {
-        bool anyDependencies = false;
-        foreach (ControlFlowStep step in steps)
-        {
-            if ((step.DependsOn?.Count ?? 0) > 0)
-            {
-                anyDependencies = true;
-                break;
-            }
-        }
-
-        if (!anyDependencies)
-        {
-            return steps;
-        }
-
-        var indexById = new Dictionary<string, int>(StringComparer.Ordinal);
-        for (int i = 0; i < steps.Count; i++)
-        {
-            indexById[steps[i].StepId] = i;
-        }
-
-        var inDegree = new int[steps.Count];
-        var dependents = new List<int>[steps.Count];
-        for (int i = 0; i < steps.Count; i++)
-        {
-            dependents[i] = [];
-        }
-
-        for (int i = 0; i < steps.Count; i++)
-        {
-            foreach (string dependency in steps[i].DependsOn ?? [])
-            {
-                if (indexById.TryGetValue(dependency, out int dependencyIndex) && dependencyIndex != i)
-                {
-                    dependents[dependencyIndex].Add(i);
-                    inDegree[i]++;
-                }
-            }
-        }
-
-        // Kahn's algorithm; a SortedSet keyed by original index makes ready steps emerge in document
-        // order, so the result is document order when dependencies don't force otherwise.
-        var ready = new SortedSet<int>();
-        for (int i = 0; i < steps.Count; i++)
-        {
-            if (inDegree[i] == 0)
-            {
-                ready.Add(i);
-            }
-        }
-
-        var ordered = new List<ControlFlowStep>(steps.Count);
-        while (ready.Count > 0)
-        {
-            int next = ready.Min;
-            ready.Remove(next);
-            ordered.Add(steps[next]);
-            foreach (int dependent in dependents[next])
-            {
-                if (--inDegree[dependent] == 0)
-                {
-                    ready.Add(dependent);
-                }
-            }
-        }
-
-        if (ordered.Count != steps.Count)
-        {
-            throw new InvalidOperationException("A cycle was detected in the steps' dependsOn relationships; the steps cannot be ordered.");
-        }
-
-        return ordered;
     }
 
     private static List<OutputMapping> ReadOutputs(in ArazzoDocument.StepObject step)
@@ -928,77 +147,39 @@ public static class WorkflowExecutorEmitter
         return "simple";
     }
 
-    internal static void AppendWorkflowOutputs(
-        StringBuilder fields,
-        StringBuilder body,
-        in ArazzoDocument.WorkflowObject workflow,
-        IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors)
+    private static void AppendWorkflowOutputs(StringBuilder fields, StringBuilder body, in ArazzoDocument.WorkflowObject workflow)
     {
-        var names = new List<string>();
-        var expressions = new List<string>();
+        var build = new StringBuilder();
         if (workflow.Outputs.IsNotUndefined())
         {
             foreach (JsonProperty<JsonElement> property in workflow.Outputs.EnumerateObject())
             {
-                if (property.Value.ValueKind == JsonValueKind.String)
+                if (property.Value.ValueKind != JsonValueKind.String)
                 {
-                    names.Add(property.Name);
-                    expressions.Add(property.Value.GetString()!);
+                    continue;
                 }
+
+                string field = $"Workflow_Output_{EmitText.SanitizeIdentifier(property.Name)}";
+                string local = $"{EmitText.ToCamelCase(EmitText.SanitizeIdentifier(property.Name))}Value";
+                fields.Append("private static readonly ArazzoExpression ").Append(field)
+                    .Append(" = ArazzoExpression.Parse(").Append(EmitText.Quote(property.Value.GetString()!)).AppendLine(");");
+
+                build.Append("                ctx.TryResolveValue(").Append(field).Append(", out JsonElement ").Append(local).AppendLine(");");
+                build.Append("                builder.AddProperty(").Append(EmitText.Quote(property.Name)).Append("u8, ").Append(local).AppendLine(");");
             }
         }
 
-        var statements = new StringBuilder();
-        var valueLocals = new List<string>(names.Count);
-        for (int i = 0; i < names.Count; i++)
-        {
-            string local = $"workflowOutput{i.ToString(CultureInfo.InvariantCulture)}";
-            string field = $"Workflow_Output_{EmitText.SanitizeIdentifier(names[i])}";
-            ValueResolution.Emit(fields, statements, expressions[i], local, "context", stepOutputLocals, field, "inputs", inputAccessors);
-            valueLocals.Add(local);
-        }
-
-        statements.Append("Span<JsonElement> workflowOutputValues = [").Append(string.Join(", ", valueLocals)).AppendLine("];");
-        statements.AppendLine("var workflowOutputs = JsonElement.CreateBuilder(");
-        statements.AppendLine("    workspace,");
-        statements.AppendLine("    (ReadOnlySpan<JsonElement>)workflowOutputValues,");
-        statements.AppendLine("    static (in ReadOnlySpan<JsonElement> values, ref JsonElement.ObjectBuilder builder) =>");
-        statements.AppendLine("    {");
-        for (int i = 0; i < names.Count; i++)
-        {
-            statements.Append("        builder.AddProperty(").Append(EmitText.Quote(names[i]))
-                .Append("u8, values[").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine("]);");
-        }
-
-        statements.AppendLine("    });");
-        statements.AppendLine("JsonElement workflowOutputsElement = workflowOutputs.RootElement;");
-
-        AppendIndented(body, statements.ToString(), 12);
+        body.AppendLine("            var workflowOutputs = JsonElement.CreateBuilder(");
+        body.AppendLine("                workspace,");
+        body.AppendLine("                new JsonElement.Source(context,");
+        body.AppendLine("                    static (in WorkflowExecutionContext ctx, ref JsonElement.ObjectBuilder builder) =>");
+        body.AppendLine("                    {");
+        body.Append(build);
+        body.AppendLine("                    }));");
+        body.AppendLine("            JsonElement workflowOutputsElement = workflowOutputs.RootElement;");
     }
 
-    /// <summary>
-    /// Resolves the .NET namespace a sub-workflow's generated executor lives in: the caller's own
-    /// namespace for a same-document sub-workflow, or the per-source namespace a cross-document
-    /// (<c>$sourceDescriptions.&lt;name&gt;.&lt;workflowId&gt;</c>) sub-workflow was generated into.
-    /// </summary>
-    internal static string ResolveSubWorkflowNamespace(in WorkflowExecutorOptions options, string? subWorkflowSource)
-    {
-        if (subWorkflowSource is null)
-        {
-            return options.Namespace;
-        }
-
-        if (options.SubWorkflowSourceNamespaces is { } map && map.TryGetValue(subWorkflowSource, out string? sourceNamespace))
-        {
-            return sourceNamespace;
-        }
-
-        throw new InvalidOperationException(
-            $"A sub-workflow step references source description '{subWorkflowSource}', which is not a generated Arazzo (type: arazzo) source description.");
-    }
-
-    internal static void AppendIndented(StringBuilder target, string text, int indent)
+    private static void AppendIndented(StringBuilder target, string text, int indent)
     {
         if (text.Length == 0)
         {
@@ -1020,7 +201,7 @@ public static class WorkflowExecutorEmitter
         }
     }
 
-    private static string Compose(in WorkflowExecutorOptions options, string workflowId, string fields, string body, string auxiliaryTypes, bool needsContext, IReadOnlyList<string> workflowDependsOn, bool needsMessageTransport, TransportSelection selection, IReadOnlyList<string> usedApiSources)
+    private static string Compose(in WorkflowExecutorOptions options, string workflowId, string fields, string body)
     {
         var writer = new StringBuilder();
         writer.AppendLine("// <auto-generated>");
@@ -1030,216 +211,47 @@ public static class WorkflowExecutorEmitter
         writer.AppendLine();
         writer.AppendLine("#nullable enable");
         writer.AppendLine();
-        writer.AppendLine("using System;");
-        writer.AppendLine("using System.Buffers;");
         writer.AppendLine("using System.Diagnostics;");
-        writer.AppendLine("using System.Text.RegularExpressions;");
         writer.AppendLine("using System.Threading;");
         writer.AppendLine("using System.Threading.Tasks;");
         writer.AppendLine("using Corvus.Text.Json;");
         writer.AppendLine("using Corvus.Text.Json.Arazzo;");
-        writer.AppendLine("using Corvus.Text.Json.AsyncApi;");
-        writer.AppendLine("using Corvus.Text.Json.JsonPath;");
         writer.AppendLine("using Corvus.Text.Json.OpenApi;");
-
-        // The JSON Patch extensions (TryAdd at a JSON Pointer) are emitted only for steps that use payload
-        // replacements, so only those consumers need the Corvus.Text.Json.Patch reference.
-        if (body.Contains(".TryAdd(", StringComparison.Ordinal))
-        {
-            writer.AppendLine("using Corvus.Text.Json.Patch;");
-        }
-
         writer.AppendLine();
         writer.Append("namespace ").Append(options.Namespace).AppendLine(";");
         writer.AppendLine();
         writer.Append("/// <summary>Generated executor for the '").Append(workflowId).AppendLine("' workflow.</summary>");
-
-        // The class is partial so [GeneratedRegex] partial methods (emitted for regex criteria) can be
-        // completed by the regular-expression source generator at the consumer's compile.
-        writer.Append("public static partial class ").AppendLine(options.ClassName);
+        writer.Append("public static class ").AppendLine(options.ClassName);
         writer.AppendLine("{");
-
-        // Workflow-level dependsOn (Arazzo) is a prerequisite for an orchestrator — it does not trigger
-        // execution — so it is surfaced as metadata for the caller to sequence runs, not auto-invoked.
-        writer.AppendLine("    /// <summary>The workflow ids that must be completed before this workflow (Arazzo workflow-level <c>dependsOn</c>). This is a prerequisite for the orchestrator; it does not trigger execution.</summary>");
-        writer.Append("    public static System.Collections.Generic.IReadOnlyList<string> DependsOn { get; } = [")
-            .Append(string.Join(", ", workflowDependsOn.Select(EmitText.Quote))).AppendLine("];");
-        writer.AppendLine();
-
         AppendIndented(writer, fields, 4);
         if (fields.Length > 0)
         {
             writer.AppendLine();
         }
 
-        // A channel step publishes through an IMessageTransport, so that transport is added to the
-        // signature only when the workflow has a channel step (HTTP-only workflows are unchanged).
-        string messageTransportParameter = needsMessageTransport ? "IMessageTransport messageTransport, " : string.Empty;
-
-        // The durable shape threads an optional run that carries the resumable state and persists checkpoints;
-        // a null run makes the executor behave exactly like the non-durable form. It returns the tri-state
-        // WorkflowRunResult (completed / faulted / suspended) instead of the bare outputs.
-        string runParameter = options.Durable ? "IWorkflowRun? run = null, " : string.Empty;
-        string returnType = options.Durable ? $"WorkflowRunResult<{options.OutputsTypeName}>" : options.OutputsTypeName;
-
-        // A multi-source document selects the transport per source from a map; a single-source document keeps
-        // the single transport parameter.
-        string transportParameter = selection.MultiSource
-            ? "System.Collections.Generic.IReadOnlyDictionary<string, IApiTransport> transports, "
-            : "IApiTransport transport, ";
-
         writer.Append("    /// <summary>Executes the '").Append(workflowId).AppendLine("' workflow.</summary>");
-        writer.Append("    public static async ValueTask<").Append(returnType)
-            .Append("> ExecuteAsync(").Append(transportParameter).Append(messageTransportParameter).Append("JsonWorkspace workspace, ")
-            .Append(options.InputsTypeName).Append(" inputs, ").Append(runParameter).AppendLine("CancellationToken cancellationToken = default, TimeProvider? timeProvider = null)");
+        writer.Append("    public static async ValueTask<").Append(options.OutputsTypeName)
+            .Append("> ExecuteAsync(IApiTransport transport, JsonWorkspace workspace, ")
+            .Append(options.InputsTypeName).AppendLine(" inputs, CancellationToken cancellationToken = default)");
         writer.AppendLine("    {");
-        writer.Append("        ArgumentNullException.ThrowIfNull(").Append(selection.ParameterName).AppendLine(");");
-        if (needsMessageTransport)
-        {
-            writer.AppendLine("        ArgumentNullException.ThrowIfNull(messageTransport);");
-        }
-
-        writer.AppendLine("        ArgumentNullException.ThrowIfNull(workspace);");
-
-        // Hoist one transport local per API source this workflow's operation steps use (multi-source only),
-        // selected from the map; each operation step then uses its source's transport.
-        if (selection.MultiSource)
-        {
-            foreach (string apiSource in usedApiSources)
-            {
-                writer.Append("        IApiTransport ").Append(TransportSelection.TransportLocal(apiSource))
-                    .Append(" = transports[").Append(EmitText.Quote(apiSource)).AppendLine("];");
-            }
-        }
-
-        // The context is created only when a criterion or value still resolves through it.
-        if (needsContext)
-        {
-            writer.AppendLine("        var context = new WorkflowExecutionContext();");
-            writer.AppendLine("        context.SetInputs(inputs);");
-        }
-
-        if (options.Durable)
-        {
-            // The run's correlation id IS its W3C trace id (captured at creation). Re-establish it as the
-            // root span's trace context so a resumed run — and the OpenAPI/AsyncAPI calls its steps make —
-            // continues the original trace; when absent, fall back to the ambient Activity.Current.
-            writer.Append("        using Activity? activity = run?.CorrelationId is { Length: 32 } correlationTraceId")
-                .Append(" ? ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId)
-                .AppendLine("\", ActivityKind.Internal, new ActivityContext(ActivityTraceId.CreateFromString(correlationTraceId), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded))");
-            writer.Append("            : ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId).AppendLine("\");");
-            writer.AppendLine("        if (activity is not null && run?.CorrelationId is { } correlationId) { activity.SetTag(ArazzoTelemetry.CorrelationIdTag, correlationId); }");
-        }
-        else
-        {
-            writer.Append("        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId).AppendLine("\");");
-        }
-
+        writer.AppendLine("        var context = new WorkflowExecutionContext();");
+        writer.AppendLine("        context.SetInputs(inputs);");
+        writer.Append("        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity(\"workflow.").Append(workflowId).AppendLine("\");");
         writer.AppendLine("        ArazzoTelemetry.WorkflowsStarted.Add(1);");
         writer.AppendLine("        try");
         writer.AppendLine("        {");
         writer.Append(body);
-        if (options.Durable)
-        {
-            // Record the terminal checkpoint with the final workflow outputs, then return the completed result.
-            writer.AppendLine("            if (run is not null) { await run.CompleteAsync(workflowOutputsElement, cancellationToken).ConfigureAwait(false); }");
-            writer.AppendLine("            ArazzoTelemetry.WorkflowsCompleted.Add(1);");
-            writer.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).AppendLine(">.Completed(workflowOutputsElement);");
-        }
-        else
-        {
-            writer.AppendLine("            ArazzoTelemetry.WorkflowsCompleted.Add(1);");
-            writer.AppendLine("            return workflowOutputsElement;");
-        }
-
+        writer.AppendLine("            ArazzoTelemetry.WorkflowsCompleted.Add(1);");
+        writer.AppendLine("            return workflowOutputsElement;");
         writer.AppendLine("        }");
-        if (options.Durable)
-        {
-            // A source credential that expired at bind time faults the run with a typed credentials-expired error
-            // (§13.2/§13.3) rather than propagating opaquely — so the run is Faulted, the fault is filterable, and it is
-            // resumable once the operator rotates the secret in the store (the re-bound run picks up the fresh
-            // credential). Only when there is a run to record the fault on; the null-run fallback re-throws via the
-            // general handler below. The offending source name is recorded as the fault's step id.
-            writer.AppendLine("        catch (SourceCredentialExpiredException ex) when (run is not null)");
-            writer.AppendLine("        {");
-            writer.AppendLine("            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);");
-            writer.AppendLine("            ArazzoTelemetry.WorkflowsFaulted.Add(1);");
-            writer.AppendLine("            WorkflowFault credentialsExpiredFault = await run.FaultAsync(ex.SourceName, 1, SourceCredentialExpiredException.ErrorType, cancellationToken).ConfigureAwait(false);");
-            writer.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).AppendLine(">.Faulted(credentialsExpiredFault);");
-            writer.AppendLine("        }");
-        }
-
-        writer.AppendLine("        catch (Exception ex)");
+        writer.AppendLine("        catch");
         writer.AppendLine("        {");
-        writer.AppendLine("            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);");
         writer.AppendLine("            ArazzoTelemetry.WorkflowsFaulted.Add(1);");
         writer.AppendLine("            throw;");
         writer.AppendLine("        }");
         writer.AppendLine("    }");
         writer.AppendLine("}");
-
-        // The durable shape also emits a non-generic host adapter implementing IHostedWorkflow, so an
-        // execution host can load and run the workflow without referencing its generated input/output types.
-        if (options.Durable)
-        {
-            AppendHostAdapter(writer, options, workflowId, needsMessageTransport, selection);
-        }
-
-        // Sibling types (ahead-of-time-compiled jsonpath query classes) live after the executor class
-        // in the same namespace.
-        if (auxiliaryTypes.Length > 0)
-        {
-            writer.AppendLine();
-            writer.Append(auxiliaryTypes);
-        }
-
         return writer.ToString();
-    }
-
-    /// <summary>
-    /// Emits the non-generic host adapter — a <c>sealed class {ClassName}Host : IHostedWorkflow</c> that an
-    /// execution host activates (via the manifest's <c>entryType</c>) to run the workflow without the
-    /// generated input/output types: it advertises a <see cref="WorkflowDescriptor"/>, parses the run's
-    /// inputs, delegates to the static durable <c>ExecuteAsync</c>, and returns the tri-state outcome.
-    /// </summary>
-    private static void AppendHostAdapter(StringBuilder writer, in WorkflowExecutorOptions options, string workflowId, bool needsMessageTransport, TransportSelection selection)
-    {
-        IReadOnlyList<string> sources = options.Sources ?? [];
-        string sourcesList = string.Join(", ", sources.Select(EmitText.Quote));
-        string messageTransportArgument = needsMessageTransport ? "messageTransport!, " : string.Empty;
-        bool typedInputs = !string.Equals(options.InputsTypeName, "Corvus.Text.Json.JsonElement", StringComparison.Ordinal);
-        string inputsArgument = typedInputs ? "typedInputs" : "inputs";
-
-        // The uniform host contract supplies one IApiTransport per source name; a single-source executor
-        // picks its sole source from the map, a multi-source executor forwards the whole map, and a workflow
-        // with no API source gets no transport (its steps make no API calls).
-        string transportArgument = selection.MultiSource
-            ? "apiTransports, "
-            : sources.Count > 0 ? $"apiTransports[{EmitText.Quote(sources[0])}], " : "default(IApiTransport)!, ";
-
-        writer.AppendLine();
-        writer.Append("/// <summary>Host adapter for the '").Append(workflowId).AppendLine("' workflow — the non-generic IHostedWorkflow an execution host loads and runs.</summary>");
-        writer.Append("public sealed class ").Append(options.ClassName).AppendLine("Host : IHostedWorkflow");
-        writer.AppendLine("{");
-        writer.AppendLine("    /// <inheritdoc/>");
-        writer.Append("    public WorkflowDescriptor Descriptor { get; } = new(")
-            .Append(EmitText.Quote(workflowId)).Append(", ").Append(needsMessageTransport ? "true" : "false")
-            .Append(", [").Append(sourcesList).AppendLine("]);");
-        writer.AppendLine();
-        writer.AppendLine("    /// <inheritdoc/>");
-        writer.AppendLine("    public async ValueTask<WorkflowRunResultKind> RunAsync(System.Collections.Generic.IReadOnlyDictionary<string, IApiTransport> apiTransports, IMessageTransport? messageTransport, JsonWorkspace workspace, JsonElement inputs, IWorkflowRun run, CancellationToken cancellationToken)");
-        writer.AppendLine("    {");
-        if (typedInputs)
-        {
-            writer.Append("        ").Append(options.InputsTypeName).Append(" typedInputs = ").Append(options.InputsTypeName).AppendLine(".From(inputs);");
-        }
-
-        writer.Append("        WorkflowRunResult<").Append(options.OutputsTypeName).Append("> result = await ").Append(options.ClassName)
-            .Append(".ExecuteAsync(").Append(transportArgument).Append(messageTransportArgument).Append("workspace, ").Append(inputsArgument)
-            .AppendLine(", run, cancellationToken).ConfigureAwait(false);");
-        writer.AppendLine("        return result.Kind;");
-        writer.AppendLine("    }");
-        writer.AppendLine("}");
     }
 }
 
@@ -1250,89 +262,8 @@ public static class WorkflowExecutorEmitter
 /// <param name="ClassName">The generated executor class name (e.g. <c>AdoptWorkflow</c>).</param>
 /// <param name="InputsTypeName">The fully-qualified type of the workflow inputs.</param>
 /// <param name="OutputsTypeName">The fully-qualified type of the workflow outputs.</param>
-/// <param name="InputAccessors">
-/// Map of input JSON name → generated dotnet accessor property on the inputs model (e.g.
-/// <c>petId</c> → <c>PetId</c>), so <c>$inputs.&lt;name&gt;</c> compiles to a strongly-typed accessor.
-/// <see langword="null"/> when the inputs are an untyped <see cref="JsonElement"/>.
-/// </param>
-/// <param name="Durable">
-/// When <see langword="true"/>, emit the durable (checkpoint &amp; resume) executor shape (plan §9.3): the
-/// labelled-loop state machine is forced on, <c>ExecuteAsync</c> takes an extra optional
-/// <c>IWorkflowRun? run</c>, the resumable locals (cursor, step outputs, retry counters, correlation
-/// register) restore from the run on entry, a checkpoint is written after each step, and the run is marked
-/// complete with the final outputs. A <see langword="null"/> run behaves exactly like the non-durable form,
-/// so durability is purely additive.
-/// </param>
-/// <param name="Sources">
-/// The <c>sourceDescriptions</c> names the document declares, surfaced on the durable host adapter's
-/// <see cref="WorkflowDescriptor"/> so an execution host can resolve a transport binding per source.
-/// </param>
 public readonly record struct WorkflowExecutorOptions(
     string Namespace,
     string ClassName,
     string InputsTypeName,
-    string OutputsTypeName,
-    IReadOnlyDictionary<string, string>? InputAccessors = null,
-    bool Durable = false,
-    IReadOnlyDictionary<string, string>? SubWorkflowSourceNamespaces = null,
-    IReadOnlyList<string>? Sources = null);
-
-/// <summary>The control-flow effect of an Arazzo success/failure action.</summary>
-internal enum StepActionKind
-{
-    /// <summary>End the workflow (jump to building the outputs).</summary>
-    End,
-
-    /// <summary>Transfer control to another step (sub-workflow targets are a later phase).</summary>
-    Goto,
-
-    /// <summary>Retry the current step (failure actions only), up to <c>retryLimit</c> times.</summary>
-    Retry,
-}
-
-/// <summary>
-/// A success/failure action read off a step (plan §3.3): a control-flow effect gated by criteria.
-/// </summary>
-/// <param name="Name">The action name.</param>
-/// <param name="Kind">The effect (end/goto/retry).</param>
-/// <param name="TargetStepId">The goto target step id, if any.</param>
-/// <param name="TargetWorkflowId">The goto/retry target workflow id, if any.</param>
-/// <param name="RetryAfter">The retry delay in seconds, if specified.</param>
-/// <param name="RetryLimit">The retry limit, if specified (defaults to a single retry).</param>
-/// <param name="Criteria">The criteria gating this action (an empty set always matches).</param>
-/// <param name="TargetWorkflowSource">
-/// The <c>sourceDescriptions</c> name a cross-document goto/retry target workflow lives in (from the
-/// <c>$sourceDescriptions.&lt;name&gt;.&lt;workflowId&gt;</c> form), or <see langword="null"/> for a
-/// same-document target.
-/// </param>
-internal readonly record struct StepActionInfo(
-    string Name,
-    StepActionKind Kind,
-    string? TargetStepId,
-    string? TargetWorkflowId,
-    double? RetryAfter,
-    int? RetryLimit,
-    IReadOnlyList<StepCriterion> Criteria,
-    string? TargetWorkflowSource = null);
-
-/// <summary>
-/// A fully-bound workflow step (its resolved operation plus everything the emitter reads off the typed
-/// document), shared between the straight-line and control-flow emission paths.
-/// </summary>
-internal readonly record struct ControlFlowStep(
-    string StepId,
-    ResolvedOperation? Operation,
-    IReadOnlyList<StepArgument> Arguments,
-    IReadOnlyList<StepCriterion> SuccessCriteria,
-    IReadOnlyList<OutputMapping> Outputs,
-    StepBody? RequestBody,
-    bool BindResponseBody,
-    IReadOnlyList<StepActionInfo> OnSuccess,
-    IReadOnlyList<StepActionInfo> OnFailure,
-    string? SubWorkflowId = null,
-    IReadOnlyList<string>? DependsOn = null,
-    ResolvedChannel? Channel = null,
-    int? TimeoutMs = null,
-    string? CorrelationName = null,
-    string? CorrelationLocation = null,
-    string? SubWorkflowSource = null);
+    string OutputsTypeName);
