@@ -1,0 +1,48 @@
+// <copyright file="OperationDescriptor.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+namespace Corvus.Text.Json.OpenApi.CodeGeneration;
+
+/// <summary>
+/// A fully-resolved description of a generated operation: its identity, the generated
+/// request/response type names, and the request parameters — everything a downstream generator (such
+/// as the Arazzo workflow generator) needs to call the operation, taken verbatim from the generator
+/// so the convention is never re-derived. Unlike <see cref="OperationSummary"/> this is produced by a
+/// generator <em>instance</em>, because the parameter and type names depend on the schema type map
+/// and root namespace the instance was configured with.
+/// </summary>
+/// <param name="Path">The API path template (e.g. <c>/pets/{petId}</c>).</param>
+/// <param name="Method">The HTTP method.</param>
+/// <param name="OperationId">The <c>operationId</c>, or <see langword="null"/> if not specified.</param>
+/// <param name="MethodName">The generated method name (PascalCase).</param>
+/// <param name="RequestTypeName">The fully-qualified generated request type name.</param>
+/// <param name="ResponseTypeName">The fully-qualified generated response type name.</param>
+/// <param name="RequestParameters">The request parameters, in document order.</param>
+/// <param name="HasRequestBody">Whether the operation declares a request body.</param>
+public readonly record struct OperationDescriptor(
+    string Path,
+    OperationMethod Method,
+    string? OperationId,
+    string MethodName,
+    string RequestTypeName,
+    string ResponseTypeName,
+    IReadOnlyList<RequestParameterInfo> RequestParameters,
+    bool HasRequestBody);
+
+/// <summary>
+/// A request parameter of a generated operation, described by the names and type the generator
+/// actually emitted for it — so a caller can bind a value to the right request property via
+/// <c>TTarget.From(source)</c> without re-deriving the naming or type convention.
+/// </summary>
+/// <param name="Name">The OpenAPI parameter name.</param>
+/// <param name="Location">The parameter location (path, query, header, or cookie).</param>
+/// <param name="PropertyName">The name of the generated request property (e.g. <c>PetId</c>).</param>
+/// <param name="TypeName">The fully-qualified type of the generated request property (e.g. <c>Acme.Pets.Models.JsonInt64</c>).</param>
+/// <param name="IsRequired">Whether the parameter is required (and therefore a constructor argument).</param>
+public readonly record struct RequestParameterInfo(
+    string Name,
+    ParameterLocation Location,
+    string PropertyName,
+    string TypeName,
+    bool IsRequired);
