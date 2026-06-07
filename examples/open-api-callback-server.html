@@ -420,16 +420,12 @@ app.Run();
             builder.WithMetadata(new EndpointGroupNameAttribute(&quot;event-deliveries&quot;));
         }
 
-        // For a spec that declares security, translate each requirement into the
-        // authorization policies your app registered. event-api.json declares no
-        // security, so this list is empty and the endpoints stay anonymous.
-        foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
-        {
-            builder.RequireAuthorization($&quot;{requirement.SchemeName}:{string.Join('+', requirement.Scopes)}&quot;);
-        }
+        // Apply any declared OpenAPI security using the canonical policy-name convention.
+        // event-api.json declares no security, so every endpoint is AllowAnonymous.
+        builder.RequireDeclaredAuthorization(endpoint);
     });
 </code></pre>
-<p><code>EndpointDescriptor</code> carries the <code>OperationId</code>, <code>MethodName</code>, <code>HttpMethod</code>, <code>RouteTemplate</code>, <code>Tags</code>, <code>IsCallback</code>, and <code>SecurityRequirements</code> for the operation. See the &quot;Customizing Generated Endpoints&quot; section of the main OpenAPI guide (<code>docs/OpenApi.md</code>) for the full descriptor reference and a spec that wires <code>RequireAuthorization()</code> from declared security.</p>
+<p><code>EndpointDescriptor</code> carries the <code>OperationId</code>, <code>MethodName</code>, <code>HttpMethod</code>, <code>RouteTemplate</code>, <code>Tags</code>, <code>IsCallback</code>, and <code>SecurityRequirements</code> (a list of OR alternatives) for the operation. See the &quot;Applying OpenAPI Security as Authorization&quot; section of the main OpenAPI guide (<code>docs/OpenApi.md</code>) for the full descriptor reference and the <code>RequireDeclaredAuthorization</code> helper.</p>
 <h2 id="running-the-recipe">Running the Recipe</h2>
 <pre><code class="language-bash">dotnet run --project docs/ExampleRecipes/034-OpenApiCallbackServer
 </code></pre>

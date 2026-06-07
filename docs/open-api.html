@@ -845,7 +845,7 @@ catch (InvalidOperationException ex)
 </code></pre>
 <p>The bare <code>MapApiEndpoints(petsHandler)</code> overload is preserved unchanged; the callback variant is an <strong>additional overload</strong>, so adopting the hook is both source- and binary-compatible. No new package dependency is added — the callback receives <code>IEndpointConventionBuilder</code> from <code>Microsoft.AspNetCore.Routing</code>, which the generated server already references.</p>
 <h3 id="endpointdescriptor">EndpointDescriptor</h3>
-<p><code>EndpointDescriptor</code>, <code>EndpointSecurityRequirement</code>, and the <code>ConfigureEndpoint</code> delegate are read-only types generated alongside <code>ApiEndpointRegistration</code> in your server's root namespace.</p>
+<p><code>EndpointDescriptor</code>, <code>EndpointSecurityRequirementSet</code>, <code>EndpointSecurityRequirement</code>, and the <code>ConfigureEndpoint</code> delegate are read-only types generated alongside <code>ApiEndpointRegistration</code> in your server's root namespace.</p>
 <table>
 <thead>
 <tr>
@@ -887,22 +887,94 @@ catch (InvalidOperationException ex)
 </tr>
 <tr>
 <td><code>SecurityRequirements</code></td>
-<td><code>IReadOnlyList&lt;EndpointSecurityRequirement&gt;</code></td>
-<td>The operation's declared security (each carries <code>SchemeName</code> and <code>Scopes</code>)</td>
+<td><code>IReadOnlyList&lt;EndpointSecurityRequirementSet&gt;</code></td>
+<td>The operation's declared security as a list of <strong>alternatives</strong> (see below)</td>
 </tr>
 </tbody>
 </table>
-<p><code>SecurityRequirements</code> is populated for OpenAPI 3.2 specs (which extract <code>security</code>); for 3.0/3.1 the list is currently always empty, but the hook works identically.</p>
+<p><code>SecurityRequirements</code> is populated for all supported spec versions (OpenAPI 3.0, 3.1, and 3.2). Operation-level <code>security</code> takes precedence over the document-level default; operations that declare neither surface an empty list.</p>
+<h4 id="the-orand-structure">The OR/AND structure</h4>
+<p>OpenAPI security mirrors the spec's <code>security</code> array exactly: it is a list of <strong>alternatives</strong>, and the operation is satisfied if <strong>any one</strong> alternative is met (OR). Each alternative — an <code>EndpointSecurityRequirementSet</code> — is a group of scheme requirements that must <strong>all</strong> be met together (AND). For example <code>[{bearerAuth: []}, {apiKeyAuth: []}]</code> means <em>bearerAuth OR apiKeyAuth</em>, whereas <code>[{bearerAuth: [], apiKeyAuth: []}]</code> means <em>bearerAuth AND apiKeyAuth</em>.</p>
+<p><code>EndpointSecurityRequirementSet</code> (one alternative):</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Requirements</code></td>
+<td><code>IReadOnlyList&lt;EndpointSecurityRequirement&gt;</code></td>
+<td>The scheme requirements that must all be satisfied together (AND)</td>
+</tr>
+<tr>
+<td><code>IsOptional</code></td>
+<td><code>bool</code></td>
+<td><code>true</code> when this alternative is the empty OpenAPI requirement (<code>{}</code>), which permits anonymous access</td>
+</tr>
+<tr>
+<td><code>PolicyName</code></td>
+<td><code>string</code></td>
+<td>The canonical policy name for the alternative: the single requirement's <code>PolicyName</code>, or the requirement policy names joined with <code>&amp;&amp;</code> (empty for an anonymous alternative)</td>
+</tr>
+</tbody>
+</table>
+<p><code>EndpointSecurityRequirement</code> (one scheme within an alternative):</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SchemeName</code></td>
+<td><code>string</code></td>
+<td>The security scheme name, as declared in <code>components.securitySchemes</code></td>
+</tr>
+<tr>
+<td><code>Scopes</code></td>
+<td><code>IReadOnlyList&lt;string&gt;</code></td>
+<td>The scopes required by this requirement (empty for non-scoped schemes)</td>
+</tr>
+<tr>
+<td><code>SchemeType</code></td>
+<td><code>string?</code></td>
+<td>The scheme's OpenAPI <code>type</code> (<code>oauth2</code>, <code>apiKey</code>, <code>http</code>, <code>openIdConnect</code>), or <code>null</code> if the scheme is not declared in <code>components.securitySchemes</code>. Lets the callback branch on scheme type without cross-referencing the scheme table</td>
+</tr>
+<tr>
+<td><code>PolicyName</code></td>
+<td><code>string</code></td>
+<td>The canonical policy name: the scheme name alone when no scopes are required, otherwise <code>{schemeName}:{scope+scope...}</code>. Use the same value when registering policies so endpoint mapping and policy registration stay in sync</td>
+</tr>
+</tbody>
+</table>
 <h3 id="applying-openapi-security-as-authorization">Applying OpenAPI Security as Authorization</h3>
-<p>The generator parses <code>components.securitySchemes</code> and per-operation <code>security</code> and emits them as static metadata, but it deliberately does <strong>not</strong> wire authorization onto endpoints — which scheme maps to which policy, and how scopes are enforced, are application concerns. <code>configureEndpoint</code> is the unopinionated place to close that gap: translate each declared requirement into a policy your app has registered.</p>
+<p>The generator surfaces <code>components.securitySchemes</code> and per-operation <code>security</code> on the descriptor, but it deliberately does <strong>not</strong> decide <em>how</em> a scheme maps to an authentication handler or how scopes are enforced — those are application concerns. It does, however, generate a small helper that applies the declared security using a sensible default convention, so the common case needs only one line.</p>
+<h4 id="the-generated-requiredeclaredauthorization-helper">The generated <code>RequireDeclaredAuthorization</code> helper</h4>
+<p>Alongside the registration types, the generator emits an <code>EndpointSecurityConventions.RequireDeclaredAuthorization</code> extension. Its behaviour follows the alternatives:</p>
+<ul>
+<li>No declared security, or any anonymous (<code>{}</code>) alternative → <code>AllowAnonymous</code>.</li>
+<li>A single alternative → <code>RequireAuthorization</code> for each scheme in it (AND), using each requirement's <code>PolicyName</code>.</li>
+<li>Multiple alternatives (OR) → a single <code>RequireAuthorization</code> with a combined name (the alternatives' <code>PolicyName</code>s joined by <code>||</code>), because ASP.NET endpoint conventions cannot OR policies. You register that one policy with your own OR logic.</li>
+</ul>
+<p>You register the referenced policies and wire the helper into the hook:</p>
 <pre><code class="language-csharp">WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAuthentication(/* your scheme(s) */);
 builder.Services.AddAuthorization(options =&gt;
 {
-    // One policy per (scheme, scopes) your spec declares.
+    // Single-alternative operations require one policy per requirement PolicyName.
     options.AddPolicy(&quot;oauth2:read:pets&quot;, p =&gt; p.RequireClaim(&quot;scope&quot;, &quot;read:pets&quot;));
-    options.AddPolicy(&quot;oauth2:write:pets&quot;, p =&gt; p.RequireClaim(&quot;scope&quot;, &quot;write:pets&quot;));
+
+    // An OR operation ([{bearerAuth}, {apiKeyAuth}]) requires the combined policy; you supply the OR logic.
+    options.AddPolicy(&quot;bearerAuth || apiKeyAuth&quot;, p =&gt; p.RequireAssertion(ctx =&gt;
+        ctx.User.HasClaim(c =&gt; c.Type == &quot;bearer&quot;) || ctx.User.HasClaim(c =&gt; c.Type == &quot;apikey&quot;)));
 });
 
 WebApplication app = builder.Build();
@@ -911,24 +983,31 @@ app.UseAuthorization();
 
 PetsHandler petsHandler = new();
 app.MapApiEndpoints(petsHandler, static (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =&gt;
+    builder.RequireDeclaredAuthorization(endpoint));
+
+app.Run();
+</code></pre>
+<h4 id="writing-the-mapping-yourself">Writing the mapping yourself</h4>
+<p><code>RequireDeclaredAuthorization</code> is just a convenience over <code>SecurityRequirements</code>. When you need different policy names or to branch on <code>SchemeType</code>, walk the alternatives yourself:</p>
+<pre><code class="language-csharp">app.MapApiEndpoints(petsHandler, static (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =&gt;
 {
-    // Operations with no declared security are explicitly anonymous.
     if (endpoint.SecurityRequirements.Count == 0)
     {
         builder.AllowAnonymous();
         return;
     }
 
-    // Map each declared (scheme, scopes) requirement to the matching app policy.
-    foreach (EndpointSecurityRequirement requirement in endpoint.SecurityRequirements)
+    foreach (EndpointSecurityRequirementSet alternative in endpoint.SecurityRequirements)
     {
-        string scopes = string.Join('+', requirement.Scopes);
-        builder.RequireAuthorization(
-            scopes.Length == 0 ? requirement.SchemeName : $&quot;{requirement.SchemeName}:{scopes}&quot;);
+        foreach (EndpointSecurityRequirement requirement in alternative.Requirements)
+        {
+            // requirement.SchemeType is &quot;oauth2&quot;, &quot;apiKey&quot;, &quot;http&quot;, or &quot;openIdConnect&quot;.
+            _ = requirement.PolicyName;
+        }
     }
-});
 
-app.Run();
+    // ...translate the OR-of-ANDs however your app enforces it.
+});
 </code></pre>
 <p>Because the callback just hands you an <code>IEndpointConventionBuilder</code>, every standard ASP.NET endpoint extension is available the same way — <code>RequireRateLimiting</code>, <code>CacheOutput</code>, <code>RequireCors</code>, <code>DisableAntiforgery</code>, and so on. See the <code>034-OpenApiCallbackServer</code> recipe for the hook applied to a callback/webhook server.</p>
 <h2 id="authentication">Authentication</h2>
