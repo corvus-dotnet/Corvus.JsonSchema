@@ -15,27 +15,14 @@ namespace Corvus.Text.Json.Arazzo;
 /// </summary>
 public sealed partial class WorkflowExecutionContext
 {
-    // Scalar values are stored as UTF-8 (converted once when set) so that interpolation appends them
-    // directly to the builder and criterion comparands compare them as UTF-8 spans — no managed
-    // string is materialized on the hot path.
-    private Dictionary<string, byte[]>? requestHeaders;
-    private Dictionary<string, byte[]>? requestQuery;
-    private Dictionary<string, byte[]>? requestPath;
-    private Dictionary<string, byte[]>? responseHeaders;
-    private Dictionary<string, byte[]>? messageHeaders;
-    private byte[]? url;
-    private byte[]? method;
+    private Dictionary<string, string>? requestHeaders;
+    private Dictionary<string, string>? requestQuery;
+    private Dictionary<string, string>? requestPath;
+    private Dictionary<string, string>? responseHeaders;
+    private Dictionary<string, string>? messageHeaders;
+    private string? url;
+    private string? method;
     private int? statusCode;
-
-    // Scratch buffers for building a $url criterion's relative URL. Thread-static and reused across runs
-    // (allocated once per thread, like the OpenAPI transport's URI writer) — the URL is built synchronously
-    // within a single step, so the buffer never overlaps, and the path allocates no per-step/per-run writer.
-    [ThreadStatic]
-    private static ArrayBufferWriter<byte>? t_urlBuffer;
-    [ThreadStatic]
-    private static ArrayBufferWriter<byte>? t_urlQueryBuffer;
-    [ThreadStatic]
-    private static bool t_urlHasQuery;
 
     /// <summary>
     /// Sets the request URL and HTTP method (resolved by <c>$url</c> and <c>$method</c>).
@@ -44,57 +31,8 @@ public sealed partial class WorkflowExecutionContext
     /// <param name="httpMethod">The HTTP method.</param>
     public void SetRequest(string requestUrl, string httpMethod)
     {
-        ArgumentNullException.ThrowIfNull(requestUrl);
-        ArgumentNullException.ThrowIfNull(httpMethod);
-        this.url = Encoding.UTF8.GetBytes(requestUrl);
-        this.method = Encoding.UTF8.GetBytes(httpMethod);
-    }
-
-    /// <summary>
-    /// Begins building the request URL for a <c>$url</c> criterion: returns a reused, cleared buffer for
-    /// the generated executor to write the resolved path into (it owns the buffer, so the <c>$url</c> path
-    /// allocates no per-step writer). Pair with <see cref="EndRequestUrl"/>.
-    /// </summary>
-    /// <returns>A buffer to write the resolved path into.</returns>
-    public IBufferWriter<byte> BeginRequestUrl()
-    {
-        ArrayBufferWriter<byte> buffer = t_urlBuffer ??= new ArrayBufferWriter<byte>(128);
-        buffer.ResetWrittenCount();
-        t_urlHasQuery = false;
-        return buffer;
-    }
-
-    /// <summary>
-    /// Begins the query-string portion of the request URL being built: returns a reused, cleared buffer
-    /// for the generated executor to write the query string into (without the leading <c>?</c>).
-    /// <see cref="EndRequestUrl"/> appends it to the path when non-empty.
-    /// </summary>
-    /// <returns>A buffer to write the query string into.</returns>
-    public IBufferWriter<byte> BeginRequestUrlQuery()
-    {
-        ArrayBufferWriter<byte> buffer = t_urlQueryBuffer ??= new ArrayBufferWriter<byte>(64);
-        buffer.ResetWrittenCount();
-        t_urlHasQuery = true;
-        return buffer;
-    }
-
-    /// <summary>
-    /// Completes the request URL begun by <see cref="BeginRequestUrl"/> (appending the query begun by
-    /// <see cref="BeginRequestUrlQuery"/> when non-empty) and stores it together with the HTTP method, so
-    /// <c>$url</c> and <c>$method</c> resolve against them.
-    /// </summary>
-    /// <param name="httpMethod">The HTTP method as UTF-8.</param>
-    public void EndRequestUrl(ReadOnlySpan<byte> httpMethod)
-    {
-        ArrayBufferWriter<byte> buffer = t_urlBuffer!;
-        if (t_urlHasQuery && t_urlQueryBuffer is { WrittenCount: > 0 } query)
-        {
-            buffer.Write("?"u8);
-            buffer.Write(query.WrittenSpan);
-        }
-
-        this.url = buffer.WrittenSpan.ToArray();
-        this.method = httpMethod.ToArray();
+        this.url = requestUrl;
+        this.method = httpMethod;
     }
 
     /// <summary>
@@ -206,64 +144,10 @@ public sealed partial class WorkflowExecutionContext
         }
     }
 
-    /// <summary>
-    /// Interpolates a pre-compiled template to a UTF-8 buffer. Allocation-free on the hot path:
-    /// the template is already parsed, and values are appended as UTF-8.
-    /// </summary>
-    /// <param name="template">The compiled template.</param>
-    /// <param name="output">The buffer to receive the UTF-8 result.</param>
-    /// <returns><see langword="true"/> if every embedded expression resolved.</returns>
-    public bool TryInterpolate(CompiledInterpolationTemplate template, IBufferWriter<byte> output)
-    {
-        ArgumentNullException.ThrowIfNull(template);
-        ArgumentNullException.ThrowIfNull(output);
-
-        var builder = new Utf8ValueStringBuilder(64);
-        try
-        {
-            if (!this.TryAppendTemplate(template, ref builder))
-            {
-                return false;
-            }
-
-            output.Write(builder.AsSpan());
-            return true;
-        }
-        finally
-        {
-            builder.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Appends a compiled template's interpolation to a UTF-8 builder. Used by callers (e.g. dynamic
-    /// criteria) that want the UTF-8 span directly rather than copying to an <see cref="IBufferWriter{T}"/>.
-    /// </summary>
-    /// <param name="template">The compiled template.</param>
-    /// <param name="builder">The UTF-8 builder to append to.</param>
-    /// <returns><see langword="true"/> if every embedded expression resolved.</returns>
-    internal bool TryAppendTemplate(CompiledInterpolationTemplate template, ref Utf8ValueStringBuilder builder)
-    {
-        foreach (ref readonly CompiledInterpolationTemplate.Segment segment in template.Segments)
-        {
-            if (segment.IsLiteral)
-            {
-                builder.Append(segment.Literal!);
-            }
-            else if (!this.TryAppendEmbedded(segment.Expression, ref builder))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static void Add(ref Dictionary<string, byte[]>? map, StringComparer comparer, string name, string value)
+    private static void Add(ref Dictionary<string, string>? map, StringComparer comparer, string name, string value)
     {
         ArgumentNullException.ThrowIfNull(name);
-        ArgumentNullException.ThrowIfNull(value);
-        (map ??= new Dictionary<string, byte[]>(comparer))[name] = Encoding.UTF8.GetBytes(value);
+        (map ??= new Dictionary<string, string>(comparer))[name] = value;
     }
 
     private static void AppendText(ref Utf8ValueStringBuilder builder, ReadOnlySpan<char> text)
@@ -284,13 +168,12 @@ public sealed partial class WorkflowExecutionContext
 
         while (i < span.Length)
         {
-            // An embedded expression begins with "{$" (per spec, the braces wrap a runtime
-            // expression). A bare '{' — e.g. a regex quantifier like a{2,3} — is literal text.
-            if (span[i] == '{' && i + 1 < span.Length && span[i + 1] == '$')
+            if (span[i] == '{')
             {
                 int relativeClose = span[i..].IndexOf('}');
                 if (relativeClose < 0)
                 {
+                    // No closing brace — emit the remainder literally.
                     AppendText(ref builder, span[i..]);
                     return true;
                 }
@@ -307,31 +190,18 @@ public sealed partial class WorkflowExecutionContext
                 continue;
             }
 
-            int next = IndexOfEmbeddedStart(span, i);
-            if (next < 0)
+            int relativeOpen = span[i..].IndexOf('{');
+            if (relativeOpen < 0)
             {
                 AppendText(ref builder, span[i..]);
                 break;
             }
 
-            AppendText(ref builder, span[i..next]);
-            i = next;
+            AppendText(ref builder, span.Slice(i, relativeOpen));
+            i += relativeOpen;
         }
 
         return true;
-    }
-
-    private static int IndexOfEmbeddedStart(ReadOnlySpan<char> span, int from)
-    {
-        for (int j = from; j < span.Length - 1; j++)
-        {
-            if (span[j] == '{' && span[j + 1] == '$')
-            {
-                return j;
-            }
-        }
-
-        return -1;
     }
 
     private bool TryAppendEmbedded(in ArazzoExpression expression, ref Utf8ValueStringBuilder builder)
@@ -383,37 +253,35 @@ public sealed partial class WorkflowExecutionContext
         }
     }
 
-    private static bool TryAppendScalar(ref Utf8ValueStringBuilder builder, byte[]? value)
+    private static bool TryAppendScalar(ref Utf8ValueStringBuilder builder, string? value)
     {
         if (value is null)
         {
             return false;
         }
 
-        builder.Append(value);
+        AppendText(ref builder, value);
         return true;
     }
 
-    private static bool TryAppendFromMap(ref Utf8ValueStringBuilder builder, Dictionary<string, byte[]>? map, string? name)
+    private static bool TryAppendFromMap(ref Utf8ValueStringBuilder builder, Dictionary<string, string>? map, string? name)
     {
-        if (map is null || name is null || !map.TryGetValue(name, out byte[]? value))
+        if (map is null || name is null || !map.TryGetValue(name, out string? value))
         {
             return false;
         }
 
-        builder.Append(value);
+        AppendText(ref builder, value);
         return true;
     }
 
     private static void AppendJsonEmbedded(ref Utf8ValueStringBuilder builder, in JsonElement value)
     {
         // Per the Arazzo spec, embedded scalar values convert to (unquoted) strings, while objects
-        // and arrays are serialized as JSON (RFC 8259). Strings are appended as UTF-8 without
-        // materializing a managed string.
+        // and arrays are serialized as JSON (RFC 8259).
         if (value.ValueKind == JsonValueKind.String)
         {
-            using UnescapedUtf8JsonString unescaped = value.GetUtf8String();
-            builder.Append(unescaped.Span);
+            AppendText(ref builder, value.GetString());
             return;
         }
 
