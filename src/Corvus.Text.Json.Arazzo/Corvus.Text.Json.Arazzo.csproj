@@ -26,6 +26,9 @@
     <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.AppendHelpers.cs" Link="Common\Utf8ValueStringBuilder.AppendHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo10\Corvus.Text.Json.Arazzo10.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.JsonPath\Corvus.Text.Json.JsonPath.csproj" />
