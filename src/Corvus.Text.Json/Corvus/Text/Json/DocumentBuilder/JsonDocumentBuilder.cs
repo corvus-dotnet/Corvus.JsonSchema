@@ -2077,6 +2077,14 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     }
 
     /// <inheritdoc />
+    JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace)
+    {
+        // TODO(perf): write directly to a workspace-rented Utf8JsonWriter/buffer and Parse() taking
+        // ownership of the buffer memory, avoiding the intermediate ArrayBufferWriter + re-copy.
+        return Internal.JsonDocumentCloning.CloneElementAsBuilderBySerialization(this, index, workspace);
+    }
+
+    /// <inheritdoc />
     TElement IJsonDocument.CloneElement<TElement>(int index)
     {
         return CloneElement<TElement>(index);

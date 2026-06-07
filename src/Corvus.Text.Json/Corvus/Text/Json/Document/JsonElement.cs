@@ -2296,6 +2296,25 @@ public readonly partial struct JsonElement
     }
 
     /// <summary>
+    /// Creates a <em>standalone</em> copy of this element as a new document owned by
+    /// <paramref name="workspace"/>.
+    /// </summary>
+    /// <param name="workspace">The workspace that will own the cloned document.</param>
+    /// <returns>A workspace-owned builder containing the standalone copy.</returns>
+    /// <remarks>
+    /// The returned document is fully independent of this element's source document and its backing
+    /// storage (metadata and value bytes are copied), so the source document may be disposed without
+    /// affecting the copy. The copy lives for the lifetime of <paramref name="workspace"/>.
+    /// </remarks>
+    [CLSCompliant(false)]
+    public JsonDocumentBuilder<Mutable> CloneAsBuilder(JsonWorkspace workspace)
+    {
+        CheckValidInstance();
+
+        return _parent.CloneElementAsBuilder(_idx, workspace);
+    }
+
+    /// <summary>
     /// Creates a frozen (immutable) copy of this element if it is backed by a mutable document,
     /// or returns this instance if it is already immutable.
     /// </summary>
