@@ -62,11 +62,11 @@ public static class OutputExtractionEmitter
         var statements = new StringBuilder();
         statements.Append("var ").Append(outputsVariable).AppendLine(" = JsonElement.CreateBuilder(");
         statements.Append("    ").Append(workspaceVariable).AppendLine(",");
-        statements.Append("    new JsonElement.Source(").Append(contextVariable).AppendLine(",");
-        statements.AppendLine("        static (in WorkflowExecutionContext ctx, ref JsonElement.ObjectBuilder builder) =>");
-        statements.AppendLine("        {");
+        statements.Append("    ").Append(contextVariable).AppendLine(",");
+        statements.AppendLine("    static (in WorkflowExecutionContext ctx, ref JsonElement.ObjectBuilder builder) =>");
+        statements.AppendLine("    {");
         statements.Append(build);
-        statements.AppendLine("        }));");
+        statements.AppendLine("    });");
         statements.Append(contextVariable).Append(".SetStepOutputs(").Append(EmitText.Quote(stepId)).Append(", ").Append(outputsVariable).AppendLine(".RootElement);");
 
         return new OutputExtractionCode(fields.ToString(), statements.ToString());
