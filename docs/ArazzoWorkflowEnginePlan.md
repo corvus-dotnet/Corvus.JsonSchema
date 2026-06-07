@@ -367,6 +367,57 @@ Key points:
 - Workflow-designer integration sample built on `WorkflowSimulator`.
 - `docs/Arazzo.md` user guide + `docs/CodeSampleCatalog.md` entries; samples.
 
+### Phase 7 — Fully-static executor (drop the interpreter from generated code)
+
+A performance phase that removes the remaining interpreter indirection and per-run
+structural allocation from the **generated** executor. (This is "Option B" from the
+generated-executor allocation review; Phase 2 shipped "Option A", which already
+resolves `$steps.<id>.outputs` statically and emits **no runtime dictionaries** — a
+one-step run is ~700 B/op, all of it the per-run `WorkflowExecutionContext` object
+plus the output-document builders; the per-evaluation hot path is already 0 B/op.)
+
+Goal: the generated executor uses **no `WorkflowExecutionContext`, no
+`ArazzoExpression`, and no `CompiledCriterion`** at run time — every runtime
+expression and criterion is compiled to direct C# at generation time.
+
+Scope:
+- **Expression → accessor compiler.** Resolve every runtime-expression source to a
+  direct local/parameter accessor, decided at generation time:
+  - `$inputs.<name>#/ptr` → navigate the `inputs` parameter;
+  - `$steps.<id>.outputs.<name>#/ptr` → navigate the step's outputs local (already done in Option A);
+  - `$response.body#/ptr` → navigate the current step's response body local (e.g. `getPetResponse.OkBody`);
+  - `$statusCode` → `getPetResponse.StatusCode` (an `int`, not routed through a `JsonElement`);
+  - `$response.header.<n>` / `$request.{header,query,path}.<n>` / `$url` / `$method` → the request/response accessors directly;
+  - `$message.{header,payload}` → the AsyncAPI message accessors.
+- **Criteria as native code.** Emit `successCriteria` (and `onSuccess`/`onFailure`
+  `criteria`) as native C# conditions rather than `CompiledCriterion.Evaluate`:
+  - `simple` → native comparisons that **faithfully reproduce** the spec semantics
+    already implemented and tested in `CompiledCriterion`/`Comparand`
+    (ASCII/Unicode case-insensitive string compare, numeric-string coercion for
+    `< <= > >=`, `null`-equals-only-`null`, lone-expression truthiness);
+  - `regex` → `[GeneratedRegex]` partial methods (source-generated, AOT-friendly);
+  - `jsonpath` → the JSONPath source generator / a compiled query;
+  - `xpath` → deferred with the rest of XPath.
+- **Drop the per-run context object** entirely (its only remaining job after Option A
+  is feeding criteria and current-step value resolution; both become direct code).
+
+Outcome: per-run allocation reduced to just the output-document builders (structural;
+further reducible only by `JsonWorkspace` pooling the builder objects), and faster
+execution (no virtual/delegate indirection, AOT regex/jsonpath).
+
+Risks / why it's a separate phase:
+- It **re-implements semantics that already exist and are tested** in the interpreter
+  (`CompiledCriterion`, `Comparand`, `ArazzoExpression`), in a second place — so the
+  full criterion/expression edge-case suite must be run against the **generated**
+  output (e.g. via the end-to-end emit→compile→run harness) to guarantee no
+  divergence from the interpreter.
+- Larger surface (regex/jsonpath AOT integration; pointer-navigation codegen).
+- Best done incrementally: `simple` criteria → native conditions first (common, easy),
+  then current-step value accessors, then regex/jsonpath AOT.
+
+Tracking: the matrix's "AOT-compiled criteria in generated executor" row is the
+criteria half of this phase.
+
 ## 7. Key risks & open questions
 
 1. **Static↔dynamic bridge** (the core risk): coordinating the Arazzo generator
