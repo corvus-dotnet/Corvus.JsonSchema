@@ -8,7 +8,6 @@ using Corvus.Text.Json.Arazzo.Benchmarks;
 if (args.Length > 0 && args[0] == "bdn")
 {
     BenchmarkRunner.Run<ArazzoRuntimeBenchmarks>();
-    BenchmarkRunner.Run<WorkflowExecutorBenchmarks>();
     return;
 }
 
@@ -25,32 +24,6 @@ Measure("Regex", benchmarks.Regex);
 Measure("Interpolate", benchmarks.Interpolate);
 
 benchmarks.Cleanup();
-
-// End-to-end: per-run allocation of the generated workflow executor.
-var executor = new WorkflowExecutorBenchmarks();
-executor.Setup();
-
-Console.WriteLine();
-Console.WriteLine("Generated executor end-to-end allocation (bytes/op):");
-Measure("RunWorkflow", executor.RunWorkflow);
-Measure("DurableNullRun", executor.RunDurableWorkflowNullRun);
-Measure("Durable", executor.RunDurableWorkflow);
-Measure("StatusOnly", executor.RunStatusOnlyWorkflow);
-Measure("UrlCriteria", executor.RunUrlCriteriaWorkflow);
-Measure("Interpolation", executor.RunInterpolationWorkflow);
-Measure("FallbackInterp", executor.RunFallbackInterpolationWorkflow);
-Measure("SimpleCriteria", executor.RunSimpleCriteriaWorkflow);
-Measure("JsonPath", executor.RunJsonPathWorkflow);
-Measure("ControlFlow", executor.RunControlFlowWorkflow);
-Measure("SubWorkflow", executor.RunSubWorkflow);
-Measure("ChannelSend", executor.RunChannelSendWorkflow);
-Measure("ChannelReceive", executor.RunChannelReceiveWorkflow);
-Measure("CorrelatedReceive", executor.RunCorrelatedReceiveWorkflow);
-Measure("ChannelReqReply", executor.RunChannelRequestReplyWorkflow);
-Measure("Responder", executor.RunResponderWorkflow);
-Measure("CompositeReply", executor.RunCompositeReplyWorkflow);
-
-executor.Cleanup();
 
 static void Measure(string name, Func<bool> op)
 {
