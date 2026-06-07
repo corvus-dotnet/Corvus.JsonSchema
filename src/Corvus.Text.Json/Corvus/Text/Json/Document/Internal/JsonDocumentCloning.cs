@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
-
 namespace Corvus.Text.Json.Internal;
 
 /// <summary>
@@ -31,13 +29,19 @@ internal static class JsonDocumentCloning
             throw new ArgumentNullException(nameof(workspace));
         }
 
-        var bufferWriter = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(bufferWriter))
+        // Rent the writer and its backing buffer from the workspace's pool rather than allocating a
+        // fresh ArrayBufferWriter/Utf8JsonWriter per call. Parse copies the written span into its own
+        // pooled buffer, so the rented buffer can be returned immediately afterwards.
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(256, out IByteBufferWriter bufferWriter);
+        try
         {
             document.WriteElementTo(index, writer);
             writer.Flush();
+            return JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, bufferWriter.WrittenSpan);
         }
-
-        return JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, bufferWriter.WrittenSpan);
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, bufferWriter);
+        }
     }
 }
