@@ -13,6 +13,8 @@ namespace Corvus.Text.Json.Arazzo.Tests;
 [TestClass]
 public class StepBodyEmitterTests
 {
+    private static readonly Dictionary<string, string> NoSteps = new(StringComparer.Ordinal);
+
     private static readonly ResolvedOperation GetPet = new(
         "petstore",
         new OperationDescriptor(
@@ -70,5 +72,6 @@ public class StepBodyEmitterTests
             criteria,
             "transport",
             "context",
-            "cancellationToken");
+            "cancellationToken",
+            NoSteps);
 }

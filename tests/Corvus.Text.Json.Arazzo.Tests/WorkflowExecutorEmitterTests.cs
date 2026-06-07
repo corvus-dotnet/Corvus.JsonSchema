@@ -64,13 +64,19 @@ public class WorkflowExecutorEmitterTests
     }
 
     [TestMethod]
-    public void Emits_step_and_workflow_output_extraction()
+    public void Emits_step_and_workflow_output_extraction_without_a_dictionary()
     {
         string source = Emit();
 
-        source.ShouldContain("context.SetStepOutputs(\"getPet\", getPetOutputs.RootElement);");
-        source.ShouldContain("builder.AddProperty(\"petName\"u8, petNameValue);");
-        source.ShouldContain("builder.AddProperty(\"name\"u8, nameValue);");
+        // Step outputs are built into a local, not stored in a context dictionary.
+        source.ShouldNotContain("SetStepOutputs");
+        source.ShouldContain("JsonElement getPetOutputsElement = getPetOutputs.RootElement;");
+        source.ShouldContain("builder.AddProperty(\"petName\"u8, values[0]);");
+
+        // The workflow output `name` = $steps.getPet.outputs.petName resolves statically against the
+        // step's outputs local — direct navigation, no dictionary lookup.
+        source.ShouldContain("getPetOutputsElement.TryGetProperty(\"petName\"u8, out JsonElement workflowOutput0);");
+        source.ShouldContain("builder.AddProperty(\"name\"u8, values[0]);");
         source.ShouldContain("return workflowOutputsElement;");
     }
 
