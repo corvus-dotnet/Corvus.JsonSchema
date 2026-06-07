@@ -38,17 +38,19 @@ public static class StepBodyEmitter
         IReadOnlyList<StepCriterion> successCriteria,
         string transportVariable,
         string contextVariable,
-        string cancellationTokenVariable)
+        string cancellationTokenVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
         ArgumentNullException.ThrowIfNull(successCriteria);
+        ArgumentNullException.ThrowIfNull(stepOutputLocals);
 
         string identifier = EmitText.SanitizeIdentifier(stepId);
         string prefix = $"{identifier}_";
         string requestVar = $"{EmitText.ToCamelCase(identifier)}Request";
         string responseVar = $"{EmitText.ToCamelCase(identifier)}Response";
 
-        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, requestVar, prefix);
+        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, requestVar, prefix, stepOutputLocals);
 
         var fields = new StringBuilder(request.Fields);
         var body = new StringBuilder(request.Statements);

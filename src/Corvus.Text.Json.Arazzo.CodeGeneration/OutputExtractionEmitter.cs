@@ -2,39 +2,46 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
 using System.Text;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
-/// Emits the code that projects a step's named outputs into the workflow run state (plan §3.1).
+/// Emits the code that projects a step's named outputs into a built JSON object held in a local
+/// (plan §3.1).
 /// </summary>
 /// <remarks>
-/// Each output expression is parsed once into a <c>static readonly</c> <c>ArazzoExpression</c> field.
-/// At run time the outputs object is built with the mutable-document builder using a closure-free,
-/// context-carrying <c>ObjectBuilder.Build&lt;TContext&gt;</c> delegate — each value resolved to a
-/// <see cref="JsonElement"/> and added directly, with no intermediate buffers — then registered with
-/// the workflow context. The built document is owned by the caller-provided <c>JsonWorkspace</c>,
-/// whose lifetime spans the whole run (later steps read <c>$steps.&lt;id&gt;.outputs</c>).
+/// Each output value is resolved in method scope (so <c>$steps.&lt;id&gt;.outputs</c> references resolve
+/// statically with no dictionary) and the object is then built with the mutable-document builder
+/// using a closure-free, context-carrying delegate whose context is the
+/// <see cref="ReadOnlySpan{T}"/> of pre-resolved values — so any number of outputs are added directly,
+/// with no intermediate buffers and no per-run dictionary. The built document is owned by the
+/// caller-provided <c>JsonWorkspace</c>, whose lifetime spans the run; the step's outputs object is
+/// kept in the <see cref="EmitText.StepOutputsElementLocal(string)"/> local for later
+/// <c>$steps.&lt;id&gt;.outputs</c> references.
 /// </remarks>
 public static class OutputExtractionEmitter
 {
     /// <summary>
-    /// Emits the field declarations and in-method statements that extract a step's outputs.
+    /// Emits the field declarations and in-method statements that build a step's outputs object.
     /// </summary>
-    /// <param name="stepId">The step id (the key the outputs are registered under).</param>
+    /// <param name="stepId">The step id.</param>
     /// <param name="outputs">The step's outputs (name → runtime expression), in document order.</param>
     /// <param name="workspaceVariable">The in-scope <c>JsonWorkspace</c> variable name.</param>
     /// <param name="contextVariable">The in-scope <c>WorkflowExecutionContext</c> variable name.</param>
+    /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <returns>The emitted static field declarations and the in-method statements (empty when there are no outputs).</returns>
     public static OutputExtractionCode Emit(
         string stepId,
         IReadOnlyList<OutputMapping> outputs,
         string workspaceVariable,
-        string contextVariable)
+        string contextVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
         ArgumentNullException.ThrowIfNull(outputs);
+        ArgumentNullException.ThrowIfNull(stepOutputLocals);
 
         if (outputs.Count == 0)
         {
@@ -42,32 +49,36 @@ public static class OutputExtractionEmitter
         }
 
         string identifier = EmitText.SanitizeIdentifier(stepId);
-        string outputsVariable = $"{EmitText.ToCamelCase(identifier)}Outputs";
+        string builderVariable = $"{EmitText.ToCamelCase(identifier)}Outputs";
+        string elementVariable = EmitText.StepOutputsElementLocal(stepId);
 
         var fields = new StringBuilder();
-        var build = new StringBuilder();
+        var statements = new StringBuilder();
+        var valueLocals = new List<string>(outputs.Count);
 
-        foreach (OutputMapping output in outputs)
+        for (int i = 0; i < outputs.Count; i++)
         {
-            string field = $"{identifier}_Output_{EmitText.SanitizeIdentifier(output.Name)}";
-            string local = $"{EmitText.ToCamelCase(EmitText.SanitizeIdentifier(output.Name))}Value";
-
-            fields.Append("private static readonly ArazzoExpression ").Append(field)
-                .Append(" = ArazzoExpression.Parse(").Append(EmitText.Quote(output.Expression)).AppendLine(");");
-
-            build.Append("        ctx.TryResolveValue(").Append(field).Append(", out JsonElement ").Append(local).AppendLine(");");
-            build.Append("        builder.AddProperty(").Append(EmitText.Quote(output.Name)).Append("u8, ").Append(local).AppendLine(");");
+            string local = $"{EmitText.ToCamelCase(identifier)}Output{i.ToString(CultureInfo.InvariantCulture)}";
+            string field = $"{identifier}_Output_{EmitText.SanitizeIdentifier(outputs[i].Name)}";
+            ValueResolution.Emit(fields, statements, outputs[i].Expression, local, contextVariable, stepOutputLocals, field);
+            valueLocals.Add(local);
         }
 
-        var statements = new StringBuilder();
-        statements.Append("var ").Append(outputsVariable).AppendLine(" = JsonElement.CreateBuilder(");
+        statements.Append("Span<JsonElement> ").Append(builderVariable).Append("Values = [")
+            .Append(string.Join(", ", valueLocals)).AppendLine("];");
+        statements.Append("var ").Append(builderVariable).AppendLine(" = JsonElement.CreateBuilder(");
         statements.Append("    ").Append(workspaceVariable).AppendLine(",");
-        statements.Append("    ").Append(contextVariable).AppendLine(",");
-        statements.AppendLine("    static (in WorkflowExecutionContext ctx, ref JsonElement.ObjectBuilder builder) =>");
+        statements.Append("    (ReadOnlySpan<JsonElement>)").Append(builderVariable).AppendLine("Values,");
+        statements.AppendLine("    static (in ReadOnlySpan<JsonElement> values, ref JsonElement.ObjectBuilder builder) =>");
         statements.AppendLine("    {");
-        statements.Append(build);
+        for (int i = 0; i < outputs.Count; i++)
+        {
+            statements.Append("        builder.AddProperty(").Append(EmitText.Quote(outputs[i].Name))
+                .Append("u8, values[").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine("]);");
+        }
+
         statements.AppendLine("    });");
-        statements.Append(contextVariable).Append(".SetStepOutputs(").Append(EmitText.Quote(stepId)).Append(", ").Append(outputsVariable).AppendLine(".RootElement);");
+        statements.Append("JsonElement ").Append(elementVariable).Append(" = ").Append(builderVariable).AppendLine(".RootElement;");
 
         return new OutputExtractionCode(fields.ToString(), statements.ToString());
     }
@@ -84,5 +95,5 @@ public readonly record struct OutputMapping(string Name, string Expression);
 /// The code emitted for a step's output extraction (plan §3.1).
 /// </summary>
 /// <param name="Fields">The <c>static readonly</c> field declarations to place on the executor class.</param>
-/// <param name="Statements">The in-method statements that build and register the step's outputs.</param>
+/// <param name="Statements">The in-method statements that build the step's outputs object.</param>
 public readonly record struct OutputExtractionCode(string Fields, string Statements);

@@ -13,6 +13,8 @@ namespace Corvus.Text.Json.Arazzo.Tests;
 [TestClass]
 public class RequestBindingEmitterTests
 {
+    private static readonly Dictionary<string, string> NoSteps = new(StringComparer.Ordinal);
+
     private static readonly ResolvedOperation GetPet = new(
         "petstore",
         new OperationDescriptor(
@@ -37,7 +39,8 @@ public class RequestBindingEmitterTests
             [new StepArgument("petId", "$inputs.petId"), new StepArgument("limit", "$inputs.limit")],
             "context",
             "request",
-            "GetPet_");
+            "GetPet_",
+            NoSteps);
 
         code.Fields.ShouldContain("private static readonly ArazzoExpression GetPet_PetId = ArazzoExpression.Parse(\"$inputs.petId\");");
         code.Fields.ShouldContain("private static readonly ArazzoExpression GetPet_Limit = ArazzoExpression.Parse(\"$inputs.limit\");");
@@ -51,7 +54,8 @@ public class RequestBindingEmitterTests
             [new StepArgument("petId", "$inputs.petId"), new StepArgument("limit", "$inputs.limit")],
             "context",
             "request",
-            "GetPet_");
+            "GetPet_",
+            NoSteps);
 
         // Resolve each argument to a JsonElement, then From()-bind to the generated property type.
         code.Statements.ShouldContain("context.TryResolveValue(GetPet_PetId, out JsonElement petIdValue);");
@@ -67,7 +71,8 @@ public class RequestBindingEmitterTests
             [new StepArgument("petId", "$inputs.petId")],
             "context",
             "request",
-            "GetPet_");
+            "GetPet_",
+            NoSteps);
 
         code.Statements.ShouldContain("var request = new Acme.Pets.GetPetRequest(Acme.Pets.JsonString.From(petIdValue));");
         code.Statements.ShouldNotContain("Limit =");
@@ -81,6 +86,7 @@ public class RequestBindingEmitterTests
             [new StepArgument("limit", "$inputs.limit")],
             "context",
             "request",
-            "GetPet_"));
+            "GetPet_",
+            NoSteps));
     }
 }
