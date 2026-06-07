@@ -758,16 +758,16 @@ main-docs:
       - {index: 1, language: bash, lines: [19, 22]}
       - {index: 2, language: bash, lines: [30, 34]}
       - {index: 3, language: bash, lines: [44, 46]}
-      - {index: 4, language: bash, lines: [75, 94]}
-      - {index: 5, language: bash, lines: [100, 102]}
-      - {index: 6, language: json, lines: [106, 141]}
-      - {index: 7, language: bash, lines: [203, 205]}
-      - {index: 8, language: bash, lines: [213, 215]}
-      - {index: 9, language: bash, lines: [221, 223]}
-      - {index: 10, language: json, lines: [255, 265]}
-      - {index: 11, language: bash, lines: [293, 298]}
-      - {index: 12, language: json, lines: [318, 327]}
-      - {index: 13, language: bash, lines: [356, 368]}
+      - {index: 4, language: bash, lines: [76, 95]}
+      - {index: 5, language: bash, lines: [101, 103]}
+      - {index: 6, language: json, lines: [107, 143]}
+      - {index: 7, language: bash, lines: [206, 208]}
+      - {index: 8, language: bash, lines: [216, 218]}
+      - {index: 9, language: bash, lines: [224, 226]}
+      - {index: 10, language: json, lines: [258, 268]}
+      - {index: 11, language: bash, lines: [296, 301]}
+      - {index: 12, language: json, lines: [321, 330]}
+      - {index: 13, language: bash, lines: [359, 371]}
   - path: "docs/CodeSampleCatalog.md"
     blocks:
       - {index: 0, language: powershell, lines: [13, 26]}
@@ -1367,9 +1367,9 @@ main-docs:
       - {index: 6, language: csharp, lines: [95, 101], category: compilable, verified: false}
       - {index: 7, language: xml, lines: [114, 123]}
       - {index: 8, language: xml, lines: [127, 131]}
-      - {index: 9, language: xml, lines: [139, 145]}
-      - {index: 10, language: xml, lines: [178, 182]}
-      - {index: 11, language: , lines: [186, 191]}
+      - {index: 9, language: xml, lines: [139, 146]}
+      - {index: 10, language: xml, lines: [180, 184]}
+      - {index: 11, language: , lines: [188, 193]}
   - path: "docs/StandaloneEvaluatorInternals.md"
     blocks:
       - {index: 0, language: csharp, lines: [19, 26], category: compilable, verified: false}
@@ -1710,8 +1710,8 @@ skills:
       - {index: 0, language: csharp, lines: [22, 25], category: compilable, verified: false}
       - {index: 1, language: xml, lines: [34, 38]}
       - {index: 2, language: powershell, lines: [42, 52]}
-      - {index: 3, language: json, lines: [103, 121]}
-      - {index: 4, language: powershell, lines: [125, 133]}
+      - {index: 3, language: json, lines: [105, 123]}
+      - {index: 4, language: powershell, lines: [127, 135]}
   - path: ".github/skills/corvus-ctj-handler-implementation/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [29, 34], category: compilable, verified: false}

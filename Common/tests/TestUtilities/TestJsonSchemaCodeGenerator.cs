@@ -40,6 +40,8 @@ public class TestJsonSchemaCodeGenerator
 
     private readonly bool _addExplicitUsings;
 
+    private IReadOnlyDictionary<string, FormatAssertionMode>? _formatModeOverrides;
+
     private TestJsonSchemaCodeGenerator(
         string remotesBaseDirectory,
         IVocabulary? defaultVocabulary = null,
@@ -307,6 +309,74 @@ public class TestJsonSchemaCodeGenerator
     }
 
     /// <summary>
+    /// Generates the concatenated source text for the given virtual file, applying the supplied
+    /// per-format assertion mode overrides. Used to assert on the emitted validation code.
+    /// </summary>
+    /// <param name="virtualFilename">The virtual file name.</param>
+    /// <param name="schemaText">The text of the virtual schema file.</param>
+    /// <param name="defaultNamespace">The default namespace for code generation.</param>
+    /// <param name="remotesBaseDirectory">The remotes base directory for the test suite.</param>
+    /// <param name="defaultVocabulary">The default vocabulary for the test run.</param>
+    /// <param name="validateFormat">Whether to assert format globally (maps to <c>alwaysAssertFormat</c>).</param>
+    /// <param name="formatModeOverrides">The per-format assertion mode overrides, keyed by format name.</param>
+    /// <returns>A task which, when complete, provides the concatenated generated source text.</returns>
+    public static async ValueTask<string> GenerateCodeTextForVirtualFile(
+        string virtualFilename,
+        string schemaText,
+        string defaultNamespace,
+        string remotesBaseDirectory,
+        IVocabulary defaultVocabulary,
+        bool validateFormat,
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides)
+    {
+        var generator = new TestJsonSchemaCodeGenerator(
+            remotesBaseDirectory,
+            defaultVocabulary: defaultVocabulary,
+            validateFormat: validateFormat)
+        {
+            _formatModeOverrides = formatModeOverrides,
+        };
+
+        GeneratedCode generatedCode = await generator.GenerateCodeAsync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
+        return string.Join("\n", generatedCode.GeneratedFiles.Select(f => f.FileContent));
+    }
+
+    /// <summary>
+    /// Generates and compiles the type for the given virtual file, applying the supplied per-format
+    /// assertion mode overrides. Used to assert that the emitted validation code compiles.
+    /// </summary>
+    /// <param name="virtualFilename">The virtual file name.</param>
+    /// <param name="schemaText">The text of the virtual schema file.</param>
+    /// <param name="defaultNamespace">The default namespace for code generation.</param>
+    /// <param name="remotesBaseDirectory">The remotes base directory for the test suite.</param>
+    /// <param name="defaultVocabulary">The default vocabulary for the test run.</param>
+    /// <param name="validateFormat">Whether to assert format globally (maps to <c>alwaysAssertFormat</c>).</param>
+    /// <param name="formatModeOverrides">The per-format assertion mode overrides, keyed by format name.</param>
+    /// <param name="hostAssembly">The host assembly with preserved compilation context.</param>
+    /// <returns>A task which, when complete, provides the compiled <see cref="DynamicJsonType"/>.</returns>
+    public static async ValueTask<DynamicJsonType> GenerateTypeForVirtualFile(
+        string virtualFilename,
+        string schemaText,
+        string defaultNamespace,
+        string remotesBaseDirectory,
+        IVocabulary defaultVocabulary,
+        bool validateFormat,
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides,
+        Assembly hostAssembly)
+    {
+        var generator = new TestJsonSchemaCodeGenerator(
+            remotesBaseDirectory,
+            defaultVocabulary: defaultVocabulary,
+            validateFormat: validateFormat)
+        {
+            _formatModeOverrides = formatModeOverrides,
+        };
+
+        GeneratedCode generatedCode = await generator.GenerateCodeAsync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
+        return Compile(generatedCode, hostAssembly);
+    }
+
+    /// <summary>
     /// Compiles the generated code.
     /// </summary>
     /// <param name="code">The generated code.</param>
@@ -390,7 +460,8 @@ public class TestJsonSchemaCodeGenerator
             alwaysAssertFormat: _validateFormat,
             optionalAsNullable: _optionalAsNullable,
             useImplicitOperatorString: _useImplicitOperatorString,
-            addExplicitUsings: _addExplicitUsings);
+            addExplicitUsings: _addExplicitUsings,
+            formatModeOverrides: _formatModeOverrides);
 
         _jsonSchemaTypeBuilder.AddDocument(path, System.Text.Json.JsonDocument.Parse(jsonSchema));
 

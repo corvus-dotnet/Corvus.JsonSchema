@@ -1854,7 +1854,18 @@ internal static partial class StandaloneEvaluatorGenerator
             (formatKw is IContentMediaTypeValidationKeyword &&
              (format.EndsWith("-pre201909", System.StringComparison.Ordinal) ||
               typeDeclaration.Keywords().OfType<IContentSemanticsKeyword>().Any(k => k.ContentSemantics == ContentEncodingSemantics.PreDraft201909)));
-        if (!isContentFormat && !typeDeclaration.AlwaysAssertFormat())
+        bool warn = false;
+        if (typeDeclaration.GetFormatModeOverride(format, out FormatAssertionMode overrideMode))
+        {
+            if (overrideMode == FormatAssertionMode.Disable)
+            {
+                // Format is not asserted — the annotation value is emitted by EmitAnnotations.
+                return;
+            }
+
+            warn = overrideMode == FormatAssertionMode.Warning;
+        }
+        else if (!isContentFormat && !typeDeclaration.AlwaysAssertFormat())
         {
             // Format is not asserted — the annotation value is emitted by EmitAnnotations.
             return;
@@ -1873,11 +1884,17 @@ internal static partial class StandaloneEvaluatorGenerator
 
         if (expectedTokenType == JsonTokenType.String)
         {
+            // Warning mode emits the WarnXxx sibling, which records a WARNING annotation on
+            // mismatch instead of failing validation.
+            string stringMethodName = warn && matchMethodName.StartsWith("Match", System.StringComparison.Ordinal)
+                ? "Warn" + matchMethodName.Substring("Match".Length)
+                : matchMethodName;
+
             ctx.AppendLine("if (tokenType == JsonTokenType.String)");
             ctx.AppendLine("{");
             ctx.PushIndent();
             ctx.AppendLine("using UnescapedUtf8JsonString unescapedFormatString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);");
-            ctx.AppendLine($"JsonSchemaEvaluation.{matchMethodName}(unescapedFormatString.Span, {formatKeywordLiteral}, ref context);");
+            ctx.AppendLine($"JsonSchemaEvaluation.{stringMethodName}(unescapedFormatString.Span, {formatKeywordLiteral}, ref context);");
             ctx.AppendLine();
             ctx.AppendLine("if (!context.HasCollector && !context.IsMatch)");
             ctx.AppendLine("{");
@@ -1903,6 +1920,13 @@ internal static partial class StandaloneEvaluatorGenerator
         }
         else if (expectedTokenType == JsonTokenType.Number)
         {
+            if (warn)
+            {
+                // Warning mode is only supported for string formats. Numeric formats fall back
+                // to assertion; emit a visible note in the generated code.
+                ctx.AppendLine($"// NOTE: 'warning' format mode is not supported for the numeric format '{format}'; asserting instead.");
+            }
+
             ctx.AppendLine("if (tokenType == JsonTokenType.Number)");
             ctx.AppendLine("{");
             ctx.PushIndent();

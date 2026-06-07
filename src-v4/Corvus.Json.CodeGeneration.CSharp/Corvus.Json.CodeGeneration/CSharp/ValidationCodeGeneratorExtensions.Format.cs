@@ -101,9 +101,22 @@ public static partial class ValidationCodeGeneratorExtensions
             child.AppendValidationCode(generator, typeDeclaration);
         }
 
-        if (typeDeclaration.IsFormatAssertion() || typeDeclaration.AlwaysAssertFormat())
+        FormatAssertionMode formatMode = typeDeclaration.GetEffectiveFormatMode(explicitFormat);
+
+        if (formatMode is FormatAssertionMode.Assert or FormatAssertionMode.Warning)
         {
-            FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(generator, explicitFormat, "value", "validationContext", null, keywords.FirstOrDefault(), returnFromMethod: true);
+            bool warn = formatMode == FormatAssertionMode.Warning;
+
+            if (warn && expectedValueKind != JsonValueKind.String)
+            {
+                // Warning mode is only supported for string formats. Numeric formats fall back to
+                // assertion; emit a visible note in the generated code.
+                generator
+                    .AppendLineIndent("// NOTE: 'warning' format mode is not supported for the numeric format '", explicitFormat, "'; asserting instead.");
+                warn = false;
+            }
+
+            FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(generator, explicitFormat, "value", "validationContext", null, keywords.FirstOrDefault(), returnFromMethod: true, warn: warn);
         }
         else
         {

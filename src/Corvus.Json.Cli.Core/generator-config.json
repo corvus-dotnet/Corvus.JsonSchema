@@ -13,6 +13,14 @@
             "type": "boolean",
             "description": "If true, assert format specifications."
         },
+        "formatMode": {
+            "type": "object",
+            "description": "Per-format assertion mode overrides. Keys are format names (e.g. 'date-time'); values are the assertion mode. An override takes precedence over assertFormat and the vocabulary's format-assertion behaviour.",
+            "additionalProperties": {
+                "type": "string",
+                "enum": [ "assert", "disable", "warning" ]
+            }
+        },
         "outputMapFile": {
             "type": "string",
             "description": "The name to use for a map file which includes details of the files that were written."

@@ -24,13 +24,16 @@ public interface IStringFormatHandler : IFormatHandler
     /// <param name="formatKeywordProviderExpression">The expression that produces the JsonSchemaPathProvider for the keyword.</param>
     /// <param name="valueIdentifier">The identifier for the value to test.</param>
     /// <param name="validationContextIdentifier">The identifier for the validation context to update.</param>
+    /// <param name="warn">If <see langword="true"/>, emit the warning-mode variant that records a
+    /// <c>WARNING</c> annotation on mismatch instead of failing validation.</param>
     /// <returns><see langword="true"/> if the instance handled this format.</returns>
     bool AppendFormatAssertion(
         CodeGenerator generator,
         string format,
         string formatKeywordProviderExpression,
         string valueIdentifier,
-        string validationContextIdentifier);
+        string validationContextIdentifier,
+        bool warn = false);
 
     /// <summary>
     /// Indicates whether the string format requires the simple types backing.

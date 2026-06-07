@@ -141,7 +141,7 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
     }
 
     /// <inheritdoc/>
-    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod)
+    public bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod, bool warn = false)
     {
         string validator = includeType ? "Validate" : "ValidateWithoutCoreType";
 
@@ -153,274 +153,55 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                 ? $"{typeKeywordDisplay}, {formatKeywordDisplay}"
                 : formatKeywordDisplay;
 
+        string? methodSuffix = format switch
+        {
+            "date" => "Date",
+            "date-time" => "DateTime",
+            "time" => "Time",
+            "duration" => "Duration",
+            "email" => "Email",
+            "idn-email" => "IdnEmail",
+            "hostname" => "Hostname",
+            "idn-hostname" => "IdnHostName",
+            "ipv4" => "IpV4",
+            "ipv6" => "IpV6",
+            "uuid" => "Uuid",
+            "uri" => "Uri",
+            "uri-template" => "UriTemplate",
+            "uri-reference" => "UriReference",
+            "iri" => "Iri",
+            "iri-reference" => "IriReference",
+            "json-pointer" => "Pointer",
+            "relative-json-pointer" => "RelativePointer",
+            "regex" => "Regex",
+            _ => null,
+        };
+
+        if (methodSuffix is not null)
+        {
+            // In warning mode emit the TypeXxxWarning sibling, which records a WARNING annotation
+            // on mismatch instead of failing validation.
+            string methodName = warn ? methodSuffix + "Warning" : methodSuffix;
+            generator.AppendLineIndent(
+                returnFromMethod ? "return" : validationContextIdentifier,
+                returnFromMethod ? string.Empty : " = ",
+                " Corvus.Json.",
+                validator,
+                ".Type",
+                methodName,
+                "(",
+                valueIdentifier,
+                ", ",
+                validationContextIdentifier,
+                ", level, ",
+                keywordParameters,
+                ");");
+            return true;
+        }
+
+        // Content formats already pass and annotate failures, so warning mode is a no-op for them.
         switch (format)
         {
-            case "date":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeDate(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "date-time":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeDateTime(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "time":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeTime(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "duration":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeDuration(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "email":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeEmail(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "idn-email":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeIdnEmail(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "hostname":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeHostname(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "idn-hostname":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeIdnHostName(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "ipv4":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeIpV4(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "ipv6":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeIpV6(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "uuid":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeUuid(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "uri":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeUri(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "uri-template":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeUriTemplate(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "uri-reference":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeUriReference(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "iri":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeIri(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "iri-reference":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeIriReference(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "json-pointer":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypePointer(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "relative-json-pointer":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeRelativePointer(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
-            case "regex":
-                generator.AppendLineIndent(
-                    returnFromMethod ? "return" : validationContextIdentifier,
-                    returnFromMethod ? string.Empty : " = ",
-                    " Corvus.Json.",
-                    validator,
-                    ".TypeRegex(",
-                    valueIdentifier,
-                    ", ",
-                    validationContextIdentifier,
-                    ", level, ",
-                    keywordParameters,
-                    ");");
-                return true;
             case "corvus-base64-content":
                 generator.AppendLineIndent(
                     returnFromMethod ? "return" : validationContextIdentifier,

@@ -141,6 +141,7 @@ Control the generator's behaviour with MSBuild properties in your `.csproj`:
   <CorvusTextJsonFallbackVocabulary>Draft202012</CorvusTextJsonFallbackVocabulary>
   <CorvusTextJsonOptionalAsNullable>NullOrUndefined</CorvusTextJsonOptionalAsNullable>
   <CorvusTextJsonAlwaysAssertFormat>true</CorvusTextJsonAlwaysAssertFormat>
+  <CorvusTextJsonFormatMode>date-time=disable;time=warning</CorvusTextJsonFormatMode>
 </PropertyGroup>
 ```
 
@@ -149,6 +150,7 @@ Control the generator's behaviour with MSBuild properties in your `.csproj`:
 | `CorvusTextJsonFallbackVocabulary` | `Draft202012` | Fallback schema vocabulary when the `$schema` keyword is omitted. Values: `Draft4`, `Draft6`, `Draft7`, `Draft201909`, `Draft202012`, `OpenApi30`. |
 | `CorvusTextJsonOptionalAsNullable` | — | When set to `NullOrUndefined`, optional properties generate as .NET nullable types (`T?`). JSON `null` or missing values map to C# `null`. When set to `NullOrUndefinedExceptNonNullDefaulted`, this applies to all optional properties *except* those that declare a non-null `default`, which are generated as the non-nullable type `T` (the default is returned when the property is absent); an optional property whose `default` is JSON `null` stays nullable. When omitted, optional properties use the full type and you check for `Undefined` explicitly. |
 | `CorvusTextJsonAlwaysAssertFormat` | `true` | When `true`, the `format` keyword is enforced as a validation assertion. When `false`, it is treated as an annotation only. |
+| `CorvusTextJsonFormatMode` | — | Per-format assertion mode overrides as semicolon-separated `format=mode` pairs, where `mode` is `assert`, `disable`, or `warning` (e.g. `date-time=disable;time=warning`). An override takes precedence over `CorvusTextJsonAlwaysAssertFormat`. `disable` makes the format annotation-only; `warning` validates but always succeeds, emitting a `WARNING` annotation on a mismatch. Warning mode applies to string formats only; for a numeric format it falls back to `assert`. |
 | `CorvusTextJsonUseImplicitOperatorString` | `true` | When `true`, conversion operators to `string` are implicit. When `false`, explicit casting is required. Explicit casts make string allocations more visible. |
 | `CorvusTextJsonAddExplicitUsings` | `true` | When `true`, generated files include `using` statements for standard implicit usings. Disable if your project already uses implicit usings and you want cleaner output. |
 | `CorvusTextJsonUseOptionalNameHeuristics` | `true` | When `true`, applies naming heuristics to infer idiomatic C# names from JSON Schema property names and definitions. |
