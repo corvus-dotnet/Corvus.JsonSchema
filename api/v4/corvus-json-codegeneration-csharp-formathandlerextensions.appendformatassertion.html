@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.CSharp<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="appendformatassertion-ienumerable-t-codegenerator-string-string-string-ikeyword-ikeyword-bool-bool">AppendFormatAssertion(IEnumerable&lt;T&gt;, CodeGenerator, string, string, string, IKeyword?, IKeyword?, bool, bool)</h2>
+<h2 id="appendformatassertion-ienumerable-t-codegenerator-string-string-string-ikeyword-ikeyword-bool-bool-bool">AppendFormatAssertion(IEnumerable&lt;T&gt;, CodeGenerator, string, string, string, IKeyword?, IKeyword?, bool, bool, bool)</h2>
 <p>Append a format assertion to the generator.</p>
-<pre><code class="language-csharp">public static bool AppendFormatAssertion&lt;T&gt;(IEnumerable&lt;T&gt; handlers, CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod, bool includeType)
+<pre><code class="language-csharp">public static bool AppendFormatAssertion&lt;T&gt;(IEnumerable&lt;T&gt; handlers, CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod, bool includeType, bool warn)
     where T : IFormatHandler
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -172,6 +172,11 @@
 <td><code>includeType</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
 <td><code>true</code> if you should also include type assertion. <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>warn</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
+<td>If <code>true</code>, emit the warning-mode variant that records a <code>WARNING</code> annotation on mismatch instead of failing validation. <em>(optional)</em></td>
 </tr>
 </tbody>
 </table>

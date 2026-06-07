@@ -98,8 +98,8 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.CSharp<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="csharplanguageprovider-options-string-csharplanguageprovider-namedtype-csharplanguageprovider-namespace-bool-bool-bool-string-string-bool-string-bool-generatedtypeaccessibility-bool">CSharpLanguageProvider.Options(string, CSharpLanguageProvider.NamedType[], CSharpLanguageProvider.Namespace[], bool, bool, bool, string[], string, bool, string, bool, GeneratedTypeAccessibility, bool)</h2>
-<pre><code class="language-csharp">public CSharpLanguageProvider.Options(string defaultNamespace, CSharpLanguageProvider.NamedType[] namedTypes, CSharpLanguageProvider.Namespace[] namespaces, bool useOptionalNameHeuristics, bool alwaysAssertFormat, bool optionalAsNullable, string[] disabledNamingHeuristics, string fileExtension, bool useImplicitOperatorString, string lineEndSequence, bool addExplicitUsings, GeneratedTypeAccessibility defaultAccessibility, bool excludeNonNullDefaulted)
+<h2 id="csharplanguageprovider-options-string-csharplanguageprovider-namedtype-csharplanguageprovider-namespace-bool-bool-bool-string-string-bool-string-bool-generatedtypeaccessibility-bool-ireadonlydictionary-string-formatassertionmode">CSharpLanguageProvider.Options(string, CSharpLanguageProvider.NamedType[], CSharpLanguageProvider.Namespace[], bool, bool, bool, string[], string, bool, string, bool, GeneratedTypeAccessibility, bool, IReadOnlyDictionary&lt;string, FormatAssertionMode&gt;)</h2>
+<pre><code class="language-csharp">public CSharpLanguageProvider.Options(string defaultNamespace, CSharpLanguageProvider.NamedType[] namedTypes, CSharpLanguageProvider.Namespace[] namespaces, bool useOptionalNameHeuristics, bool alwaysAssertFormat, bool optionalAsNullable, string[] disabledNamingHeuristics, string fileExtension, bool useImplicitOperatorString, string lineEndSequence, bool addExplicitUsings, GeneratedTypeAccessibility defaultAccessibility, bool excludeNonNullDefaulted, IReadOnlyDictionary&lt;string, FormatAssertionMode&gt; formatModeOverrides)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -174,6 +174,11 @@
 <tr>
 <td><code>excludeNonNullDefaulted</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
+<td><em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>formatModeOverrides</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlydictionary-2"><code>IReadOnlyDictionary&lt;string, FormatAssertionMode&gt;</code></a></td>
 <td><em>(optional)</em></td>
 </tr>
 </tbody>

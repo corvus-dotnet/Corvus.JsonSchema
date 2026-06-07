@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2425b7aabfd1899931049af7186531c81f6ad980/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.cs#L18">JsonSchemaEvaluation.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/fe70e5a81d8d933cebad46cb44729a333f571051/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.cs#L18">JsonSchemaEvaluation.cs</a></p>
 <p>Support for JSON Schema matching implementations.</p>
 <pre><code class="language-csharp">public static class JsonSchemaEvaluation
 </code></pre>
@@ -560,6 +560,94 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.trycopypath.html#trycopypath-readonlyspan-byte-span-byte-int">TryCopyPath(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</a> <code>static</code></td>
 <td>Tries to copy the path to the output buffer.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnbase64content.html#warnbase64content-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnBase64Content(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is a Base64-encoded JSON document.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnbase64string.html#warnbase64string-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnBase64String(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is a Base64-encoded string.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warndate.html#warndate-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnDate(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an ISO 8601 date.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warndatetime.html#warndatetime-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnDateTime(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an ISO 8601 offset date-time.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnduration.html#warnduration-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnDuration(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an ISO 8601 duration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnemail.html#warnemail-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnEmail(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an email address.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnhostname.html#warnhostname-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnHostname(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is a hostname.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnidnemail.html#warnidnemail-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnIdnEmail(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an internationalized (IDN) email address.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnidnhostname.html#warnidnhostname-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnIdnHostname(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an internationalized (IDN) hostname.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnipv4.html#warnipv4-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnIPV4(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an IPv4 address.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnipv6.html#warnipv6-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnIPV6(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an IPv6 address.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warniri.html#warniri-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnIri(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an IRI.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnirireference.html#warnirireference-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnIriReference(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an IRI reference.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnjsoncontent.html#warnjsoncontent-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnJsonContent(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is valid JSON content.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnjsonpointer.html#warnjsonpointer-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnJsonPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is a JSON Pointer.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnregex.html#warnregex-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnRegex(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an ECMAScript regular expression.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnrelativejsonpointer.html#warnrelativejsonpointer-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnRelativeJsonPointer(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is a relative JSON Pointer.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warntime.html#warntime-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnTime(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is an ISO 8601 offset time.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnuri.html#warnuri-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnUri(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is a URI.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnurireference.html#warnurireference-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnUriReference(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is a URI reference.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnuritemplate.html#warnuritemplate-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnUriTemplate(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is a URI template.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.warnuuid.html#warnuuid-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">WarnUuid(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td>Validates, in warning mode, that a string value is a UUID.</td>
 </tr>
 </tbody>
 </table>

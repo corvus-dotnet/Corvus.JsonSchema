@@ -98,10 +98,12 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2425b7aabfd1899931049af7186531c81f6ad980/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidateWithoutCoreType.cs#L1">ValidateWithoutCoreType.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/fe70e5a81d8d933cebad46cb44729a333f571051/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/ValidateWithoutCoreType.cs#L1">ValidateWithoutCoreType.cs</a></p>
 <p>JsonSchema validation errors, without asserting the core type.</p>
 <pre><code class="language-csharp">public static class ValidateWithoutCoreType
 </code></pre>
+<h2 id="remarks">Remarks</h2>
+<p>Each method mirrors its <code>Type&lt;Format&gt;</code> sibling but, for a value that does not satisfy the format, records a <code>WARNING</code> annotation and reports the value as valid rather than failing.</p>
 <h2 id="inheritance">Inheritance</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <strong>ValidateWithoutCoreType</strong></p>
 <h2 id="methods">Methods</h2>
@@ -158,6 +160,14 @@
 <td>Validates the format datetime.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typedatetimewarning.html#typedatetimewarning-t-validationcontext-validationlevel-string">TypeDateTimeWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>date-time</code> in warning mode.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typedatewarning.html#typedatewarning-t-validationcontext-validationlevel-string">TypeDateWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>date</code> in warning mode.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typedecimal.html#typedecimal-t-validationcontext-validationlevel-string">TypeDecimal(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format decimal.</td>
 </tr>
@@ -170,8 +180,16 @@
 <td>Validates the format duration.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typedurationwarning.html#typedurationwarning-t-validationcontext-validationlevel-string">TypeDurationWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>duration</code> in warning mode.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeemail.html#typeemail-t-validationcontext-validationlevel-string">TypeEmail(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format email.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeemailwarning.html#typeemailwarning-t-validationcontext-validationlevel-string">TypeEmailWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>email</code> in warning mode.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typehalf.html#typehalf-t-validationcontext-validationlevel-string">TypeHalf(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
@@ -182,12 +200,24 @@
 <td>Validates the format hostname.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typehostnamewarning.html#typehostnamewarning-t-validationcontext-validationlevel-string">TypeHostnameWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>hostname</code> in warning mode.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeidnemail.html#typeidnemail-t-validationcontext-validationlevel-string">TypeIdnEmail(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format idn-email.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeidnemailwarning.html#typeidnemailwarning-t-validationcontext-validationlevel-string">TypeIdnEmailWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>idn-email</code> in warning mode.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeidnhostname.html#typeidnhostname-t-validationcontext-validationlevel-string">TypeIdnHostName(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format idn-hostname.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeidnhostnamewarning.html#typeidnhostnamewarning-t-validationcontext-validationlevel-string">TypeIdnHostNameWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>idn-hostname</code> in warning mode.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeint128.html#typeint128-t-validationcontext-validationlevel-string">TypeInt128(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
@@ -214,8 +244,16 @@
 <td>Validates the format ipv4.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeipv4warning.html#typeipv4warning-t-validationcontext-validationlevel-string">TypeIpV4Warning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>ipv4</code> in warning mode.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeipv6.html#typeipv6-t-validationcontext-validationlevel-string">TypeIpV6(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format ipv6.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeipv6warning.html#typeipv6warning-t-validationcontext-validationlevel-string">TypeIpV6Warning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>ipv6</code> in warning mode.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeiri.html#typeiri-t-validationcontext-validationlevel-string">TypeIri(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
@@ -224,6 +262,14 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeirireference.html#typeirireference-t-validationcontext-validationlevel-string">TypeIriReference(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format iri-reference.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeirireferencewarning.html#typeirireferencewarning-t-validationcontext-validationlevel-string">TypeIriReferenceWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>iri-reference</code> in warning mode.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeiriwarning.html#typeiriwarning-t-validationcontext-validationlevel-string">TypeIriWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>iri</code> in warning mode.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typenull.html#typenull-jsonvaluekind-validationcontext-validationlevel-string">TypeNull(JsonValueKind, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
@@ -242,12 +288,24 @@
 <td>Validates the format json-pointer.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typepointerwarning.html#typepointerwarning-t-validationcontext-validationlevel-string">TypePointerWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>json-pointer</code> in warning mode.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeregex.html#typeregex-t-validationcontext-validationlevel-string">TypeRegex(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format regex.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeregexwarning.html#typeregexwarning-t-validationcontext-validationlevel-string">TypeRegexWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>regex</code> in warning mode.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typerelativepointer.html#typerelativepointer-t-validationcontext-validationlevel-string">TypeRelativePointer(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format relative-json-pointer.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typerelativepointerwarning.html#typerelativepointerwarning-t-validationcontext-validationlevel-string">TypeRelativePointerWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>relative-json-pointer</code> in warning mode.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typesbyte.html#typesbyte-t-validationcontext-validationlevel-string">TypeSByte(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
@@ -264,6 +322,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typetime.html#typetime-t-validationcontext-validationlevel-string">TypeTime(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format time.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typetimewarning.html#typetimewarning-t-validationcontext-validationlevel-string">TypeTimeWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>time</code> in warning mode.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeuint128.html#typeuint128-t-validationcontext-validationlevel-string">TypeUInt128(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
@@ -290,12 +352,28 @@
 <td>Validates the format uri-reference.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeurireferencewarning.html#typeurireferencewarning-t-validationcontext-validationlevel-string">TypeUriReferenceWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>uri-reference</code> in warning mode.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeuritemplate.html#typeuritemplate-t-validationcontext-validationlevel-string">TypeUriTemplate(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format uri-template.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeuritemplatewarning.html#typeuritemplatewarning-t-validationcontext-validationlevel-string">TypeUriTemplateWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>uri-template</code> in warning mode.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeuriwarning.html#typeuriwarning-t-validationcontext-validationlevel-string">TypeUriWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>uri</code> in warning mode.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeuuid.html#typeuuid-t-validationcontext-validationlevel-string">TypeUuid(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
 <td>Validates the format uuid.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeuuidwarning.html#typeuuidwarning-t-validationcontext-validationlevel-string">TypeUuidWarning(T, ValidationContext, ValidationLevel, string?)</a> <code>static</code></td>
+<td>Validates the format <code>uuid</code> in warning mode.</td>
 </tr>
 </tbody>
 </table>

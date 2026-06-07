@@ -15467,7 +15467,7 @@
     "Title": "Validate",
     "Description": "JsonSchema validation errors.",
     "Keywords": "Validate class Corvus.Json",
-    "Body": "JsonSchema validation errors.\nTypeString: Validate a string type value.\nTypeNumber: Validate a number type value.\nTypeNull: Validate a null type value.\nTypeInteger: Validates the format integer.\nTypeByte: Validates the format byte.\nTypeSByte: Validates the format sbyte.\nTypeInt16: Validates the format int16.\nTypeUInt16: Validates the format uint16.\nTypeInt32: Validates the format int32.\nTypeUInt32: Validates the format uint32.\nTypeInt64: Validates the format int64.\nTypeUInt64: Validates the format uint64.\nTypeInt128: Validates the format int128.\nTypeUInt128: Validates the format uint128.\nTypeHalf: Validates the format half.\nTypeSingle: Validates the format single.\nTypeDouble: Validates the format double.\nTypeDecimal: Validates the format decimal.\nTypeUriTemplate: Validates the format uri-template.\nTypeIdnEmail: Validates the format idn-email.\nTypeIdnHostName: Validates the format idn-hostname.\nTypeHostname: Validates the format hostname.\nTypeUuid: Validates the format uuid.\nTypeDuration: Validates the format duration.\nTypeEmail: Validates the format email.\nTypeRelativePointer: Validates the format relative-json-pointer.\nTypePointer: Validates the format json-pointer.\nTypeArray: Validate an array type value.\nTypeBoolean: Validate a boolean type value.\nTypeObject: Validate an object type value.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateConst: Validate a const value.\nValidateNumber: Perform numeric validation on the value.\nValidateString: Validates a string value.\nCountRunes: Count the runes in a [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1).\nTypeContentPre201909: Validates a content value.\nTypeContent: Validates a content value.\nTypeBase64ContentPre201909: Validates a base64Content value.\nTypeBase64Content: Validates a base64Content value.\nTypeBase64StringPre201909: Validates a base64 value.\nTypeBase64String: Validates a base64 value.\nTypeRegex: Validates the format regex.\nTypeIriReference: Validates the format iri-reference.\nTypeIri: Validates the format iri.\nTypeUri: Validates the format uri.\nTypeUriReference: Validates the format uri-reference.\nTypeTime: Validates the format time.\nTypeDate: Validates the format date.\nTypeIpV6: Validates the format ipv6.\nTypeIpV4: Validates the format ipv4.\nTypeDateTime: Validates the format datetime."
+    "Body": "JsonSchema validation errors.\nEach method mirrors its `Type<Format>` sibling but, for a value of the correct JSON type that does not satisfy the format, records a `WARNING` annotation and reports the value as valid rather than failing. A value of the wrong JSON type still fails, because warning mode only downgrades the `format` assertion.\nTypeString: Validate a string type value.\nTypeNumber: Validate a number type value.\nTypeNull: Validate a null type value.\nTypeInteger: Validates the format integer.\nTypeByte: Validates the format byte.\nTypeSByte: Validates the format sbyte.\nTypeInt16: Validates the format int16.\nTypeUInt16: Validates the format uint16.\nTypeInt32: Validates the format int32.\nTypeUInt32: Validates the format uint32.\nTypeInt64: Validates the format int64.\nTypeUInt64: Validates the format uint64.\nTypeInt128: Validates the format int128.\nTypeUInt128: Validates the format uint128.\nTypeHalf: Validates the format half.\nTypeSingle: Validates the format single.\nTypeDouble: Validates the format double.\nTypeDecimal: Validates the format decimal.\nTypeUriTemplate: Validates the format uri-template.\nTypeIdnEmail: Validates the format idn-email.\nTypeIdnHostName: Validates the format idn-hostname.\nTypeHostname: Validates the format hostname.\nTypeUuid: Validates the format uuid.\nTypeDuration: Validates the format duration.\nTypeEmail: Validates the format email.\nTypeRelativePointer: Validates the format relative-json-pointer.\nTypePointer: Validates the format json-pointer.\nTypeArray: Validate an array type value.\nTypeBoolean: Validate a boolean type value.\nTypeObject: Validate an object type value.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateEnum: Validate an enumeration.\nValidateConst: Validate a const value.\nValidateNumber: Perform numeric validation on the value.\nValidateString: Validates a string value.\nCountRunes: Count the runes in a [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1).\nTypeContentPre201909: Validates a content value.\nTypeContent: Validates a content value.\nTypeBase64ContentPre201909: Validates a base64Content value.\nTypeBase64Content: Validates a base64Content value.\nTypeBase64StringPre201909: Validates a base64 value.\nTypeBase64String: Validates a base64 value.\nTypeRegex: Validates the format regex.\nTypeIriReference: Validates the format iri-reference.\nTypeIri: Validates the format iri.\nTypeUri: Validates the format uri.\nTypeUriReference: Validates the format uri-reference.\nTypeTime: Validates the format time.\nTypeDate: Validates the format date.\nTypeIpV6: Validates the format ipv6.\nTypeIpV4: Validates the format ipv4.\nTypeDateTime: Validates the format datetime.\nTypeUriTemplateWarning: Validates the format `uri-template` in warning mode.\nTypeIdnEmailWarning: Validates the format `idn-email` in warning mode.\nTypeIdnHostNameWarning: Validates the format `idn-hostname` in warning mode.\nTypeHostnameWarning: Validates the format `hostname` in warning mode.\nTypeUuidWarning: Validates the format `uuid` in warning mode.\nTypeDurationWarning: Validates the format `duration` in warning mode.\nTypeEmailWarning: Validates the format `email` in warning mode.\nTypeRelativePointerWarning: Validates the format `relative-json-pointer` in warning mode.\nTypePointerWarning: Validates the format `json-pointer` in warning mode.\nTypeRegexWarning: Validates the format `regex` in warning mode.\nTypeIriReferenceWarning: Validates the format `iri-reference` in warning mode.\nTypeIriWarning: Validates the format `iri` in warning mode.\nTypeUriWarning: Validates the format `uri` in warning mode.\nTypeUriReferenceWarning: Validates the format `uri-reference` in warning mode.\nTypeTimeWarning: Validates the format `time` in warning mode.\nTypeDateWarning: Validates the format `date` in warning mode.\nTypeIpV6Warning: Validates the format `ipv6` in warning mode.\nTypeIpV4Warning: Validates the format `ipv4` in warning mode.\nTypeDateTimeWarning: Validates the format `date-time` in warning mode."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typestring.html",
@@ -15827,6 +15827,139 @@
     "Body": "Validates the format datetime."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeuritemplatewarning.html",
+    "Title": "Validate.TypeUriTemplateWarning",
+    "Description": "Validates the format `uri-template` in warning mode.",
+    "Keywords": "Validate TypeUriTemplateWarning method Corvus.Json",
+    "Body": "Validates the format `uri-template` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeidnemailwarning.html",
+    "Title": "Validate.TypeIdnEmailWarning",
+    "Description": "Validates the format `idn-email` in warning mode.",
+    "Keywords": "Validate TypeIdnEmailWarning method Corvus.Json",
+    "Body": "Validates the format `idn-email` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeidnhostnamewarning.html",
+    "Title": "Validate.TypeIdnHostNameWarning",
+    "Description": "Validates the format `idn-hostname` in warning mode.",
+    "Keywords": "Validate TypeIdnHostNameWarning method Corvus.Json",
+    "Body": "Validates the format `idn-hostname` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typehostnamewarning.html",
+    "Title": "Validate.TypeHostnameWarning",
+    "Description": "Validates the format `hostname` in warning mode.",
+    "Keywords": "Validate TypeHostnameWarning method Corvus.Json",
+    "Body": "Validates the format `hostname` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeuuidwarning.html",
+    "Title": "Validate.TypeUuidWarning",
+    "Description": "Validates the format `uuid` in warning mode.",
+    "Keywords": "Validate TypeUuidWarning method Corvus.Json",
+    "Body": "Validates the format `uuid` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typedurationwarning.html",
+    "Title": "Validate.TypeDurationWarning",
+    "Description": "Validates the format `duration` in warning mode.",
+    "Keywords": "Validate TypeDurationWarning method Corvus.Json",
+    "Body": "Validates the format `duration` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeemailwarning.html",
+    "Title": "Validate.TypeEmailWarning",
+    "Description": "Validates the format `email` in warning mode.",
+    "Keywords": "Validate TypeEmailWarning method Corvus.Json",
+    "Body": "Validates the format `email` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typerelativepointerwarning.html",
+    "Title": "Validate.TypeRelativePointerWarning",
+    "Description": "Validates the format `relative-json-pointer` in warning mode.",
+    "Keywords": "Validate TypeRelativePointerWarning method Corvus.Json",
+    "Body": "Validates the format `relative-json-pointer` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typepointerwarning.html",
+    "Title": "Validate.TypePointerWarning",
+    "Description": "Validates the format `json-pointer` in warning mode.",
+    "Keywords": "Validate TypePointerWarning method Corvus.Json",
+    "Body": "Validates the format `json-pointer` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeregexwarning.html",
+    "Title": "Validate.TypeRegexWarning",
+    "Description": "Validates the format `regex` in warning mode.",
+    "Keywords": "Validate TypeRegexWarning method Corvus.Json",
+    "Body": "Validates the format `regex` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeirireferencewarning.html",
+    "Title": "Validate.TypeIriReferenceWarning",
+    "Description": "Validates the format `iri-reference` in warning mode.",
+    "Keywords": "Validate TypeIriReferenceWarning method Corvus.Json",
+    "Body": "Validates the format `iri-reference` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeiriwarning.html",
+    "Title": "Validate.TypeIriWarning",
+    "Description": "Validates the format `iri` in warning mode.",
+    "Keywords": "Validate TypeIriWarning method Corvus.Json",
+    "Body": "Validates the format `iri` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeuriwarning.html",
+    "Title": "Validate.TypeUriWarning",
+    "Description": "Validates the format `uri` in warning mode.",
+    "Keywords": "Validate TypeUriWarning method Corvus.Json",
+    "Body": "Validates the format `uri` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeurireferencewarning.html",
+    "Title": "Validate.TypeUriReferenceWarning",
+    "Description": "Validates the format `uri-reference` in warning mode.",
+    "Keywords": "Validate TypeUriReferenceWarning method Corvus.Json",
+    "Body": "Validates the format `uri-reference` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typetimewarning.html",
+    "Title": "Validate.TypeTimeWarning",
+    "Description": "Validates the format `time` in warning mode.",
+    "Keywords": "Validate TypeTimeWarning method Corvus.Json",
+    "Body": "Validates the format `time` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typedatewarning.html",
+    "Title": "Validate.TypeDateWarning",
+    "Description": "Validates the format `date` in warning mode.",
+    "Keywords": "Validate TypeDateWarning method Corvus.Json",
+    "Body": "Validates the format `date` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeipv6warning.html",
+    "Title": "Validate.TypeIpV6Warning",
+    "Description": "Validates the format `ipv6` in warning mode.",
+    "Keywords": "Validate TypeIpV6Warning method Corvus.Json",
+    "Body": "Validates the format `ipv6` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typeipv4warning.html",
+    "Title": "Validate.TypeIpV4Warning",
+    "Description": "Validates the format `ipv4` in warning mode.",
+    "Keywords": "Validate TypeIpV4Warning method Corvus.Json",
+    "Body": "Validates the format `ipv4` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate.typedatetimewarning.html",
+    "Title": "Validate.TypeDateTimeWarning",
+    "Description": "Validates the format `date-time` in warning mode.",
+    "Keywords": "Validate TypeDateTimeWarning method Corvus.Json",
+    "Body": "Validates the format `date-time` in warning mode."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validate-validationcontextwrapper.html",
     "Title": "Validate.ValidationContextWrapper",
     "Description": "",
@@ -15978,7 +16111,7 @@
     "Title": "ValidateWithoutCoreType",
     "Description": "JsonSchema validation errors, without asserting the core type.",
     "Keywords": "ValidateWithoutCoreType class Corvus.Json",
-    "Body": "JsonSchema validation errors, without asserting the core type.\nTypeString: Validate a string type value.\nTypeNumber: Validate a number type value.\nTypeNull: Validate a null type value.\nTypeInteger: Validates the format integer.\nTypeArray: Validate an array type value.\nTypeBoolean: Validate a boolean type value.\nTypeObject: Validate an object type value.\nTypeByte: Validates the format byte.\nTypeSByte: Validates the format sbyte.\nTypeInt16: Validates the format int16.\nTypeUInt16: Validates the format uint16.\nTypeInt32: Validates the format int32.\nTypeUInt32: Validates the format uint32.\nTypeInt64: Validates the format int64.\nTypeUInt64: Validates the format uint64.\nTypeInt128: Validates the format int128.\nTypeUInt128: Validates the format uint128.\nTypeHalf: Validates the format half.\nTypeSingle: Validates the format single.\nTypeDouble: Validates the format double.\nTypeDecimal: Validates the format decimal.\nTypeUriTemplate: Validates the format uri-template.\nTypeIdnEmail: Validates the format idn-email.\nTypeIdnHostName: Validates the format idn-hostname.\nTypeHostname: Validates the format hostname.\nTypeUuid: Validates the format uuid.\nTypeDuration: Validates the format duration.\nTypeEmail: Validates the format email.\nTypeRelativePointer: Validates the format relative-json-pointer.\nTypePointer: Validates the format json-pointer.\nTypeContentPre201909: Validates a content value.\nTypeContent: Validates a content value.\nTypeBase64ContentPre201909: Validates a base64Content value.\nTypeBase64Content: Validates a base64Content value.\nTypeBase64StringPre201909: Validates a base64 value.\nTypeBase64String: Validates a base64 value.\nTypeRegex: Validates the format regex.\nTypeIriReference: Validates the format iri-reference.\nTypeIri: Validates the format iri.\nTypeUri: Validates the format uri.\nTypeUriReference: Validates the format uri-reference.\nTypeTime: Validates the format time.\nTypeDate: Validates the format date.\nTypeIpV6: Validates the format ipv6.\nTypeIpV4: Validates the format ipv4.\nTypeDateTime: Validates the format datetime."
+    "Body": "JsonSchema validation errors, without asserting the core type.\nEach method mirrors its `Type<Format>` sibling but, for a value that does not satisfy the format, records a `WARNING` annotation and reports the value as valid rather than failing.\nTypeString: Validate a string type value.\nTypeNumber: Validate a number type value.\nTypeNull: Validate a null type value.\nTypeInteger: Validates the format integer.\nTypeArray: Validate an array type value.\nTypeBoolean: Validate a boolean type value.\nTypeObject: Validate an object type value.\nTypeByte: Validates the format byte.\nTypeSByte: Validates the format sbyte.\nTypeInt16: Validates the format int16.\nTypeUInt16: Validates the format uint16.\nTypeInt32: Validates the format int32.\nTypeUInt32: Validates the format uint32.\nTypeInt64: Validates the format int64.\nTypeUInt64: Validates the format uint64.\nTypeInt128: Validates the format int128.\nTypeUInt128: Validates the format uint128.\nTypeHalf: Validates the format half.\nTypeSingle: Validates the format single.\nTypeDouble: Validates the format double.\nTypeDecimal: Validates the format decimal.\nTypeUriTemplate: Validates the format uri-template.\nTypeIdnEmail: Validates the format idn-email.\nTypeIdnHostName: Validates the format idn-hostname.\nTypeHostname: Validates the format hostname.\nTypeUuid: Validates the format uuid.\nTypeDuration: Validates the format duration.\nTypeEmail: Validates the format email.\nTypeRelativePointer: Validates the format relative-json-pointer.\nTypePointer: Validates the format json-pointer.\nTypeContentPre201909: Validates a content value.\nTypeContent: Validates a content value.\nTypeBase64ContentPre201909: Validates a base64Content value.\nTypeBase64Content: Validates a base64Content value.\nTypeBase64StringPre201909: Validates a base64 value.\nTypeBase64String: Validates a base64 value.\nTypeRegex: Validates the format regex.\nTypeIriReference: Validates the format iri-reference.\nTypeIri: Validates the format iri.\nTypeUri: Validates the format uri.\nTypeUriReference: Validates the format uri-reference.\nTypeTime: Validates the format time.\nTypeDate: Validates the format date.\nTypeIpV6: Validates the format ipv6.\nTypeIpV4: Validates the format ipv4.\nTypeDateTime: Validates the format datetime.\nTypeUriTemplateWarning: Validates the format `uri-template` in warning mode.\nTypeIdnEmailWarning: Validates the format `idn-email` in warning mode.\nTypeIdnHostNameWarning: Validates the format `idn-hostname` in warning mode.\nTypeHostnameWarning: Validates the format `hostname` in warning mode.\nTypeUuidWarning: Validates the format `uuid` in warning mode.\nTypeDurationWarning: Validates the format `duration` in warning mode.\nTypeEmailWarning: Validates the format `email` in warning mode.\nTypeRelativePointerWarning: Validates the format `relative-json-pointer` in warning mode.\nTypePointerWarning: Validates the format `json-pointer` in warning mode.\nTypeRegexWarning: Validates the format `regex` in warning mode.\nTypeIriReferenceWarning: Validates the format `iri-reference` in warning mode.\nTypeIriWarning: Validates the format `iri` in warning mode.\nTypeUriWarning: Validates the format `uri` in warning mode.\nTypeUriReferenceWarning: Validates the format `uri-reference` in warning mode.\nTypeTimeWarning: Validates the format `time` in warning mode.\nTypeDateWarning: Validates the format `date` in warning mode.\nTypeIpV6Warning: Validates the format `ipv6` in warning mode.\nTypeIpV4Warning: Validates the format `ipv4` in warning mode.\nTypeDateTimeWarning: Validates the format `date-time` in warning mode."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typestring.html",
@@ -16301,6 +16434,139 @@
     "Description": "Validates the format datetime.",
     "Keywords": "ValidateWithoutCoreType TypeDateTime method Corvus.Json",
     "Body": "Validates the format datetime."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeuritemplatewarning.html",
+    "Title": "ValidateWithoutCoreType.TypeUriTemplateWarning",
+    "Description": "Validates the format `uri-template` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeUriTemplateWarning method Corvus.Json",
+    "Body": "Validates the format `uri-template` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeidnemailwarning.html",
+    "Title": "ValidateWithoutCoreType.TypeIdnEmailWarning",
+    "Description": "Validates the format `idn-email` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeIdnEmailWarning method Corvus.Json",
+    "Body": "Validates the format `idn-email` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeidnhostnamewarning.html",
+    "Title": "ValidateWithoutCoreType.TypeIdnHostNameWarning",
+    "Description": "Validates the format `idn-hostname` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeIdnHostNameWarning method Corvus.Json",
+    "Body": "Validates the format `idn-hostname` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typehostnamewarning.html",
+    "Title": "ValidateWithoutCoreType.TypeHostnameWarning",
+    "Description": "Validates the format `hostname` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeHostnameWarning method Corvus.Json",
+    "Body": "Validates the format `hostname` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeuuidwarning.html",
+    "Title": "ValidateWithoutCoreType.TypeUuidWarning",
+    "Description": "Validates the format `uuid` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeUuidWarning method Corvus.Json",
+    "Body": "Validates the format `uuid` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typedurationwarning.html",
+    "Title": "ValidateWithoutCoreType.TypeDurationWarning",
+    "Description": "Validates the format `duration` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeDurationWarning method Corvus.Json",
+    "Body": "Validates the format `duration` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeemailwarning.html",
+    "Title": "ValidateWithoutCoreType.TypeEmailWarning",
+    "Description": "Validates the format `email` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeEmailWarning method Corvus.Json",
+    "Body": "Validates the format `email` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typerelativepointerwarning.html",
+    "Title": "ValidateWithoutCoreType.TypeRelativePointerWarning",
+    "Description": "Validates the format `relative-json-pointer` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeRelativePointerWarning method Corvus.Json",
+    "Body": "Validates the format `relative-json-pointer` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typepointerwarning.html",
+    "Title": "ValidateWithoutCoreType.TypePointerWarning",
+    "Description": "Validates the format `json-pointer` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypePointerWarning method Corvus.Json",
+    "Body": "Validates the format `json-pointer` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeregexwarning.html",
+    "Title": "ValidateWithoutCoreType.TypeRegexWarning",
+    "Description": "Validates the format `regex` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeRegexWarning method Corvus.Json",
+    "Body": "Validates the format `regex` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeirireferencewarning.html",
+    "Title": "ValidateWithoutCoreType.TypeIriReferenceWarning",
+    "Description": "Validates the format `iri-reference` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeIriReferenceWarning method Corvus.Json",
+    "Body": "Validates the format `iri-reference` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeiriwarning.html",
+    "Title": "ValidateWithoutCoreType.TypeIriWarning",
+    "Description": "Validates the format `iri` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeIriWarning method Corvus.Json",
+    "Body": "Validates the format `iri` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeuriwarning.html",
+    "Title": "ValidateWithoutCoreType.TypeUriWarning",
+    "Description": "Validates the format `uri` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeUriWarning method Corvus.Json",
+    "Body": "Validates the format `uri` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeurireferencewarning.html",
+    "Title": "ValidateWithoutCoreType.TypeUriReferenceWarning",
+    "Description": "Validates the format `uri-reference` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeUriReferenceWarning method Corvus.Json",
+    "Body": "Validates the format `uri-reference` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typetimewarning.html",
+    "Title": "ValidateWithoutCoreType.TypeTimeWarning",
+    "Description": "Validates the format `time` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeTimeWarning method Corvus.Json",
+    "Body": "Validates the format `time` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typedatewarning.html",
+    "Title": "ValidateWithoutCoreType.TypeDateWarning",
+    "Description": "Validates the format `date` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeDateWarning method Corvus.Json",
+    "Body": "Validates the format `date` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeipv6warning.html",
+    "Title": "ValidateWithoutCoreType.TypeIpV6Warning",
+    "Description": "Validates the format `ipv6` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeIpV6Warning method Corvus.Json",
+    "Body": "Validates the format `ipv6` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typeipv4warning.html",
+    "Title": "ValidateWithoutCoreType.TypeIpV4Warning",
+    "Description": "Validates the format `ipv4` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeIpV4Warning method Corvus.Json",
+    "Body": "Validates the format `ipv4` in warning mode."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validatewithoutcoretype.typedatetimewarning.html",
+    "Title": "ValidateWithoutCoreType.TypeDateTimeWarning",
+    "Description": "Validates the format `date-time` in warning mode.",
+    "Keywords": "ValidateWithoutCoreType TypeDateTimeWarning method Corvus.Json",
+    "Body": "Validates the format `date-time` in warning mode."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-validationcontext.html",
@@ -17575,6 +17841,34 @@
     "Description": "Get the core types for the given format string.",
     "Keywords": "Format GetCoreTypesFor method Corvus.Json.CodeGeneration",
     "Body": "Get the core types for the given format string."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-formatassertionmode.html",
+    "Title": "FormatAssertionMode",
+    "Description": "Determines how a JSON Schema `format` assertion is emitted by the code generation pipeline for a particular format.",
+    "Keywords": "FormatAssertionMode enum Corvus.Json.CodeGeneration",
+    "Body": "Determines how a JSON Schema `format` assertion is emitted by the code generation pipeline for a particular format.\nThe mode is resolved at code-generation time, not at runtime. Each mode emits different static code, so the default [`Assert`](/api/v4/corvus-json-codegeneration-formatassertionmode.assert.html) path carries no additional runtime branches."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-formatassertionmodeparser.html",
+    "Title": "FormatAssertionModeParser",
+    "Description": "Helpers for parsing per-format [`FormatAssertionMode`](/api/v4/corvus-json-codegeneration-formatassertionmode.html) configuration from the textual forms used by the CLI (`date-time=disable,time=warning`) and the MSBuild source-generator property (`date-time=disable;time=warning`).",
+    "Keywords": "FormatAssertionModeParser class Corvus.Json.CodeGeneration",
+    "Body": "Helpers for parsing per-format [`FormatAssertionMode`](/api/v4/corvus-json-codegeneration-formatassertionmode.html) configuration from the textual forms used by the CLI (`date-time=disable,time=warning`) and the MSBuild source-generator property (`date-time=disable;time=warning`).\nTryParseMode: Tries to parse a single mode token (`assert`, `disable` or `warning`, case-insensitive).\nParseSpecification: Parses a per-format mode specification consisting of `format=mode` pairs separated by any of the given `separators` (e.g. `date-time=disable,time=warning`)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-formatassertionmodeparser.tryparsemode.html",
+    "Title": "FormatAssertionModeParser.TryParseMode",
+    "Description": "Tries to parse a single mode token (`assert`, `disable` or `warning`, case-insensitive).",
+    "Keywords": "FormatAssertionModeParser TryParseMode method Corvus.Json.CodeGeneration",
+    "Body": "Tries to parse a single mode token (`assert`, `disable` or `warning`, case-insensitive)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-formatassertionmodeparser.parsespecification.html",
+    "Title": "FormatAssertionModeParser.ParseSpecification",
+    "Description": "Parses a per-format mode specification consisting of `format=mode` pairs separated by any of the given `separators` (e.g. `date-time=disable,time=warning`).",
+    "Keywords": "FormatAssertionModeParser ParseSpecification method Corvus.Json.CodeGeneration",
+    "Body": "Parses a per-format mode specification consisting of `format=mode` pairs separated by any of the given `separators` (e.g. `date-time=disable,time=warning`)."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.html",
@@ -24406,7 +24700,7 @@
     "Title": "TypeDeclarationExtensions",
     "Description": "Extension methods for [`TypeDeclaration`](/api/v4/corvus-json-codegeneration-typedeclaration.html).",
     "Keywords": "TypeDeclarationExtensions class Corvus.Json.CodeGeneration.CSharp",
-    "Body": "Extension methods for [`TypeDeclaration`](/api/v4/corvus-json-codegeneration-typedeclaration.html).\nIsCorvusJsonExtendedType: Gets a value indicating whether this is a Corvus extended JSON type.\nTryGetCorvusJsonExtendedTypeName: Try to get the Corvus extended type name for the given type declaration.\nPreferredBinaryJsonNumberKind: Gets a value indicating whether this type prefers 128bit integers.\nAlwaysAssertFormat: Gets a value indicating whether to always assert format, regardless of the vocabulary.\nFindChildNameCollision: Determines if there is a child of the parent type declaration whose name matches the proposed name for a given child type declaration.\nOptionalAsNullable: Gets a value indicating whether to generate optional properties as nullable.\nExcludeNonNullDefaulted: Gets a value indicating whether an optional property that declares a non-null `default` should be generated as a non-nullable type, even when [`OptionalAsNullable`](/api/v4/corvus-json-codegeneration-csharp-typedeclarationextensions.optionalasnullable.html) is `true`.\nUseImplicitOperatorString: Gets a value indicating whether to generate an implicit operator for conversion to `string`.\nAddExplicitUsings: Gets a value indicating whether to generate using statements for the standard implicit usings.\nCollidesWithParent: Determines if the given name collides with the parent name.\nMatchesExistingTypeInParent: Determines if the given name collides with another child in the parent.\nIsBuiltInJsonAnyType: Gets a value which determines if this type is the built-in JsonAny type.\nIsCorvusJsonExtendedJsonAny: Gets a value which determines if this type is the built-in JsonAny type.\nIsCorvusJsonExtendedJsonNotAny: Gets a value which determines if this type is the built-in JsonAny type.\nMatchesExistingPropertyNameInParent: Determines if the given name collides with a property name in the parent.\nPreferredDotnetNumericTypeName: Gets the preferred .NET numeric type (e.g. int, double, long etc) for the type declaration.\nPreferredDotnetStringFormatTypeName: Gets the preferred .NET string format type (e.g. JsonUuid, JsonIri etc) for the type declaration.\nFullyQualifiedDotnetTypeName: Gets the fully qualified .NET type name.\nDotnetTypeNameWithoutNamespace: Gets the .NET type name fully qualified, but without the namespace.\nDotnetNamespace: Gets the .NET namespace.\nParent: Gets the .NET namespace.\nSetParent: Sets the parent type declaration for a child.\nChildren: Gets the children of a type declaration.\nDoNotGenerate: Gets a value indicating that this type declaration should not be generated.\nSetDoNotGenerate: Sets a value indicating that this type declaration should not be generated.\nDotnetTypeName: Gets the .NET type name.\nHasDotnetTypeName: Gets a value indicating whether the .NET type name has been set for the type declaration.\nTryGetDotnetTypeName: Tries to get the .NET type name for the type declaration.\nSetDotnetNamespace: Sets the .NET namespace.\nSetDotnetAccessibility: Sets the .NET accessibility.\nDotnetAccessibility: Gets the .NET accessibility.\nSetDotnetTypeName: Sets the .NET type name."
+    "Body": "Extension methods for [`TypeDeclaration`](/api/v4/corvus-json-codegeneration-typedeclaration.html).\nIsCorvusJsonExtendedType: Gets a value indicating whether this is a Corvus extended JSON type.\nTryGetCorvusJsonExtendedTypeName: Try to get the Corvus extended type name for the given type declaration.\nPreferredBinaryJsonNumberKind: Gets a value indicating whether this type prefers 128bit integers.\nAlwaysAssertFormat: Gets a value indicating whether to always assert format, regardless of the vocabulary.\nGetEffectiveFormatMode: Gets the effective [`FormatAssertionMode`](/api/v4/corvus-json-codegeneration-formatassertionmode.html) for the given format on this type declaration.\nGetFormatModeOverride: Tries to get an explicit per-format assertion mode override for the given format.\nFindChildNameCollision: Determines if there is a child of the parent type declaration whose name matches the proposed name for a given child type declaration.\nOptionalAsNullable: Gets a value indicating whether to generate optional properties as nullable.\nExcludeNonNullDefaulted: Gets a value indicating whether an optional property that declares a non-null `default` should be generated as a non-nullable type, even when [`OptionalAsNullable`](/api/v4/corvus-json-codegeneration-csharp-typedeclarationextensions.optionalasnullable.html) is `true`.\nUseImplicitOperatorString: Gets a value indicating whether to generate an implicit operator for conversion to `string`.\nAddExplicitUsings: Gets a value indicating whether to generate using statements for the standard implicit usings.\nCollidesWithParent: Determines if the given name collides with the parent name.\nMatchesExistingTypeInParent: Determines if the given name collides with another child in the parent.\nIsBuiltInJsonAnyType: Gets a value which determines if this type is the built-in JsonAny type.\nIsCorvusJsonExtendedJsonAny: Gets a value which determines if this type is the built-in JsonAny type.\nIsCorvusJsonExtendedJsonNotAny: Gets a value which determines if this type is the built-in JsonAny type.\nMatchesExistingPropertyNameInParent: Determines if the given name collides with a property name in the parent.\nPreferredDotnetNumericTypeName: Gets the preferred .NET numeric type (e.g. int, double, long etc) for the type declaration.\nPreferredDotnetStringFormatTypeName: Gets the preferred .NET string format type (e.g. JsonUuid, JsonIri etc) for the type declaration.\nFullyQualifiedDotnetTypeName: Gets the fully qualified .NET type name.\nDotnetTypeNameWithoutNamespace: Gets the .NET type name fully qualified, but without the namespace.\nDotnetNamespace: Gets the .NET namespace.\nParent: Gets the .NET namespace.\nSetParent: Sets the parent type declaration for a child.\nChildren: Gets the children of a type declaration.\nDoNotGenerate: Gets a value indicating that this type declaration should not be generated.\nSetDoNotGenerate: Sets a value indicating that this type declaration should not be generated.\nDotnetTypeName: Gets the .NET type name.\nHasDotnetTypeName: Gets a value indicating whether the .NET type name has been set for the type declaration.\nTryGetDotnetTypeName: Tries to get the .NET type name for the type declaration.\nSetDotnetNamespace: Sets the .NET namespace.\nSetDotnetAccessibility: Sets the .NET accessibility.\nDotnetAccessibility: Gets the .NET accessibility.\nSetDotnetTypeName: Sets the .NET type name."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-csharp-typedeclarationextensions.setcsharpoptions.html",
@@ -24442,6 +24736,20 @@
     "Description": "Gets a value indicating whether to always assert format, regardless of the vocabulary.",
     "Keywords": "TypeDeclarationExtensions AlwaysAssertFormat method Corvus.Json.CodeGeneration.CSharp",
     "Body": "Gets a value indicating whether to always assert format, regardless of the vocabulary."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-csharp-typedeclarationextensions.geteffectiveformatmode.html",
+    "Title": "TypeDeclarationExtensions.GetEffectiveFormatMode",
+    "Description": "Gets the effective [`FormatAssertionMode`](/api/v4/corvus-json-codegeneration-formatassertionmode.html) for the given format on this type declaration.",
+    "Keywords": "TypeDeclarationExtensions GetEffectiveFormatMode method Corvus.Json.CodeGeneration.CSharp",
+    "Body": "Gets the effective [`FormatAssertionMode`](/api/v4/corvus-json-codegeneration-formatassertionmode.html) for the given format on this type declaration."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-csharp-typedeclarationextensions.getformatmodeoverride.html",
+    "Title": "TypeDeclarationExtensions.GetFormatModeOverride",
+    "Description": "Tries to get an explicit per-format assertion mode override for the given format.",
+    "Keywords": "TypeDeclarationExtensions GetFormatModeOverride method Corvus.Json.CodeGeneration.CSharp",
+    "Body": "Tries to get an explicit per-format assertion mode override for the given format."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-csharp-typedeclarationextensions.findchildnamecollision.html",

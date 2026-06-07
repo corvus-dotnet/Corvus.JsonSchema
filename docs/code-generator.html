@@ -370,7 +370,12 @@ dotnet tool install Corvus.Json.Cli
 <tr>
 <td><code>--assertFormat</code></td>
 <td><code>true</code></td>
-<td>Enforce <code>format</code> keyword as a validation assertion</td>
+<td>Enforce <code>format</code> keyword as a validation assertion (global default)</td>
+</tr>
+<tr>
+<td><code>--formatMode</code></td>
+<td>—</td>
+<td>Per-format assertion mode overrides as comma-separated <code>format=mode</code> pairs, where <code>mode</code> is <code>assert</code>, <code>disable</code>, or <code>warning</code> (e.g. <code>date-time=disable,time=warning</code>). Repeatable. An override takes precedence over <code>--assertFormat</code>. Warning mode applies to string formats only.</td>
 </tr>
 <tr>
 <td><code>--optionalAsNullable</code></td>
@@ -454,6 +459,7 @@ corvusjson jsonschema Schemas/config.json \
     &quot;outputPath&quot;: &quot;Generated/&quot;,
     &quot;useSchema&quot;: &quot;Draft202012&quot;,
     &quot;assertFormat&quot;: true,
+    &quot;formatMode&quot;: { &quot;date-time&quot;: &quot;disable&quot;, &quot;time&quot;: &quot;warning&quot; },
     &quot;optionalAsNullable&quot;: &quot;None&quot;,
     &quot;typesToGenerate&quot;: [
         {
@@ -531,6 +537,12 @@ corvusjson jsonschema Schemas/config.json \
 <td>No</td>
 <td><code>true</code></td>
 <td>When <code>true</code>, the <code>format</code> keyword is enforced as a validation assertion. When <code>false</code>, <code>format</code> is treated as an annotation only (per the JSON Schema specification).</td>
+</tr>
+<tr>
+<td><code>formatMode</code></td>
+<td>No</td>
+<td>—</td>
+<td>A dictionary of per-format assertion mode overrides. Keys are format names (e.g. <code>date-time</code>); values are <code>assert</code>, <code>disable</code>, or <code>warning</code>. An override takes precedence over <code>assertFormat</code> and the vocabulary's format-assertion behaviour. <code>assert</code> validates and fails on a non-conformant value; <code>disable</code> makes the format annotation-only; <code>warning</code> validates but always succeeds, emitting a <code>WARNING</code> annotation on a mismatch. Warning mode applies to string formats only; for a numeric format it falls back to <code>assert</code>.</td>
 </tr>
 <tr>
 <td><code>optionalAsNullable</code></td>

@@ -420,6 +420,7 @@ public readonly partial struct PhoneNumber;
   &lt;CorvusTextJsonFallbackVocabulary&gt;Draft202012&lt;/CorvusTextJsonFallbackVocabulary&gt;
   &lt;CorvusTextJsonOptionalAsNullable&gt;NullOrUndefined&lt;/CorvusTextJsonOptionalAsNullable&gt;
   &lt;CorvusTextJsonAlwaysAssertFormat&gt;true&lt;/CorvusTextJsonAlwaysAssertFormat&gt;
+  &lt;CorvusTextJsonFormatMode&gt;date-time=disable;time=warning&lt;/CorvusTextJsonFormatMode&gt;
 &lt;/PropertyGroup&gt;
 </code></pre>
 <table>
@@ -445,6 +446,11 @@ public readonly partial struct PhoneNumber;
 <td><code>CorvusTextJsonAlwaysAssertFormat</code></td>
 <td><code>true</code></td>
 <td>When <code>true</code>, the <code>format</code> keyword is enforced as a validation assertion. When <code>false</code>, it is treated as an annotation only.</td>
+</tr>
+<tr>
+<td><code>CorvusTextJsonFormatMode</code></td>
+<td>—</td>
+<td>Per-format assertion mode overrides as semicolon-separated <code>format=mode</code> pairs, where <code>mode</code> is <code>assert</code>, <code>disable</code>, or <code>warning</code> (e.g. <code>date-time=disable;time=warning</code>). An override takes precedence over <code>CorvusTextJsonAlwaysAssertFormat</code>. <code>disable</code> makes the format annotation-only; <code>warning</code> validates but always succeeds, emitting a <code>WARNING</code> annotation on a mismatch. Warning mode applies to string formats only; for a numeric format it falls back to <code>assert</code>.</td>
 </tr>
 <tr>
 <td><code>CorvusTextJsonUseImplicitOperatorString</code></td>

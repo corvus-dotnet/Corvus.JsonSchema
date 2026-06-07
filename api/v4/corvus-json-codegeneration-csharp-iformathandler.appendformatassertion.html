@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration.CSharp<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="appendformatassertion-codegenerator-string-string-string-bool-ikeyword-ikeyword-bool">AppendFormatAssertion(CodeGenerator, string, string, string, bool, IKeyword?, IKeyword?, bool)</h2>
+<h2 id="appendformatassertion-codegenerator-string-string-string-bool-ikeyword-ikeyword-bool-bool">AppendFormatAssertion(CodeGenerator, string, string, string, bool, IKeyword?, IKeyword?, bool, bool)</h2>
 <p>Append a format assertion to the generator.</p>
-<pre><code class="language-csharp">public abstract bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod)
+<pre><code class="language-csharp">public abstract bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier, bool includeType, IKeyword? typeKeyword, IKeyword? formatKeyword, bool returnFromMethod, bool warn)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -151,6 +151,11 @@
 <td><code>returnFromMethod</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
 <td>If <code>true</code>, then the method will return. Otherwise it will set the <code>validationContextIdentifier</code>.</td>
+</tr>
+<tr>
+<td><code>warn</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
+<td>If <code>true</code>, emit the warning-mode variant that records a <code>WARNING</code> annotation on mismatch instead of failing validation. <em>(optional)</em></td>
 </tr>
 </tbody>
 </table>
