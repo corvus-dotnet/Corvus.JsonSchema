@@ -119,6 +119,32 @@ public class WorkflowInterpolationTests
     }
 
     [TestMethod]
+    public void Interpolate_compiled_template()
+    {
+        using ParsedJsonDocument<JsonElement> inputs = Parse("""{ "host": "h" }""");
+        using ParsedJsonDocument<JsonElement> stepOutputs = Parse("""{ "id": "42" }""");
+        var context = new WorkflowExecutionContext();
+        context.SetInputs(inputs.RootElement);
+        context.SetStepOutputs("create", stepOutputs.RootElement);
+
+        CompiledInterpolationTemplate template = CompiledInterpolationTemplate.Compile("https://{$inputs.host}/api/{$steps.create.outputs.id}");
+        var output = new ArrayBufferWriter<byte>();
+        context.TryInterpolate(template, output).ShouldBeTrue();
+
+        Encoding.UTF8.GetString(output.WrittenSpan).ShouldBe("https://h/api/42");
+    }
+
+    [TestMethod]
+    public void Interpolate_compiled_template_unresolved_returns_false()
+    {
+        var context = new WorkflowExecutionContext();
+        CompiledInterpolationTemplate template = CompiledInterpolationTemplate.Compile("Bearer {$steps.login.outputs.token}");
+        var output = new ArrayBufferWriter<byte>();
+
+        context.TryInterpolate(template, output).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public void Interpolate_to_buffer_writer()
     {
         using ParsedJsonDocument<JsonElement> doc = Parse("""{ "host": "example.com" }""");
