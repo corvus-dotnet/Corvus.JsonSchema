@@ -142,6 +142,54 @@ public class CompiledCriterionTests
     }
 
     [TestMethod]
+    [DataRow(404, true)]
+    [DataRow(200, false)]
+    public void Regex_against_status_code(int statusCode, bool expected)
+    {
+        var context = new WorkflowExecutionContext();
+        context.SetResponseStatusCode(statusCode);
+
+        CompiledCriterion criterion = CompiledCriterion.Compile(CriterionType.Regex, "^4", "$statusCode");
+
+        criterion.Evaluate(context).ShouldBe(expected);
+    }
+
+    [TestMethod]
+    public void Regex_against_literal_context()
+    {
+        var context = new WorkflowExecutionContext();
+
+        CompiledCriterion.Compile(CriterionType.Regex, "ell", "'hello'").Evaluate(context).ShouldBeTrue();
+        CompiledCriterion.Compile(CriterionType.Regex, "^z", "'hello'").Evaluate(context).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void Regex_against_non_string_json_does_not_match()
+    {
+        using ParsedJsonDocument<JsonElement> doc = Parse("""{ "count": 42 }""");
+        var context = new WorkflowExecutionContext();
+        context.SetResponseBody(doc.RootElement);
+
+        CompiledCriterion.Compile(CriterionType.Regex, "42", "$response.body#/count")
+            .Evaluate(context).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void Regex_against_unescaped_string_value()
+    {
+        // The body string contains a JSON escape; the regex must see the unescaped text (a tab),
+        // not the raw \t sequence.
+        using ParsedJsonDocument<JsonElement> doc = Parse("""{ "label": "a\tb" }""");
+        var context = new WorkflowExecutionContext();
+        context.SetResponseBody(doc.RootElement);
+
+        CompiledCriterion.Compile(CriterionType.Regex, "a\tb", "$response.body#/label")
+            .Evaluate(context).ShouldBeTrue();
+        CompiledCriterion.Compile(CriterionType.Regex, @"a\\tb", "$response.body#/label")
+            .Evaluate(context).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public void JsonPath_non_empty_passes()
     {
         using ParsedJsonDocument<JsonElement> doc = Parse("""{ "items": [1, 2, 3] }""");
