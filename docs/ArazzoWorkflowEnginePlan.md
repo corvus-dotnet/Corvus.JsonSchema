@@ -470,3 +470,93 @@ ecosystem specifically — **Azure Storage** are the backends customers expect.
 Each is a thin adapter over the same JSON checkpoint, so adding a backend is
 low cost; we ship the first wave with the durability feature and add the rest
 based on demand.
+
+## 10. Faulting, resume, and workflow management (control plane)
+
+Durability is only useful if operators can see and act on stuck runs. The engine
+needs a **control plane**: fault a run, query faulted/suspended runs, and resume
+(or remediate, cancel) them. This is the workflow-level analogue of a
+dead-letter queue — and the AsyncAPI side already models DLQ inspection and
+redelivery (`RecordDeadLetter`, dead-letter channels), so the shape is familiar.
+
+### Run lifecycle
+
+Every run has a persisted status, stored in its checkpoint:
+
+`Pending → Running → { Suspended (awaiting timer/message) | Completed | Cancelled | Faulted }`
+
+A run **faults** when a step errors and the workflow's own `failureActions`
+don't resolve it — `retryLimit` exhausted with no `goto`/`end`, an unhandled
+operation/transport error, a failed `successCriteria` with no handler, or an
+input/schema validation failure — or on an infrastructure error mid-execution.
+Faulting is distinct from a *clean* failure (`failureActions: end`): a clean end
+is terminal-by-design; a fault is **terminal-but-recoverable**, awaiting action.
+
+The persisted **fault record** captures: the faulted `stepId`, attempt count,
+the error (type/message, and which runtime expression or criterion failed), the
+timestamp (from the injected `TimeProvider`), a `retriable` hint, and the pointer
+to the last good checkpoint. Faulting emits an error span + a `faulted` metric
+counter (alertable), and the fault detail is appended to the run's history (the
+execution trace *is* the history).
+
+### Visibility index (querying)
+
+Following Temporal's split of authoritative state vs. *visibility*, the
+checkpoint store holds the source of truth while a **queryable index** answers
+management queries. This is the *same* index Tier 2 uses to find due/awaiting
+runs (§9.4) generalized to carry: status, `workflowId`, created/updated/faulted
+timestamps, error type, and user tags. Rich backends (SQL/Cosmos/Mongo) make
+this columns/fields; a blob-only store gets a companion Azure Table. So one
+index serves timers, correlation wake-ups, *and* operator queries.
+
+### Management API
+
+A control-plane client over the store + the same worker-trigger channel used for
+Tier 2 resume:
+
+```csharp
+public interface IWorkflowManagementClient
+{
+    // Query / visibility
+    ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, CancellationToken ct);   // filter by status, workflowId, time range, error type, tags; paged
+    ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, CancellationToken ct);     // status + fault detail + history/trace
+
+    // Control
+    ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, CancellationToken ct);
+    ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, CancellationToken ct);
+    ValueTask<bool> SuspendAsync(WorkflowRunId id, CancellationToken ct);               // and UnsuspendAsync
+    ValueTask<int>  PurgeAsync(WorkflowPurgeQuery query, CancellationToken ct);          // reap old completed/cancelled
+}
+```
+
+### Resume / remediation options for a faulted run
+
+`ResumeOptions` covers the operator intents (each is: load checkpoint → mutate
+status/cursor/state under optimistic concurrency → enqueue for a worker):
+
+- **Retry the faulted step** — reset the cursor to the faulted step, clear its
+  partial state, re-execute. (The common case.)
+- **Resume from an earlier step (rewind)** — set the cursor back, discard outputs
+  after it, re-run. (cf. Temporal *reset* / Durable Functions *rewind*.)
+- **Skip the faulted step** — mark it skipped (empty or operator-supplied
+  outputs), advance. (Only safe when downstream doesn't need its outputs.)
+- **Resume with a state patch** — apply a **JSON Patch** (reuse
+  `Corvus.Text.Json.Patch`) to the persisted context to fix a bad input/output,
+  then retry. Powerful for manual remediation.
+- **Cancel** — mark `Cancelled`.
+
+All mutations use the store's optimistic concurrency (ETag/version) and take a
+lease, so concurrent operators — or an operator and a worker — can't conflict.
+Every management action is appended to the run history for **audit** (who, when,
+what patch/reason).
+
+### Phasing
+
+- **Phase 3** (with Tier 1 durability + the state machine): introduce the run
+  lifecycle, the `Faulted` state + fault record, and basic `ResumeAsync`
+  (retry-faulted-step) and `CancelAsync`.
+- **Phase 6** (productionization): the full `IWorkflowManagementClient` with the
+  visibility index, rich queries, rewind/skip/state-patch resume, purge, audit
+  trail, and a CLI surface (e.g. `arazzo-runs list --status faulted`,
+  `arazzo-runs resume <id>`). Conformance tests assert the fault → query →
+  resume → complete cycle, including the emitted telemetry.
