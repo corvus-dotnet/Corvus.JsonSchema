@@ -1789,7 +1789,7 @@ skills:
   - path: ".github/skills/corvus-test-suite-regeneration/SKILL.md"
     blocks:
       - {index: 0, language: powershell, lines: [18, 20]}
-      - {index: 1, language: powershell, lines: [41, 49]}
+      - {index: 1, language: powershell, lines: [44, 53]}
   - path: ".github/skills/corvus-v4-migration/SKILL.md"
     blocks:
       - {index: 0, language: xml, lines: [29, 31]}

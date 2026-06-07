@@ -26,25 +26,29 @@ This handles the full workflow:
 ## V5 Test Generator
 
 The `Corvus.JsonSchemaTestSuite.CodeGenerator` project generates test classes for 3 suites,
-all of which are subdirectories under `tests/Corvus.Text.Json.Tests/`:
+output into two test projects:
 
 | Output subdirectory | Purpose |
 |---------------------|---------|
-| `tests/Corvus.Text.Json.Tests/JsonSchemaTestSuite/` | Full type-based validation tests |
-| `tests/Corvus.Text.Json.Tests/StandaloneEvaluatorTestSuite/` | Evaluator-only tests |
-| `tests/Corvus.Text.Json.Tests/AnnotationTestSuite/` | Annotation collection tests |
+| `tests/Corvus.Text.Json.SchemaTestSuite.Tests/JsonSchemaTestSuite/` | Full type-based validation tests |
+| `tests/Corvus.Text.Json.EvaluatorTestSuite.Tests/StandaloneEvaluatorTestSuite/` | Evaluator-only tests |
+| `tests/Corvus.Text.Json.EvaluatorTestSuite.Tests/AnnotationTestSuite/` | Annotation collection tests |
 
-These are NOT separate projects — they are subdirectories within `Corvus.Text.Json.Tests`.
+The output paths are configured in the generator's `appsettings.json` (`outputPath`,
+`evaluatorOutputPath`, `annotationOutputPath`). The emitted fixtures are OS-independent
+(embedded paths use `/`, embedded JSON uses LF), so regeneration is byte-stable across
+operating systems.
 
-**CRITICAL:** The V5 generator must be run **from its `bin/` directory**, not via `dotnet run`, because `appsettings.json` uses relative paths that resolve from the exe's working directory.
+**CRITICAL:** The V5 generator must be run **from its `bin/` directory**, not via `dotnet run`, because `appsettings.json` uses relative paths that resolve from the working directory.
 
 ```powershell
 # Build the generator
 dotnet build tests\Corvus.JsonSchemaTestSuite.CodeGenerator -c Release
 
-# Run from bin directory
+# Run from bin directory (use `dotnet <dll>` so it works on every OS;
+# the apphost is `.exe` on Windows only)
 Push-Location tests\Corvus.JsonSchemaTestSuite.CodeGenerator\bin\Release\net10.0
-.\Corvus.JsonSchemaTestSuite.CodeGenerator.exe > $null
+dotnet .\Corvus.JsonSchemaTestSuite.CodeGenerator.dll > $null
 Pop-Location
 ```
 
