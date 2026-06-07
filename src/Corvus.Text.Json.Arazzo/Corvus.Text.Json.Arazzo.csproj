@@ -9,37 +9,16 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
-    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>Runtime support for executing Arazzo workflows: runtime-expression evaluation, criterion evaluation, execution context, control-flow signals, and OpenTelemetry instrumentation.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-  <PropertyGroup>
-    <CommonPath>..\..\Common\src\</CommonPath>
-  </PropertyGroup>
-  <ItemGroup>
-    <!-- Link the repository's internal zero-allocation UTF-8 string builder (not an external package),
-         as Corvus.Text.Json.JsonLogic / .Toon / .Jsonata do. -->
-    <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.cs" Link="Common\Utf8ValueStringBuilder.cs" />
-    <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.AppendHelpers.cs" Link="Common\Utf8ValueStringBuilder.AppendHelpers.cs" />
-    <!-- Share the codegen layer's ECMAScript→.NET regex translator as source (it has no codegen
-         dependencies), so the interpreted CompiledCriterion evaluates regex conditions in the spec's
-         ECMA-262 dialect — the same translation the inlined [GeneratedRegex] path applies at gen time. -->
-    <Compile Include="..\Corvus.Text.Json.CodeGeneration\EcmaRegexTranslator.cs" Link="Internal\EcmaRegexTranslator.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Tests" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.JsonPath\Corvus.Text.Json.JsonPath.csproj" />
-    <!-- The hosted-workflow contract (IHostedWorkflow) exposes the transport interfaces a generated executor
-         is driven through, so the runtime references the OpenAPI/AsyncAPI runtimes that define them. -->
-    <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo10\Corvus.Text.Json.Arazzo10.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />

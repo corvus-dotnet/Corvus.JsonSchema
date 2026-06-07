@@ -49,8 +49,6 @@ public static class CliAppFactory
                     .WithDescription("Generate typed producers, consumers, and message types from an AsyncAPI specification.");
                 c.AddCommand<ArazzoShowCommand>("arazzo-show")
                     .WithDescription("Display the source descriptions, workflows, and steps of an Arazzo workflow document.");
-                c.AddCommand<ArazzoGenerateCommand>("arazzo-generate")
-                    .WithDescription("Generate strongly-typed workflow executors (and their inputs models and OpenAPI clients) from an Arazzo workflow document.");
 #endif
             });
         return app;
