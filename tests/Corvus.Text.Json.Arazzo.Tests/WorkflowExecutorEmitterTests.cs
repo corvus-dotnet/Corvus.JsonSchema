@@ -49,6 +49,11 @@ public class WorkflowExecutorEmitterTests
         source.ShouldContain("ArazzoTelemetry.WorkflowsStarted.Add(1);");
         source.ShouldContain("ArazzoTelemetry.WorkflowsCompleted.Add(1);");
         source.ShouldContain("ArazzoTelemetry.WorkflowsFaulted.Add(1);");
+
+        // Defensive: validates arguments and records the failure on the span.
+        source.ShouldContain("ArgumentNullException.ThrowIfNull(transport);");
+        source.ShouldContain("ArgumentNullException.ThrowIfNull(workspace);");
+        source.ShouldContain("activity?.SetStatus(ActivityStatusCode.Error, ex.Message);");
     }
 
     [TestMethod]
