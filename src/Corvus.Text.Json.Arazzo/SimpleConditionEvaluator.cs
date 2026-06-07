@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
+
 namespace Corvus.Text.Json.Arazzo;
 
 /// <summary>
@@ -84,6 +86,11 @@ public sealed class SimpleConditionEvaluator
             => left.Evaluate(context) && right.Evaluate(context);
     }
 
+    private sealed class NotNode(Node inner) : Node
+    {
+        public override bool Evaluate(WorkflowExecutionContext context) => !inner.Evaluate(context);
+    }
+
     private sealed class TruthyNode(Operand operand) : Node
     {
         public override bool Evaluate(WorkflowExecutionContext context)
@@ -133,21 +140,91 @@ public sealed class SimpleConditionEvaluator
     {
         private readonly ArazzoExpression expression;
         private readonly Comparand literal;
+        private readonly string? navigationPointer;
         private readonly bool isLiteral;
 
-        private Operand(ArazzoExpression expression, Comparand literal, bool isLiteral)
+        private Operand(ArazzoExpression expression, Comparand literal, string? navigationPointer, bool isLiteral)
         {
             this.expression = expression;
             this.literal = literal;
+            this.navigationPointer = navigationPointer;
             this.isLiteral = isLiteral;
         }
 
-        public static Operand FromExpression(ArazzoExpression expression) => new(expression, default, false);
+        public static Operand FromExpression(ArazzoExpression expression, string? navigationPointer)
+            => new(expression, default, navigationPointer, false);
 
-        public static Operand FromLiteral(Comparand literal) => new(default, literal, true);
+        public static Operand FromLiteral(Comparand literal) => new(default, literal, null, true);
 
         public Comparand Resolve(WorkflowExecutionContext context)
-            => this.isLiteral ? this.literal : context.ResolveComparand(this.expression);
+            => this.isLiteral ? this.literal : context.ResolveComparand(this.expression, this.navigationPointer);
+    }
+
+    /// <summary>
+    /// Splits an operand token into a runtime expression and an optional JSON Pointer representing
+    /// trailing <c>.property</c>/<c>[index]</c> navigation. Resolves the ABNF ambiguity the same way
+    /// the grammar does: the longest leading substring that parses as a runtime expression is the
+    /// base (so dot-bearing input/output/step names bind greedily), and any remainder is navigation.
+    /// </summary>
+    private static (ArazzoExpression Expression, string? NavigationPointer) SplitNavigation(string token)
+    {
+        string baseToken = token;
+        List<string>? segmentsRightToLeft = null;
+
+        while (true)
+        {
+            ArazzoExpression expression = ArazzoExpression.Parse(baseToken);
+            if (expression.Source != ArazzoExpressionSource.Literal)
+            {
+                return (expression, segmentsRightToLeft is null ? null : BuildPointer(segmentsRightToLeft));
+            }
+
+            if (!TryStripTrailingSegment(ref baseToken, out string segment))
+            {
+                return (expression, null);
+            }
+
+            (segmentsRightToLeft ??= []).Add(segment);
+        }
+    }
+
+    private static bool TryStripTrailingSegment(ref string token, out string segment)
+    {
+        if (token.Length > 0 && token[^1] == ']')
+        {
+            int open = token.LastIndexOf('[');
+            if (open >= 0)
+            {
+                segment = token[(open + 1)..^1];
+                token = token[..open];
+                return true;
+            }
+        }
+
+        int dot = token.LastIndexOf('.');
+        if (dot > 0)
+        {
+            segment = token[(dot + 1)..];
+            token = token[..dot];
+            return true;
+        }
+
+        segment = string.Empty;
+        return false;
+    }
+
+    private static string BuildPointer(List<string> segmentsRightToLeft)
+    {
+        var builder = new StringBuilder();
+        for (int i = segmentsRightToLeft.Count - 1; i >= 0; i--)
+        {
+            builder.Append('/');
+
+            // RFC 6901 escaping: '~' -> '~0', '/' -> '~1'.
+            builder.Append(segmentsRightToLeft[i].Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal));
+        }
+
+        return builder.ToString();
     }
 
     private ref struct Parser(string text)
@@ -179,13 +256,29 @@ public sealed class SimpleConditionEvaluator
 
         private Node ParseAnd()
         {
-            Node left = this.ParseComparison();
+            Node left = this.ParseNot();
             while (this.TryConsume("&&"))
             {
-                left = new AndNode(left, this.ParseComparison());
+                left = new AndNode(left, this.ParseNot());
             }
 
             return left;
+        }
+
+        private Node ParseNot()
+        {
+            this.SkipWhitespace();
+
+            // A leading '!' is the NOT operator — but not when it is the start of '!='.
+            if (this.position < this.span.Length
+                && this.span[this.position] == '!'
+                && (this.position + 1 >= this.span.Length || this.span[this.position + 1] != '='))
+            {
+                this.position++;
+                return new NotNode(this.ParseNot());
+            }
+
+            return this.ParseComparison();
         }
 
         private Node ParseComparison()
@@ -222,7 +315,8 @@ public sealed class SimpleConditionEvaluator
 
             if (token[0] == '$')
             {
-                return Operand.FromExpression(ArazzoExpression.Parse(token.ToString()));
+                (ArazzoExpression expr, string? navigationPointer) = SplitNavigation(token.ToString());
+                return Operand.FromExpression(expr, navigationPointer);
             }
 
             Comparand literal = Comparand.ParseLiteral(token);

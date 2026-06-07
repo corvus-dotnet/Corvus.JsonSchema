@@ -72,12 +72,21 @@ public sealed partial class WorkflowExecutionContext
     }
 
     /// <summary>
-    /// Resolves a runtime expression to a typed <see cref="Comparand"/> for <c>simple</c> criteria.
+    /// Resolves a runtime expression to a typed <see cref="Comparand"/> for <c>simple</c> criteria,
+    /// optionally navigating into the resolved value with a JSON Pointer (for the <c>.</c>/<c>[]</c>
+    /// operand operators).
     /// </summary>
     /// <param name="expression">The parsed expression.</param>
+    /// <param name="navigationPointer">An optional JSON Pointer to navigate into a JSON-valued result.</param>
     /// <returns>The resolved comparand, or <see cref="Comparand.Undefined"/> if it could not be resolved.</returns>
-    internal Comparand ResolveComparand(in ArazzoExpression expression)
+    internal Comparand ResolveComparand(in ArazzoExpression expression, string? navigationPointer = null)
     {
+        // Navigation (.property / [index]) only applies to JSON-valued sources, not scalars.
+        if (navigationPointer is not null && IsScalarSource(expression.Source))
+        {
+            return Comparand.Undefined;
+        }
+
         switch (expression.Source)
         {
             case ArazzoExpressionSource.Url:
@@ -105,11 +114,29 @@ public sealed partial class WorkflowExecutionContext
                 return ComparandFromMap(this.messageHeaders, expression.Name);
 
             default:
-                return this.TryResolveValue(expression, out JsonElement element)
-                    ? ComparandFromJson(element)
-                    : Comparand.Undefined;
+                if (!this.TryResolveValue(expression, out JsonElement element))
+                {
+                    return Comparand.Undefined;
+                }
+
+                if (navigationPointer is not null && !element.TryResolvePointer(navigationPointer, out element))
+                {
+                    return Comparand.Undefined;
+                }
+
+                return ComparandFromJson(element);
         }
     }
+
+    private static bool IsScalarSource(ArazzoExpressionSource source)
+        => source is ArazzoExpressionSource.Url
+            or ArazzoExpressionSource.Method
+            or ArazzoExpressionSource.StatusCode
+            or ArazzoExpressionSource.RequestHeader
+            or ArazzoExpressionSource.RequestQuery
+            or ArazzoExpressionSource.RequestPath
+            or ArazzoExpressionSource.ResponseHeader
+            or ArazzoExpressionSource.MessageHeader;
 
     private static Comparand ComparandFromJson(in JsonElement element)
         => element.ValueKind switch

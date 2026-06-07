@@ -20,6 +20,13 @@ namespace Corvus.Text.Json.Arazzo;
 /// which caches the compiled query by expression so it is compiled at most once per process.
 /// </para>
 /// <para>
+/// Per the spec, <c>regex</c>/<c>jsonpath</c>/<c>xpath</c> conditions may contain embedded
+/// <c>{expression}</c> fragments that are substituted before the pattern/query is evaluated. When a
+/// condition contains such fragments it is <em>dynamic</em>: it is interpolated against the context
+/// on each evaluation (the resulting pattern/query is still cache-compiled by the regex engine /
+/// <see cref="JsonPathEvaluator"/>). Conditions without embedded expressions are fully compiled once.
+/// </para>
+/// <para>
 /// This is the <em>interpreted</em> evaluator, used for dynamic execution. Code-generated
 /// executors (.NET 10+) instead emit criteria ahead-of-time for zero per-evaluation overhead:
 /// JSONPath via the Corvus JSONPath source generator and regular expressions via
@@ -31,21 +38,27 @@ public sealed class CompiledCriterion
     private readonly CriterionType type;
     private readonly SimpleConditionEvaluator? simple;
     private readonly Regex? regex;
-    private readonly string? jsonPathQuery;
+    private readonly TimeSpan regexTimeout;
+    private readonly string? condition;
     private readonly ArazzoExpression context;
+    private readonly bool isDynamic;
 
     private CompiledCriterion(
         CriterionType type,
         SimpleConditionEvaluator? simple,
         Regex? regex,
-        string? jsonPathQuery,
-        ArazzoExpression context)
+        TimeSpan regexTimeout,
+        string? condition,
+        ArazzoExpression context,
+        bool isDynamic)
     {
         this.type = type;
         this.simple = simple;
         this.regex = regex;
-        this.jsonPathQuery = jsonPathQuery;
+        this.regexTimeout = regexTimeout;
+        this.condition = condition;
         this.context = context;
+        this.isDynamic = isDynamic;
     }
 
     /// <summary>
@@ -54,7 +67,8 @@ public sealed class CompiledCriterion
     /// <param name="type">The criterion type.</param>
     /// <param name="condition">
     /// The condition: a simple expression, a regular expression pattern, or a JSONPath query,
-    /// depending on <paramref name="type"/>.
+    /// depending on <paramref name="type"/>. Regex/JSONPath conditions may embed <c>{expression}</c>
+    /// fragments.
     /// </param>
     /// <param name="contextExpression">
     /// The runtime expression supplying the value the criterion is evaluated against. Required for
@@ -78,22 +92,21 @@ public sealed class CompiledCriterion
         switch (type)
         {
             case CriterionType.Simple:
-                return new CompiledCriterion(type, SimpleConditionEvaluator.Compile(condition), null, null, default);
+                return new CompiledCriterion(type, SimpleConditionEvaluator.Compile(condition), null, default, null, default, false);
 
             case CriterionType.Regex:
             {
                 ArazzoExpression ctx = RequireContext(contextExpression);
-                var compiledRegex = new Regex(
-                    condition,
-                    RegexOptions.CultureInvariant,
-                    regexTimeout ?? TimeSpan.FromSeconds(1));
-                return new CompiledCriterion(type, null, compiledRegex, null, ctx);
+                TimeSpan timeout = regexTimeout ?? TimeSpan.FromSeconds(1);
+                bool dynamic = HasEmbeddedExpression(condition);
+                Regex? compiled = dynamic ? null : new Regex(condition, RegexOptions.CultureInvariant, timeout);
+                return new CompiledCriterion(type, null, compiled, timeout, condition, ctx, dynamic);
             }
 
             case CriterionType.JsonPath:
             {
                 ArazzoExpression ctx = RequireContext(contextExpression);
-                return new CompiledCriterion(type, null, null, condition, ctx);
+                return new CompiledCriterion(type, null, null, default, condition, ctx, HasEmbeddedExpression(condition));
             }
 
             default:
@@ -116,35 +129,18 @@ public sealed class CompiledCriterion
                 return this.simple!.Evaluate(executionContext);
 
             case CriterionType.Regex:
-                if (!executionContext.TryResolveString(this.context, out string text))
-                {
-                    return false;
-                }
-
-                try
-                {
-                    return this.regex!.IsMatch(text);
-                }
-                catch (RegexMatchTimeoutException)
-                {
-                    return false;
-                }
+                return this.EvaluateRegex(executionContext);
 
             case CriterionType.JsonPath:
-                if (!executionContext.TryResolveValue(this.context, out JsonElement data))
-                {
-                    return false;
-                }
-
-                using (JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(this.jsonPathQuery!, data))
-                {
-                    return result.Count > 0;
-                }
+                return this.EvaluateJsonPath(executionContext);
 
             default:
                 return false;
         }
     }
+
+    private static bool HasEmbeddedExpression(string condition)
+        => condition.Contains('{', StringComparison.Ordinal);
 
     private static ArazzoExpression RequireContext(string? contextExpression)
     {
@@ -154,5 +150,50 @@ public sealed class CompiledCriterion
         }
 
         return ArazzoExpression.Parse(contextExpression);
+    }
+
+    private bool EvaluateRegex(WorkflowExecutionContext executionContext)
+    {
+        if (!executionContext.TryResolveString(this.context, out string text))
+        {
+            return false;
+        }
+
+        try
+        {
+            if (!this.isDynamic)
+            {
+                return this.regex!.IsMatch(text);
+            }
+
+            // Substitute embedded expressions, then match (the static overload caches the pattern).
+            if (!executionContext.TryInterpolate(this.condition!, out string pattern))
+            {
+                return false;
+            }
+
+            return Regex.IsMatch(text, pattern, RegexOptions.CultureInvariant, this.regexTimeout);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return false;
+        }
+    }
+
+    private bool EvaluateJsonPath(WorkflowExecutionContext executionContext)
+    {
+        if (!executionContext.TryResolveValue(this.context, out JsonElement data))
+        {
+            return false;
+        }
+
+        string query = this.condition!;
+        if (this.isDynamic && !executionContext.TryInterpolate(query, out query))
+        {
+            return false;
+        }
+
+        using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(query, data);
+        return result.Count > 0;
     }
 }
