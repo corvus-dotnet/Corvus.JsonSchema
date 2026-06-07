@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Text;
 using System.Text.RegularExpressions;
+using Corvus.Text;
 using Corvus.Text.Json.JsonPath;
 
 namespace Corvus.Text.Json.Arazzo;
@@ -41,7 +42,8 @@ public sealed class CompiledCriterion
     private readonly SimpleConditionEvaluator? simple;
     private readonly Regex? regex;
     private readonly TimeSpan regexTimeout;
-    private readonly string? condition;
+    private readonly byte[]? jsonPathUtf8;                       // static jsonpath query, baked UTF-8.
+    private readonly CompiledInterpolationTemplate? dynamicTemplate; // dynamic regex/jsonpath condition.
     private readonly ArazzoExpression context;
     private readonly bool isDynamic;
 
@@ -50,7 +52,8 @@ public sealed class CompiledCriterion
         SimpleConditionEvaluator? simple,
         Regex? regex,
         TimeSpan regexTimeout,
-        string? condition,
+        byte[]? jsonPathUtf8,
+        CompiledInterpolationTemplate? dynamicTemplate,
         ArazzoExpression context,
         bool isDynamic)
     {
@@ -58,7 +61,8 @@ public sealed class CompiledCriterion
         this.simple = simple;
         this.regex = regex;
         this.regexTimeout = regexTimeout;
-        this.condition = condition;
+        this.jsonPathUtf8 = jsonPathUtf8;
+        this.dynamicTemplate = dynamicTemplate;
         this.context = context;
         this.isDynamic = isDynamic;
     }
@@ -94,21 +98,29 @@ public sealed class CompiledCriterion
         switch (type)
         {
             case CriterionType.Simple:
-                return new CompiledCriterion(type, SimpleConditionEvaluator.Compile(condition), null, default, null, default, false);
+                return new CompiledCriterion(type, SimpleConditionEvaluator.Compile(condition), null, default, null, null, default, false);
 
             case CriterionType.Regex:
             {
                 ArazzoExpression ctx = RequireContext(contextExpression);
                 TimeSpan timeout = regexTimeout ?? TimeSpan.FromSeconds(1);
-                bool dynamic = HasEmbeddedExpression(condition);
-                Regex? compiled = dynamic ? null : new Regex(condition, RegexOptions.CultureInvariant, timeout);
-                return new CompiledCriterion(type, null, compiled, timeout, condition, ctx, dynamic);
+                if (HasEmbeddedExpression(condition))
+                {
+                    return new CompiledCriterion(type, null, null, timeout, null, CompiledInterpolationTemplate.Compile(condition), ctx, true);
+                }
+
+                return new CompiledCriterion(type, null, new Regex(condition, RegexOptions.CultureInvariant, timeout), timeout, null, null, ctx, false);
             }
 
             case CriterionType.JsonPath:
             {
                 ArazzoExpression ctx = RequireContext(contextExpression);
-                return new CompiledCriterion(type, null, null, default, condition, ctx, HasEmbeddedExpression(condition));
+                if (HasEmbeddedExpression(condition))
+                {
+                    return new CompiledCriterion(type, null, null, default, null, CompiledInterpolationTemplate.Compile(condition), ctx, true);
+                }
+
+                return new CompiledCriterion(type, null, null, default, Encoding.UTF8.GetBytes(condition), null, ctx, false);
             }
 
             default:
@@ -206,16 +218,25 @@ public sealed class CompiledCriterion
                 return this.regex!.IsMatch(input);
             }
 
-            // Substitute embedded expressions into the pattern (built via Utf8ValueStringBuilder
-            // inside TryInterpolate). A managed string is required here only because Regex has no
-            // span pattern overload; the static IsMatch caches the compiled pattern, so a dynamic
-            // pattern is not recompiled every evaluation.
-            if (!executionContext.TryInterpolate(this.condition!, out string pattern))
+            // Build the pattern from the compiled template (the parse happened at Compile time).
+            // A managed string is required here only because Regex has no span-pattern overload;
+            // the static IsMatch caches the compiled pattern, so a dynamic pattern is not
+            // recompiled every evaluation.
+            var builder = new Utf8ValueStringBuilder(64);
+            try
             {
-                return false;
-            }
+                if (!executionContext.TryAppendTemplate(this.dynamicTemplate!, ref builder))
+                {
+                    return false;
+                }
 
-            return Regex.IsMatch(input, pattern, RegexOptions.CultureInvariant, this.regexTimeout);
+                string pattern = Encoding.UTF8.GetString(builder.AsSpan());
+                return Regex.IsMatch(input, pattern, RegexOptions.CultureInvariant, this.regexTimeout);
+            }
+            finally
+            {
+                builder.Dispose();
+            }
         }
         catch (RegexMatchTimeoutException)
         {
@@ -230,13 +251,28 @@ public sealed class CompiledCriterion
             return false;
         }
 
-        string query = this.condition!;
-        if (this.isDynamic && !executionContext.TryInterpolate(query, out query))
+        if (!this.isDynamic)
         {
-            return false;
+            // Static query: baked UTF-8, evaluated via the zero-allocation UTF-8 overload.
+            using JsonPathResult staticResult = JsonPathEvaluator.Default.QueryNodes(this.jsonPathUtf8!, data);
+            return staticResult.Count > 0;
         }
 
-        using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(query, data);
-        return result.Count > 0;
+        // Dynamic query: build UTF-8 from the compiled template, then query without a managed string.
+        var builder = new Utf8ValueStringBuilder(64);
+        try
+        {
+            if (!executionContext.TryAppendTemplate(this.dynamicTemplate!, ref builder))
+            {
+                return false;
+            }
+
+            using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(builder.AsSpan(), data);
+            return result.Count > 0;
+        }
+        finally
+        {
+            builder.Dispose();
+        }
     }
 }
