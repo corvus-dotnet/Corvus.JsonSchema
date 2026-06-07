@@ -48,6 +48,27 @@ public class CompiledCriterionTests
     }
 
     [TestMethod]
+    public void Simple_string_equality_is_case_insensitive()
+    {
+        // Arazzo §Condition Evaluation: string comparisons MUST be case-insensitive.
+        using ParsedJsonDocument<JsonElement> doc = Parse("""{ "status": "OK" }""");
+        var context = new WorkflowExecutionContext();
+        context.SetResponseBody(doc.RootElement);
+
+        CompiledCriterion.Compile(CriterionType.Simple, "$response.body#/status == 'ok'").Evaluate(context).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public void Simple_string_literal_escapes_doubled_single_quote()
+    {
+        using ParsedJsonDocument<JsonElement> doc = Parse("""{ "v": "it's ok" }""");
+        var context = new WorkflowExecutionContext();
+        context.SetResponseBody(doc.RootElement);
+
+        CompiledCriterion.Compile(CriterionType.Simple, "$response.body#/v == 'it''s ok'").Evaluate(context).ShouldBeTrue();
+    }
+
+    [TestMethod]
     public void Simple_boolean_and_null()
     {
         using ParsedJsonDocument<JsonElement> doc = Parse("""{ "active": true, "maybe": null }""");
