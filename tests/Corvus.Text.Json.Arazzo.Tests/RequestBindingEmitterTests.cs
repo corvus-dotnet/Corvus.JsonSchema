@@ -122,9 +122,12 @@ public class RequestBindingEmitterTests
         code.Statements.ShouldContain("workspace.RentWriterAndBuffer(256, out IByteBufferWriter GetPet_PetIdInterpBuffer)");
         code.Statements.ShouldContain("Interpolation.AppendUtf8(GetPet_PetIdInterpBuffer, \"pet-\"u8);");
         code.Statements.ShouldContain("Interpolation.AppendValue(GetPet_PetIdInterpBuffer,");
-        code.Statements.ShouldContain("workspace.RegisterDocument(GetPet_PetIdInterpDoc);");
         code.Statements.ShouldNotContain("context");
-        code.NamedArguments.ShouldContain("petId: petIdValue");
+
+        // The buffer's span is passed straight to the client as its Source (no reified document), and
+        // the buffer is returned after the call.
+        code.NamedArguments.ShouldContain("petId: GetPet_PetIdInterpBuffer.WrittenSpan");
+        code.Cleanup.ShouldContain("workspace.ReturnWriterAndBuffer(GetPet_PetIdInterpWriter, GetPet_PetIdInterpBuffer);");
     }
 
     [TestMethod]

@@ -111,6 +111,11 @@ public static class StepBodyEmitter
             .Append(operation.Operation.ClientMethodName).Append('(')
             .Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
 
+        // Return any pooled buffers whose spans were passed as a Source: the client materialised them
+        // synchronously while building the request, so they are no longer referenced once the call
+        // above has returned.
+        body.Append(request.Cleanup);
+
         // The step-outputs product is declared BEFORE the try so later steps can reference it, but
         // built INSIDE the try while the response is still alive — so its $response.body values are
         // projected (and only those copied) without cloning the whole body. The response is then
