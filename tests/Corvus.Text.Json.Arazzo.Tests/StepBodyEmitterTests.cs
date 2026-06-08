@@ -72,6 +72,7 @@ public class StepBodyEmitterTests
             "context",
             "cancellationToken",
             NoSteps,
+            "inputs",
             requestBody: null,
             bindResponseBody: false);
 
@@ -119,5 +120,6 @@ public class StepBodyEmitterTests
             "workspace",
             "context",
             "cancellationToken",
-            NoSteps);
+            NoSteps,
+            "inputs");
 }
