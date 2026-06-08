@@ -252,10 +252,13 @@ public class StepBodyEmitterTests
         // live body, and tested for at least one match — no CompiledCriterion, no runtime interpreter.
         code.Fields.ShouldNotContain("CompiledCriterion");
         code.AuxiliaryTypes.ShouldContain("internal static class getPet_C0JsonPath");
-        code.AuxiliaryTypes.ShouldContain("public static JsonPathResult QueryNodes(in JsonElement data)");
-        // The whole-body context resolves directly to the live body local (no extra data temporary).
-        code.Statements.ShouldContain("using (JsonPathResult getPet_C0Result = getPet_C0JsonPath.QueryNodes(getPetResponseBody))");
+        code.AuxiliaryTypes.ShouldContain("public static void EvaluateNodes(in JsonElement data, JsonWorkspace workspace, ref JsonPathResult result)");
+        // The query runs against the live body local using the RUN workspace (not a per-call one) and a
+        // pool-rented result buffer disposed in a finally — no internal JsonWorkspace.Create per eval.
+        code.Statements.ShouldContain("JsonPathResult getPet_C0Result = JsonPathResult.CreatePooled(16);");
+        code.Statements.ShouldContain("getPet_C0JsonPath.EvaluateNodes(getPetResponseBody, workspace, ref getPet_C0Result);");
         code.Statements.ShouldContain("getPet_C0Match = getPet_C0Result.Count > 0;");
+        code.Statements.ShouldContain("getPet_C0Result.Dispose();");
         code.Statements.ShouldContain("if (!(getPet_C0Match))");
     }
 
