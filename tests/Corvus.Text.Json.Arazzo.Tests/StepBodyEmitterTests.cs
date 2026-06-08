@@ -39,7 +39,10 @@ public class StepBodyEmitterTests
         code.Statements.ShouldContain("var getPetClient = new Acme.Pets.PetsClient(transport);");
         code.Statements.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: petIdValue, cancellationToken: cancellationToken).ConfigureAwait(false);");
         code.Statements.ShouldContain("ArazzoTelemetry.StepsExecuted.Add(1);");
-        code.Statements.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
+
+        // A step with no context consumer never populates the context.
+        code.UsesContext.ShouldBeFalse();
+        code.Statements.ShouldNotContain("context.SetResponseStatusCode");
     }
 
     [TestMethod]
@@ -50,8 +53,10 @@ public class StepBodyEmitterTests
         // The matched-status body is a live reference (used by criteria while the response is alive);
         // the whole-body CloneAsBuilder is gone.
         code.Statements.ShouldContain("if (getPetResponse.StatusCode == 200) { getPetResponseBody = (JsonElement)getPetResponse.OkBody; }");
-        code.Statements.ShouldContain("context.SetResponseBody(getPetResponseBody);");
         code.Statements.ShouldNotContain("CloneAsBuilder");
+
+        // With no context consumer the live body is never fed to the context.
+        code.Statements.ShouldNotContain("context.SetResponseBody");
     }
 
     [TestMethod]
@@ -86,8 +91,8 @@ public class StepBodyEmitterTests
         code.Statements.ShouldNotContain("SetResponseBody");
         code.Statements.ShouldNotContain("CloneAsBuilder");
 
-        // … but the status is still recorded and the response is still disposed.
-        code.Statements.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
+        // … and with no context consumer, neither is the status recorded; the response is still disposed.
+        code.Statements.ShouldNotContain("context.SetResponseStatusCode");
         code.Statements.ShouldContain("await getPetResponse.DisposeAsync().ConfigureAwait(false);");
     }
 
@@ -236,6 +241,10 @@ public class StepBodyEmitterTests
 
         code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple,");
         code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
+
+        // Because a CompiledCriterion consumes the context, the context IS populated for this step.
+        code.UsesContext.ShouldBeTrue();
+        code.Statements.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
     }
 
     [TestMethod]
