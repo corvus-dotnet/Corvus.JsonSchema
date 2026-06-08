@@ -7,7 +7,7 @@ using System.Text;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Testing;
 using Corvus.Text.Json.Arazzo.Tests.Fakes;
-using Corvus.Text.Json.Arazzo10;
+using Corvus.Text.Json.Arazzo11;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Microsoft.CodeAnalysis;
