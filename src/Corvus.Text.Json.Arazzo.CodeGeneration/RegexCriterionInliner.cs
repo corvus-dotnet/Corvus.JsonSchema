@@ -34,6 +34,7 @@ internal static class RegexCriterionInliner
     /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="responseHeaders">The operation's declared response headers (for a <c>$response.header.&lt;name&gt;</c> context).</param>
     /// <param name="tmpPrefix">A unique prefix for the generated regex method and any temporaries.</param>
     /// <param name="members">Accumulates the <c>[GeneratedRegex]</c> partial-method declaration (a class member).</param>
@@ -47,6 +48,7 @@ internal static class RegexCriterionInliner
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         string tmpPrefix,
         StringBuilder members,
@@ -93,7 +95,7 @@ internal static class RegexCriterionInliner
                 : $"(JsonElement){responseVar}.{header.PropertyName}";
         }
         else if (CriterionExpressionParsing.TryEmitElementNavigation(
-            context, null, $"{tmpPrefix}ctx", responseBodyLocal, inputsVariable, stepOutputLocals, statementBuilder, out string elementLocal))
+            context, null, $"{tmpPrefix}ctx", responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, statementBuilder, out string elementLocal))
         {
             contextValue = elementLocal;
         }

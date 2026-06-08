@@ -41,6 +41,7 @@ public static class RequestBindingEmitter
         string fieldPrefix,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         StepBody? requestBody = null)
     {
         ArgumentNullException.ThrowIfNull(arguments);
@@ -72,7 +73,7 @@ public static class RequestBindingEmitter
             }
 
             string source = EmitValue(
-                fields, statements, argument.Kind, argument.Value, contextVariable, stepOutputLocals, inputsVariable,
+                fields, statements, argument.Kind, argument.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
                 $"{fieldPrefix}{parameter.PropertyName}", parameter.PropertyName, parameter.TypeName);
             namedArguments.Add($"{parameter.ParameterName}: {source}");
         }
@@ -80,7 +81,7 @@ public static class RequestBindingEmitter
         if (requestBody is { } body && operation.Operation.RequestBodyTypeName is { } bodyType)
         {
             string source = EmitValue(
-                fields, statements, body.Kind, body.Value, contextVariable, stepOutputLocals, inputsVariable,
+                fields, statements, body.Kind, body.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
                 $"{fieldPrefix}Body", "Body", bodyType);
             namedArguments.Add($"body: {source}");
         }
@@ -100,6 +101,7 @@ public static class RequestBindingEmitter
         string contextVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         string fieldName,
         string propertyName,
         string typeName)
@@ -111,7 +113,7 @@ public static class RequestBindingEmitter
             case ArgumentValueKind.Expression:
                 // Runtime expression → resolve to a JsonElement (a reference into an existing document),
                 // passed straight in as a Source.
-                ValueResolution.Emit(fields, statements, value, local, contextVariable, stepOutputLocals, fieldName, inputsVariable);
+                ValueResolution.Emit(fields, statements, value, local, contextVariable, stepOutputLocals, fieldName, inputsVariable, inputAccessors);
                 return local;
 
             case ArgumentValueKind.Interpolation:

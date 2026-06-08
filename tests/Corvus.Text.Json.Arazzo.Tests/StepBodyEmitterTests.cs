@@ -87,6 +87,7 @@ public class StepBodyEmitterTests
             "cancellationToken",
             NoSteps,
             "inputs",
+            null,
             "Acme.Pets",
             requestBody: null,
             bindResponseBody: false);
@@ -310,5 +311,6 @@ public class StepBodyEmitterTests
             "cancellationToken",
             NoSteps,
             "inputs",
+            null,
             "Acme.Pets");
 }

@@ -51,6 +51,7 @@ internal static class SimpleCriterionInliner
     /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="responseHeaders">The operation's declared response headers (for <c>$response.header.&lt;name&gt;</c> operands).</param>
     /// <param name="tmpPrefix">A unique prefix for emitted temporaries and baked literal fields.</param>
     /// <param name="fields">Accumulates any baked string-literal <c>static readonly byte[]</c> fields.</param>
@@ -63,6 +64,7 @@ internal static class SimpleCriterionInliner
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         string tmpPrefix,
         StringBuilder fields,
@@ -73,7 +75,7 @@ internal static class SimpleCriterionInliner
         expression = string.Empty;
 
         var statementBuilder = new StringBuilder();
-        var parser = new Parser(condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, responseHeaders, tmpPrefix, fields, statementBuilder);
+        var parser = new Parser(condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, tmpPrefix, fields, statementBuilder);
 
         string? expr = parser.ParseOr();
         if (expr is null || !parser.AtEnd)
@@ -109,6 +111,7 @@ internal static class SimpleCriterionInliner
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         StringBuilder fields,
         StringBuilder statements,
@@ -118,7 +121,7 @@ internal static class SimpleCriterionInliner
 
         if (token.Length > 0 && token[0] == '$')
         {
-            return TryEmitExpressionOperand(token, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, responseHeaders, statements, out comparandExpr);
+            return TryEmitExpressionOperand(token, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, statements, out comparandExpr);
         }
 
         return TryEmitLiteralOperand(token, baseName, fields, out comparandExpr);
@@ -131,6 +134,7 @@ internal static class SimpleCriterionInliner
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         StringBuilder statements,
         out string comparandExpr)
@@ -169,7 +173,7 @@ internal static class SimpleCriterionInliner
         // FromJsonElement maps an undefined element to an undefined comparand, so a missing operand
         // makes the comparison false, matching the runtime.
         if (!CriterionExpressionParsing.TryEmitElementNavigation(
-                expression, navigationPointer, baseName, responseBodyLocal, inputsVariable, stepOutputLocals, statements, out string elementLocal))
+                expression, navigationPointer, baseName, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, statements, out string elementLocal))
         {
             return false;
         }
@@ -241,6 +245,7 @@ internal static class SimpleCriterionInliner
         private readonly string? responseBodyLocal;
         private readonly string inputsVariable;
         private readonly IReadOnlyDictionary<string, string> stepOutputLocals;
+        private readonly IReadOnlyDictionary<string, string>? inputAccessors;
         private readonly IReadOnlyList<ResponseHeaderInfo>? responseHeaders;
         private readonly string tmpPrefix;
         private readonly StringBuilder fields;
@@ -254,6 +259,7 @@ internal static class SimpleCriterionInliner
             string? responseBodyLocal,
             string inputsVariable,
             IReadOnlyDictionary<string, string> stepOutputLocals,
+            IReadOnlyDictionary<string, string>? inputAccessors,
             IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
             string tmpPrefix,
             StringBuilder fields,
@@ -264,6 +270,7 @@ internal static class SimpleCriterionInliner
             this.responseBodyLocal = responseBodyLocal;
             this.inputsVariable = inputsVariable;
             this.stepOutputLocals = stepOutputLocals;
+            this.inputAccessors = inputAccessors;
             this.responseHeaders = responseHeaders;
             this.tmpPrefix = tmpPrefix;
             this.fields = fields;
@@ -370,7 +377,7 @@ internal static class SimpleCriterionInliner
             this.operandCount++;
             return TryEmitOperand(
                 token, baseName, this.responseVar, this.responseBodyLocal, this.inputsVariable,
-                this.stepOutputLocals, this.responseHeaders, this.fields, this.statements, out comparandExpr);
+                this.stepOutputLocals, this.inputAccessors, this.responseHeaders, this.fields, this.statements, out comparandExpr);
         }
 
         private string ReadOperandToken()

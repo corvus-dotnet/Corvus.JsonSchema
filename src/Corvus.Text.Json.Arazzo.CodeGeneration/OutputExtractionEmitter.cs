@@ -33,6 +33,7 @@ public static class OutputExtractionEmitter
     /// <param name="contextVariable">The in-scope <c>WorkflowExecutionContext</c> variable name.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable name (for static <c>$inputs</c> navigation).</param>
+    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="responseBodyLocal">
     /// The in-scope local holding the live matched-status response body (for <c>$response.body</c>
     /// projection), or <see langword="null"/> when the step references no response body. The projected
@@ -47,6 +48,7 @@ public static class OutputExtractionEmitter
         string contextVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         string? responseBodyLocal)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
@@ -82,7 +84,7 @@ public static class OutputExtractionEmitter
             {
                 // $inputs / $steps.*.outputs resolve to references into documents that outlive the
                 // outputs object; other sources still flow through the context for now.
-                ValueResolution.Emit(fields, statements, outputs[i].Expression, local, contextVariable, stepOutputLocals, field, inputsVariable);
+                ValueResolution.Emit(fields, statements, outputs[i].Expression, local, contextVariable, stepOutputLocals, field, inputsVariable, inputAccessors);
             }
 
             valueLocals.Add(local);
