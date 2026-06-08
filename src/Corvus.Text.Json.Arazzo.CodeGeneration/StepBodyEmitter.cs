@@ -54,6 +54,7 @@ public static class StepBodyEmitter
     /// <param name="cancellationTokenVariable">The in-scope <c>CancellationToken</c> variable name.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable name (for static <c>$inputs</c> navigation).</param>
+    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="namespaceName">The executor's namespace (for sibling types emitted for <c>jsonpath</c> criteria).</param>
     /// <param name="requestBody">The step's request body (expression or literal), or <see langword="null"/> when the step declares no (supported) request body.</param>
     /// <param name="bindResponseBody">
@@ -74,6 +75,7 @@ public static class StepBodyEmitter
         string cancellationTokenVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         string namespaceName,
         StepBody? requestBody = null,
         bool bindResponseBody = true)
@@ -89,7 +91,7 @@ public static class StepBodyEmitter
         string clientVar = $"{camel}Client";
         string responseVar = $"{camel}Response";
 
-        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, prefix, stepOutputLocals, inputsVariable, requestBody);
+        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, prefix, stepOutputLocals, inputsVariable, inputAccessors, requestBody);
 
         var fields = new StringBuilder(request.Fields);
         var body = new StringBuilder(request.Statements);
@@ -126,13 +128,13 @@ public static class StepBodyEmitter
         var gate = new StringBuilder();
         EmitSuccessGate(
             fields, gate, auxiliaryTypes, successCriteria, prefix, contextVariable, responseVar,
-            bindResponseBody ? responseBodyLocal : null, inputsVariable, stepOutputLocals, operation.Operation.ResponseHeaders, namespaceName, stepId);
+            bindResponseBody ? responseBodyLocal : null, inputsVariable, stepOutputLocals, inputAccessors, operation.Operation.ResponseHeaders, namespaceName, stepId);
 
         string outputStatements = string.Empty;
         if (hasOutputs)
         {
             OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
-                stepId, outputs, workspaceVariable, contextVariable, stepOutputLocals, inputsVariable,
+                stepId, outputs, workspaceVariable, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
                 bindResponseBody ? responseBodyLocal : null);
             fields.Append(outputCode.Fields);
             outputStatements = outputCode.Statements;
@@ -224,6 +226,7 @@ public static class StepBodyEmitter
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         string namespaceName,
         string stepId)
@@ -261,7 +264,7 @@ public static class StepBodyEmitter
             // before the gate.
             if (MapCriterionType(criterion.Type) == "Simple"
                 && SimpleCriterionInliner.TryEmit(
-                    criterion.Condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, responseHeaders,
+                    criterion.Condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders,
                     $"{prefix}C{index}", fields, out string inlineStatements, out string inlineExpression))
             {
                 body.Append(inlineStatements);
@@ -273,7 +276,7 @@ public static class StepBodyEmitter
             // (compiled ahead-of-time) matching the statically-resolved context value.
             if (MapCriterionType(criterion.Type) == "Regex"
                 && RegexCriterionInliner.TryEmit(
-                    criterion.Condition, criterion.Context, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, responseHeaders,
+                    criterion.Condition, criterion.Context, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders,
                     $"{prefix}C{index}", fields, out string regexStatements, out string regexExpression))
             {
                 body.Append(regexStatements);
@@ -286,7 +289,7 @@ public static class StepBodyEmitter
             // against the statically-resolved context value.
             if (MapCriterionType(criterion.Type) == "JsonPath"
                 && JsonPathCriterionInliner.TryEmit(
-                    criterion.Condition, criterion.Context, responseBodyLocal, inputsVariable, stepOutputLocals,
+                    criterion.Condition, criterion.Context, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors,
                     namespaceName, $"{prefix}C{index}", auxiliaryTypes, out string jsonPathStatements, out string jsonPathExpression))
             {
                 body.Append(jsonPathStatements);
