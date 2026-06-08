@@ -1,0 +1,21 @@
+{
+  "arazzo": "1.1.0",
+  "info": { "title": "Notify", "version": "1.0.0" },
+  "sourceDescriptions": [
+    { "name": "events", "url": "./notifications.asyncapi.json", "type": "asyncapi" }
+  ],
+  "workflows": [
+    {
+      "workflowId": "notify",
+      "steps": [
+        {
+          "stepId": "send",
+          "channelPath": "notifications",
+          "action": "send",
+          "requestBody": { "payload": "$inputs.message" }
+        }
+      ],
+      "outputs": {}
+    }
+  ]
+}

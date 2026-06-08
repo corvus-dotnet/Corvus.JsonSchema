@@ -52,4 +52,32 @@ public class ArazzoGenerateCommandTests : IDisposable
             Directory.Exists(Path.Combine(_outputDir, "Models", "Adopt")),
             $"Expected inputs model under {Path.Combine(_outputDir, "Models", "Adopt")}.");
     }
+
+    [TestMethod]
+    public async Task ArazzoGenerate_WithAsyncApiSource_ProducesProducerAndChannelStep()
+    {
+        string arazzo = CodeGeneratorRunner.GetFixturePath("Arazzo", "notify.arazzo.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"arazzo-generate \"{arazzo}\" --rootNamespace TestWorkflows --outputPath \"{_outputDir}\"");
+
+        Assert.AreEqual(0, result.ExitCode, $"Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+
+        // The executor for the 'notify' workflow was generated.
+        string executorPath = Path.Combine(_outputDir, "Workflows", "NotifyWorkflow.cs");
+        Assert.IsTrue(File.Exists(executorPath), $"Expected {executorPath}. Stdout: {result.StandardOutput}");
+
+        // The AsyncAPI producer + message models for the 'events' source description were generated
+        // under Events/ (the producer the channel step publishes through).
+        Assert.IsTrue(
+            Directory.Exists(Path.Combine(_outputDir, "Events"))
+            && Directory.GetFiles(Path.Combine(_outputDir, "Events"), "*Producer.cs", SearchOption.AllDirectories).Length > 0,
+            $"Expected a generated AsyncAPI producer under {Path.Combine(_outputDir, "Events")}.");
+
+        // The executor takes an IMessageTransport and publishes through the generated producer for the
+        // 'events' source namespace.
+        string executor = await File.ReadAllTextAsync(executorPath);
+        StringAssert.Contains(executor, "IMessageTransport messageTransport");
+        StringAssert.Contains(executor, "new TestWorkflows.Events.NotifyProducer(messageTransport)");
+    }
 }
