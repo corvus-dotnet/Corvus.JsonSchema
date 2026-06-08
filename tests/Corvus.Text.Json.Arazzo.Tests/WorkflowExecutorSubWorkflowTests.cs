@@ -134,4 +134,148 @@ public partial class WorkflowExecutorEndToEndTests
         outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
         name.GetString().ShouldBe("Fido");
     }
+
+    private const string RetrySubWorkflowDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "parent",
+              "steps": [
+                {
+                  "stepId": "callChild",
+                  "workflowId": "child",
+                  "parameters": [ { "name": "petId", "value": "$inputs.petId" } ],
+                  "onFailure": [ { "name": "retryChild", "type": "retry", "retryAfter": 0, "retryLimit": 2 } ]
+                }
+              ],
+              "outputs": { "name": "$steps.callChild.outputs.petName" }
+            },
+            {
+              "workflowId": "child",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "petName": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    private const string GotoWorkflowDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "parent",
+              "steps": [
+                {
+                  "stepId": "step1",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "onSuccess": [ { "name": "handOff", "type": "goto", "workflowId": "other" } ]
+                }
+              ],
+              "outputs": {}
+            },
+            {
+              "workflowId": "other",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "tag": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "tag": "$steps.getPet.outputs.tag" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_parent_retries_a_failing_sub_workflow_step()
+    {
+        Assembly assembly = await GenerateAndCompileWorkflows(RetrySubWorkflowDocument);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.Workflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        // The child fails the first time (its getPet returns 500 → WorkflowStepFailedException); the
+        // parent's onFailure retry re-invokes it and the second attempt (200) succeeds.
+        var transport = new MockApiTransport();
+        transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 500, "{}");
+        transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        JsonElement outputs = await pending;
+
+        transport.Requests.Count.ShouldBe(2);
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Fido");
+    }
+
+    [TestMethod]
+    public async Task Generated_workflow_transfers_to_another_workflow_on_a_goto_action()
+    {
+        Assembly assembly = await GenerateAndCompileWorkflows(GotoWorkflowDocument);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.Workflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        JsonElement outputs = await pending;
+
+        // step1 succeeds and transfers to 'other', whose outputs become the result — so the result has
+        // 'other''s 'tag' output, not the (empty) parent outputs.
+        transport.Requests.Count.ShouldBe(2);
+        outputs.TryGetProperty("tag"u8, out JsonElement tag).ShouldBeTrue();
+        tag.GetString().ShouldBe("Fido");
+    }
+
+    private static async Task<Assembly> GenerateAndCompileWorkflows(string document)
+    {
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets/{petId}",
+                OperationMethod.Get,
+                "getPet",
+                "GetPet",
+                typeof(PetByIdRequest).FullName!,
+                typeof(PetByIdResponse).FullName!,
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true, "petId")],
+                false,
+                [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
+                typeof(PetByIdClient).FullName!,
+                "GetPetAsync",
+                null,
+                null),
+        ];
+
+        var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
+        IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration.GenerateAsync(
+            Encoding.UTF8.GetBytes(document), binder, new ArazzoGenerationOptions("GeneratedWorkflows"));
+
+        string[] executors = [.. files.Where(f => f.FileName.StartsWith("Workflows/", StringComparison.Ordinal)).Select(f => f.Content)];
+        return CompileInMemory(executors);
+    }
 }
