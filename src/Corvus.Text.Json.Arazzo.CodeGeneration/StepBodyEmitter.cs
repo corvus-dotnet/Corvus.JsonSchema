@@ -120,15 +120,42 @@ public static class StepBodyEmitter
             body.Append("JsonElement ").Append(EmitText.StepOutputsElementLocal(stepId)).AppendLine(" = default;");
         }
 
+        // Build the success gate and output extraction first, so we can detect whether anything still
+        // consumes the WorkflowExecutionContext (a non-inlined CompiledCriterion, or a context-fallback
+        // output). When nothing does, the context-population calls are omitted entirely.
+        var gate = new StringBuilder();
+        EmitSuccessGate(
+            fields, gate, auxiliaryTypes, successCriteria, prefix, contextVariable, responseVar,
+            bindResponseBody ? responseBodyLocal : null, inputsVariable, stepOutputLocals, namespaceName, stepId);
+
+        string outputStatements = string.Empty;
+        if (hasOutputs)
+        {
+            OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
+                stepId, outputs, workspaceVariable, contextVariable, stepOutputLocals, inputsVariable,
+                bindResponseBody ? responseBodyLocal : null);
+            fields.Append(outputCode.Fields);
+            outputStatements = outputCode.Statements;
+        }
+
+        bool usesContext = gate.ToString().Contains(contextVariable, StringComparison.Ordinal)
+            || outputStatements.Contains(contextVariable, StringComparison.Ordinal);
+
         body.AppendLine("try");
         body.AppendLine("{");
 
         var inner = new StringBuilder();
         inner.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
-        inner.Append(contextVariable).Append(".SetResponseStatusCode(").Append(responseVar).AppendLine(".StatusCode);");
 
-        // Bind the matched-status body as a LIVE reference (no clone) — used by criteria and projected
-        // into outputs below, all while the response is alive.
+        // The status code only ever feeds the context, so it is recorded only when the context is used.
+        if (usesContext)
+        {
+            inner.Append(contextVariable).Append(".SetResponseStatusCode(").Append(responseVar).AppendLine(".StatusCode);");
+        }
+
+        // Bind the matched-status body as a LIVE reference (no clone) — used by inlined criteria and
+        // projected into outputs, all while the response is alive. The body is fed to the context only
+        // when a non-inlined criterion still resolves $response.body through it.
         if (bindResponseBody)
         {
             inner.Append("JsonElement ").Append(responseBodyLocal).AppendLine(" = default;");
@@ -144,21 +171,14 @@ public static class StepBodyEmitter
                 }
             }
 
-            inner.Append(contextVariable).Append(".SetResponseBody(").Append(responseBodyLocal).AppendLine(");");
+            if (usesContext)
+            {
+                inner.Append(contextVariable).Append(".SetResponseBody(").Append(responseBodyLocal).AppendLine(");");
+            }
         }
 
-        EmitSuccessGate(
-            fields, inner, auxiliaryTypes, successCriteria, prefix, contextVariable, responseVar,
-            bindResponseBody ? responseBodyLocal : null, inputsVariable, stepOutputLocals, namespaceName, stepId);
-
-        if (hasOutputs)
-        {
-            OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
-                stepId, outputs, workspaceVariable, contextVariable, stepOutputLocals, inputsVariable,
-                bindResponseBody ? responseBodyLocal : null);
-            fields.Append(outputCode.Fields);
-            inner.Append(outputCode.Statements);
-        }
+        inner.Append(gate);
+        inner.Append(outputStatements);
 
         AppendIndented(body, inner.ToString(), 4);
 
@@ -168,7 +188,7 @@ public static class StepBodyEmitter
         body.Append("    await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
         body.AppendLine("}");
 
-        return new StepBodyCode(fields.ToString(), body.ToString(), auxiliaryTypes.ToString());
+        return new StepBodyCode(fields.ToString(), body.ToString(), auxiliaryTypes.ToString(), usesContext);
     }
 
     private static void AppendIndented(StringBuilder target, string text, int indent)
@@ -350,4 +370,5 @@ public readonly record struct StepCriterion(string Type, string Condition, strin
 /// <param name="Fields">The <c>static readonly</c> field declarations to place on the executor class.</param>
 /// <param name="Statements">The in-method statements implementing the step.</param>
 /// <param name="AuxiliaryTypes">Top-level sibling type declarations (e.g. ahead-of-time-compiled <c>jsonpath</c> query classes) to place after the executor class, in the same namespace.</param>
-public readonly record struct StepBodyCode(string Fields, string Statements, string AuxiliaryTypes);
+/// <param name="UsesContext">Whether the step still consumes the <c>WorkflowExecutionContext</c> (a non-inlined criterion or a context-fallback output).</param>
+public readonly record struct StepBodyCode(string Fields, string Statements, string AuxiliaryTypes, bool UsesContext);
