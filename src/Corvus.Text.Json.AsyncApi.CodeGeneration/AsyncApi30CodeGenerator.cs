@@ -478,8 +478,30 @@ public sealed class AsyncApi30CodeGenerator
             return files;
         }
 
+        (List<OperationInfo> sendOps, List<OperationInfo> receiveOps) = CollectOperations(doc, filter, referenceResolver);
+
+        files.AddRange(this.GenerateOperations(sendOps, receiveOps, ListServers(doc)));
+
+        return files;
+    }
+
+    /// <summary>
+    /// Collects the document's send/receive operations (channel address, messages with resolved payload
+    /// type names, parameters, reply, bindings) — the shared walk behind <see cref="Generate"/> and
+    /// <see cref="DescribeChannelOperations"/>.
+    /// </summary>
+    internal (List<OperationInfo> Send, List<OperationInfo> Receive) CollectOperations(
+        AsyncApiDocument doc,
+        OperationFilter? filter = null,
+        IAsyncApiReferenceResolver? referenceResolver = null)
+    {
         List<OperationInfo> sendOps = [];
         List<OperationInfo> receiveOps = [];
+
+        if (doc.OperationsValue.IsUndefined())
+        {
+            return (sendOps, receiveOps);
+        }
 
         foreach (var operationProp in doc.OperationsValue.EnumerateObject())
         {
@@ -564,9 +586,53 @@ public sealed class AsyncApi30CodeGenerator
             }
         }
 
-        files.AddRange(this.GenerateOperations(sendOps, receiveOps, ListServers(doc)));
+        return (sendOps, receiveOps);
+    }
 
-        return files;
+    /// <summary>
+    /// Describes the document's channel operations with the generated producer/consumer details an
+    /// Arazzo channel step needs to call: the channel address, the operation action, the producer class
+    /// (for send operations), and per-message the resolved payload type name and producer publish method.
+    /// </summary>
+    /// <param name="doc">The AsyncAPI document.</param>
+    /// <param name="filter">An optional channel filter.</param>
+    /// <param name="referenceResolver">An optional reference resolver for cross-document <c>$ref</c>s.</param>
+    /// <returns>One descriptor per channel operation.</returns>
+    public IReadOnlyList<AsyncApiChannelDescriptor> DescribeChannelOperations(
+        AsyncApiDocument doc,
+        OperationFilter? filter = null,
+        IAsyncApiReferenceResolver? referenceResolver = null)
+    {
+        (List<OperationInfo> sendOps, List<OperationInfo> receiveOps) = CollectOperations(doc, filter, referenceResolver);
+
+        var descriptors = new List<AsyncApiChannelDescriptor>(sendOps.Count + receiveOps.Count);
+        foreach (OperationInfo op in sendOps.Concat(receiveOps))
+        {
+            bool isSend = op.Action == OperationAction.Send;
+            string? producerClassName = isSend ? $"{this.rootNamespace}.{ToPascalCase(op.Name)}Producer" : null;
+
+            var messages = new List<AsyncApiChannelMessageDescriptor>(op.Messages.Count);
+            foreach (MessageInfo message in op.Messages)
+            {
+                messages.Add(new AsyncApiChannelMessageDescriptor(
+                    message.Name,
+                    message.PayloadTypeName,
+                    message.HeadersTypeName,
+                    message.ContentType,
+                    isSend ? $"Publish{ToPascalCase(message.Name)}Async" : null));
+            }
+
+            descriptors.Add(new AsyncApiChannelDescriptor(
+                op.ChannelAddress,
+                op.Action,
+                op.Name,
+                producerClassName,
+                op.IsDynamicAddress,
+                op.Parameters.Select(static p => p.Name).ToList(),
+                messages));
+        }
+
+        return descriptors;
     }
 
     internal IReadOnlyList<GeneratedFile> GenerateOperations(
