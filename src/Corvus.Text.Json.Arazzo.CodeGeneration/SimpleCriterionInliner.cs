@@ -53,6 +53,7 @@ internal static class SimpleCriterionInliner
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="responseHeaders">The operation's declared response headers (for <c>$response.header.&lt;name&gt;</c> operands).</param>
+    /// <param name="requestContext">The step's request-side values (for <c>$method</c> and <c>$request.*</c> operands).</param>
     /// <param name="tmpPrefix">A unique prefix for emitted temporaries and baked literal fields.</param>
     /// <param name="fields">Accumulates any baked string-literal <c>static readonly byte[]</c> fields.</param>
     /// <param name="statements">When this method returns <see langword="true"/>, the operand-resolution statements to emit before the gate.</param>
@@ -66,6 +67,7 @@ internal static class SimpleCriterionInliner
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
+        in StepRequestContext requestContext,
         string tmpPrefix,
         StringBuilder fields,
         out string statements,
@@ -75,7 +77,7 @@ internal static class SimpleCriterionInliner
         expression = string.Empty;
 
         var statementBuilder = new StringBuilder();
-        var parser = new Parser(condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, tmpPrefix, fields, statementBuilder);
+        var parser = new Parser(condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, tmpPrefix, fields, statementBuilder);
 
         string? expr = parser.ParseOr();
         if (expr is null || !parser.AtEnd)
@@ -113,6 +115,7 @@ internal static class SimpleCriterionInliner
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
+        in StepRequestContext requestContext,
         StringBuilder fields,
         StringBuilder statements,
         out string comparandExpr)
@@ -121,7 +124,7 @@ internal static class SimpleCriterionInliner
 
         if (token.Length > 0 && token[0] == '$')
         {
-            return TryEmitExpressionOperand(token, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, statements, out comparandExpr);
+            return TryEmitExpressionOperand(token, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
         }
 
         return TryEmitLiteralOperand(token, baseName, fields, out comparandExpr);
@@ -136,16 +139,19 @@ internal static class SimpleCriterionInliner
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
+        in StepRequestContext requestContext,
+        StringBuilder fields,
         StringBuilder statements,
         out string comparandExpr)
     {
         comparandExpr = string.Empty;
         (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(token);
+        bool bare = !expression.HasJsonPointer && navigationPointer is null;
 
         // $statusCode: only the bare form (no navigation) is a number; anything else is undefined.
         if (expression.Source == ArazzoExpressionSource.StatusCode)
         {
-            if (expression.HasJsonPointer || navigationPointer is not null)
+            if (!bare)
             {
                 return false;
             }
@@ -154,13 +160,27 @@ internal static class SimpleCriterionInliner
             return true;
         }
 
+        // $method: the operation's HTTP method — a compile-time constant baked as a string.
+        if (expression.Source == ArazzoExpressionSource.Method && bare)
+        {
+            comparandExpr = BakeStringLiteral(requestContext.Method, baseName, fields);
+            return true;
+        }
+
+        // $request.<location>.<name> / $request.body: resolve the value the step bound to the request.
+        if (bare && TryGetRequestValue(expression.Source, expression.Name, requestContext, out ArgumentValueKind requestKind, out string? requestValue))
+        {
+            return TryEmitRequestValue(
+                requestKind, requestValue!, baseName, responseVar, responseBodyLocal, inputsVariable,
+                stepOutputLocals, inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
+        }
+
         // $response.header.<name>: read the generated response property. A schema-less header is a
         // string?; a typed header is a generated JSON value read as a JsonElement. Both map an absent
         // header to an undefined comparand. Only the bare form (no navigation) is supported.
         if (expression.Source == ArazzoExpressionSource.ResponseHeader
             && expression.Name is { } headerName
-            && !expression.HasJsonPointer
-            && navigationPointer is null
+            && bare
             && CriterionExpressionParsing.TryResolveResponseHeader(responseHeaders, headerName, out ResponseHeaderInfo header))
         {
             comparandExpr = header.IsString
@@ -180,6 +200,101 @@ internal static class SimpleCriterionInliner
 
         comparandExpr = $"Comparand.FromJsonElement({elementLocal})";
         return true;
+    }
+
+    /// <summary>
+    /// Looks up the step's bound value for a <c>$request.&lt;location&gt;.&lt;name&gt;</c> or
+    /// <c>$request.body</c> operand.
+    /// </summary>
+    private static bool TryGetRequestValue(
+        ArazzoExpressionSource source,
+        string? name,
+        in StepRequestContext requestContext,
+        out ArgumentValueKind kind,
+        out string? value)
+    {
+        kind = default;
+        value = null;
+
+        if (source is ArazzoExpressionSource.RequestPath or ArazzoExpressionSource.RequestQuery or ArazzoExpressionSource.RequestHeader)
+        {
+            if (name is null)
+            {
+                return false;
+            }
+
+            foreach (StepArgument argument in requestContext.Arguments)
+            {
+                if (string.Equals(argument.Name, name, StringComparison.Ordinal))
+                {
+                    kind = argument.Kind;
+                    value = argument.Value;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if (source == ArazzoExpressionSource.RequestBody && requestContext.Body is { } body)
+        {
+            kind = body.Kind;
+            value = body.Value;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Emits a comparand for a request-bound value: an expression value is resolved like any other
+    /// operand (so it picks up typed input accessors, prior-step outputs, …); a scalar literal is baked
+    /// directly. Interpolated/composite request values are not inlined.
+    /// </summary>
+    private static bool TryEmitRequestValue(
+        ArgumentValueKind kind,
+        string value,
+        string baseName,
+        string responseVar,
+        string? responseBodyLocal,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
+        in StepRequestContext requestContext,
+        StringBuilder fields,
+        StringBuilder statements,
+        out string comparandExpr)
+    {
+        comparandExpr = string.Empty;
+
+        switch (kind)
+        {
+            case ArgumentValueKind.Expression:
+                return TryEmitExpressionOperand(
+                    value, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals,
+                    inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
+
+            case ArgumentValueKind.LiteralString:
+                comparandExpr = BakeStringLiteral(value, baseName, fields);
+                return true;
+
+            case ArgumentValueKind.LiteralNumber:
+                comparandExpr = $"Comparand.FromNumber({value})";
+                return true;
+
+            case ArgumentValueKind.LiteralBoolean:
+                comparandExpr = $"Comparand.FromBoolean({value})";
+                return true;
+
+            case ArgumentValueKind.LiteralNull:
+                comparandExpr = "Comparand.Null";
+                return true;
+
+            default:
+                // Interpolation / composite request values are not inlined.
+                return false;
+        }
     }
 
     private static bool TryEmitLiteralOperand(string token, string baseName, StringBuilder fields, out string comparandExpr)
@@ -247,6 +362,7 @@ internal static class SimpleCriterionInliner
         private readonly IReadOnlyDictionary<string, string> stepOutputLocals;
         private readonly IReadOnlyDictionary<string, string>? inputAccessors;
         private readonly IReadOnlyList<ResponseHeaderInfo>? responseHeaders;
+        private readonly StepRequestContext requestContext;
         private readonly string tmpPrefix;
         private readonly StringBuilder fields;
         private readonly StringBuilder statements;
@@ -261,6 +377,7 @@ internal static class SimpleCriterionInliner
             IReadOnlyDictionary<string, string> stepOutputLocals,
             IReadOnlyDictionary<string, string>? inputAccessors,
             IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
+            in StepRequestContext requestContext,
             string tmpPrefix,
             StringBuilder fields,
             StringBuilder statements)
@@ -272,6 +389,7 @@ internal static class SimpleCriterionInliner
             this.stepOutputLocals = stepOutputLocals;
             this.inputAccessors = inputAccessors;
             this.responseHeaders = responseHeaders;
+            this.requestContext = requestContext;
             this.tmpPrefix = tmpPrefix;
             this.fields = fields;
             this.statements = statements;
@@ -377,7 +495,7 @@ internal static class SimpleCriterionInliner
             this.operandCount++;
             return TryEmitOperand(
                 token, baseName, this.responseVar, this.responseBodyLocal, this.inputsVariable,
-                this.stepOutputLocals, this.inputAccessors, this.responseHeaders, this.fields, this.statements, out comparandExpr);
+                this.stepOutputLocals, this.inputAccessors, this.responseHeaders, this.requestContext, this.fields, this.statements, out comparandExpr);
         }
 
         private string ReadOperandToken()
