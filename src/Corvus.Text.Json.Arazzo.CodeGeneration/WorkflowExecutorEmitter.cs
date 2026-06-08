@@ -32,7 +32,8 @@ public static class WorkflowExecutorEmitter
     public static string Emit(
         in ArazzoDocument.WorkflowObject workflow,
         WorkflowOperationBinder binder,
-        in WorkflowExecutorOptions options)
+        in WorkflowExecutorOptions options,
+        JsonElement reusableActionComponents = default)
     {
         ArgumentNullException.ThrowIfNull(binder);
 
@@ -50,6 +51,12 @@ public static class WorkflowExecutorEmitter
         // as a labelled-loop executor (control flow), otherwise as the straight-line form.
         var boundSteps = new List<ControlFlowStep>();
         bool usesControlFlow = false;
+
+        // Workflow-level success/failure actions apply to every step as defaults (a step's own action
+        // with the same name overrides). Both these and a step's actions may be reusable $ref entries.
+        List<StepActionInfo> workflowSuccessActions = ReadActions(workflow.SuccessActions, reusableActionComponents);
+        List<StepActionInfo> workflowFailureActions = ReadActions(workflow.FailureActions, reusableActionComponents);
+
         foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
         {
             string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw new InvalidOperationException("A step is missing its required stepId.");
@@ -57,8 +64,8 @@ public static class WorkflowExecutorEmitter
 
             List<OutputMapping> stepOutputs = ReadOutputs(step);
             List<StepCriterion> criteria = ReadCriteria(step);
-            List<StepActionInfo> onSuccess = ReadActions(step.OnSuccess);
-            List<StepActionInfo> onFailure = ReadActions(step.OnFailure);
+            List<StepActionInfo> onSuccess = MergeActions(ReadActions(step.OnSuccess, reusableActionComponents), workflowSuccessActions);
+            List<StepActionInfo> onFailure = MergeActions(ReadActions(step.OnFailure, reusableActionComponents), workflowFailureActions);
 
             // A sub-workflow step invokes another generated workflow. Its criteria (success and action)
             // run against the sub-workflow's outputs / the inputs — never an HTTP response — so they may
@@ -311,11 +318,12 @@ public static class WorkflowExecutorEmitter
     }
 
     /// <summary>
-    /// Reads a step's <c>onSuccess</c>/<c>onFailure</c> array into a list of <see cref="StepActionInfo"/>.
-    /// Inline action objects are read; a reusable-action reference (<c>{reference:…}</c>) is skipped —
-    /// component resolution is a later phase.
+    /// Reads an <c>onSuccess</c>/<c>onFailure</c> (or workflow-level <c>successActions</c>/<c>failureActions</c>)
+    /// array into a list of <see cref="StepActionInfo"/>. Inline action objects are read directly; a
+    /// reusable-action reference (<c>{reference:"$components.successActions.x"}</c>) is resolved against
+    /// <paramref name="components"/>.
     /// </summary>
-    private static List<StepActionInfo> ReadActions(in JsonElement actions)
+    private static List<StepActionInfo> ReadActions(in JsonElement actions, in JsonElement components)
     {
         var list = new List<StepActionInfo>();
         if (actions.ValueKind != JsonValueKind.Array)
@@ -325,40 +333,128 @@ public static class WorkflowExecutorEmitter
 
         foreach (JsonElement entity in actions.EnumerateArray())
         {
-            if (entity.ValueKind != JsonValueKind.Object || entity.TryGetProperty("reference"u8, out _))
+            if (entity.ValueKind != JsonValueKind.Object)
             {
                 continue;
             }
 
-            if (!entity.TryGetProperty("name"u8, out JsonElement nameElement) || nameElement.ValueKind != JsonValueKind.String
-                || !entity.TryGetProperty("type"u8, out JsonElement typeElement) || typeElement.ValueKind != JsonValueKind.String)
+            if (entity.TryGetProperty("reference"u8, out JsonElement referenceElement) && referenceElement.ValueKind == JsonValueKind.String)
             {
+                string reference = referenceElement.GetString()!;
+                if (ResolveActionReference(components, reference) is not { } resolved || ReadInlineAction(resolved) is not { } resolvedAction)
+                {
+                    throw new InvalidOperationException($"Could not resolve reusable action reference '{reference}'.");
+                }
+
+                list.Add(resolvedAction);
                 continue;
             }
 
-            StepActionKind kind = typeElement.GetString() switch
+            if (ReadInlineAction(entity) is { } action)
             {
-                "end" => StepActionKind.End,
-                "goto" => StepActionKind.Goto,
-                "retry" => StepActionKind.Retry,
-                _ => StepActionKind.End,
-            };
-
-            string? targetStepId = entity.TryGetProperty("stepId"u8, out JsonElement stepIdElement) && stepIdElement.ValueKind == JsonValueKind.String
-                ? stepIdElement.GetString() : null;
-            string? targetWorkflowId = entity.TryGetProperty("workflowId"u8, out JsonElement workflowIdElement) && workflowIdElement.ValueKind == JsonValueKind.String
-                ? workflowIdElement.GetString() : null;
-            double? retryAfter = entity.TryGetProperty("retryAfter"u8, out JsonElement retryAfterElement) && retryAfterElement.ValueKind == JsonValueKind.Number
-                ? retryAfterElement.GetDouble() : null;
-            int? retryLimit = entity.TryGetProperty("retryLimit"u8, out JsonElement retryLimitElement) && retryLimitElement.ValueKind == JsonValueKind.Number
-                ? retryLimitElement.GetInt32() : null;
-            List<StepCriterion> criteria = entity.TryGetProperty("criteria"u8, out JsonElement criteriaElement)
-                ? ReadCriteriaArray(criteriaElement) : [];
-
-            list.Add(new StepActionInfo(nameElement.GetString()!, kind, targetStepId, targetWorkflowId, retryAfter, retryLimit, criteria));
+                list.Add(action);
+            }
         }
 
         return list;
+    }
+
+    /// <summary>Reads a single inline success/failure action object, or <see langword="null"/> if it lacks the required name/type.</summary>
+    private static StepActionInfo? ReadInlineAction(in JsonElement entity)
+    {
+        if (!entity.TryGetProperty("name"u8, out JsonElement nameElement) || nameElement.ValueKind != JsonValueKind.String
+            || !entity.TryGetProperty("type"u8, out JsonElement typeElement) || typeElement.ValueKind != JsonValueKind.String)
+        {
+            return null;
+        }
+
+        StepActionKind kind = typeElement.GetString() switch
+        {
+            "end" => StepActionKind.End,
+            "goto" => StepActionKind.Goto,
+            "retry" => StepActionKind.Retry,
+            _ => StepActionKind.End,
+        };
+
+        string? targetStepId = entity.TryGetProperty("stepId"u8, out JsonElement stepIdElement) && stepIdElement.ValueKind == JsonValueKind.String
+            ? stepIdElement.GetString() : null;
+        string? targetWorkflowId = entity.TryGetProperty("workflowId"u8, out JsonElement workflowIdElement) && workflowIdElement.ValueKind == JsonValueKind.String
+            ? workflowIdElement.GetString() : null;
+        double? retryAfter = entity.TryGetProperty("retryAfter"u8, out JsonElement retryAfterElement) && retryAfterElement.ValueKind == JsonValueKind.Number
+            ? retryAfterElement.GetDouble() : null;
+        int? retryLimit = entity.TryGetProperty("retryLimit"u8, out JsonElement retryLimitElement) && retryLimitElement.ValueKind == JsonValueKind.Number
+            ? retryLimitElement.GetInt32() : null;
+        List<StepCriterion> criteria = entity.TryGetProperty("criteria"u8, out JsonElement criteriaElement)
+            ? ReadCriteriaArray(criteriaElement) : [];
+
+        return new StepActionInfo(nameElement.GetString()!, kind, targetStepId, targetWorkflowId, retryAfter, retryLimit, criteria);
+    }
+
+    /// <summary>
+    /// Resolves a <c>$components.&lt;section&gt;.&lt;name&gt;</c> reusable-action reference against the
+    /// document's <c>components</c> object, returning the referenced action object or <see langword="null"/>.
+    /// </summary>
+    private static JsonElement? ResolveActionReference(in JsonElement components, string reference)
+    {
+        const string prefix = "$components.";
+        if (components.ValueKind != JsonValueKind.Object || !reference.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        string rest = reference[prefix.Length..];
+        int dot = rest.IndexOf('.', StringComparison.Ordinal);
+        if (dot <= 0)
+        {
+            return null;
+        }
+
+        string section = rest[..dot];
+        string name = rest[(dot + 1)..];
+
+        foreach (JsonProperty<JsonElement> sectionProperty in components.EnumerateObject())
+        {
+            if (sectionProperty.Name == section && sectionProperty.Value.ValueKind == JsonValueKind.Object)
+            {
+                foreach (JsonProperty<JsonElement> actionProperty in sectionProperty.Value.EnumerateObject())
+                {
+                    if (actionProperty.Name == name)
+                    {
+                        return actionProperty.Value;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Merges workflow-level default actions into a step's actions: the step's own actions take
+    /// precedence (matched first), then any workflow-level action whose name the step did not override.
+    /// </summary>
+    private static List<StepActionInfo> MergeActions(List<StepActionInfo> stepActions, IReadOnlyList<StepActionInfo> workflowDefaults)
+    {
+        if (workflowDefaults.Count == 0)
+        {
+            return stepActions;
+        }
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (StepActionInfo action in stepActions)
+        {
+            names.Add(action.Name);
+        }
+
+        foreach (StepActionInfo action in workflowDefaults)
+        {
+            if (names.Add(action.Name))
+            {
+                stepActions.Add(action);
+            }
+        }
+
+        return stepActions;
     }
 
     /// <summary>

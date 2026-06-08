@@ -50,6 +50,12 @@ public static class ArazzoCodeGeneration
 
         using var document = ParsedJsonDocument<ArazzoDocument>.Parse(arazzoDocumentUtf8.ToArray());
 
+        // The document's components hold reusable success/failure actions referenced by $ref from steps
+        // or workflow-level action lists.
+        JsonElement components = document.RootElement.Components.IsNotUndefined()
+            ? document.RootElement.Components
+            : default;
+
         int index = 0;
         foreach (ArazzoDocument.WorkflowObject workflow in document.RootElement.Workflows.EnumerateArray())
         {
@@ -85,7 +91,8 @@ public static class ArazzoCodeGeneration
             string executorSource = WorkflowExecutorEmitter.Emit(
                 workflow,
                 binder,
-                new WorkflowExecutorOptions(workflowsNamespace, className, inputsTypeName, options.OutputsTypeName, inputAccessors));
+                new WorkflowExecutorOptions(workflowsNamespace, className, inputsTypeName, options.OutputsTypeName, inputAccessors),
+                components);
 
             files.Add(new GeneratedModelFile($"{DefaultWorkflowsNamespaceSuffix}/{className}.cs", executorSource));
 
