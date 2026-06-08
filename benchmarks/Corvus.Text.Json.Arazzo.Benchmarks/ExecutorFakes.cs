@@ -93,36 +93,12 @@ public sealed class BenchClient(IApiTransport transport)
     // generated client exactly.
     public ValueTask<BenchResponse> GetPetAsync(
         JsonElement.Source petId,
-        JsonElement.Source limit = default,
-        JsonElement.Source active = default,
-        JsonElement.Source tag = default,
-        JsonElement.Source cursor = default,
         CancellationToken cancellationToken = default,
         ValidationMode validationMode = ValidationMode.Basic,
         ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         JsonElement petIdValue = JsonElement.CreateBuilder(workspace, petId).RootElement;
-        if (!limit.IsUndefined)
-        {
-            _ = JsonElement.CreateBuilder(workspace, limit).RootElement;
-        }
-
-        if (!active.IsUndefined)
-        {
-            _ = JsonElement.CreateBuilder(workspace, active).RootElement;
-        }
-
-        if (!tag.IsUndefined)
-        {
-            _ = JsonElement.CreateBuilder(workspace, tag).RootElement;
-        }
-
-        if (!cursor.IsUndefined)
-        {
-            _ = JsonElement.CreateBuilder(workspace, cursor).RootElement;
-        }
-
         var request = new BenchRequest(petIdValue);
         return this.SendCore(workspace, request, cancellationToken);
     }
