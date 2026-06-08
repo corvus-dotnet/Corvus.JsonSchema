@@ -48,7 +48,7 @@ internal static class SimpleCriterionInliner
     /// </summary>
     /// <param name="condition">The condition string.</param>
     /// <param name="responseVar">The in-scope response variable (for <c>$statusCode</c>).</param>
-    /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
+    /// <param name="sources">The step's live JSON sources (response body / message payload / message headers).</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
@@ -62,7 +62,7 @@ internal static class SimpleCriterionInliner
     public static bool TryEmit(
         string condition,
         string responseVar,
-        string? responseBodyLocal,
+        CriterionSources sources,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
@@ -77,7 +77,7 @@ internal static class SimpleCriterionInliner
         expression = string.Empty;
 
         var statementBuilder = new StringBuilder();
-        var parser = new Parser(condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, tmpPrefix, fields, statementBuilder);
+        var parser = new Parser(condition, responseVar, sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, tmpPrefix, fields, statementBuilder);
 
         string? expr = parser.ParseOr();
         if (expr is null || !parser.AtEnd)
@@ -110,7 +110,7 @@ internal static class SimpleCriterionInliner
         string token,
         string baseName,
         string responseVar,
-        string? responseBodyLocal,
+        CriterionSources sources,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
@@ -124,7 +124,7 @@ internal static class SimpleCriterionInliner
 
         if (token.Length > 0 && token[0] == '$')
         {
-            return TryEmitExpressionOperand(token, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
+            return TryEmitExpressionOperand(token, baseName, responseVar, sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
         }
 
         return TryEmitLiteralOperand(token, baseName, fields, out comparandExpr);
@@ -134,7 +134,7 @@ internal static class SimpleCriterionInliner
         string token,
         string baseName,
         string responseVar,
-        string? responseBodyLocal,
+        CriterionSources sources,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
@@ -171,7 +171,7 @@ internal static class SimpleCriterionInliner
         if (bare && TryGetRequestValue(expression.Source, expression.Name, requestContext, out ArgumentValueKind requestKind, out string? requestValue))
         {
             return TryEmitRequestValue(
-                requestKind, requestValue!, baseName, responseVar, responseBodyLocal, inputsVariable,
+                requestKind, requestValue!, baseName, responseVar, sources, inputsVariable,
                 stepOutputLocals, inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
         }
 
@@ -193,7 +193,7 @@ internal static class SimpleCriterionInliner
         // FromJsonElement maps an undefined element to an undefined comparand, so a missing operand
         // makes the comparison false, matching the runtime.
         if (!CriterionExpressionParsing.TryEmitElementNavigation(
-                expression, navigationPointer, baseName, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, statements, out string elementLocal))
+                expression, navigationPointer, baseName, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, out string elementLocal))
         {
             return false;
         }
@@ -256,7 +256,7 @@ internal static class SimpleCriterionInliner
         string value,
         string baseName,
         string responseVar,
-        string? responseBodyLocal,
+        CriterionSources sources,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
@@ -272,7 +272,7 @@ internal static class SimpleCriterionInliner
         {
             case ArgumentValueKind.Expression:
                 return TryEmitExpressionOperand(
-                    value, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals,
+                    value, baseName, responseVar, sources, inputsVariable, stepOutputLocals,
                     inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
 
             case ArgumentValueKind.LiteralString:
@@ -357,7 +357,7 @@ internal static class SimpleCriterionInliner
     {
         private readonly ReadOnlySpan<char> span;
         private readonly string responseVar;
-        private readonly string? responseBodyLocal;
+        private readonly CriterionSources sources;
         private readonly string inputsVariable;
         private readonly IReadOnlyDictionary<string, string> stepOutputLocals;
         private readonly IReadOnlyDictionary<string, string>? inputAccessors;
@@ -372,7 +372,7 @@ internal static class SimpleCriterionInliner
         public Parser(
             string text,
             string responseVar,
-            string? responseBodyLocal,
+            CriterionSources sources,
             string inputsVariable,
             IReadOnlyDictionary<string, string> stepOutputLocals,
             IReadOnlyDictionary<string, string>? inputAccessors,
@@ -384,7 +384,7 @@ internal static class SimpleCriterionInliner
         {
             this.span = text;
             this.responseVar = responseVar;
-            this.responseBodyLocal = responseBodyLocal;
+            this.sources = sources;
             this.inputsVariable = inputsVariable;
             this.stepOutputLocals = stepOutputLocals;
             this.inputAccessors = inputAccessors;
@@ -494,7 +494,7 @@ internal static class SimpleCriterionInliner
             string baseName = $"{this.tmpPrefix}o{this.operandCount.ToString(CultureInfo.InvariantCulture)}";
             this.operandCount++;
             return TryEmitOperand(
-                token, baseName, this.responseVar, this.responseBodyLocal, this.inputsVariable,
+                token, baseName, this.responseVar, this.sources, this.inputsVariable,
                 this.stepOutputLocals, this.inputAccessors, this.responseHeaders, this.requestContext, this.fields, this.statements, out comparandExpr);
         }
 
