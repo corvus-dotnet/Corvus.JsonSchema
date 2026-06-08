@@ -80,4 +80,26 @@ public class ArazzoGenerateCommandTests : IDisposable
         StringAssert.Contains(executor, "IMessageTransport messageTransport");
         StringAssert.Contains(executor, "new TestWorkflows.Events.NotifyProducer(messageTransport)");
     }
+
+    [TestMethod]
+    public async Task ArazzoGenerate_WithAsyncApi26Source_ProducesProducerAndChannelStep()
+    {
+        string arazzo = CodeGeneratorRunner.GetFixturePath("Arazzo", "notify26.arazzo.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"arazzo-generate \"{arazzo}\" --rootNamespace TestWorkflows --outputPath \"{_outputDir}\"");
+
+        Assert.AreEqual(0, result.ExitCode, $"Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+
+        // The AsyncAPI 2.6 'subscribe' operation generated a producer under the 'events' source segment.
+        Assert.IsTrue(
+            Directory.Exists(Path.Combine(_outputDir, "Events"))
+            && Directory.GetFiles(Path.Combine(_outputDir, "Events"), "*Producer.cs", SearchOption.AllDirectories).Length > 0,
+            $"Expected a generated AsyncAPI producer under {Path.Combine(_outputDir, "Events")}.");
+
+        // The executor publishes through the producer derived from the 2.6 subscribe operationId.
+        string executor = await File.ReadAllTextAsync(Path.Combine(_outputDir, "Workflows", "NotifyWorkflow.cs"));
+        StringAssert.Contains(executor, "IMessageTransport messageTransport");
+        StringAssert.Contains(executor, "new TestWorkflows.Events.NotifyProducer(messageTransport)");
+    }
 }

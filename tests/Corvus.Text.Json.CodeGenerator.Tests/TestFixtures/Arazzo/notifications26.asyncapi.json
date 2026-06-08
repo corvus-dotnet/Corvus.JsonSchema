@@ -1,0 +1,31 @@
+{
+  "asyncapi": "2.6.0",
+  "info": { "title": "Notifications 2.6", "version": "1.0.0" },
+  "defaultContentType": "application/json",
+  "channels": {
+    "notifications": {
+      "subscribe": {
+        "operationId": "notify",
+        "message": { "$ref": "#/components/messages/notification" }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "notification": {
+        "name": "notification",
+        "title": "Notification",
+        "contentType": "application/json",
+        "payload": { "$ref": "#/components/schemas/notificationPayload" }
+      }
+    },
+    "schemas": {
+      "notificationPayload": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "description": "The notification text." }
+        }
+      }
+    }
+  }
+}
