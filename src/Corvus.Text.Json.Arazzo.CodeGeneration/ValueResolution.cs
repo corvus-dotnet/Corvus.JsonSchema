@@ -31,6 +31,7 @@ internal static class ValueResolution
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="fieldName">The unique name for the compiled-expression field (used for the context path).</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable name (for static <c>$inputs</c> navigation).</param>
+    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor property on the inputs model, or <see langword="null"/> when the inputs are an untyped <see cref="JsonElement"/>.</param>
     public static void Emit(
         StringBuilder fields,
         StringBuilder statements,
@@ -39,7 +40,8 @@ internal static class ValueResolution
         string contextVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string fieldName,
-        string inputsVariable)
+        string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors)
     {
         ArazzoExpression parsed = ArazzoExpression.Parse(expression);
 
@@ -54,10 +56,20 @@ internal static class ValueResolution
         }
 
         // Static: navigate the workflow inputs directly — the inputs document outlives every product
-        // built from it, so the result is a reference, never a copy.
+        // built from it, so the result is a reference, never a copy. When the inputs are a generated
+        // model, use the strongly-typed accessor (inputs.PetId); otherwise fall back to a property
+        // lookup over the untyped JsonElement.
         if (parsed.Source == ArazzoExpressionSource.Inputs && parsed.Name is { } inputName)
         {
-            EmitNavigation(statements, $"((JsonElement){inputsVariable})", inputName, parsed.JsonPointer, resultLocal);
+            if (inputAccessors is not null && inputAccessors.TryGetValue(inputName, out string? accessor))
+            {
+                EmitTypedAccessor(statements, $"((JsonElement){inputsVariable}.{accessor})", parsed.JsonPointer, resultLocal);
+            }
+            else
+            {
+                EmitNavigation(statements, $"((JsonElement){inputsVariable})", inputName, parsed.JsonPointer, resultLocal);
+            }
+
             return;
         }
 
@@ -67,6 +79,24 @@ internal static class ValueResolution
             .Append(" = ArazzoExpression.Parse(").Append(EmitText.Quote(expression)).AppendLine(");");
         statements.Append(contextVariable).Append(".TryResolveValue(")
             .Append(fieldName).Append(", out JsonElement ").Append(resultLocal).AppendLine(");");
+    }
+
+    /// <summary>
+    /// Emits assignment of a strongly-typed-accessor value (already a <see cref="JsonElement"/>),
+    /// optionally followed by a JSON Pointer, into <paramref name="resultLocal"/>.
+    /// </summary>
+    private static void EmitTypedAccessor(StringBuilder statements, string valueExpression, string? jsonPointer, string resultLocal)
+    {
+        if (string.IsNullOrEmpty(jsonPointer))
+        {
+            statements.Append("JsonElement ").Append(resultLocal).Append(" = ").Append(valueExpression).AppendLine(";");
+        }
+        else
+        {
+            statements.Append("JsonElement ").Append(resultLocal).AppendLine(" = default;");
+            statements.Append(valueExpression).Append(".TryResolvePointer(")
+                .Append(EmitText.Quote(jsonPointer)).Append("u8, out ").Append(resultLocal).AppendLine(");");
+        }
     }
 
     /// <summary>

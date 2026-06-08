@@ -136,7 +136,19 @@ public class WorkflowExecutorEmitterTests
         source.ShouldNotContain("context.SetResponseStatusCode");
     }
 
-    private static string Emit(string document = Document)
+    [TestMethod]
+    public void Emits_typed_input_accessors_when_an_accessor_map_is_supplied()
+    {
+        // With an accessor map, $inputs.petId compiles to the strongly-typed accessor on the inputs
+        // model rather than a TryGetProperty over an untyped JsonElement.
+        var accessors = new Dictionary<string, string>(StringComparer.Ordinal) { ["petId"] = "PetId" };
+        string source = Emit(Document, accessors);
+
+        source.ShouldContain("petIdValue = ((JsonElement)inputs.PetId);");
+        source.ShouldNotContain("((JsonElement)inputs).TryGetProperty(\"petId\"u8");
+    }
+
+    private static string Emit(string document = Document, IReadOnlyDictionary<string, string>? inputAccessors = null)
     {
         OperationDescriptor[] operations =
         [
@@ -163,7 +175,7 @@ public class WorkflowExecutorEmitterTests
             return WorkflowExecutorEmitter.Emit(
                 workflow,
                 binder,
-                new WorkflowExecutorOptions("Acme.Pets.Workflows", "AdoptWorkflow", "Acme.Pets.AdoptInputs", "Acme.Pets.AdoptOutputs"));
+                new WorkflowExecutorOptions("Acme.Pets.Workflows", "AdoptWorkflow", "Acme.Pets.AdoptInputs", "Acme.Pets.AdoptOutputs", inputAccessors));
         }
 
         throw new InvalidOperationException("No workflow.");

@@ -23,6 +23,7 @@ public class OutputExtractionEmitterTests
             "context",
             NoSteps,
             "inputs",
+            null,
             "getPetResponseBody");
 
         // $response.body values are navigated from the live body and ONLY those values are copied
@@ -51,6 +52,7 @@ public class OutputExtractionEmitterTests
             "context",
             stepLocals,
             "inputs",
+            null,
             null);
 
         // Direct navigation of the prior step's outputs local — no context, no dictionary, no field.
@@ -62,7 +64,7 @@ public class OutputExtractionEmitterTests
     [TestMethod]
     public void Emits_nothing_when_the_step_has_no_outputs()
     {
-        OutputExtractionCode code = OutputExtractionEmitter.Emit("getPet", [], "workspace", "context", NoSteps, "inputs", null);
+        OutputExtractionCode code = OutputExtractionEmitter.Emit("getPet", [], "workspace", "context", NoSteps, "inputs", null, null);
 
         code.Fields.ShouldBeEmpty();
         code.Statements.ShouldBeEmpty();

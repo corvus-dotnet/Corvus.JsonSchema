@@ -39,6 +39,7 @@ internal static class JsonPathCriterionInliner
     /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="namespaceName">The executor's namespace (the sibling query class is emitted into it).</param>
     /// <param name="tmpPrefix">A unique prefix for the query class and any temporaries.</param>
     /// <param name="auxiliaryTypes">Accumulates the generated sibling query class source.</param>
@@ -51,6 +52,7 @@ internal static class JsonPathCriterionInliner
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         string namespaceName,
         string tmpPrefix,
         StringBuilder auxiliaryTypes,
@@ -76,7 +78,7 @@ internal static class JsonPathCriterionInliner
         ArazzoExpression context = ArazzoExpression.Parse(contextExpression);
         var statementBuilder = new StringBuilder();
         if (!CriterionExpressionParsing.TryEmitElementNavigation(
-            context, null, $"{tmpPrefix}data", responseBodyLocal, inputsVariable, stepOutputLocals, statementBuilder, out string dataLocal))
+            context, null, $"{tmpPrefix}data", responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, statementBuilder, out string dataLocal))
         {
             return false;
         }
