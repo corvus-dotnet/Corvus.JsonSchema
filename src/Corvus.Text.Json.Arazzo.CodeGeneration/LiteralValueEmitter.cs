@@ -7,14 +7,21 @@ using System.Text;
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
-/// Emits a constant (non-expression) JSON value as a parsed-once <see cref="JsonElement"/> local
+/// Emits a constant (non-expression) JSON value as a parse-free <see cref="JsonElement"/> local
 /// (plan §3.1).
 /// </summary>
 /// <remarks>
-/// A literal parameter value or request-body payload is fixed at generation time, so its JSON is
-/// parsed once into a <c>static readonly</c> document (process-lifetime, like a cached regex) and the
-/// local is assigned its root — no per-execution parse or allocation. The document is standalone, so
-/// values bound from it via <c>TTarget.From(...)</c> are valid for the whole run.
+/// <para>
+/// A literal parameter value or request-body payload is fixed at generation time, so it is bound once
+/// to a <c>static readonly</c> document (process-lifetime, like a cached regex — never disposed) and
+/// the local is assigned its root. The document is standalone, so values bound from it via
+/// <c>TTarget.From(...)</c> are valid for the whole run.
+/// </para>
+/// <para>
+/// A scalar string or number uses the specialised <c>FixedJsonValueDocument</c>, which simply wraps the
+/// raw UTF-8 bytes (no tokenizer, no metadata database) — far cheaper than a full parse. Booleans,
+/// nulls, objects, and arrays fall back to <c>ParsedJsonDocument.Parse</c>.
+/// </para>
 /// </remarks>
 internal static class LiteralValueEmitter
 {
@@ -34,9 +41,30 @@ internal static class LiteralValueEmitter
         string resultLocal,
         string fieldName)
     {
-        fields.Append("private static readonly ParsedJsonDocument<JsonElement> ").Append(fieldName)
-            .Append(" = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(")
-            .Append(EmitText.Quote(literalJson)).AppendLine("));");
+        char first = literalJson.Length > 0 ? literalJson[0] : '\0';
+
+        if (first == '"')
+        {
+            // Scalar string: wrap the raw quoted UTF-8 directly — no parse.
+            fields.Append("private static readonly Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement> ").Append(fieldName)
+                .Append(" = Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement>.ForString(")
+                .Append(EmitText.Quote(literalJson)).AppendLine("u8.ToArray());");
+        }
+        else if (first == '-' || (first >= '0' && first <= '9'))
+        {
+            // Scalar number: wrap the raw UTF-8 number text directly — no parse.
+            fields.Append("private static readonly Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement> ").Append(fieldName)
+                .Append(" = Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement>.ForNumber(")
+                .Append(EmitText.Quote(literalJson)).AppendLine("u8.ToArray());");
+        }
+        else
+        {
+            // Boolean, null, object, or array: parse once into a standalone document.
+            fields.Append("private static readonly ParsedJsonDocument<JsonElement> ").Append(fieldName)
+                .Append(" = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(")
+                .Append(EmitText.Quote(literalJson)).AppendLine("));");
+        }
+
         statements.Append("JsonElement ").Append(resultLocal).Append(" = ").Append(fieldName).AppendLine(".RootElement;");
     }
 }
