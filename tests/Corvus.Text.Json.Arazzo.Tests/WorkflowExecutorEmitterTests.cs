@@ -148,6 +148,42 @@ public class WorkflowExecutorEmitterTests
         source.ShouldNotContain("((JsonElement)inputs).TryGetProperty(\"petId\"u8");
     }
 
+    private const string MixedOutputsDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "sub": "$inputs.petId#/sub", "code": "$statusCode" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.sub" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public void Resolves_a_typed_input_pointer_and_falls_back_to_the_context_for_a_scalar_source()
+    {
+        var accessors = new Dictionary<string, string>(StringComparer.Ordinal) { ["petId"] = "PetId" };
+        string source = Emit(MixedOutputsDocument, accessors);
+
+        // $inputs.petId#/sub → typed accessor followed by a JSON-pointer navigation.
+        source.ShouldContain("((JsonElement)inputs.PetId).TryResolvePointer(\"/sub\"u8");
+
+        // $statusCode is not statically navigable in an output, so it resolves through the context.
+        source.ShouldContain("context.TryResolveValue(");
+    }
+
     private static string Emit(string document = Document, IReadOnlyDictionary<string, string>? inputAccessors = null)
     {
         OperationDescriptor[] operations =
