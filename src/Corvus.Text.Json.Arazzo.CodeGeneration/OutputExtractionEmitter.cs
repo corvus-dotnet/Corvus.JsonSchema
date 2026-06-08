@@ -31,13 +31,15 @@ public static class OutputExtractionEmitter
     /// <param name="workspaceVariable">The in-scope <c>JsonWorkspace</c> variable name.</param>
     /// <param name="contextVariable">The in-scope <c>WorkflowExecutionContext</c> variable name.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="inputsVariable">The in-scope workflow inputs variable name (for static <c>$inputs</c> navigation).</param>
     /// <returns>The emitted static field declarations and the in-method statements (empty when there are no outputs).</returns>
     public static OutputExtractionCode Emit(
         string stepId,
         IReadOnlyList<OutputMapping> outputs,
         string workspaceVariable,
         string contextVariable,
-        IReadOnlyDictionary<string, string> stepOutputLocals)
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        string inputsVariable)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
         ArgumentNullException.ThrowIfNull(outputs);
@@ -60,7 +62,7 @@ public static class OutputExtractionEmitter
         {
             string local = $"{EmitText.ToCamelCase(identifier)}Output{i.ToString(CultureInfo.InvariantCulture)}";
             string field = $"{identifier}_Output_{EmitText.SanitizeIdentifier(outputs[i].Name)}";
-            ValueResolution.Emit(fields, statements, outputs[i].Expression, local, contextVariable, stepOutputLocals, field);
+            ValueResolution.Emit(fields, statements, outputs[i].Expression, local, contextVariable, stepOutputLocals, field, inputsVariable);
             valueLocals.Add(local);
         }
 

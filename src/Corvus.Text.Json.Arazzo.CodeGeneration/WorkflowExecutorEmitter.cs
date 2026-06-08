@@ -65,11 +65,11 @@ public static class WorkflowExecutorEmitter
             body.Append("            // ── step: ").Append(stepId).AppendLine(" ──");
 
             StepBodyCode stepBody = StepBodyEmitter.Emit(
-                stepId, operation, ReadArguments(step), criteria, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, ReadRequestBody(step), bindResponseBody);
+                stepId, operation, ReadArguments(step), criteria, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", ReadRequestBody(step), bindResponseBody);
             fields.Append(stepBody.Fields);
             AppendIndented(body, stepBody.Statements, 12);
 
-            OutputExtractionCode outputs = OutputExtractionEmitter.Emit(stepId, stepOutputs, "workspace", "context", stepOutputLocals);
+            OutputExtractionCode outputs = OutputExtractionEmitter.Emit(stepId, stepOutputs, "workspace", "context", stepOutputLocals, "inputs");
             fields.Append(outputs.Fields);
             AppendIndented(body, outputs.Statements, 12);
 
@@ -287,7 +287,7 @@ public static class WorkflowExecutorEmitter
         {
             string local = $"workflowOutput{i.ToString(CultureInfo.InvariantCulture)}";
             string field = $"Workflow_Output_{EmitText.SanitizeIdentifier(names[i])}";
-            ValueResolution.Emit(fields, statements, expressions[i], local, "context", stepOutputLocals, field);
+            ValueResolution.Emit(fields, statements, expressions[i], local, "context", stepOutputLocals, field, "inputs");
             valueLocals.Add(local);
         }
 
