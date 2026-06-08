@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/fe70e5a81d8d933cebad46cb44729a333f571051/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.DateTime.cs#L84">JsonElementHelpers.DateTime.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/671e730cbfb39b8ff5d293686ba9e56627665539/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.DateTime.cs#L89">JsonElementHelpers.DateTime.cs</a></p>
 <h2 id="tryformatperiod-period-span-byte-int">TryFormatPeriod(Period, Span&lt;byte&gt;, int)</h2>
 <p>Format a period as a UTF-8 string for the <code>duration</code> format.</p>
 <pre><code class="language-csharp">public static bool TryFormatPeriod(in Period value, Span&lt;byte&gt; output, out int bytesWritten)
@@ -133,6 +133,8 @@
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></p>
 <p><code>true</code> if the period was formatted successfully.</p>
+<h3 id="remarks">Remarks</h3>
+<p>The JSON Schema <code>duration</code> format (RFC 3339 Appendix A) does not permit fractional seconds, so any sub-second component of <code>value</code> is rounded to the nearest whole second before formatting (rounding halves away from zero).</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

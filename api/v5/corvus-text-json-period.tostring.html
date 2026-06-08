@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/fe70e5a81d8d933cebad46cb44729a333f571051/src/Corvus.Text.Json/Corvus/NodaTimeExtensions/Period.cs#L691">Period.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/671e730cbfb39b8ff5d293686ba9e56627665539/src/Corvus.Text.Json/Corvus/NodaTimeExtensions/Period.cs#L764">Period.cs</a></p>
 <h2 id="tostring">ToString()</h2>
 <p>Returns this string formatted according to the ISO8601 duration specification used by JSON schema.</p>
 <pre><code class="language-csharp">public override string ToString()
@@ -106,6 +106,8 @@
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></p>
 <p>A formatted representation of this period.</p>
+<h3 id="remarks">Remarks</h3>
+<p>The result is a valid RFC 3339 Appendix A <code>duration</code> (the grammar used by the JSON Schema <code>duration</code> format), and is produced by the same formatter used when writing a period to a JSON document, so it always round-trips back through <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-period.tryparse.html"><code>TryParse</code></a>. That grammar does not permit fractional seconds, so any sub-second component is rounded to the nearest whole second before formatting (rounding halves away from zero). Zero-valued units are omitted where the grammar allows, so for example a one-day, two-hour period is formatted as <code>P1DT2H</code> rather than <code>P0Y0M1DT2H0M0S</code>.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
