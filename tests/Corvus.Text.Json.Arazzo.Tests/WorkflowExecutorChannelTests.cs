@@ -91,4 +91,76 @@ public partial class WorkflowExecutorEndToEndTests
         messageTransport.PublishedMessages[0].Channel.ShouldBe("notifications");
         Encoding.UTF8.GetString(messageTransport.PublishedMessages[0].PayloadBytes).ShouldContain("hi");
     }
+
+    private const string ChannelReceiveDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listen",
+              "steps": [
+                {
+                  "stepId": "receive",
+                  "channelPath": "measurements",
+                  "action": "receive"
+                }
+              ],
+              "outputs": { "lumens": "$steps.receive.outputs.lumens" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_receives_a_message_from_a_channel()
+    {
+        // A receive descriptor whose message payload is delivered as JsonElement (the typed receive path).
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The receive step awaits one typed message (via the ReceiveOneAsync subscriber wrapper) and
+        // captures its payload as the step's outputs.
+        source.ShouldContain("messageTransport.ReceiveOneAsync<Corvus.Text.Json.JsonElement>(");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        // Start the executor: it subscribes synchronously and then awaits the first message. Deliver one
+        // so the subscriber wrapper completes, then await the run.
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"lumens":150}"""));
+        JsonElement outputs = await pending;
+
+        // The received payload became the step's outputs and flowed to the workflow output.
+        outputs.TryGetProperty("lumens"u8, out JsonElement lumens).ShouldBeTrue();
+        lumens.GetInt32().ShouldBe(150);
+    }
 }
