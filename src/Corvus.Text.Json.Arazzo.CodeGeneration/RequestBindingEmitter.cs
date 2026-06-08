@@ -57,6 +57,7 @@ public static class RequestBindingEmitter
 
         var fields = new StringBuilder();
         var statements = new StringBuilder();
+        var cleanup = new StringBuilder();
         var namedArguments = new List<string>();
 
         foreach (RequestParameterInfo parameter in operation.Operation.RequestParameters)
@@ -73,7 +74,7 @@ public static class RequestBindingEmitter
             }
 
             string source = EmitValue(
-                fields, statements, argument.Kind, argument.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
+                fields, statements, cleanup, argument.Kind, argument.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
                 $"{fieldPrefix}{parameter.PropertyName}", parameter.PropertyName, parameter.TypeName);
             namedArguments.Add($"{parameter.ParameterName}: {source}");
         }
@@ -81,12 +82,12 @@ public static class RequestBindingEmitter
         if (requestBody is { } body && operation.Operation.RequestBodyTypeName is { } bodyType)
         {
             string source = EmitValue(
-                fields, statements, body.Kind, body.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
+                fields, statements, cleanup, body.Kind, body.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
                 $"{fieldPrefix}Body", "Body", bodyType);
             namedArguments.Add($"body: {source}");
         }
 
-        return new RequestBindingCode(fields.ToString(), statements.ToString(), namedArguments);
+        return new RequestBindingCode(fields.ToString(), statements.ToString(), namedArguments, cleanup.ToString());
     }
 
     /// <summary>
@@ -96,6 +97,7 @@ public static class RequestBindingEmitter
     private static string EmitValue(
         StringBuilder fields,
         StringBuilder statements,
+        StringBuilder cleanup,
         ArgumentValueKind kind,
         string value,
         string contextVariable,
@@ -118,18 +120,18 @@ public static class RequestBindingEmitter
 
             case ArgumentValueKind.Interpolation:
                 // Inline the template (literal segments + statically-navigated $inputs/$steps fragments
-                // into a pooled buffer, no context) when possible; otherwise fall back to the runtime
-                // interpreter. Request-side interpolation binds no response body, so pass none.
+                // into a pooled buffer, no context) when possible: the buffer's span is passed straight
+                // to the client as its Source and returned after the call. Otherwise fall back to the
+                // runtime interpreter. Request-side interpolation binds no response body, so pass none.
                 if (InterpolationInliner.TryEmit(
-                    value, local, responseBodyLocal: null, inputsVariable, stepOutputLocals, inputAccessors, $"{fieldName}Interp", out string inlined))
+                    value, responseBodyLocal: null, inputsVariable, stepOutputLocals, inputAccessors, $"{fieldName}Interp", out InterpolationInlineCode inlined))
                 {
-                    statements.Append(inlined);
-                }
-                else
-                {
-                    InterpolationEmitter.Emit(fields, statements, value, local, contextVariable, $"{fieldName}Template");
+                    statements.Append(inlined.Statements);
+                    cleanup.Append(inlined.Cleanup);
+                    return inlined.SourceExpression;
                 }
 
+                InterpolationEmitter.Emit(fields, statements, value, local, contextVariable, $"{fieldName}Template");
                 return local;
 
             case ArgumentValueKind.LiteralString:
@@ -216,6 +218,7 @@ public readonly record struct StepRequestContext(
 /// The code emitted for a step's request binding (plan §3.1).
 /// </summary>
 /// <param name="Fields">The <c>static readonly</c> field declarations to place on the executor class.</param>
-/// <param name="Statements">The in-method statements that resolve each argument.</param>
+/// <param name="Statements">The in-method statements that resolve each argument, emitted before the client call.</param>
 /// <param name="NamedArguments">The <c>paramName: source</c> fragments to pass to the generated client method.</param>
-public readonly record struct RequestBindingCode(string Fields, string Statements, IReadOnlyList<string> NamedArguments);
+/// <param name="Cleanup">Statements to emit immediately after the client call — e.g. returning a pooled interpolation buffer whose span was passed as a <c>Source</c> (the client consumes it synchronously, so it is safe to return once the call has been made).</param>
+public readonly record struct RequestBindingCode(string Fields, string Statements, IReadOnlyList<string> NamedArguments, string Cleanup = "");
