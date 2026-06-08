@@ -47,15 +47,36 @@ internal static class SubWorkflowStepEmitter
         ArgumentException.ThrowIfNullOrEmpty(subWorkflowId);
         ArgumentNullException.ThrowIfNull(arguments);
 
+        string outputsLocal = EmitText.StepOutputsElementLocal(stepId);
+
+        var fields = new StringBuilder();
+        var statements = new StringBuilder();
+        string builderVariable = BuildInputs(fields, statements, stepId, arguments, stepOutputLocals, inputsVariable, inputAccessors);
+
+        statements.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
+        statements.Append("JsonElement ").Append(outputsLocal).Append(" = await ").Append(TargetClass(workflowsNamespace, subWorkflowId))
+            .Append(".ExecuteAsync(transport, workspace, ").Append(builderVariable).AppendLine(".RootElement, cancellationToken).ConfigureAwait(false);");
+
+        return new SubWorkflowStepCode(fields.ToString(), statements.ToString());
+    }
+
+    /// <summary>
+    /// Emits the statements that project a sub-workflow step's parameters into an inputs object and
+    /// returns the builder variable whose <c>RootElement</c> is the inputs to pass to the target.
+    /// </summary>
+    public static string BuildInputs(
+        StringBuilder fields,
+        StringBuilder statements,
+        string stepId,
+        IReadOnlyList<StepArgument> arguments,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors)
+    {
         string identifier = EmitText.SanitizeIdentifier(stepId);
         string prefix = $"{identifier}_";
         string camel = EmitText.ToCamelCase(identifier);
         string builderVariable = $"{camel}Inputs";
-        string outputsLocal = EmitText.StepOutputsElementLocal(stepId);
-        string targetClass = $"{workflowsNamespace}.{EmitText.ToPascalCase(subWorkflowId)}Workflow";
-
-        var fields = new StringBuilder();
-        var statements = new StringBuilder();
         var valueLocals = new List<string>(arguments.Count);
 
         foreach (StepArgument argument in arguments)
@@ -72,8 +93,8 @@ internal static class SubWorkflowStepEmitter
             valueLocals.Add(local);
         }
 
-        // Project the parameters into the sub-workflow's inputs object, then invoke it. A JsonElement
-        // converts to the target's inputs type (typed model or JsonElement) via its implicit operator.
+        // Project the parameters into the sub-workflow's inputs object. A JsonElement converts to the
+        // target's inputs type (typed model or JsonElement) via its implicit operator.
         statements.Append("Span<JsonElement> ").Append(builderVariable).Append("Values = [")
             .Append(string.Join(", ", valueLocals)).AppendLine("];");
         statements.Append("var ").Append(builderVariable).AppendLine(" = JsonElement.CreateBuilder(");
@@ -89,13 +110,12 @@ internal static class SubWorkflowStepEmitter
 
         statements.AppendLine("    });");
 
-        statements.Append("ArazzoTelemetry.StepsExecuted.Add(1);");
-        statements.AppendLine();
-        statements.Append("JsonElement ").Append(outputsLocal).Append(" = await ").Append(targetClass)
-            .Append(".ExecuteAsync(transport, workspace, ").Append(builderVariable).AppendLine(".RootElement, cancellationToken).ConfigureAwait(false);");
-
-        return new SubWorkflowStepCode(fields.ToString(), statements.ToString());
+        return builderVariable;
     }
+
+    /// <summary>Computes the fully-qualified generated executor class name for a workflow id.</summary>
+    public static string TargetClass(string workflowsNamespace, string subWorkflowId)
+        => $"{workflowsNamespace}.{EmitText.ToPascalCase(subWorkflowId)}Workflow";
 }
 
 /// <summary>
