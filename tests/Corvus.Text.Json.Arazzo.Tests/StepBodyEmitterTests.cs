@@ -29,7 +29,11 @@ public class StepBodyEmitterTests
             [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")],
             "Acme.Pets.PetsClient",
             "GetPetAsync",
-            null));
+            null,
+            [
+                new ResponseHeaderInfo("X-Flag", "XFlagHeader", "string", true),
+                new ResponseHeaderInfo("X-Count", "XCountHeader", "Acme.Pets.JsonInt32", false),
+            ]));
 
     [TestMethod]
     public void Invokes_the_generated_client_method_with_named_arguments()
@@ -230,6 +234,42 @@ public class StepBodyEmitterTests
 
         code.AuxiliaryTypes.ShouldBeEmpty();
         code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath,");
+        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
+    }
+
+    [TestMethod]
+    public void Inlines_a_response_header_simple_criterion()
+    {
+        // A schema-less header is read as a string?; a typed header is read as a JsonElement — both
+        // against the generated response property, with no CompiledCriterion and no context.
+        StepBodyCode code = Emit(
+        [
+            new StepCriterion("simple", "$response.header.X-Flag == 'on'", null),
+            new StepCriterion("simple", "$response.header.X-Count > 5", null),
+        ]);
+
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.UsesContext.ShouldBeFalse();
+        code.Statements.ShouldContain("Comparand.FromString(getPetResponse.XFlagHeader).ValueEquals(");
+        code.Statements.ShouldContain("Comparand.FromJsonElement((JsonElement)getPetResponse.XCountHeader).GreaterThan(Comparand.FromNumber(5))");
+    }
+
+    [TestMethod]
+    public void Inlines_a_regex_criterion_against_a_response_header()
+    {
+        StepBodyCode code = Emit([new StepCriterion("regex", "^v\\d", "$response.header.X-Flag")]);
+
+        code.Fields.ShouldContain("[GeneratedRegex(");
+        code.Statements.ShouldContain("RegexCriterion.IsMatch(getPet_C0Regex(), getPetResponse.XFlagHeader)");
+    }
+
+    [TestMethod]
+    public void Falls_back_to_a_compiled_criterion_for_an_undeclared_response_header()
+    {
+        // A header not declared on the operation has no generated property — fall back to the runtime.
+        StepBodyCode code = Emit([new StepCriterion("simple", "$response.header.X-Unknown == 'y'", null)]);
+
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple,");
         code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
     }
 

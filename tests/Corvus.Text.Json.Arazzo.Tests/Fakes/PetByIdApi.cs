@@ -57,12 +57,17 @@ public readonly struct PetByIdRequest(JsonElement petId) : IApiRequest<PetByIdRe
 public struct PetByIdResponse : IApiResponse<PetByIdResponse>
 {
     private ParsedJsonDocument<JsonElement>? bodyDocument;
+    private IResponseHeaders? responseHeaders;
 
     public int StatusCode { get; private set; }
 
     public JsonElement OkBody { get; private set; }
 
     public readonly bool IsSuccess => this.StatusCode is >= 200 and < 300;
+
+    /// <summary>Gets the schema-less <c>X-Flag</c> response header (mirrors the generator's untyped header property).</summary>
+    public readonly string? XFlagHeader
+        => this.responseHeaders is { } headers && headers.TryGetValue("X-Flag", out string? value) ? value : null;
 
     public static async ValueTask<PetByIdResponse> CreateAsync(
         int statusCode,
@@ -75,7 +80,7 @@ public struct PetByIdResponse : IApiResponse<PetByIdResponse>
     {
         using var buffer = new MemoryStream();
         await contentStream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
-        var response = new PetByIdResponse { StatusCode = statusCode };
+        var response = new PetByIdResponse { StatusCode = statusCode, responseHeaders = responseHeaders };
         if (buffer.Length > 0)
         {
             response.bodyDocument = ParsedJsonDocument<JsonElement>.Parse(buffer.ToArray());
