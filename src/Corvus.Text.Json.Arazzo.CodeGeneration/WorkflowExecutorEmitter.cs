@@ -100,13 +100,21 @@ public static class WorkflowExecutorEmitter
                     continue;
                 }
 
-                JsonElement value = (JsonElement)parameter.Value;
-                if (value.ValueKind == JsonValueKind.String)
-                {
-                    arguments.Add(new StepArgument(parameter.Name.GetString()!, value.GetString()!));
-                }
+                string name = parameter.Name.GetString()!;
+                JsonElement value = parameter.Value;
 
-                // Non-string (literal) parameter values are bound in a later stage.
+                if (value.ValueKind == JsonValueKind.String && value.GetString() is { } text && text.StartsWith('$'))
+                {
+                    // A runtime expression (e.g. "$inputs.petId"). Interpolated strings ("{$…}") are a
+                    // later phase; they fall through to the literal branch for now.
+                    arguments.Add(new StepArgument(name, text));
+                }
+                else
+                {
+                    // A constant JSON value (string, number, boolean, object, or array) — bound as a
+                    // parsed-once literal.
+                    arguments.Add(new StepArgument(name, value.GetRawText(), IsLiteral: true));
+                }
             }
         }
 

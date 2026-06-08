@@ -95,6 +95,23 @@ public class RequestBindingEmitterTests
     }
 
     [TestMethod]
+    public void Binds_a_literal_parameter_value_as_a_parsed_once_constant()
+    {
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            GetPet,
+            [new StepArgument("petId", "\"42\"", IsLiteral: true)],
+            "context",
+            "GetPet_",
+            NoSteps);
+
+        // The literal is parsed once into a static document; no context resolution is emitted.
+        code.Fields.ShouldContain("private static readonly ParsedJsonDocument<JsonElement> GetPet_PetIdLiteral = ParsedJsonDocument<JsonElement>.Parse(");
+        code.Statements.ShouldContain("JsonElement petIdValue = GetPet_PetIdLiteral.RootElement;");
+        code.Statements.ShouldNotContain("context.TryResolveValue");
+        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(petIdValue)");
+    }
+
+    [TestMethod]
     public void Emits_compiled_expression_fields_for_each_argument()
     {
         RequestBindingCode code = RequestBindingEmitter.Emit(

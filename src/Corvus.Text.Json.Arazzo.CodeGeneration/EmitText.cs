@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
 using System.Text;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
@@ -12,12 +13,44 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 internal static class EmitText
 {
     /// <summary>
-    /// Renders a string as a double-quoted C# string literal, escaping backslashes and quotes.
+    /// Renders a string as a double-quoted C# string literal, escaping backslashes, quotes, and all
+    /// control characters (so arbitrary text — including JSON with newlines — embeds safely).
     /// </summary>
     /// <param name="value">The value.</param>
     /// <returns>The C# string literal.</returns>
     public static string Quote(string value)
-        => $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+    {
+        var builder = new StringBuilder(value.Length + 2);
+        builder.Append('"');
+        foreach (char c in value)
+        {
+            switch (c)
+            {
+                case '\\': builder.Append("\\\\"); break;
+                case '"': builder.Append("\\\""); break;
+                case '\n': builder.Append("\\n"); break;
+                case '\r': builder.Append("\\r"); break;
+                case '\t': builder.Append("\\t"); break;
+                case '\b': builder.Append("\\b"); break;
+                case '\f': builder.Append("\\f"); break;
+                case '\0': builder.Append("\\0"); break;
+                default:
+                    if (c < ' ')
+                    {
+                        builder.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
+                    }
+                    else
+                    {
+                        builder.Append(c);
+                    }
+
+                    break;
+            }
+        }
+
+        builder.Append('"');
+        return builder.ToString();
+    }
 
     /// <summary>
     /// Lower-cases the first character (PascalCase → camelCase) for local-variable names.

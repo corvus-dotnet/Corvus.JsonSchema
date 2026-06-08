@@ -139,6 +139,94 @@ public class WorkflowExecutorEndToEndTests
         transport.Requests[0].Path.ShouldBe("/pets");
     }
 
+    private const string LiteralParamDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adoptLiteral",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "42" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_binds_a_literal_parameter_value_and_runs()
+    {
+        string source = EmitLiteralParamExecutor();
+
+        Assembly assembly = CompileInMemory(source);
+        Type workflowType = assembly.GetType("GeneratedWorkflows.AdoptLiteralWorkflow")
+            ?? throw new InvalidOperationException("Generated workflow type not found.");
+        MethodInfo execute = workflowType.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        JsonElement outputs = await pending;
+
+        // The literal "42" was bound to the path parameter with no inputs involved.
+        transport.Requests.Count.ShouldBe(1);
+        transport.Requests[0].Path.ShouldBe("/pets/42");
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Fido");
+    }
+
+    private static string EmitLiteralParamExecutor()
+    {
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets/{petId}",
+                OperationMethod.Get,
+                "getPet",
+                "GetPet",
+                typeof(PetByIdRequest).FullName!,
+                typeof(PetByIdResponse).FullName!,
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true, "petId")],
+                false,
+                [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
+                typeof(PetByIdClient).FullName!,
+                "GetPetAsync",
+                null),
+        ];
+
+        var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
+
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(LiteralParamDocument));
+        foreach (ArazzoDocument.WorkflowObject workflow in doc.RootElement.Workflows.EnumerateArray())
+        {
+            return WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions(
+                    "GeneratedWorkflows",
+                    "AdoptLiteralWorkflow",
+                    "Corvus.Text.Json.JsonElement",
+                    "Corvus.Text.Json.JsonElement"));
+        }
+
+        throw new InvalidOperationException("No workflow.");
+    }
+
     private static string EmitCreatePetExecutor()
     {
         OperationDescriptor[] operations =
