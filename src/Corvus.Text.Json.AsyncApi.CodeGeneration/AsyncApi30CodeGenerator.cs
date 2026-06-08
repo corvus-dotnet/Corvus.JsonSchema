@@ -604,36 +604,12 @@ public sealed class AsyncApi30CodeGenerator
         IAsyncApiReferenceResolver? referenceResolver = null)
     {
         (List<OperationInfo> sendOps, List<OperationInfo> receiveOps) = CollectOperations(doc, filter, referenceResolver);
-        return this.BuildChannelDescriptors(sendOps, receiveOps);
-    }
 
-    /// <summary>
-    /// Maps collected <see cref="OperationInfo"/> records to <see cref="AsyncApiChannelDescriptor"/>s —
-    /// the version-independent half of <see cref="DescribeChannelOperations"/>, shared with the AsyncAPI
-    /// 2.6 generator (which collects its own operations from the older channel/publish/subscribe shape but
-    /// emits and describes them through this generator).
-    /// </summary>
-    /// <param name="sendOps">The send operations.</param>
-    /// <param name="receiveOps">The receive operations.</param>
-    /// <returns>One descriptor per operation.</returns>
-    internal IReadOnlyList<AsyncApiChannelDescriptor> BuildChannelDescriptors(
-        IReadOnlyList<OperationInfo> sendOps,
-        IReadOnlyList<OperationInfo> receiveOps)
-    {
         var descriptors = new List<AsyncApiChannelDescriptor>(sendOps.Count + receiveOps.Count);
         foreach (OperationInfo op in sendOps.Concat(receiveOps))
         {
             bool isSend = op.Action == OperationAction.Send;
             string? producerClassName = isSend ? $"{this.rootNamespace}.{ToPascalCase(op.Name)}Producer" : null;
-
-            // An operation that declares a reply is request/reply. On the send side the producer exposes a
-            // SendAndReceive{Message}Async method; on the receive side the descriptor still carries the reply
-            // payload type so a responder (consumer / Arazzo responder step) knows what reply to produce.
-            bool hasReply = op.Reply is not null;
-            bool isSendRequestReply = isSend && hasReply;
-            string? replyPayloadTypeName = hasReply
-                ? (op.Reply!.Value.Messages.Count == 1 ? op.Reply.Value.Messages[0].PayloadTypeName : null) ?? "Corvus.Text.Json.JsonElement"
-                : null;
 
             var messages = new List<AsyncApiChannelMessageDescriptor>(op.Messages.Count);
             foreach (MessageInfo message in op.Messages)
@@ -643,10 +619,7 @@ public sealed class AsyncApi30CodeGenerator
                     message.PayloadTypeName,
                     message.HeadersTypeName,
                     message.ContentType,
-                    isSend ? $"Publish{ToPascalCase(message.Name)}Async" : null,
-                    isSendRequestReply ? $"SendAndReceive{ToPascalCase(message.Name)}Async" : null,
-                    message.CorrelationIdName,
-                    message.CorrelationIdLocation));
+                    isSend ? $"Publish{ToPascalCase(message.Name)}Async" : null));
             }
 
             descriptors.Add(new AsyncApiChannelDescriptor(
@@ -656,8 +629,7 @@ public sealed class AsyncApi30CodeGenerator
                 producerClassName,
                 op.IsDynamicAddress,
                 op.Parameters.Select(static p => p.Name).ToList(),
-                messages,
-                replyPayloadTypeName));
+                messages));
         }
 
         return descriptors;
@@ -740,9 +712,7 @@ public sealed class AsyncApi30CodeGenerator
         string? HeadersPointer,
         string? HeadersTypeName,
         string? ContentType,
-        string? MessageBindingsJson,
-        string? CorrelationIdName = null,
-        string? CorrelationIdLocation = null);
+        string? MessageBindingsJson);
 
     internal readonly record struct ChannelParameter(
         string Name,
@@ -998,9 +968,7 @@ public sealed class AsyncApi30CodeGenerator
                 }
             }
 
-            (string? correlationIdName, string? correlationIdLocation) = ExtractCorrelationId(resolved, doc, resolver);
-
-            messages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, contentType, messageBindingsJson, correlationIdName, correlationIdLocation));
+            messages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, contentType, messageBindingsJson));
             index++;
         }
 
@@ -1317,38 +1285,6 @@ public sealed class AsyncApi30CodeGenerator
         return ResolveRef(element, doc, resolver, out _);
     }
 
-    // Extracts a message's AsyncAPI Correlation ID as (name, location). The message's `correlationId` is
-    // either inline ({ location, ... }, which has no referable name) or a $ref to a named definition under
-    // components.correlationIds — the latter's key is the name an Arazzo receive step's `correlationId`
-    // matches. The location is the runtime expression (e.g. $message.header#/correlationId) saying where the
-    // correlation token lives in the message.
-    internal static (string? Name, string? Location) ExtractCorrelationId(JsonElement message, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver)
-    {
-        if (!TryGetPropertyWithTraits(message, "correlationId"u8, doc, resolver, out JsonElement corrEl))
-        {
-            return (null, null);
-        }
-
-        JsonElement resolved = ResolveRef(corrEl, doc, resolver, out string? refPointer);
-
-        string? name = null;
-        if (refPointer is { } pointer)
-        {
-            int slash = pointer.LastIndexOf('/');
-            name = slash >= 0 ? pointer[(slash + 1)..] : pointer;
-        }
-
-        string? location = null;
-        if (resolved.ValueKind == JsonValueKind.Object &&
-            resolved.TryGetProperty("location"u8, out JsonElement locEl) &&
-            locEl.ValueKind == JsonValueKind.String)
-        {
-            location = locEl.GetString();
-        }
-
-        return (name, location);
-    }
-
     private static JsonElement ResolveRef(
         JsonElement element,
         AsyncApiDocument doc,
@@ -1562,227 +1498,133 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine();
             string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
             string methodName = $"Publish{ToPascalCase(msg.Name)}Async";
+            w.WriteLine($"/// <summary>");
+            w.WriteLine($"/// Publishes a <c>{msg.Name}</c> message.");
+            w.WriteLine($"/// </summary>");
+            w.WriteLine($"/// <param name=\"payload\">The message payload.</param>");
 
-            // A dynamic-address operation with no channel-template parameters takes a
-            // caller-provided channel. For that case we emit a triple of overloads
-            // (string / ReadOnlySpan<char> / ReadOnlySpan<byte>) that all delegate to a
-            // shared private Core which receives the channel as already-built UTF-8.
-            bool dynamicNoParams = op.IsDynamicAddress && op.Parameters.Count == 0;
-
-            // Local function that emits the shared body (workspace + payload + validation +
-            // MessageContext + the PublishAsyncCore call). For the dynamic triple this is the
-            // Core body and the channel is already supplied as channelUtf8/channelRental.
-            void EmitPublishBody()
+            if (msg.HeadersTypeName is not null)
             {
-                w.WriteLine($"JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
-                w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(workspace, payload, 30).RootElement;");
-
-                if (msg.HeadersTypeName is not null)
-                {
-                    w.WriteLine($"{msg.HeadersTypeName} headersValue = {msg.HeadersTypeName}.CreateBuilder(workspace, headers, 10).RootElement;");
-                }
-
-                // Validation
-                w.WriteLine();
-                w.WriteLine("if (this.validationMode != ValidationMode.None)");
-                w.OpenBrace();
-                w.WriteLine("ValidatePayload(payloadValue, this.validationMode);");
-
-                if (msg.HeadersTypeName is not null)
-                {
-                    w.WriteLine("ValidateHeaders(headersValue, this.validationMode);");
-                }
-
-                w.CloseBrace();
-
-                // Build channel address as UTF-8 bytes (unless already supplied by the Core overloads).
-                w.WriteLine();
-                if (op.Parameters.Count > 0)
-                {
-                    // Split the template into segments around parameters and encode directly to a rented buffer
-                    EmitParameterizedChannelConstruction(w, op);
-                }
-                else if (op.IsDynamicAddress && !dynamicNoParams)
-                {
-                    // Dynamic: convert user-provided string to UTF-8 bytes (one allocation)
-                    w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
-                    w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
-                    w.WriteLine("int channelLen = Encoding.UTF8.GetBytes(channel, channelRental);");
-                    w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelLen);");
-                }
-
-                // Call PublishAsyncCore with message context
-                string headersArg = msg.HeadersTypeName is not null
-                    ? "Corvus.Text.Json.JsonElement.From(headersValue)"
-                    : "default";
-
-                w.WriteLine($"MessageContext context = new()");
-                w.OpenBrace();
-                if (msg.ContentType is not null)
-                {
-                    w.WriteLine($"ContentType = \"{EscapeString(msg.ContentType)}\",");
-                }
-
-                if (op.ChannelBindingsJson is not null)
-                {
-                    w.WriteLine("ChannelBindingsJson = ChannelBindingsBytes,");
-                }
-
-                if (op.OperationBindingsJson is not null)
-                {
-                    w.WriteLine("OperationBindingsJson = OperationBindingsBytes,");
-                }
-
-                if (msg.MessageBindingsJson is not null)
-                {
-                    string wrapperClassName = $"{ToPascalCase(op.Name)}{ToPascalCase(msg.Name)}Message";
-                    w.WriteLine($"MessageBindingsJson = {wrapperClassName}.MessageBindingsBytes,");
-                }
-
-                w.CloseBraceWithSemicolon();
-
-                string channelArg = op.IsDynamicAddress || op.Parameters.Count > 0
-                    ? "channelUtf8"
-                    : "ChannelAddressUtf8";
-                string rentalArg = op.IsDynamicAddress || op.Parameters.Count > 0
-                    ? "channelRental"
-                    : "null";
-
-                w.WriteLine($"return PublishAsyncCore(workspace, {channelArg}, {rentalArg}, payloadValue, {headersArg}, context, cancellationToken);");
+                w.WriteLine($"/// <param name=\"headers\">The message headers.</param>");
             }
 
-            if (dynamicNoParams)
+            if (op.IsDynamicAddress)
             {
-                // Common leading params (payload, optional headers) shared by all overloads.
-                string leadingParams = $"{payloadType}.Source payload";
-                string leadingArgs = "payload";
-                if (msg.HeadersTypeName is not null)
+                w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
+            }
+
+            foreach (ChannelParameter p in op.Parameters)
+            {
+                w.WriteLine($"/// <param name=\"{ToCamelCase(p.Name)}\">{p.Description ?? $"The {p.Name} channel parameter."}</param>");
+            }
+
+            w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
+
+            // Build method signature
+            List<string> methodParams = [$"{payloadType}.Source payload"];
+
+            if (msg.HeadersTypeName is not null)
+            {
+                methodParams.Add($"{msg.HeadersTypeName}.Source headers");
+            }
+
+            if (op.IsDynamicAddress)
+            {
+                methodParams.Add("string channel");
+            }
+
+            foreach (ChannelParameter p in op.Parameters)
+            {
+                string paramDecl = $"string {ToCamelCase(p.Name)}";
+                if (p.DefaultValue is not null)
                 {
-                    leadingParams += $", {msg.HeadersTypeName}.Source headers";
-                    leadingArgs += ", headers";
+                    paramDecl += $" = \"{EscapeString(p.DefaultValue)}\"";
                 }
 
-                void EmitLeadingDocs(string summary)
-                {
-                    w.WriteLine($"/// <summary>");
-                    w.WriteLine($"/// {summary}");
-                    w.WriteLine($"/// </summary>");
-                    w.WriteLine($"/// <param name=\"payload\">The message payload.</param>");
-                    if (msg.HeadersTypeName is not null)
-                    {
-                        w.WriteLine($"/// <param name=\"headers\">The message headers.</param>");
-                    }
-                }
+                methodParams.Add(paramDecl);
+            }
 
-                // string overload — delegates to the ReadOnlySpan<char> overload.
-                EmitLeadingDocs($"Publishes a <c>{msg.Name}</c> message.");
-                w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
-                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"public ValueTask {methodName}({leadingParams}, string channel, CancellationToken cancellationToken = default)");
-                w.OpenBrace();
-                w.WriteLine($"return {methodName}({leadingArgs}, channel.AsSpan(), cancellationToken);");
-                w.CloseBrace();
+            methodParams.Add("CancellationToken cancellationToken = default");
 
-                // ReadOnlySpan<char> overload — transcodes to UTF-8 then calls the Core.
-                w.WriteLine();
-                EmitLeadingDocs($"Publishes a <c>{msg.Name}</c> message.");
-                w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
-                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"public ValueTask {methodName}({leadingParams}, ReadOnlySpan<char> channel, CancellationToken cancellationToken = default)");
-                w.OpenBrace();
+            w.WriteLine($"public ValueTask {methodName}({string.Join(", ", methodParams)})");
+            w.OpenBrace();
+
+            w.WriteLine($"JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
+            w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(workspace, payload, 30).RootElement;");
+
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"{msg.HeadersTypeName} headersValue = {msg.HeadersTypeName}.CreateBuilder(workspace, headers, 10).RootElement;");
+            }
+
+            // Validation
+            w.WriteLine();
+            w.WriteLine("if (this.validationMode != ValidationMode.None)");
+            w.OpenBrace();
+            w.WriteLine("ValidatePayload(payloadValue, this.validationMode);");
+
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine("ValidateHeaders(headersValue, this.validationMode);");
+            }
+
+            w.CloseBrace();
+
+            // Build channel address as UTF-8 bytes
+            w.WriteLine();
+            if (op.Parameters.Count > 0)
+            {
+                // Split the template into segments around parameters and encode directly to a rented buffer
+                EmitParameterizedChannelConstruction(w, op);
+            }
+            else if (op.IsDynamicAddress)
+            {
+                // Dynamic: convert user-provided string to UTF-8 bytes (one allocation)
                 w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
                 w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
                 w.WriteLine("int channelLen = Encoding.UTF8.GetBytes(channel, channelRental);");
-                w.WriteLine($"return {methodName}Core({leadingArgs}, channelRental.AsMemory(0, channelLen), channelRental, cancellationToken);");
-                w.CloseBrace();
-
-                // ReadOnlySpan<byte> overload — channel is already UTF-8; copy it into a pooled rental (no
-                // encode), which the Core hands to the transport and returns to the pool after the send.
-                w.WriteLine();
-                EmitLeadingDocs($"Publishes a <c>{msg.Name}</c> message.");
-                w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
-                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"public ValueTask {methodName}({leadingParams}, ReadOnlySpan<byte> channelUtf8, CancellationToken cancellationToken = default)");
-                w.OpenBrace();
-                w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelUtf8.Length);");
-                w.WriteLine("channelUtf8.CopyTo(channelRental);");
-                w.WriteLine($"return {methodName}Core({leadingArgs}, channelRental.AsMemory(0, channelUtf8.Length), channelRental, cancellationToken);");
-                w.CloseBrace();
-
-                // Private Core — shared body, receives the channel as already-built UTF-8.
-                w.WriteLine();
-                w.WriteLine($"/// <summary>");
-                w.WriteLine($"/// Publishes a <c>{msg.Name}</c> message to the supplied (already UTF-8 encoded) channel.");
-                w.WriteLine($"/// </summary>");
-                w.WriteLine($"/// <param name=\"payload\">The message payload.</param>");
-                if (msg.HeadersTypeName is not null)
-                {
-                    w.WriteLine($"/// <param name=\"headers\">The message headers.</param>");
-                }
-
-                w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
-                w.WriteLine($"/// <param name=\"channelRental\">The rented buffer backing <paramref name=\"channelUtf8\"/> to return to the pool after the send.</param>");
-                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"private ValueTask {methodName}Core({leadingParams}, ReadOnlyMemory<byte> channelUtf8, byte[] channelRental, CancellationToken cancellationToken)");
-                w.OpenBrace();
-                EmitPublishBody();
-                w.CloseBrace();
+                w.WriteLine("ReadOnlyMemory<byte> channelUtf8 = channelRental.AsMemory(0, channelLen);");
             }
-            else
+
+            // Call PublishAsyncCore with message context
+            string headersArg = msg.HeadersTypeName is not null
+                ? "Corvus.Text.Json.JsonElement.From(headersValue)"
+                : "default";
+
+            w.WriteLine($"MessageContext context = new()");
+            w.OpenBrace();
+            if (msg.ContentType is not null)
             {
-                w.WriteLine($"/// <summary>");
-                w.WriteLine($"/// Publishes a <c>{msg.Name}</c> message.");
-                w.WriteLine($"/// </summary>");
-                w.WriteLine($"/// <param name=\"payload\">The message payload.</param>");
-
-                if (msg.HeadersTypeName is not null)
-                {
-                    w.WriteLine($"/// <param name=\"headers\">The message headers.</param>");
-                }
-
-                if (op.IsDynamicAddress)
-                {
-                    w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
-                }
-
-                foreach (ChannelParameter p in op.Parameters)
-                {
-                    w.WriteLine($"/// <param name=\"{ToCamelCase(p.Name)}\">{p.Description ?? $"The {p.Name} channel parameter."}</param>");
-                }
-
-                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-
-                // Build method signature
-                List<string> methodParams = [$"{payloadType}.Source payload"];
-
-                if (msg.HeadersTypeName is not null)
-                {
-                    methodParams.Add($"{msg.HeadersTypeName}.Source headers");
-                }
-
-                if (op.IsDynamicAddress)
-                {
-                    methodParams.Add("string channel");
-                }
-
-                foreach (ChannelParameter p in op.Parameters)
-                {
-                    string paramDecl = $"string {ToCamelCase(p.Name)}";
-                    if (p.DefaultValue is not null)
-                    {
-                        paramDecl += $" = \"{EscapeString(p.DefaultValue)}\"";
-                    }
-
-                    methodParams.Add(paramDecl);
-                }
-
-                methodParams.Add("CancellationToken cancellationToken = default");
-
-                w.WriteLine($"public ValueTask {methodName}({string.Join(", ", methodParams)})");
-                w.OpenBrace();
-                EmitPublishBody();
-                w.CloseBrace();
+                w.WriteLine($"ContentType = \"{EscapeString(msg.ContentType)}\",");
             }
+
+            if (op.ChannelBindingsJson is not null)
+            {
+                w.WriteLine("ChannelBindingsJson = ChannelBindingsBytes,");
+            }
+
+            if (op.OperationBindingsJson is not null)
+            {
+                w.WriteLine("OperationBindingsJson = OperationBindingsBytes,");
+            }
+
+            if (msg.MessageBindingsJson is not null)
+            {
+                string wrapperClassName = $"{ToPascalCase(op.Name)}{ToPascalCase(msg.Name)}Message";
+                w.WriteLine($"MessageBindingsJson = {wrapperClassName}.MessageBindingsBytes,");
+            }
+
+            w.CloseBraceWithSemicolon();
+
+            string channelArg = op.IsDynamicAddress || op.Parameters.Count > 0
+                ? "channelUtf8"
+                : "ChannelAddressUtf8";
+            string rentalArg = op.IsDynamicAddress || op.Parameters.Count > 0
+                ? "channelRental"
+                : "null";
+
+            w.WriteLine($"return PublishAsyncCore(workspace, {channelArg}, {rentalArg}, payloadValue, {headersArg}, context, cancellationToken);");
+            w.CloseBrace();
         }
 
         // Emit request/reply methods if this operation has a reply
@@ -1798,16 +1640,58 @@ public sealed class AsyncApi30CodeGenerator
                     ? reply.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement"
                     : "Corvus.Text.Json.JsonElement";
 
-                // As with the publish methods, a dynamic-address operation with no channel-template
-                // parameters emits a string / ReadOnlySpan<char> / ReadOnlySpan<byte> triple that
-                // all delegate to a shared private Core taking the channel as already-built UTF-8.
-                bool dynamicNoParams = op.IsDynamicAddress && op.Parameters.Count == 0;
+                w.WriteLine();
+                w.WriteLine($"/// <summary>");
+                w.WriteLine($"/// Sends a <c>{msg.Name}</c> request and waits for a reply.");
+                w.WriteLine($"/// </summary>");
+                w.WriteLine($"/// <param name=\"payload\">The request payload.</param>");
 
-                // Local function emitting the shared body (workspace + payload + validation + reply
-                // address derivation + the RequestAsyncCore call). For the dynamic triple this is the
-                // Core body and the channel is already supplied as channelUtf8/channelRental.
-                void EmitRequestBody()
+                if (msg.HeadersTypeName is not null)
                 {
+                    w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
+                }
+
+                if (op.IsDynamicAddress)
+                {
+                    w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
+                }
+
+                foreach (ChannelParameter p in op.Parameters)
+                {
+                    w.WriteLine($"/// <param name=\"{ToCamelCase(p.Name)}\">{p.Description ?? $"The {p.Name} channel parameter."}</param>");
+                }
+
+                w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
+                w.WriteLine($"/// <returns>The reply payload.</returns>");
+
+                // Build method signature
+                List<string> reqParams = [$"{payloadType}.Source payload"];
+                if (msg.HeadersTypeName is not null)
+                {
+                    reqParams.Add($"{msg.HeadersTypeName}.Source headers");
+                }
+
+                if (op.IsDynamicAddress)
+                {
+                    reqParams.Add("string channel");
+                }
+
+                foreach (ChannelParameter p in op.Parameters)
+                {
+                    string paramDecl = $"string {ToCamelCase(p.Name)}";
+                    if (p.DefaultValue is not null)
+                    {
+                        paramDecl += $" = \"{EscapeString(p.DefaultValue)}\"";
+                    }
+
+                    reqParams.Add(paramDecl);
+                }
+
+                reqParams.Add("CancellationToken cancellationToken = default");
+
+                w.WriteLine($"public ValueTask<{replyType}> {requestMethodName}({string.Join(", ", reqParams)})");
+                    w.OpenBrace();
+
                     w.WriteLine($"JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
                     w.WriteLine($"{payloadType} payloadValue = {payloadType}.CreateBuilder(workspace, payload, 30).RootElement;");
 
@@ -1828,13 +1712,13 @@ public sealed class AsyncApi30CodeGenerator
 
                     w.CloseBrace();
 
-                    // Build channel address as UTF-8 bytes (unless already supplied by the Core overloads).
+                    // Build channel address as UTF-8 bytes
                     w.WriteLine();
                     if (op.Parameters.Count > 0)
                     {
                         EmitParameterizedChannelConstruction(w, op);
                     }
-                    else if (op.IsDynamicAddress && !dynamicNoParams)
+                    else if (op.IsDynamicAddress)
                     {
                         w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
                         w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
@@ -1893,145 +1777,8 @@ public sealed class AsyncApi30CodeGenerator
                         : "null";
 
                     w.WriteLine($"return RequestAsyncCore<{payloadType}, {replyType}>(workspace, {channelArg}, {rentalArg}, {replyAddr}, payloadValue, {headersArg}, cancellationToken);");
-                }
 
-                w.WriteLine();
-
-                if (dynamicNoParams)
-                {
-                    string leadingParams = $"{payloadType}.Source payload";
-                    string leadingArgs = "payload";
-                    if (msg.HeadersTypeName is not null)
-                    {
-                        leadingParams += $", {msg.HeadersTypeName}.Source headers";
-                        leadingArgs += ", headers";
-                    }
-
-                    void EmitLeadingDocs()
-                    {
-                        w.WriteLine($"/// <summary>");
-                        w.WriteLine($"/// Sends a <c>{msg.Name}</c> request and waits for a reply.");
-                        w.WriteLine($"/// </summary>");
-                        w.WriteLine($"/// <param name=\"payload\">The request payload.</param>");
-                        if (msg.HeadersTypeName is not null)
-                        {
-                            w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
-                        }
-                    }
-
-                    // string overload — delegates to the ReadOnlySpan<char> overload.
-                    EmitLeadingDocs();
-                    w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
-                    w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                    w.WriteLine($"/// <returns>The reply payload.</returns>");
-                    w.WriteLine($"public ValueTask<{replyType}> {requestMethodName}({leadingParams}, string channel, CancellationToken cancellationToken = default)");
-                    w.OpenBrace();
-                    w.WriteLine($"return {requestMethodName}({leadingArgs}, channel.AsSpan(), cancellationToken);");
                     w.CloseBrace();
-
-                    // ReadOnlySpan<char> overload — transcodes to UTF-8 then calls the Core.
-                    w.WriteLine();
-                    EmitLeadingDocs();
-                    w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
-                    w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                    w.WriteLine($"/// <returns>The reply payload.</returns>");
-                    w.WriteLine($"public ValueTask<{replyType}> {requestMethodName}({leadingParams}, ReadOnlySpan<char> channel, CancellationToken cancellationToken = default)");
-                    w.OpenBrace();
-                    w.WriteLine("int channelByteCount = Encoding.UTF8.GetByteCount(channel);");
-                    w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelByteCount);");
-                    w.WriteLine("int channelLen = Encoding.UTF8.GetBytes(channel, channelRental);");
-                    w.WriteLine($"return {requestMethodName}Core({leadingArgs}, channelRental.AsMemory(0, channelLen), channelRental, cancellationToken);");
-                    w.CloseBrace();
-
-                    // ReadOnlySpan<byte> overload — channel is already UTF-8; copy it into a pooled rental (no
-                    // encode), which the Core hands to the transport and returns to the pool after the send.
-                    w.WriteLine();
-                    EmitLeadingDocs();
-                    w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
-                    w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                    w.WriteLine($"/// <returns>The reply payload.</returns>");
-                    w.WriteLine($"public ValueTask<{replyType}> {requestMethodName}({leadingParams}, ReadOnlySpan<byte> channelUtf8, CancellationToken cancellationToken = default)");
-                    w.OpenBrace();
-                    w.WriteLine("byte[] channelRental = ArrayPool<byte>.Shared.Rent(channelUtf8.Length);");
-                    w.WriteLine("channelUtf8.CopyTo(channelRental);");
-                    w.WriteLine($"return {requestMethodName}Core({leadingArgs}, channelRental.AsMemory(0, channelUtf8.Length), channelRental, cancellationToken);");
-                    w.CloseBrace();
-
-                    // Private Core — shared body, receives the channel as already-built UTF-8.
-                    w.WriteLine();
-                    w.WriteLine($"/// <summary>");
-                    w.WriteLine($"/// Sends a <c>{msg.Name}</c> request to the supplied (already UTF-8 encoded) channel and waits for a reply.");
-                    w.WriteLine($"/// </summary>");
-                    w.WriteLine($"/// <param name=\"payload\">The request payload.</param>");
-                    if (msg.HeadersTypeName is not null)
-                    {
-                        w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
-                    }
-
-                    w.WriteLine($"/// <param name=\"channelUtf8\">The target channel address as UTF-8 bytes.</param>");
-                    w.WriteLine($"/// <param name=\"channelRental\">The rented buffer backing <paramref name=\"channelUtf8\"/> to return to the pool after the send.</param>");
-                    w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                    w.WriteLine($"/// <returns>The reply payload.</returns>");
-                    w.WriteLine($"private ValueTask<{replyType}> {requestMethodName}Core({leadingParams}, ReadOnlyMemory<byte> channelUtf8, byte[] channelRental, CancellationToken cancellationToken)");
-                    w.OpenBrace();
-                    EmitRequestBody();
-                    w.CloseBrace();
-                }
-                else
-                {
-                    w.WriteLine($"/// <summary>");
-                    w.WriteLine($"/// Sends a <c>{msg.Name}</c> request and waits for a reply.");
-                    w.WriteLine($"/// </summary>");
-                    w.WriteLine($"/// <param name=\"payload\">The request payload.</param>");
-
-                    if (msg.HeadersTypeName is not null)
-                    {
-                        w.WriteLine($"/// <param name=\"headers\">The request headers.</param>");
-                    }
-
-                    if (op.IsDynamicAddress)
-                    {
-                        w.WriteLine($"/// <param name=\"channel\">The target channel address (dynamic routing).</param>");
-                    }
-
-                    foreach (ChannelParameter p in op.Parameters)
-                    {
-                        w.WriteLine($"/// <param name=\"{ToCamelCase(p.Name)}\">{p.Description ?? $"The {p.Name} channel parameter."}</param>");
-                    }
-
-                    w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                    w.WriteLine($"/// <returns>The reply payload.</returns>");
-
-                    // Build method signature
-                    List<string> reqParams = [$"{payloadType}.Source payload"];
-                    if (msg.HeadersTypeName is not null)
-                    {
-                        reqParams.Add($"{msg.HeadersTypeName}.Source headers");
-                    }
-
-                    if (op.IsDynamicAddress)
-                    {
-                        reqParams.Add("string channel");
-                    }
-
-                    foreach (ChannelParameter p in op.Parameters)
-                    {
-                        string paramDecl = $"string {ToCamelCase(p.Name)}";
-                        if (p.DefaultValue is not null)
-                        {
-                            paramDecl += $" = \"{EscapeString(p.DefaultValue)}\"";
-                        }
-
-                        reqParams.Add(paramDecl);
-                    }
-
-                    reqParams.Add("CancellationToken cancellationToken = default");
-
-                    w.WriteLine($"public ValueTask<{replyType}> {requestMethodName}({string.Join(", ", reqParams)})");
-                    w.OpenBrace();
-                    EmitRequestBody();
-                    w.CloseBrace();
-                }
             }
         }
 
@@ -2098,16 +1845,6 @@ public sealed class AsyncApi30CodeGenerator
         return new GeneratedFile($"{className}.cs", w.ToString());
     }
 
-    // A single-message receive operation that declares a reply is a responder: its handler returns the
-    // reply payload (the consumer publishes it via SubscribeReplyAsync).
-    private static bool IsResponderOperation(in OperationInfo op) => op.Reply is not null && op.Messages.Count == 1;
-
-    private static string ReplyPayloadTypeNameOf(in OperationInfo op)
-        => (op.Reply!.Value.Messages.Count == 1 ? op.Reply.Value.Messages[0].PayloadTypeName : null) ?? "Corvus.Text.Json.JsonElement";
-
-    private static string ReplyHandlerReturnType(in OperationInfo op)
-        => IsResponderOperation(op) ? $"ValueTask<{ReplyPayloadTypeNameOf(op)}>" : "ValueTask";
-
     private GeneratedFile EmitConsumerHandler(OperationInfo op)
     {
         string interfaceName = $"I{ToPascalCase(op.Name)}Handler";
@@ -2130,14 +1867,12 @@ public sealed class AsyncApi30CodeGenerator
 
         if (op.Messages.Count == 1)
         {
-            // Single message: handler receives the typed payload directly. A receive operation that
-            // declares a reply returns the reply payload (the consumer publishes it); otherwise void.
+            // Single message: handler receives the typed payload directly
             MessageInfo msg = op.Messages[0];
             string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
             string methodName = $"Handle{ToPascalCase(msg.Name)}Async";
-            string returnType = ReplyHandlerReturnType(op);
             w.WriteLine($"/// <summary>");
-            w.WriteLine($"/// Handles a <c>{msg.Name}</c> message{(op.Reply is not null ? " and returns the reply payload" : string.Empty)}.");
+            w.WriteLine($"/// Handles a <c>{msg.Name}</c> message.");
             w.WriteLine($"/// </summary>");
             w.WriteLine($"/// <param name=\"payload\">The deserialized message payload.</param>");
 
@@ -2145,12 +1880,12 @@ public sealed class AsyncApi30CodeGenerator
             {
                 w.WriteLine($"/// <param name=\"headers\">The deserialized message headers.</param>");
                 w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"{returnType} {methodName}({payloadType} payload, {msg.HeadersTypeName} headers, CancellationToken cancellationToken = default);");
+                w.WriteLine($"ValueTask {methodName}({payloadType} payload, {msg.HeadersTypeName} headers, CancellationToken cancellationToken = default);");
             }
             else
             {
                 w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"{returnType} {methodName}({payloadType} payload, CancellationToken cancellationToken = default);");
+                w.WriteLine($"ValueTask {methodName}({payloadType} payload, CancellationToken cancellationToken = default);");
             }
         }
         else
@@ -2213,7 +1948,7 @@ public sealed class AsyncApi30CodeGenerator
         if (op.IsDynamicAddress)
         {
             w.WriteLine("private string? subscribedChannel;");
-            w.WriteLine("private ReadOnlyMemory<byte> subscribedChannelUtf8;");
+            w.WriteLine("private byte[]? subscribedChannelUtf8;");
         }
         else
         {
@@ -2294,112 +2029,20 @@ public sealed class AsyncApi30CodeGenerator
 
         w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
 
-        // A dynamic-address consumer takes a caller-provided channel. As with the producer we
-        // emit a string / ReadOnlySpan<char> / ReadOnlySpan<byte> triple delegating to a private
-        // Core that receives the (retained) UTF-8 channel bytes. Static channels are unchanged.
-        bool dynamicNoParams = op.IsDynamicAddress;
+        string startParams = op.IsDynamicAddress
+            ? "string channel, CancellationToken cancellationToken = default"
+            : "CancellationToken cancellationToken = default";
 
-        // Local function emitting the subscribe body. For the dynamic case the channel bytes have
-        // already been stored in this.subscribedChannelUtf8 by the Core/overloads.
-        void EmitStartBody(bool async)
+        if (op.SecuritySchemes.Count > 0)
         {
-            string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
-            string keyword = async ? "await " : "return ";
-            string suffix = async ? ".ConfigureAwait(false)" : string.Empty;
-            if (IsResponderOperation(op))
-            {
-                string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"{keyword}this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken){suffix};");
-            }
-            else if (op.Messages.Count == 1)
-            {
-                string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-                w.WriteLine($"{keyword}this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken){suffix};");
-            }
-            else
-            {
-                w.WriteLine($"{keyword}this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken){suffix};");
-            }
-        }
-
-        if (dynamicNoParams)
-        {
-            // string overload — delegates to the ReadOnlySpan<char> overload (and retains the channel string).
-            w.WriteLine($"public ValueTask StartAsync(string channel, CancellationToken cancellationToken = default)");
+            w.WriteLine($"public async ValueTask StartAsync({startParams})");
             w.OpenBrace();
-            w.WriteLine("this.subscribedChannel = channel;");
-            w.WriteLine("return this.StartAsync(channel.AsSpan(), cancellationToken);");
-            w.CloseBrace();
 
-            // ReadOnlySpan<char> overload — transcodes to a retained UTF-8 array then calls the Core.
-            w.WriteLine();
-            w.WriteLine($"/// <summary>");
-            w.WriteLine($"/// Starts consuming messages from the channel.");
-            w.WriteLine($"/// </summary>");
-            w.WriteLine($"/// <param name=\"channel\">The channel address to subscribe to (dynamic routing).</param>");
-            w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-            w.WriteLine($"/// <returns>A task that completes when the subscription is established.</returns>");
-            w.WriteLine($"public ValueTask StartAsync(ReadOnlySpan<char> channel, CancellationToken cancellationToken = default)");
-            w.OpenBrace();
-            w.WriteLine("byte[] channelUtf8 = new byte[Encoding.UTF8.GetByteCount(channel)];");
-            w.WriteLine("Encoding.UTF8.GetBytes(channel, channelUtf8);");
-            w.WriteLine("return this.StartAsyncCore(channelUtf8, cancellationToken);");
-            w.CloseBrace();
-
-            // ReadOnlyMemory<byte> overload — channel is already UTF-8; retain it directly (no copy). The
-            // caller owns the memory and must keep it valid for the lifetime of the subscription.
-            w.WriteLine();
-            w.WriteLine($"/// <summary>");
-            w.WriteLine($"/// Starts consuming messages from the channel.");
-            w.WriteLine($"/// </summary>");
-            w.WriteLine($"/// <param name=\"channelUtf8\">The channel address to subscribe to as UTF-8 bytes (dynamic routing); must remain valid until the subscription is stopped.</param>");
-            w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-            w.WriteLine($"/// <returns>A task that completes when the subscription is established.</returns>");
-            w.WriteLine($"public ValueTask StartAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)");
-            w.OpenBrace();
-            w.WriteLine("return this.StartAsyncCore(channelUtf8, cancellationToken);");
-            w.CloseBrace();
-
-            // Private Core — retains the channel bytes and subscribes.
-            w.WriteLine();
-            w.WriteLine($"/// <summary>");
-            w.WriteLine($"/// Starts consuming messages from the supplied (already UTF-8 encoded) channel.");
-            w.WriteLine($"/// </summary>");
-            w.WriteLine($"/// <param name=\"channelUtf8\">The channel address to subscribe to as UTF-8 bytes.</param>");
-            w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-            w.WriteLine($"/// <returns>A task that completes when the subscription is established.</returns>");
-
-            if (op.SecuritySchemes.Count > 0)
+            if (op.IsDynamicAddress)
             {
-                w.WriteLine($"private async ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)");
-                w.OpenBrace();
-                w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
-                w.WriteLine();
-                w.WriteLine("if (this.authProvider is not null)");
-                w.OpenBrace();
-                foreach (SecuritySchemeInfo scheme in op.SecuritySchemes)
-                {
-                    w.WriteLine($"await this.authProvider.AuthenticateAsync({ToPascalCase(scheme.Name)}AuthContext, cancellationToken).ConfigureAwait(false);");
-                }
-
-                w.CloseBrace();
-                w.WriteLine();
-                EmitStartBody(async: true);
-                w.CloseBrace();
+                w.WriteLine("this.subscribedChannel = channel;");
+                w.WriteLine("this.subscribedChannelUtf8 = Encoding.UTF8.GetBytes(channel);");
             }
-            else
-            {
-                w.WriteLine($"private ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken)");
-                w.OpenBrace();
-                w.WriteLine("this.subscribedChannelUtf8 = channelUtf8;");
-                EmitStartBody(async: false);
-                w.CloseBrace();
-            }
-        }
-        else if (op.SecuritySchemes.Count > 0)
-        {
-            w.WriteLine($"public async ValueTask StartAsync(CancellationToken cancellationToken = default)");
-            w.OpenBrace();
 
             w.WriteLine("if (this.authProvider is not null)");
             w.OpenBrace();
@@ -2410,14 +2053,42 @@ public sealed class AsyncApi30CodeGenerator
 
             w.CloseBrace();
             w.WriteLine();
-            EmitStartBody(async: true);
+
+            string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            if (op.Messages.Count == 1)
+            {
+                string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
+                w.WriteLine($"await this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);");
+            }
+            else
+            {
+                w.WriteLine($"await this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);");
+            }
+
             w.CloseBrace();
         }
         else
         {
-            w.WriteLine($"public ValueTask StartAsync(CancellationToken cancellationToken = default)");
+            w.WriteLine($"public ValueTask StartAsync({startParams})");
             w.OpenBrace();
-            EmitStartBody(async: false);
+
+            if (op.IsDynamicAddress)
+            {
+                w.WriteLine("this.subscribedChannel = channel;");
+                w.WriteLine("this.subscribedChannelUtf8 = Encoding.UTF8.GetBytes(channel);");
+            }
+
+            string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            if (op.Messages.Count == 1)
+            {
+                string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
+                w.WriteLine($"return this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
+            }
+            else
+            {
+                w.WriteLine($"return this.transport.SubscribeAsync<Corvus.Text.Json.JsonElement>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
+            }
+
             w.CloseBrace();
         }
 
@@ -2432,7 +2103,7 @@ public sealed class AsyncApi30CodeGenerator
 
         if (op.IsDynamicAddress)
         {
-            w.WriteLine("if (this.subscribedChannelUtf8.IsEmpty)");
+            w.WriteLine("if (this.subscribedChannelUtf8 is null)");
             w.OpenBrace();
             w.WriteLine("ThrowHelper.ThrowConsumerNotStarted();");
             w.CloseBrace();
@@ -2449,39 +2120,7 @@ public sealed class AsyncApi30CodeGenerator
         // HandleMessageAsync — with error policy
         w.WriteLine();
 
-        if (IsResponderOperation(op))
-        {
-            // Responder: validate the request, return the handler's reply payload. The transport
-            // publishes it correlated; an exception propagates to the requester (no dead-letter path).
-            MessageInfo msg = op.Messages[0];
-            string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
-            string handlerMethod = $"Handle{ToPascalCase(msg.Name)}Async";
-            string replyType = ReplyPayloadTypeNameOf(op);
-
-            w.WriteLine($"private ValueTask<{replyType}> HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
-            w.OpenBrace();
-            w.WriteLine("if (this.validationMode != ValidationMode.None)");
-            w.OpenBrace();
-            w.WriteLine("ValidatePayload(payload, this.validationMode);");
-            if (msg.HeadersTypeName is not null)
-            {
-                w.WriteLine($"ValidateHeaders({msg.HeadersTypeName}.From(headers), this.validationMode);");
-            }
-
-            w.CloseBrace();
-            w.WriteLine();
-            if (msg.HeadersTypeName is not null)
-            {
-                w.WriteLine($"return this.handler.{handlerMethod}(payload, {msg.HeadersTypeName}.From(headers), cancellationToken);");
-            }
-            else
-            {
-                w.WriteLine($"return this.handler.{handlerMethod}(payload, cancellationToken);");
-            }
-
-            w.CloseBrace();
-        }
-        else if (op.Messages.Count == 1)
+        if (op.Messages.Count == 1)
         {
             MessageInfo msg = op.Messages[0];
             string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
@@ -2491,7 +2130,7 @@ public sealed class AsyncApi30CodeGenerator
             w.OpenBrace();
 
             string channelExpr = op.IsDynamicAddress ? "this.subscribedChannel!" : "ChannelAddress";
-            string channelUtf8Expr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            string channelUtf8Expr = op.IsDynamicAddress ? "this.subscribedChannelUtf8!" : "ChannelAddressUtf8";
 
             w.WriteLine("try");
             w.OpenBrace();
@@ -2553,7 +2192,7 @@ public sealed class AsyncApi30CodeGenerator
         {
             string messageTypeName = $"{ToPascalCase(op.Name)}ReceivedMessage";
             string channelExpr = op.IsDynamicAddress ? "this.subscribedChannel!" : "ChannelAddress";
-            string channelUtf8Expr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
+            string channelUtf8Expr = op.IsDynamicAddress ? "this.subscribedChannelUtf8!" : "ChannelAddressUtf8";
 
             w.WriteLine("private async ValueTask HandleMessageAsync(Corvus.Text.Json.JsonElement payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
