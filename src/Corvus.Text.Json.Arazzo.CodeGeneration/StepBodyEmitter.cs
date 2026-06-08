@@ -43,6 +43,11 @@ public static class StepBodyEmitter
     /// <param name="cancellationTokenVariable">The in-scope <c>CancellationToken</c> variable name.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="requestBodyExpression">The runtime expression that produces the request body, or <see langword="null"/> when the step declares no (supported) request body.</param>
+    /// <param name="bindResponseBody">
+    /// Whether to feed the response body into the context. Set <see langword="false"/> when nothing in
+    /// the step references <c>$response.body</c> — the body is then never cloned into the workspace,
+    /// saving the clone (a document allocation) for status-only steps.
+    /// </param>
     /// <returns>The emitted static field declarations and the in-method statements.</returns>
     public static StepBodyCode Emit(
         string stepId,
@@ -54,7 +59,8 @@ public static class StepBodyEmitter
         string contextVariable,
         string cancellationTokenVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        string? requestBodyExpression = null)
+        string? requestBodyExpression = null,
+        bool bindResponseBody = true)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
         ArgumentNullException.ThrowIfNull(successCriteria);
@@ -98,15 +104,19 @@ public static class StepBodyEmitter
         // Feed each declared JSON body into the context, guarded by the matching status, so
         // $response.body resolves for criteria and outputs. The body is cloned into the workspace so it
         // outlives the response (disposed below) and can be safely referenced by the step's outputs.
-        foreach (ResponseDescriptor response in operation.Operation.Responses)
+        // Skipped entirely when nothing references $response.body — no clone, no allocation.
+        if (bindResponseBody)
         {
-            if (response.BodyPropertyName is { } bodyProperty
-                && int.TryParse(response.StatusCode, NumberStyles.Integer, CultureInfo.InvariantCulture, out int statusCode))
+            foreach (ResponseDescriptor response in operation.Operation.Responses)
             {
-                inner.Append("if (").Append(responseVar).Append(".StatusCode == ")
-                    .Append(statusCode.ToString(CultureInfo.InvariantCulture)).Append(") { ")
-                    .Append(contextVariable).Append(".SetResponseBody(((JsonElement)").Append(responseVar).Append('.').Append(bodyProperty)
-                    .Append(").CloneAsBuilder(").Append(workspaceVariable).AppendLine(").RootElement); }");
+                if (response.BodyPropertyName is { } bodyProperty
+                    && int.TryParse(response.StatusCode, NumberStyles.Integer, CultureInfo.InvariantCulture, out int statusCode))
+                {
+                    inner.Append("if (").Append(responseVar).Append(".StatusCode == ")
+                        .Append(statusCode.ToString(CultureInfo.InvariantCulture)).Append(") { ")
+                        .Append(contextVariable).Append(".SetResponseBody(((JsonElement)").Append(responseVar).Append('.').Append(bodyProperty)
+                        .Append(").CloneAsBuilder(").Append(workspaceVariable).AppendLine(").RootElement); }");
+                }
             }
         }
 
