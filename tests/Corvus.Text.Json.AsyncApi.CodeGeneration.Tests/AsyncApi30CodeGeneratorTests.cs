@@ -179,6 +179,34 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void DescribeChannelOperations_ResolvesProducerAndPayloadType()
+    {
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/turnOnOffPayload"] = "Streetlights.TurnOnOffPayload",
+            ["#/components/schemas/lightMeasuredPayload"] = "Streetlights.LightMeasuredPayload",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Streetlights", schemaTypeMap);
+        IReadOnlyList<AsyncApiChannelDescriptor> channels = generator.DescribeChannelOperations(streetlightsRoot);
+
+        Assert.AreEqual(2, channels.Count);
+
+        AsyncApiChannelDescriptor send = channels.Single(c => c.Action == OperationAction.Send);
+        Assert.IsNotNull(send.ProducerClassName);
+        Assert.IsTrue(send.ProducerClassName!.StartsWith("Streetlights.", StringComparison.Ordinal), send.ProducerClassName);
+        Assert.IsTrue(send.ProducerClassName.EndsWith("Producer", StringComparison.Ordinal), send.ProducerClassName);
+
+        AsyncApiChannelMessageDescriptor message = send.Messages.Single();
+        Assert.AreEqual("Streetlights.TurnOnOffPayload", message.PayloadTypeName);
+        Assert.AreEqual("PublishTurnOnOffAsync", message.ProducerMethodName);
+
+        // A receive operation has no producer.
+        AsyncApiChannelDescriptor receive = channels.Single(c => c.Action == OperationAction.Receive);
+        Assert.IsNull(receive.ProducerClassName);
+    }
+
+    [TestMethod]
     public void Generate_ConsumerHandlerContainsHandleMethod()
     {
         var schemaTypeMap = new Dictionary<string, string>
