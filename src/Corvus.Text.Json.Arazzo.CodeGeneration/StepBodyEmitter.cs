@@ -37,6 +37,7 @@ public static class StepBodyEmitter
     /// <param name="operation">The resolved operation the step targets.</param>
     /// <param name="arguments">The step's arguments (parameter name → runtime-expression value).</param>
     /// <param name="successCriteria">The step's success criteria, in document order.</param>
+    /// <param name="outputs">The step's outputs, projected into the step-outputs product inside the step while the response is alive.</param>
     /// <param name="transportVariable">The in-scope <c>IApiTransport</c> variable name.</param>
     /// <param name="workspaceVariable">The in-scope <c>JsonWorkspace</c> variable name (owns the cloned response bodies).</param>
     /// <param name="contextVariable">The in-scope <c>WorkflowExecutionContext</c> variable name.</param>
@@ -55,6 +56,7 @@ public static class StepBodyEmitter
         in ResolvedOperation operation,
         IReadOnlyList<StepArgument> arguments,
         IReadOnlyList<StepCriterion> successCriteria,
+        IReadOnlyList<OutputMapping> outputs,
         string transportVariable,
         string workspaceVariable,
         string contextVariable,
@@ -94,8 +96,17 @@ public static class StepBodyEmitter
             .Append(operation.Operation.ClientMethodName).Append('(')
             .Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
 
-        // The response owns a transport buffer; clone any extracted body into the workspace, then
-        // always dispose it.
+        // The step-outputs product is declared BEFORE the try so later steps can reference it, but
+        // built INSIDE the try while the response is still alive — so its $response.body values are
+        // projected (and only those copied) without cloning the whole body. The response is then
+        // disposed in the finally.
+        string responseBodyLocal = $"{camel}ResponseBody";
+        bool hasOutputs = outputs.Count > 0;
+        if (hasOutputs)
+        {
+            body.Append("JsonElement ").Append(EmitText.StepOutputsElementLocal(stepId)).AppendLine(" = default;");
+        }
+
         body.AppendLine("try");
         body.AppendLine("{");
 
@@ -103,12 +114,11 @@ public static class StepBodyEmitter
         inner.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
         inner.Append(contextVariable).Append(".SetResponseStatusCode(").Append(responseVar).AppendLine(".StatusCode);");
 
-        // Feed each declared JSON body into the context, guarded by the matching status, so
-        // $response.body resolves for criteria and outputs. The body is cloned into the workspace so it
-        // outlives the response (disposed below) and can be safely referenced by the step's outputs.
-        // Skipped entirely when nothing references $response.body — no clone, no allocation.
+        // Bind the matched-status body as a LIVE reference (no clone) — used by criteria and projected
+        // into outputs below, all while the response is alive.
         if (bindResponseBody)
         {
+            inner.Append("JsonElement ").Append(responseBodyLocal).AppendLine(" = default;");
             foreach (ResponseDescriptor response in operation.Operation.Responses)
             {
                 if (response.BodyPropertyName is { } bodyProperty
@@ -116,13 +126,24 @@ public static class StepBodyEmitter
                 {
                     inner.Append("if (").Append(responseVar).Append(".StatusCode == ")
                         .Append(statusCode.ToString(CultureInfo.InvariantCulture)).Append(") { ")
-                        .Append(contextVariable).Append(".SetResponseBody(((JsonElement)").Append(responseVar).Append('.').Append(bodyProperty)
-                        .Append(").CloneAsBuilder(").Append(workspaceVariable).AppendLine(").RootElement); }");
+                        .Append(responseBodyLocal).Append(" = (JsonElement)").Append(responseVar).Append('.').Append(bodyProperty)
+                        .AppendLine("; }");
                 }
             }
+
+            inner.Append(contextVariable).Append(".SetResponseBody(").Append(responseBodyLocal).AppendLine(");");
         }
 
         EmitSuccessGate(fields, inner, successCriteria, prefix, contextVariable, responseVar, stepId);
+
+        if (hasOutputs)
+        {
+            OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
+                stepId, outputs, workspaceVariable, contextVariable, stepOutputLocals, inputsVariable,
+                bindResponseBody ? responseBodyLocal : null);
+            fields.Append(outputCode.Fields);
+            inner.Append(outputCode.Statements);
+        }
 
         AppendIndented(body, inner.ToString(), 4);
 

@@ -64,7 +64,9 @@ public class WorkflowExecutorEmitterTests
         source.ShouldContain("// ── step: getPet ──");
         source.ShouldContain("var getPetClient = new Acme.Pets.PetsClient(transport);");
         source.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: petIdValue, cancellationToken: cancellationToken).ConfigureAwait(false);");
-        source.ShouldContain("if (getPetResponse.StatusCode == 200) { context.SetResponseBody(((JsonElement)getPetResponse.OkBody).CloneAsBuilder(workspace).RootElement); }");
+        // The body is bound as a live reference — no whole-body clone.
+        source.ShouldContain("if (getPetResponse.StatusCode == 200) { getPetResponseBody = (JsonElement)getPetResponse.OkBody; }");
+        source.ShouldNotContain("CloneAsBuilder(workspace).RootElement); }");
         source.ShouldContain("await getPetResponse.DisposeAsync().ConfigureAwait(false);");
         source.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
     }
@@ -74,10 +76,14 @@ public class WorkflowExecutorEmitterTests
     {
         string source = Emit();
 
-        // Step outputs are built into a local, not stored in a context dictionary.
+        // Step outputs are built into a local, not stored in a context dictionary. The element is
+        // declared before the step's try (so later steps see it) and assigned inside it.
         source.ShouldNotContain("SetStepOutputs");
-        source.ShouldContain("JsonElement getPetOutputsElement = getPetOutputs.RootElement;");
+        source.ShouldContain("JsonElement getPetOutputsElement = default;");
+        source.ShouldContain("getPetOutputsElement = getPetOutputs.RootElement;");
         source.ShouldContain("builder.AddProperty(\"petName\"u8, values[0]);");
+        // petName = $response.body#/name is projected from the live body, copying only that value.
+        source.ShouldContain("getPetResponseBody.TryResolvePointer(\"/name\"u8, out JsonElement getPetOutput0Nav)");
 
         // The workflow output `name` = $steps.getPet.outputs.petName resolves statically against the
         // step's outputs local — direct navigation, no dictionary lookup.

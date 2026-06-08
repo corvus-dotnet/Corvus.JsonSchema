@@ -64,14 +64,12 @@ public static class WorkflowExecutorEmitter
 
             body.Append("            // ── step: ").Append(stepId).AppendLine(" ──");
 
+            // The step body now builds the step's outputs product inside the step (while the response
+            // is alive), so output extraction is no longer a separate post-step pass.
             StepBodyCode stepBody = StepBodyEmitter.Emit(
-                stepId, operation, ReadArguments(step), criteria, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", ReadRequestBody(step), bindResponseBody);
+                stepId, operation, ReadArguments(step), criteria, stepOutputs, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", ReadRequestBody(step), bindResponseBody);
             fields.Append(stepBody.Fields);
             AppendIndented(body, stepBody.Statements, 12);
-
-            OutputExtractionCode outputs = OutputExtractionEmitter.Emit(stepId, stepOutputs, "workspace", "context", stepOutputLocals, "inputs");
-            fields.Append(outputs.Fields);
-            AppendIndented(body, outputs.Statements, 12);
 
             if (stepOutputs.Count > 0)
             {
