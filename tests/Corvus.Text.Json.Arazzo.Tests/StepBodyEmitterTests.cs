@@ -275,6 +275,39 @@ public class StepBodyEmitterTests
     }
 
     [TestMethod]
+    public void Inlines_a_method_criterion_as_a_constant()
+    {
+        // $method is the operation's HTTP method (GET here) — a compile-time constant baked as a string.
+        StepBodyCode code = Emit([new StepCriterion("simple", "$method == 'GET'", null)]);
+
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.Fields.ShouldContain("\"GET\"u8.ToArray();");
+        code.Statements.ShouldContain(".ValueEquals(");
+    }
+
+    [TestMethod]
+    public void Inlines_a_request_parameter_criterion_via_the_bound_argument()
+    {
+        // $request.path.petId resolves to the value the step bound to petId ($inputs.petId), so the
+        // operand is resolved exactly like $inputs.petId would be — no CompiledCriterion.
+        StepBodyCode code = Emit([new StepCriterion("simple", "$request.path.petId == '42'", null)]);
+
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"petId\"u8, out JsonElement getPet_C0o0n0)");
+        code.Statements.ShouldContain("Comparand.FromJsonElement(getPet_C0o0).ValueEquals(");
+    }
+
+    [TestMethod]
+    public void Falls_back_to_a_compiled_criterion_for_an_unbound_request_parameter()
+    {
+        // No step argument named 'missing' — the request operand can't be resolved, so it falls back.
+        StepBodyCode code = Emit([new StepCriterion("simple", "$request.query.missing == '1'", null)]);
+
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple,");
+        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
+    }
+
+    [TestMethod]
     public void Falls_back_to_a_compiled_criterion_for_an_unsupported_source()
     {
         // $response.header is not statically navigable yet — the criterion compiles to a CompiledCriterion.

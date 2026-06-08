@@ -812,6 +812,81 @@ public class WorkflowExecutorEndToEndTests
         }
     }
 
+    private const string RequestCriteriaDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adoptRequest",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [
+                    { "condition": "$method == 'GET'" },
+                    { "condition": "$request.path.petId == '42'" }
+                  ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_inlines_method_and_request_parameter_criteria()
+    {
+        string source = EmitGetPetExecutor(RequestCriteriaDocument, "AdoptRequestWorkflow");
+        source.ShouldNotContain("CompiledCriterion");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptRequestWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        // Passing: method is GET and the bound petId equals "42".
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            JsonElement outputs = await pending;
+            outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+            name.GetString().ShouldBe("Fido");
+        }
+
+        // Failing: the bound petId is "99", so $request.path.petId == '42' is false.
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"99"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+            WorkflowStepFailedException? caught = null;
+            try
+            {
+                _ = await pending;
+            }
+            catch (WorkflowStepFailedException ex)
+            {
+                caught = ex;
+            }
+
+            caught.ShouldNotBeNull();
+        }
+    }
+
     private const string TypedInputsDocument = """
         {
           "arazzo": "1.0.1",
