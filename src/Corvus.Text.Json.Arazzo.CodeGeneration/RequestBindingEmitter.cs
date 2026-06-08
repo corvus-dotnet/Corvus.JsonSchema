@@ -77,7 +77,14 @@ public static class RequestBindingEmitter
             string field = $"{fieldPrefix}{parameter.PropertyName}";
             string local = $"{EmitText.ToCamelCase(parameter.PropertyName)}Value";
 
-            ValueResolution.Emit(fields, statements, argument.Expression, local, contextVariable, stepOutputLocals, field);
+            if (argument.IsLiteral)
+            {
+                LiteralValueEmitter.Emit(fields, statements, argument.Expression, local, $"{field}Literal");
+            }
+            else
+            {
+                ValueResolution.Emit(fields, statements, argument.Expression, local, contextVariable, stepOutputLocals, field);
+            }
 
             namedArguments.Add($"{parameter.ParameterName}: {parameter.TypeName}.From({local})");
         }
@@ -99,8 +106,13 @@ public static class RequestBindingEmitter
 /// An argument a step passes to an operation parameter (plan §3.1).
 /// </summary>
 /// <param name="Name">The operation parameter name to bind.</param>
-/// <param name="Expression">The runtime expression that produces the value (e.g. <c>$inputs.petId</c>).</param>
-public readonly record struct StepArgument(string Name, string Expression);
+/// <param name="Expression">
+/// When <paramref name="IsLiteral"/> is <see langword="false"/>, the runtime expression that produces
+/// the value (e.g. <c>$inputs.petId</c>); when <see langword="true"/>, the literal value's JSON text
+/// (e.g. <c>"electronic"</c> or <c>42</c>).
+/// </param>
+/// <param name="IsLiteral">Whether the argument is a constant JSON value rather than a runtime expression.</param>
+public readonly record struct StepArgument(string Name, string Expression, bool IsLiteral = false);
 
 /// <summary>
 /// The code emitted for a step's request binding (plan §3.1).
