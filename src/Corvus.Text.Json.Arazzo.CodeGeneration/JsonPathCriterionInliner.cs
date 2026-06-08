@@ -110,13 +110,24 @@ internal static class JsonPathCriterionInliner
 
         auxiliaryTypes.Append(generated, classStart, generated.Length - classStart).AppendLine();
 
+        // Evaluate against the RUN workspace rather than calling QueryNodes, which spins up its own
+        // per-call JsonWorkspace; any intermediate values the query allocates land in the run workspace
+        // and are released when the caller resets/disposes it. JsonElement is a managed type so the
+        // node buffer cannot be stack-allocated — CreatePooled rents it from the array pool and Dispose
+        // returns it (and any spilled growth).
         string matchLocal = $"{tmpPrefix}Match";
         string resultLocal = $"{tmpPrefix}Result";
         statementBuilder.Append("bool ").Append(matchLocal).AppendLine(";");
-        statementBuilder.Append("using (JsonPathResult ").Append(resultLocal).Append(" = ").Append(className)
-            .Append(".QueryNodes(").Append(dataLocal).AppendLine("))");
+        statementBuilder.Append("JsonPathResult ").Append(resultLocal).AppendLine(" = JsonPathResult.CreatePooled(16);");
+        statementBuilder.AppendLine("try");
         statementBuilder.AppendLine("{");
+        statementBuilder.Append("    ").Append(className).Append(".EvaluateNodes(").Append(dataLocal)
+            .Append(", workspace, ref ").Append(resultLocal).AppendLine(");");
         statementBuilder.Append("    ").Append(matchLocal).Append(" = ").Append(resultLocal).AppendLine(".Count > 0;");
+        statementBuilder.AppendLine("}");
+        statementBuilder.AppendLine("finally");
+        statementBuilder.AppendLine("{");
+        statementBuilder.Append("    ").Append(resultLocal).AppendLine(".Dispose();");
         statementBuilder.AppendLine("}");
 
         statements = statementBuilder.ToString();

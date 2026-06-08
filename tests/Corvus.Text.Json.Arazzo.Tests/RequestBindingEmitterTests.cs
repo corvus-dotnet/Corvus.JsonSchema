@@ -111,11 +111,30 @@ public class RequestBindingEmitterTests
     }
 
     [TestMethod]
-    public void Interpolated_value_is_built_and_passed_as_the_source()
+    public void Interpolated_value_is_inlined_into_a_pooled_buffer_and_passed_as_the_source()
     {
         RequestBindingCode code = Emit([new StepArgument("petId", "pet-{$inputs.id}", ArgumentValueKind.Interpolation)]);
 
-        code.Fields.ShouldContain("private static readonly CompiledInterpolationTemplate GetPet_PetIdTemplate = CompiledInterpolationTemplate.Compile(\"pet-{$inputs.id}\");");
+        // The template is inlined directly: a workspace-pooled buffer, the literal segment as a UTF-8
+        // write, and the $inputs.id fragment statically navigated and appended. No runtime interpreter,
+        // no CompiledInterpolationTemplate field, and no WorkflowExecutionContext.
+        code.Fields.ShouldNotContain("CompiledInterpolationTemplate");
+        code.Statements.ShouldContain("workspace.RentWriterAndBuffer(256, out IByteBufferWriter GetPet_PetIdInterpBuffer)");
+        code.Statements.ShouldContain("Interpolation.AppendUtf8(GetPet_PetIdInterpBuffer, \"pet-\"u8);");
+        code.Statements.ShouldContain("Interpolation.AppendValue(GetPet_PetIdInterpBuffer,");
+        code.Statements.ShouldContain("workspace.RegisterDocument(GetPet_PetIdInterpDoc);");
+        code.Statements.ShouldNotContain("context");
+        code.NamedArguments.ShouldContain("petId: petIdValue");
+    }
+
+    [TestMethod]
+    public void Interpolated_value_with_an_unobservable_fragment_falls_back_to_the_interpreter()
+    {
+        // $url is not statically navigable, so the template cannot be inlined and the emitter falls
+        // back to the context-based CompiledInterpolationTemplate path.
+        RequestBindingCode code = Emit([new StepArgument("petId", "{$url}", ArgumentValueKind.Interpolation)]);
+
+        code.Fields.ShouldContain("CompiledInterpolationTemplate GetPet_PetIdTemplate = CompiledInterpolationTemplate.Compile(\"{$url}\");");
         code.NamedArguments.ShouldContain("petId: petIdValue");
     }
 
