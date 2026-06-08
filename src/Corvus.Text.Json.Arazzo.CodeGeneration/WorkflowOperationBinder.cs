@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo11;
+using Corvus.Text.Json.AsyncApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
@@ -18,15 +19,20 @@ public sealed class WorkflowOperationBinder
 {
     private readonly IReadOnlyList<SourceDescriptionClient> clients;
     private readonly Dictionary<string, SourceDescriptionClient> byName;
+    private readonly IReadOnlyList<SourceDescriptionChannels> channelSources;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WorkflowOperationBinder"/> class.
     /// </summary>
-    /// <param name="clients">The generated client per source description.</param>
-    public WorkflowOperationBinder(IReadOnlyList<SourceDescriptionClient> clients)
+    /// <param name="clients">The generated client per OpenAPI source description.</param>
+    /// <param name="channelSources">The generated channel operations per AsyncAPI source description (for channel steps).</param>
+    public WorkflowOperationBinder(
+        IReadOnlyList<SourceDescriptionClient> clients,
+        IReadOnlyList<SourceDescriptionChannels>? channelSources = null)
     {
         ArgumentNullException.ThrowIfNull(clients);
         this.clients = clients;
+        this.channelSources = channelSources ?? [];
         this.byName = new Dictionary<string, SourceDescriptionClient>(StringComparer.Ordinal);
         foreach (SourceDescriptionClient client in clients)
         {
@@ -57,7 +63,34 @@ public sealed class WorkflowOperationBinder
             return new StepBinding(StepTargetKind.WorkflowId, null, step.WorkflowId.GetString());
         }
 
+        if (step.ChannelPath.IsNotUndefined())
+        {
+            return this.BindChannel(step.ChannelPath.GetString()!, step);
+        }
+
         return new StepBinding(StepTargetKind.None, null, null);
+    }
+
+    private StepBinding BindChannel(string channelPath, in ArazzoDocument.StepObject step)
+    {
+        // The step's action (send/receive) disambiguates two operations on the same channel address.
+        OperationAction action = step.Action.IsNotUndefined() && step.Action.GetString() == "receive"
+            ? OperationAction.Receive
+            : OperationAction.Send;
+
+        foreach (SourceDescriptionChannels source in this.channelSources)
+        {
+            foreach (AsyncApiChannelDescriptor channel in source.Channels)
+            {
+                if (channel.ChannelAddress == channelPath && channel.Action == action)
+                {
+                    return new StepBinding(StepTargetKind.ChannelPath, null, null, new ResolvedChannel(source.Name, channel));
+                }
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"No AsyncAPI source description defines a channel '{channelPath}' with action '{action.ToString().ToLowerInvariant()}'.");
     }
 
     private static string? ExtractSourceName(string operationPath)
@@ -127,4 +160,5 @@ public sealed class WorkflowOperationBinder
 public readonly record struct StepBinding(
     StepTargetKind Kind,
     ResolvedOperation? Operation,
-    string? SubWorkflowId);
+    string? SubWorkflowId,
+    ResolvedChannel? Channel = null);

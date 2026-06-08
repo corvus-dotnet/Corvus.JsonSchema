@@ -20,6 +20,9 @@ public enum StepTargetKind
 
     /// <summary>The step invokes another workflow by <c>workflowId</c>.</summary>
     WorkflowId,
+
+    /// <summary>The step sends/receives on an AsyncAPI channel by <c>channelPath</c>.</summary>
+    ChannelPath,
 }
 
 /// <summary>
