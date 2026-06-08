@@ -79,21 +79,48 @@ public readonly struct BenchResponse : IApiResponse<BenchResponse>
 }
 
 /// <summary>
-/// A minimal generated-style client (<c>GET /pets/{petId}</c>): it builds the request and sends it
-/// via the transport, so the executor invokes the operation through the client as it would the real
-/// generated code.
+/// A generated-style client (<c>GET /pets/{petId}</c>) that mirrors the real generated code: each
+/// parameter is a <see cref="JsonElement.Source"/> that the client materializes into its own
+/// workspace via <c>CreateBuilder</c> — so the benchmark measures the same build the real client does
+/// (rather than skipping it by taking a reified <see cref="JsonElement"/>).
 /// </summary>
 public sealed class BenchClient(IApiTransport transport)
 {
     private readonly IApiTransport transport = transport;
 
     public ValueTask<BenchResponse> GetPetAsync(
-        JsonElement petId,
+        JsonElement.Source petId,
+        JsonElement.Source limit = default,
+        JsonElement.Source active = default,
+        JsonElement.Source tag = default,
+        JsonElement.Source cursor = default,
         CancellationToken cancellationToken = default,
         ValidationMode validationMode = ValidationMode.Basic,
         ValidationMode responseValidationMode = ValidationMode.None)
     {
-        var request = new BenchRequest(petId);
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        JsonElement petIdValue = JsonElement.CreateBuilder(workspace, petId).RootElement;
+        if (!limit.IsUndefined)
+        {
+            _ = JsonElement.CreateBuilder(workspace, limit).RootElement;
+        }
+
+        if (!active.IsUndefined)
+        {
+            _ = JsonElement.CreateBuilder(workspace, active).RootElement;
+        }
+
+        if (!tag.IsUndefined)
+        {
+            _ = JsonElement.CreateBuilder(workspace, tag).RootElement;
+        }
+
+        if (!cursor.IsUndefined)
+        {
+            _ = JsonElement.CreateBuilder(workspace, cursor).RootElement;
+        }
+
+        var request = new BenchRequest(petIdValue);
         return this.transport.SendAsync<BenchRequest, BenchResponse>(in request, cancellationToken);
     }
 }
