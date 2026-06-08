@@ -604,7 +604,22 @@ public sealed class AsyncApi30CodeGenerator
         IAsyncApiReferenceResolver? referenceResolver = null)
     {
         (List<OperationInfo> sendOps, List<OperationInfo> receiveOps) = CollectOperations(doc, filter, referenceResolver);
+        return this.BuildChannelDescriptors(sendOps, receiveOps);
+    }
 
+    /// <summary>
+    /// Maps collected <see cref="OperationInfo"/> records to <see cref="AsyncApiChannelDescriptor"/>s —
+    /// the version-independent half of <see cref="DescribeChannelOperations"/>, shared with the AsyncAPI
+    /// 2.6 generator (which collects its own operations from the older channel/publish/subscribe shape but
+    /// emits and describes them through this generator).
+    /// </summary>
+    /// <param name="sendOps">The send operations.</param>
+    /// <param name="receiveOps">The receive operations.</param>
+    /// <returns>One descriptor per operation.</returns>
+    internal IReadOnlyList<AsyncApiChannelDescriptor> BuildChannelDescriptors(
+        IReadOnlyList<OperationInfo> sendOps,
+        IReadOnlyList<OperationInfo> receiveOps)
+    {
         var descriptors = new List<AsyncApiChannelDescriptor>(sendOps.Count + receiveOps.Count);
         foreach (OperationInfo op in sendOps.Concat(receiveOps))
         {

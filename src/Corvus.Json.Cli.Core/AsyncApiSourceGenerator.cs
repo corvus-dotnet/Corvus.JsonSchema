@@ -49,25 +49,38 @@ internal static class AsyncApiSourceGenerator
         JsonElement specRoot = doc.RootElement;
         string version = AsyncApiShowCommand.DetectAsyncApiVersion(specRoot, null);
 
-        // Only AsyncAPI 3.0 can describe its channel operations for Arazzo today (2.6 has no
-        // DescribeChannelOperations surface yet).
-        if (!AsyncApiShowCommand.IsAsyncApi30Version(version))
+        bool is26 = AsyncApiShowCommand.IsAsyncApi26Version(version);
+        if (!is26 && !AsyncApiShowCommand.IsAsyncApi30Version(version))
         {
             throw new NotSupportedException(
-                $"AsyncAPI source '{Path.GetFileName(specFilePath)}' is version {version}; Arazzo channel steps require AsyncAPI 3.0.");
+                $"AsyncAPI source '{Path.GetFileName(specFilePath)}' is version {version}; Arazzo channel steps require AsyncAPI 2.6 or 3.0.");
         }
 
         using AsyncApiExternalReferenceResolver referenceResolver = new(specRoot, specFilePath);
 
-        string[] pointers = AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, null, referenceResolver);
+        string[] pointers = is26
+            ? AsyncApi26CodeGenerator.CollectSchemaPointers(specRoot, null, referenceResolver)
+            : AsyncApi30CodeGenerator.CollectSchemaPointers(specRoot, null, referenceResolver);
 
         string modelsPath = Path.Combine(outputPath, "Models");
         Dictionary<string, string> schemaTypeMap = pointers.Length > 0
             ? await GenerateSchemaTypesAsync(specFilePath, rootNamespace, modelsPath, pointers, useYaml, cancellationToken).ConfigureAwait(false)
             : new Dictionary<string, string>(StringComparer.Ordinal);
 
-        AsyncApi30CodeGenerator generator = new(rootNamespace, schemaTypeMap);
-        IReadOnlyList<GeneratedFile> clientFiles = generator.Generate(specRoot, null, referenceResolver);
+        IReadOnlyList<GeneratedFile> clientFiles;
+        IReadOnlyList<AsyncApiChannelDescriptor> channels;
+        if (is26)
+        {
+            AsyncApi26CodeGenerator generator = new(rootNamespace, schemaTypeMap);
+            clientFiles = generator.Generate(specRoot, null, referenceResolver);
+            channels = generator.DescribeChannelOperations(specRoot, null, referenceResolver);
+        }
+        else
+        {
+            AsyncApi30CodeGenerator generator = new(rootNamespace, schemaTypeMap);
+            clientFiles = generator.Generate(specRoot, null, referenceResolver);
+            channels = generator.DescribeChannelOperations(specRoot, null, referenceResolver);
+        }
 
         Directory.CreateDirectory(outputPath);
         foreach (GeneratedFile file in clientFiles)
@@ -75,7 +88,7 @@ internal static class AsyncApiSourceGenerator
             await File.WriteAllTextAsync(Path.Combine(outputPath, file.FileName), file.Content, cancellationToken).ConfigureAwait(false);
         }
 
-        return generator.DescribeChannelOperations(specRoot, null, referenceResolver);
+        return channels;
     }
 
     private static async Task<Dictionary<string, string>> GenerateSchemaTypesAsync(
