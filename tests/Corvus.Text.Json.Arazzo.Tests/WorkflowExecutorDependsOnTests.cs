@@ -4,8 +4,11 @@
 
 using System.Reflection;
 using System.Text;
+using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Testing;
+using Corvus.Text.Json.Arazzo.Tests.Fakes;
 using Corvus.Text.Json.OpenApi;
+using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -104,5 +107,113 @@ public partial class WorkflowExecutorEndToEndTests
     {
         Should.Throw<InvalidOperationException>(() => EmitGetPetExecutor(DependsOnCycleDocument, "CyclicWorkflow"))
             .Message.ShouldContain("cycle");
+    }
+
+    private const string WorkflowDependsOnDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "b",
+              "dependsOn": [ "a" ],
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ]
+                }
+              ]
+            },
+            {
+              "workflowId": "a",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ]
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    private const string WorkflowDependsOnCycleDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "a",
+              "dependsOn": [ "b" ],
+              "steps": [ { "stepId": "getPet", "operationId": "getPet", "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ], "successCriteria": [ { "condition": "$statusCode == 200" } ] } ]
+            },
+            {
+              "workflowId": "b",
+              "dependsOn": [ "a" ],
+              "steps": [ { "stepId": "getPet", "operationId": "getPet", "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ], "successCriteria": [ { "condition": "$statusCode == 200" } ] } ]
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public void Executor_surfaces_workflow_level_dependsOn_as_metadata()
+    {
+        // EmitGetPetExecutor emits the first workflow (b), which declares workflow-level dependsOn [a].
+        string source = EmitGetPetExecutor(WorkflowDependsOnDocument, "BWorkflow");
+
+        source.ShouldContain("public static System.Collections.Generic.IReadOnlyList<string> DependsOn { get; } = [\"a\"];");
+    }
+
+    [TestMethod]
+    public async Task Document_emits_a_workflow_order_catalog_in_dependency_order()
+    {
+        IReadOnlyList<GeneratedModelFile> files = await GenerateWorkflowFiles(WorkflowDependsOnDocument);
+
+        GeneratedModelFile order = files.Single(f => f.FileName == "Workflows/WorkflowOrder.cs");
+        // 'b' dependsOn 'a' (and is declared first), so the catalog lists 'a' before 'b'.
+        order.Content.ShouldContain("ExecutionOrder { get; } = [\"a\", \"b\"];");
+
+        // The whole set (executors + catalog) compiles together.
+        string[] sources = [.. files.Where(f => f.FileName.StartsWith("Workflows/", StringComparison.Ordinal)).Select(f => f.Content)];
+        CompileInMemory(sources);
+    }
+
+    [TestMethod]
+    public async Task Document_generation_throws_for_a_workflow_dependsOn_cycle()
+    {
+        (await Should.ThrowAsync<InvalidOperationException>(async () => await GenerateWorkflowFiles(WorkflowDependsOnCycleDocument)))
+            .Message.ShouldContain("cycle");
+    }
+
+    private static async Task<IReadOnlyList<GeneratedModelFile>> GenerateWorkflowFiles(string document)
+    {
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets/{petId}",
+                OperationMethod.Get,
+                "getPet",
+                "GetPet",
+                typeof(PetByIdRequest).FullName!,
+                typeof(PetByIdResponse).FullName!,
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true, "petId")],
+                false,
+                [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
+                typeof(PetByIdClient).FullName!,
+                "GetPetAsync",
+                null,
+                null),
+        ];
+
+        var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
+        return await ArazzoCodeGeneration.GenerateAsync(
+            Encoding.UTF8.GetBytes(document), binder, new ArazzoGenerationOptions("GeneratedWorkflows"));
     }
 }
