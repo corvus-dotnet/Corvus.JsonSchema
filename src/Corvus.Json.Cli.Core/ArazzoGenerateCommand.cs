@@ -4,7 +4,6 @@
 
 #if NET10_0_OR_GREATER
 
-using Corvus.Text.Json.Arazzo.Generation;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -33,7 +32,7 @@ internal sealed class ArazzoGenerateCommand : AsyncCommand<ArazzoGenerateSetting
         AnsiConsole.MarkupLine($"[green]Generating workflows from:[/] {settings.ArazzoFile}");
 
         IReadOnlyList<string> written = await ArazzoGenerationDriver
-            .GenerateAsync(settings.ArazzoFile, rootNamespace, outputPath, settings.ClientName, settings.Durable, cancellationToken, progress: m => AnsiConsole.WriteLine(m))
+            .GenerateAsync(settings.ArazzoFile, rootNamespace, outputPath, settings.ClientName, cancellationToken)
             .ConfigureAwait(false);
 
         foreach (string path in written)
