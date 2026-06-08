@@ -34,6 +34,66 @@ public class RequestBindingEmitterTests
             "GetPetAsync",
             null));
 
+    private static readonly ResolvedOperation CreatePet = new(
+        "petstore",
+        new OperationDescriptor(
+            "/pets",
+            OperationMethod.Post,
+            "createPet",
+            "CreatePet",
+            "Acme.Pets.CreatePetRequest",
+            "Acme.Pets.CreatePetResponse",
+            [],
+            true,
+            [new ResponseDescriptor("201", "Acme.Pets.Pet", "CreatedBody")],
+            "Acme.Pets.PetsClient",
+            "CreatePetAsync",
+            "Acme.Pets.NewPet"));
+
+    [TestMethod]
+    public void Binds_the_request_body_expression_to_the_body_parameter()
+    {
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            CreatePet,
+            [],
+            "context",
+            "CreatePet_",
+            NoSteps,
+            "$inputs.pet");
+
+        code.Fields.ShouldContain("private static readonly ArazzoExpression CreatePet_Body = ArazzoExpression.Parse(\"$inputs.pet\");");
+        code.Statements.ShouldContain("context.TryResolveValue(CreatePet_Body, out JsonElement bodyValue);");
+        code.NamedArguments.ShouldContain("body: Acme.Pets.NewPet.From(bodyValue)");
+    }
+
+    [TestMethod]
+    public void Does_not_bind_a_body_when_the_operation_has_no_body_type()
+    {
+        // GetPet has RequestBodyTypeName == null, so even a supplied body expression is not bound.
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            GetPet,
+            [new StepArgument("petId", "$inputs.petId")],
+            "context",
+            "GetPet_",
+            NoSteps,
+            "$inputs.pet");
+
+        code.NamedArguments.ShouldNotContain(a => a.StartsWith("body:", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Does_not_bind_a_body_when_no_body_expression_is_supplied()
+    {
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            CreatePet,
+            [],
+            "context",
+            "CreatePet_",
+            NoSteps);
+
+        code.NamedArguments.ShouldNotContain(a => a.StartsWith("body:", StringComparison.Ordinal));
+    }
+
     [TestMethod]
     public void Emits_compiled_expression_fields_for_each_argument()
     {

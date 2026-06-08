@@ -61,7 +61,7 @@ public static class WorkflowExecutorEmitter
             body.Append("            // ── step: ").Append(stepId).AppendLine(" ──");
 
             StepBodyCode stepBody = StepBodyEmitter.Emit(
-                stepId, operation, ReadArguments(step), ReadCriteria(step), "transport", "workspace", "context", "cancellationToken", stepOutputLocals);
+                stepId, operation, ReadArguments(step), ReadCriteria(step), "transport", "workspace", "context", "cancellationToken", stepOutputLocals, ReadRequestBodyExpression(step));
             fields.Append(stepBody.Fields);
             AppendIndented(body, stepBody.Statements, 12);
 
@@ -107,6 +107,35 @@ public static class WorkflowExecutorEmitter
         }
 
         return arguments;
+    }
+
+    private static string? ReadRequestBodyExpression(in ArazzoDocument.StepObject step)
+    {
+        if (!step.RequestBody.IsNotUndefined())
+        {
+            return null;
+        }
+
+        ArazzoDocument.RequestBodyObject requestBody = step.RequestBody;
+        if (!requestBody.Payload.IsNotUndefined())
+        {
+            return null;
+        }
+
+        JsonElement payload = requestBody.Payload;
+
+        // Only a payload that is a single runtime expression (e.g. "$inputs.pet") is bound by the
+        // current generator. Literal, interpolated ({…}), and payload-replacement bodies need value
+        // construction/substitution and are a later phase.
+        if (payload.ValueKind == JsonValueKind.String
+            && !requestBody.Replacements.IsNotUndefined()
+            && payload.GetString() is { } text
+            && text.StartsWith('$'))
+        {
+            return text;
+        }
+
+        return null;
     }
 
     private static List<StepCriterion> ReadCriteria(in ArazzoDocument.StepObject step)

@@ -83,6 +83,99 @@ public class WorkflowExecutorEndToEndTests
         recorded.Sum("corvus.arazzo.workflows.faulted").ShouldBe(0);
     }
 
+    private const string CreatePetDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "register",
+              "steps": [
+                {
+                  "stepId": "createPet",
+                  "operationId": "createPet",
+                  "requestBody": { "contentType": "application/json", "payload": "$inputs.pet" },
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.createPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_binds_a_request_body_and_runs()
+    {
+        CreatePetClient.CapturedBodies.Clear();
+        string source = EmitCreatePetExecutor();
+
+        Assembly assembly = CompileInMemory(source);
+        Type workflowType = assembly.GetType("GeneratedWorkflows.RegisterWorkflow")
+            ?? throw new InvalidOperationException("Generated workflow type not found.");
+        MethodInfo execute = workflowType.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Post, "/pets", 200, """{"name":"Rex"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"pet":{"name":"Rex"}}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        JsonElement outputs = await pending;
+
+        // The request body ($inputs.pet) was resolved and passed to the client's body parameter.
+        CreatePetClient.CapturedBodies.Count.ShouldBe(1);
+        CreatePetClient.CapturedBodies[0].ShouldBe("""{"name":"Rex"}""");
+
+        // And the POST ran, returning the created pet's name through the workflow output.
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Rex");
+        transport.Requests.Count.ShouldBe(1);
+        transport.Requests[0].Path.ShouldBe("/pets");
+    }
+
+    private static string EmitCreatePetExecutor()
+    {
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets",
+                OperationMethod.Post,
+                "createPet",
+                "CreatePet",
+                typeof(CreatePetRequest).FullName!,
+                typeof(PetByIdResponse).FullName!,
+                [],
+                true,
+                [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
+                typeof(CreatePetClient).FullName!,
+                "CreatePetAsync",
+                "Corvus.Text.Json.JsonElement"),
+        ];
+
+        var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
+
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(CreatePetDocument));
+        foreach (ArazzoDocument.WorkflowObject workflow in doc.RootElement.Workflows.EnumerateArray())
+        {
+            return WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions(
+                    "GeneratedWorkflows",
+                    "RegisterWorkflow",
+                    "Corvus.Text.Json.JsonElement",
+                    "Corvus.Text.Json.JsonElement"));
+        }
+
+        throw new InvalidOperationException("No workflow.");
+    }
+
     private static string EmitExecutor()
     {
         OperationDescriptor[] operations =
