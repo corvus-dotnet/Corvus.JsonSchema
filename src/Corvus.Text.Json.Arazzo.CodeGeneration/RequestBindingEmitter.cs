@@ -31,6 +31,11 @@ public static class RequestBindingEmitter
     /// <param name="contextVariable">The name of the in-scope <c>WorkflowExecutionContext</c> variable.</param>
     /// <param name="fieldPrefix">A unique prefix (e.g. the step id) for the emitted static expression fields.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="requestBodyExpression">
+    /// The runtime expression that produces the request body (e.g. <c>$inputs.pet</c>), or
+    /// <see langword="null"/> when the step declares no request body (or a body the current generator
+    /// does not yet support — a literal, interpolated, or replacement payload, which is a later phase).
+    /// </param>
     /// <returns>The emitted static field declarations, the in-method resolution statements, and the named-argument fragments.</returns>
     /// <exception cref="InvalidOperationException">A required parameter has no argument.</exception>
     public static RequestBindingCode Emit(
@@ -38,7 +43,8 @@ public static class RequestBindingEmitter
         IReadOnlyList<StepArgument> arguments,
         string contextVariable,
         string fieldPrefix,
-        IReadOnlyDictionary<string, string> stepOutputLocals)
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        string? requestBodyExpression = null)
     {
         ArgumentNullException.ThrowIfNull(arguments);
         ArgumentNullException.ThrowIfNull(stepOutputLocals);
@@ -74,6 +80,15 @@ public static class RequestBindingEmitter
             ValueResolution.Emit(fields, statements, argument.Expression, local, contextVariable, stepOutputLocals, field);
 
             namedArguments.Add($"{parameter.ParameterName}: {parameter.TypeName}.From({local})");
+        }
+
+        // Bind the request body, resolving its runtime expression and From()-binding it to the client
+        // method's `body` parameter. The generated client owns serialization; we only supply the value.
+        if (requestBodyExpression is { } bodyExpression && operation.Operation.RequestBodyTypeName is { } bodyType)
+        {
+            const string bodyLocal = "bodyValue";
+            ValueResolution.Emit(fields, statements, bodyExpression, bodyLocal, contextVariable, stepOutputLocals, $"{fieldPrefix}Body");
+            namedArguments.Add($"body: {bodyType}.From({bodyLocal})");
         }
 
         return new RequestBindingCode(fields.ToString(), statements.ToString(), namedArguments);
