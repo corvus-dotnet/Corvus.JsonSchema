@@ -160,6 +160,39 @@ public sealed class AsyncApi26CodeGenerator
         OperationFilter? filter = null,
         IAsyncApiReferenceResolver? referenceResolver = null)
     {
+        (List<AsyncApi30CodeGenerator.OperationInfo> sendOps, List<AsyncApi30CodeGenerator.OperationInfo> receiveOps) =
+            this.CollectOperations(doc, filter, referenceResolver);
+
+        return this.emitter.GenerateOperations(sendOps, receiveOps, []);
+    }
+
+    /// <summary>
+    /// Describes the document's channel operations with the generated producer/consumer details an Arazzo
+    /// channel step needs (channel address, action, producer class + publish method, message payload
+    /// types) — the AsyncAPI 2.6 counterpart of
+    /// <see cref="AsyncApi30CodeGenerator.DescribeChannelOperations"/>. Collects operations from the 2.6
+    /// channel/publish/subscribe shape, then maps them through the shared descriptor builder.
+    /// </summary>
+    /// <param name="doc">The parsed AsyncAPI 2.6 document.</param>
+    /// <param name="filter">An optional channel filter.</param>
+    /// <param name="referenceResolver">An optional reference resolver for cross-document <c>$ref</c>s.</param>
+    /// <returns>One descriptor per channel operation.</returns>
+    public IReadOnlyList<AsyncApiChannelDescriptor> DescribeChannelOperations(
+        JsonElement doc,
+        OperationFilter? filter = null,
+        IAsyncApiReferenceResolver? referenceResolver = null)
+    {
+        (List<AsyncApi30CodeGenerator.OperationInfo> sendOps, List<AsyncApi30CodeGenerator.OperationInfo> receiveOps) =
+            this.CollectOperations(doc, filter, referenceResolver);
+
+        return this.emitter.BuildChannelDescriptors(sendOps, receiveOps);
+    }
+
+    private (List<AsyncApi30CodeGenerator.OperationInfo> Send, List<AsyncApi30CodeGenerator.OperationInfo> Receive) CollectOperations(
+        JsonElement doc,
+        OperationFilter? filter,
+        IAsyncApiReferenceResolver? referenceResolver)
+    {
         List<AsyncApi30CodeGenerator.OperationInfo> sendOps = [];
         List<AsyncApi30CodeGenerator.OperationInfo> receiveOps = [];
 
@@ -213,7 +246,7 @@ public sealed class AsyncApi26CodeGenerator
             }
         }
 
-        return this.emitter.GenerateOperations(sendOps, receiveOps, []);
+        return (sendOps, receiveOps);
     }
 
     private static IEnumerable<ChannelOperation> EnumerateChannelOperations(

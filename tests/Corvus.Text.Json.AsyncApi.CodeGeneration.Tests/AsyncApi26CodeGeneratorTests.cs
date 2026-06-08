@@ -126,6 +126,34 @@ public class AsyncApi26CodeGeneratorTests
         DynamicCompiler.AssertCompiles(files, "Calculator.AsyncApi26.Generated", stubs);
     }
 
+    [TestMethod]
+    public void DescribeChannelOperations_ResolvesProducerAndPayloadType()
+    {
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/schemas/turnOnOffPayload"] = "Streetlights.TurnOnOffPayload",
+            ["#/components/schemas/lightMeasuredPayload"] = "Streetlights.LightMeasuredPayload",
+        };
+
+        var generator = new AsyncApi26CodeGenerator("Streetlights", schemaTypeMap);
+        IReadOnlyList<AsyncApiChannelDescriptor> channels = generator.DescribeChannelOperations(streetlightsRoot);
+
+        Assert.AreEqual(2, channels.Count);
+
+        // 'subscribe' maps to a send operation, which gets a producer.
+        AsyncApiChannelDescriptor send = channels.Single(c => c.Action == OperationAction.Send);
+        Assert.AreEqual("Streetlights.TurnOnProducer", send.ProducerClassName);
+
+        AsyncApiChannelMessageDescriptor message = send.Messages.Single();
+        Assert.AreEqual("Streetlights.TurnOnOffPayload", message.PayloadTypeName);
+        Assert.AreEqual("PublishTurnOnOffAsync", message.ProducerMethodName);
+
+        // 'publish' maps to a receive operation, which has no producer.
+        AsyncApiChannelDescriptor receive = channels.Single(c => c.Action == OperationAction.Receive);
+        Assert.IsNull(receive.ProducerClassName);
+        Assert.AreEqual("Streetlights.LightMeasuredPayload", receive.Messages.Single().PayloadTypeName);
+    }
+
     private static Dictionary<string, string> CreateRequestReplySchemaTypeMap()
     {
         return new()
