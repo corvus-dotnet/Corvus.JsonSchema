@@ -5,6 +5,7 @@
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Arazzo;
+using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
@@ -50,6 +51,7 @@ internal static class SimpleCriterionInliner
     /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="responseHeaders">The operation's declared response headers (for <c>$response.header.&lt;name&gt;</c> operands).</param>
     /// <param name="tmpPrefix">A unique prefix for emitted temporaries and baked literal fields.</param>
     /// <param name="fields">Accumulates any baked string-literal <c>static readonly byte[]</c> fields.</param>
     /// <param name="statements">When this method returns <see langword="true"/>, the operand-resolution statements to emit before the gate.</param>
@@ -61,6 +63,7 @@ internal static class SimpleCriterionInliner
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         string tmpPrefix,
         StringBuilder fields,
         out string statements,
@@ -70,7 +73,7 @@ internal static class SimpleCriterionInliner
         expression = string.Empty;
 
         var statementBuilder = new StringBuilder();
-        var parser = new Parser(condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, tmpPrefix, fields, statementBuilder);
+        var parser = new Parser(condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, responseHeaders, tmpPrefix, fields, statementBuilder);
 
         string? expr = parser.ParseOr();
         if (expr is null || !parser.AtEnd)
@@ -106,6 +109,7 @@ internal static class SimpleCriterionInliner
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         StringBuilder fields,
         StringBuilder statements,
         out string comparandExpr)
@@ -114,7 +118,7 @@ internal static class SimpleCriterionInliner
 
         if (token.Length > 0 && token[0] == '$')
         {
-            return TryEmitExpressionOperand(token, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, statements, out comparandExpr);
+            return TryEmitExpressionOperand(token, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, responseHeaders, statements, out comparandExpr);
         }
 
         return TryEmitLiteralOperand(token, baseName, fields, out comparandExpr);
@@ -127,6 +131,7 @@ internal static class SimpleCriterionInliner
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         StringBuilder statements,
         out string comparandExpr)
     {
@@ -142,6 +147,21 @@ internal static class SimpleCriterionInliner
             }
 
             comparandExpr = $"Comparand.FromNumber({responseVar}.StatusCode)";
+            return true;
+        }
+
+        // $response.header.<name>: read the generated response property. A schema-less header is a
+        // string?; a typed header is a generated JSON value read as a JsonElement. Both map an absent
+        // header to an undefined comparand. Only the bare form (no navigation) is supported.
+        if (expression.Source == ArazzoExpressionSource.ResponseHeader
+            && expression.Name is { } headerName
+            && !expression.HasJsonPointer
+            && navigationPointer is null
+            && CriterionExpressionParsing.TryResolveResponseHeader(responseHeaders, headerName, out ResponseHeaderInfo header))
+        {
+            comparandExpr = header.IsString
+                ? $"Comparand.FromString({responseVar}.{header.PropertyName})"
+                : $"Comparand.FromJsonElement((JsonElement){responseVar}.{header.PropertyName})";
             return true;
         }
 
@@ -221,6 +241,7 @@ internal static class SimpleCriterionInliner
         private readonly string? responseBodyLocal;
         private readonly string inputsVariable;
         private readonly IReadOnlyDictionary<string, string> stepOutputLocals;
+        private readonly IReadOnlyList<ResponseHeaderInfo>? responseHeaders;
         private readonly string tmpPrefix;
         private readonly StringBuilder fields;
         private readonly StringBuilder statements;
@@ -233,6 +254,7 @@ internal static class SimpleCriterionInliner
             string? responseBodyLocal,
             string inputsVariable,
             IReadOnlyDictionary<string, string> stepOutputLocals,
+            IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
             string tmpPrefix,
             StringBuilder fields,
             StringBuilder statements)
@@ -242,6 +264,7 @@ internal static class SimpleCriterionInliner
             this.responseBodyLocal = responseBodyLocal;
             this.inputsVariable = inputsVariable;
             this.stepOutputLocals = stepOutputLocals;
+            this.responseHeaders = responseHeaders;
             this.tmpPrefix = tmpPrefix;
             this.fields = fields;
             this.statements = statements;
@@ -347,7 +370,7 @@ internal static class SimpleCriterionInliner
             this.operandCount++;
             return TryEmitOperand(
                 token, baseName, this.responseVar, this.responseBodyLocal, this.inputsVariable,
-                this.stepOutputLocals, this.fields, this.statements, out comparandExpr);
+                this.stepOutputLocals, this.responseHeaders, this.fields, this.statements, out comparandExpr);
         }
 
         private string ReadOperandToken()
