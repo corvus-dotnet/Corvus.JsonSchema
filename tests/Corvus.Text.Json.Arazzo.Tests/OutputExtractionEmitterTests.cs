@@ -14,7 +14,7 @@ public class OutputExtractionEmitterTests
     private static readonly Dictionary<string, string> NoSteps = new(StringComparer.Ordinal);
 
     [TestMethod]
-    public void Pre_resolves_values_then_builds_via_a_span_context()
+    public void Projects_response_body_values_from_the_live_body_copying_only_those_values()
     {
         OutputExtractionCode code = OutputExtractionEmitter.Emit(
             "getPet",
@@ -22,19 +22,20 @@ public class OutputExtractionEmitterTests
             "workspace",
             "context",
             NoSteps,
-            "inputs");
+            "inputs",
+            "getPetResponseBody");
 
-        code.Fields.ShouldContain("private static readonly ArazzoExpression getPet_Output_id = ArazzoExpression.Parse(\"$response.body#/id\");");
+        // $response.body values are navigated from the live body and ONLY those values are copied
+        // (CloneAsBuilder) into the workspace — no whole-body clone, no context resolution.
+        code.Statements.ShouldContain("getPetResponseBody.TryResolvePointer(\"/id\"u8, out JsonElement getPetOutput0Nav)");
+        code.Statements.ShouldContain("getPetOutput0 = getPetOutput0Nav.CloneAsBuilder(workspace).RootElement;");
+        code.Statements.ShouldNotContain("context.TryResolveValue");
 
-        // Values are resolved in method scope (current-step sources via the field-based context)...
-        code.Statements.ShouldContain("context.TryResolveValue(getPet_Output_id, out JsonElement getPetOutput0);");
-        code.Statements.ShouldContain("context.TryResolveValue(getPet_Output_name, out JsonElement getPetOutput1);");
-
-        // ...then built via a closure-free ReadOnlySpan<JsonElement> context — no dictionary, no SetStepOutputs.
+        // Built via a closure-free ReadOnlySpan<JsonElement> context, assigning the pre-declared element.
         code.Statements.ShouldContain("Span<JsonElement> getPetOutputsValues = [getPetOutput0, getPetOutput1];");
-        code.Statements.ShouldContain("static (in ReadOnlySpan<JsonElement> values, ref JsonElement.ObjectBuilder builder) =>");
         code.Statements.ShouldContain("builder.AddProperty(\"id\"u8, values[0]);");
-        code.Statements.ShouldContain("JsonElement getPetOutputsElement = getPetOutputs.RootElement;");
+        code.Statements.ShouldContain("getPetOutputsElement = getPetOutputs.RootElement;");
+        code.Statements.ShouldNotContain("JsonElement getPetOutputsElement =");
         code.Statements.ShouldNotContain("SetStepOutputs");
     }
 
@@ -49,7 +50,8 @@ public class OutputExtractionEmitterTests
             "workspace",
             "context",
             stepLocals,
-            "inputs");
+            "inputs",
+            null);
 
         // Direct navigation of the prior step's outputs local — no context, no dictionary, no field.
         code.Statements.ShouldContain("loginOutputsElement.TryGetProperty(\"token\"u8, out JsonElement useOutput0);");
@@ -60,7 +62,7 @@ public class OutputExtractionEmitterTests
     [TestMethod]
     public void Emits_nothing_when_the_step_has_no_outputs()
     {
-        OutputExtractionCode code = OutputExtractionEmitter.Emit("getPet", [], "workspace", "context", NoSteps, "inputs");
+        OutputExtractionCode code = OutputExtractionEmitter.Emit("getPet", [], "workspace", "context", NoSteps, "inputs", null);
 
         code.Fields.ShouldBeEmpty();
         code.Statements.ShouldBeEmpty();
