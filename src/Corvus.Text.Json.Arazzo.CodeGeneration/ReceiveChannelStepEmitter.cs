@@ -109,7 +109,7 @@ internal static class ReceiveChannelStepEmitter
                 $"{identifier}Recv",
                 "context",
                 responseVar: string.Empty,
-                responseBodyLocal: payloadLocal,
+                sources: new CriterionSources(payloadLocal, "messageHeaders"),
                 inputsVariable,
                 stepOutputLocals,
                 inputAccessors,

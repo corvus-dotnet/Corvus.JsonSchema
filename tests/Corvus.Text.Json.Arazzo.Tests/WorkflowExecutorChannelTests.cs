@@ -385,6 +385,100 @@ public partial class WorkflowExecutorEndToEndTests
         temp.GetInt32().ShouldBe(21);
     }
 
+    private const string ChannelReceiveWithHeaderCriteriaDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listen",
+              "steps": [
+                {
+                  "stepId": "receive",
+                  "channelPath": "measurements",
+                  "action": "receive",
+                  "successCriteria": [ { "condition": "$message.header.x-status == 'ok'" } ],
+                  "outputs": { "temp": "$message.payload#/temp" }
+                }
+              ],
+              "outputs": { "temp": "$steps.receive.outputs.temp" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_gates_a_received_message_on_header_criteria()
+    {
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveWithHeaderCriteriaDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The header criterion is inlined against the handler's headers parameter (no context).
+        source.ShouldContain("messageHeaders.TryGetProperty(\"x-status\"u8");
+        source.ShouldNotContain("WorkflowExecutionContext");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        // Pass: the header satisfies the criterion.
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        await messageTransport.DeliverAsync<JsonElement>(
+            "measurements",
+            Encoding.UTF8.GetBytes("""{"temp":21}"""),
+            Encoding.UTF8.GetBytes("""{"x-status":"ok"}"""));
+        JsonElement outputs = await pending;
+        outputs.TryGetProperty("temp"u8, out JsonElement temp).ShouldBeTrue();
+        temp.GetInt32().ShouldBe(21);
+
+        // Fail: a header that misses the criterion fails the step.
+        await using var messageTransport2 = new InMemoryMessageTransport();
+        using var workspace2 = JsonWorkspace.Create();
+        var pending2 = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport2, workspace2, inputsDocument.RootElement, default(CancellationToken)])!;
+        WorkflowStepFailedException? caught = null;
+        try
+        {
+            await messageTransport2.DeliverAsync<JsonElement>(
+                "measurements",
+                Encoding.UTF8.GetBytes("""{"temp":21}"""),
+                Encoding.UTF8.GetBytes("""{"x-status":"bad"}"""));
+            _ = await pending2;
+        }
+        catch (WorkflowStepFailedException ex)
+        {
+            caught = ex;
+        }
+
+        caught.ShouldNotBeNull();
+    }
+
     private static MethodInfo CompileReceiveWithCriteria(out string source)
     {
         var descriptor = new AsyncApiChannelDescriptor(

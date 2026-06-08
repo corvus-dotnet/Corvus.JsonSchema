@@ -77,7 +77,7 @@ internal static class InterpolationInliner
 
                 var navigation = new StringBuilder();
                 if (!CriterionExpressionParsing.TryEmitElementNavigation(
-                    expression, null, $"{tmpPrefix}Seg{segment}", responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, navigation, out string segmentLocal))
+                    expression, null, $"{tmpPrefix}Seg{segment}", new CriterionSources(responseBodyLocal), inputsVariable, stepOutputLocals, inputAccessors, navigation, out string segmentLocal))
                 {
                     return false;
                 }

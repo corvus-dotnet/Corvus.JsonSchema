@@ -13,6 +13,16 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// Shared generation-time parsing of criterion operand/context tokens, mirroring the runtime
 /// <c>SimpleConditionEvaluator</c> so inlined criteria navigate values exactly as the interpreter does.
 /// </summary>
+/// <summary>
+/// The in-scope locals holding a step's live JSON sources for criterion operand navigation: the step's
+/// body (an HTTP response body <c>$response.body</c> or a received message payload <c>$message.payload</c>
+/// — a step has at most one) and, for a channel receive step, the message headers object
+/// (<c>$message.header.&lt;name&gt;</c>). Bundled so a new source does not change every inliner signature.
+/// </summary>
+/// <param name="BodyLocal">The live body local, or <see langword="null"/> if the step bound none.</param>
+/// <param name="HeadersLocal">The message headers local, or <see langword="null"/> if none is available.</param>
+internal readonly record struct CriterionSources(string? BodyLocal, string? HeadersLocal = null);
+
 internal static class CriterionExpressionParsing
 {
     /// <summary>
@@ -49,7 +59,7 @@ internal static class CriterionExpressionParsing
     /// <param name="expression">The parsed expression.</param>
     /// <param name="navigationPointer">An additional <c>.</c>/<c>[]</c> navigation pointer (simple-condition operands), or <see langword="null"/>.</param>
     /// <param name="baseName">A unique base name for any emitted temporaries.</param>
-    /// <param name="responseBodyLocal">The in-scope live JSON body local — an HTTP response body (<c>$response.body</c>) or a received message payload (<c>$message.payload</c>; a step has at most one) — or <see langword="null"/> if none was bound.</param>
+    /// <param name="sources">The step's live JSON sources (response body / message payload / message headers).</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
@@ -60,7 +70,7 @@ internal static class CriterionExpressionParsing
         in ArazzoExpression expression,
         string? navigationPointer,
         string baseName,
-        string? responseBodyLocal,
+        in CriterionSources sources,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
@@ -73,13 +83,19 @@ internal static class CriterionExpressionParsing
         string? name = null;
         switch (expression.Source)
         {
-            case ArazzoExpressionSource.ResponseBody when responseBodyLocal is not null:
-                root = responseBodyLocal;
+            case ArazzoExpressionSource.ResponseBody when sources.BodyLocal is not null:
+                root = sources.BodyLocal;
                 break;
 
-            case ArazzoExpressionSource.MessagePayload when responseBodyLocal is not null:
+            case ArazzoExpressionSource.MessagePayload when sources.BodyLocal is not null:
                 // A channel receive step's live body local holds the received message payload.
-                root = responseBodyLocal;
+                root = sources.BodyLocal;
+                break;
+
+            case ArazzoExpressionSource.MessageHeader when sources.HeadersLocal is not null && expression.Name is { } headerName:
+                // A named value off the received message headers object (then any pointer/navigation).
+                root = sources.HeadersLocal;
+                name = headerName;
                 break;
 
             case ArazzoExpressionSource.Inputs when expression.Name is { } inputName
