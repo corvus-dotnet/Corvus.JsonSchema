@@ -10,9 +10,9 @@ using Shouldly;
 namespace Corvus.Text.Json.Arazzo.Tests;
 
 /// <summary>
-/// Direct unit tests for the internal <see cref="Comparand"/> value type (via InternalsVisibleTo),
-/// covering branches not reachable through the simple-condition evaluator (which short-circuits
-/// undefined operands before comparing).
+/// Direct unit tests for the <see cref="Comparand"/> value type, covering branches not reachable
+/// through the simple-condition evaluator (which short-circuits undefined operands before comparing)
+/// and the public surface generated executors call when inlining <c>simple</c> criteria.
 /// </summary>
 [TestClass]
 public class ComparandTests
@@ -67,6 +67,52 @@ public class ComparandTests
         c.ShouldBeLessThan(0);
         Comparand.FromNumber(1).TryCompareNumeric(Comparand.Null, out _).ShouldBeFalse();
     }
+
+    [TestMethod]
+    public void FromJsonElement_maps_each_value_kind()
+    {
+        Comparand.FromJsonElement(Json("\"hi\"")).Kind.ShouldBe(ComparandKind.String);
+        Comparand.FromJsonElement(Json("42")).Kind.ShouldBe(ComparandKind.Number);
+        Comparand.FromJsonElement(Json("true")).Kind.ShouldBe(ComparandKind.Boolean);
+        Comparand.FromJsonElement(Json("false")).Kind.ShouldBe(ComparandKind.Boolean);
+        Comparand.FromJsonElement(Json("null")).Kind.ShouldBe(ComparandKind.Null);
+        Comparand.FromJsonElement(Json("{}")).Kind.ShouldBe(ComparandKind.Json);
+        Comparand.FromJsonElement(Json("[]")).Kind.ShouldBe(ComparandKind.Json);
+        Comparand.FromJsonElement(default).Kind.ShouldBe(ComparandKind.Undefined);
+    }
+
+    [TestMethod]
+    public void ValueNotEquals_is_false_for_undefined_operands()
+    {
+        // Not the negation of ValueEquals: an undefined operand makes != false too.
+        Comparand.Undefined.ValueNotEquals(Comparand.FromNumber(1)).ShouldBeFalse();
+        Comparand.FromNumber(1).ValueNotEquals(Comparand.Undefined).ShouldBeFalse();
+        Comparand.FromNumber(1).ValueNotEquals(Comparand.FromNumber(2)).ShouldBeTrue();
+        Comparand.FromNumber(1).ValueNotEquals(Comparand.FromNumber(1)).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void Ordering_helpers_require_two_numbers()
+    {
+        Comparand.FromNumber(1).LessThan(Comparand.FromNumber(2)).ShouldBeTrue();
+        Comparand.FromNumber(2).LessThanOrEqual(Comparand.FromNumber(2)).ShouldBeTrue();
+        Comparand.FromNumber(3).GreaterThan(Comparand.FromNumber(2)).ShouldBeTrue();
+        Comparand.FromNumber(2).GreaterThanOrEqual(Comparand.FromNumber(2)).ShouldBeTrue();
+        Utf8("5").GreaterThan(Comparand.FromNumber(4)).ShouldBeTrue();   // numeric-string coercion
+        Comparand.FromNumber(1).LessThan(Comparand.Null).ShouldBeFalse(); // non-numeric → false
+    }
+
+    [TestMethod]
+    public void IsTrue_only_for_boolean_true()
+    {
+        Comparand.FromBoolean(true).IsTrue.ShouldBeTrue();
+        Comparand.FromBoolean(false).IsTrue.ShouldBeFalse();
+        Comparand.FromNumber(1).IsTrue.ShouldBeFalse();
+        Comparand.Undefined.IsTrue.ShouldBeFalse();
+    }
+
+    private static JsonElement Json(string json)
+        => ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(json)).RootElement;
 
     [TestMethod]
     public void ParseLiteral_recognizes_each_literal_form()
