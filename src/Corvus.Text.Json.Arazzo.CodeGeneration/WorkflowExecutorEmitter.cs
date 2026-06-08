@@ -4,7 +4,7 @@
 
 using System.Globalization;
 using System.Text;
-using Corvus.Text.Json.Arazzo10;
+using Corvus.Text.Json.Arazzo11;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 

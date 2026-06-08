@@ -6,7 +6,7 @@
 
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Text.Json;
-using Corvus.Text.Json.Arazzo10;
+using Corvus.Text.Json.Arazzo11;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -80,10 +80,7 @@ internal sealed class ArazzoShowCommand : AsyncCommand<ArazzoSettings>
 
             ArazzoDocument.SourceDescriptionObject.TypeEntity type = source.Type;
             string typeStr = type.IsNotUndefined()
-                ? type.Match(
-                    static () => " [italic cyan]arazzo[/]",
-                    static () => " [italic cyan]openapi[/]",
-                    () => $" [italic cyan]{Markup.Escape(type.GetString()!)}[/]")
+                ? $" [italic cyan]{Markup.Escape(type.GetString()!)}[/]"
                 : string.Empty;
 
             tree.AddNode($"[bold]{Markup.Escape(name)}[/]{typeStr}{urlStr}");
@@ -126,11 +123,24 @@ internal sealed class ArazzoShowCommand : AsyncCommand<ArazzoSettings>
     }
 
     private static string DescribeStepTarget(ArazzoDocument.StepObject step)
-        => step.Match(
-            static (in ArazzoDocument.StepObject.RequiredOperationId s) => $"[blue]operationId[/] [dim]{Markup.Escape(s.OperationId.GetString()!)}[/]",
-            static (in ArazzoDocument.StepObject.RequiredOperationPath s) => $"[blue]operationPath[/] [dim]{Markup.Escape(s.OperationPath.GetString()!)}[/]",
-            static (in ArazzoDocument.StepObject.RequiredWorkflowId s) => $"[blue]workflowId[/] [dim]{Markup.Escape(s.WorkflowId.GetString()!)}[/]",
-            static (in ArazzoDocument.StepObject s) => "[dim](no target)[/]");
+    {
+        if (step.OperationId.IsNotUndefined())
+        {
+            return $"[blue]operationId[/] [dim]{Markup.Escape(step.OperationId.GetString()!)}[/]";
+        }
+
+        if (step.OperationPath.IsNotUndefined())
+        {
+            return $"[blue]operationPath[/] [dim]{Markup.Escape(step.OperationPath.GetString()!)}[/]";
+        }
+
+        if (step.WorkflowId.IsNotUndefined())
+        {
+            return $"[blue]workflowId[/] [dim]{Markup.Escape(step.WorkflowId.GetString()!)}[/]";
+        }
+
+        return "[dim](no target)[/]";
+    }
 
     private static bool IsYamlFile(string path)
     {

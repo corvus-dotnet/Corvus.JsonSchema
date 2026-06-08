@@ -61,7 +61,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi31\Corvus.Text.Json.OpenApi31.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi.CodeGeneration\Corvus.Text.Json.AsyncApi.CodeGeneration.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.Arazzo10\Corvus.Text.Json.Arazzo10.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.CodeGeneration\Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
   </ItemGroup>
   <ItemGroup>

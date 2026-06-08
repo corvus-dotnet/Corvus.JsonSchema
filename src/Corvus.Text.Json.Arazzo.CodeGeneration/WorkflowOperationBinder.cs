@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Text.Json.Arazzo10;
+using Corvus.Text.Json.Arazzo11;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
@@ -41,11 +41,24 @@ public sealed class WorkflowOperationBinder
     /// <returns>The binding: the resolved operation for an operation step, the sub-workflow id for a workflow step, or <see cref="StepTargetKind.None"/>.</returns>
     /// <exception cref="InvalidOperationException">An operation step references an operation no source description defines.</exception>
     public StepBinding Bind(in ArazzoDocument.StepObject step)
-        => step.Match(
-            (in ArazzoDocument.StepObject.RequiredOperationId s) => this.BindOperationId(s.OperationId.GetString()!),
-            (in ArazzoDocument.StepObject.RequiredOperationPath s) => this.BindOperationPath(s.OperationPath.GetString()!),
-            (in ArazzoDocument.StepObject.RequiredWorkflowId s) => new StepBinding(StepTargetKind.WorkflowId, null, s.WorkflowId.GetString()),
-            (in ArazzoDocument.StepObject _) => new StepBinding(StepTargetKind.None, null, null));
+    {
+        if (step.OperationId.IsNotUndefined())
+        {
+            return this.BindOperationId(step.OperationId.GetString()!);
+        }
+
+        if (step.OperationPath.IsNotUndefined())
+        {
+            return this.BindOperationPath(step.OperationPath.GetString()!);
+        }
+
+        if (step.WorkflowId.IsNotUndefined())
+        {
+            return new StepBinding(StepTargetKind.WorkflowId, null, step.WorkflowId.GetString());
+        }
+
+        return new StepBinding(StepTargetKind.None, null, null);
+    }
 
     private static string? ExtractSourceName(string operationPath)
     {
