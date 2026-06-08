@@ -45,6 +45,10 @@ public static class OutputExtractionEmitter
     /// projection), or <see langword="null"/> when the step is not a channel receive step. The payload is
     /// already workspace-owned, so each projected value is copied into the outputs object the same way.
     /// </param>
+    /// <param name="messageHeadersLocal">
+    /// The in-scope local holding the received AsyncAPI message headers (a JSON object, for
+    /// <c>$message.header.&lt;name&gt;</c> projection), or <see langword="null"/> when none is available.
+    /// </param>
     /// <returns>The emitted static field declarations and the in-method statements (empty when there are no outputs). The statements ASSIGN the pre-declared step-outputs element local.</returns>
     public static OutputExtractionCode Emit(
         string stepId,
@@ -55,7 +59,8 @@ public static class OutputExtractionEmitter
         string inputsVariable,
         IReadOnlyDictionary<string, string>? inputAccessors,
         string? responseBodyLocal,
-        string? messagePayloadLocal = null)
+        string? messagePayloadLocal = null,
+        string? messageHeadersLocal = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
         ArgumentNullException.ThrowIfNull(outputs);
@@ -92,6 +97,12 @@ public static class OutputExtractionEmitter
                 // that pulls one field off a large message does not re-materialise the whole thing.
                 EmitLiveValueProjection(statements, messagePayloadLocal, parsed.JsonPointer, workspaceVariable, local);
             }
+            else if (parsed.Source == ArazzoExpressionSource.MessageHeader && messageHeadersLocal is not null && parsed.Name is { } headerName)
+            {
+                // Project a named value off the received message headers object (an optional pointer
+                // navigates into a structured header value).
+                EmitHeaderProjection(statements, messageHeadersLocal, headerName, parsed.JsonPointer, workspaceVariable, local);
+            }
             else
             {
                 // $inputs / $steps.*.outputs resolve to references into documents that outlive the
@@ -122,6 +133,27 @@ public static class OutputExtractionEmitter
         statements.Append(elementVariable).Append(" = ").Append(builderVariable).AppendLine(".RootElement;");
 
         return new OutputExtractionCode(fields.ToString(), statements.ToString());
+    }
+
+    // Projects a named value off a JSON headers object (a received message's headers) into the workspace,
+    // optionally navigating a JSON Pointer into a structured header value, copying only that value.
+    private static void EmitHeaderProjection(StringBuilder statements, string headersLocal, string headerName, string? jsonPointer, string workspaceVariable, string resultLocal)
+    {
+        statements.Append("JsonElement ").Append(resultLocal).AppendLine(" = default;");
+        statements.Append("if (").Append(headersLocal).Append(".TryGetProperty(")
+            .Append(EmitText.Quote(headerName)).Append("u8, out JsonElement ").Append(resultLocal).Append("Hdr)");
+
+        if (!string.IsNullOrEmpty(jsonPointer))
+        {
+            statements.Append(" && ").Append(resultLocal).Append("Hdr.TryResolvePointer(")
+                .Append(EmitText.Quote(jsonPointer)).Append("u8, out ").Append(resultLocal).Append("Hdr)");
+        }
+
+        statements.AppendLine(")");
+        statements.AppendLine("{");
+        statements.Append("    ").Append(resultLocal).Append(" = ").Append(resultLocal)
+            .Append("Hdr.CloneAsBuilder(").Append(workspaceVariable).AppendLine(").RootElement;");
+        statements.AppendLine("}");
     }
 
     // Projects a value from a live JSON local (a response body or a received message payload) into the

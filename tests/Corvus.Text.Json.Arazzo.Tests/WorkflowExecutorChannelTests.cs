@@ -313,6 +313,78 @@ public partial class WorkflowExecutorEndToEndTests
         caught!.StepId.ShouldBe("receive");
     }
 
+    private const string ChannelReceiveWithHeaderOutputsDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listen",
+              "steps": [
+                {
+                  "stepId": "receive",
+                  "channelPath": "measurements",
+                  "action": "receive",
+                  "outputs": { "trace": "$message.header.x-trace-id", "temp": "$message.payload#/temp" }
+                }
+              ],
+              "outputs": { "trace": "$steps.receive.outputs.trace", "temp": "$steps.receive.outputs.temp" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_projects_message_header_outputs()
+    {
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveWithHeaderOutputsDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The header value is read off the handler's headers parameter.
+        source.ShouldContain("messageHeaders.TryGetProperty(\"x-trace-id\"u8");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        await messageTransport.DeliverAsync<JsonElement>(
+            "measurements",
+            Encoding.UTF8.GetBytes("""{"temp":21}"""),
+            Encoding.UTF8.GetBytes("""{"x-trace-id":"abc-123"}"""));
+        JsonElement outputs = await pending;
+
+        outputs.TryGetProperty("trace"u8, out JsonElement trace).ShouldBeTrue();
+        trace.GetString().ShouldBe("abc-123");
+        outputs.TryGetProperty("temp"u8, out JsonElement temp).ShouldBeTrue();
+        temp.GetInt32().ShouldBe(21);
+    }
+
     private static MethodInfo CompileReceiveWithCriteria(out string source)
     {
         var descriptor = new AsyncApiChannelDescriptor(
