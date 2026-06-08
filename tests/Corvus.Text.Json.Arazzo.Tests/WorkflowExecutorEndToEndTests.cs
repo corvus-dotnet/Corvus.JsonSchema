@@ -422,6 +422,80 @@ public class WorkflowExecutorEndToEndTests
         recorded.Sum("corvus.arazzo.workflows.faulted").ShouldBe(1);
     }
 
+    private const string CompoundCriteriaDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adoptCompound",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [
+                    { "condition": "($response.body#/status == 'ok' || $response.body#/status == 'fine') && !$response.body#/error" }
+                  ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_inlines_a_compound_logical_criterion()
+    {
+        string source = EmitGetPetExecutor(CompoundCriteriaDocument, "AdoptCompoundWorkflow");
+        source.ShouldNotContain("CompiledCriterion");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptCompoundWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        // Passing: status "fine" satisfies the grouped OR, and error is false.
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","status":"fine","error":false}""");
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            JsonElement outputs = await pending;
+            outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+            name.GetString().ShouldBe("Fido");
+        }
+
+        // Failing: status is neither 'ok' nor 'fine' — the grouped OR is false, so the AND fails.
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","status":"bad","error":false}""");
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+            WorkflowStepFailedException? caught = null;
+            try
+            {
+                _ = await pending;
+            }
+            catch (WorkflowStepFailedException ex)
+            {
+                caught = ex;
+            }
+
+            caught.ShouldNotBeNull();
+        }
+    }
+
     private static string EmitCreatePetExecutor() => EmitCreatePetExecutor(CreatePetDocument, "RegisterWorkflow");
 
     private static string EmitCreatePetExecutor(string document, string className)

@@ -127,9 +127,9 @@ public class StepBodyEmitterTests
         // with the string literal baked once into a static readonly byte[].
         code.Fields.ShouldNotContain("CompiledCriterion");
         code.Fields.ShouldContain("\"ok\"u8.ToArray();");
-        code.Statements.ShouldContain("getPetResponseBody.TryResolvePointer(\"/status\"u8, out JsonElement getPet_C0L0)");
-        code.Statements.ShouldContain("getPet_C0L = Comparand.FromJsonElement(getPet_C0L0);");
-        code.Statements.ShouldContain("if (!(getPet_C0L.ValueEquals(Comparand.FromUtf8String(getPet_C0RLit))))");
+        code.Statements.ShouldContain("getPetResponseBody.TryResolvePointer(\"/status\"u8, out JsonElement getPet_C0o0n0)");
+        code.Statements.ShouldContain("getPet_C0o0 = Comparand.FromJsonElement(getPet_C0o0n0);");
+        code.Statements.ShouldContain("if (!(getPet_C0o0.ValueEquals(Comparand.FromUtf8String(getPet_C0o1Lit))))");
     }
 
     [TestMethod]
@@ -143,17 +143,32 @@ public class StepBodyEmitterTests
 
         code.Fields.ShouldNotContain("CompiledCriterion");
         // Numeric comparison → GreaterThan against a Comparand.FromNumber literal.
-        code.Statements.ShouldContain("getPet_C0L.GreaterThan(Comparand.FromNumber(5))");
+        code.Statements.ShouldContain("getPet_C0o0.GreaterThan(Comparand.FromNumber(5))");
         // Lone operand → IsTrue.
-        code.Statements.ShouldContain("getPet_C1L.IsTrue");
-        code.Statements.ShouldContain("if (!(getPet_C0L.GreaterThan(Comparand.FromNumber(5)) && getPet_C1L.IsTrue))");
+        code.Statements.ShouldContain("getPet_C1o0.IsTrue");
+        code.Statements.ShouldContain("if (!(getPet_C0o0.GreaterThan(Comparand.FromNumber(5)) && getPet_C1o0.IsTrue))");
     }
 
     [TestMethod]
-    public void Falls_back_to_a_compiled_criterion_for_a_compound_simple_condition()
+    public void Inlines_a_compound_simple_condition_with_logical_operators()
     {
-        // A condition using the logical grammar is not inlined yet — it compiles to a CompiledCriterion.
-        StepBodyCode code = Emit([new StepCriterion("simple", "$response.body#/count > 5 && $response.body#/active", null)]);
+        // The full grammar (||, &&, !, grouping) is inlined — operands within one criterion share its
+        // index and the logical structure is emitted as a C# boolean expression.
+        StepBodyCode code = Emit([new StepCriterion("simple", "($response.body#/count > 5 || $response.body#/count == 0) && !$response.body#/error", null)]);
+
+        code.Fields.ShouldNotContain("CompiledCriterion");
+
+        // Operand bases are numbered per operand encountered (literals consume a slot too), so the
+        // navigated body operands here are o0 (count), o2 (count), o4 (error).
+        code.Statements.ShouldContain(
+            "if (!(((getPet_C0o0.GreaterThan(Comparand.FromNumber(5)) || getPet_C0o2.ValueEquals(Comparand.FromNumber(0))) && !(getPet_C0o4.IsTrue))))");
+    }
+
+    [TestMethod]
+    public void Falls_back_to_a_compiled_criterion_for_an_unsupported_source()
+    {
+        // $response.header is not statically navigable yet — the criterion compiles to a CompiledCriterion.
+        StepBodyCode code = Emit([new StepCriterion("simple", "$response.header.foo == 'bar'", null)]);
 
         code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple,");
         code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
