@@ -57,11 +57,15 @@ public static class WorkflowExecutorEmitter
             }
 
             List<OutputMapping> stepOutputs = ReadOutputs(step);
+            List<StepCriterion> criteria = ReadCriteria(step);
+
+            // Only clone the response body into the workspace when the step actually consumes it.
+            bool bindResponseBody = ReferencesResponseBody(criteria, stepOutputs);
 
             body.Append("            // ── step: ").Append(stepId).AppendLine(" ──");
 
             StepBodyCode stepBody = StepBodyEmitter.Emit(
-                stepId, operation, ReadArguments(step), ReadCriteria(step), "transport", "workspace", "context", "cancellationToken", stepOutputLocals, ReadRequestBodyExpression(step));
+                stepId, operation, ReadArguments(step), criteria, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, ReadRequestBodyExpression(step), bindResponseBody);
             fields.Append(stepBody.Fields);
             AppendIndented(body, stepBody.Statements, 12);
 
@@ -107,6 +111,32 @@ public static class WorkflowExecutorEmitter
         }
 
         return arguments;
+    }
+
+    private static bool ReferencesResponseBody(
+        IReadOnlyList<StepCriterion> criteria,
+        IReadOnlyList<OutputMapping> outputs)
+    {
+        const string token = "$response.body";
+
+        foreach (StepCriterion criterion in criteria)
+        {
+            if (criterion.Condition.Contains(token, StringComparison.Ordinal)
+                || (criterion.Context is { } context && context.Contains(token, StringComparison.Ordinal)))
+            {
+                return true;
+            }
+        }
+
+        foreach (OutputMapping output in outputs)
+        {
+            if (output.Expression.Contains(token, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static string? ReadRequestBodyExpression(in ArazzoDocument.StepObject step)

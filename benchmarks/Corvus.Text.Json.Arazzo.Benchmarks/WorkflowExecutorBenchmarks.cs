@@ -48,7 +48,33 @@ public class WorkflowExecutorBenchmarks
         }
         """;
 
+    // Identical to Document but the step references only $statusCode / $inputs — never $response.body —
+    // so the generator emits no response-body clone.
+    private const string StatusOnlyDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "echo": "$inputs.petId" }
+                }
+              ],
+              "outputs": { "id": "$steps.getPet.outputs.echo" }
+            }
+          ]
+        }
+        """;
+
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> execute = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeStatusOnly = null!;
     private BenchTransport transport = null!;
     private JsonWorkspace workspace = null!;
     private ParsedJsonDocument<JsonElement> inputsDocument = default!;
@@ -57,14 +83,20 @@ public class WorkflowExecutorBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        Assembly assembly = CompileInMemory(EmitExecutor());
-        MethodInfo method = assembly.GetType("GeneratedWorkflows.AdoptWorkflow")!.GetMethod("ExecuteAsync")!;
-        this.execute = method.CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+        this.execute = Compile(Document, "AdoptWorkflow");
+        this.executeStatusOnly = Compile(StatusOnlyDocument, "StatusOnlyWorkflow");
 
         this.transport = new BenchTransport();
         this.workspace = JsonWorkspace.Create();
         this.inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
         this.inputs = this.inputsDocument.RootElement;
+
+        static Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> Compile(string document, string className)
+        {
+            Assembly assembly = CompileInMemory(EmitExecutor(document, className));
+            MethodInfo method = assembly.GetType($"GeneratedWorkflows.{className}")!.GetMethod("ExecuteAsync")!;
+            return method.CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+        }
     }
 
     [GlobalCleanup]
@@ -76,7 +108,7 @@ public class WorkflowExecutorBenchmarks
 
     /// <summary>Runs the generated workflow once; the workspace is reset to reuse its buffers.</summary>
     /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public bool RunWorkflow()
     {
         this.workspace.Reset();
@@ -85,7 +117,18 @@ public class WorkflowExecutorBenchmarks
         return result.TryGetProperty("name"u8, out _);
     }
 
-    private static string EmitExecutor()
+    /// <summary>Runs a status-only workflow (no $response.body reference, so no body clone).</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunStatusOnlyWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeStatusOnly(this.transport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("id"u8, out _);
+    }
+
+    private static string EmitExecutor(string document, string className)
     {
         OperationDescriptor[] operations =
         [
@@ -106,7 +149,7 @@ public class WorkflowExecutorBenchmarks
 
         var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
 
-        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(Document));
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
         foreach (ArazzoDocument.WorkflowObject workflow in doc.RootElement.Workflows.EnumerateArray())
         {
             return WorkflowExecutorEmitter.Emit(
@@ -114,7 +157,7 @@ public class WorkflowExecutorBenchmarks
                 binder,
                 new WorkflowExecutorOptions(
                     "GeneratedWorkflows",
-                    "AdoptWorkflow",
+                    className,
                     "Corvus.Text.Json.JsonElement",
                     "Corvus.Text.Json.JsonElement"));
         }
