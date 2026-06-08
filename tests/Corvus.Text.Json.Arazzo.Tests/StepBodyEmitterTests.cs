@@ -60,6 +60,31 @@ public class StepBodyEmitterTests
     }
 
     [TestMethod]
+    public void Skips_the_response_body_clone_when_the_body_is_not_referenced()
+    {
+        StepBodyCode code = StepBodyEmitter.Emit(
+            "getPet",
+            GetPet,
+            [new StepArgument("petId", "$inputs.petId")],
+            [],
+            "transport",
+            "workspace",
+            "context",
+            "cancellationToken",
+            NoSteps,
+            requestBodyExpression: null,
+            bindResponseBody: false);
+
+        // No body clone is emitted at all …
+        code.Statements.ShouldNotContain("SetResponseBody");
+        code.Statements.ShouldNotContain("CloneAsBuilder");
+
+        // … but the status is still recorded and the response is still disposed.
+        code.Statements.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
+        code.Statements.ShouldContain("await getPetResponse.DisposeAsync().ConfigureAwait(false);");
+    }
+
+    [TestMethod]
     public void Compiles_success_criteria_into_static_fields_and_gates_on_them()
     {
         StepBodyCode code = Emit(
