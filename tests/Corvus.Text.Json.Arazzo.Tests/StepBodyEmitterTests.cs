@@ -200,6 +200,38 @@ public class StepBodyEmitterTests
     }
 
     [TestMethod]
+    public void Inlines_a_regex_criterion_against_the_method()
+    {
+        StepBodyCode code = Emit([new StepCriterion("regex", "^G", "$method")]);
+
+        code.Fields.ShouldContain("[GeneratedRegex(\"^G\", RegexOptions.CultureInvariant, 1000)]");
+        code.Statements.ShouldContain("RegexCriterion.IsMatch(getPet_C0Regex(), \"GET\")");
+    }
+
+    [TestMethod]
+    public void Inlines_two_regex_criteria_as_separate_generated_methods()
+    {
+        StepBodyCode code = Emit(
+        [
+            new StepCriterion("regex", "^Fi", "$response.body#/name"),
+            new StepCriterion("regex", "o$", "$response.body#/name"),
+        ]);
+
+        code.Fields.ShouldContain("private static partial Regex getPet_C0Regex();");
+        code.Fields.ShouldContain("private static partial Regex getPet_C1Regex();");
+    }
+
+    [TestMethod]
+    public void Falls_back_to_a_compiled_criterion_for_a_regex_without_a_context()
+    {
+        // A regex needs a context expression; without one the inliner bails to the runtime criterion.
+        StepBodyCode code = Emit([new StepCriterion("regex", "^x", null)]);
+
+        code.Fields.ShouldNotContain("GeneratedRegex");
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Regex,");
+    }
+
+    [TestMethod]
     public void Falls_back_to_a_compiled_criterion_for_a_dynamic_regex_pattern()
     {
         // An embedded {expression} makes the pattern dynamic — [GeneratedRegex] needs a constant, so it
@@ -225,6 +257,51 @@ public class StepBodyEmitterTests
         code.Statements.ShouldContain("using (JsonPathResult getPet_C0Result = getPet_C0JsonPath.QueryNodes(getPetResponseBody))");
         code.Statements.ShouldContain("getPet_C0Match = getPet_C0Result.Count > 0;");
         code.Statements.ShouldContain("if (!(getPet_C0Match))");
+    }
+
+    [TestMethod]
+    public void Inlines_two_jsonpath_criteria_as_separate_sibling_classes()
+    {
+        StepBodyCode code = Emit(
+        [
+            new StepCriterion("jsonpath", "$.name", "$response.body"),
+            new StepCriterion("jsonpath", "$.tags[*]", "$response.body"),
+        ]);
+
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.AuxiliaryTypes.ShouldContain("internal static class getPet_C0JsonPath");
+        code.AuxiliaryTypes.ShouldContain("internal static class getPet_C1JsonPath");
+    }
+
+    [TestMethod]
+    public void Falls_back_to_a_compiled_criterion_for_an_invalid_jsonpath_query()
+    {
+        // A malformed query makes the JSONPath generator throw — the criterion falls back.
+        StepBodyCode code = Emit([new StepCriterion("jsonpath", "$.items[", "$response.body")]);
+
+        code.AuxiliaryTypes.ShouldBeEmpty();
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath,");
+    }
+
+    [TestMethod]
+    public void Falls_back_to_a_compiled_criterion_for_a_jsonpath_over_an_unnavigable_context()
+    {
+        // $statusCode is not a navigable JSON value, so the jsonpath context can't be resolved.
+        StepBodyCode code = Emit([new StepCriterion("jsonpath", "$.x", "$statusCode")]);
+
+        code.AuxiliaryTypes.ShouldBeEmpty();
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath,");
+    }
+
+    [TestMethod]
+    public void Inlines_a_body_operand_with_a_pointer_as_a_navigation_chain()
+    {
+        // $inputs.petId#/sub navigates a property then a pointer — a two-step chain.
+        StepBodyCode code = Emit([new StepCriterion("simple", "$inputs.petId#/sub == 'x'", null)]);
+
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.Statements.ShouldContain("((JsonElement)inputs).TryGetProperty(\"petId\"u8, out JsonElement getPet_C0o0n0)");
+        code.Statements.ShouldContain("getPet_C0o0n0.TryResolvePointer(\"/sub\"u8, out JsonElement getPet_C0o0n1)");
     }
 
     [TestMethod]
@@ -272,6 +349,46 @@ public class StepBodyEmitterTests
 
         code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple,");
         code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
+    }
+
+    [TestMethod]
+    public void Inlines_each_comparison_operator()
+    {
+        StepBodyCode code = Emit(
+        [
+            new StepCriterion("simple", "$response.body#/a != 1", null),
+            new StepCriterion("simple", "$response.body#/b < 2", null),
+            new StepCriterion("simple", "$response.body#/c <= 3", null),
+            new StepCriterion("simple", "$response.body#/d > 4", null),
+            new StepCriterion("simple", "$response.body#/e >= 5", null),
+        ]);
+
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.Statements.ShouldContain(".ValueNotEquals(Comparand.FromNumber(1))");
+        code.Statements.ShouldContain(".LessThan(Comparand.FromNumber(2))");
+        code.Statements.ShouldContain(".LessThanOrEqual(Comparand.FromNumber(3))");
+        code.Statements.ShouldContain(".GreaterThan(Comparand.FromNumber(4))");
+        code.Statements.ShouldContain(".GreaterThanOrEqual(Comparand.FromNumber(5))");
+    }
+
+    [TestMethod]
+    public void Inlines_each_literal_operand_kind()
+    {
+        StepBodyCode code = Emit(
+        [
+            new StepCriterion("simple", "$response.body#/s == \"hi\"", null),
+            new StepCriterion("simple", "$response.body#/active == true", null),
+            new StepCriterion("simple", "$response.body#/gone == false", null),
+            new StepCriterion("simple", "$response.body#/maybe == null", null),
+            new StepCriterion("simple", "$response.body#/ratio > 1.5", null),
+        ]);
+
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.Fields.ShouldContain("\"hi\"u8.ToArray();");                    // double-quoted string literal
+        code.Statements.ShouldContain("Comparand.FromBoolean(true)");
+        code.Statements.ShouldContain("Comparand.FromBoolean(false)");
+        code.Statements.ShouldContain("Comparand.Null");
+        code.Statements.ShouldContain("Comparand.FromNumber(1.5)");
     }
 
     [TestMethod]
