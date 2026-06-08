@@ -1,0 +1,29 @@
+{
+  "arazzo": "1.0.1",
+  "info": { "title": "Adopt", "version": "1.0.0" },
+  "sourceDescriptions": [
+    { "name": "pets", "url": "./pets.openapi.json", "type": "openapi" }
+  ],
+  "workflows": [
+    {
+      "workflowId": "adopt",
+      "inputs": {
+        "type": "object",
+        "properties": { "petId": { "type": "string" } },
+        "required": [ "petId" ]
+      },
+      "steps": [
+        {
+          "stepId": "getPet",
+          "operationId": "getPet",
+          "parameters": [
+            { "name": "petId", "in": "path", "value": "$inputs.petId" }
+          ],
+          "successCriteria": [ { "condition": "$statusCode == 200" } ],
+          "outputs": { "petName": "$response.body#/name" }
+        }
+      ],
+      "outputs": { "name": "$steps.getPet.outputs.petName" }
+    }
+  ]
+}
