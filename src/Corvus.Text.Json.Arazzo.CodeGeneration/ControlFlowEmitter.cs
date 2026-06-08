@@ -42,7 +42,7 @@ internal static class ControlFlowEmitter
         for (int i = 0; i < steps.Count; i++)
         {
             stepIndex[steps[i].StepId] = i;
-            if (steps[i].Outputs.Count > 0)
+            if (ProducesOutputs(steps[i]))
             {
                 stepOutputLocals[steps[i].StepId] = EmitText.StepOutputsElementLocal(steps[i].StepId);
             }
@@ -54,7 +54,7 @@ internal static class ControlFlowEmitter
         // (read by later steps) and each retried step's attempt counter.
         foreach (ControlFlowStep step in steps)
         {
-            if (step.Outputs.Count > 0)
+            if (ProducesOutputs(step))
             {
                 loop.Append("JsonElement ").Append(EmitText.StepOutputsElementLocal(step.StepId)).AppendLine(" = default;");
             }
@@ -74,7 +74,14 @@ internal static class ControlFlowEmitter
         for (int i = 0; i < steps.Count; i++)
         {
             loop.Append("        case ").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine(":");
-            EmitCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals);
+            if (steps[i].SubWorkflowId is not null)
+            {
+                EmitSubWorkflowCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals);
+            }
+            else
+            {
+                EmitCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals);
+            }
         }
 
         // A state past the last step (the last step's default "next") completes the workflow.
@@ -137,11 +144,11 @@ internal static class ControlFlowEmitter
             WorkflowExecutorEmitter.AppendIndented(gate, outputCode.Statements, 4);
         }
 
-        EmitDispatch(gate, step.OnSuccess, isFailure: false, camel, prefix, responseVar, bindBodyLocal, stepIndex, fields, auxiliaryTypes, operation, requestContext, stepOutputLocals, options);
+        EmitDispatch(gate, step.OnSuccess, isFailure: false, camel, prefix, responseVar, bindBodyLocal, stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options);
         gate.AppendLine("}");
         gate.AppendLine("else");
         gate.AppendLine("{");
-        EmitDispatch(gate, step.OnFailure, isFailure: true, camel, prefix, responseVar, bindBodyLocal, stepIndex, fields, auxiliaryTypes, operation, requestContext, stepOutputLocals, options);
+        EmitDispatch(gate, step.OnFailure, isFailure: true, camel, prefix, responseVar, bindBodyLocal, stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options);
         gate.AppendLine("}");
 
         string gateText = gate.ToString();
@@ -216,6 +223,105 @@ internal static class ControlFlowEmitter
         WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
     }
 
+    private static void EmitSubWorkflowCase(
+        in ControlFlowStep step,
+        int index,
+        IReadOnlyDictionary<string, int> stepIndex,
+        in WorkflowExecutorOptions options,
+        StringBuilder fields,
+        StringBuilder loop,
+        StringBuilder auxiliaryTypes,
+        Dictionary<string, string> stepOutputLocals)
+    {
+        string subWorkflowId = step.SubWorkflowId!;
+        string identifier = EmitText.SanitizeIdentifier(step.StepId);
+        string prefix = $"{identifier}_";
+        string camel = EmitText.ToCamelCase(identifier);
+        string outputsLocal = EmitText.StepOutputsElementLocal(step.StepId);
+        string completedLocal = $"{camel}Completed";
+        string successLocal = $"{camel}Success";
+
+        // Success criteria (and action criteria) of a sub-workflow step have no HTTP response — they run
+        // against the sub-workflow's outputs / the inputs, so no response var / headers / request context.
+        var gate = new StringBuilder();
+        string successExpression = step.SuccessCriteria.Count == 0
+            ? "true"
+            : StepBodyEmitter.EmitCriteriaExpression(
+                step.SuccessCriteria, fields, gate, auxiliaryTypes, prefix, "context", string.Empty, null,
+                "inputs", stepOutputLocals, options.InputAccessors, null, default, options.Namespace);
+
+        var successDispatch = new StringBuilder();
+        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, null, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+        var failureDispatch = new StringBuilder();
+        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, null, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+
+        var inputs = new StringBuilder();
+        string builderVariable = SubWorkflowStepEmitter.BuildInputs(fields, inputs, step.StepId, step.Arguments, stepOutputLocals, "inputs", options.InputAccessors);
+        string targetClass = SubWorkflowStepEmitter.TargetClass(options.Namespace, subWorkflowId);
+
+        var c = new StringBuilder();
+        c.AppendLine("{");
+        c.Append("    // ── step: ").Append(step.StepId).Append(" (workflow: ").Append(subWorkflowId).AppendLine(") ──");
+        WorkflowExecutorEmitter.AppendIndented(c, inputs.ToString(), 4);
+        c.Append("    int ").Append(camel).Append("Next = ").Append((index + 1).ToString(CultureInfo.InvariantCulture)).AppendLine(";");
+        c.Append("    bool ").Append(camel).AppendLine("End = false;");
+        c.Append("    bool ").Append(camel).AppendLine("Fail = false;");
+        c.Append("    bool ").Append(camel).AppendLine("Retry = false;");
+        c.Append("    double ").Append(camel).AppendLine("RetryDelay = 0;");
+        c.Append("    bool ").Append(completedLocal).AppendLine(";");
+
+        // The sub-workflow fails by throwing WorkflowStepFailedException; catch it so onFailure can act.
+        c.AppendLine("    try");
+        c.AppendLine("    {");
+        c.AppendLine("        ArazzoTelemetry.StepsExecuted.Add(1);");
+        c.Append("        ").Append(outputsLocal).Append(" = await ").Append(targetClass)
+            .Append(".ExecuteAsync(transport, workspace, ").Append(builderVariable).AppendLine(".RootElement, cancellationToken).ConfigureAwait(false);");
+        c.Append("        ").Append(completedLocal).AppendLine(" = true;");
+        c.AppendLine("    }");
+        c.AppendLine("    catch (WorkflowStepFailedException)");
+        c.AppendLine("    {");
+        c.Append("        ").Append(completedLocal).AppendLine(" = false;");
+        c.AppendLine("    }");
+
+        c.Append("    bool ").Append(successLocal).AppendLine(";");
+        c.Append("    if (").Append(completedLocal).AppendLine(")");
+        c.AppendLine("    {");
+        WorkflowExecutorEmitter.AppendIndented(c, gate.ToString(), 8);
+        c.Append("        ").Append(successLocal).Append(" = (").Append(successExpression).AppendLine(");");
+        c.AppendLine("    }");
+        c.AppendLine("    else");
+        c.AppendLine("    {");
+        c.Append("        ").Append(successLocal).AppendLine(" = false;");
+        c.AppendLine("    }");
+
+        c.Append("    if (").Append(successLocal).AppendLine(")");
+        c.AppendLine("    {");
+        WorkflowExecutorEmitter.AppendIndented(c, successDispatch.ToString(), 8);
+        c.AppendLine("    }");
+        c.AppendLine("    else");
+        c.AppendLine("    {");
+        WorkflowExecutorEmitter.AppendIndented(c, failureDispatch.ToString(), 8);
+        c.AppendLine("    }");
+
+        c.Append("    if (").Append(camel).Append("Fail) { throw new WorkflowStepFailedException(")
+            .Append(EmitText.Quote(step.StepId)).Append(", ").Append(EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.")).AppendLine("); }");
+        c.Append("    if (").Append(camel).AppendLine("End) { goto __workflowOutputs; }");
+        c.Append("    if (").Append(camel).AppendLine("Retry)");
+        c.AppendLine("    {");
+        c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
+            .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
+        c.Append("        __state = ").Append(index.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
+        c.AppendLine("        continue;");
+        c.AppendLine("    }");
+        c.Append("    __state = ").Append(camel).AppendLine("Next;");
+        c.AppendLine("    continue;");
+        c.AppendLine("}");
+
+        WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
+    }
+
+    private static bool ProducesOutputs(in ControlFlowStep step) => step.SubWorkflowId is not null || step.Outputs.Count > 0;
+
     private static void EmitDispatch(
         StringBuilder target,
         IReadOnlyList<StepActionInfo> actions,
@@ -227,7 +333,7 @@ internal static class ControlFlowEmitter
         IReadOnlyDictionary<string, int> stepIndex,
         StringBuilder fields,
         StringBuilder auxiliaryTypes,
-        ResolvedOperation operation,
+        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         StepRequestContext requestContext,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         in WorkflowExecutorOptions options)
@@ -249,9 +355,9 @@ internal static class ControlFlowEmitter
             actionNumber++;
             string expression = StepBodyEmitter.EmitCriteriaExpression(
                 action.Criteria, fields, target, auxiliaryTypes, actionPrefix, "context", responseVar, bindBodyLocal,
-                "inputs", stepOutputLocals, options.InputAccessors, operation.Operation.ResponseHeaders, requestContext, options.Namespace);
+                "inputs", stepOutputLocals, options.InputAccessors, responseHeaders, requestContext, options.Namespace);
 
-            resolved.Add((expression, BuildApply(action, camel, stepIndex)));
+            resolved.Add((expression, BuildApply(action, camel, stepIndex, options.Namespace)));
             if (action.Criteria.Count == 0)
             {
                 break;
@@ -307,7 +413,7 @@ internal static class ControlFlowEmitter
         // Success with no matching action falls through to the default next state (already set).
     }
 
-    private static string BuildApply(in StepActionInfo action, string camel, IReadOnlyDictionary<string, int> stepIndex)
+    private static string BuildApply(in StepActionInfo action, string camel, IReadOnlyDictionary<string, int> stepIndex, string workflowsNamespace)
     {
         switch (action.Kind)
         {
@@ -315,10 +421,12 @@ internal static class ControlFlowEmitter
                 return $"{camel}End = true;\n";
 
             case StepActionKind.Goto:
-                if (action.TargetWorkflowId is not null)
+                if (action.TargetWorkflowId is { } targetWorkflow)
                 {
-                    throw new NotSupportedException(
-                        $"Action '{action.Name}' performs a goto to workflow '{action.TargetWorkflowId}'; sub-workflow control flow is a later phase.");
+                    // goto a workflow = transfer control: run the target workflow and return its result
+                    // as this workflow's result. The current inputs flow through (a JsonElement converts
+                    // to the target's inputs type via its implicit operator).
+                    return $"return await {SubWorkflowStepEmitter.TargetClass(workflowsNamespace, targetWorkflow)}.ExecuteAsync(transport, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
                 }
 
                 if (action.TargetStepId is not { } targetStep || !stepIndex.TryGetValue(targetStep, out int target))

@@ -50,7 +50,6 @@ public static class WorkflowExecutorEmitter
         // as a labelled-loop executor (control flow), otherwise as the straight-line form.
         var boundSteps = new List<ControlFlowStep>();
         bool usesControlFlow = false;
-        bool hasSubWorkflowStep = false;
         foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
         {
             string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw new InvalidOperationException("A step is missing its required stepId.");
@@ -61,17 +60,13 @@ public static class WorkflowExecutorEmitter
             List<StepActionInfo> onSuccess = ReadActions(step.OnSuccess);
             List<StepActionInfo> onFailure = ReadActions(step.OnFailure);
 
-            // A sub-workflow step invokes another generated workflow. Success criteria and control-flow
-            // actions on such a step (and goto-to-sub-workflow) are a later phase.
+            // A sub-workflow step invokes another generated workflow. Its criteria (success and action)
+            // run against the sub-workflow's outputs / the inputs — never an HTTP response — so they may
+            // only reference $inputs and $steps; an action or criterion makes the workflow control-flow.
             if (binding.Kind == StepTargetKind.WorkflowId && binding.SubWorkflowId is { } subWorkflowId)
             {
-                if (criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0)
-                {
-                    throw new NotSupportedException(
-                        $"Step '{stepId}' invokes sub-workflow '{subWorkflowId}'; success criteria and onSuccess/onFailure actions on a sub-workflow step are a later phase.");
-                }
-
-                hasSubWorkflowStep = true;
+                ValidateSubWorkflowCriteria(stepId, criteria, onSuccess, onFailure);
+                usesControlFlow |= criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0;
                 boundSteps.Add(new ControlFlowStep(stepId, null, ReadArguments(step), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId));
                 continue;
             }
@@ -90,12 +85,6 @@ public static class WorkflowExecutorEmitter
 
             boundSteps.Add(new ControlFlowStep(
                 stepId, operation, ReadArguments(step), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure));
-        }
-
-        if (usesControlFlow && hasSubWorkflowStep)
-        {
-            throw new NotSupportedException(
-                "Combining sub-workflow steps with onSuccess/onFailure control flow in one workflow is a later phase.");
         }
 
         if (usesControlFlow)
@@ -370,6 +359,47 @@ public static class WorkflowExecutorEmitter
         }
 
         return list;
+    }
+
+    /// <summary>
+    /// Validates that a sub-workflow step's criteria (success and action) reference only sources that
+    /// exist for a workflow invocation — <c>$inputs</c> and <c>$steps</c>. A sub-workflow step has no
+    /// HTTP response or request, so <c>$statusCode</c>/<c>$response</c>/<c>$request</c>/<c>$method</c>/<c>$url</c>
+    /// cannot resolve and are rejected up front rather than emitted as broken code.
+    /// </summary>
+    private static void ValidateSubWorkflowCriteria(
+        string stepId,
+        IReadOnlyList<StepCriterion> successCriteria,
+        IReadOnlyList<StepActionInfo> onSuccess,
+        IReadOnlyList<StepActionInfo> onFailure)
+    {
+        static void Check(string stepId, IReadOnlyList<StepCriterion> criteria)
+        {
+            ReadOnlySpan<string> forbidden = ["$statusCode", "$response", "$request", "$method", "$url"];
+            foreach (StepCriterion criterion in criteria)
+            {
+                string text = criterion.Context is { } context ? $"{criterion.Condition} {context}" : criterion.Condition;
+                foreach (string token in forbidden)
+                {
+                    if (text.Contains(token, StringComparison.Ordinal))
+                    {
+                        throw new NotSupportedException(
+                            $"Sub-workflow step '{stepId}' has a criterion referencing '{token}'; a sub-workflow step's criteria may reference only $inputs and $steps.");
+                    }
+                }
+            }
+        }
+
+        Check(stepId, successCriteria);
+        foreach (StepActionInfo action in onSuccess)
+        {
+            Check(stepId, action.Criteria);
+        }
+
+        foreach (StepActionInfo action in onFailure)
+        {
+            Check(stepId, action.Criteria);
+        }
     }
 
     private static List<OutputMapping> ReadOutputs(in ArazzoDocument.StepObject step)
