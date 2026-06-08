@@ -257,7 +257,8 @@ public class WorkflowExecutorEndToEndTests
                 [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
                 typeof(PetByIdClient).FullName!,
                 "GetPetAsync",
-                null),
+                null,
+                [new ResponseHeaderInfo("X-Flag", "XFlagHeader", "string", true)]),
         ];
 
         var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
@@ -708,6 +709,83 @@ public class WorkflowExecutorEndToEndTests
         {
             var transport = new MockApiTransport();
             transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","tags":[{"primary":false}]}""");
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+            WorkflowStepFailedException? caught = null;
+            try
+            {
+                _ = await pending;
+            }
+            catch (WorkflowStepFailedException ex)
+            {
+                caught = ex;
+            }
+
+            caught.ShouldNotBeNull();
+        }
+    }
+
+    private const string HeaderCriteriaDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adoptHeader",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$response.header.X-Flag == 'on'" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_inlines_a_response_header_criterion()
+    {
+        string source = EmitGetPetExecutor(HeaderCriteriaDocument, "AdoptHeaderWorkflow");
+
+        // The header is read directly from the generated response property — no context.
+        source.ShouldContain("getPetResponse.XFlagHeader");
+        source.ShouldNotContain("WorkflowExecutionContext");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptHeaderWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal) { ["X-Flag"] = "on" };
+
+        // Passing: X-Flag is "on".
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""", headers: headers);
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            JsonElement outputs = await pending;
+            outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+            name.GetString().ShouldBe("Fido");
+        }
+
+        // Failing: X-Flag is "off".
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""", headers: new Dictionary<string, string>(StringComparer.Ordinal) { ["X-Flag"] = "off" });
             using var workspace = JsonWorkspace.Create();
             using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 

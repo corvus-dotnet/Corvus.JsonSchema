@@ -446,6 +446,8 @@ public sealed class OpenApi31CodeGenerator
                     bodyTypeName is null ? null : CodeEmitHelpers.ResponseBodyPropertyName(response.StatusCode));
             }
 
+            ResponseHeaderInfo[] responseHeaders = this.DescribeResponseHeaders(op.Responses);
+
             string clientTag = op.Tags.Length > 0 ? op.Tags[0] : "default";
             string? requestBodyTypeName = op.RequestBody is { } rb && !IsRawStreamRequestBody(rb)
                 ? this.ResolveRequestBodyTypeName(rb)
@@ -463,10 +465,42 @@ public sealed class OpenApi31CodeGenerator
                 responses,
                 $"{this.rootNamespace}.{this.GetClientName(clientTag)}Client",
                 $"{op.MethodName}Async",
-                requestBodyTypeName));
+                requestBodyTypeName,
+                responseHeaders));
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Describes the response headers an operation declares — mirroring <see cref="EmitResponseHeaderProperties"/>'s
+    /// naming and typing so a caller can resolve <c>$response.header.&lt;name&gt;</c> against the generated
+    /// response property. Deduplicated by generated property name across all responses.
+    /// </summary>
+    /// <param name="responses">The operation's responses.</param>
+    /// <returns>The described response headers.</returns>
+    private ResponseHeaderInfo[] DescribeResponseHeaders(ResponseInfo[] responses)
+    {
+        var headers = new List<ResponseHeaderInfo>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (ResponseInfo response in responses)
+        {
+            foreach (HeaderInfo header in response.Headers)
+            {
+                string propertyName = CodeEmitHelpers.HeaderNameToPropertyName(header.HeaderName) + "Header";
+                if (!seen.Add(propertyName))
+                {
+                    continue;
+                }
+
+                bool isString = header.SchemaPointer is null;
+                string typeName = isString ? "string" : this.ResolveSchemaTypeName(header.SchemaPointer);
+                headers.Add(new ResponseHeaderInfo(header.HeaderName, propertyName, typeName, isString));
+            }
+        }
+
+        return [.. headers];
     }
 
     // ═══════════════════════════════════════════════════════════════════

@@ -61,6 +61,16 @@ public readonly struct Comparand
     /// <returns>The comparand.</returns>
     public static Comparand FromUtf8String(byte[] value) => new(ComparandKind.String, false, 0, value, default);
 
+    /// <summary>
+    /// Creates a string comparand from a managed string (e.g. an untyped response header value), or
+    /// <see cref="Undefined"/> when the value is <see langword="null"/> (an absent header). The string
+    /// is encoded to UTF-8 so comparison uses the same case-insensitive UTF-8 path as every other string.
+    /// </summary>
+    /// <param name="value">The string value, or <see langword="null"/>.</param>
+    /// <returns>The comparand.</returns>
+    public static Comparand FromString(string? value)
+        => value is null ? Undefined : FromUtf8String(Encoding.UTF8.GetBytes(value));
+
     /// <summary>Creates a string comparand backed by a JSON string element (no string is materialized).</summary>
     /// <param name="value">The JSON string element.</param>
     /// <returns>The comparand.</returns>

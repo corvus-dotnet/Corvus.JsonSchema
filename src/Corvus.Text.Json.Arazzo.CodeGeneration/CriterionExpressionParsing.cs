@@ -5,6 +5,7 @@
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Arazzo;
+using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
@@ -14,6 +15,32 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// </summary>
 internal static class CriterionExpressionParsing
 {
+    /// <summary>
+    /// Resolves a <c>$response.header.&lt;name&gt;</c> operand/context to the generated response property
+    /// that exposes the header (HTTP header names are case-insensitive).
+    /// </summary>
+    /// <param name="responseHeaders">The operation's declared response headers, or <see langword="null"/>.</param>
+    /// <param name="headerName">The header name from the expression.</param>
+    /// <param name="header">The matched header descriptor.</param>
+    /// <returns><see langword="true"/> if a declared header matches.</returns>
+    public static bool TryResolveResponseHeader(IReadOnlyList<ResponseHeaderInfo>? responseHeaders, string headerName, out ResponseHeaderInfo header)
+    {
+        if (responseHeaders is not null)
+        {
+            foreach (ResponseHeaderInfo candidate in responseHeaders)
+            {
+                if (string.Equals(candidate.HeaderName, headerName, StringComparison.OrdinalIgnoreCase))
+                {
+                    header = candidate;
+                    return true;
+                }
+            }
+        }
+
+        header = default;
+        return false;
+    }
+
     /// <summary>
     /// Emits navigation of a JSON-valued expression (<c>$response.body</c>, <c>$inputs.&lt;name&gt;</c>,
     /// or <c>$steps.&lt;id&gt;.outputs.&lt;name&gt;</c>) to a <see cref="JsonElement"/>, used by the

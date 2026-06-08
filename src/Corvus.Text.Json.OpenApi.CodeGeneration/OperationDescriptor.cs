@@ -38,6 +38,13 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// parameter (so a caller binds a body via <c>{RequestBodyTypeName}.From(source)</c>), or
 /// <see langword="null"/> when the operation has no JSON request body (no body, or a raw stream body).
 /// </param>
+/// <param name="ResponseHeaders">
+/// The response headers the operation declares, each described by the generated response property that
+/// exposes it — so a caller can resolve <c>$response.header.&lt;name&gt;</c> against the response object
+/// without introspecting the emitted struct. <see langword="null"/> (or empty) when the operation
+/// declares no response headers. Deduplicated by generated property name across all responses (the
+/// generated response struct flattens headers, so one property serves every status that declares it).
+/// </param>
 public readonly record struct OperationDescriptor(
     string Path,
     OperationMethod Method,
@@ -50,7 +57,8 @@ public readonly record struct OperationDescriptor(
     IReadOnlyList<ResponseDescriptor> Responses,
     string ClientTypeName,
     string ClientMethodName,
-    string? RequestBodyTypeName);
+    string? RequestBodyTypeName,
+    IReadOnlyList<ResponseHeaderInfo>? ResponseHeaders = null);
 
 /// <summary>
 /// A response of a generated operation, described by the generated type of its JSON body — so a
@@ -64,6 +72,21 @@ public readonly record struct ResponseDescriptor(
     string StatusCode,
     string? BodyTypeName,
     string? BodyPropertyName);
+
+/// <summary>
+/// A response header of a generated operation, described by the generated response property that
+/// exposes it — so a caller can resolve <c>$response.header.&lt;name&gt;</c> without re-deriving the
+/// header-to-property naming convention.
+/// </summary>
+/// <param name="HeaderName">The OpenAPI header name (e.g. <c>X-Total-Count</c>).</param>
+/// <param name="PropertyName">The generated response property that returns the header value (e.g. <c>XTotalCountHeader</c>).</param>
+/// <param name="TypeName">The fully-qualified type of that property — the header's generated schema type, or <c>string</c> for a header with no schema.</param>
+/// <param name="IsString">Whether the property is a plain <c>string?</c> (a header with no schema) rather than a generated JSON type.</param>
+public readonly record struct ResponseHeaderInfo(
+    string HeaderName,
+    string PropertyName,
+    string TypeName,
+    bool IsString);
 
 /// <summary>
 /// A request parameter of a generated operation, described by the names and type the generator

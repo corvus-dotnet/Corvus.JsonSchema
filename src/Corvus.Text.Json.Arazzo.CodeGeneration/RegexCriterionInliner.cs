@@ -4,6 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.Arazzo;
+using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
@@ -33,6 +34,7 @@ internal static class RegexCriterionInliner
     /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="responseHeaders">The operation's declared response headers (for a <c>$response.header.&lt;name&gt;</c> context).</param>
     /// <param name="tmpPrefix">A unique prefix for the generated regex method and any temporaries.</param>
     /// <param name="members">Accumulates the <c>[GeneratedRegex]</c> partial-method declaration (a class member).</param>
     /// <param name="statements">When this method returns <see langword="true"/>, the context-resolution statements to emit before the gate.</param>
@@ -45,6 +47,7 @@ internal static class RegexCriterionInliner
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
         string tmpPrefix,
         StringBuilder members,
         out string statements,
@@ -77,6 +80,17 @@ internal static class RegexCriterionInliner
         else if (context.Source == ArazzoExpressionSource.StatusCode && !context.HasJsonPointer)
         {
             contextValue = $"{responseVar}.StatusCode";
+        }
+        else if (context.Source == ArazzoExpressionSource.ResponseHeader
+            && context.Name is { } headerName
+            && !context.HasJsonPointer
+            && CriterionExpressionParsing.TryResolveResponseHeader(responseHeaders, headerName, out ResponseHeaderInfo header))
+        {
+            // A schema-less header is a string? (the string? overload handles null); a typed header is
+            // read as a JsonElement (the JsonElement overload matches only string-kind values).
+            contextValue = header.IsString
+                ? $"{responseVar}.{header.PropertyName}"
+                : $"(JsonElement){responseVar}.{header.PropertyName}";
         }
         else if (CriterionExpressionParsing.TryEmitElementNavigation(
             context, null, $"{tmpPrefix}ctx", responseBodyLocal, inputsVariable, stepOutputLocals, statementBuilder, out string elementLocal))
