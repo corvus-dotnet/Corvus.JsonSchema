@@ -52,6 +52,7 @@ internal static class CriterionExpressionParsing
     /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if no body was bound.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="statements">Accumulates the navigation statements (none when the whole root is used).</param>
     /// <param name="elementLocal">The in-scope expression yielding the resolved <see cref="JsonElement"/> (a local, or the root directly).</param>
     /// <returns><see langword="true"/> if the source is statically navigable.</returns>
@@ -62,6 +63,7 @@ internal static class CriterionExpressionParsing
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
         StringBuilder statements,
         out string elementLocal)
     {
@@ -73,6 +75,12 @@ internal static class CriterionExpressionParsing
         {
             case ArazzoExpressionSource.ResponseBody when responseBodyLocal is not null:
                 root = responseBodyLocal;
+                break;
+
+            case ArazzoExpressionSource.Inputs when expression.Name is { } inputName
+                && inputAccessors is not null && inputAccessors.TryGetValue(inputName, out string? accessor):
+                // Strongly-typed inputs model: the accessor IS the navigation (no property lookup).
+                root = $"((JsonElement){inputsVariable}.{accessor})";
                 break;
 
             case ArazzoExpressionSource.Inputs when expression.Name is { } inputName:
