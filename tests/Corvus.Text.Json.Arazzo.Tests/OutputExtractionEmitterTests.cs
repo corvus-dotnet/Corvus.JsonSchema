@@ -21,7 +21,8 @@ public class OutputExtractionEmitterTests
             [new OutputMapping("id", "$response.body#/id"), new OutputMapping("name", "$response.body#/name")],
             "workspace",
             "context",
-            NoSteps);
+            NoSteps,
+            "inputs");
 
         code.Fields.ShouldContain("private static readonly ArazzoExpression getPet_Output_id = ArazzoExpression.Parse(\"$response.body#/id\");");
 
@@ -47,7 +48,8 @@ public class OutputExtractionEmitterTests
             [new OutputMapping("token", "$steps.login.outputs.token")],
             "workspace",
             "context",
-            stepLocals);
+            stepLocals,
+            "inputs");
 
         // Direct navigation of the prior step's outputs local — no context, no dictionary, no field.
         code.Statements.ShouldContain("loginOutputsElement.TryGetProperty(\"token\"u8, out JsonElement useOutput0);");
@@ -58,7 +60,7 @@ public class OutputExtractionEmitterTests
     [TestMethod]
     public void Emits_nothing_when_the_step_has_no_outputs()
     {
-        OutputExtractionCode code = OutputExtractionEmitter.Emit("getPet", [], "workspace", "context", NoSteps);
+        OutputExtractionCode code = OutputExtractionEmitter.Emit("getPet", [], "workspace", "context", NoSteps, "inputs");
 
         code.Fields.ShouldBeEmpty();
         code.Statements.ShouldBeEmpty();
