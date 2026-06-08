@@ -35,6 +35,8 @@ Console.WriteLine("Generated executor end-to-end allocation (bytes/op):");
 Measure("RunWorkflow", executor.RunWorkflow);
 Measure("StatusOnly", executor.RunStatusOnlyWorkflow);
 Measure("Interpolation", executor.RunInterpolationWorkflow);
+Measure("SimpleCriteria", executor.RunSimpleCriteriaWorkflow);
+Measure("JsonPath", executor.RunJsonPathWorkflow);
 
 executor.Cleanup();
 
