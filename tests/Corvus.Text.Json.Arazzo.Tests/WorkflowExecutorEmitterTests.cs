@@ -57,14 +57,15 @@ public class WorkflowExecutorEmitterTests
     }
 
     [TestMethod]
-    public void Emits_the_step_request_send_and_gate()
+    public void Emits_the_step_client_call_and_gate()
     {
         string source = Emit();
 
         source.ShouldContain("// ── step: getPet ──");
-        source.ShouldContain("var getPetRequest = new Acme.Pets.GetPetRequest(Acme.Pets.JsonString.From(petIdValue));");
-        source.ShouldContain("var getPetResponse = await transport.SendAsync<Acme.Pets.GetPetRequest, Acme.Pets.GetPetResponse>(getPetRequest, cancellationToken).ConfigureAwait(false);");
-        source.ShouldContain("if (getPetResponse.StatusCode == 200) { context.SetResponseBody(getPetResponse.OkBody); }");
+        source.ShouldContain("var getPetClient = new Acme.Pets.PetsClient(transport);");
+        source.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: Acme.Pets.JsonString.From(petIdValue), cancellationToken: cancellationToken).ConfigureAwait(false);");
+        source.ShouldContain("if (getPetResponse.StatusCode == 200) { context.SetResponseBody(((JsonElement)getPetResponse.OkBody).CloneAsBuilder(workspace).RootElement); }");
+        source.ShouldContain("await getPetResponse.DisposeAsync().ConfigureAwait(false);");
         source.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
     }
 
@@ -96,9 +97,12 @@ public class WorkflowExecutorEmitterTests
                 "GetPet",
                 "Acme.Pets.GetPetRequest",
                 "Acme.Pets.GetPetResponse",
-                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true)],
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true, "petId")],
                 false,
-                [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")]),
+                [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")],
+                "Acme.Pets.PetsClient",
+                "GetPetAsync",
+                null),
         ];
 
         var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);

@@ -102,7 +102,10 @@ public class OperationResolverTests
                 "Acme.Pets.ListPetsResponse",
                 [],
                 false,
-                []),
+                [],
+                "Acme.Pets.PetsClient",
+                "ListPetsAsync",
+                null),
             new(
                 "/pets/{petId}",
                 OperationMethod.Get,
@@ -110,9 +113,12 @@ public class OperationResolverTests
                 "GetPet",
                 "Acme.Pets.GetPetRequest",
                 "Acme.Pets.GetPetResponse",
-                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true)],
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true, "petId")],
                 false,
-                [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")]),
+                [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")],
+                "Acme.Pets.PetsClient",
+                "GetPetAsync",
+                null),
             new(
                 "/pets/{petId}/~care",
                 OperationMethod.Get,
@@ -122,7 +128,10 @@ public class OperationResolverTests
                 "Acme.Pets.GetPetsPetIdCareResponse",
                 [],
                 false,
-                []),
+                [],
+                "Acme.Pets.PetsClient",
+                "GetPetsPetIdCareAsync",
+                null),
         ];
 
         return OperationResolver.Create("petstore", operations);
