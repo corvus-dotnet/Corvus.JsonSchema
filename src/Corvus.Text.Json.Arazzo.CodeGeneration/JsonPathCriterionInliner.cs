@@ -36,7 +36,7 @@ internal static class JsonPathCriterionInliner
     /// </summary>
     /// <param name="query">The JSONPath query (the criterion condition).</param>
     /// <param name="contextExpression">The runtime expression supplying the JSON value the query runs against.</param>
-    /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
+    /// <param name="sources">The step's live JSON sources (response body / message payload / message headers).</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
@@ -49,7 +49,7 @@ internal static class JsonPathCriterionInliner
     public static bool TryEmit(
         string query,
         string? contextExpression,
-        string? responseBodyLocal,
+        CriterionSources sources,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
@@ -78,7 +78,7 @@ internal static class JsonPathCriterionInliner
         ArazzoExpression context = ArazzoExpression.Parse(contextExpression);
         var statementBuilder = new StringBuilder();
         if (!CriterionExpressionParsing.TryEmitElementNavigation(
-            context, null, $"{tmpPrefix}data", responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, statementBuilder, out string dataLocal))
+            context, null, $"{tmpPrefix}data", sources, inputsVariable, stepOutputLocals, inputAccessors, statementBuilder, out string dataLocal))
         {
             return false;
         }

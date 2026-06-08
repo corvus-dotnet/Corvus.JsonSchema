@@ -135,7 +135,7 @@ public static class StepBodyEmitter
             operation.Operation.Method.ToString().ToUpperInvariant(), arguments, requestBody);
         EmitSuccessGate(
             fields, gate, auxiliaryTypes, successCriteria, prefix, contextVariable, responseVar,
-            bindResponseBody ? responseBodyLocal : null, inputsVariable, stepOutputLocals, inputAccessors, operation.Operation.ResponseHeaders, requestContext, namespaceName, stepId);
+            new CriterionSources(bindResponseBody ? responseBodyLocal : null), inputsVariable, stepOutputLocals, inputAccessors, operation.Operation.ResponseHeaders, requestContext, namespaceName, stepId);
 
         string outputStatements = string.Empty;
         if (hasOutputs)
@@ -230,7 +230,7 @@ public static class StepBodyEmitter
         string prefix,
         string contextVariable,
         string responseVar,
-        string? responseBodyLocal,
+        CriterionSources sources,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
@@ -253,7 +253,7 @@ public static class StepBodyEmitter
 
         string expression = EmitCriteriaExpression(
             successCriteria, fields, body, auxiliaryTypes, prefix, contextVariable, responseVar,
-            responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, namespaceName);
+            sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, namespaceName);
 
         body.Append("if (!(").Append(expression).AppendLine("))");
         body.AppendLine("{");
@@ -280,7 +280,7 @@ public static class StepBodyEmitter
         string prefix,
         string contextVariable,
         string responseVar,
-        string? responseBodyLocal,
+        CriterionSources sources,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
@@ -314,7 +314,7 @@ public static class StepBodyEmitter
             // before the gate.
             if (MapCriterionType(criterion.Type) == "Simple"
                 && SimpleCriterionInliner.TryEmit(
-                    criterion.Condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext,
+                    criterion.Condition, responseVar, sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext,
                     $"{prefix}C{index}", fields, out string inlineStatements, out string inlineExpression))
             {
                 body.Append(inlineStatements);
@@ -326,7 +326,7 @@ public static class StepBodyEmitter
             // (compiled ahead-of-time) matching the statically-resolved context value.
             if (MapCriterionType(criterion.Type) == "Regex"
                 && RegexCriterionInliner.TryEmit(
-                    criterion.Condition, criterion.Context, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext,
+                    criterion.Condition, criterion.Context, responseVar, sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext,
                     $"{prefix}C{index}", fields, out string regexStatements, out string regexExpression))
             {
                 body.Append(regexStatements);
@@ -339,7 +339,7 @@ public static class StepBodyEmitter
             // against the statically-resolved context value.
             if (MapCriterionType(criterion.Type) == "JsonPath"
                 && JsonPathCriterionInliner.TryEmit(
-                    criterion.Condition, criterion.Context, responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors,
+                    criterion.Condition, criterion.Context, sources, inputsVariable, stepOutputLocals, inputAccessors,
                     namespaceName, $"{prefix}C{index}", auxiliaryTypes, out string jsonPathStatements, out string jsonPathExpression))
             {
                 body.Append(jsonPathStatements);
