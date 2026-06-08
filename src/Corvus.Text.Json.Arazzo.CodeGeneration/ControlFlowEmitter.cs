@@ -1,0 +1,360 @@
+// <copyright file="ControlFlowEmitter.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Globalization;
+using System.Text;
+using Corvus.Text.Json.Arazzo10;
+using Corvus.Text.Json.OpenApi.CodeGeneration;
+
+namespace Corvus.Text.Json.Arazzo.CodeGeneration;
+
+/// <summary>
+/// Emits a workflow executor body as a labelled loop (a <c>while(true)</c> over a <c>switch(__state)</c>)
+/// when the workflow uses control flow — any step declares an <c>onSuccess</c>/<c>onFailure</c> action
+/// (plan §3.3). Each step's success gate becomes a boolean; the first matching action then sets the next
+/// state (<c>goto</c>), schedules a retry (<c>retry</c>, with a hoisted per-step counter and an optional
+/// delay), or jumps to building the outputs (<c>end</c>). With no matching action the default applies —
+/// next step on success, fail the workflow on failure.
+/// </summary>
+/// <remarks>
+/// Action criteria are inlined exactly like success criteria (via
+/// <see cref="StepBodyEmitter.EmitCriteriaExpression"/>), so a control-flow step stays context-free when
+/// every criterion is statically resolvable. Action criteria are evaluated <em>inside</em> the step's
+/// <c>try</c> (while the response is alive); the chosen effect is captured in case-local flags and applied
+/// after the response is disposed. Sub-workflow <c>goto</c> (a <c>workflowId</c> target) and reusable
+/// <c>$ref</c> actions are later phases.
+/// </remarks>
+internal static class ControlFlowEmitter
+{
+    public static void Emit(
+        IReadOnlyList<ControlFlowStep> steps,
+        in ArazzoDocument.WorkflowObject workflow,
+        in WorkflowExecutorOptions options,
+        StringBuilder fields,
+        StringBuilder body,
+        StringBuilder auxiliaryTypes,
+        Dictionary<string, string> stepOutputLocals)
+    {
+        // A goto targets a step by id; build the id→state-index map and pre-register every step's
+        // outputs local so $steps.<id>.outputs references resolve regardless of execution order.
+        var stepIndex = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (int i = 0; i < steps.Count; i++)
+        {
+            stepIndex[steps[i].StepId] = i;
+            if (steps[i].Outputs.Count > 0)
+            {
+                stepOutputLocals[steps[i].StepId] = EmitText.StepOutputsElementLocal(steps[i].StepId);
+            }
+        }
+
+        var loop = new StringBuilder();
+
+        // Hoist the per-step state that must survive across loop iterations: each step's outputs object
+        // (read by later steps) and each retried step's attempt counter.
+        foreach (ControlFlowStep step in steps)
+        {
+            if (step.Outputs.Count > 0)
+            {
+                loop.Append("JsonElement ").Append(EmitText.StepOutputsElementLocal(step.StepId)).AppendLine(" = default;");
+            }
+
+            if (NeedsRetryCounter(step))
+            {
+                loop.Append("int ").Append(RetryCounter(step.StepId)).AppendLine(" = 0;");
+            }
+        }
+
+        loop.AppendLine("int __state = 0;");
+        loop.AppendLine("while (true)");
+        loop.AppendLine("{");
+        loop.AppendLine("    switch (__state)");
+        loop.AppendLine("    {");
+
+        for (int i = 0; i < steps.Count; i++)
+        {
+            loop.Append("        case ").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine(":");
+            EmitCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals);
+        }
+
+        // A state past the last step (the last step's default "next") completes the workflow.
+        loop.AppendLine("        default: goto __workflowOutputs;");
+        loop.AppendLine("    }");
+        loop.AppendLine("}");
+        loop.AppendLine();
+        loop.AppendLine("__workflowOutputs:");
+
+        WorkflowExecutorEmitter.AppendIndented(body, loop.ToString(), 12);
+
+        // The outputs are built after the loop label, at the method-body indent (like the straight-line path).
+        WorkflowExecutorEmitter.AppendWorkflowOutputs(fields, body, workflow, stepOutputLocals, options.InputAccessors);
+    }
+
+    private static void EmitCase(
+        in ControlFlowStep step,
+        int index,
+        IReadOnlyDictionary<string, int> stepIndex,
+        in WorkflowExecutorOptions options,
+        StringBuilder fields,
+        StringBuilder loop,
+        StringBuilder auxiliaryTypes,
+        Dictionary<string, string> stepOutputLocals)
+    {
+        ResolvedOperation operation = step.Operation;
+        string identifier = EmitText.SanitizeIdentifier(step.StepId);
+        string prefix = $"{identifier}_";
+        string camel = EmitText.ToCamelCase(identifier);
+        string clientVar = $"{camel}Client";
+        string responseVar = $"{camel}Response";
+        string responseBodyLocal = $"{camel}ResponseBody";
+        string? bindBodyLocal = step.BindResponseBody ? responseBodyLocal : null;
+
+        var requestContext = new StepRequestContext(
+            operation.Operation.Method.ToString().ToUpperInvariant(), step.Arguments, step.RequestBody);
+
+        RequestBindingCode request = RequestBindingEmitter.Emit(
+            operation, step.Arguments, "context", prefix, stepOutputLocals, "inputs", options.InputAccessors, step.RequestBody);
+        fields.Append(request.Fields);
+
+        // Build the success gate + action dispatch first, so we can tell whether anything still resolves
+        // through the WorkflowExecutionContext (a non-inlined criterion). Only then is the context fed.
+        var gate = new StringBuilder();
+        string successExpression = step.SuccessCriteria.Count == 0
+            ? $"{responseVar}.IsSuccess"
+            : StepBodyEmitter.EmitCriteriaExpression(
+                step.SuccessCriteria, fields, gate, auxiliaryTypes, prefix, "context", responseVar, bindBodyLocal,
+                "inputs", stepOutputLocals, options.InputAccessors, operation.Operation.ResponseHeaders, requestContext, options.Namespace);
+
+        gate.Append("bool ").Append(camel).Append("Success = (").Append(successExpression).AppendLine(");");
+        gate.Append("if (").Append(camel).AppendLine("Success)");
+        gate.AppendLine("{");
+
+        if (step.Outputs.Count > 0)
+        {
+            OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
+                step.StepId, step.Outputs, "workspace", "context", stepOutputLocals, "inputs", options.InputAccessors, bindBodyLocal);
+            fields.Append(outputCode.Fields);
+            WorkflowExecutorEmitter.AppendIndented(gate, outputCode.Statements, 4);
+        }
+
+        EmitDispatch(gate, step.OnSuccess, isFailure: false, camel, prefix, responseVar, bindBodyLocal, stepIndex, fields, auxiliaryTypes, operation, requestContext, stepOutputLocals, options);
+        gate.AppendLine("}");
+        gate.AppendLine("else");
+        gate.AppendLine("{");
+        EmitDispatch(gate, step.OnFailure, isFailure: true, camel, prefix, responseVar, bindBodyLocal, stepIndex, fields, auxiliaryTypes, operation, requestContext, stepOutputLocals, options);
+        gate.AppendLine("}");
+
+        string gateText = gate.ToString();
+        bool usesContext = gateText.Contains("context", StringComparison.Ordinal);
+
+        // ---- assemble the case block ----
+        var c = new StringBuilder();
+        c.AppendLine("{");
+        c.Append("    // ── step: ").Append(step.StepId).AppendLine(" ──");
+        WorkflowExecutorEmitter.AppendIndented(c, request.Statements, 4);
+        c.Append("    var ").Append(clientVar).Append(" = new ").Append(operation.Operation.ClientTypeName).Append('(').AppendLine("transport);");
+
+        var callArguments = new List<string>(request.NamedArguments) { "cancellationToken: cancellationToken" };
+        c.Append("    var ").Append(responseVar).Append(" = await ").Append(clientVar).Append('.')
+            .Append(operation.Operation.ClientMethodName).Append('(').Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
+        WorkflowExecutorEmitter.AppendIndented(c, request.Cleanup, 4);
+
+        c.Append("    int ").Append(camel).Append("Next = ").Append((index + 1).ToString(CultureInfo.InvariantCulture)).AppendLine(";");
+        c.Append("    bool ").Append(camel).AppendLine("End = false;");
+        c.Append("    bool ").Append(camel).AppendLine("Fail = false;");
+        c.Append("    bool ").Append(camel).AppendLine("Retry = false;");
+        c.Append("    double ").Append(camel).AppendLine("RetryDelay = 0;");
+        c.AppendLine("    try");
+        c.AppendLine("    {");
+        c.AppendLine("        ArazzoTelemetry.StepsExecuted.Add(1);");
+        if (usesContext)
+        {
+            c.Append("        context.SetResponseStatusCode(").Append(responseVar).AppendLine(".StatusCode);");
+        }
+
+        if (step.BindResponseBody)
+        {
+            c.Append("        JsonElement ").Append(responseBodyLocal).AppendLine(" = default;");
+            foreach (ResponseDescriptor response in operation.Operation.Responses)
+            {
+                if (response.BodyPropertyName is { } bodyProperty
+                    && int.TryParse(response.StatusCode, NumberStyles.Integer, CultureInfo.InvariantCulture, out int statusCode))
+                {
+                    c.Append("        if (").Append(responseVar).Append(".StatusCode == ").Append(statusCode.ToString(CultureInfo.InvariantCulture))
+                        .Append(") { ").Append(responseBodyLocal).Append(" = (JsonElement)").Append(responseVar).Append('.').Append(bodyProperty).AppendLine("; }");
+                }
+            }
+
+            if (usesContext)
+            {
+                c.Append("        context.SetResponseBody(").Append(responseBodyLocal).AppendLine(");");
+            }
+        }
+
+        WorkflowExecutorEmitter.AppendIndented(c, gateText, 8);
+        c.AppendLine("    }");
+        c.AppendLine("    finally");
+        c.AppendLine("    {");
+        c.Append("        await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
+        c.AppendLine("    }");
+
+        // Apply the captured control-flow decision now the response is disposed.
+        c.Append("    if (").Append(camel).Append("Fail) { throw new WorkflowStepFailedException(")
+            .Append(EmitText.Quote(step.StepId)).Append(", ").Append(EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.")).AppendLine("); }");
+        c.Append("    if (").Append(camel).AppendLine("End) { goto __workflowOutputs; }");
+        c.Append("    if (").Append(camel).AppendLine("Retry)");
+        c.AppendLine("    {");
+        c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
+            .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
+        c.Append("        __state = ").Append(index.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
+        c.AppendLine("        continue;");
+        c.AppendLine("    }");
+        c.Append("    __state = ").Append(camel).AppendLine("Next;");
+        c.AppendLine("    continue;");
+        c.AppendLine("}");
+
+        WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
+    }
+
+    private static void EmitDispatch(
+        StringBuilder target,
+        IReadOnlyList<StepActionInfo> actions,
+        bool isFailure,
+        string camel,
+        string prefix,
+        string responseVar,
+        string? bindBodyLocal,
+        IReadOnlyDictionary<string, int> stepIndex,
+        StringBuilder fields,
+        StringBuilder auxiliaryTypes,
+        ResolvedOperation operation,
+        StepRequestContext requestContext,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        in WorkflowExecutorOptions options)
+    {
+        // Resolve each action's criteria expression (its operand statements are appended to `target`
+        // before the if-chain) and its effect. First-match wins, so once an unconditional action (empty
+        // criteria) is reached the remaining actions are unreachable and dropped.
+        var resolved = new List<(string Expression, string Apply)>();
+        int actionNumber = 0;
+        foreach (StepActionInfo action in actions)
+        {
+            if (action.Kind == StepActionKind.Retry && !isFailure)
+            {
+                // retry is a failure action only; ignore it on the success path.
+                continue;
+            }
+
+            string actionPrefix = $"{prefix}{(isFailure ? "F" : "S")}{actionNumber.ToString(CultureInfo.InvariantCulture)}_";
+            actionNumber++;
+            string expression = StepBodyEmitter.EmitCriteriaExpression(
+                action.Criteria, fields, target, auxiliaryTypes, actionPrefix, "context", responseVar, bindBodyLocal,
+                "inputs", stepOutputLocals, options.InputAccessors, operation.Operation.ResponseHeaders, requestContext, options.Namespace);
+
+            resolved.Add((expression, BuildApply(action, camel, stepIndex)));
+            if (action.Criteria.Count == 0)
+            {
+                break;
+            }
+        }
+
+        bool first = true;
+        bool hasUnconditional = false;
+        foreach ((string expression, string apply) in resolved)
+        {
+            if (expression == "true")
+            {
+                if (first)
+                {
+                    target.Append(apply);
+                }
+                else
+                {
+                    target.AppendLine("else");
+                    target.AppendLine("{");
+                    target.Append("    ").Append(apply);
+                    target.AppendLine("}");
+                }
+
+                hasUnconditional = true;
+                break;
+            }
+
+            target.Append(first ? "if (" : "else if (").Append(expression).AppendLine(")");
+            target.AppendLine("{");
+            target.Append("    ").Append(apply);
+            target.AppendLine("}");
+            first = false;
+        }
+
+        if (!hasUnconditional && isFailure)
+        {
+            // No failure action matched: fail the workflow (the straight-line default).
+            string fail = $"{camel}Fail = true;\n";
+            if (first)
+            {
+                target.Append(fail);
+            }
+            else
+            {
+                target.AppendLine("else");
+                target.AppendLine("{");
+                target.Append("    ").Append(fail);
+                target.AppendLine("}");
+            }
+        }
+
+        // Success with no matching action falls through to the default next state (already set).
+    }
+
+    private static string BuildApply(in StepActionInfo action, string camel, IReadOnlyDictionary<string, int> stepIndex)
+    {
+        switch (action.Kind)
+        {
+            case StepActionKind.End:
+                return $"{camel}End = true;\n";
+
+            case StepActionKind.Goto:
+                if (action.TargetWorkflowId is not null)
+                {
+                    throw new NotSupportedException(
+                        $"Action '{action.Name}' performs a goto to workflow '{action.TargetWorkflowId}'; sub-workflow control flow is a later phase.");
+                }
+
+                if (action.TargetStepId is not { } targetStep || !stepIndex.TryGetValue(targetStep, out int target))
+                {
+                    throw new InvalidOperationException(
+                        $"Action '{action.Name}' performs a goto to unknown step '{action.TargetStepId}'.");
+                }
+
+                return $"{camel}Next = {target.ToString(CultureInfo.InvariantCulture)};\n";
+
+            case StepActionKind.Retry:
+            {
+                int limit = action.RetryLimit ?? 1;
+                string delay = (action.RetryAfter ?? 0).ToString(CultureInfo.InvariantCulture);
+                return $"if ({RetryCounterFromCamel(camel)} < {limit.ToString(CultureInfo.InvariantCulture)}) {{ {RetryCounterFromCamel(camel)}++; {camel}Retry = true; {camel}RetryDelay = {delay}; }} else {{ {camel}Fail = true; }}\n";
+            }
+
+            default:
+                return $"{camel}End = true;\n";
+        }
+    }
+
+    private static bool NeedsRetryCounter(in ControlFlowStep step)
+    {
+        foreach (StepActionInfo action in step.OnFailure)
+        {
+            if (action.Kind == StepActionKind.Retry)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string RetryCounter(string stepId) => $"{EmitText.ToCamelCase(EmitText.SanitizeIdentifier(stepId))}RetryCount";
+
+    private static string RetryCounterFromCamel(string camel) => $"{camel}RetryCount";
+}
