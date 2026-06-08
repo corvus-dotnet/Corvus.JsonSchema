@@ -96,9 +96,12 @@ public class WorkflowExecutorBenchmarks
                 "GetPet",
                 typeof(BenchRequest).FullName!,
                 typeof(BenchResponse).FullName!,
-                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true)],
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true, "petId")],
                 false,
-                [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")]),
+                [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
+                typeof(BenchClient).FullName!,
+                "GetPetAsync",
+                null),
         ];
 
         var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);

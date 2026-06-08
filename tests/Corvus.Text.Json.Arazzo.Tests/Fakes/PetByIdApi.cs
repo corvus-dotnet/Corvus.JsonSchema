@@ -101,3 +101,25 @@ public struct PetByIdResponse : IApiResponse<PetByIdResponse>
         return default;
     }
 }
+
+/// <summary>
+/// A minimal generated-style client (<c>GET /pets/{petId}</c>) for the end-to-end executor test,
+/// shaped like the OpenAPI generator's output: it owns the protocol (builds and validates the
+/// request, sends it via the transport, returns the typed response), so the executor only calls the
+/// method.
+/// </summary>
+public sealed class PetByIdClient(IApiTransport transport)
+{
+    private readonly IApiTransport transport = transport ?? throw new ArgumentNullException(nameof(transport));
+
+    public ValueTask<PetByIdResponse> GetPetAsync(
+        JsonElement petId,
+        CancellationToken cancellationToken = default,
+        ValidationMode validationMode = ValidationMode.Basic,
+        ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        var request = new PetByIdRequest(petId);
+        request.Validate(validationMode);
+        return this.transport.SendAsync<PetByIdRequest, PetByIdResponse>(in request, cancellationToken);
+    }
+}

@@ -25,11 +25,14 @@ public class RequestBindingEmitterTests
             "Acme.Pets.GetPetRequest",
             "Acme.Pets.GetPetResponse",
             [
-                new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true),
-                new RequestParameterInfo("limit", ParameterLocation.Query, "Limit", "Acme.Pets.JsonInt32", false),
+                new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true, "petId"),
+                new RequestParameterInfo("limit", ParameterLocation.Query, "Limit", "Acme.Pets.JsonInt32", false, "limit"),
             ],
             false,
-            [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")]));
+            [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")],
+            "Acme.Pets.PetsClient",
+            "GetPetAsync",
+            null));
 
     [TestMethod]
     public void Emits_compiled_expression_fields_for_each_argument()
@@ -38,7 +41,6 @@ public class RequestBindingEmitterTests
             GetPet,
             [new StepArgument("petId", "$inputs.petId"), new StepArgument("limit", "$inputs.limit")],
             "context",
-            "request",
             "GetPet_",
             NoSteps);
 
@@ -47,20 +49,19 @@ public class RequestBindingEmitterTests
     }
 
     [TestMethod]
-    public void Binds_required_param_via_constructor_and_optional_via_initializer()
+    public void Resolves_each_argument_and_binds_it_to_a_named_client_parameter()
     {
         RequestBindingCode code = RequestBindingEmitter.Emit(
             GetPet,
             [new StepArgument("petId", "$inputs.petId"), new StepArgument("limit", "$inputs.limit")],
             "context",
-            "request",
             "GetPet_",
             NoSteps);
 
-        // Resolve each argument to a JsonElement, then From()-bind to the generated property type.
+        // Resolve each argument to a JsonElement, then bind it as a named argument with From().
         code.Statements.ShouldContain("context.TryResolveValue(GetPet_PetId, out JsonElement petIdValue);");
-        code.Statements.ShouldContain("var request = new Acme.Pets.GetPetRequest(Acme.Pets.JsonString.From(petIdValue))");
-        code.Statements.ShouldContain("Limit = Acme.Pets.JsonInt32.From(limitValue),");
+        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(petIdValue)");
+        code.NamedArguments.ShouldContain("limit: Acme.Pets.JsonInt32.From(limitValue)");
     }
 
     [TestMethod]
@@ -70,12 +71,11 @@ public class RequestBindingEmitterTests
             GetPet,
             [new StepArgument("petId", "$inputs.petId")],
             "context",
-            "request",
             "GetPet_",
             NoSteps);
 
-        code.Statements.ShouldContain("var request = new Acme.Pets.GetPetRequest(Acme.Pets.JsonString.From(petIdValue));");
-        code.Statements.ShouldNotContain("Limit =");
+        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(petIdValue)");
+        code.NamedArguments.ShouldNotContain(a => a.StartsWith("limit:", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -85,7 +85,6 @@ public class RequestBindingEmitterTests
             GetPet,
             [new StepArgument("limit", "$inputs.limit")],
             "context",
-            "request",
             "GetPet_",
             NoSteps));
     }
