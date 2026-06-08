@@ -78,6 +78,26 @@ public readonly struct BenchResponse : IApiResponse<BenchResponse>
     public ValueTask DisposeAsync() => default;
 }
 
+/// <summary>
+/// A minimal generated-style client (<c>GET /pets/{petId}</c>): it builds the request and sends it
+/// via the transport, so the executor invokes the operation through the client as it would the real
+/// generated code.
+/// </summary>
+public sealed class BenchClient(IApiTransport transport)
+{
+    private readonly IApiTransport transport = transport;
+
+    public ValueTask<BenchResponse> GetPetAsync(
+        JsonElement petId,
+        CancellationToken cancellationToken = default,
+        ValidationMode validationMode = ValidationMode.Basic,
+        ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        var request = new BenchRequest(petId);
+        return this.transport.SendAsync<BenchRequest, BenchResponse>(in request, cancellationToken);
+    }
+}
+
 /// <summary>A zero-overhead transport: returns a synchronously-completed cached response.</summary>
 public sealed class BenchTransport : IApiTransport
 {
