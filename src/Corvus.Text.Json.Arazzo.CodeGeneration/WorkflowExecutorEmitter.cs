@@ -50,21 +50,38 @@ public static class WorkflowExecutorEmitter
         // as a labelled-loop executor (control flow), otherwise as the straight-line form.
         var boundSteps = new List<ControlFlowStep>();
         bool usesControlFlow = false;
+        bool hasSubWorkflowStep = false;
         foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
         {
             string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw new InvalidOperationException("A step is missing its required stepId.");
             StepBinding binding = binder.Bind(step);
 
-            if (binding.Kind is not (StepTargetKind.OperationId or StepTargetKind.OperationPath) || binding.Operation is not { } operation)
-            {
-                throw new InvalidOperationException(
-                    $"Step '{stepId}' targets {binding.Kind}; only operation steps are supported by the current generator.");
-            }
-
             List<OutputMapping> stepOutputs = ReadOutputs(step);
             List<StepCriterion> criteria = ReadCriteria(step);
             List<StepActionInfo> onSuccess = ReadActions(step.OnSuccess);
             List<StepActionInfo> onFailure = ReadActions(step.OnFailure);
+
+            // A sub-workflow step invokes another generated workflow. Success criteria and control-flow
+            // actions on such a step (and goto-to-sub-workflow) are a later phase.
+            if (binding.Kind == StepTargetKind.WorkflowId && binding.SubWorkflowId is { } subWorkflowId)
+            {
+                if (criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0)
+                {
+                    throw new NotSupportedException(
+                        $"Step '{stepId}' invokes sub-workflow '{subWorkflowId}'; success criteria and onSuccess/onFailure actions on a sub-workflow step are a later phase.");
+                }
+
+                hasSubWorkflowStep = true;
+                boundSteps.Add(new ControlFlowStep(stepId, null, ReadArguments(step), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId));
+                continue;
+            }
+
+            if (binding.Kind is not (StepTargetKind.OperationId or StepTargetKind.OperationPath) || binding.Operation is not { } operation)
+            {
+                throw new InvalidOperationException(
+                    $"Step '{stepId}' targets {binding.Kind}; only operation and sub-workflow steps are supported by the current generator.");
+            }
+
             usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
 
             // Only clone the response body into the workspace when the step actually consumes it
@@ -73,6 +90,12 @@ public static class WorkflowExecutorEmitter
 
             boundSteps.Add(new ControlFlowStep(
                 stepId, operation, ReadArguments(step), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure));
+        }
+
+        if (usesControlFlow && hasSubWorkflowStep)
+        {
+            throw new NotSupportedException(
+                "Combining sub-workflow steps with onSuccess/onFailure control flow in one workflow is a later phase.");
         }
 
         if (usesControlFlow)
@@ -85,10 +108,21 @@ public static class WorkflowExecutorEmitter
             {
                 body.Append("            // ── step: ").Append(step.StepId).AppendLine(" ──");
 
+                if (step.SubWorkflowId is { } subWorkflowId)
+                {
+                    SubWorkflowStepCode subStep = SubWorkflowStepEmitter.Emit(
+                        step.StepId, subWorkflowId, step.Arguments, options.Namespace, stepOutputLocals, "inputs", options.InputAccessors);
+                    fields.Append(subStep.Fields);
+                    AppendIndented(body, subStep.Statements, 12);
+                    stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
+                    body.AppendLine();
+                    continue;
+                }
+
                 // The step body builds the step's outputs product inside the step (while the response
                 // is alive), so output extraction is not a separate post-step pass.
                 StepBodyCode stepBody = StepBodyEmitter.Emit(
-                    step.StepId, step.Operation, step.Arguments, step.SuccessCriteria, step.Outputs, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", options.InputAccessors, options.Namespace, step.RequestBody, step.BindResponseBody);
+                    step.StepId, step.Operation!.Value, step.Arguments, step.SuccessCriteria, step.Outputs, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", options.InputAccessors, options.Namespace, step.RequestBody, step.BindResponseBody);
                 fields.Append(stepBody.Fields);
                 AppendIndented(body, stepBody.Statements, 12);
                 auxiliaryTypes.Append(stepBody.AuxiliaryTypes);
@@ -579,11 +613,12 @@ internal readonly record struct StepActionInfo(
 /// </summary>
 internal readonly record struct ControlFlowStep(
     string StepId,
-    ResolvedOperation Operation,
+    ResolvedOperation? Operation,
     IReadOnlyList<StepArgument> Arguments,
     IReadOnlyList<StepCriterion> SuccessCriteria,
     IReadOnlyList<OutputMapping> Outputs,
     StepBody? RequestBody,
     bool BindResponseBody,
     IReadOnlyList<StepActionInfo> OnSuccess,
-    IReadOnlyList<StepActionInfo> OnFailure);
+    IReadOnlyList<StepActionInfo> OnFailure,
+    string? SubWorkflowId = null);
