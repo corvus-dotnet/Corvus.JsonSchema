@@ -7,7 +7,9 @@ using System.Text;
 using BenchmarkDotNet.Attributes;
 using Corvus.Text.Json.Arazzo.Benchmarks.Fakes;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
-using Corvus.Text.Json.Arazzo10;
+using Corvus.Text.Json.Arazzo11;
+using Corvus.Text.Json.AsyncApi;
+using Corvus.Text.Json.AsyncApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Microsoft.CodeAnalysis;
@@ -148,12 +150,94 @@ public class WorkflowExecutorBenchmarks
         }
         """;
 
+    // A control-flow workflow: an onSuccess 'end' action makes the generator emit the labelled
+    // switch-loop dispatch (with hoisted step locals) instead of straight-line code — this probes the
+    // control-flow codegen overhead over the straight-line baseline.
+    private const string ControlFlowDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "onSuccess": [ { "name": "done", "type": "end", "criteria": [ { "condition": "$statusCode == 200" } ] } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    // A parent workflow that invokes a child sub-workflow; the child runs the operation step. Probes the
+    // nested-executor invocation (child inputs object construction + child outputs surfacing).
+    private const string SubWorkflowDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "parent",
+              "steps": [
+                { "stepId": "call", "workflowId": "child", "parameters": [ { "name": "petId", "value": "$inputs.petId" } ] }
+              ],
+              "outputs": { "name": "$steps.call.outputs.name" }
+            },
+            {
+              "workflowId": "child",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    // A send channel step: publishes the payload on an AsyncAPI channel through the generated producer
+    // (a workspace materialisation + transport publish). Probes the channel-step codegen path.
+    private const string ChannelSendDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./e.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "notify",
+              "steps": [
+                { "stepId": "send", "channelPath": "bench", "action": "send", "requestBody": { "payload": "$inputs.petId" } }
+              ],
+              "outputs": { "id": "$inputs.petId" }
+            }
+          ]
+        }
+        """;
+
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> execute = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeStatusOnly = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeInterpolation = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeSimpleCriteria = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeJsonPath = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeControlFlow = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeSubWorkflow = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelSend = null!;
     private BenchTransport transport = null!;
+    private BenchMessageTransport messageTransport = null!;
     private JsonWorkspace workspace = null!;
     private ParsedJsonDocument<JsonElement> inputsDocument = default!;
     private JsonElement inputs;
@@ -166,8 +250,12 @@ public class WorkflowExecutorBenchmarks
         this.executeInterpolation = Compile(InterpolationDocument, "InterpolationWorkflow");
         this.executeSimpleCriteria = Compile(SimpleCriteriaDocument, "SimpleCriteriaWorkflow");
         this.executeJsonPath = Compile(JsonPathDocument, "JsonPathWorkflow");
+        this.executeControlFlow = Compile(ControlFlowDocument, "ControlFlowWorkflow");
+        this.executeSubWorkflow = CompileSubWorkflow();
+        this.executeChannelSend = CompileChannelSend();
 
         this.transport = new BenchTransport();
+        this.messageTransport = new BenchMessageTransport();
         this.workspace = JsonWorkspace.Create();
         this.inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42","id":"42"}"""));
         this.inputs = this.inputsDocument.RootElement;
@@ -242,7 +330,76 @@ public class WorkflowExecutorBenchmarks
         return result.TryGetProperty("name"u8, out _);
     }
 
-    private static string EmitExecutor(string document, string className)
+    /// <summary>Runs a workflow whose control flow is emitted as the labelled switch-loop (onSuccess end action).</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunControlFlowWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeControlFlow(this.transport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("name"u8, out _);
+    }
+
+    /// <summary>Runs a parent workflow that invokes a child sub-workflow.</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunSubWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeSubWorkflow(this.transport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("name"u8, out _);
+    }
+
+    /// <summary>Runs a send channel-step workflow (publishes through the generated producer).</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunChannelSendWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeChannelSend(this.transport, this.messageTransport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("id"u8, out _);
+    }
+
+    private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileChannelSend()
+    {
+        var descriptor = new AsyncApiChannelDescriptor(
+            "bench",
+            OperationAction.Send,
+            "notify",
+            typeof(BenchProducer).FullName!,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("bench", "Corvus.Text.Json.JsonElement", null, null, "PublishBenchAsync")]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelSendDocument));
+        ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+        string source = WorkflowExecutorEmitter.Emit(
+            workflow,
+            binder,
+            new WorkflowExecutorOptions("GeneratedWorkflows", "NotifyWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo method = assembly.GetType("GeneratedWorkflows.NotifyWorkflow")!.GetMethod("ExecuteAsync")!;
+        return method.CreateDelegate<Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+    }
+
+    private static Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileSubWorkflow()
+    {
+        string parent = EmitWorkflowAt(SubWorkflowDocument, 0, "ParentWorkflow");
+        string child = EmitWorkflowAt(SubWorkflowDocument, 1, "ChildWorkflow");
+        Assembly assembly = CompileInMemory(parent, child);
+        MethodInfo method = assembly.GetType("GeneratedWorkflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!;
+        return method.CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+    }
+
+    private static string EmitExecutor(string document, string className) => EmitWorkflowAt(document, 0, className);
+
+    private static string EmitWorkflowAt(string document, int workflowIndex, string className)
     {
         OperationDescriptor[] operations =
         [
@@ -264,8 +421,14 @@ public class WorkflowExecutorBenchmarks
         var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
 
         using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
+        int index = 0;
         foreach (ArazzoDocument.WorkflowObject workflow in doc.RootElement.Workflows.EnumerateArray())
         {
+            if (index++ != workflowIndex)
+            {
+                continue;
+            }
+
             return WorkflowExecutorEmitter.Emit(
                 workflow,
                 binder,
@@ -279,14 +442,14 @@ public class WorkflowExecutorBenchmarks
         throw new InvalidOperationException("No workflow.");
     }
 
-    private static Assembly CompileInMemory(string source)
+    private static Assembly CompileInMemory(params string[] sources)
     {
         // Define target-framework symbols so generated code (e.g. ahead-of-time jsonpath classes) takes
         // its modern #if NET8_0_OR_GREATER path.
         var parseOptions = new CSharpParseOptions(LanguageVersion.Preview).WithPreprocessorSymbols(
             "NET", "NET5_0_OR_GREATER", "NET6_0_OR_GREATER", "NET7_0_OR_GREATER",
             "NET8_0_OR_GREATER", "NET9_0_OR_GREATER", "NET10_0_OR_GREATER");
-        SyntaxTree tree = CSharpSyntaxTree.ParseText(source, parseOptions);
+        SyntaxTree[] trees = [.. sources.Select(s => CSharpSyntaxTree.ParseText(s, parseOptions))];
 
         // Force-load assemblies the emitted code references transitively so they appear in the set.
         _ = typeof(NodaTime.OffsetTime).Assembly;
@@ -301,7 +464,7 @@ public class WorkflowExecutorBenchmarks
 
         var compilation = CSharpCompilation.Create(
             "GeneratedWorkflows.Bench",
-            [tree],
+            trees,
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, allowUnsafe: true, nullableContextOptions: NullableContextOptions.Enable));
 
