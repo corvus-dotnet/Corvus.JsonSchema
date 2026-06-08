@@ -258,10 +258,33 @@ public class OpenApi31CodeGeneratorTests
         Assert.AreEqual("PetId", petId.PropertyName);
         Assert.AreEqual("Petstore.Client.JsonString", petId.TypeName);
         Assert.IsTrue(petId.IsRequired);
+        Assert.AreEqual("petId", petId.ParameterName);
 
         ResponseDescriptor ok = showPet.Responses.First(r => r.StatusCode == "200");
         Assert.AreEqual("Petstore.Client.Pet", ok.BodyTypeName);
         Assert.AreEqual("OkBody", ok.BodyPropertyName);
+
+        // The generated client that exposes this operation (tag 'pets', default 'Api' prefix), the
+        // client method name (with the Async suffix), and — for a GET — no JSON request body.
+        Assert.AreEqual("Petstore.Client.ApiPetsClient", showPet.ClientTypeName);
+        Assert.AreEqual("ShowPetByIdAsync", showPet.ClientMethodName);
+        Assert.IsNull(showPet.RequestBodyTypeName);
+    }
+
+    [TestMethod]
+    public void DescribeOperations_SurfacesRequestBodyTypeName()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<OperationDescriptor> operations = gen.DescribeOperations(petstoreRoot);
+
+        OperationDescriptor createPet = operations.First(o => o.OperationId == "createPet");
+        Assert.IsTrue(createPet.HasRequestBody);
+
+        // The body type whose .Source is the client method's `body` parameter, so a caller binds via
+        // RequestBodyTypeName.From(source).
+        Assert.AreEqual("Petstore.Client.NewPet", createPet.RequestBodyTypeName);
+        Assert.AreEqual("CreatePetAsync", createPet.ClientMethodName);
+        Assert.AreEqual("Petstore.Client.ApiPetsClient", createPet.ClientTypeName);
     }
 
     [TestMethod]
