@@ -683,12 +683,93 @@ public readonly struct Period : IEquatable<Period>
     }
 
     /// <summary>
+    /// Returns a normalized copy of this period with any sub-second component (milliseconds,
+    /// ticks and nanoseconds) rounded to the nearest whole second.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The RFC 3339 Appendix A <c>duration</c> grammar used by the JSON Schema <c>duration</c>
+    /// format only permits integer values for each unit, and seconds is the smallest unit it
+    /// defines - fractional seconds are not allowed. A <see cref="Period"/>, however, can carry
+    /// sub-second precision (for example when it is built from a .NET <see cref="System.TimeSpan"/>
+    /// via <see cref="FromTicks"/>). Such precision cannot be represented in a valid duration
+    /// string, so the formatting performed by <see cref="ToString"/> rounds the sub-second portion
+    /// to the nearest second, with halves rounded away from zero.
+    /// </para>
+    /// <para>
+    /// For example, a period of 6.2207241 seconds is rounded to 6 seconds, and a period of
+    /// 6.6 seconds is rounded to 7 seconds. The rounding is applied to the normalized value, so a
+    /// carry (such as 59.6 seconds rounding up to a full minute) is propagated through the higher
+    /// units.
+    /// </para>
+    /// </remarks>
+    /// <returns>The period rounded to whole seconds.</returns>
+    [Pure]
+    internal Period RoundedToWholeSeconds()
+    {
+        Period normalized = this.Normalize();
+
+        // After normalization "ticks" is always zero, but include it for completeness.
+        long subSecondNanoseconds =
+            (normalized.Milliseconds * NanosecondsPerMillisecond) +
+            (normalized.Ticks * NanosecondsPerTick) +
+            normalized.Nanoseconds;
+
+        if (subSecondNanoseconds == 0)
+        {
+            return normalized;
+        }
+
+        // Round halves away from zero. Normalization guarantees every "standard" property shares the
+        // same sign, so a positive period has a positive remainder and a negative period a negative one.
+        long roundingSeconds =
+            subSecondNanoseconds >= NanosecondsPerSecond / 2 ? 1 :
+            subSecondNanoseconds <= -(NanosecondsPerSecond / 2) ? -1 :
+            0;
+
+        // Rebuild without the sub-second component and re-normalize so that any carry produced by the
+        // rounding (e.g. 59 seconds + 1 -> +1 minute) is propagated through the higher units.
+        return new Period(
+            normalized.Years,
+            normalized.Months,
+            0 /* weeks */,
+            normalized.Days,
+            normalized.Hours,
+            normalized.Minutes,
+            normalized.Seconds + roundingSeconds,
+            0 /* milliseconds */,
+            0 /* ticks */,
+            0 /* nanoseconds */).Normalize();
+    }
+
+    /// <summary>
     /// Returns this string formatted according to the ISO8601 duration specification used by JSON schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The result is a valid RFC 3339 Appendix A <c>duration</c> (the grammar used by the JSON Schema
+    /// <c>duration</c> format), and is produced by the same formatter used when writing a period to a
+    /// JSON document, so it always round-trips back through <see cref="TryParse"/>.
+    /// </para>
+    /// <para>
+    /// That grammar does not permit fractional seconds, so any sub-second component is rounded to the
+    /// nearest whole second before formatting (rounding halves away from zero). Zero-valued
+    /// units are omitted where the grammar allows, so for example a one-day, two-hour period is
+    /// formatted as <c>P1DT2H</c> rather than <c>P0Y0M1DT2H0M0S</c>.
+    /// </para>
+    /// </remarks>
     /// <returns>A formatted representation of this period.</returns>
     public override string ToString()
     {
-        return NodaTime.Text.PeriodPattern.NormalizingIso.Format(this);
+        Span<byte> buffer = stackalloc byte[JsonConstants.MaximumFormatPeriodLength];
+        if (Internal.JsonElementHelpers.TryFormatPeriod(this, buffer, out int bytesWritten))
+        {
+            return JsonHelpers.Utf8GetString(buffer[..bytesWritten]);
+        }
+
+        // The buffer is sized to the maximum possible formatted length, so this is unreachable for any
+        // representable period; fall back to the NodaTime formatter (which also rounds sub-seconds away).
+        return NodaTime.Text.PeriodPattern.NormalizingIso.Format(this.RoundedToWholeSeconds());
     }
 
     /// <summary>

@@ -290,6 +290,104 @@ public class PeriodTest
     }
 
     [TestMethod]
+    public void ToString_SubSecondRoundsDown()
+    {
+        // 6.2207241 seconds (the value from issue #805). RFC 3339 durations have no fractional
+        // seconds, so the sub-second component rounds down to 6 whole seconds.
+        Json.Period period = new Corvus.Text.Json.PeriodBuilder { Seconds = 6, Milliseconds = 220, Nanoseconds = 724100 }.BuildPeriod();
+        Assert.AreEqual("PT6S", period.ToString());
+    }
+
+    [TestMethod]
+    public void ToString_SubSecondRoundsUp()
+    {
+        // 6.6 seconds rounds up to 7 whole seconds.
+        Json.Period period = new Corvus.Text.Json.PeriodBuilder { Seconds = 6, Milliseconds = 600 }.BuildPeriod();
+        Assert.AreEqual("PT7S", period.ToString());
+    }
+
+    [TestMethod]
+    public void ToString_SubSecondRoundsHalfAwayFromZero()
+    {
+        // Exactly half a second rounds away from zero (up to 1 second).
+        Json.Period period = new Corvus.Text.Json.PeriodBuilder { Milliseconds = 500 }.BuildPeriod();
+        Assert.AreEqual("PT1S", period.ToString());
+    }
+
+    [TestMethod]
+    public void ToString_SubSecondRoundUpCarriesIntoMinutes()
+    {
+        // 59.6 seconds rounds up to 60, which carries into a full minute.
+        Json.Period period = new Corvus.Text.Json.PeriodBuilder { Seconds = 59, Milliseconds = 600 }.BuildPeriod();
+        Assert.AreEqual("PT1M", period.ToString());
+    }
+
+    [TestMethod]
+    public void ToString_NegativeSubSecondRoundsAwayFromZero()
+    {
+        // -6.6 seconds rounds away from zero to -7 whole seconds.
+        Json.Period period = new Corvus.Text.Json.PeriodBuilder { Seconds = -6, Milliseconds = -600 }.BuildPeriod();
+        Assert.AreEqual("PT-7S", period.ToString());
+    }
+
+    [TestMethod]
+    public void TryFormatPeriod_SubSecondRoundsAndRoundTripsThroughParser()
+    {
+        // The backing-store formatter (used by the OpenAPI source generator's Build methods, via the
+        // implicit Period -> Source conversion) must emit a valid RFC 3339 duration with no fraction.
+        Json.Period period = new Corvus.Text.Json.PeriodBuilder { Seconds = 6, Milliseconds = 220, Nanoseconds = 724100 }.BuildPeriod();
+
+        byte[] buffer = new byte[128];
+        Assert.IsTrue(Corvus.Text.Json.Internal.JsonElementHelpers.TryFormatPeriod(period, buffer, out int written));
+        string formatted = System.Text.Encoding.UTF8.GetString(buffer, 0, written);
+
+        // No fraction, and unnecessary leading zero units are omitted.
+        Assert.AreEqual("PT6S", formatted);
+
+        // It round-trips through the (strict RFC 3339) parser, which rejects fractions.
+        Assert.IsTrue(Corvus.Text.Json.Period.TryParse(System.Text.Encoding.UTF8.GetBytes(formatted), out Json.Period roundTripped));
+        Assert.AreEqual(6, roundTripped.Seconds);
+        Assert.AreEqual(0, roundTripped.Milliseconds);
+        Assert.AreEqual(0, roundTripped.Nanoseconds);
+    }
+
+    [TestMethod]
+    [DataRow(1, 0, 3, "P1Y0M3D")] // A day after a year requires the bridging zero month (contiguity).
+    [DataRow(0, 0, 5, "P5D")] // Lone day omits years and months.
+    [DataRow(5, 0, 0, "P5Y")] // Lone year omits months and days.
+    [DataRow(0, 2, 3, "P2M3D")] // Month + day, no year.
+    [DataRow(1, 2, 3, "P1Y2M3D")] // All three date units.
+    public void TryFormatPeriod_DateUnits_OmitsZerosWithContiguity(int years, int months, int days, string expected)
+    {
+        Json.Period period = new Corvus.Text.Json.PeriodBuilder { Years = years, Months = months, Days = days }.BuildPeriod();
+
+        byte[] buffer = new byte[128];
+        Assert.IsTrue(Corvus.Text.Json.Internal.JsonElementHelpers.TryFormatPeriod(period, buffer, out int written));
+        string formatted = System.Text.Encoding.UTF8.GetString(buffer, 0, written);
+
+        Assert.AreEqual(expected, formatted);
+        Assert.IsTrue(Corvus.Text.Json.Period.TryParse(System.Text.Encoding.UTF8.GetBytes(formatted), out _), $"'{formatted}' must round-trip through the parser.");
+    }
+
+    [TestMethod]
+    [DataRow(1, 0, 5, "PT1H0M5S")] // A second after an hour requires the bridging zero minute (contiguity).
+    [DataRow(5, 0, 0, "PT5H")] // Lone hour omits minutes and seconds.
+    [DataRow(0, 0, 6, "PT6S")] // Lone second omits hours and minutes.
+    [DataRow(0, 30, 0, "PT30M")] // Lone minute.
+    [DataRow(5, 30, 6, "PT5H30M6S")] // All three time units.
+    public void TryFormatPeriod_TimeUnits_OmitsZerosWithContiguity(int hours, int minutes, int seconds, string expected)
+    {
+        Json.Period period = new Corvus.Text.Json.PeriodBuilder { Hours = hours, Minutes = minutes, Seconds = seconds }.BuildPeriod();
+
+        byte[] buffer = new byte[128];
+        Assert.IsTrue(Corvus.Text.Json.Internal.JsonElementHelpers.TryFormatPeriod(period, buffer, out int written));
+        string formatted = System.Text.Encoding.UTF8.GetString(buffer, 0, written);
+
+        Assert.AreEqual(expected, formatted);
+        Assert.IsTrue(Corvus.Text.Json.Period.TryParse(System.Text.Encoding.UTF8.GetBytes(formatted), out _), $"'{formatted}' must round-trip through the parser.");
+    }
+
+    [TestMethod]
     public void Normalize_Weeks()
     {
         Json.Period original = new Corvus.Text.Json.PeriodBuilder { Weeks = 2, Days = 5 }.BuildPeriod();

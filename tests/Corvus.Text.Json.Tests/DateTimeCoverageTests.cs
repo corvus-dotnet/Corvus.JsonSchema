@@ -123,7 +123,7 @@ public class DateTimeCoverageTests
 
     #endregion
 
-    #region Period with time components (seconds and fractional)
+    #region Period with time components (seconds and sub-second rounding)
 
     [TestMethod]
     public void TryFormatPeriod_WithSeconds_RoundTrips()
@@ -149,15 +149,16 @@ public class DateTimeCoverageTests
     }
 
     [TestMethod]
-    public void TryFormatPeriod_WithMilliseconds_FormatsSuccessfully()
+    public void TryFormatPeriod_WithMilliseconds_RoundsToWholeSeconds()
     {
-        // Exercises the fractional != 0 path in TryFormat(Period, ...)
+        // RFC 3339 durations have no sub-second precision, so the milliseconds are rounded to the
+        // nearest second (123ms rounds down). The output must be a valid, fraction-free duration.
         Period period = Period.FromSeconds(5) + Period.FromMilliseconds(123);
         Span<byte> buffer = stackalloc byte[90];
         Assert.IsTrue(JsonElementHelpers.TryFormatPeriod(period, buffer, out int bytesWritten));
         string result = JsonReaderHelper.TranscodeHelper(buffer.Slice(0, bytesWritten));
-        StringAssert.Contains(result, ".");
-        StringAssert.Contains(result, "S");
+        Assert.AreEqual("PT5S", result);
+        Assert.IsFalse(result.Contains("."), $"Formatted duration '{result}' must not contain a fraction.");
     }
 
     #endregion

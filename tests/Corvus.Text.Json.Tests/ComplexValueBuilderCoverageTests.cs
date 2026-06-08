@@ -610,7 +610,7 @@ public class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.AreEqual("""{"p":"P0Y0M7D"}""", json);
+        Assert.AreEqual("""{"p":"P7D"}""", json);
     }
 
     [TestMethod]

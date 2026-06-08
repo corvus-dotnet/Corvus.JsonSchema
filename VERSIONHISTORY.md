@@ -1,8 +1,41 @@
 # Version History
 
-## V5.2.0
+## V5.1.12
 
-V5.2.0 adds an opt-in `NullOrUndefinedExceptNonNullDefaulted` value for the `OptionalAsNullable` generation option — generating optional properties that declare a non-null `default` as non-nullable `T` — and fixes a V5 bug where an explicit JSON `null` was not mapped to C# `null` under `OptionalAsNullable=NullOrUndefined`.
+V5.1.12 fixes a V5 bug where `Corvus.Text.Json.Period` could emit `duration` strings that are invalid under the JSON Schema `duration` format.
+
+### Bug fixes
+
+- **`Period` no longer emits invalid `duration` strings** — The V5 `Corvus.Text.Json.Period` formatter (used by `Period.ToString()` and when writing a period to a JSON document, including the OpenAPI server `Build` methods) could emit a fractional seconds value, for example `P0Y0M0DT0H0M6.220724100S` for a period built from a sub-second `System.TimeSpan`. The JSON Schema `duration` format (RFC 3339 Appendix A) does not permit fractional seconds, so such values failed to round-trip through `Period.TryParse`. The formatter now rounds any sub-second component (milliseconds, ticks, nanoseconds) to the nearest whole second — rounding halves away from zero — producing a valid, round-trippable duration. As part of the fix the formatter also omits unnecessary zero-valued units where the RFC 3339 grammar allows, so output is now compact (for example `PT6S` and `P7D` rather than `P0Y0M0DT0H0M6S` and `P0Y0M7D`). Consumers that compared the exact formatted string should note the more compact output. See [#805](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/805).
+
+## V5.1.11
+
+V5.1.11 adds per-format assertion mode configuration to the V4 and V5 code generation pipelines, so consumers can selectively disable a single `format` assertion or downgrade it to a warning without weakening all format validation.
+
+### New features
+
+- **Per-format assertion modes** — A new `FormatAssertionMode` (`Assert` / `Disable` / `Warning`) can be configured per format, letting you keep strict format validation while relaxing an individual format that real-world data violates (for example a `date-time` missing its timezone offset). The effective mode is resolved per format as override > vocabulary > the global `assertFormat` default > disable. Configurable via the `corvusjson` CLI `--formatMode` flag, a `formatMode` object in `generator-config.json`, the `CorvusTextJsonFormatMode` / `CorvusJsonSchemaFormatMode` MSBuild properties, and the `CSharpLanguageProvider.Options` API. `Warning` applies to string formats (a non-conformant value is reported rather than rejected); numeric formats fall back to `Assert`. Mode selection happens at generation time, so the default assert path carries no extra runtime branches. Supported by both engines. See [#749](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/749).
+
+## V5.1.10
+
+V5.1.10 extends OpenAPI server generation to extract an operation's declared `security` for OpenAPI 3.0 and 3.1 (not just 3.2), models it with correct OR/AND semantics, and adds a one-line authorization helper.
+
+### New features
+
+- **Declared security extraction and authorization helper** — Generated servers now populate each endpoint's security requirements for OpenAPI 3.0 and 3.1 (previously only 3.2 did so; 3.0/3.1 always emitted an empty array despite the spec supporting `security`). `EndpointSecurityRequirement` carries the resolved `SchemeType` (oauth2/apiKey/http/openIdConnect) and a canonical `PolicyName`, and a generated `EndpointSecurityConventions.RequireDeclaredAuthorization` extension implements the default mapping (`AllowAnonymous` when there is no security, `RequireAuthorization(PolicyName)` per requirement) so the common case is a one-line hook. The generated registration takes no dependency on `Microsoft.AspNetCore.Authorization`, and the custom `configureEndpoint` escape hatch is unchanged. See [#791](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/791).
+- **OR/AND security semantics** — `EndpointDescriptor.SecurityRequirements` is now an `IReadOnlyList<EndpointSecurityRequirementSet>`, one element per OR alternative, each exposing its AND-group of requirements, an `IsOptional` marker for the anonymous (`{}`) requirement, and a canonical `PolicyName`. `RequireDeclaredAuthorization` honours the structure (AND within an alternative; a single combined policy for multiple OR alternatives), correcting the previous behaviour that flattened the array and enforced the alternatives as if all were required. See [#791](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/791).
+
+## V5.1.9
+
+V5.1.9 emits `Build(...)` overloads on V5 object types that take the `Create(...)` property parameters directly, removing the nested builder lambda at call sites.
+
+### New features
+
+- **Property-parameter `Build(...)` overloads** — V5 object types now emit `Build(...)` / `Build<TContext>(...)` factories that capture the `Create(...)` arguments directly, so `quaternion: Quaternion.Build(w: r.W, x: r.X, y: r.Y, z: r.Z)` replaces the previous `(ref b) => b.Create(...)` lambda form. The captured arguments materialise through the existing static `Create` with no closure allocation. A type emits the overload only when it has at least one `Create` parameter, is not part of a reference cycle (keeping a `Source` from ever transitively containing itself), and its captured-slot weight is within the configured threshold (default 32); recursive or over-threshold types keep the delegate/context `Build` form with a `<remarks>` explaining the omission. The threshold is configurable via the `CSharpLanguageProvider.Options` API, the `CorvusTextJsonBuildParametersThreshold` MSBuild property, and the `corvusjson` CLI `--buildParametersThreshold` flag. See [#789](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/789).
+
+## V5.1.8
+
+V5.1.8 adds an opt-in `NullOrUndefinedExceptNonNullDefaulted` value for the `OptionalAsNullable` generation option — generating optional properties that declare a non-null `default` as non-nullable `T` — and fixes a V5 bug where an explicit JSON `null` was not mapped to C# `null` under `OptionalAsNullable=NullOrUndefined`.
 
 ### New features
 
@@ -20,13 +53,20 @@ V5.1.7 adds an optional per-endpoint configuration callback to the generated Ope
 
 - **Per-endpoint configuration callback for generated servers** — The generated `MapApiEndpoints` extension gains an additive overload that accepts a `ConfigureEndpoint` callback. It is invoked once per generated endpoint (including webhook/callback endpoints) with an `EndpointDescriptor` (operation id, generated method name, HTTP verb, route template, tags, callback origin, and the operation's security requirements) and the route's `IEndpointConventionBuilder`. This lets consumers apply per-endpoint conventions — authorization, naming, tags, output caching, rate limiting — and wire the OpenAPI security specification onto endpoints without editing generated code. The original overload is preserved, so the change is source- and binary-compatible. Implemented for OpenAPI 3.0/3.1/3.2 across both the regular and callback/webhook server paths, with no new package dependency on the generated server. See [#783](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/783).
 
-## V5.1.2
+## V5.1.5
 
-V5.1.2 is a breaking change that moves generated JSON Schema model types into a `.Models` sub-namespace for OpenAPI and AsyncAPI code generation, preventing name collisions with request/response infrastructure types.
+V5.1.5 adds context-flowing source overloads to generated V5 mutable builders.
+
+### New features
+
+- **Context source builder overloads** — Generated V5 mutable object and array builders now expose `AddProperty<TContext>(propertyName, in PropertyType.Source<TContext> value)` and `AddItem<TContext>(in ItemType.Source<TContext> value)` overloads (for the `ReadOnlySpan<byte>`, `ReadOnlySpan<char>`, and `string` property-name forms, with `where TContext : allows ref struct` on .NET 9 and later). This lets a context-bearing `.Source<TContext>` value be added directly to a builder without first materialising it. See [#780](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/780).
+
+## V5.1.4
+
+V5.1.4 changes generated OpenAPI server result factories to take `.Source` types for response headers, deprecates `ParseValue()`, adds `JsonWorkspace.TakeOwnership()`, and fixes webhook schema pointer resolution.
 
 ### Breaking changes
 
-- **OpenAPI/AsyncAPI model types now in `.Models` sub-namespace** — JSON Schema model types generated by `corvusjson openapi-client`, `openapi-server`, `openapi-callback-client`, `openapi-callback-server`, and `asyncapi-generate` are now placed in a `.Models` sub-namespace (e.g., `Petstore.Client.Models` instead of `Petstore.Client`). Consumer code must add a `using` directive for the new namespace (e.g., `using Petstore.Client.Models;`). Request/response infrastructure types (producers, consumers, handler interfaces, request/response classes) remain in the root namespace.
 - **Server result factory methods use `.Source` for response headers** — Generated server result factory methods (e.g., `ListPetsResult.Ok(...)`) now accept `.Source` types for response header parameters instead of realized types. For example, a header parameter changes from `JsonString xNext = default` to `JsonString.Source xNext = default`. Existing code that passes realized types (e.g., `JsonString.ParseValue(...)`) continues to compile via implicit conversion. Factories with headers but no body now also require a `JsonWorkspace workspace` parameter.
 - **`ParseValue()` deprecated** — All `ParseValue()` overloads on `JsonElement` and generated types are now marked `[Obsolete]`. Use `ParsedJsonDocument<T>.Parse()` for pooled-memory parsing (returns a disposable document that recycles memory), or `Clone()` when you genuinely need a standalone copy. `ParseValue()` allocates backing memory that becomes GC garbage — the deprecation makes the performance tradeoff explicit. See [#772](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/772).
 
@@ -37,6 +77,14 @@ V5.1.2 is a breaking change that moves generated JSON Schema model types into a 
 ### Bug fixes
 
 - **Webhook schema pointer resolution** — `openapi-callback-server` previously constructed JSON pointers using `#/paths/{name}` instead of `#/webhooks/{name}` when processing webhook schemas, causing resolution failures. `SchemaPointerBuilder` full-pointer methods now accept a `rootSegmentUtf8` parameter to correctly distinguish between paths and webhooks. See [#773](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/773).
+
+## V5.1.2
+
+V5.1.2 is a breaking change that moves generated JSON Schema model types into a `.Models` sub-namespace for OpenAPI and AsyncAPI code generation, preventing name collisions with request/response infrastructure types.
+
+### Breaking changes
+
+- **OpenAPI/AsyncAPI model types now in `.Models` sub-namespace** — JSON Schema model types generated by `corvusjson openapi-client`, `openapi-server`, `openapi-callback-client`, `openapi-callback-server`, and `asyncapi-generate` are now placed in a `.Models` sub-namespace (e.g., `Petstore.Client.Models` instead of `Petstore.Client`). Consumer code must add a `using` directive for the new namespace (e.g., `using Petstore.Client.Models;`). Request/response infrastructure types (producers, consumers, handler interfaces, request/response classes) remain in the root namespace.
 
 ## V5.1.1
 
