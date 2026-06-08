@@ -144,3 +144,47 @@ public sealed class BenchTransport : IApiTransport
 
     public ValueTask DisposeAsync() => default;
 }
+/// <summary>A no-op message transport for the channel-step probe (publish discards).</summary>
+public sealed class BenchMessageTransport : Corvus.Text.Json.AsyncApi.IMessageTransport
+{
+    public ValueTask PublishAsync<TPayload>(ReadOnlyMemory<byte> channelUtf8, in TPayload payload, in JsonElement headers = default, CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload> => default;
+
+    public ValueTask<(TReply Payload, JsonElement Headers)> RequestAsync<TRequest, TReply>(ReadOnlyMemory<byte> requestChannelUtf8, ReadOnlyMemory<byte> replyChannelUtf8, TRequest request, ReadOnlyMemory<byte> correlationIdUtf8, JsonElement headers = default, CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply> => throw new NotSupportedException();
+
+    public ValueTask SubscribeAsync<TPayload>(ReadOnlyMemory<byte> channelUtf8, Func<TPayload, JsonElement, CancellationToken, ValueTask> handler, CancellationToken cancellationToken = default)
+        where TPayload : struct, IJsonElement<TPayload> => default;
+
+    public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default) => default;
+
+    public ValueTask DeadLetterAsync(ReadOnlyMemory<byte> deadLetterChannelUtf8, ReadOnlyMemory<byte> originalChannelUtf8, in JsonElement payload, in JsonElement headers, Exception exception, CancellationToken cancellationToken = default) => default;
+
+    public ValueTask DisposeAsync() => default;
+}
+
+/// <summary>A generated-style AsyncAPI producer (mirrors the real producer's workspace materialisation).</summary>
+public sealed class BenchProducer(Corvus.Text.Json.AsyncApi.IMessageTransport transport)
+{
+    private readonly Corvus.Text.Json.AsyncApi.IMessageTransport transport = transport;
+
+    public ValueTask PublishBenchAsync(JsonElement.Source payload, CancellationToken cancellationToken = default)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        JsonElement built = JsonElement.CreateBuilder(workspace, payload).RootElement;
+        return this.PublishCoreAsync(workspace, built, cancellationToken);
+    }
+
+    private async ValueTask PublishCoreAsync(JsonWorkspace workspace, JsonElement payload, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await this.transport.PublishAsync("bench"u8.ToArray(), payload, default, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            workspace.Dispose();
+        }
+    }
+}
