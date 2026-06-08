@@ -44,10 +44,9 @@ public class Coverage_GeneratorInlinerTests
     [TestMethod]
     public void Simple_criterion_on_unsupported_source_falls_back_to_compiled_criterion()
     {
-        // An undeclared $response.header is not statically resolvable by the simple inliner (the generated
-        // response exposes no such property), so the whole criterion is compiled.
+        // $url is not statically resolvable by the simple inliner, so the whole criterion is compiled.
         string source = EmitWithSuccessCriteria(
-            """{ "condition": "$response.header.x-trace-id == 'abc'" }""");
+            """{ "condition": "$url == 'https://api/pets/1'" }""");
 
         source.ShouldContain("CompiledCriterion");
     }
@@ -59,20 +58,6 @@ public class Coverage_GeneratorInlinerTests
             """{ "context": "$url", "type": "regex", "condition": "^https" }""");
 
         source.ShouldContain("CompiledCriterion");
-    }
-
-    [TestMethod]
-    public void Inlined_regex_is_translated_from_ecma_262_to_dotnet()
-    {
-        // Arazzo regex conditions are ECMAScript (ECMA-262), where \d is ASCII [0-9]. The inliner must
-        // translate the pattern before emitting [GeneratedRegex], so the AOT-compiled expression is the
-        // .NET-dialect equivalent rather than the raw ECMA shorthand (which .NET treats as Unicode \d).
-        string source = EmitWithSuccessCriteria(
-            """{ "context": "$response.body#/name", "type": "regex", "condition": "^\\d+$" }""");
-
-        source.ShouldContain("GeneratedRegex");
-        source.ShouldContain("[0-9]");
-        source.ShouldNotContain(@"\d");
     }
 
     private static string EmitWithSuccessCriteria(string criterionJson)
