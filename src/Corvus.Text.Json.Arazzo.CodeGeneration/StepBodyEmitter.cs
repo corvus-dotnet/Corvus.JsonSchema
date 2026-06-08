@@ -30,8 +30,10 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// grammar (<c>||</c>, <c>&amp;&amp;</c>, <c>!</c>, grouping, comparisons, lone truthy operands) — is
 /// inlined (via <see cref="SimpleCriterionInliner"/>) to evaluate directly against the live response /
 /// inputs / prior-step outputs, reusing <see cref="Corvus.Text.Json.Arazzo.Comparand"/> for the operand
-/// semantics — no <c>CompiledCriterion</c>, no context. A criterion the inliner cannot resolve
-/// statically (an unsupported source, or <c>regex</c>/<c>jsonpath</c>) is compiled once into a
+/// semantics. A <c>regex</c> criterion with a static pattern is inlined (via
+/// <see cref="RegexCriterionInliner"/>) as a <c>[GeneratedRegex]</c> partial method matching the
+/// statically-resolved context value. A criterion the inliners cannot resolve statically (an
+/// unsupported source, a dynamic regex pattern, or <c>jsonpath</c>) is compiled once into a
 /// <c>static readonly</c> <c>CompiledCriterion</c> field. A step with no <c>successCriteria</c> defaults
 /// to requiring an HTTP success status.
 /// </para>
@@ -238,6 +240,18 @@ public static class StepBodyEmitter
             {
                 body.Append(inlineStatements);
                 checks.Add(inlineExpression);
+                continue;
+            }
+
+            // A regex criterion with a static pattern is inlined via a [GeneratedRegex] partial method
+            // (compiled ahead-of-time) matching the statically-resolved context value.
+            if (MapCriterionType(criterion.Type) == "Regex"
+                && RegexCriterionInliner.TryEmit(
+                    criterion.Condition, criterion.Context, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals,
+                    $"{prefix}C{index}", fields, out string regexStatements, out string regexExpression))
+            {
+                body.Append(regexStatements);
+                checks.Add(regexExpression);
                 continue;
             }
 
