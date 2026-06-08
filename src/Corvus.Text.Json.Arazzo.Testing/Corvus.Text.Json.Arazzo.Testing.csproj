@@ -18,7 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.Arazzo10\Corvus.Text.Json.Arazzo10.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
   </ItemGroup>
   <ItemGroup>
