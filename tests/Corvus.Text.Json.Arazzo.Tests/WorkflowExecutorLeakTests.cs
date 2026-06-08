@@ -58,19 +58,6 @@ public partial class WorkflowExecutorEndToEndTests
     }
 
     [TestMethod]
-    public async Task Url_criterion_executor_does_not_retain_memory_across_runs()
-    {
-        // The $url path rebuilds the request, writes its resolved path into the context's reused
-        // (thread-static) buffer, and stores the URL/method bytes per run — none of which should
-        // accumulate across runs (the buffer is reused, the stored bytes are released with the context).
-        await AssertNoRetainedGrowthAsync(
-            EmitGetPetExecutor(UrlCriterionDocument, "AdoptUrlWorkflow"),
-            "GeneratedWorkflows.AdoptUrlWorkflow",
-            """{"petId":"42"}""",
-            """{"name":"Fido"}""");
-    }
-
-    [TestMethod]
     public async Task Inlined_interpolation_allocates_little_more_than_the_base_path_per_run()
     {
         // The base path binds petId from $inputs.petId; the interpolation path binds "pet-{$inputs.id}".
@@ -93,46 +80,11 @@ public partial class WorkflowExecutorEndToEndTests
             $"interpolation added {overhead} B/run over the base path (base {basePerOp}, interpolation {interpolationPerOp})");
     }
 
-    [TestMethod]
-    public async Task SubWorkflow_executor_does_not_retain_memory_across_runs()
-    {
-        // The sub-workflow path builds a child inputs object (CreateBuilder + AddProperty) and nests a
-        // full child run (its own outputs document) per iteration — all workspace-owned and released on
-        // Reset. A retained child inputs/outputs document would grow the footprint with the run count.
-        Assembly assembly = await GenerateAndCompileWorkflows(ParentAndChildDocument).ConfigureAwait(false);
-        var execute = assembly.GetType("GeneratedWorkflows.Workflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!
-            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
-
-        var transport = new FixedResponseTransport(200, """{"name":"Fido"}""");
-        using var workspace = JsonWorkspace.Create();
-        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        JsonElement inputs = inputsDocument.RootElement;
-
-        async Task RunBatchAsync(int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                workspace.Reset();
-                _ = await execute(transport, workspace, inputs, default, null).ConfigureAwait(false);
-            }
-        }
-
-        await RunBatchAsync(2_000).ConfigureAwait(false);
-
-        long before = StableManagedMemory();
-        await RunBatchAsync(50_000).ConfigureAwait(false);
-        long growth = StableManagedMemory() - before;
-
-        growth.ShouldBeLessThan(
-            1024 * 1024,
-            $"retained {growth} bytes across 50k sub-workflow runs (~{growth / 50_000.0:0.0} B/run) — expected a flat footprint");
-    }
-
     private static async Task<long> MeasurePerOpAllocationAsync(string source, string typeName, string inputsJson, string responseJson)
     {
         Assembly assembly = CompileInMemory(source);
         var execute = assembly.GetType(typeName)!.GetMethod("ExecuteAsync")!
-            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
 
         var transport = new FixedResponseTransport(200, responseJson);
         using var workspace = JsonWorkspace.Create();
@@ -146,7 +98,7 @@ public partial class WorkflowExecutorEndToEndTests
             for (int i = 0; i < count; i++)
             {
                 workspace.Reset();
-                _ = await execute(transport, workspace, inputs, default, null).ConfigureAwait(false);
+                _ = await execute(transport, workspace, inputs, default).ConfigureAwait(false);
             }
         }
 
@@ -160,49 +112,11 @@ public partial class WorkflowExecutorEndToEndTests
         return (after - before) / measured;
     }
 
-    [TestMethod]
-    public async Task Durable_executor_does_not_retain_memory_across_runs()
-    {
-        // Each durable run serialises a checkpoint (pooled writer + ArrayBufferWriter) and writes it to the
-        // store; the run is dropped and the store is reset each iteration, so a leak — an unreturned pooled
-        // buffer, or a store that accumulates checkpoints — would retain memory proportional to the run count.
-        string source = EmitGetPetExecutor(Document, "AdoptDurableLeakWorkflow", durable: true);
-        Assembly assembly = CompileInMemory(source);
-        var execute = assembly.GetType("GeneratedWorkflows.AdoptDurableLeakWorkflow")!.GetMethod("ExecuteAsync")!
-            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, TimeProvider?, ValueTask<WorkflowRunResult<JsonElement>>>>();
-
-        var transport = new FixedResponseTransport(200, """{"name":"Fido"}""");
-        var store = new Durability.InMemoryWorkflowStateStore();
-        using var workspace = JsonWorkspace.Create();
-        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        JsonElement inputs = inputsDocument.RootElement;
-
-        async Task RunBatchAsync(int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                workspace.Reset();
-                await store.DeleteAsync("leak", default).ConfigureAwait(false);
-                using var run = Durability.WorkflowRun.CreateNew(store, "leak", "adopt", inputs);
-                _ = await execute(transport, workspace, inputs, run, default, null).ConfigureAwait(false);
-            }
-        }
-
-        await RunBatchAsync(2_000).ConfigureAwait(false);
-        long before = StableManagedMemory();
-        await RunBatchAsync(50_000).ConfigureAwait(false);
-        long growth = StableManagedMemory() - before;
-
-        growth.ShouldBeLessThan(
-            1024 * 1024,
-            $"retained {growth} bytes across 50k durable runs (~{growth / 50_000.0:0.0} B/run) — expected a flat footprint");
-    }
-
     private static async Task AssertNoRetainedGrowthAsync(string source, string typeName, string inputsJson, string responseJson)
     {
         Assembly assembly = CompileInMemory(source);
         var execute = assembly.GetType(typeName)!.GetMethod("ExecuteAsync")!
-            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
 
         var transport = new FixedResponseTransport(200, responseJson);
         using var workspace = JsonWorkspace.Create();
@@ -214,7 +128,7 @@ public partial class WorkflowExecutorEndToEndTests
             for (int i = 0; i < count; i++)
             {
                 workspace.Reset();
-                _ = await execute(transport, workspace, inputs, default, null).ConfigureAwait(false);
+                _ = await execute(transport, workspace, inputs, default).ConfigureAwait(false);
             }
         }
 
