@@ -8,41 +8,41 @@ using Corvus.Text.Json.OpenApi.CodeGeneration;
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
-/// Emits the code that constructs a step's generated request, binding each Arazzo argument to the
-/// matching generated request property via <c>TTarget.From(source)</c> (plan §3.1).
+/// Emits the code that resolves a step's arguments and binds each to the matching generated
+/// client-method parameter via <c>TTarget.From(source)</c>, ready to pass as named arguments to the
+/// generated client method (plan §3.1).
 /// </summary>
 /// <remarks>
 /// Each argument's runtime expression is parsed once into a <c>static readonly</c>
 /// <c>ArazzoExpression</c> field (no per-execution parse/allocation); at run time the value is
 /// resolved to a <see cref="JsonElement"/> via <c>WorkflowExecutionContext.TryResolveValue</c> and
-/// bound to the property's generated type with <c>From</c>. Required parameters become constructor
-/// arguments (in the generator's parameter order); optional parameters become object-initializer
-/// assignments.
+/// bound to the parameter's generated type with <c>From</c>. The binding is surfaced as a list of
+/// <c>paramName: Type.From(local)</c> named-argument fragments — the generated client method (not this
+/// generator) owns request construction, validation, and the protocol, so we never build the request
+/// type directly.
 /// </remarks>
 public static class RequestBindingEmitter
 {
     /// <summary>
-    /// Emits the request-construction code for an operation step.
+    /// Emits the argument-resolution code and the named-argument fragments for a client-method call.
     /// </summary>
     /// <param name="operation">The resolved operation the step targets.</param>
     /// <param name="arguments">The step's arguments (parameter name → runtime-expression value).</param>
     /// <param name="contextVariable">The name of the in-scope <c>WorkflowExecutionContext</c> variable.</param>
-    /// <param name="requestVariable">The name of the local the constructed request is assigned to.</param>
     /// <param name="fieldPrefix">A unique prefix (e.g. the step id) for the emitted static expression fields.</param>
-    /// <returns>The emitted static field declarations and the in-method construction statements.</returns>
+    /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <returns>The emitted static field declarations, the in-method resolution statements, and the named-argument fragments.</returns>
     /// <exception cref="InvalidOperationException">A required parameter has no argument.</exception>
     public static RequestBindingCode Emit(
         in ResolvedOperation operation,
         IReadOnlyList<StepArgument> arguments,
         string contextVariable,
-        string requestVariable,
         string fieldPrefix,
         IReadOnlyDictionary<string, string> stepOutputLocals)
     {
         ArgumentNullException.ThrowIfNull(arguments);
         ArgumentNullException.ThrowIfNull(stepOutputLocals);
         ArgumentException.ThrowIfNullOrEmpty(contextVariable);
-        ArgumentException.ThrowIfNullOrEmpty(requestVariable);
         ArgumentException.ThrowIfNullOrEmpty(fieldPrefix);
 
         var argumentsByName = new Dictionary<string, StepArgument>(StringComparer.Ordinal);
@@ -53,8 +53,7 @@ public static class RequestBindingEmitter
 
         var fields = new StringBuilder();
         var statements = new StringBuilder();
-        var constructorArguments = new List<string>();
-        var initializers = new List<string>();
+        var namedArguments = new List<string>();
 
         foreach (RequestParameterInfo parameter in operation.Operation.RequestParameters)
         {
@@ -74,42 +73,10 @@ public static class RequestBindingEmitter
 
             ValueResolution.Emit(fields, statements, argument.Expression, local, contextVariable, stepOutputLocals, field);
 
-            string bound = $"{parameter.TypeName}.From({local})";
-            if (parameter.IsRequired)
-            {
-                constructorArguments.Add(bound);
-            }
-            else
-            {
-                initializers.Add($"{parameter.PropertyName} = {bound},");
-            }
+            namedArguments.Add($"{parameter.ParameterName}: {parameter.TypeName}.From({local})");
         }
 
-        statements.Append("var ")
-            .Append(requestVariable)
-            .Append(" = new ")
-            .Append(operation.Operation.RequestTypeName)
-            .Append('(')
-            .Append(string.Join(", ", constructorArguments))
-            .Append(')');
-
-        if (initializers.Count > 0)
-        {
-            statements.AppendLine();
-            statements.AppendLine("{");
-            foreach (string initializer in initializers)
-            {
-                statements.Append("    ").AppendLine(initializer);
-            }
-
-            statements.AppendLine("};");
-        }
-        else
-        {
-            statements.AppendLine(";");
-        }
-
-        return new RequestBindingCode(fields.ToString(), statements.ToString());
+        return new RequestBindingCode(fields.ToString(), statements.ToString(), namedArguments);
     }
 }
 
@@ -121,8 +88,9 @@ public static class RequestBindingEmitter
 public readonly record struct StepArgument(string Name, string Expression);
 
 /// <summary>
-/// The code emitted for a step's request construction (plan §3.1).
+/// The code emitted for a step's request binding (plan §3.1).
 /// </summary>
 /// <param name="Fields">The <c>static readonly</c> compiled-expression field declarations to place on the executor class.</param>
-/// <param name="Statements">The in-method statements that resolve the arguments and construct the request.</param>
-public readonly record struct RequestBindingCode(string Fields, string Statements);
+/// <param name="Statements">The in-method statements that resolve each argument into a local <see cref="JsonElement"/>.</param>
+/// <param name="NamedArguments">The <c>paramName: Type.From(local)</c> fragments to pass to the generated client method.</param>
+public readonly record struct RequestBindingCode(string Fields, string Statements, IReadOnlyList<string> NamedArguments);

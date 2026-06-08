@@ -61,7 +61,7 @@ public static class WorkflowExecutorEmitter
             body.Append("            // ── step: ").Append(stepId).AppendLine(" ──");
 
             StepBodyCode stepBody = StepBodyEmitter.Emit(
-                stepId, operation, ReadArguments(step), ReadCriteria(step), "transport", "context", "cancellationToken", stepOutputLocals);
+                stepId, operation, ReadArguments(step), ReadCriteria(step), "transport", "workspace", "context", "cancellationToken", stepOutputLocals);
             fields.Append(stepBody.Fields);
             AppendIndented(body, stepBody.Statements, 12);
 

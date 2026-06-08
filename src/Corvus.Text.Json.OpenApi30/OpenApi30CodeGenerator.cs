@@ -447,7 +447,8 @@ public sealed class OpenApi30CodeGenerator
                     parameter.Location,
                     CodeEmitHelpers.SanitizeIdentifier(parameter.Name),
                     this.GetParameterTypeName(parameter),
-                    parameter.IsRequired);
+                    parameter.IsRequired,
+                    CodeEmitHelpers.EscapeCSharpKeyword(CodeEmitHelpers.SanitizeParameterName(parameter.Name)));
             }
 
             var responses = new ResponseDescriptor[op.Responses.Length];
@@ -461,6 +462,11 @@ public sealed class OpenApi30CodeGenerator
                     bodyTypeName is null ? null : CodeEmitHelpers.ResponseBodyPropertyName(response.StatusCode));
             }
 
+            string clientTag = op.Tags.Length > 0 ? op.Tags[0] : "default";
+            string? requestBodyTypeName = op.RequestBody is { } rb && !IsRawStreamRequestBody(rb)
+                ? this.ResolveRequestBodyTypeName(rb)
+                : null;
+
             result.Add(new OperationDescriptor(
                 op.PathTemplate,
                 op.Method,
@@ -470,7 +476,10 @@ public sealed class OpenApi30CodeGenerator
                 $"{this.rootNamespace}.{GeneratedClientTypeNaming.ResponseTypeName(op.MethodName)}",
                 parameters,
                 op.RequestBody is not null,
-                responses));
+                responses,
+                $"{this.rootNamespace}.{this.GetClientName(clientTag)}Client",
+                $"{op.MethodName}Async",
+                requestBodyTypeName));
         }
 
         return result;

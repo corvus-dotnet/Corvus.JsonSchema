@@ -15,12 +15,29 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <param name="Path">The API path template (e.g. <c>/pets/{petId}</c>).</param>
 /// <param name="Method">The HTTP method.</param>
 /// <param name="OperationId">The <c>operationId</c>, or <see langword="null"/> if not specified.</param>
-/// <param name="MethodName">The generated method name (PascalCase).</param>
+/// <param name="MethodName">The generated method name (PascalCase, without the <c>Async</c> suffix).</param>
 /// <param name="RequestTypeName">The fully-qualified generated request type name.</param>
 /// <param name="ResponseTypeName">The fully-qualified generated response type name.</param>
 /// <param name="RequestParameters">The request parameters, in document order.</param>
 /// <param name="HasRequestBody">Whether the operation declares a request body.</param>
 /// <param name="Responses">The operation's responses, in document order.</param>
+/// <param name="ClientTypeName">
+/// The fully-qualified type of the generated client class that exposes this operation (e.g.
+/// <c>Acme.Pets.PetsClient</c>). An operation grouped under several tags is exposed on a client per
+/// tag; this is the canonical client (the operation's first tag, or the default client when it has
+/// none). Constructed with a single <c>IApiTransport</c> argument.
+/// </param>
+/// <param name="ClientMethodName">
+/// The name of the generated client method that invokes this operation (e.g.
+/// <c>GetPetByIdAsync</c>) — the <see cref="MethodName"/> with the <c>Async</c> suffix the generator
+/// actually emitted. It builds and validates the request, sends it, and validates the response,
+/// returning the generated response type.
+/// </param>
+/// <param name="RequestBodyTypeName">
+/// The fully-qualified generated type whose <c>.Source</c> is the client method's <c>body</c>
+/// parameter (so a caller binds a body via <c>{RequestBodyTypeName}.From(source)</c>), or
+/// <see langword="null"/> when the operation has no JSON request body (no body, or a raw stream body).
+/// </param>
 public readonly record struct OperationDescriptor(
     string Path,
     OperationMethod Method,
@@ -30,7 +47,10 @@ public readonly record struct OperationDescriptor(
     string ResponseTypeName,
     IReadOnlyList<RequestParameterInfo> RequestParameters,
     bool HasRequestBody,
-    IReadOnlyList<ResponseDescriptor> Responses);
+    IReadOnlyList<ResponseDescriptor> Responses,
+    string ClientTypeName,
+    string ClientMethodName,
+    string? RequestBodyTypeName);
 
 /// <summary>
 /// A response of a generated operation, described by the generated type of its JSON body — so a
@@ -55,9 +75,15 @@ public readonly record struct ResponseDescriptor(
 /// <param name="PropertyName">The name of the generated request property (e.g. <c>PetId</c>).</param>
 /// <param name="TypeName">The fully-qualified type of the generated request property (e.g. <c>Acme.Pets.Models.JsonInt64</c>).</param>
 /// <param name="IsRequired">Whether the parameter is required (and therefore a constructor argument).</param>
+/// <param name="ParameterName">
+/// The C# identifier the generator emitted for this parameter on the client method (e.g. <c>petId</c>,
+/// keyword-escaped where necessary) — so a caller can pass it as a named argument without re-deriving
+/// the naming convention.
+/// </param>
 public readonly record struct RequestParameterInfo(
     string Name,
     ParameterLocation Location,
     string PropertyName,
     string TypeName,
-    bool IsRequired);
+    bool IsRequired,
+    string ParameterName);

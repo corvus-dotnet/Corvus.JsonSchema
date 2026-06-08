@@ -24,19 +24,39 @@ public class StepBodyEmitterTests
             "GetPet",
             "Acme.Pets.GetPetRequest",
             "Acme.Pets.GetPetResponse",
-            [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true)],
+            [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true, "petId")],
             false,
-            [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")]));
+            [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")],
+            "Acme.Pets.PetsClient",
+            "GetPetAsync",
+            null));
 
     [TestMethod]
-    public void Emits_send_telemetry_and_response_feed()
+    public void Invokes_the_generated_client_method_with_named_arguments()
     {
         StepBodyCode code = Emit([]);
 
-        code.Statements.ShouldContain("var getPetResponse = await transport.SendAsync<Acme.Pets.GetPetRequest, Acme.Pets.GetPetResponse>(getPetRequest, cancellationToken).ConfigureAwait(false);");
+        code.Statements.ShouldContain("var getPetClient = new Acme.Pets.PetsClient(transport);");
+        code.Statements.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: Acme.Pets.JsonString.From(petIdValue), cancellationToken: cancellationToken).ConfigureAwait(false);");
         code.Statements.ShouldContain("ArazzoTelemetry.StepsExecuted.Add(1);");
         code.Statements.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
-        code.Statements.ShouldContain("if (getPetResponse.StatusCode == 200) { context.SetResponseBody(getPetResponse.OkBody); }");
+    }
+
+    [TestMethod]
+    public void Clones_the_response_body_into_the_workspace_before_feeding_the_context()
+    {
+        StepBodyCode code = Emit([]);
+
+        code.Statements.ShouldContain("if (getPetResponse.StatusCode == 200) { context.SetResponseBody(((JsonElement)getPetResponse.OkBody).CloneAsBuilder(workspace).RootElement); }");
+    }
+
+    [TestMethod]
+    public void Disposes_the_response_in_a_finally()
+    {
+        StepBodyCode code = Emit([]);
+
+        code.Statements.ShouldContain("finally");
+        code.Statements.ShouldContain("await getPetResponse.DisposeAsync().ConfigureAwait(false);");
     }
 
     [TestMethod]
@@ -71,6 +91,7 @@ public class StepBodyEmitterTests
             [new StepArgument("petId", "$inputs.petId")],
             criteria,
             "transport",
+            "workspace",
             "context",
             "cancellationToken",
             NoSteps);
