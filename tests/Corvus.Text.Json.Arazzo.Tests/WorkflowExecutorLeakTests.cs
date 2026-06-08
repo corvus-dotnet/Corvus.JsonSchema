@@ -80,6 +80,41 @@ public partial class WorkflowExecutorEndToEndTests
             $"interpolation added {overhead} B/run over the base path (base {basePerOp}, interpolation {interpolationPerOp})");
     }
 
+    [TestMethod]
+    public async Task SubWorkflow_executor_does_not_retain_memory_across_runs()
+    {
+        // The sub-workflow path builds a child inputs object (CreateBuilder + AddProperty) and nests a
+        // full child run (its own outputs document) per iteration — all workspace-owned and released on
+        // Reset. A retained child inputs/outputs document would grow the footprint with the run count.
+        Assembly assembly = await GenerateAndCompileWorkflows(ParentAndChildDocument).ConfigureAwait(false);
+        var execute = assembly.GetType("GeneratedWorkflows.Workflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+
+        var transport = new FixedResponseTransport(200, """{"name":"Fido"}""");
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        JsonElement inputs = inputsDocument.RootElement;
+
+        async Task RunBatchAsync(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                workspace.Reset();
+                _ = await execute(transport, workspace, inputs, default).ConfigureAwait(false);
+            }
+        }
+
+        await RunBatchAsync(2_000).ConfigureAwait(false);
+
+        long before = StableManagedMemory();
+        await RunBatchAsync(50_000).ConfigureAwait(false);
+        long growth = StableManagedMemory() - before;
+
+        growth.ShouldBeLessThan(
+            1024 * 1024,
+            $"retained {growth} bytes across 50k sub-workflow runs (~{growth / 50_000.0:0.0} B/run) — expected a flat footprint");
+    }
+
     private static async Task<long> MeasurePerOpAllocationAsync(string source, string typeName, string inputsJson, string responseJson)
     {
         Assembly assembly = CompileInMemory(source);
