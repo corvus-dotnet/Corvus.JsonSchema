@@ -155,7 +155,7 @@ internal static class ReceiveChannelStepEmitter
         return statements.ToString();
     }
 
-    private static void ValidateCriteria(string stepId, IReadOnlyList<StepCriterion> criteria)
+    internal static void ValidateCriteria(string stepId, IReadOnlyList<StepCriterion> criteria)
     {
         foreach (StepCriterion criterion in criteria)
         {
