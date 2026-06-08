@@ -99,9 +99,22 @@ public class StepBodyEmitterTests
             new StepCriterion("jsonpath", "$.id", "$response.body"),
         ]);
 
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple, \"$statusCode == 200\");");
+        // The bare $statusCode comparison is emitted inline (no field); the jsonpath criterion still
+        // compiles to a CompiledCriterion field, keeping its per-criterion index.
+        code.Fields.ShouldNotContain("$statusCode == 200");
         code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath, \"$.id\", \"$response.body\");");
-        code.Statements.ShouldContain("if (!(getPet_SuccessCriterion0.Evaluate(context) && getPet_SuccessCriterion1.Evaluate(context)))");
+        code.Statements.ShouldContain("if (!(getPetResponse.StatusCode == 200 && getPet_SuccessCriterion1.Evaluate(context)))");
+        code.Statements.ShouldContain("throw new WorkflowStepFailedException(\"getPet\", \"Step 'getPet' did not satisfy its success criteria.\");");
+    }
+
+    [TestMethod]
+    public void Emits_a_bare_status_code_criterion_inline_without_a_compiled_field()
+    {
+        StepBodyCode code = Emit([new StepCriterion("simple", "$statusCode != 500", null)]);
+
+        // A pure $statusCode comparison needs neither a CompiledCriterion field nor the context.
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.Statements.ShouldContain("if (!(getPetResponse.StatusCode != 500))");
         code.Statements.ShouldContain("throw new WorkflowStepFailedException(\"getPet\", \"Step 'getPet' did not satisfy its success criteria.\");");
     }
 

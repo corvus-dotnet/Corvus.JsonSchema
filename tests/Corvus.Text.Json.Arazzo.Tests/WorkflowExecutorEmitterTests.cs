@@ -68,7 +68,9 @@ public class WorkflowExecutorEmitterTests
         source.ShouldContain("if (getPetResponse.StatusCode == 200) { getPetResponseBody = (JsonElement)getPetResponse.OkBody; }");
         source.ShouldNotContain("CloneAsBuilder(workspace).RootElement); }");
         source.ShouldContain("await getPetResponse.DisposeAsync().ConfigureAwait(false);");
-        source.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
+        // The bare $statusCode == 200 criterion is emitted inline — no CompiledCriterion field.
+        source.ShouldContain("if (!(getPetResponse.StatusCode == 200))");
+        source.ShouldNotContain("SuccessCriterion0");
     }
 
     [TestMethod]
