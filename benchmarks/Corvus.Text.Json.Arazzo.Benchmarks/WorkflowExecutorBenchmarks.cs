@@ -98,9 +98,61 @@ public class WorkflowExecutorBenchmarks
         }
         """;
 
+    // A workflow whose success is decided by an inlined simple body-comparison criterion
+    // ($response.body#/name == 'Fido') — evaluated directly via Comparand, no runtime interpreter.
+    private const string SimpleCriteriaDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" }, { "condition": "$response.body#/name == 'Fido'" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    // A workflow whose success is decided by an inlined jsonpath criterion (the query is compiled
+    // ahead-of-time into a sibling class; success = QueryNodes(...).Count > 0).
+    private const string JsonPathDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "context": "$response.body", "type": "jsonpath", "condition": "$.name" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> execute = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeStatusOnly = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeInterpolation = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeSimpleCriteria = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeJsonPath = null!;
     private BenchTransport transport = null!;
     private JsonWorkspace workspace = null!;
     private ParsedJsonDocument<JsonElement> inputsDocument = default!;
@@ -112,6 +164,8 @@ public class WorkflowExecutorBenchmarks
         this.execute = Compile(Document, "AdoptWorkflow");
         this.executeStatusOnly = Compile(StatusOnlyDocument, "StatusOnlyWorkflow");
         this.executeInterpolation = Compile(InterpolationDocument, "InterpolationWorkflow");
+        this.executeSimpleCriteria = Compile(SimpleCriteriaDocument, "SimpleCriteriaWorkflow");
+        this.executeJsonPath = Compile(JsonPathDocument, "JsonPathWorkflow");
 
         this.transport = new BenchTransport();
         this.workspace = JsonWorkspace.Create();
@@ -166,6 +220,28 @@ public class WorkflowExecutorBenchmarks
         return result.TryGetProperty("name"u8, out _);
     }
 
+    /// <summary>Runs a workflow gated by an inlined simple body-comparison criterion.</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunSimpleCriteriaWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeSimpleCriteria(this.transport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("name"u8, out _);
+    }
+
+    /// <summary>Runs a workflow gated by an inlined (ahead-of-time-compiled) jsonpath criterion.</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunJsonPathWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeJsonPath(this.transport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("name"u8, out _);
+    }
+
     private static string EmitExecutor(string document, string className)
     {
         OperationDescriptor[] operations =
@@ -205,12 +281,18 @@ public class WorkflowExecutorBenchmarks
 
     private static Assembly CompileInMemory(string source)
     {
-        SyntaxTree tree = CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Preview));
+        // Define target-framework symbols so generated code (e.g. ahead-of-time jsonpath classes) takes
+        // its modern #if NET8_0_OR_GREATER path.
+        var parseOptions = new CSharpParseOptions(LanguageVersion.Preview).WithPreprocessorSymbols(
+            "NET", "NET5_0_OR_GREATER", "NET6_0_OR_GREATER", "NET7_0_OR_GREATER",
+            "NET8_0_OR_GREATER", "NET9_0_OR_GREATER", "NET10_0_OR_GREATER");
+        SyntaxTree tree = CSharpSyntaxTree.ParseText(source, parseOptions);
 
         // Force-load assemblies the emitted code references transitively so they appear in the set.
         _ = typeof(NodaTime.OffsetTime).Assembly;
         _ = typeof(System.Diagnostics.ActivitySource).Assembly;
         _ = typeof(System.Numerics.BigInteger).Assembly;
+        _ = typeof(Corvus.Text.Json.JsonPath.JsonPathResult).Assembly;
 
         var references = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
