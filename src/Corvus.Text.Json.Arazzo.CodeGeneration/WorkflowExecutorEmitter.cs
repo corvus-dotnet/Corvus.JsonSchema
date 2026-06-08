@@ -68,7 +68,7 @@ public static class WorkflowExecutorEmitter
             // The step body now builds the step's outputs product inside the step (while the response
             // is alive), so output extraction is no longer a separate post-step pass.
             StepBodyCode stepBody = StepBodyEmitter.Emit(
-                stepId, operation, ReadArguments(step), criteria, stepOutputs, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", options.Namespace, ReadRequestBody(step), bindResponseBody);
+                stepId, operation, ReadArguments(step), criteria, stepOutputs, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", options.InputAccessors, options.Namespace, ReadRequestBody(step), bindResponseBody);
             fields.Append(stepBody.Fields);
             AppendIndented(body, stepBody.Statements, 12);
             auxiliaryTypes.Append(stepBody.AuxiliaryTypes);
@@ -81,7 +81,7 @@ public static class WorkflowExecutorEmitter
             body.AppendLine();
         }
 
-        AppendWorkflowOutputs(fields, body, workflow, stepOutputLocals);
+        AppendWorkflowOutputs(fields, body, workflow, stepOutputLocals, options.InputAccessors);
 
         string bodyText = body.ToString();
 
@@ -272,7 +272,8 @@ public static class WorkflowExecutorEmitter
         StringBuilder fields,
         StringBuilder body,
         in ArazzoDocument.WorkflowObject workflow,
-        IReadOnlyDictionary<string, string> stepOutputLocals)
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors)
     {
         var names = new List<string>();
         var expressions = new List<string>();
@@ -294,7 +295,7 @@ public static class WorkflowExecutorEmitter
         {
             string local = $"workflowOutput{i.ToString(CultureInfo.InvariantCulture)}";
             string field = $"Workflow_Output_{EmitText.SanitizeIdentifier(names[i])}";
-            ValueResolution.Emit(fields, statements, expressions[i], local, "context", stepOutputLocals, field, "inputs");
+            ValueResolution.Emit(fields, statements, expressions[i], local, "context", stepOutputLocals, field, "inputs", inputAccessors);
             valueLocals.Add(local);
         }
 
@@ -424,8 +425,14 @@ public static class WorkflowExecutorEmitter
 /// <param name="ClassName">The generated executor class name (e.g. <c>AdoptWorkflow</c>).</param>
 /// <param name="InputsTypeName">The fully-qualified type of the workflow inputs.</param>
 /// <param name="OutputsTypeName">The fully-qualified type of the workflow outputs.</param>
+/// <param name="InputAccessors">
+/// Map of input JSON name → generated dotnet accessor property on the inputs model (e.g.
+/// <c>petId</c> → <c>PetId</c>), so <c>$inputs.&lt;name&gt;</c> compiles to a strongly-typed accessor.
+/// <see langword="null"/> when the inputs are an untyped <see cref="JsonElement"/>.
+/// </param>
 public readonly record struct WorkflowExecutorOptions(
     string Namespace,
     string ClassName,
     string InputsTypeName,
-    string OutputsTypeName);
+    string OutputsTypeName,
+    IReadOnlyDictionary<string, string>? InputAccessors = null);
