@@ -325,6 +325,103 @@ public class WorkflowExecutorEndToEndTests
         CreatePetClient.CapturedBodies[0].ShouldBe("true");
     }
 
+    private const string BodyCriteriaDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adoptChecked",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [
+                    { "condition": "$statusCode == 200" },
+                    { "condition": "$response.body#/status == 'ok'" },
+                    { "condition": "$response.body#/count > 5" },
+                    { "condition": "$response.body#/active" }
+                  ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_inlines_body_comparison_success_criteria_that_pass()
+    {
+        string source = EmitGetPetExecutor(BodyCriteriaDocument, "AdoptCheckedWorkflow");
+
+        // The body criteria are inlined against the live body — no CompiledCriterion, no context.
+        source.ShouldContain("Comparand");
+        source.ShouldNotContain("CompiledCriterion");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptCheckedWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+
+        // status "OK" matches 'ok' case-insensitively; count 7 > 5; active is truthy.
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","status":"OK","count":7,"active":true}""");
+
+        using var recorded = new RecordedTelemetry();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        JsonElement outputs = await pending;
+
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Fido");
+        recorded.Sum("corvus.arazzo.workflows.completed").ShouldBe(1);
+        recorded.Sum("corvus.arazzo.workflows.faulted").ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task Generated_executor_inlines_body_comparison_success_criteria_that_fail()
+    {
+        string source = EmitGetPetExecutor(BodyCriteriaDocument, "AdoptCheckedWorkflow");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptCheckedWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+
+        // count 3 is NOT > 5 — the inlined numeric comparison must fail the step.
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","status":"OK","count":3,"active":true}""");
+
+        using var recorded = new RecordedTelemetry();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+        // Await directly (as the other end-to-end tests do) so the continuation — and the pooled
+        // workspace's dispose — stays on this thread.
+        WorkflowStepFailedException? caught = null;
+        try
+        {
+            _ = await pending;
+        }
+        catch (WorkflowStepFailedException ex)
+        {
+            caught = ex;
+        }
+
+        caught.ShouldNotBeNull();
+        recorded.Sum("corvus.arazzo.workflows.faulted").ShouldBe(1);
+    }
+
     private static string EmitCreatePetExecutor() => EmitCreatePetExecutor(CreatePetDocument, "RegisterWorkflow");
 
     private static string EmitCreatePetExecutor(string document, string className)
