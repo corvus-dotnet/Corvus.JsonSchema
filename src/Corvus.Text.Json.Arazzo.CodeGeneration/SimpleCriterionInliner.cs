@@ -5,30 +5,25 @@
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Arazzo;
-using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
-/// Inlines a <c>simple</c> success criterion (plan §3.1, reification-free rebuild stage 3). The whole
-/// condition grammar — <c>||</c>, <c>&amp;&amp;</c>, <c>!</c>, grouping, comparisons, and lone truthy
-/// operands — is parsed at generation time and emitted as a direct evaluation against the live
-/// response / inputs / prior-step outputs, reusing <see cref="Comparand"/> for the operand semantics
-/// (case-insensitive UTF-8 string equality, numeric string coercion, JSON equality) so the inlined
-/// code matches the runtime <c>SimpleConditionEvaluator</c> exactly.
+/// Inlines a <c>simple</c> success criterion that is a single comparison or a lone truthy operand
+/// (plan §3.1, reification-free rebuild stage 3). The condition is parsed at generation time and
+/// emitted as a direct evaluation against the live response / inputs / prior-step outputs, reusing
+/// <see cref="Comparand"/> for the operand semantics (case-insensitive UTF-8 string equality, numeric
+/// string coercion, JSON equality) so the inlined code matches the runtime interpreter exactly.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Operands are resolved as side-effect-free statements before the gate; the logical structure is then
-/// emitted as a C# boolean expression referencing the resolved operands. Pre-computing the operands
-/// (rather than short-circuiting through <c>&amp;&amp;</c>/<c>||</c>) is behaviour-preserving because
-/// operand resolution has no side effects.
-/// </para>
-/// <para>
-/// <see cref="TryEmit"/> returns <see langword="false"/> — and the caller falls back to compiling a
-/// <see cref="CompiledCriterion"/> — when an operand's source cannot be navigated statically
-/// (<c>$response.header</c>, <c>$request.*</c>, <c>$workflows</c>, …, or <c>$response.body</c> on a step
-/// that did not bind a body) or the condition is malformed.
+/// Only single comparisons (<c>operand op operand</c>) and lone truthy operands are inlined. Anything
+/// using the logical grammar (<c>||</c>, <c>&amp;&amp;</c>, a leading <c>!</c>, or grouping) or an
+/// operand whose source cannot be navigated statically (<c>$response.header</c>, <c>$request.*</c>,
+/// <c>$workflows</c>, …, or <c>$response.body</c> on a step that did not bind a body) causes
+/// <see cref="TryEmit"/> to return <see langword="false"/>, and the caller falls back to compiling a
+/// <see cref="CompiledCriterion"/>. Operands are resolved as side-effect-free statements before the
+/// gate, so pre-computing them (rather than short-circuiting) is behaviour-preserving.
 /// </para>
 /// </remarks>
 internal static class SimpleCriterionInliner
@@ -48,12 +43,9 @@ internal static class SimpleCriterionInliner
     /// </summary>
     /// <param name="condition">The condition string.</param>
     /// <param name="responseVar">The in-scope response variable (for <c>$statusCode</c>).</param>
-    /// <param name="sources">The step's live JSON sources (response body / message payload / message headers).</param>
+    /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
-    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
-    /// <param name="responseHeaders">The operation's declared response headers (for <c>$response.header.&lt;name&gt;</c> operands).</param>
-    /// <param name="requestContext">The step's request-side values (for <c>$method</c> and <c>$request.*</c> operands).</param>
     /// <param name="tmpPrefix">A unique prefix for emitted temporaries and baked literal fields.</param>
     /// <param name="fields">Accumulates any baked string-literal <c>static readonly byte[]</c> fields.</param>
     /// <param name="statements">When this method returns <see langword="true"/>, the operand-resolution statements to emit before the gate.</param>
@@ -62,12 +54,9 @@ internal static class SimpleCriterionInliner
     public static bool TryEmit(
         string condition,
         string responseVar,
-        CriterionSources sources,
+        string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors,
-        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
-        in StepRequestContext requestContext,
         string tmpPrefix,
         StringBuilder fields,
         out string statements,
@@ -76,17 +65,52 @@ internal static class SimpleCriterionInliner
         statements = string.Empty;
         expression = string.Empty;
 
-        var statementBuilder = new StringBuilder();
-        var parser = new Parser(condition, responseVar, sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, tmpPrefix, fields, statementBuilder);
+        var parser = new Parser(condition);
 
-        string? expr = parser.ParseOr();
-        if (expr is null || !parser.AtEnd)
+        // The logical grammar (||, &&, leading !, grouping) is not inlined yet — fall back.
+        if (!parser.TryReadOperand(out string leftToken)
+            || !parser.TryReadOptionalOperator(out Op op, out bool hasOperator))
+        {
+            return false;
+        }
+
+        string? rightToken = null;
+        if (hasOperator)
+        {
+            if (!parser.TryReadOperand(out string read))
+            {
+                return false;
+            }
+
+            rightToken = read;
+        }
+
+        if (!parser.AtEnd)
+        {
+            return false;
+        }
+
+        var statementBuilder = new StringBuilder();
+
+        if (!TryEmitOperand(leftToken, $"{tmpPrefix}L", responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, fields, statementBuilder, out string leftExpr))
+        {
+            return false;
+        }
+
+        if (!hasOperator)
+        {
+            statements = statementBuilder.ToString();
+            expression = $"{leftExpr}.IsTrue";
+            return true;
+        }
+
+        if (!TryEmitOperand(rightToken!, $"{tmpPrefix}R", responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, fields, statementBuilder, out string rightExpr))
         {
             return false;
         }
 
         statements = statementBuilder.ToString();
-        expression = expr;
+        expression = $"{leftExpr}.{MapOperator(op)}({rightExpr})";
         return true;
     }
 
@@ -110,12 +134,9 @@ internal static class SimpleCriterionInliner
         string token,
         string baseName,
         string responseVar,
-        CriterionSources sources,
+        string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors,
-        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
-        in StepRequestContext requestContext,
         StringBuilder fields,
         StringBuilder statements,
         out string comparandExpr)
@@ -124,7 +145,7 @@ internal static class SimpleCriterionInliner
 
         if (token.Length > 0 && token[0] == '$')
         {
-            return TryEmitExpressionOperand(token, baseName, responseVar, sources, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
+            return TryEmitExpressionOperand(token, baseName, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, statements, out comparandExpr);
         }
 
         return TryEmitLiteralOperand(token, baseName, fields, out comparandExpr);
@@ -134,24 +155,19 @@ internal static class SimpleCriterionInliner
         string token,
         string baseName,
         string responseVar,
-        CriterionSources sources,
+        string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors,
-        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
-        in StepRequestContext requestContext,
-        StringBuilder fields,
         StringBuilder statements,
         out string comparandExpr)
     {
         comparandExpr = string.Empty;
-        (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(token);
-        bool bare = !expression.HasJsonPointer && navigationPointer is null;
+        (ArazzoExpression expression, string? navigationPointer) = SplitNavigation(token);
 
         // $statusCode: only the bare form (no navigation) is a number; anything else is undefined.
         if (expression.Source == ArazzoExpressionSource.StatusCode)
         {
-            if (!bare)
+            if (expression.HasJsonPointer || navigationPointer is not null)
             {
                 return false;
             }
@@ -160,150 +176,80 @@ internal static class SimpleCriterionInliner
             return true;
         }
 
-        // $method: the operation's HTTP method — a compile-time constant baked as a string.
-        if (expression.Source == ArazzoExpressionSource.Method && bare)
+        // Determine the navigable root and any leading property name.
+        string root;
+        string? name = null;
+        switch (expression.Source)
         {
-            comparandExpr = BakeStringLiteral(requestContext.Method, baseName, fields);
-            return true;
-        }
+            case ArazzoExpressionSource.ResponseBody when responseBodyLocal is not null:
+                root = responseBodyLocal;
+                break;
 
-        // $url: the resolved relative request URL, built into an executor-owned byte[] before the client
-        // call (RequestUrlEmitter). Compared as UTF-8, like a baked literal — no context, no allocation
-        // beyond the URL bytes themselves.
-        if (expression.Source == ArazzoExpressionSource.Url && bare && requestContext.UrlLocal is { } urlLocal)
-        {
-            comparandExpr = $"Comparand.FromUtf8String({urlLocal})";
-            return true;
-        }
+            case ArazzoExpressionSource.Inputs when expression.Name is { } inputName:
+                root = $"((JsonElement){inputsVariable})";
+                name = inputName;
+                break;
 
-        // $request.<location>.<name> / $request.body: resolve the value the step bound to the request.
-        if (bare && TryGetRequestValue(expression.Source, expression.Name, requestContext, out ArgumentValueKind requestKind, out string? requestValue))
-        {
-            return TryEmitRequestValue(
-                requestKind, requestValue!, baseName, responseVar, sources, inputsVariable,
-                stepOutputLocals, inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
-        }
-
-        // $response.header.<name>: read the generated response property. A schema-less header is a
-        // string?; a typed header is a generated JSON value read as a JsonElement. Both map an absent
-        // header to an undefined comparand. Only the bare form (no navigation) is supported.
-        if (expression.Source == ArazzoExpressionSource.ResponseHeader
-            && expression.Name is { } headerName
-            && bare
-            && CriterionExpressionParsing.TryResolveResponseHeader(responseHeaders, headerName, out ResponseHeaderInfo header))
-        {
-            comparandExpr = header.IsString
-                ? $"Comparand.FromString({responseVar}.{header.PropertyName})"
-                : $"Comparand.FromJsonElement((JsonElement){responseVar}.{header.PropertyName})";
-            return true;
-        }
-
-        // Navigate the operand to a JsonElement (default when absent), then read it as a Comparand —
-        // FromJsonElement maps an undefined element to an undefined comparand, so a missing operand
-        // makes the comparison false, matching the runtime.
-        if (!CriterionExpressionParsing.TryEmitElementNavigation(
-                expression, navigationPointer, baseName, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, out string elementLocal))
-        {
-            return false;
-        }
-
-        comparandExpr = $"Comparand.FromJsonElement({elementLocal})";
-        return true;
-    }
-
-    /// <summary>
-    /// Looks up the step's bound value for a <c>$request.&lt;location&gt;.&lt;name&gt;</c> or
-    /// <c>$request.body</c> operand.
-    /// </summary>
-    private static bool TryGetRequestValue(
-        ArazzoExpressionSource source,
-        string? name,
-        in StepRequestContext requestContext,
-        out ArgumentValueKind kind,
-        out string? value)
-    {
-        kind = default;
-        value = null;
-
-        if (source is ArazzoExpressionSource.RequestPath or ArazzoExpressionSource.RequestQuery or ArazzoExpressionSource.RequestHeader)
-        {
-            if (name is null)
-            {
-                return false;
-            }
-
-            foreach (StepArgument argument in requestContext.Arguments)
-            {
-                if (string.Equals(argument.Name, name, StringComparison.Ordinal))
-                {
-                    kind = argument.Kind;
-                    value = argument.Value;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        if (source == ArazzoExpressionSource.RequestBody && requestContext.Body is { } body)
-        {
-            kind = body.Kind;
-            value = body.Value;
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Emits a comparand for a request-bound value: an expression value is resolved like any other
-    /// operand (so it picks up typed input accessors, prior-step outputs, …); a scalar literal is baked
-    /// directly. Interpolated/composite request values are not inlined.
-    /// </summary>
-    private static bool TryEmitRequestValue(
-        ArgumentValueKind kind,
-        string value,
-        string baseName,
-        string responseVar,
-        CriterionSources sources,
-        string inputsVariable,
-        IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors,
-        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
-        in StepRequestContext requestContext,
-        StringBuilder fields,
-        StringBuilder statements,
-        out string comparandExpr)
-    {
-        comparandExpr = string.Empty;
-
-        switch (kind)
-        {
-            case ArgumentValueKind.Expression:
-                return TryEmitExpressionOperand(
-                    value, baseName, responseVar, sources, inputsVariable, stepOutputLocals,
-                    inputAccessors, responseHeaders, requestContext, fields, statements, out comparandExpr);
-
-            case ArgumentValueKind.LiteralString:
-                comparandExpr = BakeStringLiteral(value, baseName, fields);
-                return true;
-
-            case ArgumentValueKind.LiteralNumber:
-                comparandExpr = $"Comparand.FromNumber({value})";
-                return true;
-
-            case ArgumentValueKind.LiteralBoolean:
-                comparandExpr = $"Comparand.FromBoolean({value})";
-                return true;
-
-            case ArgumentValueKind.LiteralNull:
-                comparandExpr = "Comparand.Null";
-                return true;
+            case ArazzoExpressionSource.Steps when expression.ContainerId is { } stepId
+                && expression.Name is { } outputName
+                && stepOutputLocals.TryGetValue(stepId, out string? stepLocal):
+                root = stepLocal;
+                name = outputName;
+                break;
 
             default:
-                // Interpolation / composite request values are not inlined.
                 return false;
         }
+
+        // Build the navigation chain: optional property, then the '#' pointer, then the '.'/'[]' pointer.
+        var steps = new List<(bool IsProperty, string Value)>();
+        if (name is not null)
+        {
+            steps.Add((true, name));
+        }
+
+        if (expression.JsonPointer is { Length: > 0 } fragmentPointer)
+        {
+            steps.Add((false, fragmentPointer));
+        }
+
+        if (navigationPointer is { Length: > 0 })
+        {
+            steps.Add((false, navigationPointer));
+        }
+
+        if (steps.Count == 0)
+        {
+            comparandExpr = baseName;
+            statements.Append("Comparand ").Append(baseName).Append(" = Comparand.FromJsonElement(").Append(root).AppendLine(");");
+            return true;
+        }
+
+        statements.Append("Comparand ").Append(baseName).AppendLine(" = Comparand.Undefined;");
+        statements.Append("if (");
+        for (int i = 0; i < steps.Count; i++)
+        {
+            string source = i == 0 ? root : $"{baseName}{(i - 1).ToString(CultureInfo.InvariantCulture)}";
+            string outVar = $"{baseName}{i.ToString(CultureInfo.InvariantCulture)}";
+            (bool isProperty, string value) = steps[i];
+            string method = isProperty ? "TryGetProperty" : "TryResolvePointer";
+            if (i > 0)
+            {
+                statements.Append(" && ");
+            }
+
+            statements.Append(source).Append('.').Append(method).Append('(')
+                .Append(EmitText.Quote(value)).Append("u8, out JsonElement ").Append(outVar).Append(')');
+        }
+
+        statements.AppendLine(")");
+        string last = $"{baseName}{(steps.Count - 1).ToString(CultureInfo.InvariantCulture)}";
+        statements.AppendLine("{");
+        statements.Append("    ").Append(baseName).Append(" = Comparand.FromJsonElement(").Append(last).AppendLine(");");
+        statements.AppendLine("}");
+
+        comparandExpr = baseName;
+        return true;
     }
 
     private static bool TryEmitLiteralOperand(string token, string baseName, StringBuilder fields, out string comparandExpr)
@@ -359,158 +305,106 @@ internal static class SimpleCriterionInliner
     }
 
     /// <summary>
-    /// A recursive-descent parser that mirrors the runtime <c>SimpleConditionEvaluator</c> grammar but
-    /// emits a C# boolean expression (and operand-resolution statements) instead of a node tree.
+    /// Splits an operand token into a runtime expression and an optional JSON Pointer for trailing
+    /// <c>.property</c>/<c>[index]</c> navigation — the exact algorithm the runtime
+    /// <c>SimpleConditionEvaluator</c> uses, so the inlined navigation matches.
     /// </summary>
-    private ref struct Parser
+    private static (ArazzoExpression Expression, string? NavigationPointer) SplitNavigation(string token)
     {
-        private readonly ReadOnlySpan<char> span;
-        private readonly string responseVar;
-        private readonly CriterionSources sources;
-        private readonly string inputsVariable;
-        private readonly IReadOnlyDictionary<string, string> stepOutputLocals;
-        private readonly IReadOnlyDictionary<string, string>? inputAccessors;
-        private readonly IReadOnlyList<ResponseHeaderInfo>? responseHeaders;
-        private readonly StepRequestContext requestContext;
-        private readonly string tmpPrefix;
-        private readonly StringBuilder fields;
-        private readonly StringBuilder statements;
-        private int position;
-        private int operandCount;
+        string baseToken = token;
+        List<string>? segmentsRightToLeft = null;
 
-        public Parser(
-            string text,
-            string responseVar,
-            CriterionSources sources,
-            string inputsVariable,
-            IReadOnlyDictionary<string, string> stepOutputLocals,
-            IReadOnlyDictionary<string, string>? inputAccessors,
-            IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
-            in StepRequestContext requestContext,
-            string tmpPrefix,
-            StringBuilder fields,
-            StringBuilder statements)
+        while (true)
         {
-            this.span = text;
-            this.responseVar = responseVar;
-            this.sources = sources;
-            this.inputsVariable = inputsVariable;
-            this.stepOutputLocals = stepOutputLocals;
-            this.inputAccessors = inputAccessors;
-            this.responseHeaders = responseHeaders;
-            this.requestContext = requestContext;
-            this.tmpPrefix = tmpPrefix;
-            this.fields = fields;
-            this.statements = statements;
-            this.position = 0;
-            this.operandCount = 0;
+            ArazzoExpression expression = ArazzoExpression.Parse(baseToken);
+            if (expression.Source != ArazzoExpressionSource.Literal)
+            {
+                return (expression, segmentsRightToLeft is null ? null : BuildPointer(segmentsRightToLeft));
+            }
+
+            if (!TryStripTrailingSegment(ref baseToken, out string segment))
+            {
+                return (expression, null);
+            }
+
+            (segmentsRightToLeft ??= []).Add(segment);
+        }
+    }
+
+    private static bool TryStripTrailingSegment(ref string token, out string segment)
+    {
+        if (token.Length > 0 && token[^1] == ']')
+        {
+            int open = token.LastIndexOf('[');
+            if (open >= 0)
+            {
+                segment = token[(open + 1)..^1];
+                token = token[..open];
+                return true;
+            }
         }
 
-        public bool AtEnd
+        int dot = token.LastIndexOf('.');
+        if (dot > 0)
+        {
+            segment = token[(dot + 1)..];
+            token = token[..dot];
+            return true;
+        }
+
+        segment = string.Empty;
+        return false;
+    }
+
+    private static string BuildPointer(List<string> segmentsRightToLeft)
+    {
+        var builder = new StringBuilder();
+        for (int i = segmentsRightToLeft.Count - 1; i >= 0; i--)
+        {
+            builder.Append('/');
+
+            // RFC 6901 escaping: '~' -> '~0', '/' -> '~1'.
+            builder.Append(segmentsRightToLeft[i].Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal));
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// A minimal single-comparison parser mirroring the runtime tokenizer's operand/operator rules.
+    /// </summary>
+    private ref struct Parser(string text)
+    {
+        private readonly ReadOnlySpan<char> span = text;
+        private int position = 0;
+
+        public readonly bool AtEnd
         {
             get
             {
-                this.SkipWhitespace();
-                return this.position == this.span.Length;
-            }
-        }
-
-        public string? ParseOr()
-        {
-            string? left = this.ParseAnd();
-            while (left is not null && this.TryConsume("||"))
-            {
-                string? right = this.ParseAnd();
-                left = right is null ? null : $"({left} || {right})";
-            }
-
-            return left;
-        }
-
-        private string? ParseAnd()
-        {
-            string? left = this.ParseNot();
-            while (left is not null && this.TryConsume("&&"))
-            {
-                string? right = this.ParseNot();
-                left = right is null ? null : $"({left} && {right})";
-            }
-
-            return left;
-        }
-
-        private string? ParseNot()
-        {
-            this.SkipWhitespace();
-
-            // A leading '!' is the NOT operator — but not when it is the start of '!='.
-            if (this.position < this.span.Length
-                && this.span[this.position] == '!'
-                && (this.position + 1 >= this.span.Length || this.span[this.position + 1] != '='))
-            {
-                this.position++;
-                string? inner = this.ParseNot();
-                return inner is null ? null : $"!({inner})";
-            }
-
-            return this.ParseComparison();
-        }
-
-        private string? ParseComparison()
-        {
-            this.SkipWhitespace();
-            if (this.TryConsume("("))
-            {
-                string? grouped = this.ParseOr();
-                if (grouped is null || !this.TryConsume(")"))
+                int p = this.position;
+                while (p < this.span.Length && char.IsWhiteSpace(this.span[p]))
                 {
-                    return null;
+                    p++;
                 }
 
-                // No extra parentheses: ParseOr/ParseAnd already parenthesize multi-term expressions,
-                // and a single term is atomic (a method call or a negation), so precedence is preserved.
-                return grouped;
+                return p == this.span.Length;
             }
-
-            if (!this.TryEmitNextOperand(out string leftExpr))
-            {
-                return null;
-            }
-
-            if (this.TryParseOperator(out Op op))
-            {
-                if (!this.TryEmitNextOperand(out string rightExpr))
-                {
-                    return null;
-                }
-
-                return $"{leftExpr}.{MapOperator(op)}({rightExpr})";
-            }
-
-            return $"{leftExpr}.IsTrue";
         }
 
-        private bool TryEmitNextOperand(out string comparandExpr)
+        public bool TryReadOperand(out string token)
         {
-            comparandExpr = string.Empty;
+            token = string.Empty;
             this.SkipWhitespace();
-            string token = this.ReadOperandToken();
-            if (token.Length == 0)
+
+            // A leading '!' / '(' is the logical grammar — not inlined here.
+            if (this.position >= this.span.Length || this.span[this.position] is '(' or ')' or '!')
             {
                 return false;
             }
 
-            string baseName = $"{this.tmpPrefix}o{this.operandCount.ToString(CultureInfo.InvariantCulture)}";
-            this.operandCount++;
-            return TryEmitOperand(
-                token, baseName, this.responseVar, this.sources, this.inputsVariable,
-                this.stepOutputLocals, this.inputAccessors, this.responseHeaders, this.requestContext, this.fields, this.statements, out comparandExpr);
-        }
-
-        private string ReadOperandToken()
-        {
             int start = this.position;
-            if (this.position < this.span.Length && (this.span[this.position] == '\'' || this.span[this.position] == '"'))
+            if (this.span[this.position] is '\'' or '"')
             {
                 char quote = this.span[this.position];
                 this.position++;
@@ -518,47 +412,68 @@ internal static class SimpleCriterionInliner
                 {
                     if (this.span[this.position] == quote)
                     {
-                        // A doubled quote ('') is an escaped quote, not the terminator.
                         if (this.position + 1 < this.span.Length && this.span[this.position + 1] == quote)
                         {
                             this.position += 2;
                             continue;
                         }
 
-                        this.position++; // closing quote
+                        this.position++;
                         break;
                     }
 
                     this.position++;
                 }
-
-                return this.span[start..this.position].ToString();
             }
-
-            while (this.position < this.span.Length && !IsDelimiter(this.span[this.position]))
+            else
             {
-                this.position++;
+                while (this.position < this.span.Length && !IsDelimiter(this.span[this.position]))
+                {
+                    this.position++;
+                }
             }
 
-            return this.span[start..this.position].ToString();
+            if (this.position == start)
+            {
+                return false;
+            }
+
+            token = this.span[start..this.position].ToString();
+            return true;
         }
 
-        private bool TryParseOperator(out Op op)
+        public bool TryReadOptionalOperator(out Op op, out bool hasOperator)
         {
-            this.SkipWhitespace();
-            if (this.TryConsume("==")) { op = Op.Equal; return true; }
-            if (this.TryConsume("!=")) { op = Op.NotEqual; return true; }
-            if (this.TryConsume("<=")) { op = Op.LessThanOrEqual; return true; }
-            if (this.TryConsume(">=")) { op = Op.GreaterThanOrEqual; return true; }
-            if (this.TryConsume("<")) { op = Op.LessThan; return true; }
-            if (this.TryConsume(">")) { op = Op.GreaterThan; return true; }
             op = default;
+            hasOperator = false;
+            this.SkipWhitespace();
+
+            if (this.position >= this.span.Length)
+            {
+                return true;
+            }
+
+            // Logical operators are not inlined — bail so the whole criterion compiles.
+            if (this.Matches("||") || this.Matches("&&"))
+            {
+                return false;
+            }
+
+            if (this.TryConsume("==")) { op = Op.Equal; hasOperator = true; return true; }
+            if (this.TryConsume("!=")) { op = Op.NotEqual; hasOperator = true; return true; }
+            if (this.TryConsume("<=")) { op = Op.LessThanOrEqual; hasOperator = true; return true; }
+            if (this.TryConsume(">=")) { op = Op.GreaterThanOrEqual; hasOperator = true; return true; }
+            if (this.TryConsume("<")) { op = Op.LessThan; hasOperator = true; return true; }
+            if (this.TryConsume(">")) { op = Op.GreaterThan; hasOperator = true; return true; }
+
+            // Trailing content that is not an operator (e.g. an unsupported token) — bail.
             return false;
         }
 
+        private readonly bool Matches(string symbol) => this.span[this.position..].StartsWith(symbol);
+
         private bool TryConsume(string symbol)
         {
-            this.SkipWhitespace();
             if (this.span[this.position..].StartsWith(symbol))
             {
                 this.position += symbol.Length;

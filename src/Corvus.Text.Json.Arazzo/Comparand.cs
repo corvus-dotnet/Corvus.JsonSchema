@@ -14,11 +14,19 @@ namespace Corvus.Text.Json.Arazzo;
 /// value, compared only for equality).
 /// </summary>
 /// <remarks>
+/// <para>
 /// String operands are held as UTF-8 — either a baked literal/scalar byte buffer or a JSON string
 /// element accessed via <see cref="JsonElement.GetUtf8String"/> — so equality and numeric coercion
 /// are performed over UTF-8 spans with no managed-string allocation on the hot path.
+/// </para>
+/// <para>
+/// This type is the single source of truth for <c>simple</c>-criterion operand semantics. It is
+/// <see langword="public"/> so generated workflow executors can inline criterion evaluation —
+/// resolving each operand statically and calling <see cref="ValueEquals"/>/<see cref="ValueNotEquals"/>/
+/// the ordering helpers/<see cref="IsTrue"/> directly — without going through the runtime interpreter.
+/// </para>
 /// </remarks>
-internal readonly struct Comparand
+public readonly struct Comparand
 {
     private readonly ComparandKind kind;
     private readonly bool boolean;
@@ -64,6 +72,25 @@ internal readonly struct Comparand
     public static Comparand FromJson(in JsonElement value) => new(ComparandKind.Json, false, 0, null, value);
 
     /// <summary>
+    /// Creates a comparand from a resolved JSON value, mapping each <see cref="JsonValueKind"/> to the
+    /// matching comparand kind (string/number/boolean/null, or opaque JSON for object/array). This is
+    /// the mapping a generated executor applies to a statically-navigated operand.
+    /// </summary>
+    /// <param name="value">The resolved JSON element.</param>
+    /// <returns>The comparand, or <see cref="Undefined"/> for <see cref="JsonValueKind.Undefined"/>.</returns>
+    public static Comparand FromJsonElement(in JsonElement value)
+        => value.ValueKind switch
+        {
+            JsonValueKind.String => FromJsonString(value),
+            JsonValueKind.Number => FromNumber(value.GetDouble()),
+            JsonValueKind.True => FromBoolean(true),
+            JsonValueKind.False => FromBoolean(false),
+            JsonValueKind.Null => Null,
+            JsonValueKind.Object or JsonValueKind.Array => FromJson(value),
+            _ => Undefined,
+        };
+
+    /// <summary>
     /// Evaluates equality (<c>==</c>). Differing kinds are never equal; an undefined operand makes
     /// the comparison false. String comparison is case-insensitive (Arazzo §Condition Evaluation),
     /// performed over UTF-8 spans.
@@ -87,6 +114,36 @@ internal readonly struct Comparand
             _ => false,
         };
     }
+
+    /// <summary>
+    /// Evaluates inequality (<c>!=</c>). Mirrors the runtime's <c>simple</c>-criterion semantics: an
+    /// undefined operand makes the comparison <see langword="false"/> (it is <em>not</em> the negation
+    /// of <see cref="ValueEquals"/>, which is also false for undefined operands).
+    /// </summary>
+    /// <param name="other">The right-hand comparand.</param>
+    /// <returns><see langword="true"/> if both operands are defined and not equal.</returns>
+    public bool ValueNotEquals(in Comparand other)
+        => this.kind != ComparandKind.Undefined && other.kind != ComparandKind.Undefined && !this.ValueEquals(other);
+
+    /// <summary>Evaluates <c>&lt;</c> (numeric, coercing numeric strings); false unless both operands are numeric.</summary>
+    /// <param name="other">The right-hand comparand.</param>
+    /// <returns>The comparison result.</returns>
+    public bool LessThan(in Comparand other) => this.TryCompareNumeric(other, out int c) && c < 0;
+
+    /// <summary>Evaluates <c>&lt;=</c> (numeric, coercing numeric strings); false unless both operands are numeric.</summary>
+    /// <param name="other">The right-hand comparand.</param>
+    /// <returns>The comparison result.</returns>
+    public bool LessThanOrEqual(in Comparand other) => this.TryCompareNumeric(other, out int c) && c <= 0;
+
+    /// <summary>Evaluates <c>&gt;</c> (numeric, coercing numeric strings); false unless both operands are numeric.</summary>
+    /// <param name="other">The right-hand comparand.</param>
+    /// <returns>The comparison result.</returns>
+    public bool GreaterThan(in Comparand other) => this.TryCompareNumeric(other, out int c) && c > 0;
+
+    /// <summary>Evaluates <c>&gt;=</c> (numeric, coercing numeric strings); false unless both operands are numeric.</summary>
+    /// <param name="other">The right-hand comparand.</param>
+    /// <returns>The comparison result.</returns>
+    public bool GreaterThanOrEqual(in Comparand other) => this.TryCompareNumeric(other, out int c) && c >= 0;
 
     /// <summary>
     /// Gets this comparand as a number, coercing a numeric string per the Arazzo spec

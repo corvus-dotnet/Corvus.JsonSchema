@@ -119,6 +119,47 @@ public class StepBodyEmitterTests
     }
 
     [TestMethod]
+    public void Inlines_a_body_comparison_simple_criterion_against_the_live_body()
+    {
+        StepBodyCode code = Emit([new StepCriterion("simple", "$response.body#/status == 'ok'", null)]);
+
+        // No CompiledCriterion: the operand is navigated from the live body and compared via Comparand,
+        // with the string literal baked once into a static readonly byte[].
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.Fields.ShouldContain("\"ok\"u8.ToArray();");
+        code.Statements.ShouldContain("getPetResponseBody.TryResolvePointer(\"/status\"u8, out JsonElement getPet_C0L0)");
+        code.Statements.ShouldContain("getPet_C0L = Comparand.FromJsonElement(getPet_C0L0);");
+        code.Statements.ShouldContain("if (!(getPet_C0L.ValueEquals(Comparand.FromUtf8String(getPet_C0RLit))))");
+    }
+
+    [TestMethod]
+    public void Inlines_a_numeric_body_comparison_and_a_lone_truthy_operand()
+    {
+        StepBodyCode code = Emit(
+        [
+            new StepCriterion("simple", "$response.body#/count > 5", null),
+            new StepCriterion("simple", "$response.body#/active", null),
+        ]);
+
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        // Numeric comparison → GreaterThan against a Comparand.FromNumber literal.
+        code.Statements.ShouldContain("getPet_C0L.GreaterThan(Comparand.FromNumber(5))");
+        // Lone operand → IsTrue.
+        code.Statements.ShouldContain("getPet_C1L.IsTrue");
+        code.Statements.ShouldContain("if (!(getPet_C0L.GreaterThan(Comparand.FromNumber(5)) && getPet_C1L.IsTrue))");
+    }
+
+    [TestMethod]
+    public void Falls_back_to_a_compiled_criterion_for_a_compound_simple_condition()
+    {
+        // A condition using the logical grammar is not inlined yet — it compiles to a CompiledCriterion.
+        StepBodyCode code = Emit([new StepCriterion("simple", "$response.body#/count > 5 && $response.body#/active", null)]);
+
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Simple,");
+        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
+    }
+
+    [TestMethod]
     public void Defaults_to_http_success_when_no_criteria()
     {
         StepBodyCode code = Emit([]);

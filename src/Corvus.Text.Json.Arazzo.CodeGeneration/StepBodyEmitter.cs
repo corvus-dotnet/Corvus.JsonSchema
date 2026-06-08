@@ -25,11 +25,14 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// response is then disposed in a <c>finally</c>, leaking nothing.
 /// </para>
 /// <para>
-/// Success criteria that are pure <c>$statusCode &lt;op&gt; &lt;int&gt;</c> comparisons are evaluated at
-/// generation time and emitted <em>inline</em> as a direct comparison against the response's status
-/// code — no <c>CompiledCriterion</c>, no context, no allocation. Any other criterion is compiled once
-/// into a <c>static readonly</c> <c>CompiledCriterion</c> field. A step with no <c>successCriteria</c>
-/// defaults to requiring an HTTP success status.
+/// Success criteria are inlined where possible: a pure <c>$statusCode &lt;op&gt; &lt;int&gt;</c>
+/// comparison becomes a direct status-code comparison, and a single-comparison / lone-truthy
+/// <c>simple</c> condition is inlined (via <see cref="SimpleCriterionInliner"/>) to evaluate directly
+/// against the live response / inputs / prior-step outputs, reusing <see cref="Corvus.Text.Json.Arazzo.Comparand"/>
+/// for the operand semantics — no <c>CompiledCriterion</c>, no context. Anything else (compound/negated/
+/// grouped <c>simple</c>, <c>regex</c>, <c>jsonpath</c>) is compiled once into a <c>static readonly</c>
+/// <c>CompiledCriterion</c> field. A step with no <c>successCriteria</c> defaults to requiring an HTTP
+/// success status.
 /// </para>
 /// </remarks>
 public static class StepBodyEmitter
@@ -138,7 +141,9 @@ public static class StepBodyEmitter
             inner.Append(contextVariable).Append(".SetResponseBody(").Append(responseBodyLocal).AppendLine(");");
         }
 
-        EmitSuccessGate(fields, inner, successCriteria, prefix, contextVariable, responseVar, stepId);
+        EmitSuccessGate(
+            fields, inner, successCriteria, prefix, contextVariable, responseVar,
+            bindResponseBody ? responseBodyLocal : null, inputsVariable, stepOutputLocals, stepId);
 
         if (hasOutputs)
         {
@@ -189,6 +194,9 @@ public static class StepBodyEmitter
         string prefix,
         string contextVariable,
         string responseVar,
+        string? responseBodyLocal,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
         string stepId)
     {
         if (successCriteria.Count == 0)
@@ -207,17 +215,33 @@ public static class StepBodyEmitter
         for (int i = 0; i < successCriteria.Count; i++)
         {
             StepCriterion criterion = successCriteria[i];
+            string index = i.ToString(CultureInfo.InvariantCulture);
 
             // A pure `$statusCode <op> <int>` simple criterion is evaluated at generation time into a
             // direct comparison against the response's status code — no CompiledCriterion field, no
-            // context, no allocation. Everything else falls back to the compiled-criterion runtime.
+            // context, no allocation.
             if (TryEmitStatusCodeCheck(criterion, responseVar, out string inlineCheck))
             {
                 checks.Add(inlineCheck);
                 continue;
             }
 
-            string field = $"{prefix}SuccessCriterion{i.ToString(CultureInfo.InvariantCulture)}";
+            // A single-comparison / lone-truthy simple criterion is inlined to evaluate directly
+            // against the live response / inputs / prior-step outputs (reusing Comparand for operand
+            // semantics) — its operand-resolution statements are emitted before the gate.
+            if (MapCriterionType(criterion.Type) == "Simple"
+                && SimpleCriterionInliner.TryEmit(
+                    criterion.Condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals,
+                    $"{prefix}C{index}", fields, out string inlineStatements, out string inlineExpression))
+            {
+                body.Append(inlineStatements);
+                checks.Add(inlineExpression);
+                continue;
+            }
+
+            // Everything else (compound/negated/grouped simple, regex, jsonpath) falls back to the
+            // compiled-criterion runtime.
+            string field = $"{prefix}SuccessCriterion{index}";
             string contextArgument = criterion.Context is null ? string.Empty : $", {EmitText.Quote(criterion.Context)}";
 
             fields.Append("private static readonly CompiledCriterion ").Append(field)

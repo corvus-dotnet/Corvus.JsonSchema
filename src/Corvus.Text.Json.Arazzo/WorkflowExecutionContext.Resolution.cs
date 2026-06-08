@@ -199,17 +199,7 @@ public sealed partial class WorkflowExecutionContext
             or ArazzoExpressionSource.ResponseHeader
             or ArazzoExpressionSource.MessageHeader;
 
-    private static Comparand ComparandFromJson(in JsonElement element)
-        => element.ValueKind switch
-        {
-            JsonValueKind.String => Comparand.FromJsonString(element),
-            JsonValueKind.Number => Comparand.FromNumber(element.GetDouble()),
-            JsonValueKind.True => Comparand.FromBoolean(true),
-            JsonValueKind.False => Comparand.FromBoolean(false),
-            JsonValueKind.Null => Comparand.Null,
-            JsonValueKind.Object or JsonValueKind.Array => Comparand.FromJson(element),
-            _ => Comparand.Undefined,
-        };
+    private static Comparand ComparandFromJson(in JsonElement element) => Comparand.FromJsonElement(element);
 
     private static Comparand ComparandFromMap(Dictionary<string, byte[]>? map, string? name)
         => map is not null && name is not null && map.TryGetValue(name, out byte[]? value)
