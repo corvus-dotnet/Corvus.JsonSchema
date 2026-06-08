@@ -59,10 +59,26 @@ public class RequestBindingEmitterTests
             "context",
             "CreatePet_",
             NoSteps,
-            "$inputs.pet");
+            new StepBody("$inputs.pet", IsLiteral: false));
 
         code.Fields.ShouldContain("private static readonly ArazzoExpression CreatePet_Body = ArazzoExpression.Parse(\"$inputs.pet\");");
         code.Statements.ShouldContain("context.TryResolveValue(CreatePet_Body, out JsonElement bodyValue);");
+        code.NamedArguments.ShouldContain("body: Acme.Pets.NewPet.From(bodyValue)");
+    }
+
+    [TestMethod]
+    public void Binds_a_literal_request_body_via_a_fixed_document()
+    {
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            CreatePet,
+            [],
+            "context",
+            "CreatePet_",
+            NoSteps,
+            new StepBody("\"electronic\"", IsLiteral: true));
+
+        code.Fields.ShouldContain("private static readonly Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement> CreatePet_BodyLiteral = Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement>.ForString(");
+        code.Statements.ShouldContain("JsonElement bodyValue = CreatePet_BodyLiteral.RootElement;");
         code.NamedArguments.ShouldContain("body: Acme.Pets.NewPet.From(bodyValue)");
     }
 
@@ -76,7 +92,7 @@ public class RequestBindingEmitterTests
             "context",
             "GetPet_",
             NoSteps,
-            "$inputs.pet");
+            new StepBody("$inputs.pet", IsLiteral: false));
 
         code.NamedArguments.ShouldNotContain(a => a.StartsWith("body:", StringComparison.Ordinal));
     }
