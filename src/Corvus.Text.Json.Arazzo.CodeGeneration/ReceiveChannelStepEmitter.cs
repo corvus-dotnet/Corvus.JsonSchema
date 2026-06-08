@@ -101,10 +101,11 @@ internal static class ReceiveChannelStepEmitter
 
         if (hasCriteria)
         {
+            var gateOps = new StringBuilder();
             string gateExpression = StepBodyEmitter.EmitCriteriaExpression(
                 successCriteria,
                 fields,
-                lambdaBody,
+                gateOps,
                 auxiliaryTypes,
                 $"{identifier}Recv",
                 "context",
@@ -117,6 +118,14 @@ internal static class ReceiveChannelStepEmitter
                 requestContext: default,
                 namespaceName);
 
+            // A dynamic-pattern criterion that could not be inlined evaluates a CompiledCriterion against
+            // the context; feed the received message into it (the context's inputs are set at method scope).
+            if (UsesContext(gateOps, gateExpression))
+            {
+                lambdaBody.Append("context.SetMessagePayload(").Append(payloadLocal).AppendLine(");");
+            }
+
+            lambdaBody.Append(gateOps);
             lambdaBody.Append(successLocal).Append(" = (").Append(gateExpression).AppendLine(");");
         }
 
@@ -154,6 +163,12 @@ internal static class ReceiveChannelStepEmitter
 
         return statements.ToString();
     }
+
+    // True when the emitted gate still resolves through the WorkflowExecutionContext (a criterion that
+    // could not be inlined — e.g. a dynamic regex/jsonpath pattern — fell back to a CompiledCriterion).
+    internal static bool UsesContext(StringBuilder gateOperands, string gateExpression)
+        => gateExpression.Contains("context", StringComparison.Ordinal)
+            || gateOperands.ToString().Contains("context", StringComparison.Ordinal);
 
     internal static void ValidateCriteria(string stepId, IReadOnlyList<StepCriterion> criteria)
     {
