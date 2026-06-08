@@ -5,6 +5,7 @@
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Arazzo11;
+using Corvus.Text.Json.AsyncApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
@@ -77,6 +78,10 @@ internal static class ControlFlowEmitter
             if (steps[i].SubWorkflowId is not null)
             {
                 EmitSubWorkflowCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals);
+            }
+            else if (steps[i].Channel is not null)
+            {
+                EmitChannelCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals);
             }
             else
             {
@@ -320,7 +325,172 @@ internal static class ControlFlowEmitter
         WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
     }
 
-    private static bool ProducesOutputs(in ControlFlowStep step) => step.SubWorkflowId is not null || step.Outputs.Count > 0;
+    private static void EmitChannelCase(
+        in ControlFlowStep step,
+        int index,
+        IReadOnlyDictionary<string, int> stepIndex,
+        in WorkflowExecutorOptions options,
+        StringBuilder fields,
+        StringBuilder loop,
+        StringBuilder auxiliaryTypes,
+        Dictionary<string, string> stepOutputLocals)
+    {
+        ResolvedChannel channel = step.Channel!.Value;
+        AsyncApiChannelDescriptor descriptor = channel.Channel;
+        bool isReceive = descriptor.Action == OperationAction.Receive;
+        string identifier = EmitText.SanitizeIdentifier(step.StepId);
+        string prefix = $"{identifier}_";
+        string camel = EmitText.ToCamelCase(identifier);
+
+        // Action criteria are dispatched after the message handler returns (so a goto/return is valid and
+        // the payload is no longer live), so they may reference only $inputs/$steps — never $message.*.
+        ValidateChannelActionCriteria(step.StepId, step.OnSuccess);
+        ValidateChannelActionCriteria(step.StepId, step.OnFailure);
+
+        // Dispatch runs after the step; for a channel step it has no response/request/message context.
+        var successDispatch = new StringBuilder();
+        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+        var failureDispatch = new StringBuilder();
+        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+
+        var c = new StringBuilder();
+        c.AppendLine("{");
+        c.Append("    // ── step: ").Append(step.StepId).AppendLine(" (channel) ──");
+        c.Append("    int ").Append(camel).Append("Next = ").Append((index + 1).ToString(CultureInfo.InvariantCulture)).AppendLine(";");
+        c.Append("    bool ").Append(camel).AppendLine("End = false;");
+        c.Append("    bool ").Append(camel).AppendLine("Fail = false;");
+        c.Append("    bool ").Append(camel).AppendLine("Retry = false;");
+        c.Append("    double ").Append(camel).AppendLine("RetryDelay = 0;");
+        c.Append("    bool ").Append(camel).AppendLine("Success = false;");
+
+        if (isReceive)
+        {
+            EmitReceiveBody(c, step, descriptor, camel, prefix, fields, auxiliaryTypes, stepOutputLocals, options);
+        }
+        else
+        {
+            // Send: publish the payload, then the step succeeds unconditionally.
+            SendChannelStepCode send = SendChannelStepEmitter.Emit(
+                step.StepId, channel, step.RequestBody, "messageTransport", stepOutputLocals, "inputs", options.InputAccessors);
+            fields.Append(send.Fields);
+            WorkflowExecutorEmitter.AppendIndented(c, send.Statements, 4);
+            c.Append("    ").Append(camel).AppendLine("Success = true;");
+        }
+
+        c.Append("    if (").Append(camel).AppendLine("Success)");
+        c.AppendLine("    {");
+        WorkflowExecutorEmitter.AppendIndented(c, successDispatch.ToString(), 8);
+        c.AppendLine("    }");
+        c.AppendLine("    else");
+        c.AppendLine("    {");
+        WorkflowExecutorEmitter.AppendIndented(c, failureDispatch.ToString(), 8);
+        c.AppendLine("    }");
+
+        c.Append("    if (").Append(camel).Append("Fail) { throw new WorkflowStepFailedException(")
+            .Append(EmitText.Quote(step.StepId)).Append(", ").Append(EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.")).AppendLine("); }");
+        c.Append("    if (").Append(camel).AppendLine("End) { goto __workflowOutputs; }");
+        c.Append("    if (").Append(camel).AppendLine("Retry)");
+        c.AppendLine("    {");
+        c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
+            .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
+        c.Append("        __state = ").Append(index.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
+        c.AppendLine("        continue;");
+        c.AppendLine("    }");
+        c.Append("    __state = ").Append(camel).AppendLine("Next;");
+        c.AppendLine("    continue;");
+        c.AppendLine("}");
+
+        WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
+    }
+
+    // Emits the receive into the case body: the message is handled inline (while the payload is live) to
+    // evaluate the success criteria and project outputs; the success flag and outputs element escape to
+    // the surrounding case for action dispatch.
+    private static void EmitReceiveBody(
+        StringBuilder c,
+        in ControlFlowStep step,
+        in AsyncApiChannelDescriptor descriptor,
+        string camel,
+        string prefix,
+        StringBuilder fields,
+        StringBuilder auxiliaryTypes,
+        Dictionary<string, string> stepOutputLocals,
+        in WorkflowExecutorOptions options)
+    {
+        if (descriptor.ChannelParameters.Count > 0)
+        {
+            throw new NotSupportedException($"Channel step '{step.StepId}' receives on a parameterised channel '{descriptor.ChannelAddress}'; parameterised channel addresses are a later phase.");
+        }
+
+        ReceiveChannelStepEmitter.ValidateCriteria(step.StepId, step.SuccessCriteria);
+
+        string payloadType = descriptor.Messages.Count > 0 && descriptor.Messages[0].PayloadTypeName is { } typeName
+            ? typeName
+            : "Corvus.Text.Json.JsonElement";
+        string payloadLocal = $"{camel}MessagePayload";
+        string outputsLocal = EmitText.StepOutputsElementLocal(step.StepId);
+
+        // The message handler reads the live payload: evaluate the success gate, then project outputs.
+        var lambdaBody = new StringBuilder();
+        lambdaBody.Append("JsonElement ").Append(payloadLocal).AppendLine(" = JsonElement.From(message);");
+
+        var sources = new CriterionSources(payloadLocal, "messageHeaders");
+        string gateExpression = step.SuccessCriteria.Count == 0
+            ? "true"
+            : StepBodyEmitter.EmitCriteriaExpression(
+                step.SuccessCriteria, fields, lambdaBody, auxiliaryTypes, $"{prefix}recv", "context",
+                responseVar: string.Empty, sources, "inputs", stepOutputLocals, options.InputAccessors, null, default, options.Namespace);
+
+        lambdaBody.Append(camel).Append("Success = (").Append(gateExpression).AppendLine(");");
+        lambdaBody.Append("if (").Append(camel).AppendLine("Success)");
+        lambdaBody.AppendLine("{");
+        if (step.Outputs.Count > 0)
+        {
+            OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
+                step.StepId, step.Outputs, "workspace", "context", stepOutputLocals, "inputs", options.InputAccessors, responseBodyLocal: null, messagePayloadLocal: payloadLocal, messageHeadersLocal: "messageHeaders");
+            fields.Append(outputCode.Fields);
+            WorkflowExecutorEmitter.AppendIndented(lambdaBody, outputCode.Statements, 4);
+        }
+        else
+        {
+            lambdaBody.Append("    ").Append(outputsLocal).Append(" = ").Append(payloadLocal).AppendLine(".CloneAsBuilder(workspace).RootElement;");
+        }
+
+        lambdaBody.AppendLine("}");
+        lambdaBody.AppendLine("return default;");
+
+        c.AppendLine("    ArazzoTelemetry.StepsExecuted.Add(1);");
+        c.Append("    await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
+            .Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
+        c.AppendLine("    {");
+        WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 8);
+        c.AppendLine("    }, cancellationToken).ConfigureAwait(false);");
+    }
+
+    private static void ValidateChannelActionCriteria(string stepId, IReadOnlyList<StepActionInfo> actions)
+    {
+        ReadOnlySpan<string> forbidden = ["$message", "$statusCode", "$response", "$request", "$method", "$url"];
+        foreach (StepActionInfo action in actions)
+        {
+            foreach (StepCriterion criterion in action.Criteria)
+            {
+                string text = criterion.Context is { } context ? $"{criterion.Condition} {context}" : criterion.Condition;
+                foreach (string token in forbidden)
+                {
+                    if (text.Contains(token, StringComparison.Ordinal))
+                    {
+                        throw new NotSupportedException(
+                            $"Channel step '{stepId}' has an onSuccess/onFailure action criterion referencing '{token}'; a channel step's action criteria run after the message is handled and may reference only $inputs and $steps.");
+                    }
+                }
+            }
+        }
+    }
+
+    private static bool ProducesOutputs(in ControlFlowStep step)
+        => step.SubWorkflowId is not null
+            || step.Outputs.Count > 0
+            || (step.Channel is { } channel && channel.Channel.Action == OperationAction.Receive);
 
     private static void EmitDispatch(
         StringBuilder target,
