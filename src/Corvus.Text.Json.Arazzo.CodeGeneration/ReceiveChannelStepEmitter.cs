@@ -77,33 +77,34 @@ internal static class ReceiveChannelStepEmitter
             : "Corvus.Text.Json.JsonElement";
 
         string identifier = EmitText.SanitizeIdentifier(stepId);
+        string camel = EmitText.ToCamelCase(identifier);
         string outputsElementLocal = EmitText.StepOutputsElementLocal(stepId);
+        string payloadLocal = $"{camel}MessagePayload";
+        string successLocal = $"{camel}Success";
         bool hasOutputs = outputs.Count > 0;
         bool hasCriteria = successCriteria.Count > 0;
 
+        // The received payload is materialised in the subscriber handler — while it is still live — so we
+        // copy only what the step actually uses (the declared outputs, or the whole message when none are
+        // declared) into the run's workspace, never cloning the whole message just to extract one field.
         var statements = new StringBuilder();
+        var lambdaBody = new StringBuilder();
         statements.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
-
-        if (!hasOutputs && !hasCriteria)
+        statements.Append("JsonElement ").Append(outputsElementLocal).AppendLine(" = default;");
+        if (hasCriteria)
         {
-            // No criteria and no declared outputs: the whole received message is the step's outputs.
-            statements.Append("JsonElement ").Append(outputsElementLocal);
-            AppendReceive(statements, messageTransportVariable, payloadType, descriptor.ChannelAddress, workspaceVariable);
-            return statements.ToString();
+            statements.Append("bool ").Append(successLocal).AppendLine(" = true;");
         }
 
-        // Receive into a payload local so criteria can gate on it and outputs can project from it.
-        string payloadLocal = $"{EmitText.ToCamelCase(identifier)}MessagePayload";
-        statements.Append("JsonElement ").Append(payloadLocal);
-        AppendReceive(statements, messageTransportVariable, payloadType, descriptor.ChannelAddress, workspaceVariable);
+        // The live message is bound to a JsonElement once; criteria and output projection read from it.
+        lambdaBody.Append("JsonElement ").Append(payloadLocal).AppendLine(" = JsonElement.From(message);");
 
         if (hasCriteria)
         {
-            // Inline the criteria against the received payload (the live JSON body), then gate on the result.
             string gateExpression = StepBodyEmitter.EmitCriteriaExpression(
                 successCriteria,
                 fields,
-                statements,
+                lambdaBody,
                 auxiliaryTypes,
                 $"{identifier}Recv",
                 "context",
@@ -116,25 +117,39 @@ internal static class ReceiveChannelStepEmitter
                 requestContext: default,
                 namespaceName);
 
-            statements.Append("if (!(").Append(gateExpression).AppendLine("))");
-            statements.AppendLine("{");
-            statements.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
-                .Append(EmitText.Quote($"Step '{stepId}' did not satisfy its success criteria.")).AppendLine(");");
-            statements.AppendLine("}");
+            lambdaBody.Append(successLocal).Append(" = (").Append(gateExpression).AppendLine(");");
         }
 
         if (hasOutputs)
         {
-            statements.Append("JsonElement ").Append(outputsElementLocal).AppendLine(" = default;");
             OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
                 stepId, outputs, workspaceVariable, "context", stepOutputLocals, inputsVariable, inputAccessors, responseBodyLocal: null, messagePayloadLocal: payloadLocal);
             fields.Append(outputCode.Fields);
-            statements.Append(outputCode.Statements);
+            lambdaBody.Append(outputCode.Statements);
         }
         else
         {
-            // Criteria but no declared outputs: the whole received message is the step's outputs.
-            statements.Append("JsonElement ").Append(outputsElementLocal).Append(" = ").Append(payloadLocal).AppendLine(";");
+            // No declared outputs: the whole received message becomes the step's outputs (cloned out of
+            // the live payload before the handler returns).
+            lambdaBody.Append(outputsElementLocal).Append(" = ").Append(payloadLocal)
+                .Append(".CloneAsBuilder(").Append(workspaceVariable).AppendLine(").RootElement;");
+        }
+
+        lambdaBody.AppendLine("return default;");
+
+        statements.Append("await ").Append(messageTransportVariable).Append(".ReceiveOneAsync<").Append(payloadType)
+            .Append(">(").Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, _) =>");
+        statements.AppendLine("{");
+        statements.Append(lambdaBody);
+        statements.AppendLine("}, cancellationToken).ConfigureAwait(false);");
+
+        if (hasCriteria)
+        {
+            statements.Append("if (!").Append(successLocal).AppendLine(")");
+            statements.AppendLine("{");
+            statements.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
+                .Append(EmitText.Quote($"Step '{stepId}' did not satisfy its success criteria.")).AppendLine(");");
+            statements.AppendLine("}");
         }
 
         return statements.ToString();
@@ -154,12 +169,5 @@ internal static class ReceiveChannelStepEmitter
                 }
             }
         }
-    }
-
-    private static void AppendReceive(StringBuilder statements, string messageTransportVariable, string payloadType, string channelAddress, string workspaceVariable)
-    {
-        statements.Append(" = await ").Append(messageTransportVariable)
-            .Append(".ReceiveOneAsync<").Append(payloadType).Append(">(").Append(EmitText.Quote(channelAddress))
-            .Append("u8.ToArray(), ").Append(workspaceVariable).AppendLine(", cancellationToken).ConfigureAwait(false);");
     }
 }
