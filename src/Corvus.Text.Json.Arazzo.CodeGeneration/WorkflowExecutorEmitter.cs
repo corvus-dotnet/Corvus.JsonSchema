@@ -46,6 +46,10 @@ public static class WorkflowExecutorEmitter
         // $steps.<id>.outputs references resolve statically — no runtime dictionary.
         var stepOutputLocals = new Dictionary<string, string>(StringComparer.Ordinal);
 
+        // Bind every step up front; a workflow that declares any onSuccess/onFailure action is emitted
+        // as a labelled-loop executor (control flow), otherwise as the straight-line form.
+        var boundSteps = new List<ControlFlowStep>();
+        bool usesControlFlow = false;
         foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
         {
             string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw new InvalidOperationException("A step is missing its required stepId.");
@@ -59,29 +63,46 @@ public static class WorkflowExecutorEmitter
 
             List<OutputMapping> stepOutputs = ReadOutputs(step);
             List<StepCriterion> criteria = ReadCriteria(step);
+            List<StepActionInfo> onSuccess = ReadActions(step.OnSuccess);
+            List<StepActionInfo> onFailure = ReadActions(step.OnFailure);
+            usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
 
-            // Only clone the response body into the workspace when the step actually consumes it.
-            bool bindResponseBody = ReferencesResponseBody(criteria, stepOutputs);
+            // Only clone the response body into the workspace when the step actually consumes it
+            // (success criteria, outputs, or an action's criteria).
+            bool bindResponseBody = ReferencesResponseBody(criteria, stepOutputs, onSuccess, onFailure);
 
-            body.Append("            // ── step: ").Append(stepId).AppendLine(" ──");
-
-            // The step body now builds the step's outputs product inside the step (while the response
-            // is alive), so output extraction is no longer a separate post-step pass.
-            StepBodyCode stepBody = StepBodyEmitter.Emit(
-                stepId, operation, ReadArguments(step), criteria, stepOutputs, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", options.InputAccessors, options.Namespace, ReadRequestBody(step), bindResponseBody);
-            fields.Append(stepBody.Fields);
-            AppendIndented(body, stepBody.Statements, 12);
-            auxiliaryTypes.Append(stepBody.AuxiliaryTypes);
-
-            if (stepOutputs.Count > 0)
-            {
-                stepOutputLocals[stepId] = EmitText.StepOutputsElementLocal(stepId);
-            }
-
-            body.AppendLine();
+            boundSteps.Add(new ControlFlowStep(
+                stepId, operation, ReadArguments(step), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure));
         }
 
-        AppendWorkflowOutputs(fields, body, workflow, stepOutputLocals, options.InputAccessors);
+        if (usesControlFlow)
+        {
+            ControlFlowEmitter.Emit(boundSteps, workflow, options, fields, body, auxiliaryTypes, stepOutputLocals);
+        }
+        else
+        {
+            foreach (ControlFlowStep step in boundSteps)
+            {
+                body.Append("            // ── step: ").Append(step.StepId).AppendLine(" ──");
+
+                // The step body builds the step's outputs product inside the step (while the response
+                // is alive), so output extraction is not a separate post-step pass.
+                StepBodyCode stepBody = StepBodyEmitter.Emit(
+                    step.StepId, step.Operation, step.Arguments, step.SuccessCriteria, step.Outputs, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, "inputs", options.InputAccessors, options.Namespace, step.RequestBody, step.BindResponseBody);
+                fields.Append(stepBody.Fields);
+                AppendIndented(body, stepBody.Statements, 12);
+                auxiliaryTypes.Append(stepBody.AuxiliaryTypes);
+
+                if (step.Outputs.Count > 0)
+                {
+                    stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
+                }
+
+                body.AppendLine();
+            }
+
+            AppendWorkflowOutputs(fields, body, workflow, stepOutputLocals, options.InputAccessors);
+        }
 
         string bodyText = body.ToString();
 
@@ -163,22 +184,50 @@ public static class WorkflowExecutorEmitter
 
     private static bool ReferencesResponseBody(
         IReadOnlyList<StepCriterion> criteria,
-        IReadOnlyList<OutputMapping> outputs)
+        IReadOnlyList<OutputMapping> outputs,
+        IReadOnlyList<StepActionInfo> onSuccess,
+        IReadOnlyList<StepActionInfo> onFailure)
     {
         const string token = "$response.body";
 
-        foreach (StepCriterion criterion in criteria)
+        static bool AnyCriterion(IReadOnlyList<StepCriterion> criteria, string token)
         {
-            if (criterion.Condition.Contains(token, StringComparison.Ordinal)
-                || (criterion.Context is { } context && context.Contains(token, StringComparison.Ordinal)))
+            foreach (StepCriterion criterion in criteria)
             {
-                return true;
+                if (criterion.Condition.Contains(token, StringComparison.Ordinal)
+                    || (criterion.Context is { } context && context.Contains(token, StringComparison.Ordinal)))
+                {
+                    return true;
+                }
             }
+
+            return false;
+        }
+
+        if (AnyCriterion(criteria, token))
+        {
+            return true;
         }
 
         foreach (OutputMapping output in outputs)
         {
             if (output.Expression.Contains(token, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        foreach (StepActionInfo action in onSuccess)
+        {
+            if (AnyCriterion(action.Criteria, token))
+            {
+                return true;
+            }
+        }
+
+        foreach (StepActionInfo action in onFailure)
+        {
+            if (AnyCriterion(action.Criteria, token))
             {
                 return true;
             }
@@ -219,12 +268,16 @@ public static class WorkflowExecutorEmitter
     }
 
     private static List<StepCriterion> ReadCriteria(in ArazzoDocument.StepObject step)
+        => step.SuccessCriteria.IsNotUndefined() ? ReadCriteriaArray(step.SuccessCriteria) : [];
+
+    private static List<StepCriterion> ReadCriteriaArray(in JsonElement criteriaArray)
     {
         var criteria = new List<StepCriterion>();
-        if (step.SuccessCriteria.IsNotUndefined())
+        if (criteriaArray.ValueKind == JsonValueKind.Array)
         {
-            foreach (ArazzoDocument.CriterionObject criterion in step.SuccessCriteria.EnumerateArray())
+            foreach (JsonElement element in criteriaArray.EnumerateArray())
             {
+                ArazzoDocument.CriterionObject criterion = element;
                 string condition = criterion.Condition.GetString()!;
                 string? context = criterion.Context.IsNotUndefined() ? criterion.Context.GetString() : null;
                 criteria.Add(new StepCriterion(ResolveCriterionType(criterion.Type), condition, context));
@@ -232,6 +285,57 @@ public static class WorkflowExecutorEmitter
         }
 
         return criteria;
+    }
+
+    /// <summary>
+    /// Reads a step's <c>onSuccess</c>/<c>onFailure</c> array into a list of <see cref="StepActionInfo"/>.
+    /// Inline action objects are read; a reusable-action reference (<c>{reference:…}</c>) is skipped —
+    /// component resolution is a later phase.
+    /// </summary>
+    private static List<StepActionInfo> ReadActions(in JsonElement actions)
+    {
+        var list = new List<StepActionInfo>();
+        if (actions.ValueKind != JsonValueKind.Array)
+        {
+            return list;
+        }
+
+        foreach (JsonElement entity in actions.EnumerateArray())
+        {
+            if (entity.ValueKind != JsonValueKind.Object || entity.TryGetProperty("reference"u8, out _))
+            {
+                continue;
+            }
+
+            if (!entity.TryGetProperty("name"u8, out JsonElement nameElement) || nameElement.ValueKind != JsonValueKind.String
+                || !entity.TryGetProperty("type"u8, out JsonElement typeElement) || typeElement.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            StepActionKind kind = typeElement.GetString() switch
+            {
+                "end" => StepActionKind.End,
+                "goto" => StepActionKind.Goto,
+                "retry" => StepActionKind.Retry,
+                _ => StepActionKind.End,
+            };
+
+            string? targetStepId = entity.TryGetProperty("stepId"u8, out JsonElement stepIdElement) && stepIdElement.ValueKind == JsonValueKind.String
+                ? stepIdElement.GetString() : null;
+            string? targetWorkflowId = entity.TryGetProperty("workflowId"u8, out JsonElement workflowIdElement) && workflowIdElement.ValueKind == JsonValueKind.String
+                ? workflowIdElement.GetString() : null;
+            double? retryAfter = entity.TryGetProperty("retryAfter"u8, out JsonElement retryAfterElement) && retryAfterElement.ValueKind == JsonValueKind.Number
+                ? retryAfterElement.GetDouble() : null;
+            int? retryLimit = entity.TryGetProperty("retryLimit"u8, out JsonElement retryLimitElement) && retryLimitElement.ValueKind == JsonValueKind.Number
+                ? retryLimitElement.GetInt32() : null;
+            List<StepCriterion> criteria = entity.TryGetProperty("criteria"u8, out JsonElement criteriaElement)
+                ? ReadCriteriaArray(criteriaElement) : [];
+
+            list.Add(new StepActionInfo(nameElement.GetString()!, kind, targetStepId, targetWorkflowId, retryAfter, retryLimit, criteria));
+        }
+
+        return list;
     }
 
     private static List<OutputMapping> ReadOutputs(in ArazzoDocument.StepObject step)
@@ -268,7 +372,7 @@ public static class WorkflowExecutorEmitter
         return "simple";
     }
 
-    private static void AppendWorkflowOutputs(
+    internal static void AppendWorkflowOutputs(
         StringBuilder fields,
         StringBuilder body,
         in ArazzoDocument.WorkflowObject workflow,
@@ -317,7 +421,7 @@ public static class WorkflowExecutorEmitter
         AppendIndented(body, statements.ToString(), 12);
     }
 
-    private static void AppendIndented(StringBuilder target, string text, int indent)
+    internal static void AppendIndented(StringBuilder target, string text, int indent)
     {
         if (text.Length == 0)
         {
@@ -436,3 +540,50 @@ public readonly record struct WorkflowExecutorOptions(
     string InputsTypeName,
     string OutputsTypeName,
     IReadOnlyDictionary<string, string>? InputAccessors = null);
+
+/// <summary>The control-flow effect of an Arazzo success/failure action.</summary>
+internal enum StepActionKind
+{
+    /// <summary>End the workflow (jump to building the outputs).</summary>
+    End,
+
+    /// <summary>Transfer control to another step (sub-workflow targets are a later phase).</summary>
+    Goto,
+
+    /// <summary>Retry the current step (failure actions only), up to <c>retryLimit</c> times.</summary>
+    Retry,
+}
+
+/// <summary>
+/// A success/failure action read off a step (plan §3.3): a control-flow effect gated by criteria.
+/// </summary>
+/// <param name="Name">The action name.</param>
+/// <param name="Kind">The effect (end/goto/retry).</param>
+/// <param name="TargetStepId">The goto target step id, if any.</param>
+/// <param name="TargetWorkflowId">The goto/retry target workflow id, if any (sub-workflow — later phase).</param>
+/// <param name="RetryAfter">The retry delay in seconds, if specified.</param>
+/// <param name="RetryLimit">The retry limit, if specified (defaults to a single retry).</param>
+/// <param name="Criteria">The criteria gating this action (an empty set always matches).</param>
+internal readonly record struct StepActionInfo(
+    string Name,
+    StepActionKind Kind,
+    string? TargetStepId,
+    string? TargetWorkflowId,
+    double? RetryAfter,
+    int? RetryLimit,
+    IReadOnlyList<StepCriterion> Criteria);
+
+/// <summary>
+/// A fully-bound workflow step (its resolved operation plus everything the emitter reads off the typed
+/// document), shared between the straight-line and control-flow emission paths.
+/// </summary>
+internal readonly record struct ControlFlowStep(
+    string StepId,
+    ResolvedOperation Operation,
+    IReadOnlyList<StepArgument> Arguments,
+    IReadOnlyList<StepCriterion> SuccessCriteria,
+    IReadOnlyList<OutputMapping> Outputs,
+    StepBody? RequestBody,
+    bool BindResponseBody,
+    IReadOnlyList<StepActionInfo> OnSuccess,
+    IReadOnlyList<StepActionInfo> OnFailure);

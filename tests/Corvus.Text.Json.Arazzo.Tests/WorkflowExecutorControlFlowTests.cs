@@ -101,58 +101,6 @@ public partial class WorkflowExecutorEndToEndTests
         }
         """;
 
-    private const string RetryWithDelayDocument = """
-        {
-          "arazzo": "1.0.1",
-          "info": { "title": "t", "version": "1.0.0" },
-          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
-          "workflows": [
-            {
-              "workflowId": "retryDelayAdopt",
-              "steps": [
-                {
-                  "stepId": "getPet",
-                  "operationId": "getPet",
-                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
-                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
-                  "onFailure": [
-                    { "name": "retry5xx", "type": "retry", "retryAfter": 5, "retryLimit": 3, "criteria": [ { "condition": "$statusCode == 500" } ] }
-                  ],
-                  "outputs": { "petName": "$response.body#/name" }
-                }
-              ],
-              "outputs": { "name": "$steps.getPet.outputs.petName" }
-            }
-          ]
-        }
-        """;
-
-    [TestMethod]
-    public async Task Generated_executor_uses_the_injected_TimeProvider_for_the_retry_delay()
-    {
-        string source = EmitGetPetExecutor(RetryWithDelayDocument, "RetryDelayWorkflow");
-        Assembly assembly = CompileInMemory(source);
-        MethodInfo execute = assembly.GetType("GeneratedWorkflows.RetryDelayWorkflow")!.GetMethod("ExecuteAsync")!;
-
-        var transport = new MockApiTransport();
-        transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 500, "{}");
-        transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
-
-        using var workspace = JsonWorkspace.Create();
-        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        var timeProvider = new ImmediateRecordingTimeProvider();
-
-        // retryAfter is 5s; because the executor honours the injected TimeProvider, the delay is driven by
-        // this provider (which fires timers immediately) rather than the wall clock — so the test completes
-        // promptly and the provider records that it created the delay timer.
-        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), timeProvider])!;
-        JsonElement outputs = await pending;
-
-        transport.Requests.Count.ShouldBe(2);
-        outputs.GetProperty("name"u8).GetString().ShouldBe("Fido");
-        timeProvider.TimersCreated.ShouldBeGreaterThanOrEqualTo(1);
-    }
-
     [TestMethod]
     public void Emits_a_labelled_loop_with_inlined_action_criteria_and_no_context()
     {
@@ -184,7 +132,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 
-        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
         JsonElement outputs = await pending;
 
         transport.Requests.Count.ShouldBe(2);
@@ -230,7 +178,7 @@ public partial class WorkflowExecutorEndToEndTests
         WorkflowStepFailedException? caught = null;
         try
         {
-            var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+            var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
             await pending;
         }
         catch (TargetInvocationException ex) when (ex.InnerException is WorkflowStepFailedException failed)
@@ -261,7 +209,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 
-        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
         JsonElement outputs = await pending;
 
         transport.Requests.Count.ShouldBe(1);
@@ -283,40 +231,12 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
 
-        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
         JsonElement outputs = await pending;
 
         // step1 succeeds and gotos step3 — step2 is skipped, so only two requests are made.
         transport.Requests.Count.ShouldBe(2);
         outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
         name.GetString().ShouldBe("Fido");
-    }
-
-    /// <summary>A <see cref="TimeProvider"/> that fires every timer immediately and records how many it
-    /// created — so a <c>Task.Delay</c> routed through it completes at once and the test can assert it was used.</summary>
-    private sealed class ImmediateRecordingTimeProvider : TimeProvider
-    {
-        private int timersCreated;
-
-        public int TimersCreated => Volatile.Read(ref this.timersCreated);
-
-        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
-        {
-            Interlocked.Increment(ref this.timersCreated);
-            return new ImmediateTimer(callback, state);
-        }
-
-        private sealed class ImmediateTimer : ITimer
-        {
-            public ImmediateTimer(TimerCallback callback, object? state) => callback(state);
-
-            public bool Change(TimeSpan dueTime, TimeSpan period) => true;
-
-            public void Dispose()
-            {
-            }
-
-            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
-        }
     }
 }
