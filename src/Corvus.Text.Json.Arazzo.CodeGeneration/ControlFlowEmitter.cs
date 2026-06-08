@@ -435,12 +435,21 @@ internal static class ControlFlowEmitter
         lambdaBody.Append("JsonElement ").Append(payloadLocal).AppendLine(" = JsonElement.From(message);");
 
         var sources = new CriterionSources(payloadLocal, "messageHeaders");
+        var gateOps = new StringBuilder();
         string gateExpression = step.SuccessCriteria.Count == 0
             ? "true"
             : StepBodyEmitter.EmitCriteriaExpression(
-                step.SuccessCriteria, fields, lambdaBody, auxiliaryTypes, $"{prefix}recv", "context",
+                step.SuccessCriteria, fields, gateOps, auxiliaryTypes, $"{prefix}recv", "context",
                 responseVar: string.Empty, sources, "inputs", stepOutputLocals, options.InputAccessors, null, default, options.Namespace);
 
+        // A dynamic-pattern criterion that could not be inlined evaluates a CompiledCriterion against the
+        // context; feed the received message into it (the context's inputs are set at method scope).
+        if (ReceiveChannelStepEmitter.UsesContext(gateOps, gateExpression))
+        {
+            lambdaBody.Append("context.SetMessagePayload(").Append(payloadLocal).AppendLine(");");
+        }
+
+        lambdaBody.Append(gateOps);
         lambdaBody.Append(camel).Append("Success = (").Append(gateExpression).AppendLine(");");
         lambdaBody.Append("if (").Append(camel).AppendLine("Success)");
         lambdaBody.AppendLine("{");

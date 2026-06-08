@@ -552,6 +552,78 @@ public partial class WorkflowExecutorEndToEndTests
         id.GetString().ShouldBe("R2");
     }
 
+    private const string ChannelReceiveDynamicCriteriaDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listen",
+              "steps": [
+                {
+                  "stepId": "receive",
+                  "channelPath": "measurements",
+                  "action": "receive",
+                  "successCriteria": [ { "context": "$message.payload#/name", "type": "regex", "condition": "^{$inputs.prefix}" } ],
+                  "outputs": { "name": "$message.payload#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.receive.outputs.name" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_gates_a_receive_on_a_dynamic_pattern_criterion()
+    {
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveDynamicCriteriaDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The embedded {$inputs.prefix} makes the pattern dynamic → a CompiledCriterion evaluated against
+        // a context fed with the received message payload.
+        source.ShouldContain("CompiledCriterion");
+        source.ShouldContain("context.SetMessagePayload(receiveMessagePayload)");
+        source.ShouldContain("new WorkflowExecutionContext()");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"prefix":"id"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"name":"id-42"}"""));
+        JsonElement outputs = await pending;
+
+        // The dynamic pattern "^id" (built from $inputs.prefix) matched the message's name.
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("id-42");
+    }
+
     private static MethodInfo CompileReceiveWithCriteria(out string source)
     {
         var descriptor = new AsyncApiChannelDescriptor(
