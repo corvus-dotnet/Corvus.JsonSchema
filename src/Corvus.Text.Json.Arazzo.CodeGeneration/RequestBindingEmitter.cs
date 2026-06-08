@@ -117,7 +117,19 @@ public static class RequestBindingEmitter
                 return local;
 
             case ArgumentValueKind.Interpolation:
-                InterpolationEmitter.Emit(fields, statements, value, local, contextVariable, $"{fieldName}Template");
+                // Inline the template (literal segments + statically-navigated $inputs/$steps fragments
+                // into a pooled buffer, no context) when possible; otherwise fall back to the runtime
+                // interpreter. Request-side interpolation binds no response body, so pass none.
+                if (InterpolationInliner.TryEmit(
+                    value, local, responseBodyLocal: null, inputsVariable, stepOutputLocals, inputAccessors, $"{fieldName}Interp", out string inlined))
+                {
+                    statements.Append(inlined);
+                }
+                else
+                {
+                    InterpolationEmitter.Emit(fields, statements, value, local, contextVariable, $"{fieldName}Template");
+                }
+
                 return local;
 
             case ArgumentValueKind.LiteralString:
