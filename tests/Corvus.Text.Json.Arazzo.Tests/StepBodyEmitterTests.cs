@@ -37,7 +37,7 @@ public class StepBodyEmitterTests
         StepBodyCode code = Emit([]);
 
         code.Statements.ShouldContain("var getPetClient = new Acme.Pets.PetsClient(transport);");
-        code.Statements.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: Acme.Pets.JsonString.From(petIdValue), cancellationToken: cancellationToken).ConfigureAwait(false);");
+        code.Statements.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: petIdValue, cancellationToken: cancellationToken).ConfigureAwait(false);");
         code.Statements.ShouldContain("ArazzoTelemetry.StepsExecuted.Add(1);");
         code.Statements.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
     }

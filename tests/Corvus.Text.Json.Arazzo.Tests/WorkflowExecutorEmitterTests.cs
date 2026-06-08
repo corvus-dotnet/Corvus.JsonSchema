@@ -63,7 +63,7 @@ public class WorkflowExecutorEmitterTests
 
         source.ShouldContain("// ── step: getPet ──");
         source.ShouldContain("var getPetClient = new Acme.Pets.PetsClient(transport);");
-        source.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: Acme.Pets.JsonString.From(petIdValue), cancellationToken: cancellationToken).ConfigureAwait(false);");
+        source.ShouldContain("var getPetResponse = await getPetClient.GetPetAsync(petId: petIdValue, cancellationToken: cancellationToken).ConfigureAwait(false);");
         source.ShouldContain("if (getPetResponse.StatusCode == 200) { context.SetResponseBody(((JsonElement)getPetResponse.OkBody).CloneAsBuilder(workspace).RootElement); }");
         source.ShouldContain("await getPetResponse.DisposeAsync().ConfigureAwait(false);");
         source.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
