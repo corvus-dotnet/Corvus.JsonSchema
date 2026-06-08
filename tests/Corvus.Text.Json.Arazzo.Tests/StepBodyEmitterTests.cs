@@ -123,13 +123,14 @@ public class StepBodyEmitterTests
     {
         StepBodyCode code = Emit([new StepCriterion("simple", "$response.body#/status == 'ok'", null)]);
 
-        // No CompiledCriterion: the operand is navigated from the live body and compared via Comparand,
-        // with the string literal baked once into a static readonly byte[].
+        // No CompiledCriterion: the operand is navigated from the live body to a JsonElement and read as
+        // a Comparand, with the string literal baked once into a static readonly byte[].
         code.Fields.ShouldNotContain("CompiledCriterion");
         code.Fields.ShouldContain("\"ok\"u8.ToArray();");
+        code.Statements.ShouldContain("JsonElement getPet_C0o0 = default;");
         code.Statements.ShouldContain("getPetResponseBody.TryResolvePointer(\"/status\"u8, out JsonElement getPet_C0o0n0)");
-        code.Statements.ShouldContain("getPet_C0o0 = Comparand.FromJsonElement(getPet_C0o0n0);");
-        code.Statements.ShouldContain("if (!(getPet_C0o0.ValueEquals(Comparand.FromUtf8String(getPet_C0o1Lit))))");
+        code.Statements.ShouldContain("getPet_C0o0 = getPet_C0o0n0;");
+        code.Statements.ShouldContain("if (!(Comparand.FromJsonElement(getPet_C0o0).ValueEquals(Comparand.FromUtf8String(getPet_C0o1Lit))))");
     }
 
     [TestMethod]
@@ -143,10 +144,10 @@ public class StepBodyEmitterTests
 
         code.Fields.ShouldNotContain("CompiledCriterion");
         // Numeric comparison → GreaterThan against a Comparand.FromNumber literal.
-        code.Statements.ShouldContain("getPet_C0o0.GreaterThan(Comparand.FromNumber(5))");
+        code.Statements.ShouldContain("Comparand.FromJsonElement(getPet_C0o0).GreaterThan(Comparand.FromNumber(5))");
         // Lone operand → IsTrue.
-        code.Statements.ShouldContain("getPet_C1o0.IsTrue");
-        code.Statements.ShouldContain("if (!(getPet_C0o0.GreaterThan(Comparand.FromNumber(5)) && getPet_C1o0.IsTrue))");
+        code.Statements.ShouldContain("Comparand.FromJsonElement(getPet_C1o0).IsTrue");
+        code.Statements.ShouldContain("if (!(Comparand.FromJsonElement(getPet_C0o0).GreaterThan(Comparand.FromNumber(5)) && Comparand.FromJsonElement(getPet_C1o0).IsTrue))");
     }
 
     [TestMethod]
@@ -161,7 +162,42 @@ public class StepBodyEmitterTests
         // Operand bases are numbered per operand encountered (literals consume a slot too), so the
         // navigated body operands here are o0 (count), o2 (count), o4 (error).
         code.Statements.ShouldContain(
-            "if (!(((getPet_C0o0.GreaterThan(Comparand.FromNumber(5)) || getPet_C0o2.ValueEquals(Comparand.FromNumber(0))) && !(getPet_C0o4.IsTrue))))");
+            "if (!(((Comparand.FromJsonElement(getPet_C0o0).GreaterThan(Comparand.FromNumber(5)) || Comparand.FromJsonElement(getPet_C0o2).ValueEquals(Comparand.FromNumber(0))) && !(Comparand.FromJsonElement(getPet_C0o4).IsTrue))))");
+    }
+
+    [TestMethod]
+    public void Inlines_a_regex_criterion_as_a_generated_regex()
+    {
+        StepBodyCode code = Emit([new StepCriterion("regex", "^Fido$", "$response.body#/name")]);
+
+        // The pattern is compiled ahead-of-time via [GeneratedRegex]; the context is resolved
+        // statically and matched through the RegexCriterion runtime helper — no CompiledCriterion.
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.Fields.ShouldContain("[GeneratedRegex(\"^Fido$\", RegexOptions.CultureInvariant, 1000)]");
+        code.Fields.ShouldContain("private static partial Regex getPet_C0Regex();");
+        code.Statements.ShouldContain("getPetResponseBody.TryResolvePointer(\"/name\"u8, out JsonElement getPet_C0ctxn0)");
+        code.Statements.ShouldContain("if (!(RegexCriterion.IsMatch(getPet_C0Regex(), getPet_C0ctx)))");
+    }
+
+    [TestMethod]
+    public void Inlines_a_regex_criterion_against_the_status_code()
+    {
+        StepBodyCode code = Emit([new StepCriterion("regex", "^4", "$statusCode")]);
+
+        code.Fields.ShouldContain("[GeneratedRegex(\"^4\", RegexOptions.CultureInvariant, 1000)]");
+        code.Statements.ShouldContain("if (!(RegexCriterion.IsMatch(getPet_C0Regex(), getPetResponse.StatusCode)))");
+    }
+
+    [TestMethod]
+    public void Falls_back_to_a_compiled_criterion_for_a_dynamic_regex_pattern()
+    {
+        // An embedded {expression} makes the pattern dynamic — [GeneratedRegex] needs a constant, so it
+        // compiles to a CompiledCriterion instead.
+        StepBodyCode code = Emit([new StepCriterion("regex", "^{$inputs.prefix}-", "$response.body#/name")]);
+
+        code.Fields.ShouldNotContain("GeneratedRegex");
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.Regex,");
+        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
     }
 
     [TestMethod]
