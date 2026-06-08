@@ -95,7 +95,7 @@ public class RequestBindingEmitterTests
     }
 
     [TestMethod]
-    public void Binds_a_literal_parameter_value_as_a_parsed_once_constant()
+    public void Binds_a_literal_string_value_via_the_specialised_fixed_document()
     {
         RequestBindingCode code = RequestBindingEmitter.Emit(
             GetPet,
@@ -104,11 +104,39 @@ public class RequestBindingEmitterTests
             "GetPet_",
             NoSteps);
 
-        // The literal is parsed once into a static document; no context resolution is emitted.
-        code.Fields.ShouldContain("private static readonly ParsedJsonDocument<JsonElement> GetPet_PetIdLiteral = ParsedJsonDocument<JsonElement>.Parse(");
+        // A scalar string wraps the raw UTF-8 directly (no parse), held as a never-disposed static.
+        code.Fields.ShouldContain("private static readonly Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement> GetPet_PetIdLiteral = Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement>.ForString(");
         code.Statements.ShouldContain("JsonElement petIdValue = GetPet_PetIdLiteral.RootElement;");
         code.Statements.ShouldNotContain("context.TryResolveValue");
         code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(petIdValue)");
+    }
+
+    [TestMethod]
+    public void Binds_a_literal_number_value_via_the_specialised_fixed_document()
+    {
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            GetPet,
+            [new StepArgument("petId", "$inputs.petId"), new StepArgument("limit", "10", IsLiteral: true)],
+            "context",
+            "GetPet_",
+            NoSteps);
+
+        code.Fields.ShouldContain("private static readonly Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement> GetPet_LimitLiteral = Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement>.ForNumber(");
+        code.NamedArguments.ShouldContain("limit: Acme.Pets.JsonInt32.From(limitValue)");
+    }
+
+    [TestMethod]
+    public void Binds_a_literal_object_value_via_a_parsed_document()
+    {
+        // Object/array/bool/null literals are not scalar — they fall back to ParsedJsonDocument.
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            GetPet,
+            [new StepArgument("petId", "$inputs.petId"), new StepArgument("limit", "{\"a\":1}", IsLiteral: true)],
+            "context",
+            "GetPet_",
+            NoSteps);
+
+        code.Fields.ShouldContain("private static readonly ParsedJsonDocument<JsonElement> GetPet_LimitLiteral = ParsedJsonDocument<JsonElement>.Parse(");
     }
 
     [TestMethod]
