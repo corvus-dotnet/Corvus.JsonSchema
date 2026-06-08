@@ -37,6 +37,9 @@ Measure("StatusOnly", executor.RunStatusOnlyWorkflow);
 Measure("Interpolation", executor.RunInterpolationWorkflow);
 Measure("SimpleCriteria", executor.RunSimpleCriteriaWorkflow);
 Measure("JsonPath", executor.RunJsonPathWorkflow);
+Measure("ControlFlow", executor.RunControlFlowWorkflow);
+Measure("SubWorkflow", executor.RunSubWorkflow);
+Measure("ChannelSend", executor.RunChannelSendWorkflow);
 
 executor.Cleanup();
 
