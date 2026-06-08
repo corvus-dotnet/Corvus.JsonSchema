@@ -572,11 +572,128 @@ public class WorkflowExecutorEndToEndTests
         throw new InvalidOperationException("No workflow.");
     }
 
+    private const string RegexCriteriaDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adoptRegex",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [
+                    { "context": "$response.body#/name", "type": "regex", "condition": "^Fi" }
+                  ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_inlines_a_regex_criterion_via_generated_regex()
+    {
+        if (LazyRegexGenerator.Value is null)
+        {
+            Assert.Inconclusive("The regular-expression source generator could not be located in this environment.");
+        }
+
+        string source = EmitGetPetExecutor(RegexCriteriaDocument, "AdoptRegexWorkflow");
+        source.ShouldContain("[GeneratedRegex(\"^Fi\", RegexOptions.CultureInvariant, 1000)]");
+        source.ShouldNotContain("CompiledCriterion");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptRegexWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        // Passing: name "Fido" matches ^Fi.
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            JsonElement outputs = await pending;
+            outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+            name.GetString().ShouldBe("Fido");
+        }
+
+        // Failing: name "Rex" does not match ^Fi.
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Rex"}""");
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+            WorkflowStepFailedException? caught = null;
+            try
+            {
+                _ = await pending;
+            }
+            catch (WorkflowStepFailedException ex)
+            {
+                caught = ex;
+            }
+
+            caught.ShouldNotBeNull();
+        }
+    }
+
+    private static readonly Lazy<IIncrementalGenerator?> LazyRegexGenerator = new(LoadRegexGenerator);
+
+    private static IIncrementalGenerator? LoadRegexGenerator()
+    {
+        try
+        {
+            // The regex source generator ships as an analyzer in the .NET ref pack, a sibling of the
+            // shared runtime directory this test runs on. Pick the highest-versioned pack available.
+            string runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+            string dotnetRoot = Path.GetFullPath(Path.Combine(runtimeDir, "..", "..", ".."));
+            string refPacks = Path.Combine(dotnetRoot, "packs", "Microsoft.NETCore.App.Ref");
+            if (!Directory.Exists(refPacks))
+            {
+                return null;
+            }
+
+            string? dll = Directory.GetDirectories(refPacks)
+                .Select(d => (Dir: d, Version: ParseVersion(Path.GetFileName(d))))
+                .Where(d => d.Version is not null)
+                .OrderByDescending(d => d.Version)
+                .Select(d => Path.Combine(d.Dir, "analyzers", "dotnet", "cs", "System.Text.RegularExpressions.Generator.dll"))
+                .FirstOrDefault(File.Exists);
+            if (dll is null)
+            {
+                return null;
+            }
+
+            Type? type = Assembly.LoadFrom(dll).GetType("System.Text.RegularExpressions.Generator.RegexGenerator");
+            return type is null ? null : Activator.CreateInstance(type) as IIncrementalGenerator;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private static Version? ParseVersion(string text) => Version.TryParse(text, out Version? version) ? version : null;
+
     private static Assembly CompileInMemory(string source)
     {
-        SyntaxTree tree = CSharpSyntaxTree.ParseText(
-            source,
-            new CSharpParseOptions(LanguageVersion.Preview));
+        var parseOptions = new CSharpParseOptions(LanguageVersion.Preview);
+        SyntaxTree tree = CSharpSyntaxTree.ParseText(source, parseOptions);
 
         // Force-load assemblies the emitted code references transitively (e.g. NodaTime, via an
         // ObjectBuilder.AddProperty overload) so they appear in the loaded-assembly reference set.
@@ -587,7 +704,7 @@ public class WorkflowExecutorEndToEndTests
             .Select(a => (MetadataReference)MetadataReference.CreateFromFile(a.Location))
             .ToList();
 
-        var compilation = CSharpCompilation.Create(
+        CSharpCompilation compilation = CSharpCompilation.Create(
             "GeneratedWorkflows.Tests",
             [tree],
             references,
@@ -595,6 +712,17 @@ public class WorkflowExecutorEndToEndTests
                 OutputKind.DynamicallyLinkedLibrary,
                 allowUnsafe: true,
                 nullableContextOptions: NullableContextOptions.Enable));
+
+        // Run the regular-expression source generator so [GeneratedRegex] partial methods (emitted for
+        // regex criteria) are completed, exactly as they would be in a consumer's compilation.
+        if (LazyRegexGenerator.Value is { } regexGenerator)
+        {
+            GeneratorDriver driver = CSharpGeneratorDriver.Create(
+                [regexGenerator.AsSourceGenerator()],
+                parseOptions: parseOptions);
+            driver.RunGeneratorsAndUpdateCompilation(compilation, out Compilation updated, out _);
+            compilation = (CSharpCompilation)updated;
+        }
 
         using var peStream = new MemoryStream();
         EmitResult result = compilation.Emit(peStream);
