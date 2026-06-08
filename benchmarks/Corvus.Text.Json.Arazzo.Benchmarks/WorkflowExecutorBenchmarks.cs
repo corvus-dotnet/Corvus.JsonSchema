@@ -73,8 +73,34 @@ public class WorkflowExecutorBenchmarks
         }
         """;
 
+    // Same operation, but the step's petId is an interpolation template "pet-{$inputs.id}" — the path
+    // that currently allocates per run (template buffer + ForUnescapedString reification).
+    private const string InterpolationDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "pet-{$inputs.id}" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> execute = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeStatusOnly = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeInterpolation = null!;
     private BenchTransport transport = null!;
     private JsonWorkspace workspace = null!;
     private ParsedJsonDocument<JsonElement> inputsDocument = default!;
@@ -85,10 +111,11 @@ public class WorkflowExecutorBenchmarks
     {
         this.execute = Compile(Document, "AdoptWorkflow");
         this.executeStatusOnly = Compile(StatusOnlyDocument, "StatusOnlyWorkflow");
+        this.executeInterpolation = Compile(InterpolationDocument, "InterpolationWorkflow");
 
         this.transport = new BenchTransport();
         this.workspace = JsonWorkspace.Create();
-        this.inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        this.inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42","id":"42"}"""));
         this.inputs = this.inputsDocument.RootElement;
 
         static Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> Compile(string document, string className)
@@ -128,6 +155,17 @@ public class WorkflowExecutorBenchmarks
         return result.TryGetProperty("id"u8, out _);
     }
 
+    /// <summary>Runs a workflow whose petId is an interpolation template ("pet-{$inputs.id}").</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunInterpolationWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeInterpolation(this.transport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("name"u8, out _);
+    }
+
     private static string EmitExecutor(string document, string className)
     {
         OperationDescriptor[] operations =
@@ -139,7 +177,13 @@ public class WorkflowExecutorBenchmarks
                 "GetPet",
                 typeof(BenchRequest).FullName!,
                 typeof(BenchResponse).FullName!,
-                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true, "petId")],
+                [
+                    new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true, "petId"),
+                    new RequestParameterInfo("limit", ParameterLocation.Query, "Limit", "Corvus.Text.Json.JsonElement", false, "limit"),
+                    new RequestParameterInfo("active", ParameterLocation.Query, "Active", "Corvus.Text.Json.JsonElement", false, "active"),
+                    new RequestParameterInfo("tag", ParameterLocation.Query, "Tag", "Corvus.Text.Json.JsonElement", false, "tag"),
+                    new RequestParameterInfo("cursor", ParameterLocation.Query, "Cursor", "Corvus.Text.Json.JsonElement", false, "cursor"),
+                ],
                 false,
                 [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
                 typeof(BenchClient).FullName!,
