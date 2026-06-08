@@ -187,6 +187,20 @@ public readonly record struct StepArgument(string Name, string Value, ArgumentVa
 public readonly record struct StepBody(string Value, ArgumentValueKind Kind);
 
 /// <summary>
+/// The request-side values of a step, used to resolve <c>$method</c> and <c>$request.*</c> criterion
+/// operands — <c>$method</c> is the operation's HTTP method (a compile-time constant), and
+/// <c>$request.&lt;location&gt;.&lt;name&gt;</c>/<c>$request.body</c> resolve to the value the step binds
+/// to that request parameter/body.
+/// </summary>
+/// <param name="Method">The operation's HTTP method, upper-cased (e.g. <c>GET</c>).</param>
+/// <param name="Arguments">The step's parameter arguments, keyed by name.</param>
+/// <param name="Body">The step's request body, or <see langword="null"/>.</param>
+public readonly record struct StepRequestContext(
+    string Method,
+    IReadOnlyList<StepArgument> Arguments,
+    StepBody? Body);
+
+/// <summary>
 /// The code emitted for a step's request binding (plan §3.1).
 /// </summary>
 /// <param name="Fields">The <c>static readonly</c> field declarations to place on the executor class.</param>
