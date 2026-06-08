@@ -227,7 +227,56 @@ public class WorkflowExecutorEndToEndTests
         throw new InvalidOperationException("No workflow.");
     }
 
-    private static string EmitCreatePetExecutor()
+    private const string BooleanBodyDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "flag",
+              "steps": [
+                {
+                  "stepId": "createPet",
+                  "operationId": "createPet",
+                  "requestBody": { "contentType": "application/json", "payload": true },
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ]
+                }
+              ],
+              "outputs": {}
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_binds_a_literal_boolean_body_via_the_singleton()
+    {
+        CreatePetClient.CapturedBodies.Clear();
+        string source = EmitCreatePetExecutor(BooleanBodyDocument, "FlagWorkflow");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.FlagWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Post, "/pets", 200, "{}");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        _ = await pending;
+
+        // The literal `true` body was bound from the shared singleton and flowed to the client.
+        CreatePetClient.CapturedBodies.Count.ShouldBe(1);
+        CreatePetClient.CapturedBodies[0].ShouldBe("true");
+    }
+
+    private static string EmitCreatePetExecutor() => EmitCreatePetExecutor(CreatePetDocument, "RegisterWorkflow");
+
+    private static string EmitCreatePetExecutor(string document, string className)
     {
         OperationDescriptor[] operations =
         [
@@ -248,7 +297,7 @@ public class WorkflowExecutorEndToEndTests
 
         var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
 
-        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(CreatePetDocument));
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
         foreach (ArazzoDocument.WorkflowObject workflow in doc.RootElement.Workflows.EnumerateArray())
         {
             return WorkflowExecutorEmitter.Emit(
@@ -256,7 +305,7 @@ public class WorkflowExecutorEndToEndTests
                 binder,
                 new WorkflowExecutorOptions(
                     "GeneratedWorkflows",
-                    "RegisterWorkflow",
+                    className,
                     "Corvus.Text.Json.JsonElement",
                     "Corvus.Text.Json.JsonElement"));
         }
