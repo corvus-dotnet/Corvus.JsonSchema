@@ -67,6 +67,7 @@ public static class WorkflowExecutorEmitter
             List<StepCriterion> criteria = ReadCriteria(step);
             List<StepActionInfo> onSuccess = MergeActions(ReadActions(step.OnSuccess, components), workflowSuccessActions);
             List<StepActionInfo> onFailure = MergeActions(ReadActions(step.OnFailure, components), workflowFailureActions);
+            List<string> dependsOn = ReadDependsOn(step);
 
             // A sub-workflow step invokes another generated workflow. Its criteria (success and action)
             // run against the sub-workflow's outputs / the inputs — never an HTTP response — so they may
@@ -75,7 +76,7 @@ public static class WorkflowExecutorEmitter
             {
                 ValidateSubWorkflowCriteria(stepId, criteria, onSuccess, onFailure);
                 usesControlFlow |= criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0;
-                boundSteps.Add(new ControlFlowStep(stepId, null, ReadArguments(step, components), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId));
+                boundSteps.Add(new ControlFlowStep(stepId, null, ReadArguments(step, components), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId, dependsOn));
                 continue;
             }
 
@@ -92,8 +93,12 @@ public static class WorkflowExecutorEmitter
             bool bindResponseBody = ReferencesResponseBody(criteria, stepOutputs, onSuccess, onFailure);
 
             boundSteps.Add(new ControlFlowStep(
-                stepId, operation, ReadArguments(step, components), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure));
+                stepId, operation, ReadArguments(step, components), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure, null, dependsOn));
         }
+
+        // A step may declare dependsOn (1.1): order steps so each step's same-workflow dependencies
+        // precede it. Sequential executors must honour this; document order is used as the tie-break.
+        boundSteps = TopologicallyOrder(boundSteps);
 
         if (usesControlFlow)
         {
@@ -524,6 +529,106 @@ public static class WorkflowExecutorEmitter
         }
     }
 
+    private static List<string> ReadDependsOn(in ArazzoDocument.StepObject step)
+    {
+        var list = new List<string>();
+        if (step.DependsOn.IsNotUndefined())
+        {
+            foreach (Arazzo11.JsonString dependency in step.DependsOn.EnumerateArray())
+            {
+                if (dependency.IsNotUndefined())
+                {
+                    list.Add(dependency.GetString()!);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    /// <summary>
+    /// Orders steps so each step's same-workflow <c>dependsOn</c> dependencies precede it (a stable
+    /// topological sort — Kahn's algorithm with document order as the tie-break). Cross-workflow or
+    /// unknown dependency references are ignored (a sequential single-workflow executor cannot enforce
+    /// them); a cycle is a generation-time error. Returns the input unchanged when no step declares
+    /// <c>dependsOn</c>.
+    /// </summary>
+    private static List<ControlFlowStep> TopologicallyOrder(List<ControlFlowStep> steps)
+    {
+        bool anyDependencies = false;
+        foreach (ControlFlowStep step in steps)
+        {
+            if ((step.DependsOn?.Count ?? 0) > 0)
+            {
+                anyDependencies = true;
+                break;
+            }
+        }
+
+        if (!anyDependencies)
+        {
+            return steps;
+        }
+
+        var indexById = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (int i = 0; i < steps.Count; i++)
+        {
+            indexById[steps[i].StepId] = i;
+        }
+
+        var inDegree = new int[steps.Count];
+        var dependents = new List<int>[steps.Count];
+        for (int i = 0; i < steps.Count; i++)
+        {
+            dependents[i] = [];
+        }
+
+        for (int i = 0; i < steps.Count; i++)
+        {
+            foreach (string dependency in steps[i].DependsOn ?? [])
+            {
+                if (indexById.TryGetValue(dependency, out int dependencyIndex) && dependencyIndex != i)
+                {
+                    dependents[dependencyIndex].Add(i);
+                    inDegree[i]++;
+                }
+            }
+        }
+
+        // Kahn's algorithm; a SortedSet keyed by original index makes ready steps emerge in document
+        // order, so the result is document order when dependencies don't force otherwise.
+        var ready = new SortedSet<int>();
+        for (int i = 0; i < steps.Count; i++)
+        {
+            if (inDegree[i] == 0)
+            {
+                ready.Add(i);
+            }
+        }
+
+        var ordered = new List<ControlFlowStep>(steps.Count);
+        while (ready.Count > 0)
+        {
+            int next = ready.Min;
+            ready.Remove(next);
+            ordered.Add(steps[next]);
+            foreach (int dependent in dependents[next])
+            {
+                if (--inDegree[dependent] == 0)
+                {
+                    ready.Add(dependent);
+                }
+            }
+        }
+
+        if (ordered.Count != steps.Count)
+        {
+            throw new InvalidOperationException("A cycle was detected in the steps' dependsOn relationships; the steps cannot be ordered.");
+        }
+
+        return ordered;
+    }
+
     private static List<OutputMapping> ReadOutputs(in ArazzoDocument.StepObject step)
     {
         var outputs = new List<OutputMapping>();
@@ -773,4 +878,5 @@ internal readonly record struct ControlFlowStep(
     bool BindResponseBody,
     IReadOnlyList<StepActionInfo> OnSuccess,
     IReadOnlyList<StepActionInfo> OnFailure,
-    string? SubWorkflowId = null);
+    string? SubWorkflowId = null,
+    IReadOnlyList<string>? DependsOn = null);
