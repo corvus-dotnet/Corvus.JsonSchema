@@ -131,7 +131,7 @@ internal static class SimpleCriterionInliner
         out string comparandExpr)
     {
         comparandExpr = string.Empty;
-        (ArazzoExpression expression, string? navigationPointer) = SplitNavigation(token);
+        (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(token);
 
         // $statusCode: only the bare form (no navigation) is a number; anything else is undefined.
         if (expression.Source == ArazzoExpressionSource.StatusCode)
@@ -145,79 +145,16 @@ internal static class SimpleCriterionInliner
             return true;
         }
 
-        // Determine the navigable root and any leading property name.
-        string root;
-        string? name = null;
-        switch (expression.Source)
+        // Navigate the operand to a JsonElement (default when absent), then read it as a Comparand —
+        // FromJsonElement maps an undefined element to an undefined comparand, so a missing operand
+        // makes the comparison false, matching the runtime.
+        if (!CriterionExpressionParsing.TryEmitElementNavigation(
+                expression, navigationPointer, baseName, responseBodyLocal, inputsVariable, stepOutputLocals, statements, out string elementLocal))
         {
-            case ArazzoExpressionSource.ResponseBody when responseBodyLocal is not null:
-                root = responseBodyLocal;
-                break;
-
-            case ArazzoExpressionSource.Inputs when expression.Name is { } inputName:
-                root = $"((JsonElement){inputsVariable})";
-                name = inputName;
-                break;
-
-            case ArazzoExpressionSource.Steps when expression.ContainerId is { } stepId
-                && expression.Name is { } outputName
-                && stepOutputLocals.TryGetValue(stepId, out string? stepLocal):
-                root = stepLocal;
-                name = outputName;
-                break;
-
-            default:
-                return false;
+            return false;
         }
 
-        // Build the navigation chain: optional property, then the '#' pointer, then the '.'/'[]' pointer.
-        var steps = new List<(bool IsProperty, string Value)>();
-        if (name is not null)
-        {
-            steps.Add((true, name));
-        }
-
-        if (expression.JsonPointer is { Length: > 0 } fragmentPointer)
-        {
-            steps.Add((false, fragmentPointer));
-        }
-
-        if (navigationPointer is { Length: > 0 })
-        {
-            steps.Add((false, navigationPointer));
-        }
-
-        if (steps.Count == 0)
-        {
-            comparandExpr = baseName;
-            statements.Append("Comparand ").Append(baseName).Append(" = Comparand.FromJsonElement(").Append(root).AppendLine(");");
-            return true;
-        }
-
-        statements.Append("Comparand ").Append(baseName).AppendLine(" = Comparand.Undefined;");
-        statements.Append("if (");
-        for (int i = 0; i < steps.Count; i++)
-        {
-            string source = i == 0 ? root : $"{baseName}n{(i - 1).ToString(CultureInfo.InvariantCulture)}";
-            string outVar = $"{baseName}n{i.ToString(CultureInfo.InvariantCulture)}";
-            (bool isProperty, string value) = steps[i];
-            string method = isProperty ? "TryGetProperty" : "TryResolvePointer";
-            if (i > 0)
-            {
-                statements.Append(" && ");
-            }
-
-            statements.Append(source).Append('.').Append(method).Append('(')
-                .Append(EmitText.Quote(value)).Append("u8, out JsonElement ").Append(outVar).Append(')');
-        }
-
-        statements.AppendLine(")");
-        string last = $"{baseName}n{(steps.Count - 1).ToString(CultureInfo.InvariantCulture)}";
-        statements.AppendLine("{");
-        statements.Append("    ").Append(baseName).Append(" = Comparand.FromJsonElement(").Append(last).AppendLine(");");
-        statements.AppendLine("}");
-
-        comparandExpr = baseName;
+        comparandExpr = $"Comparand.FromJsonElement({elementLocal})";
         return true;
     }
 
@@ -271,72 +208,6 @@ internal static class SimpleCriterionInliner
         fields.Append("private static readonly byte[] ").Append(field).Append(" = ")
             .Append(EmitText.Quote(content)).AppendLine("u8.ToArray();");
         return $"Comparand.FromUtf8String({field})";
-    }
-
-    /// <summary>
-    /// Splits an operand token into a runtime expression and an optional JSON Pointer for trailing
-    /// <c>.property</c>/<c>[index]</c> navigation — the exact algorithm the runtime
-    /// <c>SimpleConditionEvaluator</c> uses, so the inlined navigation matches.
-    /// </summary>
-    private static (ArazzoExpression Expression, string? NavigationPointer) SplitNavigation(string token)
-    {
-        string baseToken = token;
-        List<string>? segmentsRightToLeft = null;
-
-        while (true)
-        {
-            ArazzoExpression expression = ArazzoExpression.Parse(baseToken);
-            if (expression.Source != ArazzoExpressionSource.Literal)
-            {
-                return (expression, segmentsRightToLeft is null ? null : BuildPointer(segmentsRightToLeft));
-            }
-
-            if (!TryStripTrailingSegment(ref baseToken, out string segment))
-            {
-                return (expression, null);
-            }
-
-            (segmentsRightToLeft ??= []).Add(segment);
-        }
-    }
-
-    private static bool TryStripTrailingSegment(ref string token, out string segment)
-    {
-        if (token.Length > 0 && token[^1] == ']')
-        {
-            int open = token.LastIndexOf('[');
-            if (open >= 0)
-            {
-                segment = token[(open + 1)..^1];
-                token = token[..open];
-                return true;
-            }
-        }
-
-        int dot = token.LastIndexOf('.');
-        if (dot > 0)
-        {
-            segment = token[(dot + 1)..];
-            token = token[..dot];
-            return true;
-        }
-
-        segment = string.Empty;
-        return false;
-    }
-
-    private static string BuildPointer(List<string> segmentsRightToLeft)
-    {
-        var builder = new StringBuilder();
-        for (int i = segmentsRightToLeft.Count - 1; i >= 0; i--)
-        {
-            builder.Append('/');
-
-            // RFC 6901 escaping: '~' -> '~0', '/' -> '~1'.
-            builder.Append(segmentsRightToLeft[i].Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal));
-        }
-
-        return builder.ToString();
     }
 
     /// <summary>

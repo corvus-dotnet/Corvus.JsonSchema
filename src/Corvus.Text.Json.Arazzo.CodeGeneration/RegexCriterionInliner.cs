@@ -4,8 +4,6 @@
 
 using System.Text;
 using Corvus.Text.Json.Arazzo;
-using Corvus.Text.Json.CodeGeneration;
-using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
@@ -32,12 +30,9 @@ internal static class RegexCriterionInliner
     /// <param name="pattern">The regular-expression pattern (the criterion condition).</param>
     /// <param name="contextExpression">The runtime expression supplying the value matched against the pattern.</param>
     /// <param name="responseVar">The in-scope response variable (for <c>$statusCode</c>).</param>
-    /// <param name="sources">The step's live JSON sources (response body / message payload / message headers).</param>
+    /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
-    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
-    /// <param name="responseHeaders">The operation's declared response headers (for a <c>$response.header.&lt;name&gt;</c> context).</param>
-    /// <param name="requestContext">The step's request-side values (for a <c>$method</c> context).</param>
     /// <param name="tmpPrefix">A unique prefix for the generated regex method and any temporaries.</param>
     /// <param name="members">Accumulates the <c>[GeneratedRegex]</c> partial-method declaration (a class member).</param>
     /// <param name="statements">When this method returns <see langword="true"/>, the context-resolution statements to emit before the gate.</param>
@@ -47,12 +42,9 @@ internal static class RegexCriterionInliner
         string pattern,
         string? contextExpression,
         string responseVar,
-        CriterionSources sources,
+        string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors,
-        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
-        in StepRequestContext requestContext,
         string tmpPrefix,
         StringBuilder members,
         out string statements,
@@ -86,24 +78,8 @@ internal static class RegexCriterionInliner
         {
             contextValue = $"{responseVar}.StatusCode";
         }
-        else if (context.Source == ArazzoExpressionSource.Method && !context.HasJsonPointer)
-        {
-            // The operation's HTTP method is a compile-time constant string.
-            contextValue = EmitText.Quote(requestContext.Method);
-        }
-        else if (context.Source == ArazzoExpressionSource.ResponseHeader
-            && context.Name is { } headerName
-            && !context.HasJsonPointer
-            && CriterionExpressionParsing.TryResolveResponseHeader(responseHeaders, headerName, out ResponseHeaderInfo header))
-        {
-            // A schema-less header is a string? (the string? overload handles null); a typed header is
-            // read as a JsonElement (the JsonElement overload matches only string-kind values).
-            contextValue = header.IsString
-                ? $"{responseVar}.{header.PropertyName}"
-                : $"(JsonElement){responseVar}.{header.PropertyName}";
-        }
         else if (CriterionExpressionParsing.TryEmitElementNavigation(
-            context, null, $"{tmpPrefix}ctx", sources, inputsVariable, stepOutputLocals, inputAccessors, statementBuilder, out string elementLocal))
+            context, null, $"{tmpPrefix}ctx", responseBodyLocal, inputsVariable, stepOutputLocals, statementBuilder, out string elementLocal))
         {
             contextValue = elementLocal;
         }
@@ -112,13 +88,8 @@ internal static class RegexCriterionInliner
             return false;
         }
 
-        // Arazzo regex conditions are ECMAScript (ECMA-262) — translate to the equivalent .NET pattern
-        // ahead of time (the same translator the JSON Schema generators use), so the source-generated
-        // [GeneratedRegex] compiles a dialect-correct expression. Translation that fails falls back to the
-        // original pattern verbatim.
-        string netPattern = EcmaRegexTranslator.TranslateOrFallback(pattern);
         string method = $"{tmpPrefix}Regex";
-        members.Append("[GeneratedRegex(").Append(EmitText.Quote(netPattern)).AppendLine(", RegexOptions.CultureInvariant, 1000)]");
+        members.Append("[GeneratedRegex(").Append(EmitText.Quote(pattern)).AppendLine(", RegexOptions.CultureInvariant, 1000)]");
         members.Append("private static partial Regex ").Append(method).AppendLine("();");
 
         statements = statementBuilder.ToString();

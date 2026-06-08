@@ -56,20 +56,6 @@ public static class RegexCriterion
     }
 
     /// <summary>
-    /// Matches a managed-string context (e.g. an untyped response header value) against the regex. A
-    /// <see langword="null"/> value (an absent header) never matches.
-    /// </summary>
-    /// <param name="regex">The source-generated regular expression.</param>
-    /// <param name="value">The string value, or <see langword="null"/>.</param>
-    /// <returns><see langword="true"/> if the value is present and matches.</returns>
-    public static bool IsMatch(Regex regex, string? value)
-    {
-        ArgumentNullException.ThrowIfNull(regex);
-
-        return value is not null && IsMatch(regex, value.AsSpan());
-    }
-
-    /// <summary>
     /// Matches a UTF-16 context (a literal or already-resolved string) against the regex, returning
     /// <see langword="false"/> on a match timeout.
     /// </summary>

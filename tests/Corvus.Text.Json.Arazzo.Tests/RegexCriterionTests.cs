@@ -59,23 +59,6 @@ public class RegexCriterionTests
     }
 
     [TestMethod]
-    public void Matches_a_managed_string_and_treats_null_as_no_match()
-    {
-        RegexCriterion.IsMatch(Word, "Fido").ShouldBeTrue();
-        RegexCriterion.IsMatch(Word, "nope").ShouldBeFalse();
-        RegexCriterion.IsMatch(Word, (string?)null).ShouldBeFalse();
-    }
-
-    [TestMethod]
-    public void Matches_a_long_json_string_via_the_pooled_transcode_path()
-    {
-        // An input longer than the stack threshold (256) takes the rented-buffer transcode path.
-        var manyAs = new Regex("^a+$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
-        string longValue = new('a', 400);
-        RegexCriterion.IsMatch(manyAs, Json($"\"{longValue}\"")).ShouldBeTrue();
-    }
-
-    [TestMethod]
     public void A_match_timeout_yields_false()
     {
         // Catastrophic backtracking against a 1-tick timeout must be caught and reported as no match.

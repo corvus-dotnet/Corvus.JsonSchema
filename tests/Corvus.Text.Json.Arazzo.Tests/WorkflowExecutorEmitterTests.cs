@@ -43,7 +43,7 @@ public class WorkflowExecutorEmitterTests
     {
         string source = Emit();
 
-        source.ShouldContain("public static class AdoptWorkflow");
+        source.ShouldContain("public static partial class AdoptWorkflow");
         source.ShouldContain("public static async ValueTask<Acme.Pets.AdoptOutputs> ExecuteAsync(IApiTransport transport, JsonWorkspace workspace, Acme.Pets.AdoptInputs inputs, CancellationToken cancellationToken = default)");
         source.ShouldContain("context.SetInputs(inputs);");
         source.ShouldContain("ArazzoTelemetry.WorkflowsStarted.Add(1);");

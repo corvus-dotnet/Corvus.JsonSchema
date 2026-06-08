@@ -5,7 +5,6 @@
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Arazzo;
-using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
@@ -13,44 +12,8 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// Shared generation-time parsing of criterion operand/context tokens, mirroring the runtime
 /// <c>SimpleConditionEvaluator</c> so inlined criteria navigate values exactly as the interpreter does.
 /// </summary>
-/// <summary>
-/// The in-scope locals holding a step's live JSON sources for criterion operand navigation: the step's
-/// body (an HTTP response body <c>$response.body</c> or a received message payload <c>$message.payload</c>
-/// — a step has at most one) and, for a channel receive step, the message headers object
-/// (<c>$message.header.&lt;name&gt;</c>). Bundled so a new source does not change every inliner signature.
-/// </summary>
-/// <param name="BodyLocal">The live body local, or <see langword="null"/> if the step bound none.</param>
-/// <param name="HeadersLocal">The message headers local, or <see langword="null"/> if none is available.</param>
-internal readonly record struct CriterionSources(string? BodyLocal, string? HeadersLocal = null);
-
 internal static class CriterionExpressionParsing
 {
-    /// <summary>
-    /// Resolves a <c>$response.header.&lt;name&gt;</c> operand/context to the generated response property
-    /// that exposes the header (HTTP header names are case-insensitive).
-    /// </summary>
-    /// <param name="responseHeaders">The operation's declared response headers, or <see langword="null"/>.</param>
-    /// <param name="headerName">The header name from the expression.</param>
-    /// <param name="header">The matched header descriptor.</param>
-    /// <returns><see langword="true"/> if a declared header matches.</returns>
-    public static bool TryResolveResponseHeader(IReadOnlyList<ResponseHeaderInfo>? responseHeaders, string headerName, out ResponseHeaderInfo header)
-    {
-        if (responseHeaders is not null)
-        {
-            foreach (ResponseHeaderInfo candidate in responseHeaders)
-            {
-                if (string.Equals(candidate.HeaderName, headerName, StringComparison.OrdinalIgnoreCase))
-                {
-                    header = candidate;
-                    return true;
-                }
-            }
-        }
-
-        header = default;
-        return false;
-    }
-
     /// <summary>
     /// Emits navigation of a JSON-valued expression (<c>$response.body</c>, <c>$inputs.&lt;name&gt;</c>,
     /// or <c>$steps.&lt;id&gt;.outputs.&lt;name&gt;</c>) to a <see cref="JsonElement"/>, used by the
@@ -59,10 +22,9 @@ internal static class CriterionExpressionParsing
     /// <param name="expression">The parsed expression.</param>
     /// <param name="navigationPointer">An additional <c>.</c>/<c>[]</c> navigation pointer (simple-condition operands), or <see langword="null"/>.</param>
     /// <param name="baseName">A unique base name for any emitted temporaries.</param>
-    /// <param name="sources">The step's live JSON sources (response body / message payload / message headers).</param>
+    /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if no body was bound.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
-    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="statements">Accumulates the navigation statements (none when the whole root is used).</param>
     /// <param name="elementLocal">The in-scope expression yielding the resolved <see cref="JsonElement"/> (a local, or the root directly).</param>
     /// <returns><see langword="true"/> if the source is statically navigable.</returns>
@@ -70,10 +32,9 @@ internal static class CriterionExpressionParsing
         in ArazzoExpression expression,
         string? navigationPointer,
         string baseName,
-        in CriterionSources sources,
+        string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors,
         StringBuilder statements,
         out string elementLocal)
     {
@@ -83,25 +44,8 @@ internal static class CriterionExpressionParsing
         string? name = null;
         switch (expression.Source)
         {
-            case ArazzoExpressionSource.ResponseBody when sources.BodyLocal is not null:
-                root = sources.BodyLocal;
-                break;
-
-            case ArazzoExpressionSource.MessagePayload when sources.BodyLocal is not null:
-                // A channel receive step's live body local holds the received message payload.
-                root = sources.BodyLocal;
-                break;
-
-            case ArazzoExpressionSource.MessageHeader when sources.HeadersLocal is not null && expression.Name is { } headerName:
-                // A named value off the received message headers object (then any pointer/navigation).
-                root = sources.HeadersLocal;
-                name = headerName;
-                break;
-
-            case ArazzoExpressionSource.Inputs when expression.Name is { } inputName
-                && inputAccessors is not null && inputAccessors.TryGetValue(inputName, out string? accessor):
-                // Strongly-typed inputs model: the accessor IS the navigation (no property lookup).
-                root = $"((JsonElement){inputsVariable}.{accessor})";
+            case ArazzoExpressionSource.ResponseBody when responseBodyLocal is not null:
+                root = responseBodyLocal;
                 break;
 
             case ArazzoExpressionSource.Inputs when expression.Name is { } inputName:
@@ -114,25 +58,6 @@ internal static class CriterionExpressionParsing
                 && stepOutputLocals.TryGetValue(stepId, out string? stepLocal):
                 root = stepLocal;
                 name = outputName;
-                break;
-
-            case ArazzoExpressionSource.Workflows when expression.Qualifier == "outputs"
-                && expression.ContainerId is { } outputsWorkflowId
-                && stepOutputLocals.TryGetValue("$workflows:" + outputsWorkflowId, out string? workflowOutputsLocal):
-                // A sub-workflow invocation's outputs ($workflows.<id>.outputs[.<name>]) — the outputs local
-                // is registered under "$workflows:<id>" as the sub-workflow step is emitted.
-                root = workflowOutputsLocal;
-                name = expression.Name;
-                break;
-
-            case ArazzoExpressionSource.Workflows when expression.Qualifier == "inputs"
-                && expression.ContainerId is { } inputsWorkflowId
-                && expression.Name is { } workflowInputName
-                && stepOutputLocals.TryGetValue("$workflows-input:" + inputsWorkflowId + ":" + workflowInputName, out string? workflowInputLocal):
-                // A sub-workflow invocation's passed input ($workflows.<id>.inputs.<name>) resolves to the
-                // bound argument value's stable local (registered under "$workflows-input:<id>:<name>"); the
-                // local IS the named input value, so no further property navigation.
-                root = workflowInputLocal;
                 break;
 
             default:
