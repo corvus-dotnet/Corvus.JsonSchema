@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Tests;
 /// <see cref="MockApiTransport"/> and assert the workflow outputs and emitted telemetry.
 /// </summary>
 [TestClass]
-public class WorkflowExecutorEndToEndTests
+public partial class WorkflowExecutorEndToEndTests
 {
     private const string Document = """
         {
