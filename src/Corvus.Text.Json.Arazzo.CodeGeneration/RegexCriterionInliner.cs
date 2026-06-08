@@ -36,6 +36,7 @@ internal static class RegexCriterionInliner
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="responseHeaders">The operation's declared response headers (for a <c>$response.header.&lt;name&gt;</c> context).</param>
+    /// <param name="requestContext">The step's request-side values (for a <c>$method</c> context).</param>
     /// <param name="tmpPrefix">A unique prefix for the generated regex method and any temporaries.</param>
     /// <param name="members">Accumulates the <c>[GeneratedRegex]</c> partial-method declaration (a class member).</param>
     /// <param name="statements">When this method returns <see langword="true"/>, the context-resolution statements to emit before the gate.</param>
@@ -50,6 +51,7 @@ internal static class RegexCriterionInliner
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
         IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
+        in StepRequestContext requestContext,
         string tmpPrefix,
         StringBuilder members,
         out string statements,
@@ -82,6 +84,11 @@ internal static class RegexCriterionInliner
         else if (context.Source == ArazzoExpressionSource.StatusCode && !context.HasJsonPointer)
         {
             contextValue = $"{responseVar}.StatusCode";
+        }
+        else if (context.Source == ArazzoExpressionSource.Method && !context.HasJsonPointer)
+        {
+            // The operation's HTTP method is a compile-time constant string.
+            contextValue = EmitText.Quote(requestContext.Method);
         }
         else if (context.Source == ArazzoExpressionSource.ResponseHeader
             && context.Name is { } headerName
