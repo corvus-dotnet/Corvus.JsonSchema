@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
@@ -24,8 +25,11 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// response is then disposed in a <c>finally</c>, leaking nothing.
 /// </para>
 /// <para>
-/// Success criteria are compiled once into <c>static readonly</c> <c>CompiledCriterion</c> fields; a
-/// step with no <c>successCriteria</c> defaults to requiring an HTTP success status.
+/// Success criteria that are pure <c>$statusCode &lt;op&gt; &lt;int&gt;</c> comparisons are evaluated at
+/// generation time and emitted <em>inline</em> as a direct comparison against the response's status
+/// code — no <c>CompiledCriterion</c>, no context, no allocation. Any other criterion is compiled once
+/// into a <c>static readonly</c> <c>CompiledCriterion</c> field. A step with no <c>successCriteria</c>
+/// defaults to requiring an HTTP success status.
 /// </para>
 /// </remarks>
 public static class StepBodyEmitter
@@ -203,6 +207,16 @@ public static class StepBodyEmitter
         for (int i = 0; i < successCriteria.Count; i++)
         {
             StepCriterion criterion = successCriteria[i];
+
+            // A pure `$statusCode <op> <int>` simple criterion is evaluated at generation time into a
+            // direct comparison against the response's status code — no CompiledCriterion field, no
+            // context, no allocation. Everything else falls back to the compiled-criterion runtime.
+            if (TryEmitStatusCodeCheck(criterion, responseVar, out string inlineCheck))
+            {
+                checks.Add(inlineCheck);
+                continue;
+            }
+
             string field = $"{prefix}SuccessCriterion{i.ToString(CultureInfo.InvariantCulture)}";
             string contextArgument = criterion.Context is null ? string.Empty : $", {EmitText.Quote(criterion.Context)}";
 
@@ -228,6 +242,40 @@ public static class StepBodyEmitter
             "jsonpath" => "JsonPath",
             _ => "Simple",
         };
+
+    /// <summary>
+    /// Recognises a pure <c>$statusCode &lt;op&gt; &lt;int&gt;</c> <c>simple</c> criterion and emits it as
+    /// a direct comparison against the response's status code, evaluated entirely at generation time.
+    /// </summary>
+    /// <param name="criterion">The criterion to inspect.</param>
+    /// <param name="responseVar">The in-scope response variable name.</param>
+    /// <param name="check">The emitted inline boolean expression when recognised; otherwise empty.</param>
+    /// <returns><see langword="true"/> when the criterion was emitted inline.</returns>
+    private static bool TryEmitStatusCodeCheck(in StepCriterion criterion, string responseVar, out string check)
+    {
+        check = string.Empty;
+
+        // Only a context-free simple criterion can be a bare $statusCode comparison.
+        if (criterion.Context is not null || MapCriterionType(criterion.Type) != "Simple")
+        {
+            return false;
+        }
+
+        Match match = StatusCodeCriterion.Match(criterion.Condition);
+        if (!match.Success)
+        {
+            return false;
+        }
+
+        string op = match.Groups[1].Value;
+        string number = match.Groups[2].Value;
+        check = $"{responseVar}.StatusCode {op} {number}";
+        return true;
+    }
+
+    private static readonly Regex StatusCodeCriterion = new(
+        @"^\s*\$statusCode\s*(==|!=|<=|>=|<|>)\s*(\d+)\s*$",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
 }
 
 /// <summary>
