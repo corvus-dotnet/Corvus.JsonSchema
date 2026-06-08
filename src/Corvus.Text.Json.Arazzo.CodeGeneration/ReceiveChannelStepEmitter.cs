@@ -123,7 +123,7 @@ internal static class ReceiveChannelStepEmitter
         if (hasOutputs)
         {
             OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
-                stepId, outputs, workspaceVariable, "context", stepOutputLocals, inputsVariable, inputAccessors, responseBodyLocal: null, messagePayloadLocal: payloadLocal);
+                stepId, outputs, workspaceVariable, "context", stepOutputLocals, inputsVariable, inputAccessors, responseBodyLocal: null, messagePayloadLocal: payloadLocal, messageHeadersLocal: "messageHeaders");
             fields.Append(outputCode.Fields);
             lambdaBody.Append(outputCode.Statements);
         }
@@ -138,7 +138,7 @@ internal static class ReceiveChannelStepEmitter
         lambdaBody.AppendLine("return default;");
 
         statements.Append("await ").Append(messageTransportVariable).Append(".ReceiveOneAsync<").Append(payloadType)
-            .Append(">(").Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, _) =>");
+            .Append(">(").Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
         statements.AppendLine("{");
         statements.Append(lambdaBody);
         statements.AppendLine("}, cancellationToken).ConfigureAwait(false);");
