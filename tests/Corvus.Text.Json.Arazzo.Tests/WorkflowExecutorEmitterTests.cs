@@ -45,7 +45,11 @@ public class WorkflowExecutorEmitterTests
 
         source.ShouldContain("public static partial class AdoptWorkflow");
         source.ShouldContain("public static async ValueTask<Acme.Pets.AdoptOutputs> ExecuteAsync(IApiTransport transport, JsonWorkspace workspace, Acme.Pets.AdoptInputs inputs, CancellationToken cancellationToken = default)");
-        source.ShouldContain("context.SetInputs(inputs);");
+
+        // Every criterion and value in this workflow resolves statically, so no WorkflowExecutionContext
+        // is created at all.
+        source.ShouldNotContain("WorkflowExecutionContext");
+        source.ShouldNotContain("context.SetInputs(inputs);");
         source.ShouldContain("ArazzoTelemetry.WorkflowsStarted.Add(1);");
         source.ShouldContain("ArazzoTelemetry.WorkflowsCompleted.Add(1);");
         source.ShouldContain("ArazzoTelemetry.WorkflowsFaulted.Add(1);");
@@ -125,7 +129,11 @@ public class WorkflowExecutorEmitterTests
 
         source.ShouldNotContain("CloneAsBuilder");
         source.ShouldNotContain("SetResponseBody");
-        source.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
+
+        // The $statusCode criterion is inlined and the outputs resolve statically, so the context is
+        // never created or populated.
+        source.ShouldNotContain("WorkflowExecutionContext");
+        source.ShouldNotContain("context.SetResponseStatusCode");
     }
 
     private static string Emit(string document = Document)
