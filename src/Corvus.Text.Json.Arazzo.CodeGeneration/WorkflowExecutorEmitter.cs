@@ -28,12 +28,13 @@ public static class WorkflowExecutorEmitter
     /// <param name="workflow">The workflow to emit.</param>
     /// <param name="binder">The operation binder for the document's source descriptions.</param>
     /// <param name="options">The emission options (namespace, class name, inputs/outputs type names).</param>
+    /// <param name="components">The document's <c>components</c> object, for resolving reusable <c>$ref</c> actions and parameters; <see langword="default"/> when there are none.</param>
     /// <returns>The C# source of the generated executor class.</returns>
     public static string Emit(
         in ArazzoDocument.WorkflowObject workflow,
         WorkflowOperationBinder binder,
         in WorkflowExecutorOptions options,
-        JsonElement reusableActionComponents = default)
+        JsonElement components = default)
     {
         ArgumentNullException.ThrowIfNull(binder);
 
@@ -54,8 +55,8 @@ public static class WorkflowExecutorEmitter
 
         // Workflow-level success/failure actions apply to every step as defaults (a step's own action
         // with the same name overrides). Both these and a step's actions may be reusable $ref entries.
-        List<StepActionInfo> workflowSuccessActions = ReadActions(workflow.SuccessActions, reusableActionComponents);
-        List<StepActionInfo> workflowFailureActions = ReadActions(workflow.FailureActions, reusableActionComponents);
+        List<StepActionInfo> workflowSuccessActions = ReadActions(workflow.SuccessActions, components);
+        List<StepActionInfo> workflowFailureActions = ReadActions(workflow.FailureActions, components);
 
         foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
         {
@@ -64,8 +65,8 @@ public static class WorkflowExecutorEmitter
 
             List<OutputMapping> stepOutputs = ReadOutputs(step);
             List<StepCriterion> criteria = ReadCriteria(step);
-            List<StepActionInfo> onSuccess = MergeActions(ReadActions(step.OnSuccess, reusableActionComponents), workflowSuccessActions);
-            List<StepActionInfo> onFailure = MergeActions(ReadActions(step.OnFailure, reusableActionComponents), workflowFailureActions);
+            List<StepActionInfo> onSuccess = MergeActions(ReadActions(step.OnSuccess, components), workflowSuccessActions);
+            List<StepActionInfo> onFailure = MergeActions(ReadActions(step.OnFailure, components), workflowFailureActions);
 
             // A sub-workflow step invokes another generated workflow. Its criteria (success and action)
             // run against the sub-workflow's outputs / the inputs — never an HTTP response — so they may
@@ -74,7 +75,7 @@ public static class WorkflowExecutorEmitter
             {
                 ValidateSubWorkflowCriteria(stepId, criteria, onSuccess, onFailure);
                 usesControlFlow |= criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0;
-                boundSteps.Add(new ControlFlowStep(stepId, null, ReadArguments(step), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId));
+                boundSteps.Add(new ControlFlowStep(stepId, null, ReadArguments(step, components), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId));
                 continue;
             }
 
@@ -91,7 +92,7 @@ public static class WorkflowExecutorEmitter
             bool bindResponseBody = ReferencesResponseBody(criteria, stepOutputs, onSuccess, onFailure);
 
             boundSteps.Add(new ControlFlowStep(
-                stepId, operation, ReadArguments(step), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure));
+                stepId, operation, ReadArguments(step, components), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure));
         }
 
         if (usesControlFlow)
@@ -144,17 +145,42 @@ public static class WorkflowExecutorEmitter
         return Compose(options, workflowId, fields.ToString(), bodyText, auxiliaryTypes.ToString(), needsContext);
     }
 
-    private static List<StepArgument> ReadArguments(in ArazzoDocument.StepObject step)
+    private static List<StepArgument> ReadArguments(in ArazzoDocument.StepObject step, in JsonElement components)
     {
         var arguments = new List<StepArgument>();
         if (step.Parameters.IsNotUndefined())
         {
             foreach (JsonElement element in step.Parameters.EnumerateArray())
             {
+                // A reusable-parameter reference ({reference:"$components.parameters.x", value?:…}):
+                // resolve the component parameter (name + value), letting a value on the reference
+                // override the component's value.
+                if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("reference"u8, out JsonElement referenceElement) && referenceElement.ValueKind == JsonValueKind.String)
+                {
+                    string reference = referenceElement.GetString()!;
+                    if (ResolveComponentReference(components, reference) is not { } resolved
+                        || !resolved.TryGetProperty("name"u8, out JsonElement resolvedName) || resolvedName.ValueKind != JsonValueKind.String)
+                    {
+                        throw new InvalidOperationException($"Could not resolve reusable parameter reference '{reference}'.");
+                    }
+
+                    JsonElement valueSource = element.TryGetProperty("value"u8, out JsonElement overrideValue)
+                        ? overrideValue
+                        : resolved.TryGetProperty("value"u8, out JsonElement componentValue) ? componentValue : default;
+                    if (valueSource.ValueKind == JsonValueKind.Undefined)
+                    {
+                        // No value on the reference or the component — nothing to bind.
+                        continue;
+                    }
+
+                    ArgumentValueKind referencedKind = Classify(valueSource, out string referencedText);
+                    arguments.Add(new StepArgument(resolvedName.GetString()!, referencedText, referencedKind));
+                    continue;
+                }
+
                 ArazzoDocument.ParameterObject parameter = element;
                 if (!parameter.Name.IsNotUndefined())
                 {
-                    // A reusable-parameter reference ({reference:…}); component resolution is a later phase.
                     continue;
                 }
 
@@ -341,7 +367,7 @@ public static class WorkflowExecutorEmitter
             if (entity.TryGetProperty("reference"u8, out JsonElement referenceElement) && referenceElement.ValueKind == JsonValueKind.String)
             {
                 string reference = referenceElement.GetString()!;
-                if (ResolveActionReference(components, reference) is not { } resolved || ReadInlineAction(resolved) is not { } resolvedAction)
+                if (ResolveComponentReference(components, reference) is not { } resolved || ReadInlineAction(resolved) is not { } resolvedAction)
                 {
                     throw new InvalidOperationException($"Could not resolve reusable action reference '{reference}'.");
                 }
@@ -394,7 +420,7 @@ public static class WorkflowExecutorEmitter
     /// Resolves a <c>$components.&lt;section&gt;.&lt;name&gt;</c> reusable-action reference against the
     /// document's <c>components</c> object, returning the referenced action object or <see langword="null"/>.
     /// </summary>
-    private static JsonElement? ResolveActionReference(in JsonElement components, string reference)
+    private static JsonElement? ResolveComponentReference(in JsonElement components, string reference)
     {
         const string prefix = "$components.";
         if (components.ValueKind != JsonValueKind.Object || !reference.StartsWith(prefix, StringComparison.Ordinal))
