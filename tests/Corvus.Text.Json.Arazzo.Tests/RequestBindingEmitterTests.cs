@@ -142,6 +142,34 @@ public class RequestBindingEmitterTests
     }
 
     [TestMethod]
+    public void Binds_a_literal_boolean_via_the_shared_singleton_with_no_field()
+    {
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            GetPet,
+            [new StepArgument("petId", "$inputs.petId"), new StepArgument("limit", "true", IsLiteral: true)],
+            "context",
+            "GetPet_",
+            NoSteps);
+
+        code.Statements.ShouldContain("JsonElement limitValue = Corvus.Text.Json.Internal.ValuelessJsonDocument<JsonElement>.BooleanTrue.RootElement;");
+        code.Fields.ShouldNotContain("GetPet_LimitLiteral");
+    }
+
+    [TestMethod]
+    public void Binds_a_literal_null_via_the_shared_singleton_with_no_field()
+    {
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            GetPet,
+            [new StepArgument("petId", "$inputs.petId"), new StepArgument("limit", "null", IsLiteral: true)],
+            "context",
+            "GetPet_",
+            NoSteps);
+
+        code.Statements.ShouldContain("JsonElement limitValue = Corvus.Text.Json.Internal.ValuelessJsonDocument<JsonElement>.Null.RootElement;");
+        code.Fields.ShouldNotContain("GetPet_LimitLiteral");
+    }
+
+    [TestMethod]
     public void Binds_a_literal_object_value_via_a_parsed_document()
     {
         // Object/array/bool/null literals are not scalar — they fall back to ParsedJsonDocument.
