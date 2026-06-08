@@ -133,6 +133,15 @@ public static class WorkflowExecutorEmitter
 
                 if (step.Channel is { } channelStep)
                 {
+                    if (channelStep.Channel.Action == AsyncApi.CodeGeneration.OperationAction.Receive)
+                    {
+                        string receiveStatements = ReceiveChannelStepEmitter.Emit(step.StepId, channelStep, "messageTransport");
+                        AppendIndented(body, receiveStatements, 12);
+                        stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
+                        body.AppendLine();
+                        continue;
+                    }
+
                     SendChannelStepCode channelCode = SendChannelStepEmitter.Emit(
                         step.StepId, channelStep, step.RequestBody, "messageTransport", stepOutputLocals, "inputs", options.InputAccessors);
                     fields.Append(channelCode.Fields);
