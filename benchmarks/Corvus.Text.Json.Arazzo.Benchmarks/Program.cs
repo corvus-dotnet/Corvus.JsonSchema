@@ -33,6 +33,7 @@ executor.Setup();
 Console.WriteLine();
 Console.WriteLine("Generated executor end-to-end allocation (bytes/op):");
 Measure("RunWorkflow", executor.RunWorkflow);
+Measure("StatusOnly", executor.RunStatusOnlyWorkflow);
 
 executor.Cleanup();
 

@@ -86,7 +86,41 @@ public class WorkflowExecutorEmitterTests
         source.ShouldContain("return workflowOutputsElement;");
     }
 
-    private static string Emit()
+    private const string StatusOnlyDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "echo": "$inputs.petId" }
+                }
+              ],
+              "outputs": { "code": "$steps.getPet.outputs.echo" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public void Skips_the_response_body_clone_for_a_status_only_step()
+    {
+        // The step references only $statusCode — never $response.body — so no clone is emitted.
+        string source = Emit(StatusOnlyDocument);
+
+        source.ShouldNotContain("CloneAsBuilder");
+        source.ShouldNotContain("SetResponseBody");
+        source.ShouldContain("context.SetResponseStatusCode(getPetResponse.StatusCode);");
+    }
+
+    private static string Emit(string document = Document)
     {
         OperationDescriptor[] operations =
         [
@@ -107,7 +141,7 @@ public class WorkflowExecutorEmitterTests
 
         var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
 
-        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(Document));
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
         foreach (ArazzoDocument.WorkflowObject workflow in doc.RootElement.Workflows.EnumerateArray())
         {
             return WorkflowExecutorEmitter.Emit(
