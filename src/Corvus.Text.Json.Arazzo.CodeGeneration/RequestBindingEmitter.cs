@@ -30,6 +30,7 @@ public static class RequestBindingEmitter
     /// <param name="contextVariable">The name of the in-scope <c>WorkflowExecutionContext</c> variable.</param>
     /// <param name="fieldPrefix">A unique prefix (e.g. the step id) for the emitted static fields.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="inputsVariable">The in-scope workflow inputs variable name (for static <c>$inputs</c> navigation).</param>
     /// <param name="requestBody">The step's request body, or <see langword="null"/> when there is none (or one not yet supported).</param>
     /// <returns>The emitted static field declarations, the in-method resolution statements, and the named-argument fragments.</returns>
     /// <exception cref="InvalidOperationException">A required parameter has no argument.</exception>
@@ -39,6 +40,7 @@ public static class RequestBindingEmitter
         string contextVariable,
         string fieldPrefix,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        string inputsVariable,
         StepBody? requestBody = null)
     {
         ArgumentNullException.ThrowIfNull(arguments);
@@ -70,7 +72,7 @@ public static class RequestBindingEmitter
             }
 
             string source = EmitValue(
-                fields, statements, argument.Kind, argument.Value, contextVariable, stepOutputLocals,
+                fields, statements, argument.Kind, argument.Value, contextVariable, stepOutputLocals, inputsVariable,
                 $"{fieldPrefix}{parameter.PropertyName}", parameter.PropertyName, parameter.TypeName);
             namedArguments.Add($"{parameter.ParameterName}: {source}");
         }
@@ -78,7 +80,7 @@ public static class RequestBindingEmitter
         if (requestBody is { } body && operation.Operation.RequestBodyTypeName is { } bodyType)
         {
             string source = EmitValue(
-                fields, statements, body.Kind, body.Value, contextVariable, stepOutputLocals,
+                fields, statements, body.Kind, body.Value, contextVariable, stepOutputLocals, inputsVariable,
                 $"{fieldPrefix}Body", "Body", bodyType);
             namedArguments.Add($"body: {source}");
         }
@@ -97,6 +99,7 @@ public static class RequestBindingEmitter
         string value,
         string contextVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        string inputsVariable,
         string fieldName,
         string propertyName,
         string typeName)
@@ -108,7 +111,7 @@ public static class RequestBindingEmitter
             case ArgumentValueKind.Expression:
                 // Runtime expression → resolve to a JsonElement (a reference into an existing document),
                 // passed straight in as a Source.
-                ValueResolution.Emit(fields, statements, value, local, contextVariable, stepOutputLocals, fieldName);
+                ValueResolution.Emit(fields, statements, value, local, contextVariable, stepOutputLocals, fieldName, inputsVariable);
                 return local;
 
             case ArgumentValueKind.Interpolation:
