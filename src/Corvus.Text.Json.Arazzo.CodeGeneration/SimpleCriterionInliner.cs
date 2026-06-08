@@ -9,21 +9,25 @@ using Corvus.Text.Json.Arazzo;
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
-/// Inlines a <c>simple</c> success criterion that is a single comparison or a lone truthy operand
-/// (plan §3.1, reification-free rebuild stage 3). The condition is parsed at generation time and
-/// emitted as a direct evaluation against the live response / inputs / prior-step outputs, reusing
-/// <see cref="Comparand"/> for the operand semantics (case-insensitive UTF-8 string equality, numeric
-/// string coercion, JSON equality) so the inlined code matches the runtime interpreter exactly.
+/// Inlines a <c>simple</c> success criterion (plan §3.1, reification-free rebuild stage 3). The whole
+/// condition grammar — <c>||</c>, <c>&amp;&amp;</c>, <c>!</c>, grouping, comparisons, and lone truthy
+/// operands — is parsed at generation time and emitted as a direct evaluation against the live
+/// response / inputs / prior-step outputs, reusing <see cref="Comparand"/> for the operand semantics
+/// (case-insensitive UTF-8 string equality, numeric string coercion, JSON equality) so the inlined
+/// code matches the runtime <c>SimpleConditionEvaluator</c> exactly.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Only single comparisons (<c>operand op operand</c>) and lone truthy operands are inlined. Anything
-/// using the logical grammar (<c>||</c>, <c>&amp;&amp;</c>, a leading <c>!</c>, or grouping) or an
-/// operand whose source cannot be navigated statically (<c>$response.header</c>, <c>$request.*</c>,
-/// <c>$workflows</c>, …, or <c>$response.body</c> on a step that did not bind a body) causes
-/// <see cref="TryEmit"/> to return <see langword="false"/>, and the caller falls back to compiling a
-/// <see cref="CompiledCriterion"/>. Operands are resolved as side-effect-free statements before the
-/// gate, so pre-computing them (rather than short-circuiting) is behaviour-preserving.
+/// Operands are resolved as side-effect-free statements before the gate; the logical structure is then
+/// emitted as a C# boolean expression referencing the resolved operands. Pre-computing the operands
+/// (rather than short-circuiting through <c>&amp;&amp;</c>/<c>||</c>) is behaviour-preserving because
+/// operand resolution has no side effects.
+/// </para>
+/// <para>
+/// <see cref="TryEmit"/> returns <see langword="false"/> — and the caller falls back to compiling a
+/// <see cref="CompiledCriterion"/> — when an operand's source cannot be navigated statically
+/// (<c>$response.header</c>, <c>$request.*</c>, <c>$workflows</c>, …, or <c>$response.body</c> on a step
+/// that did not bind a body) or the condition is malformed.
 /// </para>
 /// </remarks>
 internal static class SimpleCriterionInliner
@@ -65,52 +69,17 @@ internal static class SimpleCriterionInliner
         statements = string.Empty;
         expression = string.Empty;
 
-        var parser = new Parser(condition);
-
-        // The logical grammar (||, &&, leading !, grouping) is not inlined yet — fall back.
-        if (!parser.TryReadOperand(out string leftToken)
-            || !parser.TryReadOptionalOperator(out Op op, out bool hasOperator))
-        {
-            return false;
-        }
-
-        string? rightToken = null;
-        if (hasOperator)
-        {
-            if (!parser.TryReadOperand(out string read))
-            {
-                return false;
-            }
-
-            rightToken = read;
-        }
-
-        if (!parser.AtEnd)
-        {
-            return false;
-        }
-
         var statementBuilder = new StringBuilder();
+        var parser = new Parser(condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, tmpPrefix, fields, statementBuilder);
 
-        if (!TryEmitOperand(leftToken, $"{tmpPrefix}L", responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, fields, statementBuilder, out string leftExpr))
-        {
-            return false;
-        }
-
-        if (!hasOperator)
-        {
-            statements = statementBuilder.ToString();
-            expression = $"{leftExpr}.IsTrue";
-            return true;
-        }
-
-        if (!TryEmitOperand(rightToken!, $"{tmpPrefix}R", responseVar, responseBodyLocal, inputsVariable, stepOutputLocals, fields, statementBuilder, out string rightExpr))
+        string? expr = parser.ParseOr();
+        if (expr is null || !parser.AtEnd)
         {
             return false;
         }
 
         statements = statementBuilder.ToString();
-        expression = $"{leftExpr}.{MapOperator(op)}({rightExpr})";
+        expression = expr;
         return true;
     }
 
@@ -229,8 +198,8 @@ internal static class SimpleCriterionInliner
         statements.Append("if (");
         for (int i = 0; i < steps.Count; i++)
         {
-            string source = i == 0 ? root : $"{baseName}{(i - 1).ToString(CultureInfo.InvariantCulture)}";
-            string outVar = $"{baseName}{i.ToString(CultureInfo.InvariantCulture)}";
+            string source = i == 0 ? root : $"{baseName}n{(i - 1).ToString(CultureInfo.InvariantCulture)}";
+            string outVar = $"{baseName}n{i.ToString(CultureInfo.InvariantCulture)}";
             (bool isProperty, string value) = steps[i];
             string method = isProperty ? "TryGetProperty" : "TryResolvePointer";
             if (i > 0)
@@ -243,7 +212,7 @@ internal static class SimpleCriterionInliner
         }
 
         statements.AppendLine(")");
-        string last = $"{baseName}{(steps.Count - 1).ToString(CultureInfo.InvariantCulture)}";
+        string last = $"{baseName}n{(steps.Count - 1).ToString(CultureInfo.InvariantCulture)}";
         statements.AppendLine("{");
         statements.Append("    ").Append(baseName).Append(" = Comparand.FromJsonElement(").Append(last).AppendLine(");");
         statements.AppendLine("}");
@@ -371,40 +340,149 @@ internal static class SimpleCriterionInliner
     }
 
     /// <summary>
-    /// A minimal single-comparison parser mirroring the runtime tokenizer's operand/operator rules.
+    /// A recursive-descent parser that mirrors the runtime <c>SimpleConditionEvaluator</c> grammar but
+    /// emits a C# boolean expression (and operand-resolution statements) instead of a node tree.
     /// </summary>
-    private ref struct Parser(string text)
+    private ref struct Parser
     {
-        private readonly ReadOnlySpan<char> span = text;
-        private int position = 0;
+        private readonly ReadOnlySpan<char> span;
+        private readonly string responseVar;
+        private readonly string? responseBodyLocal;
+        private readonly string inputsVariable;
+        private readonly IReadOnlyDictionary<string, string> stepOutputLocals;
+        private readonly string tmpPrefix;
+        private readonly StringBuilder fields;
+        private readonly StringBuilder statements;
+        private int position;
+        private int operandCount;
 
-        public readonly bool AtEnd
+        public Parser(
+            string text,
+            string responseVar,
+            string? responseBodyLocal,
+            string inputsVariable,
+            IReadOnlyDictionary<string, string> stepOutputLocals,
+            string tmpPrefix,
+            StringBuilder fields,
+            StringBuilder statements)
+        {
+            this.span = text;
+            this.responseVar = responseVar;
+            this.responseBodyLocal = responseBodyLocal;
+            this.inputsVariable = inputsVariable;
+            this.stepOutputLocals = stepOutputLocals;
+            this.tmpPrefix = tmpPrefix;
+            this.fields = fields;
+            this.statements = statements;
+            this.position = 0;
+            this.operandCount = 0;
+        }
+
+        public bool AtEnd
         {
             get
             {
-                int p = this.position;
-                while (p < this.span.Length && char.IsWhiteSpace(this.span[p]))
-                {
-                    p++;
-                }
-
-                return p == this.span.Length;
+                this.SkipWhitespace();
+                return this.position == this.span.Length;
             }
         }
 
-        public bool TryReadOperand(out string token)
+        public string? ParseOr()
         {
-            token = string.Empty;
+            string? left = this.ParseAnd();
+            while (left is not null && this.TryConsume("||"))
+            {
+                string? right = this.ParseAnd();
+                left = right is null ? null : $"({left} || {right})";
+            }
+
+            return left;
+        }
+
+        private string? ParseAnd()
+        {
+            string? left = this.ParseNot();
+            while (left is not null && this.TryConsume("&&"))
+            {
+                string? right = this.ParseNot();
+                left = right is null ? null : $"({left} && {right})";
+            }
+
+            return left;
+        }
+
+        private string? ParseNot()
+        {
             this.SkipWhitespace();
 
-            // A leading '!' / '(' is the logical grammar — not inlined here.
-            if (this.position >= this.span.Length || this.span[this.position] is '(' or ')' or '!')
+            // A leading '!' is the NOT operator — but not when it is the start of '!='.
+            if (this.position < this.span.Length
+                && this.span[this.position] == '!'
+                && (this.position + 1 >= this.span.Length || this.span[this.position + 1] != '='))
+            {
+                this.position++;
+                string? inner = this.ParseNot();
+                return inner is null ? null : $"!({inner})";
+            }
+
+            return this.ParseComparison();
+        }
+
+        private string? ParseComparison()
+        {
+            this.SkipWhitespace();
+            if (this.TryConsume("("))
+            {
+                string? grouped = this.ParseOr();
+                if (grouped is null || !this.TryConsume(")"))
+                {
+                    return null;
+                }
+
+                // No extra parentheses: ParseOr/ParseAnd already parenthesize multi-term expressions,
+                // and a single term is atomic (a method call or a negation), so precedence is preserved.
+                return grouped;
+            }
+
+            if (!this.TryEmitNextOperand(out string leftExpr))
+            {
+                return null;
+            }
+
+            if (this.TryParseOperator(out Op op))
+            {
+                if (!this.TryEmitNextOperand(out string rightExpr))
+                {
+                    return null;
+                }
+
+                return $"{leftExpr}.{MapOperator(op)}({rightExpr})";
+            }
+
+            return $"{leftExpr}.IsTrue";
+        }
+
+        private bool TryEmitNextOperand(out string comparandExpr)
+        {
+            comparandExpr = string.Empty;
+            this.SkipWhitespace();
+            string token = this.ReadOperandToken();
+            if (token.Length == 0)
             {
                 return false;
             }
 
+            string baseName = $"{this.tmpPrefix}o{this.operandCount.ToString(CultureInfo.InvariantCulture)}";
+            this.operandCount++;
+            return TryEmitOperand(
+                token, baseName, this.responseVar, this.responseBodyLocal, this.inputsVariable,
+                this.stepOutputLocals, this.fields, this.statements, out comparandExpr);
+        }
+
+        private string ReadOperandToken()
+        {
             int start = this.position;
-            if (this.span[this.position] is '\'' or '"')
+            if (this.position < this.span.Length && (this.span[this.position] == '\'' || this.span[this.position] == '"'))
             {
                 char quote = this.span[this.position];
                 this.position++;
@@ -412,68 +490,47 @@ internal static class SimpleCriterionInliner
                 {
                     if (this.span[this.position] == quote)
                     {
+                        // A doubled quote ('') is an escaped quote, not the terminator.
                         if (this.position + 1 < this.span.Length && this.span[this.position + 1] == quote)
                         {
                             this.position += 2;
                             continue;
                         }
 
-                        this.position++;
+                        this.position++; // closing quote
                         break;
                     }
 
                     this.position++;
                 }
-            }
-            else
-            {
-                while (this.position < this.span.Length && !IsDelimiter(this.span[this.position]))
-                {
-                    this.position++;
-                }
+
+                return this.span[start..this.position].ToString();
             }
 
-            if (this.position == start)
+            while (this.position < this.span.Length && !IsDelimiter(this.span[this.position]))
             {
-                return false;
+                this.position++;
             }
 
-            token = this.span[start..this.position].ToString();
-            return true;
+            return this.span[start..this.position].ToString();
         }
 
-        public bool TryReadOptionalOperator(out Op op, out bool hasOperator)
+        private bool TryParseOperator(out Op op)
         {
-            op = default;
-            hasOperator = false;
             this.SkipWhitespace();
-
-            if (this.position >= this.span.Length)
-            {
-                return true;
-            }
-
-            // Logical operators are not inlined — bail so the whole criterion compiles.
-            if (this.Matches("||") || this.Matches("&&"))
-            {
-                return false;
-            }
-
-            if (this.TryConsume("==")) { op = Op.Equal; hasOperator = true; return true; }
-            if (this.TryConsume("!=")) { op = Op.NotEqual; hasOperator = true; return true; }
-            if (this.TryConsume("<=")) { op = Op.LessThanOrEqual; hasOperator = true; return true; }
-            if (this.TryConsume(">=")) { op = Op.GreaterThanOrEqual; hasOperator = true; return true; }
-            if (this.TryConsume("<")) { op = Op.LessThan; hasOperator = true; return true; }
-            if (this.TryConsume(">")) { op = Op.GreaterThan; hasOperator = true; return true; }
-
-            // Trailing content that is not an operator (e.g. an unsupported token) — bail.
+            if (this.TryConsume("==")) { op = Op.Equal; return true; }
+            if (this.TryConsume("!=")) { op = Op.NotEqual; return true; }
+            if (this.TryConsume("<=")) { op = Op.LessThanOrEqual; return true; }
+            if (this.TryConsume(">=")) { op = Op.GreaterThanOrEqual; return true; }
+            if (this.TryConsume("<")) { op = Op.LessThan; return true; }
+            if (this.TryConsume(">")) { op = Op.GreaterThan; return true; }
+            op = default;
             return false;
         }
 
-        private readonly bool Matches(string symbol) => this.span[this.position..].StartsWith(symbol);
-
         private bool TryConsume(string symbol)
         {
+            this.SkipWhitespace();
             if (this.span[this.position..].StartsWith(symbol))
             {
                 this.position += symbol.Length;

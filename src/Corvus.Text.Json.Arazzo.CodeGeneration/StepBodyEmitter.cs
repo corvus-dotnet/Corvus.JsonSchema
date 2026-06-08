@@ -26,13 +26,14 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// </para>
 /// <para>
 /// Success criteria are inlined where possible: a pure <c>$statusCode &lt;op&gt; &lt;int&gt;</c>
-/// comparison becomes a direct status-code comparison, and a single-comparison / lone-truthy
-/// <c>simple</c> condition is inlined (via <see cref="SimpleCriterionInliner"/>) to evaluate directly
-/// against the live response / inputs / prior-step outputs, reusing <see cref="Corvus.Text.Json.Arazzo.Comparand"/>
-/// for the operand semantics — no <c>CompiledCriterion</c>, no context. Anything else (compound/negated/
-/// grouped <c>simple</c>, <c>regex</c>, <c>jsonpath</c>) is compiled once into a <c>static readonly</c>
-/// <c>CompiledCriterion</c> field. A step with no <c>successCriteria</c> defaults to requiring an HTTP
-/// success status.
+/// comparison becomes a direct status-code comparison, and a <c>simple</c> condition — the whole
+/// grammar (<c>||</c>, <c>&amp;&amp;</c>, <c>!</c>, grouping, comparisons, lone truthy operands) — is
+/// inlined (via <see cref="SimpleCriterionInliner"/>) to evaluate directly against the live response /
+/// inputs / prior-step outputs, reusing <see cref="Corvus.Text.Json.Arazzo.Comparand"/> for the operand
+/// semantics — no <c>CompiledCriterion</c>, no context. A criterion the inliner cannot resolve
+/// statically (an unsupported source, or <c>regex</c>/<c>jsonpath</c>) is compiled once into a
+/// <c>static readonly</c> <c>CompiledCriterion</c> field. A step with no <c>successCriteria</c> defaults
+/// to requiring an HTTP success status.
 /// </para>
 /// </remarks>
 public static class StepBodyEmitter
@@ -226,9 +227,10 @@ public static class StepBodyEmitter
                 continue;
             }
 
-            // A single-comparison / lone-truthy simple criterion is inlined to evaluate directly
-            // against the live response / inputs / prior-step outputs (reusing Comparand for operand
-            // semantics) — its operand-resolution statements are emitted before the gate.
+            // A simple criterion (full grammar: ||, &&, !, grouping, comparisons, lone truthy operands)
+            // is inlined to evaluate directly against the live response / inputs / prior-step outputs
+            // (reusing Comparand for operand semantics) — its operand-resolution statements are emitted
+            // before the gate.
             if (MapCriterionType(criterion.Type) == "Simple"
                 && SimpleCriterionInliner.TryEmit(
                     criterion.Condition, responseVar, responseBodyLocal, inputsVariable, stepOutputLocals,
@@ -239,8 +241,8 @@ public static class StepBodyEmitter
                 continue;
             }
 
-            // Everything else (compound/negated/grouped simple, regex, jsonpath) falls back to the
-            // compiled-criterion runtime.
+            // Anything the inliner cannot resolve statically (an unsupported source, regex, jsonpath)
+            // falls back to the compiled-criterion runtime.
             string field = $"{prefix}SuccessCriterion{index}";
             string contextArgument = criterion.Context is null ? string.Empty : $", {EmitText.Quote(criterion.Context)}";
 
