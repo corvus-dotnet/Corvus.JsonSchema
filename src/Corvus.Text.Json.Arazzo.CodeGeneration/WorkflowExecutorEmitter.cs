@@ -65,7 +65,7 @@ public static class WorkflowExecutorEmitter
             body.Append("            // ── step: ").Append(stepId).AppendLine(" ──");
 
             StepBodyCode stepBody = StepBodyEmitter.Emit(
-                stepId, operation, ReadArguments(step), criteria, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, ReadRequestBodyExpression(step), bindResponseBody);
+                stepId, operation, ReadArguments(step), criteria, "transport", "workspace", "context", "cancellationToken", stepOutputLocals, ReadRequestBody(step), bindResponseBody);
             fields.Append(stepBody.Fields);
             AppendIndented(body, stepBody.Statements, 12);
 
@@ -147,7 +147,7 @@ public static class WorkflowExecutorEmitter
         return false;
     }
 
-    private static string? ReadRequestBodyExpression(in ArazzoDocument.StepObject step)
+    private static StepBody? ReadRequestBody(in ArazzoDocument.StepObject step)
     {
         if (!step.RequestBody.IsNotUndefined())
         {
@@ -160,17 +160,28 @@ public static class WorkflowExecutorEmitter
             return null;
         }
 
+        // Payload replacements need substitution into the payload — a later phase.
+        if (requestBody.Replacements.IsNotUndefined())
+        {
+            return null;
+        }
+
         JsonElement payload = requestBody.Payload;
 
-        // Only a payload that is a single runtime expression (e.g. "$inputs.pet") is bound by the
-        // current generator. Literal, interpolated ({…}), and payload-replacement bodies need value
-        // construction/substitution and are a later phase.
-        if (payload.ValueKind == JsonValueKind.String
-            && !requestBody.Replacements.IsNotUndefined()
-            && payload.GetString() is { } text
-            && text.StartsWith('$'))
+        // A payload that is a single runtime expression (e.g. "$inputs.pet").
+        if (payload.ValueKind == JsonValueKind.String && payload.GetString() is { } text && text.StartsWith('$'))
         {
-            return text;
+            return new StepBody(text, IsLiteral: false);
+        }
+
+        // A constant payload with no embedded runtime expressions (no '$' anywhere) — bound as a
+        // literal. Interpolated ("{$…}") payloads and objects/arrays that contain expressions are a
+        // later phase (they need interpolation/substitution, which the no-'$' check conservatively
+        // excludes).
+        string raw = payload.GetRawText();
+        if (!raw.Contains('$'))
+        {
+            return new StepBody(raw, IsLiteral: true);
         }
 
         return null;

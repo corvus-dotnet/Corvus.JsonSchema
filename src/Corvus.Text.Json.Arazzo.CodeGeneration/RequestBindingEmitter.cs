@@ -31,10 +31,10 @@ public static class RequestBindingEmitter
     /// <param name="contextVariable">The name of the in-scope <c>WorkflowExecutionContext</c> variable.</param>
     /// <param name="fieldPrefix">A unique prefix (e.g. the step id) for the emitted static expression fields.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
-    /// <param name="requestBodyExpression">
-    /// The runtime expression that produces the request body (e.g. <c>$inputs.pet</c>), or
-    /// <see langword="null"/> when the step declares no request body (or a body the current generator
-    /// does not yet support — a literal, interpolated, or replacement payload, which is a later phase).
+    /// <param name="requestBody">
+    /// The step's request body — a runtime expression (e.g. <c>$inputs.pet</c>) or a constant — or
+    /// <see langword="null"/> when the step declares no request body (or one the current generator does
+    /// not yet support: an interpolated or payload-replacement body, which is a later phase).
     /// </param>
     /// <returns>The emitted static field declarations, the in-method resolution statements, and the named-argument fragments.</returns>
     /// <exception cref="InvalidOperationException">A required parameter has no argument.</exception>
@@ -44,7 +44,7 @@ public static class RequestBindingEmitter
         string contextVariable,
         string fieldPrefix,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        string? requestBodyExpression = null)
+        StepBody? requestBody = null)
     {
         ArgumentNullException.ThrowIfNull(arguments);
         ArgumentNullException.ThrowIfNull(stepOutputLocals);
@@ -89,12 +89,20 @@ public static class RequestBindingEmitter
             namedArguments.Add($"{parameter.ParameterName}: {parameter.TypeName}.From({local})");
         }
 
-        // Bind the request body, resolving its runtime expression and From()-binding it to the client
-        // method's `body` parameter. The generated client owns serialization; we only supply the value.
-        if (requestBodyExpression is { } bodyExpression && operation.Operation.RequestBodyTypeName is { } bodyType)
+        // Bind the request body and From()-bind it to the client method's `body` parameter. The
+        // generated client owns serialization; we only supply the value.
+        if (requestBody is { } body && operation.Operation.RequestBodyTypeName is { } bodyType)
         {
             const string bodyLocal = "bodyValue";
-            ValueResolution.Emit(fields, statements, bodyExpression, bodyLocal, contextVariable, stepOutputLocals, $"{fieldPrefix}Body");
+            if (body.IsLiteral)
+            {
+                LiteralValueEmitter.Emit(fields, statements, body.Value, bodyLocal, $"{fieldPrefix}BodyLiteral");
+            }
+            else
+            {
+                ValueResolution.Emit(fields, statements, body.Value, bodyLocal, contextVariable, stepOutputLocals, $"{fieldPrefix}Body");
+            }
+
             namedArguments.Add($"body: {bodyType}.From({bodyLocal})");
         }
 
@@ -113,6 +121,16 @@ public static class RequestBindingEmitter
 /// </param>
 /// <param name="IsLiteral">Whether the argument is a constant JSON value rather than a runtime expression.</param>
 public readonly record struct StepArgument(string Name, string Expression, bool IsLiteral = false);
+
+/// <summary>
+/// A step's request body (plan §3.1).
+/// </summary>
+/// <param name="Value">
+/// When <paramref name="IsLiteral"/> is <see langword="false"/>, the runtime expression that produces
+/// the body (e.g. <c>$inputs.pet</c>); when <see langword="true"/>, the body's literal JSON text.
+/// </param>
+/// <param name="IsLiteral">Whether the body is a constant JSON value rather than a runtime expression.</param>
+public readonly record struct StepBody(string Value, bool IsLiteral);
 
 /// <summary>
 /// The code emitted for a step's request binding (plan §3.1).
