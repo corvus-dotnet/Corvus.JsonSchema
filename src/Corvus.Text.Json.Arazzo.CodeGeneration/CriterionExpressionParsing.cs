@@ -49,7 +49,7 @@ internal static class CriterionExpressionParsing
     /// <param name="expression">The parsed expression.</param>
     /// <param name="navigationPointer">An additional <c>.</c>/<c>[]</c> navigation pointer (simple-condition operands), or <see langword="null"/>.</param>
     /// <param name="baseName">A unique base name for any emitted temporaries.</param>
-    /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if no body was bound.</param>
+    /// <param name="responseBodyLocal">The in-scope live JSON body local — an HTTP response body (<c>$response.body</c>) or a received message payload (<c>$message.payload</c>; a step has at most one) — or <see langword="null"/> if none was bound.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
@@ -74,6 +74,11 @@ internal static class CriterionExpressionParsing
         switch (expression.Source)
         {
             case ArazzoExpressionSource.ResponseBody when responseBodyLocal is not null:
+                root = responseBodyLocal;
+                break;
+
+            case ArazzoExpressionSource.MessagePayload when responseBodyLocal is not null:
+                // A channel receive step's live body local holds the received message payload.
                 root = responseBodyLocal;
                 break;
 
