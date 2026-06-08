@@ -652,6 +652,83 @@ public class WorkflowExecutorEndToEndTests
         }
     }
 
+    private const string JsonPathCriteriaDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adoptJsonPath",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [
+                    { "context": "$response.body", "type": "jsonpath", "condition": "$.tags[?@.primary == true]" }
+                  ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_inlines_a_jsonpath_criterion_via_a_generated_sibling_class()
+    {
+        // No source generator needed: the JSONPath query is compiled ahead-of-time into a sibling class
+        // baked straight into the emitted source.
+        string source = EmitGetPetExecutor(JsonPathCriteriaDocument, "AdoptJsonPathWorkflow");
+        source.ShouldContain("internal static class getPet_C0JsonPath");
+        source.ShouldNotContain("CompiledCriterion");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptJsonPathWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        // Passing: a tag with primary == true exists.
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","tags":[{"primary":false},{"primary":true}]}""");
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            JsonElement outputs = await pending;
+            outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+            name.GetString().ShouldBe("Fido");
+        }
+
+        // Failing: no tag is primary, so the query matches nothing.
+        {
+            var transport = new MockApiTransport();
+            transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","tags":[{"primary":false}]}""");
+            using var workspace = JsonWorkspace.Create();
+            using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+            var pending = (ValueTask<JsonElement>)execute.Invoke(
+                null,
+                [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+            WorkflowStepFailedException? caught = null;
+            try
+            {
+                _ = await pending;
+            }
+            catch (WorkflowStepFailedException ex)
+            {
+                caught = ex;
+            }
+
+            caught.ShouldNotBeNull();
+        }
+    }
+
     private static readonly Lazy<IIncrementalGenerator?> LazyRegexGenerator = new(LoadRegexGenerator);
 
     private static IIncrementalGenerator? LoadRegexGenerator()

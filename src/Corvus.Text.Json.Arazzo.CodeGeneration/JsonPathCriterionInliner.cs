@@ -36,10 +36,9 @@ internal static class JsonPathCriterionInliner
     /// </summary>
     /// <param name="query">The JSONPath query (the criterion condition).</param>
     /// <param name="contextExpression">The runtime expression supplying the JSON value the query runs against.</param>
-    /// <param name="sources">The step's live JSON sources (response body / message payload / message headers).</param>
+    /// <param name="responseBodyLocal">The in-scope live response-body local, or <see langword="null"/> if the step bound no body.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
-    /// <param name="inputAccessors">Map of input JSON name → generated dotnet accessor on the inputs model, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="namespaceName">The executor's namespace (the sibling query class is emitted into it).</param>
     /// <param name="tmpPrefix">A unique prefix for the query class and any temporaries.</param>
     /// <param name="auxiliaryTypes">Accumulates the generated sibling query class source.</param>
@@ -49,10 +48,9 @@ internal static class JsonPathCriterionInliner
     public static bool TryEmit(
         string query,
         string? contextExpression,
-        CriterionSources sources,
+        string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        IReadOnlyDictionary<string, string>? inputAccessors,
         string namespaceName,
         string tmpPrefix,
         StringBuilder auxiliaryTypes,
@@ -78,7 +76,7 @@ internal static class JsonPathCriterionInliner
         ArazzoExpression context = ArazzoExpression.Parse(contextExpression);
         var statementBuilder = new StringBuilder();
         if (!CriterionExpressionParsing.TryEmitElementNavigation(
-            context, null, $"{tmpPrefix}data", sources, inputsVariable, stepOutputLocals, inputAccessors, statementBuilder, out string dataLocal))
+            context, null, $"{tmpPrefix}data", responseBodyLocal, inputsVariable, stepOutputLocals, statementBuilder, out string dataLocal))
         {
             return false;
         }
@@ -110,24 +108,13 @@ internal static class JsonPathCriterionInliner
 
         auxiliaryTypes.Append(generated, classStart, generated.Length - classStart).AppendLine();
 
-        // Evaluate against the RUN workspace rather than calling QueryNodes, which spins up its own
-        // per-call JsonWorkspace; any intermediate values the query allocates land in the run workspace
-        // and are released when the caller resets/disposes it. JsonElement is a managed type so the
-        // node buffer cannot be stack-allocated — CreatePooled rents it from the array pool and Dispose
-        // returns it (and any spilled growth).
         string matchLocal = $"{tmpPrefix}Match";
         string resultLocal = $"{tmpPrefix}Result";
         statementBuilder.Append("bool ").Append(matchLocal).AppendLine(";");
-        statementBuilder.Append("JsonPathResult ").Append(resultLocal).AppendLine(" = JsonPathResult.CreatePooled(16);");
-        statementBuilder.AppendLine("try");
+        statementBuilder.Append("using (JsonPathResult ").Append(resultLocal).Append(" = ").Append(className)
+            .Append(".QueryNodes(").Append(dataLocal).AppendLine("))");
         statementBuilder.AppendLine("{");
-        statementBuilder.Append("    ").Append(className).Append(".EvaluateNodes(").Append(dataLocal)
-            .Append(", workspace, ref ").Append(resultLocal).AppendLine(");");
         statementBuilder.Append("    ").Append(matchLocal).Append(" = ").Append(resultLocal).AppendLine(".Count > 0;");
-        statementBuilder.AppendLine("}");
-        statementBuilder.AppendLine("finally");
-        statementBuilder.AppendLine("{");
-        statementBuilder.Append("    ").Append(resultLocal).AppendLine(".Dispose();");
         statementBuilder.AppendLine("}");
 
         statements = statementBuilder.ToString();
