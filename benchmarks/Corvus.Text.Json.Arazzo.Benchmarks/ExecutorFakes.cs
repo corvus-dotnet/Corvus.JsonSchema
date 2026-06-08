@@ -98,30 +98,39 @@ public sealed class BenchClient(IApiTransport transport)
         ValidationMode validationMode = ValidationMode.Basic,
         ValidationMode responseValidationMode = ValidationMode.None)
     {
-        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        JsonElement petIdValue = JsonElement.CreateBuilder(workspace, petId).RootElement;
-        if (!limit.IsUndefined)
+        // Pooled workspace, returned when this call's request has been serialized. (The fake response
+        // carries a shared static body, so it does not reference this workspace.)
+        JsonWorkspace workspace = JsonWorkspace.Create();
+        try
         {
-            _ = JsonElement.CreateBuilder(workspace, limit).RootElement;
-        }
+            JsonElement petIdValue = JsonElement.CreateBuilder(workspace, petId).RootElement;
+            if (!limit.IsUndefined)
+            {
+                _ = JsonElement.CreateBuilder(workspace, limit).RootElement;
+            }
 
-        if (!active.IsUndefined)
+            if (!active.IsUndefined)
+            {
+                _ = JsonElement.CreateBuilder(workspace, active).RootElement;
+            }
+
+            if (!tag.IsUndefined)
+            {
+                _ = JsonElement.CreateBuilder(workspace, tag).RootElement;
+            }
+
+            if (!cursor.IsUndefined)
+            {
+                _ = JsonElement.CreateBuilder(workspace, cursor).RootElement;
+            }
+
+            var request = new BenchRequest(petIdValue);
+            return this.transport.SendAsync<BenchRequest, BenchResponse>(in request, cancellationToken);
+        }
+        finally
         {
-            _ = JsonElement.CreateBuilder(workspace, active).RootElement;
+            workspace.Dispose();
         }
-
-        if (!tag.IsUndefined)
-        {
-            _ = JsonElement.CreateBuilder(workspace, tag).RootElement;
-        }
-
-        if (!cursor.IsUndefined)
-        {
-            _ = JsonElement.CreateBuilder(workspace, cursor).RootElement;
-        }
-
-        var request = new BenchRequest(petIdValue);
-        return this.transport.SendAsync<BenchRequest, BenchResponse>(in request, cancellationToken);
     }
 }
 
