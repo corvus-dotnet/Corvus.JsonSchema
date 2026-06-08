@@ -210,8 +210,9 @@ public partial class WorkflowExecutorEndToEndTests
                 new WorkflowExecutorOptions("GeneratedWorkflows", "ListenWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
         }
 
-        // The payload is received into a local and only the declared output value is projected from it.
-        source.ShouldContain("receiveMessagePayload = await messageTransport.ReceiveOneAsync<Corvus.Text.Json.JsonElement>(");
+        // The message is bound in the receive handler and only the declared output value is projected.
+        source.ShouldContain("messageTransport.ReceiveOneAsync<Corvus.Text.Json.JsonElement>(");
+        source.ShouldContain("JsonElement receiveMessagePayload = JsonElement.From(message);");
         source.ShouldContain("receiveMessagePayload.TryResolvePointer(\"/temp\"u8");
 
         Assembly assembly = CompileInMemory(source);
