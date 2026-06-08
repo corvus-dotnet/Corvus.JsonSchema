@@ -101,24 +101,57 @@ public static class WorkflowExecutorEmitter
                 }
 
                 string name = parameter.Name.GetString()!;
-                JsonElement value = parameter.Value;
-
-                if (value.ValueKind == JsonValueKind.String && value.GetString() is { } text && (text.StartsWith('$') || text.Contains("{$", StringComparison.Ordinal)))
-                {
-                    // A runtime expression (e.g. "$inputs.petId") or an interpolation template
-                    // (e.g. "order-{$inputs.id}"); RequestBindingEmitter picks the right one.
-                    arguments.Add(new StepArgument(name, text));
-                }
-                else
-                {
-                    // A constant JSON value (string, number, boolean, object, or array) — bound as a
-                    // parsed-once literal.
-                    arguments.Add(new StepArgument(name, value.GetRawText(), IsLiteral: true));
-                }
+                ArgumentValueKind kind = Classify(parameter.Value, out string text);
+                arguments.Add(new StepArgument(name, text, kind));
             }
         }
 
         return arguments;
+    }
+
+    /// <summary>
+    /// Classifies a parameter/payload value as a runtime expression, an interpolation template, or a
+    /// constant of a particular JSON kind, returning the text the emitter needs (the expression/template,
+    /// the unescaped string content, or the raw JSON).
+    /// </summary>
+    private static ArgumentValueKind Classify(in JsonElement value, out string text)
+    {
+        if (value.ValueKind == JsonValueKind.String && value.GetString() is { } s)
+        {
+            if (s.Contains("{$", StringComparison.Ordinal))
+            {
+                text = s;
+                return ArgumentValueKind.Interpolation;
+            }
+
+            if (s.StartsWith('$'))
+            {
+                text = s;
+                return ArgumentValueKind.Expression;
+            }
+
+            text = s;
+            return ArgumentValueKind.LiteralString;
+        }
+
+        switch (value.ValueKind)
+        {
+            case JsonValueKind.Number:
+                text = value.GetRawText();
+                return ArgumentValueKind.LiteralNumber;
+            case JsonValueKind.True:
+                text = "true";
+                return ArgumentValueKind.LiteralBoolean;
+            case JsonValueKind.False:
+                text = "false";
+                return ArgumentValueKind.LiteralBoolean;
+            case JsonValueKind.Null:
+                text = string.Empty;
+                return ArgumentValueKind.LiteralNull;
+            default:
+                text = value.GetRawText();
+                return ArgumentValueKind.LiteralComposite;
+        }
     }
 
     private static bool ReferencesResponseBody(
@@ -166,26 +199,16 @@ public static class WorkflowExecutorEmitter
             return null;
         }
 
-        JsonElement payload = requestBody.Payload;
+        ArgumentValueKind kind = Classify(requestBody.Payload, out string text);
 
-        // A payload that is a single runtime expression (e.g. "$inputs.pet") or an interpolation
-        // template (e.g. "id-{$inputs.id}"); RequestBindingEmitter picks the right one.
-        if (payload.ValueKind == JsonValueKind.String && payload.GetString() is { } text
-            && (text.StartsWith('$') || text.Contains("{$", StringComparison.Ordinal)))
+        // A composite (object/array) literal that contains embedded runtime expressions needs
+        // substitution, which is a later phase — defer it (conservatively, any '$' in its raw JSON).
+        if (kind == ArgumentValueKind.LiteralComposite && requestBody.Payload.GetRawText().Contains('$'))
         {
-            return new StepBody(text, IsLiteral: false);
+            return null;
         }
 
-        // A constant payload with no embedded runtime expressions (no '$' anywhere) — bound as a
-        // literal. Objects/arrays that contain expressions need substitution and are a later phase
-        // (the no-'$' check conservatively excludes them).
-        string raw = payload.GetRawText();
-        if (!raw.Contains('$'))
-        {
-            return new StepBody(raw, IsLiteral: true);
-        }
-
-        return null;
+        return new StepBody(text, kind);
     }
 
     private static List<StepCriterion> ReadCriteria(in ArazzoDocument.StepObject step)
