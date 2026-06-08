@@ -103,6 +103,14 @@ public class ComparandTests
     }
 
     [TestMethod]
+    public void String_equality_is_case_insensitive_for_non_ascii()
+    {
+        // Non-ASCII operands take the Unicode (transcode) case-folding path, not the ASCII fast path.
+        Utf8("Café").ValueEquals(Utf8("CAFÉ")).ShouldBeTrue();
+        Utf8("Straße").ValueEquals(Utf8("STRASSE")).ShouldBeFalse(); // ß ≠ SS under OrdinalIgnoreCase
+    }
+
+    [TestMethod]
     public void IsTrue_only_for_boolean_true()
     {
         Comparand.FromBoolean(true).IsTrue.ShouldBeTrue();
