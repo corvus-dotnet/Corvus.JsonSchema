@@ -43,6 +43,22 @@ internal static class LiteralValueEmitter
     {
         char first = literalJson.Length > 0 ? literalJson[0] : '\0';
 
+        // true / false / null have no value beyond their token, so they are shared core singletons —
+        // no field, no buffer, no allocation.
+        string? singleton = first switch
+        {
+            't' => "Corvus.Text.Json.Internal.ValuelessJsonDocument<JsonElement>.BooleanTrue",
+            'f' => "Corvus.Text.Json.Internal.ValuelessJsonDocument<JsonElement>.BooleanFalse",
+            'n' => "Corvus.Text.Json.Internal.ValuelessJsonDocument<JsonElement>.Null",
+            _ => null,
+        };
+
+        if (singleton is not null)
+        {
+            statements.Append("JsonElement ").Append(resultLocal).Append(" = ").Append(singleton).AppendLine(".RootElement;");
+            return;
+        }
+
         if (first == '"')
         {
             // Scalar string: wrap the raw quoted UTF-8 directly — no parse.
@@ -59,7 +75,7 @@ internal static class LiteralValueEmitter
         }
         else
         {
-            // Boolean, null, object, or array: parse once into a standalone document.
+            // Object or array: parse once into a standalone document.
             fields.Append("private static readonly ParsedJsonDocument<JsonElement> ").Append(fieldName)
                 .Append(" = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(")
                 .Append(EmitText.Quote(literalJson)).AppendLine("));");
