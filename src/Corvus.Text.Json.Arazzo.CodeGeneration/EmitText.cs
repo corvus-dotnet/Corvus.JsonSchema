@@ -63,6 +63,42 @@ internal static class EmitText
             : char.ToLowerInvariant(value[0]) + value[1..];
 
     /// <summary>
+    /// Produces a PascalCase C# identifier from an arbitrary token, treating any run of non-alphanumeric
+    /// characters as a word boundary (e.g. <c>adopt-pet</c> → <c>AdoptPet</c>) — used for generated
+    /// type names such as the per-workflow executor class.
+    /// </summary>
+    /// <param name="value">The token.</param>
+    /// <returns>A PascalCase identifier.</returns>
+    public static string ToPascalCase(string value)
+    {
+        var builder = new StringBuilder(value.Length);
+        bool upperNext = true;
+        foreach (char c in value)
+        {
+            if (!char.IsLetterOrDigit(c))
+            {
+                upperNext = true;
+                continue;
+            }
+
+            builder.Append(upperNext ? char.ToUpperInvariant(c) : c);
+            upperNext = false;
+        }
+
+        if (builder.Length == 0)
+        {
+            return "_";
+        }
+
+        if (char.IsDigit(builder[0]))
+        {
+            builder.Insert(0, '_');
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
     /// Gets the name of the local that holds a step's built outputs object — the target of static
     /// <c>$steps.&lt;id&gt;.outputs</c> resolution.
     /// </summary>
