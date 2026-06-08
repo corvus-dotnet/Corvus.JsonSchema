@@ -7,7 +7,7 @@
 using System.Text;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
-using Corvus.Text.Json.Arazzo10;
+using Corvus.Text.Json.Arazzo11;
 
 namespace Corvus.Text.Json.CodeGenerator;
 
@@ -60,7 +60,7 @@ internal static class ArazzoGenerationDriver
                     // Only OpenAPI source descriptions produce operations; an unspecified type defaults
                     // to OpenAPI. Arazzo (sub-workflow) sources are not supported yet.
                     bool isOpenApi = !source.Type.IsNotUndefined()
-                        || source.Type.Match(static () => false, static () => true, static () => false);
+                        || source.Type.GetString() == "openapi";
                     if (!isOpenApi)
                     {
                         continue;

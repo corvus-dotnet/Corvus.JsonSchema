@@ -30,7 +30,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.Arazzo10\Corvus.Text.Json.Arazzo10.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.JsonPath\Corvus.Text.Json.JsonPath.csproj" />
   </ItemGroup>
   <ItemGroup>

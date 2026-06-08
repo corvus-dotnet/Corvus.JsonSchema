@@ -20,7 +20,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.JsonPath.CodeGeneration\Corvus.Text.Json.JsonPath.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.Arazzo10\Corvus.Text.Json.Arazzo10.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi.CodeGeneration\Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi30\Corvus.Text.Json.OpenApi30.csproj" />
