@@ -42,6 +42,7 @@ public static class StepBodyEmitter
     /// <param name="contextVariable">The in-scope <c>WorkflowExecutionContext</c> variable name.</param>
     /// <param name="cancellationTokenVariable">The in-scope <c>CancellationToken</c> variable name.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
+    /// <param name="requestBodyExpression">The runtime expression that produces the request body, or <see langword="null"/> when the step declares no (supported) request body.</param>
     /// <returns>The emitted static field declarations and the in-method statements.</returns>
     public static StepBodyCode Emit(
         string stepId,
@@ -52,7 +53,8 @@ public static class StepBodyEmitter
         string workspaceVariable,
         string contextVariable,
         string cancellationTokenVariable,
-        IReadOnlyDictionary<string, string> stepOutputLocals)
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        string? requestBodyExpression = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
         ArgumentNullException.ThrowIfNull(successCriteria);
@@ -65,7 +67,7 @@ public static class StepBodyEmitter
         string clientVar = $"{camel}Client";
         string responseVar = $"{camel}Response";
 
-        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, prefix, stepOutputLocals);
+        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, prefix, stepOutputLocals, requestBodyExpression);
 
         var fields = new StringBuilder(request.Fields);
         var body = new StringBuilder(request.Statements);
