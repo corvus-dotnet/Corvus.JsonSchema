@@ -86,9 +86,15 @@ public static class WorkflowExecutorEmitter
             // increment: a straight-line 'send' step with no criteria/actions.
             if (binding.Kind == StepTargetKind.ChannelPath && binding.Channel is { } channel)
             {
-                if (criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0)
+                bool isReceive = channel.Channel.Action == AsyncApi.CodeGeneration.OperationAction.Receive;
+                if (onSuccess.Count > 0 || onFailure.Count > 0)
                 {
-                    throw new NotSupportedException($"Channel step '{stepId}' has success criteria or onSuccess/onFailure actions; control flow on a channel step is a later phase.");
+                    throw new NotSupportedException($"Channel step '{stepId}' has onSuccess/onFailure actions; control flow on a channel step is a later phase.");
+                }
+
+                if (criteria.Count > 0 && !isReceive)
+                {
+                    throw new NotSupportedException($"Channel step '{stepId}' has success criteria on a send step; only receive channel steps support success criteria (against $message.*).");
                 }
 
                 hasChannelStep = true;
@@ -135,10 +141,10 @@ public static class WorkflowExecutorEmitter
                 {
                     if (channelStep.Channel.Action == AsyncApi.CodeGeneration.OperationAction.Receive)
                     {
-                        ReceiveChannelStepCode receiveCode = ReceiveChannelStepEmitter.Emit(
-                            step.StepId, channelStep, "messageTransport", step.Outputs, "workspace", stepOutputLocals, "inputs", options.InputAccessors);
-                        fields.Append(receiveCode.Fields);
-                        AppendIndented(body, receiveCode.Statements, 12);
+                        string receiveStatements = ReceiveChannelStepEmitter.Emit(
+                            step.StepId, channelStep, "messageTransport", step.Outputs, step.SuccessCriteria, "workspace",
+                            stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace);
+                        AppendIndented(body, receiveStatements, 12);
                         stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
                         body.AppendLine();
                         continue;
