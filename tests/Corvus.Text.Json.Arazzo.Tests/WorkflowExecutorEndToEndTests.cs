@@ -241,7 +241,11 @@ public class WorkflowExecutorEndToEndTests
 
     private static string EmitLiteralParamExecutor() => EmitGetPetExecutor(LiteralParamDocument, "AdoptLiteralWorkflow");
 
-    private static string EmitGetPetExecutor(string document, string className)
+    private static string EmitGetPetExecutor(
+        string document,
+        string className,
+        string inputsTypeName = "Corvus.Text.Json.JsonElement",
+        IReadOnlyDictionary<string, string>? inputAccessors = null)
     {
         OperationDescriptor[] operations =
         [
@@ -272,8 +276,9 @@ public class WorkflowExecutorEndToEndTests
                 new WorkflowExecutorOptions(
                     "GeneratedWorkflows",
                     className,
+                    inputsTypeName,
                     "Corvus.Text.Json.JsonElement",
-                    "Corvus.Text.Json.JsonElement"));
+                    inputAccessors));
         }
 
         throw new InvalidOperationException("No workflow.");
@@ -807,6 +812,82 @@ public class WorkflowExecutorEndToEndTests
         }
     }
 
+    private const string TypedInputsDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adoptTyped",
+              "inputs": {
+                "type": "object",
+                "properties": { "petId": { "type": "string" } },
+                "required": [ "petId" ]
+              },
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_uses_a_strongly_typed_inputs_model_end_to_end()
+    {
+        byte[] documentBytes = Encoding.UTF8.GetBytes(TypedInputsDocument);
+
+        // Stage B: generate the inputs model + accessor map from the workflow's inputs schema.
+        WorkflowInputsModel? model = await WorkflowInputsModelGenerator.GenerateAsync(
+            documentBytes, 0, "GeneratedWorkflows.Models");
+        model.ShouldNotBeNull();
+
+        // Stage A: emit the executor against the generated inputs type + accessor map.
+        string executorSource = EmitGetPetExecutor(TypedInputsDocument, "AdoptTypedWorkflow", model!.TypeName, model.Accessors);
+        executorSource.ShouldContain("((JsonElement)inputs.PetId)");
+
+        // Compile the generated inputs model files AND the executor together.
+        string[] sources = [.. model.Files.Select(f => f.Content), executorSource];
+        Assembly assembly = CompileInMemory(sources);
+
+        Type inputsType = assembly.GetType(model.TypeName)
+            ?? throw new InvalidOperationException($"Generated inputs type '{model.TypeName}' not found.");
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AdoptTypedWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        // The generated model exposes an implicit conversion from JsonElement.
+        MethodInfo fromJsonElement = inputsType
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .First(m => m.Name == "op_Implicit"
+                && m.ReturnType == inputsType
+                && m.GetParameters() is [{ ParameterType: { } pt }] && pt == typeof(JsonElement));
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        object inputsInstance = fromJsonElement.Invoke(null, [inputsDocument.RootElement])!;
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsInstance, default(CancellationToken)])!;
+        JsonElement outputs = await pending;
+
+        // The typed accessor inputs.PetId flowed into the path and the workflow output.
+        transport.Requests.Count.ShouldBe(1);
+        transport.Requests[0].Path.ShouldBe("/pets/42");
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Fido");
+    }
+
     private static readonly Lazy<IIncrementalGenerator?> LazyRegexGenerator = new(LoadRegexGenerator);
 
     private static IIncrementalGenerator? LoadRegexGenerator()
@@ -845,14 +926,36 @@ public class WorkflowExecutorEndToEndTests
 
     private static Version? ParseVersion(string text) => Version.TryParse(text, out Version? version) ? version : null;
 
-    private static Assembly CompileInMemory(string source)
-    {
-        var parseOptions = new CSharpParseOptions(LanguageVersion.Preview);
-        SyntaxTree tree = CSharpSyntaxTree.ParseText(source, parseOptions);
+    // The SDK's default implicit (global) usings — generated JSON Schema models rely on them.
+    private const string GlobalUsings = """
+        global using global::System;
+        global using global::System.Collections.Generic;
+        global using global::System.IO;
+        global using global::System.Linq;
+        global using global::System.Net.Http;
+        global using global::System.Threading;
+        global using global::System.Threading.Tasks;
+        """;
 
-        // Force-load assemblies the emitted code references transitively (e.g. NodaTime, via an
-        // ObjectBuilder.AddProperty overload) so they appear in the loaded-assembly reference set.
+    private static Assembly CompileInMemory(params string[] sources)
+    {
+        // Define the target-framework preprocessor symbols so generated models take their modern
+        // (#if NET8_0_OR_GREATER) path — static abstract interface members like CreateInstance live there
+        // and must be present to satisfy the net10 runtime's IJsonElement<T>.
+        var parseOptions = new CSharpParseOptions(LanguageVersion.Preview).WithPreprocessorSymbols(
+            "NET", "NET5_0_OR_GREATER", "NET6_0_OR_GREATER", "NET7_0_OR_GREATER",
+            "NET8_0_OR_GREATER", "NET9_0_OR_GREATER", "NET10_0_OR_GREATER");
+        SyntaxTree[] trees =
+        [
+            CSharpSyntaxTree.ParseText(GlobalUsings, parseOptions),
+            .. sources.Select(s => CSharpSyntaxTree.ParseText(s, parseOptions)),
+        ];
+
+        // Force-load assemblies the emitted code references transitively (e.g. NodaTime via an
+        // ObjectBuilder.AddProperty overload; JsonPath via generated-model usings) so they appear in
+        // the loaded-assembly reference set.
         _ = typeof(NodaTime.OffsetTime).Assembly;
+        _ = typeof(Corvus.Text.Json.JsonPath.JsonPathResult).Assembly;
 
         var references = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
@@ -861,7 +964,7 @@ public class WorkflowExecutorEndToEndTests
 
         CSharpCompilation compilation = CSharpCompilation.Create(
             "GeneratedWorkflows.Tests",
-            [tree],
+            trees,
             references,
             new CSharpCompilationOptions(
                 OutputKind.DynamicallyLinkedLibrary,
@@ -886,7 +989,7 @@ public class WorkflowExecutorEndToEndTests
             string errors = string.Join(
                 Environment.NewLine,
                 result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).Select(d => d.ToString()));
-            Assert.Fail($"Generated executor failed to compile:{Environment.NewLine}{errors}{Environment.NewLine}--- source ---{Environment.NewLine}{source}");
+            Assert.Fail($"Generated executor failed to compile:{Environment.NewLine}{errors}{Environment.NewLine}--- source ---{Environment.NewLine}{string.Join(Environment.NewLine + "// ---" + Environment.NewLine, sources)}");
         }
 
         peStream.Position = 0;
