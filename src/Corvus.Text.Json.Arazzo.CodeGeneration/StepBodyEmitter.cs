@@ -54,6 +54,7 @@ public static class StepBodyEmitter
     /// <param name="cancellationTokenVariable">The in-scope <c>CancellationToken</c> variable name.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputsVariable">The in-scope workflow inputs variable name (for static <c>$inputs</c> navigation).</param>
+    /// <param name="namespaceName">The executor's namespace (for sibling types emitted for <c>jsonpath</c> criteria).</param>
     /// <param name="requestBody">The step's request body (expression or literal), or <see langword="null"/> when the step declares no (supported) request body.</param>
     /// <param name="bindResponseBody">
     /// Whether to feed the response body into the context. Set <see langword="false"/> when nothing in
@@ -73,6 +74,7 @@ public static class StepBodyEmitter
         string cancellationTokenVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
+        string namespaceName,
         StepBody? requestBody = null,
         bool bindResponseBody = true)
     {
@@ -91,6 +93,7 @@ public static class StepBodyEmitter
 
         var fields = new StringBuilder(request.Fields);
         var body = new StringBuilder(request.Statements);
+        var auxiliaryTypes = new StringBuilder();
 
         // Invoke through the generated client: it constructs and validates the request, sends it via
         // the transport, and validates the response — we never touch the request type or the raw
@@ -145,8 +148,8 @@ public static class StepBodyEmitter
         }
 
         EmitSuccessGate(
-            fields, inner, successCriteria, prefix, contextVariable, responseVar,
-            bindResponseBody ? responseBodyLocal : null, inputsVariable, stepOutputLocals, stepId);
+            fields, inner, auxiliaryTypes, successCriteria, prefix, contextVariable, responseVar,
+            bindResponseBody ? responseBodyLocal : null, inputsVariable, stepOutputLocals, namespaceName, stepId);
 
         if (hasOutputs)
         {
@@ -165,7 +168,7 @@ public static class StepBodyEmitter
         body.Append("    await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
         body.AppendLine("}");
 
-        return new StepBodyCode(fields.ToString(), body.ToString());
+        return new StepBodyCode(fields.ToString(), body.ToString(), auxiliaryTypes.ToString());
     }
 
     private static void AppendIndented(StringBuilder target, string text, int indent)
@@ -193,6 +196,7 @@ public static class StepBodyEmitter
     private static void EmitSuccessGate(
         StringBuilder fields,
         StringBuilder body,
+        StringBuilder auxiliaryTypes,
         IReadOnlyList<StepCriterion> successCriteria,
         string prefix,
         string contextVariable,
@@ -200,6 +204,7 @@ public static class StepBodyEmitter
         string? responseBodyLocal,
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
+        string namespaceName,
         string stepId)
     {
         if (successCriteria.Count == 0)
@@ -252,6 +257,19 @@ public static class StepBodyEmitter
             {
                 body.Append(regexStatements);
                 checks.Add(regexExpression);
+                continue;
+            }
+
+            // A jsonpath criterion with a static query is inlined by compiling the query ahead-of-time
+            // into a sibling class (emitted into auxiliaryTypes) and testing for at least one match
+            // against the statically-resolved context value.
+            if (MapCriterionType(criterion.Type) == "JsonPath"
+                && JsonPathCriterionInliner.TryEmit(
+                    criterion.Condition, criterion.Context, responseBodyLocal, inputsVariable, stepOutputLocals,
+                    namespaceName, $"{prefix}C{index}", auxiliaryTypes, out string jsonPathStatements, out string jsonPathExpression))
+            {
+                body.Append(jsonPathStatements);
+                checks.Add(jsonPathExpression);
                 continue;
             }
 
@@ -331,4 +349,5 @@ public readonly record struct StepCriterion(string Type, string Condition, strin
 /// </summary>
 /// <param name="Fields">The <c>static readonly</c> field declarations to place on the executor class.</param>
 /// <param name="Statements">The in-method statements implementing the step.</param>
-public readonly record struct StepBodyCode(string Fields, string Statements);
+/// <param name="AuxiliaryTypes">Top-level sibling type declarations (e.g. ahead-of-time-compiled <c>jsonpath</c> query classes) to place after the executor class, in the same namespace.</param>
+public readonly record struct StepBodyCode(string Fields, string Statements, string AuxiliaryTypes);
