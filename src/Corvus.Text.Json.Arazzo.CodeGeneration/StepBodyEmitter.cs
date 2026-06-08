@@ -251,10 +251,52 @@ public static class StepBodyEmitter
             return;
         }
 
-        var checks = new List<string>(successCriteria.Count);
-        for (int i = 0; i < successCriteria.Count; i++)
+        string expression = EmitCriteriaExpression(
+            successCriteria, fields, body, auxiliaryTypes, prefix, contextVariable, responseVar,
+            responseBodyLocal, inputsVariable, stepOutputLocals, inputAccessors, responseHeaders, requestContext, namespaceName);
+
+        body.Append("if (!(").Append(expression).AppendLine("))");
+        body.AppendLine("{");
+        body.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
+            .Append(EmitText.Quote($"Step '{stepId}' did not satisfy its success criteria."))
+            .AppendLine(");");
+        body.AppendLine("}");
+    }
+
+    /// <summary>
+    /// Emits the operand-resolution statements for a list of criteria and returns the combined boolean
+    /// expression (an AND of each criterion's inlined check). An empty list yields <c>"true"</c> (an
+    /// empty criteria set is satisfied, per the Arazzo spec). Each criterion is inlined where possible
+    /// (<c>$statusCode</c> / <c>simple</c> / <c>regex</c> / <c>jsonpath</c>) and otherwise falls back to
+    /// a <c>CompiledCriterion</c> field evaluated against the context. Shared by the success gate and the
+    /// success/failure action gates, which pass a distinct <paramref name="prefix"/> so temporaries and
+    /// fields never collide.
+    /// </summary>
+    internal static string EmitCriteriaExpression(
+        IReadOnlyList<StepCriterion> criteria,
+        StringBuilder fields,
+        StringBuilder body,
+        StringBuilder auxiliaryTypes,
+        string prefix,
+        string contextVariable,
+        string responseVar,
+        string? responseBodyLocal,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        IReadOnlyList<ResponseHeaderInfo>? responseHeaders,
+        in StepRequestContext requestContext,
+        string namespaceName)
+    {
+        if (criteria.Count == 0)
         {
-            StepCriterion criterion = successCriteria[i];
+            return "true";
+        }
+
+        var checks = new List<string>(criteria.Count);
+        for (int i = 0; i < criteria.Count; i++)
+        {
+            StepCriterion criterion = criteria[i];
             string index = i.ToString(CultureInfo.InvariantCulture);
 
             // A pure `$statusCode <op> <int>` simple criterion is evaluated at generation time into a
@@ -317,12 +359,7 @@ public static class StepBodyEmitter
             checks.Add($"{field}.Evaluate({contextVariable})");
         }
 
-        body.Append("if (!(").Append(string.Join(" && ", checks)).AppendLine("))");
-        body.AppendLine("{");
-        body.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
-            .Append(EmitText.Quote($"Step '{stepId}' did not satisfy its success criteria."))
-            .AppendLine(");");
-        body.AppendLine("}");
+        return string.Join(" && ", checks);
     }
 
     private static string MapCriterionType(string type)
