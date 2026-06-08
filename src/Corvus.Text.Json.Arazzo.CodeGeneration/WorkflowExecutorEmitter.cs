@@ -341,6 +341,7 @@ public static class WorkflowExecutorEmitter
         writer.AppendLine();
         writer.AppendLine("using System;");
         writer.AppendLine("using System.Diagnostics;");
+        writer.AppendLine("using System.Text.RegularExpressions;");
         writer.AppendLine("using System.Threading;");
         writer.AppendLine("using System.Threading.Tasks;");
         writer.AppendLine("using Corvus.Text.Json;");
@@ -350,7 +351,10 @@ public static class WorkflowExecutorEmitter
         writer.Append("namespace ").Append(options.Namespace).AppendLine(";");
         writer.AppendLine();
         writer.Append("/// <summary>Generated executor for the '").Append(workflowId).AppendLine("' workflow.</summary>");
-        writer.Append("public static class ").AppendLine(options.ClassName);
+
+        // The class is partial so [GeneratedRegex] partial methods (emitted for regex criteria) can be
+        // completed by the regular-expression source generator at the consumer's compile.
+        writer.Append("public static partial class ").AppendLine(options.ClassName);
         writer.AppendLine("{");
         AppendIndented(writer, fields, 4);
         if (fields.Length > 0)
