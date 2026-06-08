@@ -42,7 +42,7 @@ public static class StepBodyEmitter
     /// <param name="contextVariable">The in-scope <c>WorkflowExecutionContext</c> variable name.</param>
     /// <param name="cancellationTokenVariable">The in-scope <c>CancellationToken</c> variable name.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
-    /// <param name="requestBodyExpression">The runtime expression that produces the request body, or <see langword="null"/> when the step declares no (supported) request body.</param>
+    /// <param name="requestBody">The step's request body (expression or literal), or <see langword="null"/> when the step declares no (supported) request body.</param>
     /// <param name="bindResponseBody">
     /// Whether to feed the response body into the context. Set <see langword="false"/> when nothing in
     /// the step references <c>$response.body</c> — the body is then never cloned into the workspace,
@@ -59,7 +59,7 @@ public static class StepBodyEmitter
         string contextVariable,
         string cancellationTokenVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
-        string? requestBodyExpression = null,
+        StepBody? requestBody = null,
         bool bindResponseBody = true)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
@@ -73,7 +73,7 @@ public static class StepBodyEmitter
         string clientVar = $"{camel}Client";
         string responseVar = $"{camel}Response";
 
-        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, prefix, stepOutputLocals, requestBodyExpression);
+        RequestBindingCode request = RequestBindingEmitter.Emit(operation, arguments, contextVariable, prefix, stepOutputLocals, requestBody);
 
         var fields = new StringBuilder(request.Fields);
         var body = new StringBuilder(request.Statements);
