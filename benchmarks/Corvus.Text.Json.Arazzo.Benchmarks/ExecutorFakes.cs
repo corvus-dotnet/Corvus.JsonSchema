@@ -88,6 +88,9 @@ public sealed class BenchClient(IApiTransport transport)
 {
     private readonly IApiTransport transport = transport;
 
+    // The public method is SYNC (a JsonElement.Source is a ref struct and can't be an async parameter):
+    // it builds the request into a workspace, then hands both to the async core. This mirrors the real
+    // generated client exactly.
     public ValueTask<BenchResponse> GetPetAsync(
         JsonElement.Source petId,
         JsonElement.Source limit = default,
@@ -98,34 +101,39 @@ public sealed class BenchClient(IApiTransport transport)
         ValidationMode validationMode = ValidationMode.Basic,
         ValidationMode responseValidationMode = ValidationMode.None)
     {
-        // Pooled workspace, returned when this call's request has been serialized. (The fake response
-        // carries a shared static body, so it does not reference this workspace.)
-        JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        JsonElement petIdValue = JsonElement.CreateBuilder(workspace, petId).RootElement;
+        if (!limit.IsUndefined)
+        {
+            _ = JsonElement.CreateBuilder(workspace, limit).RootElement;
+        }
+
+        if (!active.IsUndefined)
+        {
+            _ = JsonElement.CreateBuilder(workspace, active).RootElement;
+        }
+
+        if (!tag.IsUndefined)
+        {
+            _ = JsonElement.CreateBuilder(workspace, tag).RootElement;
+        }
+
+        if (!cursor.IsUndefined)
+        {
+            _ = JsonElement.CreateBuilder(workspace, cursor).RootElement;
+        }
+
+        var request = new BenchRequest(petIdValue);
+        return this.SendCore(workspace, request, cancellationToken);
+    }
+
+    // Async core: dispose the request workspace once the send has completed. The response is
+    // independent and is disposed by the caller (the executor's `await response.DisposeAsync()`).
+    private async ValueTask<BenchResponse> SendCore(JsonWorkspace workspace, BenchRequest request, CancellationToken cancellationToken)
+    {
         try
         {
-            JsonElement petIdValue = JsonElement.CreateBuilder(workspace, petId).RootElement;
-            if (!limit.IsUndefined)
-            {
-                _ = JsonElement.CreateBuilder(workspace, limit).RootElement;
-            }
-
-            if (!active.IsUndefined)
-            {
-                _ = JsonElement.CreateBuilder(workspace, active).RootElement;
-            }
-
-            if (!tag.IsUndefined)
-            {
-                _ = JsonElement.CreateBuilder(workspace, tag).RootElement;
-            }
-
-            if (!cursor.IsUndefined)
-            {
-                _ = JsonElement.CreateBuilder(workspace, cursor).RootElement;
-            }
-
-            var request = new BenchRequest(petIdValue);
-            return this.transport.SendAsync<BenchRequest, BenchResponse>(in request, cancellationToken);
+            return await this.transport.SendAsync<BenchRequest, BenchResponse>(in request, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
