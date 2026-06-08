@@ -437,6 +437,79 @@ public class JsonElementMutableFreezeTests
         Assert.AreEqual(cloned.GetRawText(), frozen.GetRawText());
     }
 
+    [TestMethod]
+    public void FreezeRootOfParsedBuilder_RoundTrips()
+    {
+        // Regression for #808: freezing a JsonDocumentBuilder created via Parse threw
+        // ArgumentException from Buffer.BlockCopy in CopyFreezeState, because parsed values
+        // live in the raw-JSON backing region and carry no DynamicValue header.
+        const string json = """{ "test": "test" }""";
+
+        using JsonWorkspace ws = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(ws, json.AsMemory());
+
+        JsonElement frozen = builder.RootElement.Freeze();
+
+        Assert.AreEqual(JsonValueKind.Object, frozen.ValueKind);
+        Assert.AreEqual("test", frozen.GetProperty("test").GetString());
+        Assert.AreEqual("""{"test":"test"}""", frozen.GetRawText());
+    }
+
+    [TestMethod]
+    [DataRow("""{"a":1,"b":[true,null,"x",2.5],"c":{"d":-3}}""")]
+    [DataRow("""{"unicode":"héllo","escaped":"a\"b\nc"}""")]
+    [DataRow("""[1,"two",3.0,{"k":"v"},[]]""")]
+    [DataRow("\"just a string\"")]
+    [DataRow("12345")]
+    public void FreezeRootOfParsedBuilder_PreservesAllValueKinds(string json)
+    {
+        using JsonWorkspace ws = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(ws, json.AsMemory());
+
+        JsonElement cloned = builder.RootElement.Clone();
+        JsonElement frozen = builder.RootElement.Freeze();
+
+        Assert.AreEqual(cloned.GetRawText(), frozen.GetRawText());
+    }
+
+    [TestMethod]
+    public void FreezeParsedBuilderAfterMutation_PreservesRawAndDynamicValues()
+    {
+        // Exercises the two-region (raw + DynamicValue) compaction: "a" is a raw-JSON value,
+        // "b" is added through the builder and stored as a DynamicValue.
+        using JsonWorkspace ws = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(ws, """{"a":"raw"}""".AsMemory());
+
+        builder.RootElement.SetProperty("b"u8, "dynamic");
+
+        JsonElement cloned = builder.RootElement.Clone();
+        JsonElement frozen = builder.RootElement.Freeze();
+
+        Assert.AreEqual(cloned.GetRawText(), frozen.GetRawText());
+        Assert.AreEqual("raw", frozen.GetProperty("a").GetString());
+        Assert.AreEqual("dynamic", frozen.GetProperty("b").GetString());
+    }
+
+    [TestMethod]
+    public void FreezeInnerElementOfParsedBuilder_RoundTrips()
+    {
+        // Freezing a sub-element compacts only that segment's referenced values.
+        using JsonWorkspace ws = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(ws, """{"keep":{"n":42,"s":"deep"},"other":[1,2,3]}""".AsMemory());
+
+        JsonElement.Mutable target = builder.RootElement.GetProperty("keep");
+        JsonElement cloned = target.Clone();
+        JsonElement frozen = target.Freeze();
+
+        Assert.AreEqual(cloned.GetRawText(), frozen.GetRawText());
+        Assert.AreEqual(42, frozen.GetProperty("n").GetInt32());
+        Assert.AreEqual("deep", frozen.GetProperty("s").GetString());
+    }
+
     private static IJsonDocument SniffParentDocument<TElement>(TElement element)
         where TElement : struct, IJsonElement<TElement>
     {

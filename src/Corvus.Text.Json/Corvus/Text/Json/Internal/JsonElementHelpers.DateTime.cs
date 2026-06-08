@@ -78,6 +78,11 @@ public static partial class JsonElementHelpers
     /// <param name="output">The output buffer.</param>
     /// <param name="bytesWritten">The number of bytes written to the output buffer.</param>
     /// <returns><see langword="true"/> if the period was formatted successfully.</returns>
+    /// <remarks>
+    /// The JSON Schema <c>duration</c> format (RFC 3339 Appendix A) does not permit fractional
+    /// seconds, so any sub-second component of <paramref name="value"/> is rounded to the nearest
+    /// whole second before formatting (rounding halves away from zero).
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryFormatPeriod(in Period value, Span<byte> output, out int bytesWritten)
     {
@@ -620,13 +625,15 @@ public static partial class JsonElementHelpers
         return true;
     }
 
-    // Roundtrippable format. One of
-    // 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
-    // ------------------------------------------------------------------------------------------
-    // P2147483647Y2147483647M2147483647W2147483647DT2147483647H2147483647M-2147483647.123456789S
+    // Round-trippable RFC 3339 Appendix A duration. The grammar permits only integer values for each
+    // unit, and seconds is the smallest unit (no fractional seconds), so any sub-second component is
+    // rounded to the nearest whole second by RoundedToWholeSeconds before formatting. One of:
+    // 01234567890123456789012345678901234567890123456789012345678901234567890123456789
+    // --------------------------------------------------------------------------------
+    // P2147483647Y2147483647M2147483647W2147483647DT2147483647H2147483647M-2147483647S
     // P2147483647Y2147483647M2147483647W2147483647D
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe bool TryFormat(in Period incomingPeriod, Span<byte> destination, out int bytesWritten)
+    private static bool TryFormat(in Period incomingPeriod, Span<byte> destination, out int bytesWritten)
     {
         const int bytesRequired = JsonConstants.MaximumFormatPeriodLength;
 
@@ -636,7 +643,7 @@ public static partial class JsonElementHelpers
             return false;
         }
 
-        Period period = incomingPeriod.Normalize();
+        Period period = incomingPeriod.RoundedToWholeSeconds();
 
         if (period.Equals(Period.Zero))
         {
@@ -646,106 +653,87 @@ public static partial class JsonElementHelpers
         }
 
         int index = 0;
-        int localWritten;
 
         destination[index++] = (byte)'P';
 
-        if (period.Weeks == 0)
-        {
-            if (!Utf8Formatter.TryFormat(period.Years, destination.Slice(index), out localWritten))
-            {
-                bytesWritten = 0;
-                return false;
-            }
+        // After RoundedToWholeSeconds the period is normalized: weeks and ticks are zero and the
+        // sub-second component has been folded into seconds, so the period reduces to Y/M/D and H/M/S.
+        // RFC 3339 Appendix A allows zero-valued units to be omitted, but the grammar is contiguous:
+        //   dur-year = Y [dur-month], dur-month = M [dur-day]      (a Day after a Year needs the Month)
+        //   dur-hour = H [dur-minute], dur-minute = M [dur-second] (a Second after an Hour needs the Minute)
+        // so a zero "bridge" unit is retained when omitting it would create an invalid gap.
+        bool hasYears = period.Years != 0;
+        bool hasDays = period.Days != 0;
 
-            index += localWritten;
-            destination[index++] = (byte)'Y';
-
-            if (!Utf8Formatter.TryFormat(period.Months, destination.Slice(index), out localWritten))
-            {
-                bytesWritten = 0;
-                return false;
-            }
-
-            index += localWritten;
-            destination[index++] = (byte)'M';
-        }
-
-        if (period.Weeks != 0)
-        {
-            if (!Utf8Formatter.TryFormat(period.Weeks, destination.Slice(index), out localWritten))
-            {
-                bytesWritten = 0;
-                return false;
-            }
-
-            index += localWritten;
-            destination[index++] = (byte)'W';
-        }
-
-        if (!Utf8Formatter.TryFormat(period.Days, destination.Slice(index), out localWritten))
+        if (hasYears && !TryAppendUnit(period.Years, (byte)'Y', destination, ref index))
         {
             bytesWritten = 0;
             return false;
         }
 
-        index += localWritten;
-        destination[index++] = (byte)'D';
+        // Emit months when non-zero, or as the bridge between years and days.
+        if ((period.Months != 0 || (hasYears && hasDays)) && !TryAppendUnit(period.Months, (byte)'M', destination, ref index))
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        if (hasDays && !TryAppendUnit(period.Days, (byte)'D', destination, ref index))
+        {
+            bytesWritten = 0;
+            return false;
+        }
 
         if (period.HasTimeComponent)
         {
             destination[index++] = (byte)'T';
-            if (!Utf8Formatter.TryFormat(period.Hours, destination.Slice(index), out localWritten))
+
+            bool hasHours = period.Hours != 0;
+
+            // The sub-second component has been rounded into seconds, so seconds is the smallest unit.
+            bool hasSeconds = period.Seconds != 0;
+
+            if (hasHours && !TryAppendUnit(period.Hours, (byte)'H', destination, ref index))
             {
                 bytesWritten = 0;
                 return false;
             }
 
-            index += localWritten;
-            destination[index++] = (byte)'H';
-            if (!Utf8Formatter.TryFormat(period.Minutes, destination.Slice(index), out localWritten))
+            // Emit minutes when non-zero, or as the bridge between hours and seconds.
+            if ((period.Minutes != 0 || (hasHours && hasSeconds)) && !TryAppendUnit(period.Minutes, (byte)'M', destination, ref index))
             {
                 bytesWritten = 0;
                 return false;
             }
 
-            index += localWritten;
-            destination[index++] = (byte)'M';
-            long fractional = period.Milliseconds * 1000000 + period.Ticks * 100 + period.Nanoseconds;
-            long integral = period.Seconds;
-            if (fractional != 0L || integral != 0L)
+            if (hasSeconds && !TryAppendUnit(period.Seconds, (byte)'S', destination, ref index))
             {
-                if (fractional < 0 || integral < 0)
-                {
-                    destination[index++] = (byte)'-';
-                    fractional = -fractional;
-                    integral = -integral;
-                }
-
-                if (!Utf8Formatter.TryFormat(integral, destination.Slice(index), out localWritten))
-                {
-                    bytesWritten = 0;
-                    return false;
-                }
-
-                index += localWritten;
-
-                if (fractional != 0L)
-                {
-                    destination[index++] = (byte)'.';
-                    fixed (byte* dest = &MemoryMarshal.GetReference(destination))
-                    {
-                        Number.WriteDigits((uint)fractional, dest + index, 9);
-                    }
-
-                    index += 9;
-                }
-
-                destination[index++] = (byte)'S';
+                bytesWritten = 0;
+                return false;
             }
         }
 
         bytesWritten = index;
+        return true;
+    }
+
+    /// <summary>
+    /// Appends a single duration unit (an integer value followed by its designator) to the destination.
+    /// </summary>
+    /// <param name="value">The integer value of the unit. Negative values are formatted with a leading '-'.</param>
+    /// <param name="designator">The RFC 3339 designator byte for the unit (for example <c>(byte)'S'</c>).</param>
+    /// <param name="destination">The output buffer.</param>
+    /// <param name="index">The current write position, advanced past the bytes written.</param>
+    /// <returns><see langword="true"/> if the unit was written successfully.</returns>
+    private static bool TryAppendUnit(long value, byte designator, Span<byte> destination, ref int index)
+    {
+        if (!Utf8Formatter.TryFormat(value, destination.Slice(index), out int localWritten))
+        {
+            return false;
+        }
+
+        index += localWritten;
+        destination[index++] = designator;
         return true;
     }
 }

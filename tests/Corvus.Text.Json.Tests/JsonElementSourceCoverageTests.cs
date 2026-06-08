@@ -556,7 +556,7 @@ public class JsonElementSourceCoverageTests
         Assert.AreEqual(Offset.FromHours(2), parsedOffsetDateTime.Offset);
         
         Assert.IsTrue(doc.RootElement.TryGetProperty("period"u8, out JsonElement.Mutable periodProp));
-        Assert.AreEqual("P1Y2M0D", periodProp.GetString());
+        Assert.AreEqual("P1Y2M", periodProp.GetString());
     }
 
     [TestMethod]
@@ -701,7 +701,7 @@ public class JsonElementSourceCoverageTests
         Assert.AreEqual(Offset.FromHours(2), parsedOffsetDateTime.Offset);
         
         Assert.IsTrue(doc.RootElement.TryGetProperty("period", out JsonElement.Mutable periodProp));
-        Assert.AreEqual("P1Y2M0D", periodProp.GetString());
+        Assert.AreEqual("P1Y2M", periodProp.GetString());
     }
 
     [TestMethod]
@@ -845,6 +845,6 @@ public class JsonElementSourceCoverageTests
         Assert.AreEqual(Offset.FromHours(2), parsedOffsetDateTime.Offset);
         
         Assert.IsTrue(doc.RootElement.TryGetProperty("period", out JsonElement.Mutable periodProp));
-        Assert.AreEqual("P1Y2M0D", periodProp.GetString());
+        Assert.AreEqual("P1Y2M", periodProp.GetString());
     }
 }

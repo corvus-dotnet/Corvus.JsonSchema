@@ -191,7 +191,7 @@ internal static partial class JsonConstants
     public const int MaximumFormatDateLength = 10;    // StandardFormat 'O', e.g. 2017-06-12
     public const int MaximumFormatOffsetDateLength = 16;    // StandardFormat 'O', e.g. 2017-06-12-07:00
     public const int MaximumFormatOffsetTimeLength = 22;    // StandardFormat 'O', e.g. 05:30:45.7680000-07:00
-    public const int MaximumFormatPeriodLength = ((MaximumFormatUInt32Length + 1) * 7) + 13;    // StandardFormat e.g. P2147483647Y2147483647M2147483647W2147483647DT2147483647H2147483647M-2147483647.123456789S
+    public const int MaximumFormatPeriodLength = ((MaximumFormatUInt32Length + 1) * 7) + 13;    // StandardFormat e.g. P2147483647Y2147483647M2147483647W2147483647DT2147483647H2147483647M-2147483647S (RFC 3339 durations have no fractional seconds)
     public const int MaximumFormatDateTimeOffsetLength = 33;  // StandardFormat 'O', e.g. 2017-06-12T05:30:45.7680000-07:00
     public const int MaxDateTimeUtcOffsetHours = 14; // The UTC offset portion of a TimeSpan or DateTime can be no more than 14 hours and no less than -14 hours.
     public const int DateTimeNumFractionDigits = 7;  // TimeSpan and DateTime formats allow exactly up to many digits for specifying the fraction after the seconds.
