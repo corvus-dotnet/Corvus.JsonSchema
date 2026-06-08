@@ -8,6 +8,7 @@ using System.Text;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo11;
+using Corvus.Text.Json.AsyncApi.CodeGeneration;
 
 namespace Corvus.Text.Json.CodeGenerator;
 
@@ -43,8 +44,10 @@ internal static class ArazzoGenerationDriver
 
         string arazzoDirectory = Path.GetDirectoryName(Path.GetFullPath(arazzoFilePath))!;
 
-        // Generate the OpenAPI client + models for each source description and collect its operations.
+        // Generate the client/models for each source description and collect its operations (OpenAPI)
+        // or channel operations (AsyncAPI).
         var clients = new List<SourceDescriptionClient>();
+        var channelSources = new List<SourceDescriptionChannels>();
         using (ParsedJsonDocument<ArazzoDocument> document = ParsedJsonDocument<ArazzoDocument>.Parse(arazzoBytes))
         {
             ArazzoDocument arazzo = document.RootElement;
@@ -57,30 +60,39 @@ internal static class ArazzoGenerationDriver
                         continue;
                     }
 
-                    // Only OpenAPI source descriptions produce operations; an unspecified type defaults
-                    // to OpenAPI. Arazzo (sub-workflow) sources are not supported yet.
-                    bool isOpenApi = !source.Type.IsNotUndefined()
-                        || source.Type.GetString() == "openapi";
-                    if (!isOpenApi)
-                    {
-                        continue;
-                    }
+                    // An unspecified type defaults to OpenAPI. OpenAPI sources produce operations;
+                    // AsyncAPI sources produce channel operations. Arazzo (sub-workflow) sources are
+                    // generated from the same document and need no per-source client.
+                    string sourceType = source.Type.IsNotUndefined() ? source.Type.GetString()! : "openapi";
 
                     string name = source.Name.GetString()!;
                     string url = source.Url.GetString()!;
                     string specPath = Path.GetFullPath(Path.Combine(arazzoDirectory, url));
                     string sourceSegment = ToIdentifier(name);
+                    string sourceNamespace = $"{rootNamespace}.{sourceSegment}";
+                    string sourceOutput = Path.Combine(outputPath, sourceSegment);
 
-                    IReadOnlyList<OpenApi.CodeGeneration.OperationDescriptor> operations = await OpenApiSourceGenerator
-                        .GenerateAsync(specPath, $"{rootNamespace}.{sourceSegment}", Path.Combine(outputPath, sourceSegment), clientName, cancellationToken)
-                        .ConfigureAwait(false);
+                    if (sourceType == "openapi")
+                    {
+                        IReadOnlyList<OpenApi.CodeGeneration.OperationDescriptor> operations = await OpenApiSourceGenerator
+                            .GenerateAsync(specPath, sourceNamespace, sourceOutput, clientName, cancellationToken)
+                            .ConfigureAwait(false);
 
-                    clients.Add(new SourceDescriptionClient(name, OperationResolver.Create(name, operations)));
+                        clients.Add(new SourceDescriptionClient(name, OperationResolver.Create(name, operations)));
+                    }
+                    else if (sourceType == "asyncapi")
+                    {
+                        IReadOnlyList<AsyncApiChannelDescriptor> channels = await AsyncApiSourceGenerator
+                            .GenerateAsync(specPath, sourceNamespace, sourceOutput, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        channelSources.Add(new SourceDescriptionChannels(name, channels));
+                    }
                 }
             }
         }
 
-        var binder = new WorkflowOperationBinder(clients);
+        var binder = new WorkflowOperationBinder(clients, channelSources);
         IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration
             .GenerateAsync(arazzoBytes, binder, new ArazzoGenerationOptions(rootNamespace), cancellationToken)
             .ConfigureAwait(false);
