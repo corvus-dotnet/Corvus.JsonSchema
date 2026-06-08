@@ -43,11 +43,15 @@ public class StepBodyEmitterTests
     }
 
     [TestMethod]
-    public void Clones_the_response_body_into_the_workspace_before_feeding_the_context()
+    public void Binds_the_response_body_as_a_live_reference_without_cloning()
     {
         StepBodyCode code = Emit([]);
 
-        code.Statements.ShouldContain("if (getPetResponse.StatusCode == 200) { context.SetResponseBody(((JsonElement)getPetResponse.OkBody).CloneAsBuilder(workspace).RootElement); }");
+        // The matched-status body is a live reference (used by criteria while the response is alive);
+        // the whole-body CloneAsBuilder is gone.
+        code.Statements.ShouldContain("if (getPetResponse.StatusCode == 200) { getPetResponseBody = (JsonElement)getPetResponse.OkBody; }");
+        code.Statements.ShouldContain("context.SetResponseBody(getPetResponseBody);");
+        code.Statements.ShouldNotContain("CloneAsBuilder");
     }
 
     [TestMethod]
@@ -66,6 +70,7 @@ public class StepBodyEmitterTests
             "getPet",
             GetPet,
             [new StepArgument("petId", "$inputs.petId")],
+            [],
             [],
             "transport",
             "workspace",
@@ -116,6 +121,7 @@ public class StepBodyEmitterTests
             GetPet,
             [new StepArgument("petId", "$inputs.petId")],
             criteria,
+            [],
             "transport",
             "workspace",
             "context",
