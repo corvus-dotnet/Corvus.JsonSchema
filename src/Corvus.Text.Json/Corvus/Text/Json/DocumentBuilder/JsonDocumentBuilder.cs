@@ -2130,7 +2130,13 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     internal void InitializeFrozen(JsonDocument source, int index, int byteSize, int parentWorkspaceIndex)
     {
         _parentWorkspaceIndex = parentWorkspaceIndex;
-        source.CopyFreezeState(this, index, byteSize);
+
+        // A source created via Parse keeps its values in a raw-JSON backing region; rows there
+        // carry no DynamicValue header. CopyFreezeState compacts those into a raw region and
+        // returns its length, which becomes this frozen builder's raw-JSON length so the same
+        // location-based discriminator keeps resolving them after the freeze.
+        int sourceRawJsonLength = source is JsonDocumentBuilder<T> sourceBuilder ? sourceBuilder._rawJsonLength : 0;
+        _rawJsonLength = source.CopyFreezeState(this, index, byteSize, sourceRawJsonLength);
         _isImmutable = true;
     }
 

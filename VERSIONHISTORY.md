@@ -2,11 +2,12 @@
 
 ## V5.1.12
 
-V5.1.12 fixes a V5 bug where `Corvus.Text.Json.Period` could emit `duration` strings that are invalid under the JSON Schema `duration` format.
+V5.1.12 fixes two V5 bugs: `Corvus.Text.Json.Period` could emit `duration` strings that are invalid under the JSON Schema `duration` format, and calling `Freeze()` on a `JsonDocumentBuilder` created via `Parse` threw an exception.
 
 ### Bug fixes
 
 - **`Period` no longer emits invalid `duration` strings** — The V5 `Corvus.Text.Json.Period` formatter (used by `Period.ToString()` and when writing a period to a JSON document, including the OpenAPI server `Build` methods) could emit a fractional seconds value, for example `P0Y0M0DT0H0M6.220724100S` for a period built from a sub-second `System.TimeSpan`. The JSON Schema `duration` format (RFC 3339 Appendix A) does not permit fractional seconds, so such values failed to round-trip through `Period.TryParse`. The formatter now rounds any sub-second component (milliseconds, ticks, nanoseconds) to the nearest whole second — rounding halves away from zero — producing a valid, round-trippable duration. As part of the fix the formatter also omits unnecessary zero-valued units where the RFC 3339 grammar allows, so output is now compact (for example `PT6S` and `P7D` rather than `P0Y0M0DT0H0M6S` and `P0Y0M7D`). Consumers that compared the exact formatted string should note the more compact output. See [#805](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/805).
+- **`Freeze()` on a parsed `JsonDocumentBuilder` no longer throws** — Calling `Freeze()` on a document produced by `JsonDocumentBuilder<T>.Parse(...)` threw `ArgumentException` (`Offset and length were out of bounds`) from `Buffer.BlockCopy`. The freeze copy assumed every value was stored as a length-prefixed *DynamicValue* blob, but values from a parsed document point directly into the original UTF-8 JSON backing region with no such header, so the copy read a bogus length. Freezing now compacts the value backing into a raw-JSON region and a DynamicValue region and propagates the raw-region length to the frozen document, so parsed, mutated, and from-scratch documents all freeze correctly. See [#808](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/808).
 
 ## V5.1.11
 

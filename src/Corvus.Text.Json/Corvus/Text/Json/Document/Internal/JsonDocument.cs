@@ -1962,52 +1962,108 @@ public abstract partial class JsonDocument
 
     /// <summary>
     /// Copies the metadb segment and only the referenced value backing from this document
-    /// into a target document for a freeze operation. Uses a single forward pass to copy
-    /// each local value row's backing data and adjust its offset.
+    /// into a target document for a freeze operation, compacting the value backing into a
+    /// raw-JSON region followed by a DynamicValue region.
     /// </summary>
     /// <param name="target">The target document to initialize.</param>
     /// <param name="index">The starting metadb byte index of the element to freeze.</param>
     /// <param name="byteSize">The byte size of the metadb segment.</param>
-    internal void CopyFreezeState(JsonDocument target, int index, int byteSize)
+    /// <param name="rawJsonLength">The length of this document's raw-JSON backing region;
+    /// value rows whose location is below this point into the original parsed JSON and carry
+    /// no DynamicValue header (the same <c>location &lt; rawJsonLength</c> convention used by
+    /// the value readers).</param>
+    /// <returns>The length of the raw-JSON region written to the target's value backing. The
+    /// caller must assign this to the target's raw-JSON length so the frozen document reads
+    /// raw and dynamic values back with the same discriminator.</returns>
+    internal int CopyFreezeState(JsonDocument target, int index, int byteSize, int rawJsonLength)
     {
         target._parsedData = _parsedData.CopySegmentRaw(index, index + byteSize);
 
         if (_valueBacking == null || _valueOffset <= 0)
         {
-            return;
+            return 0;
         }
 
-        // Single forward pass: for each local String/Number/PropertyName row,
-        // copy its backing bytes and rewrite its offset.
-        byte[]? targetBacking = null;
-        int writeOffset = 0;
+        // The value backing is compacted into two regions, each holding only the referenced
+        // values for this segment:
+        //  - Raw-JSON values (location < rawJsonLength) carry no header. Strings and property
+        //    names are copied with their surrounding quotes (location points one past the
+        //    opening quote); numbers are copied verbatim. These occupy [0..rawRegionLength).
+        //  - DynamicValue blobs ([4-byte header: length << 4 | type][data]) keep their layout
+        //    and follow the raw region.
+        // The caller sets the target's raw-JSON length to rawRegionLength, so the frozen
+        // document resolves each row to the correct region via the same location comparison.
 
+        // Pass 1: size each region so they can be laid out contiguously in one buffer.
+        int rawRegionLength = 0;
+        int dynamicRegionLength = 0;
         for (int i = 0; i < byteSize; i += DbRow.Size)
         {
             DbRow row = target._parsedData.Get(i);
-            if (!row.FromExternalDocument && row.TokenType is JsonTokenType.String or JsonTokenType.Number or JsonTokenType.PropertyName)
+            if (row.FromExternalDocument || row.TokenType is not (JsonTokenType.String or JsonTokenType.Number or JsonTokenType.PropertyName))
             {
-                int loc = row.LocationOrIndex;
+                continue;
+            }
 
-                // Read the stored size from the 4-byte header in _valueBacking.
-                // Format: [4-byte header: length<<4 | type][value data of 'length' bytes]
+            int loc = row.LocationOrIndex;
+            if (loc < rawJsonLength)
+            {
+                bool quoted = row.TokenType is JsonTokenType.String or JsonTokenType.PropertyName;
+                rawRegionLength += row.SizeOrLengthOrPropertyMapIndex + (quoted ? 2 : 0);
+            }
+            else
+            {
                 uint header = BitConverter.ToUInt32(_valueBacking, loc);
-                int storedSize = 4 + (int)(header >> 4);
-
-                targetBacking ??= ArrayPool<byte>.Shared.Rent(_valueOffset);
-
-                Buffer.BlockCopy(_valueBacking, loc, targetBacking, writeOffset, storedSize);
-                target._parsedData.SetRowLocation(i, writeOffset);
-
-                writeOffset += storedSize;
+                dynamicRegionLength += 4 + (int)(header >> 4);
             }
         }
 
-        if (targetBacking != null)
+        if (rawRegionLength == 0 && dynamicRegionLength == 0)
         {
-            target._valueBacking = targetBacking;
-            target._valueOffset = writeOffset;
+            return 0;
         }
+
+        byte[] targetBacking = ArrayPool<byte>.Shared.Rent(rawRegionLength + dynamicRegionLength);
+        int rawWrite = 0;
+        int dynamicWrite = rawRegionLength;
+
+        // Pass 2: copy each value into its region and rewrite the row's location.
+        for (int i = 0; i < byteSize; i += DbRow.Size)
+        {
+            DbRow row = target._parsedData.Get(i);
+            if (row.FromExternalDocument || row.TokenType is not (JsonTokenType.String or JsonTokenType.Number or JsonTokenType.PropertyName))
+            {
+                continue;
+            }
+
+            int loc = row.LocationOrIndex;
+            if (loc < rawJsonLength)
+            {
+                bool quoted = row.TokenType is JsonTokenType.String or JsonTokenType.PropertyName;
+                int sourceStart = quoted ? loc - 1 : loc;
+                int copyLength = row.SizeOrLengthOrPropertyMapIndex + (quoted ? 2 : 0);
+
+                Buffer.BlockCopy(_valueBacking, sourceStart, targetBacking, rawWrite, copyLength);
+
+                // Preserve the convention: location points one past the opening quote for
+                // quoted tokens, or at the value start for numbers.
+                target._parsedData.SetRowLocation(i, quoted ? rawWrite + 1 : rawWrite);
+                rawWrite += copyLength;
+            }
+            else
+            {
+                uint header = BitConverter.ToUInt32(_valueBacking, loc);
+                int storedSize = 4 + (int)(header >> 4);
+
+                Buffer.BlockCopy(_valueBacking, loc, targetBacking, dynamicWrite, storedSize);
+                target._parsedData.SetRowLocation(i, dynamicWrite);
+                dynamicWrite += storedSize;
+            }
+        }
+
+        target._valueBacking = targetBacking;
+        target._valueOffset = dynamicWrite;
+        return rawRegionLength;
     }
 
     /// <summary>
