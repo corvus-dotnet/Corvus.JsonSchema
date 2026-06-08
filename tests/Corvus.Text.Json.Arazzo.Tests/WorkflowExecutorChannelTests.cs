@@ -479,6 +479,79 @@ public partial class WorkflowExecutorEndToEndTests
         caught.ShouldNotBeNull();
     }
 
+    private const string ChannelReceiveRetryDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listen",
+              "steps": [
+                {
+                  "stepId": "wait",
+                  "channelPath": "measurements",
+                  "action": "receive",
+                  "successCriteria": [ { "condition": "$message.payload#/status == 'ready'" } ],
+                  "onFailure": [ { "name": "again", "type": "retry", "retryAfter": 0, "retryLimit": 5 } ],
+                  "outputs": { "id": "$message.payload#/id" }
+                }
+              ],
+              "outputs": { "id": "$steps.wait.outputs.id" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_retries_a_receive_step_until_a_message_matches()
+    {
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveRetryDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The receive step is promoted into the control-flow loop (onFailure retry).
+        source.ShouldContain("while (true)");
+        source.ShouldContain("messageTransport.ReceiveOneAsync<Corvus.Text.Json.JsonElement>(");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+        // First message misses the criterion → the step retries (re-subscribes); the second matches.
+        await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"status":"pending","id":"R1"}"""));
+        await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"status":"ready","id":"R2"}"""));
+        JsonElement outputs = await pending;
+
+        outputs.TryGetProperty("id"u8, out JsonElement id).ShouldBeTrue();
+        id.GetString().ShouldBe("R2");
+    }
+
     private static MethodInfo CompileReceiveWithCriteria(out string source)
     {
         var descriptor = new AsyncApiChannelDescriptor(

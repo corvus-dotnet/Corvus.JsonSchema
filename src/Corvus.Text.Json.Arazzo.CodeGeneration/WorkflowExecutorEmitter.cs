@@ -87,16 +87,13 @@ public static class WorkflowExecutorEmitter
             if (binding.Kind == StepTargetKind.ChannelPath && binding.Channel is { } channel)
             {
                 bool isReceive = channel.Channel.Action == AsyncApi.CodeGeneration.OperationAction.Receive;
-                if (onSuccess.Count > 0 || onFailure.Count > 0)
-                {
-                    throw new NotSupportedException($"Channel step '{stepId}' has onSuccess/onFailure actions; control flow on a channel step is a later phase.");
-                }
-
                 if (criteria.Count > 0 && !isReceive)
                 {
                     throw new NotSupportedException($"Channel step '{stepId}' has success criteria on a send step; only receive channel steps support success criteria (against $message.*).");
                 }
 
+                // onSuccess/onFailure actions promote the channel step into the control-flow loop.
+                usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
                 hasChannelStep = true;
                 boundSteps.Add(new ControlFlowStep(stepId, null, [], criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel));
                 continue;
@@ -121,11 +118,6 @@ public static class WorkflowExecutorEmitter
         // A step may declare dependsOn (1.1): order steps so each step's same-workflow dependencies
         // precede it. Sequential executors must honour this; document order is used as the tie-break.
         boundSteps = TopologicallyOrder(boundSteps);
-
-        if (usesControlFlow && hasChannelStep)
-        {
-            throw new NotSupportedException("Combining AsyncAPI channel steps with onSuccess/onFailure control flow in one workflow is a later phase.");
-        }
 
         if (usesControlFlow)
         {
