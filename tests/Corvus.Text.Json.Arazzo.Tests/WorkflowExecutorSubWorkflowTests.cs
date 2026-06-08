@@ -113,7 +113,7 @@ public partial class WorkflowExecutorEndToEndTests
             Encoding.UTF8.GetBytes(ParentAndChildDocument), binder, new ArazzoGenerationOptions("GeneratedWorkflows"));
 
         string[] executors = [.. files.Where(f => f.FileName.StartsWith("Workflows/", StringComparison.Ordinal)).Select(f => f.Content)];
-        executors.Length.ShouldBe(2);
+        files.Count(f => f.FileName.EndsWith("Workflow.cs", StringComparison.Ordinal)).ShouldBe(2);
 
         Assembly assembly = CompileInMemory(executors);
         MethodInfo execute = assembly.GetType("GeneratedWorkflows.Workflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!;
