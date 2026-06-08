@@ -100,7 +100,7 @@ internal static class ControlFlowEmitter
         StringBuilder auxiliaryTypes,
         Dictionary<string, string> stepOutputLocals)
     {
-        ResolvedOperation operation = step.Operation;
+        ResolvedOperation operation = step.Operation!.Value;
         string identifier = EmitText.SanitizeIdentifier(step.StepId);
         string prefix = $"{identifier}_";
         string camel = EmitText.ToCamelCase(identifier);
