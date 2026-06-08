@@ -40,6 +40,11 @@ public static class OutputExtractionEmitter
     /// value is the only thing copied (via <c>CloneAsBuilder</c>) — it outlives the response, which is
     /// disposed once this build completes.
     /// </param>
+    /// <param name="messagePayloadLocal">
+    /// The in-scope local holding the received AsyncAPI message payload (for <c>$message.payload</c>
+    /// projection), or <see langword="null"/> when the step is not a channel receive step. The payload is
+    /// already workspace-owned, so each projected value is copied into the outputs object the same way.
+    /// </param>
     /// <returns>The emitted static field declarations and the in-method statements (empty when there are no outputs). The statements ASSIGN the pre-declared step-outputs element local.</returns>
     public static OutputExtractionCode Emit(
         string stepId,
@@ -49,7 +54,8 @@ public static class OutputExtractionEmitter
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
         IReadOnlyDictionary<string, string>? inputAccessors,
-        string? responseBodyLocal)
+        string? responseBodyLocal,
+        string? messagePayloadLocal = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(stepId);
         ArgumentNullException.ThrowIfNull(outputs);
@@ -78,7 +84,13 @@ public static class OutputExtractionEmitter
             {
                 // Project from the live response body, copying ONLY this value into the workspace so it
                 // outlives the response (the only reification — and it's the output product itself).
-                EmitResponseBodyProjection(statements, responseBodyLocal, parsed.JsonPointer, workspaceVariable, local);
+                EmitLiveValueProjection(statements, responseBodyLocal, parsed.JsonPointer, workspaceVariable, local);
+            }
+            else if (parsed.Source == ArazzoExpressionSource.MessagePayload && messagePayloadLocal is not null)
+            {
+                // Project from the received message payload, copying ONLY the declared value — so a step
+                // that pulls one field off a large message does not re-materialise the whole thing.
+                EmitLiveValueProjection(statements, messagePayloadLocal, parsed.JsonPointer, workspaceVariable, local);
             }
             else
             {
@@ -112,17 +124,19 @@ public static class OutputExtractionEmitter
         return new OutputExtractionCode(fields.ToString(), statements.ToString());
     }
 
-    private static void EmitResponseBodyProjection(StringBuilder statements, string responseBodyLocal, string? jsonPointer, string workspaceVariable, string resultLocal)
+    // Projects a value from a live JSON local (a response body or a received message payload) into the
+    // workspace, copying only the addressed value. Used for both $response.body and $message.payload.
+    private static void EmitLiveValueProjection(StringBuilder statements, string sourceLocal, string? jsonPointer, string workspaceVariable, string resultLocal)
     {
         if (string.IsNullOrEmpty(jsonPointer))
         {
-            statements.Append("JsonElement ").Append(resultLocal).Append(" = ").Append(responseBodyLocal)
+            statements.Append("JsonElement ").Append(resultLocal).Append(" = ").Append(sourceLocal)
                 .Append(".CloneAsBuilder(").Append(workspaceVariable).AppendLine(").RootElement;");
         }
         else
         {
             statements.Append("JsonElement ").Append(resultLocal).AppendLine(" = default;");
-            statements.Append("if (").Append(responseBodyLocal).Append(".TryResolvePointer(")
+            statements.Append("if (").Append(sourceLocal).Append(".TryResolvePointer(")
                 .Append(EmitText.Quote(jsonPointer)).Append("u8, out JsonElement ").Append(resultLocal).AppendLine("Nav))");
             statements.AppendLine("{");
             statements.Append("    ").Append(resultLocal).Append(" = ").Append(resultLocal)
