@@ -103,10 +103,10 @@ public static class WorkflowExecutorEmitter
                 string name = parameter.Name.GetString()!;
                 JsonElement value = parameter.Value;
 
-                if (value.ValueKind == JsonValueKind.String && value.GetString() is { } text && text.StartsWith('$'))
+                if (value.ValueKind == JsonValueKind.String && value.GetString() is { } text && (text.StartsWith('$') || text.Contains("{$", StringComparison.Ordinal)))
                 {
-                    // A runtime expression (e.g. "$inputs.petId"). Interpolated strings ("{$…}") are a
-                    // later phase; they fall through to the literal branch for now.
+                    // A runtime expression (e.g. "$inputs.petId") or an interpolation template
+                    // (e.g. "order-{$inputs.id}"); RequestBindingEmitter picks the right one.
                     arguments.Add(new StepArgument(name, text));
                 }
                 else
@@ -168,16 +168,17 @@ public static class WorkflowExecutorEmitter
 
         JsonElement payload = requestBody.Payload;
 
-        // A payload that is a single runtime expression (e.g. "$inputs.pet").
-        if (payload.ValueKind == JsonValueKind.String && payload.GetString() is { } text && text.StartsWith('$'))
+        // A payload that is a single runtime expression (e.g. "$inputs.pet") or an interpolation
+        // template (e.g. "id-{$inputs.id}"); RequestBindingEmitter picks the right one.
+        if (payload.ValueKind == JsonValueKind.String && payload.GetString() is { } text
+            && (text.StartsWith('$') || text.Contains("{$", StringComparison.Ordinal)))
         {
             return new StepBody(text, IsLiteral: false);
         }
 
         // A constant payload with no embedded runtime expressions (no '$' anywhere) — bound as a
-        // literal. Interpolated ("{$…}") payloads and objects/arrays that contain expressions are a
-        // later phase (they need interpolation/substitution, which the no-'$' check conservatively
-        // excludes).
+        // literal. Objects/arrays that contain expressions need substitution and are a later phase
+        // (the no-'$' check conservatively excludes them).
         string raw = payload.GetRawText();
         if (!raw.Contains('$'))
         {

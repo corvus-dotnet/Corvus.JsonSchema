@@ -81,6 +81,10 @@ public static class RequestBindingEmitter
             {
                 LiteralValueEmitter.Emit(fields, statements, argument.Expression, local, $"{field}Literal");
             }
+            else if (argument.Expression.Contains("{$", StringComparison.Ordinal))
+            {
+                InterpolationEmitter.Emit(fields, statements, argument.Expression, local, contextVariable, $"{field}Template");
+            }
             else
             {
                 ValueResolution.Emit(fields, statements, argument.Expression, local, contextVariable, stepOutputLocals, field);
@@ -97,6 +101,10 @@ public static class RequestBindingEmitter
             if (body.IsLiteral)
             {
                 LiteralValueEmitter.Emit(fields, statements, body.Value, bodyLocal, $"{fieldPrefix}BodyLiteral");
+            }
+            else if (body.Value.Contains("{$", StringComparison.Ordinal))
+            {
+                InterpolationEmitter.Emit(fields, statements, body.Value, bodyLocal, contextVariable, $"{fieldPrefix}BodyTemplate");
             }
             else
             {

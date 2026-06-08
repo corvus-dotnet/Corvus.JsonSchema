@@ -170,6 +170,22 @@ public class RequestBindingEmitterTests
     }
 
     [TestMethod]
+    public void Binds_an_interpolated_parameter_value_via_a_compiled_template()
+    {
+        RequestBindingCode code = RequestBindingEmitter.Emit(
+            GetPet,
+            [new StepArgument("petId", "pet-{$inputs.id}")],
+            "context",
+            "GetPet_",
+            NoSteps);
+
+        code.Fields.ShouldContain("private static readonly CompiledInterpolationTemplate GetPet_PetIdTemplate = CompiledInterpolationTemplate.Compile(\"pet-{$inputs.id}\");");
+        code.Statements.ShouldContain("_ = context.TryInterpolate(GetPet_PetIdTemplate,");
+        code.Statements.ShouldContain("JsonElement petIdValue = Corvus.Text.Json.Internal.FixedJsonValueDocument<JsonElement>.ForUnescapedString(");
+        code.NamedArguments.ShouldContain("petId: Acme.Pets.JsonString.From(petIdValue)");
+    }
+
+    [TestMethod]
     public void Binds_a_literal_object_value_via_a_parsed_document()
     {
         // Object/array/bool/null literals are not scalar — they fall back to ParsedJsonDocument.
