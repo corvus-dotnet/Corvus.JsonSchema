@@ -163,4 +163,73 @@ public partial class WorkflowExecutorEndToEndTests
         outputs.TryGetProperty("lumens"u8, out JsonElement lumens).ShouldBeTrue();
         lumens.GetInt32().ShouldBe(150);
     }
+
+    private const string ChannelReceiveWithOutputsDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listen",
+              "steps": [
+                {
+                  "stepId": "receive",
+                  "channelPath": "measurements",
+                  "action": "receive",
+                  "outputs": { "celsius": "$message.payload#/temp" }
+                }
+              ],
+              "outputs": { "c": "$steps.receive.outputs.celsius" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_projects_message_payload_outputs()
+    {
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveWithOutputsDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The payload is received into a local and only the declared output value is projected from it.
+        source.ShouldContain("receiveMessagePayload = await messageTransport.ReceiveOneAsync<Corvus.Text.Json.JsonElement>(");
+        source.ShouldContain("receiveMessagePayload.TryResolvePointer(\"/temp\"u8");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"temp":21,"humidity":80}"""));
+        JsonElement outputs = await pending;
+
+        // Only the projected field flows through; the rest of the message is not in the outputs.
+        outputs.TryGetProperty("c"u8, out JsonElement celsius).ShouldBeTrue();
+        celsius.GetInt32().ShouldBe(21);
+    }
 }
