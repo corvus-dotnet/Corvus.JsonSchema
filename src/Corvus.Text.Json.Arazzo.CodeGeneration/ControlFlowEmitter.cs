@@ -129,7 +129,7 @@ internal static class ControlFlowEmitter
         string successExpression = step.SuccessCriteria.Count == 0
             ? $"{responseVar}.IsSuccess"
             : StepBodyEmitter.EmitCriteriaExpression(
-                step.SuccessCriteria, fields, gate, auxiliaryTypes, prefix, "context", responseVar, bindBodyLocal,
+                step.SuccessCriteria, fields, gate, auxiliaryTypes, prefix, "context", responseVar, new CriterionSources(bindBodyLocal),
                 "inputs", stepOutputLocals, options.InputAccessors, operation.Operation.ResponseHeaders, requestContext, options.Namespace);
 
         gate.Append("bool ").Append(camel).Append("Success = (").Append(successExpression).AppendLine(");");
@@ -144,11 +144,11 @@ internal static class ControlFlowEmitter
             WorkflowExecutorEmitter.AppendIndented(gate, outputCode.Statements, 4);
         }
 
-        EmitDispatch(gate, step.OnSuccess, isFailure: false, camel, prefix, responseVar, bindBodyLocal, stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options);
+        EmitDispatch(gate, step.OnSuccess, isFailure: false, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options);
         gate.AppendLine("}");
         gate.AppendLine("else");
         gate.AppendLine("{");
-        EmitDispatch(gate, step.OnFailure, isFailure: true, camel, prefix, responseVar, bindBodyLocal, stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options);
+        EmitDispatch(gate, step.OnFailure, isFailure: true, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options);
         gate.AppendLine("}");
 
         string gateText = gate.ToString();
@@ -247,13 +247,13 @@ internal static class ControlFlowEmitter
         string successExpression = step.SuccessCriteria.Count == 0
             ? "true"
             : StepBodyEmitter.EmitCriteriaExpression(
-                step.SuccessCriteria, fields, gate, auxiliaryTypes, prefix, "context", string.Empty, null,
+                step.SuccessCriteria, fields, gate, auxiliaryTypes, prefix, "context", string.Empty, default,
                 "inputs", stepOutputLocals, options.InputAccessors, null, default, options.Namespace);
 
         var successDispatch = new StringBuilder();
-        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, null, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
         var failureDispatch = new StringBuilder();
-        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, null, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
+        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
 
         var inputs = new StringBuilder();
         string builderVariable = SubWorkflowStepEmitter.BuildInputs(fields, inputs, step.StepId, step.Arguments, stepOutputLocals, "inputs", options.InputAccessors);
@@ -329,7 +329,7 @@ internal static class ControlFlowEmitter
         string camel,
         string prefix,
         string responseVar,
-        string? bindBodyLocal,
+        CriterionSources sources,
         IReadOnlyDictionary<string, int> stepIndex,
         StringBuilder fields,
         StringBuilder auxiliaryTypes,
@@ -354,7 +354,7 @@ internal static class ControlFlowEmitter
             string actionPrefix = $"{prefix}{(isFailure ? "F" : "S")}{actionNumber.ToString(CultureInfo.InvariantCulture)}_";
             actionNumber++;
             string expression = StepBodyEmitter.EmitCriteriaExpression(
-                action.Criteria, fields, target, auxiliaryTypes, actionPrefix, "context", responseVar, bindBodyLocal,
+                action.Criteria, fields, target, auxiliaryTypes, actionPrefix, "context", responseVar, sources,
                 "inputs", stepOutputLocals, options.InputAccessors, responseHeaders, requestContext, options.Namespace);
 
             resolved.Add((expression, BuildApply(action, camel, stepIndex, options.Namespace)));
