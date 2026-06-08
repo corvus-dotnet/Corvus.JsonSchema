@@ -78,6 +78,7 @@ public class StepBodyEmitterTests
             "cancellationToken",
             NoSteps,
             "inputs",
+            "Acme.Pets",
             requestBody: null,
             bindResponseBody: false);
 
@@ -91,7 +92,7 @@ public class StepBodyEmitterTests
     }
 
     [TestMethod]
-    public void Compiles_success_criteria_into_static_fields_and_gates_on_them()
+    public void Gates_on_a_mix_of_inlined_criteria()
     {
         StepBodyCode code = Emit(
         [
@@ -99,11 +100,11 @@ public class StepBodyEmitterTests
             new StepCriterion("jsonpath", "$.id", "$response.body"),
         ]);
 
-        // The bare $statusCode comparison is emitted inline (no field); the jsonpath criterion still
-        // compiles to a CompiledCriterion field, keeping its per-criterion index.
-        code.Fields.ShouldNotContain("$statusCode == 200");
-        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath, \"$.id\", \"$response.body\");");
-        code.Statements.ShouldContain("if (!(getPetResponse.StatusCode == 200 && getPet_SuccessCriterion1.Evaluate(context)))");
+        // Both criteria inline: the bare $statusCode is a direct comparison and the jsonpath compiles to
+        // a sibling query class — no CompiledCriterion, and the gate ANDs the two inline checks.
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.AuxiliaryTypes.ShouldContain("internal static class getPet_C1JsonPath");
+        code.Statements.ShouldContain("if (!(getPetResponse.StatusCode == 200 && getPet_C1Match))");
         code.Statements.ShouldContain("throw new WorkflowStepFailedException(\"getPet\", \"Step 'getPet' did not satisfy its success criteria.\");");
     }
 
@@ -201,6 +202,33 @@ public class StepBodyEmitterTests
     }
 
     [TestMethod]
+    public void Inlines_a_jsonpath_criterion_as_a_generated_sibling_class()
+    {
+        StepBodyCode code = Emit([new StepCriterion("jsonpath", "$.items[*]", "$response.body")]);
+
+        // The query is compiled ahead-of-time into a sibling class (auxiliary type), queried against the
+        // live body, and tested for at least one match — no CompiledCriterion, no runtime interpreter.
+        code.Fields.ShouldNotContain("CompiledCriterion");
+        code.AuxiliaryTypes.ShouldContain("internal static class getPet_C0JsonPath");
+        code.AuxiliaryTypes.ShouldContain("public static JsonPathResult QueryNodes(in JsonElement data)");
+        // The whole-body context resolves directly to the live body local (no extra data temporary).
+        code.Statements.ShouldContain("using (JsonPathResult getPet_C0Result = getPet_C0JsonPath.QueryNodes(getPetResponseBody))");
+        code.Statements.ShouldContain("getPet_C0Match = getPet_C0Result.Count > 0;");
+        code.Statements.ShouldContain("if (!(getPet_C0Match))");
+    }
+
+    [TestMethod]
+    public void Falls_back_to_a_compiled_criterion_for_a_dynamic_jsonpath_query()
+    {
+        // An embedded {expression} makes the query dynamic — it compiles to a CompiledCriterion.
+        StepBodyCode code = Emit([new StepCriterion("jsonpath", "$[?@.id == '{$inputs.id}']", "$response.body")]);
+
+        code.AuxiliaryTypes.ShouldBeEmpty();
+        code.Fields.ShouldContain("CompiledCriterion.Compile(CriterionType.JsonPath,");
+        code.Statements.ShouldContain("getPet_SuccessCriterion0.Evaluate(context)");
+    }
+
+    [TestMethod]
     public void Falls_back_to_a_compiled_criterion_for_an_unsupported_source()
     {
         // $response.header is not statically navigable yet — the criterion compiles to a CompiledCriterion.
@@ -232,5 +260,6 @@ public class StepBodyEmitterTests
             "context",
             "cancellationToken",
             NoSteps,
-            "inputs");
+            "inputs",
+            "Acme.Pets");
 }
