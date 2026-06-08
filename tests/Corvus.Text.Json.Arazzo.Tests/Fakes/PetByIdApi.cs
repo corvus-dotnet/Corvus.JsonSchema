@@ -148,15 +148,29 @@ public sealed class CreatePetClient(IApiTransport transport)
     public static List<string> CapturedBodies { get; } = [];
 
     public ValueTask<PetByIdResponse> CreatePetAsync(
-        JsonElement body,
+        JsonElement.Source body,
         CancellationToken cancellationToken = default,
         ValidationMode validationMode = ValidationMode.Basic,
         ValidationMode responseValidationMode = ValidationMode.None)
     {
-        CapturedBodies.Add(body.GetRawText());
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        JsonElement bodyValue = JsonElement.CreateBuilder(workspace, body).RootElement;
+        CapturedBodies.Add(bodyValue.GetRawText());
         var request = default(CreatePetRequest);
         request.Validate(validationMode);
-        return this.transport.SendAsync<CreatePetRequest, PetByIdResponse>(in request, cancellationToken);
+        return SendCore(this.transport, workspace, request, cancellationToken);
+    }
+
+    private static async ValueTask<PetByIdResponse> SendCore(IApiTransport transport, JsonWorkspace workspace, CreatePetRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await transport.SendAsync<CreatePetRequest, PetByIdResponse>(in request, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            workspace.Dispose();
+        }
     }
 }
 
@@ -171,13 +185,27 @@ public sealed class PetByIdClient(IApiTransport transport)
     private readonly IApiTransport transport = transport ?? throw new ArgumentNullException(nameof(transport));
 
     public ValueTask<PetByIdResponse> GetPetAsync(
-        JsonElement petId,
+        JsonElement.Source petId,
         CancellationToken cancellationToken = default,
         ValidationMode validationMode = ValidationMode.Basic,
         ValidationMode responseValidationMode = ValidationMode.None)
     {
-        var request = new PetByIdRequest(petId);
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        JsonElement petIdValue = JsonElement.CreateBuilder(workspace, petId).RootElement;
+        var request = new PetByIdRequest(petIdValue);
         request.Validate(validationMode);
-        return this.transport.SendAsync<PetByIdRequest, PetByIdResponse>(in request, cancellationToken);
+        return SendCore(this.transport, workspace, request, cancellationToken);
+    }
+
+    private static async ValueTask<PetByIdResponse> SendCore(IApiTransport transport, JsonWorkspace workspace, PetByIdRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await transport.SendAsync<PetByIdRequest, PetByIdResponse>(in request, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            workspace.Dispose();
+        }
     }
 }
