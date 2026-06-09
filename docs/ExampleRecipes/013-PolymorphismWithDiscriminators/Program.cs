@@ -47,6 +47,23 @@ Shape builtRectangle = rectangleBuilder.RootElement;
 Console.WriteLine(DescribeShape(builtCircle));
 Console.WriteLine(DescribeShape(builtRectangle));
 
+// Building an object whose property *is* a discriminated union (issue #812)
+//
+// 'Drawing' is an object with a required 'shape' property typed as the Shape
+// union. Shape.RequiredRadiusAndType.Build(...) produces the branch's Source,
+// which converts implicitly to the union's Source — exactly what
+// Drawing.CreateBuilder expects for its 'shape' parameter. So a branch built
+// with BranchType.Build() flows straight into the containing object, with no
+// intermediate Shape document materialised.
+using var drawingBuilder = Drawing.CreateBuilder(
+    ws,
+    name: "Sketch #1",
+    shape: Shape.RequiredRadiusAndType.Build(radius: 5.0));
+Drawing drawing = drawingBuilder.RootElement;
+
+Console.WriteLine(drawing); // {"name":"Sketch #1","shape":{"radius":5,"type":"circle"}}
+Console.WriteLine(DescribeShape(drawing.Shape)); // A circle with radius 5
+
 // Pattern matching function that handles all shape types
 string DescribeShape(in Shape shape)
 {

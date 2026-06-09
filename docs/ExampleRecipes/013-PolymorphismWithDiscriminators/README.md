@@ -124,6 +124,34 @@ Console.WriteLine(DescribeShape(builtRectangle)); // A rectangle 10x20
 
 This single-hop conversion (branch → union) is what lets a branch value flow wherever the union is expected — for example into a containing type's `CreateBuilder` for a property typed as the union, without first materialising the union document. It applies whenever the union is a well-formed discriminated union (a `oneOf` whose branches carry a required `const` discriminator and whose base adds no further required structure), and continues to apply when the base schema carries additional non-structural keywords such as `title` or `description`.
 
+#### Building an object whose property is the union
+
+The same wiring lets you build a containing object directly from a branch. Given `drawing.json`, an object with a required `shape` property typed as the union:
+
+```json
+{
+  "type": "object",
+  "required": ["name", "shape"],
+  "properties": {
+    "name": { "type": "string" },
+    "shape": { "$ref": "shape.json" }
+  }
+}
+```
+
+`BranchType.Build(...)` produces the branch's `Source`, which converts implicitly to the union's `Source` — exactly the type `Drawing.CreateBuilder` expects for its `shape` parameter. So the branch flows straight into the containing object, with no intermediate `Shape` document materialised:
+
+```csharp
+using var drawingBuilder = Drawing.CreateBuilder(
+    ws,
+    name: "Sketch #1",
+    shape: Shape.RequiredRadiusAndType.Build(radius: 5.0));
+Drawing drawing = drawingBuilder.RootElement;
+
+Console.WriteLine(drawing);                       // {"name":"Sketch #1","shape":{"radius":5,"type":"circle"}}
+Console.WriteLine(DescribeShape(drawing.Shape));  // A circle with radius 5
+```
+
 ## Key Differences from V4
 
 ### V4 (Corvus.Json)
