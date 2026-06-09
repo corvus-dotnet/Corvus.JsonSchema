@@ -86,22 +86,28 @@ internal static class SendChannelStepEmitter
 
         var statements = new StringBuilder();
 
-        // Resolve the payload to a JsonElement: a runtime expression resolves to a reference; a composite
-        // template (object/array embedding $inputs/$steps) is built into the run workspace.
-        switch (body.Kind)
+        // Resolve the payload to a JsonElement. A runtime expression resolves to a reference; everything
+        // else (a composite template, an interpolated string, or a literal) is built/baked and assigned —
+        // matching the kinds an operation step's request body supports.
+        if (body.Kind == ArgumentValueKind.Expression)
         {
-            case ArgumentValueKind.Expression:
-                ValueResolution.Emit(fields, statements, body.Value, payloadLocal, "context", stepOutputLocals, $"{identifier}_Payload", inputsVariable, inputAccessors);
-                break;
-
-            case ArgumentValueKind.CompositeTemplate:
-                string built = JsonTemplateEmitter.EmitComposite(
-                    stepId, body.Value, workspaceVariable, default, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{identifier}_Payload");
-                statements.Append("JsonElement ").Append(payloadLocal).Append(" = ").Append(built).AppendLine(";");
-                break;
-
-            default:
-                throw new NotSupportedException($"Channel step '{stepId}' binds a {body.Kind} payload; only runtime-expression and composite-template payloads are supported on a send channel step.");
+            ValueResolution.Emit(fields, statements, body.Value, payloadLocal, "context", stepOutputLocals, $"{identifier}_Payload", inputsVariable, inputAccessors);
+        }
+        else
+        {
+            string built = body.Kind switch
+            {
+                ArgumentValueKind.CompositeTemplate => JsonTemplateEmitter.EmitComposite(
+                    stepId, body.Value, workspaceVariable, default, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{identifier}_Payload"),
+                ArgumentValueKind.Interpolation => JsonTemplateEmitter.EmitInterpolation(
+                    stepId, body.Value, workspaceVariable, default, inputsVariable, stepOutputLocals, inputAccessors, statements, $"{identifier}_Payload"),
+                ArgumentValueKind.LiteralComposite or ArgumentValueKind.LiteralNumber or ArgumentValueKind.LiteralBoolean =>
+                    JsonTemplateEmitter.EmitConstant(body.Value, fields, $"{identifier}_PayloadConst"),
+                ArgumentValueKind.LiteralNull => JsonTemplateEmitter.EmitConstant("null", fields, $"{identifier}_PayloadConst"),
+                ArgumentValueKind.LiteralString => JsonTemplateEmitter.EmitConstant(System.Text.Json.JsonSerializer.Serialize(body.Value), fields, $"{identifier}_PayloadConst"),
+                _ => throw new NotSupportedException($"Channel step '{stepId}' binds an unsupported {body.Kind} payload."),
+            };
+            statements.Append("JsonElement ").Append(payloadLocal).Append(" = ").Append(built).AppendLine(";");
         }
 
         statements.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
