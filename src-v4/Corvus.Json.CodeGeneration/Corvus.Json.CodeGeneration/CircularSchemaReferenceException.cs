@@ -33,13 +33,15 @@ public sealed class CircularSchemaReferenceException : Exception
     /// </summary>
     public string ReferencedLocation { get; }
 
+    private const string MessageFormat =
+        "Circular schema reference: the schema at '{0}' has a same-instance composition " +
+        "reference (allOf/$ref/anyOf/oneOf) to '{1}', which is already being evaluated for " +
+        "the same instance. Validation of this schema would never terminate, so terminating code " +
+        "cannot be generated. Break the cycle before generating types (for example, restructure " +
+        "the discriminated union so its branches do not $ref back to the union).";
+
     private static string BuildMessage(JsonReference referencingLocation, JsonReference referencedLocation)
     {
-        return
-            $"Circular schema reference: the schema at '{referencingLocation}' has a same-instance composition " +
-            $"reference (allOf/$ref/anyOf/oneOf) to '{referencedLocation}', which is already being evaluated for " +
-            "the same instance. Validation of this schema would never terminate, so terminating code cannot be " +
-            "generated. Break the cycle before generating types (for example, restructure the discriminated union " +
-            "so its branches do not $ref back to the union).";
+        return string.Format(MessageFormat, referencingLocation, referencedLocation);
     }
 }
