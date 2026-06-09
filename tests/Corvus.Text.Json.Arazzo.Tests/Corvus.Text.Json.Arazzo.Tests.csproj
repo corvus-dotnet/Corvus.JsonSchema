@@ -17,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.CodeGeneration\Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />

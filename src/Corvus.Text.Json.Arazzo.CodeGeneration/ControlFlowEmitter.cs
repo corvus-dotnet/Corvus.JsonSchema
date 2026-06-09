@@ -53,21 +53,34 @@ internal static class ControlFlowEmitter
         var loop = new StringBuilder();
 
         // Hoist the per-step state that must survive across loop iterations: each step's outputs object
-        // (read by later steps) and each retried step's attempt counter.
+        // (read by later steps) and each retried step's attempt counter. In durable mode each local restores
+        // from the run (so a resumed run re-enters with its products already populated) instead of `default`.
+        bool durable = options.Durable;
         foreach (ControlFlowStep step in steps)
         {
             if (ProducesOutputs(step))
             {
-                loop.Append("JsonElement ").Append(EmitText.StepOutputsElementLocal(step.StepId)).AppendLine(" = default;");
+                string outputsLocal = EmitText.StepOutputsElementLocal(step.StepId);
+                if (durable)
+                {
+                    loop.Append("JsonElement ").Append(outputsLocal).Append(" = run is not null && run.TryGetStepOutputs(")
+                        .Append(EmitText.Quote(step.StepId)).Append(", out JsonElement ").Append(outputsLocal).Append("Restored) ? ")
+                        .Append(outputsLocal).AppendLine("Restored : default;");
+                }
+                else
+                {
+                    loop.Append("JsonElement ").Append(outputsLocal).AppendLine(" = default;");
+                }
             }
 
             if (NeedsRetryCounter(step))
             {
-                loop.Append("int ").Append(RetryCounter(step.StepId)).AppendLine(" = 0;");
+                loop.Append("int ").Append(RetryCounter(step.StepId));
+                loop.AppendLine(durable ? $" = run?.GetRetryCount({EmitText.Quote(step.StepId)}) ?? 0;" : " = 0;");
             }
         }
 
-        loop.AppendLine("int __state = 0;");
+        loop.AppendLine(durable ? "int __state = run?.Cursor ?? 0;" : "int __state = 0;");
         loop.AppendLine("while (true)");
         loop.AppendLine("{");
         loop.AppendLine("    switch (__state)");
@@ -233,6 +246,20 @@ internal static class ControlFlowEmitter
         }
 
         // Apply the captured control-flow decision now the response is disposed.
+        AppendApply(c, step, index, camel, options.Durable);
+        c.AppendLine("}");
+
+        WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
+    }
+
+    // Applies the captured control-flow decision now the response is disposed: fail (throw), end (jump to
+    // outputs), retry (delay + re-enter the same state), or advance to the next state. In durable mode a
+    // checkpoint is written after the next cursor is chosen and before the loop iterates (plan §9.3), so a
+    // crash resumes from the last completed step.
+    private static void AppendApply(StringBuilder c, in ControlFlowStep step, int index, string camel, bool durable)
+    {
+        string checkpoint = BuildCheckpoint(step, durable);
+
         c.Append("    if (").Append(camel).Append("Fail) { throw new WorkflowStepFailedException(")
             .Append(EmitText.Quote(step.StepId)).Append(", ").Append(EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.")).AppendLine("); }");
         c.Append("    if (").Append(camel).AppendLine("End) { goto __workflowOutputs; }");
@@ -241,13 +268,38 @@ internal static class ControlFlowEmitter
         c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
             .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
         c.Append("        __state = ").Append(index.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
+        WorkflowExecutorEmitter.AppendIndented(c, checkpoint, 8);
         c.AppendLine("        continue;");
         c.AppendLine("    }");
         c.Append("    __state = ").Append(camel).AppendLine("Next;");
+        WorkflowExecutorEmitter.AppendIndented(c, checkpoint, 4);
         c.AppendLine("    continue;");
-        c.AppendLine("}");
+    }
 
-        WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
+    // The durable checkpoint statements for a step: stage its products (outputs + retry counter) on the run
+    // and persist at the current cursor. Empty in non-durable mode.
+    private static string BuildCheckpoint(in ControlFlowStep step, bool durable)
+    {
+        if (!durable)
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder();
+        if (ProducesOutputs(step))
+        {
+            sb.Append("run?.SetStepOutputs(").Append(EmitText.Quote(step.StepId)).Append(", ")
+                .Append(EmitText.StepOutputsElementLocal(step.StepId)).AppendLine(");");
+        }
+
+        if (NeedsRetryCounter(step))
+        {
+            sb.Append("run?.SetRetryCount(").Append(EmitText.Quote(step.StepId)).Append(", ")
+                .Append(RetryCounter(step.StepId)).AppendLine(");");
+        }
+
+        sb.AppendLine("if (run is not null) { await run.CheckpointAsync(__state, cancellationToken).ConfigureAwait(false); }");
+        return sb.ToString();
     }
 
     // Emits the linked-CTS setup for a step that declares a `timeout` and returns the token expression to
@@ -394,18 +446,7 @@ internal static class ControlFlowEmitter
         WorkflowExecutorEmitter.AppendIndented(c, failureDispatch.ToString(), 8);
         c.AppendLine("    }");
 
-        c.Append("    if (").Append(camel).Append("Fail) { throw new WorkflowStepFailedException(")
-            .Append(EmitText.Quote(step.StepId)).Append(", ").Append(EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.")).AppendLine("); }");
-        c.Append("    if (").Append(camel).AppendLine("End) { goto __workflowOutputs; }");
-        c.Append("    if (").Append(camel).AppendLine("Retry)");
-        c.AppendLine("    {");
-        c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
-            .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
-        c.Append("        __state = ").Append(index.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
-        c.AppendLine("        continue;");
-        c.AppendLine("    }");
-        c.Append("    __state = ").Append(camel).AppendLine("Next;");
-        c.AppendLine("    continue;");
+        AppendApply(c, step, index, camel, options.Durable);
         c.AppendLine("}");
 
         WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
@@ -494,18 +535,7 @@ internal static class ControlFlowEmitter
         WorkflowExecutorEmitter.AppendIndented(c, failureDispatch.ToString(), 8);
         c.AppendLine("    }");
 
-        c.Append("    if (").Append(camel).Append("Fail) { throw new WorkflowStepFailedException(")
-            .Append(EmitText.Quote(step.StepId)).Append(", ").Append(EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.")).AppendLine("); }");
-        c.Append("    if (").Append(camel).AppendLine("End) { goto __workflowOutputs; }");
-        c.Append("    if (").Append(camel).AppendLine("Retry)");
-        c.AppendLine("    {");
-        c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
-            .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
-        c.Append("        __state = ").Append(index.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
-        c.AppendLine("        continue;");
-        c.AppendLine("    }");
-        c.Append("    __state = ").Append(camel).AppendLine("Next;");
-        c.AppendLine("    continue;");
+        AppendApply(c, step, index, camel, options.Durable);
         c.AppendLine("}");
 
         WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);

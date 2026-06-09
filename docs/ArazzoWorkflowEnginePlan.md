@@ -556,6 +556,23 @@ and returns a tri-state result (see 9.4):
 loop jumps to the restored cursor with its locals already populated and carries
 on. No separate "resume entrypoint" is generated.
 
+> **Tier 1 — implemented.** The crash-recovery slice of 9.3/9.6 is built. The
+> `Durable` option forces the labelled-loop state machine and threads an optional
+> `IWorkflowRun? run` into `ExecuteAsync`; on entry `__state`, each step-outputs
+> local, each retry counter, and the `correlationTokens` register restore from the
+> run; after each step the run stages the products (`SetStepOutputs`/`SetRetryCount`)
+> and writes a checkpoint at the chosen cursor; on completion the run records the
+> terminal checkpoint with the final outputs (`CompleteAsync`). The as-built Tier-1
+> seam is slightly leaner than the 9.6 sketch — it omits the Tier-2-only members
+> (`TryGetCorrelationToken`, `Suspend<T>`/`WorkflowRunResult<T>`), exposes the
+> correlation register directly as `CorrelationTokens` (the executor reads and
+> mutates it in place), and adds `SetRetryCount` + `CompleteAsync`. The runtime
+> seam lives in `Corvus.Text.Json.Arazzo`; the store (`IWorkflowStateStore`), the
+> per-run `WorkflowRun`, the checkpoint serializer, and the in-memory reference
+> store live in `Corvus.Text.Json.Arazzo.Durability`. A generated durable executor
+> resumes after an interrupted run and finishes without re-running completed steps,
+> their outputs restored into the final result (end-to-end test).
+
 ### 9.4 Tri-state result and suspension (Tier 2)
 
 A durable executor returns `WorkflowRunResult<TOutputs>` =
