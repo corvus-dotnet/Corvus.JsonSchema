@@ -73,6 +73,66 @@ public class AzureServiceBusTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderRoundTrip()
+    {
+        // Arrange — a responder transport hosts the SubscribeReplyAsync handler on the request queue,
+        // and a separate requester transport drives RequestAsync. The reply queue is session-enabled
+        // so the requester's session receiver (keyed on the correlation ID) correlates the reply.
+        AzureServiceBusMessageTransport responderTransport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
+        {
+            ConnectionString = AzureServiceBusFixture.ConnectionString,
+            QueueName = "test-queue",
+        });
+
+        AzureServiceBusMessageTransport requesterTransport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
+        {
+            ConnectionString = AzureServiceBusFixture.ConnectionString,
+            QueueName = "test-queue",
+        });
+
+        try
+        {
+            ReadOnlyMemory<byte> requestChannel = "test-queue"u8.ToArray();
+            ReadOnlyMemory<byte> replyChannel = "test-reply-queue"u8.ToArray();
+
+            // Register a responder that computes a reply from the request.
+            await responderTransport.SubscribeReplyAsync<JsonElement, JsonElement>(
+                requestChannel,
+                (request, headers, ct) =>
+                {
+                    int value = request.GetProperty("value"u8).GetInt32();
+                    using ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
+                        Encoding.UTF8.GetBytes($$"""{"result":{{value * 2}}}"""));
+                    return ValueTask.FromResult(replyDoc.RootElement);
+                });
+
+            // Allow the processor to start.
+            await Task.Delay(500);
+
+            // Act — send a request and await the correlated reply.
+            byte[] correlationId = "asb-responder-roundtrip-001"u8.ToArray();
+            using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+
+            (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId);
+
+            // Assert
+            Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+            Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+
+            await responderTransport.UnsubscribeAsync(requestChannel);
+        }
+        finally
+        {
+            await responderTransport.DisposeAsync();
+            await requesterTransport.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public async Task DoubleDisposeDoesNotThrow()
     {
         AzureServiceBusTransportOptions options = new()
