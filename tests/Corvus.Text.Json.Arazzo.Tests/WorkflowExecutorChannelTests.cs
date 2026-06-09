@@ -766,6 +766,92 @@ public partial class WorkflowExecutorEndToEndTests
         _ = CompileInMemory(source);
     }
 
+    private const string ChannelReceiveReplyReplacementsDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "respond",
+              "steps": [
+                {
+                  "stepId": "serve",
+                  "channelPath": "requests",
+                  "action": "receive",
+                  "requestBody": {
+                    "payload": "$message.payload",
+                    "replacements": [
+                      { "target": "/status", "value": "served" },
+                      { "target": "/echo", "value": "$message.payload#/n" }
+                    ]
+                  },
+                  "outputs": { "n": "$message.payload#/n" }
+                }
+              ],
+              "outputs": { "served": "$steps.serve.outputs.n" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_responder_applies_reply_replacements()
+    {
+        // The reply echoes the request payload, then overlays /status (constant) and /echo (from the live
+        // request) at JSON Pointer targets.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "requests",
+            OperationAction.Receive,
+            "onRequest",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("request", "Corvus.Text.Json.JsonElement", null, null, null)],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveReplyReplacementsDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "RespondWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        source.ShouldContain(".TryAdd(\"/status\"u8");
+        source.ShouldContain(".TryAdd(\"/echo\"u8");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.RespondWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.CreateUnrented();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+        using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"n":21}"""));
+        (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
+            "requests"u8.ToArray(),
+            "replies"u8.ToArray(),
+            requestDocument.RootElement,
+            "corr-replrepl"u8.ToArray());
+
+        await pending;
+
+        // Base echoed (n), plus the constant and request-derived replacements.
+        reply.GetProperty("n"u8).GetInt32().ShouldBe(21);
+        reply.GetProperty("status"u8).GetString().ShouldBe("served");
+        reply.GetProperty("echo"u8).GetInt32().ShouldBe(21);
+    }
+
     private const string ChannelReceiveConstantReplyDocument = """
         {
           "arazzo": "1.1.0",
