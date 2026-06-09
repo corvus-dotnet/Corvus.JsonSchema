@@ -246,39 +246,96 @@ internal static class ControlFlowEmitter
         }
 
         // Apply the captured control-flow decision now the response is disposed.
-        AppendApply(c, step, index, camel, options.Durable);
+        AppendApply(c, step, index, camel, options);
         c.AppendLine("}");
 
         WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
     }
 
-    // Applies the captured control-flow decision now the response is disposed: fail (throw), end (jump to
-    // outputs), retry (delay + re-enter the same state), or advance to the next state. In durable mode a
-    // checkpoint is written after the next cursor is chosen and before the loop iterates (plan §9.3), so a
-    // crash resumes from the last completed step.
-    private static void AppendApply(StringBuilder c, in ControlFlowStep step, int index, string camel, bool durable)
+    // Applies the captured control-flow decision now the response is disposed: fail, end (jump to outputs),
+    // retry (re-enter the same state), or advance to the next state. In durable mode a checkpoint is written
+    // after the next cursor is chosen and before the loop iterates (plan §9.3), so a crash resumes from the
+    // last completed step; a fault returns Faulted, and a retry with a delay suspends on a durable timer and
+    // returns Suspended (plan §9.4). With a null run a durable executor falls back to the non-durable
+    // behaviour (throw on fault, Task.Delay on a retry delay).
+    private static void AppendApply(StringBuilder c, in ControlFlowStep step, int index, string camel, in WorkflowExecutorOptions options)
     {
+        bool durable = options.Durable;
         string checkpoint = BuildCheckpoint(step, durable);
+        string staging = BuildStaging(step, durable);
+        string indexLiteral = index.ToString(CultureInfo.InvariantCulture);
+        string failMessage = EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.");
+        string throwStatement = $"throw new WorkflowStepFailedException({EmitText.Quote(step.StepId)}, {failMessage});";
 
-        c.Append("    if (").Append(camel).Append("Fail) { throw new WorkflowStepFailedException(")
-            .Append(EmitText.Quote(step.StepId)).Append(", ").Append(EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.")).AppendLine("); }");
+        // ── fail ──
+        if (durable)
+        {
+            string attempt = NeedsRetryCounter(step) ? RetryCounter(step.StepId) : "1";
+            c.Append("    if (").Append(camel).AppendLine("Fail)");
+            c.AppendLine("    {");
+            c.AppendLine("        if (run is not null)");
+            c.AppendLine("        {");
+            WorkflowExecutorEmitter.AppendIndented(c, staging, 12);
+            c.Append("            WorkflowFault ").Append(camel).Append("Fault = await run.FaultAsync(")
+                .Append(EmitText.Quote(step.StepId)).Append(", ").Append(attempt).Append(", ").Append(failMessage)
+                .AppendLine(", cancellationToken).ConfigureAwait(false);");
+            c.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).Append(">.Faulted(").Append(camel).AppendLine("Fault);");
+            c.AppendLine("        }");
+            c.AppendLine();
+            c.Append("        ").AppendLine(throwStatement);
+            c.AppendLine("    }");
+        }
+        else
+        {
+            c.Append("    if (").Append(camel).Append("Fail) { ").Append(throwStatement).AppendLine(" }");
+        }
+
+        // ── end ──
         c.Append("    if (").Append(camel).AppendLine("End) { goto __workflowOutputs; }");
+
+        // ── retry ──
         c.Append("    if (").Append(camel).AppendLine("Retry)");
         c.AppendLine("    {");
-        c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
-            .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
-        c.Append("        __state = ").Append(index.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
-        WorkflowExecutorEmitter.AppendIndented(c, checkpoint, 8);
-        c.AppendLine("        continue;");
+        if (durable)
+        {
+            c.Append("        __state = ").Append(indexLiteral).AppendLine(";");
+            c.AppendLine("        if (run is not null)");
+            c.AppendLine("        {");
+            c.Append("            if (").Append(camel).AppendLine("RetryDelay > 0)");
+            c.AppendLine("            {");
+            WorkflowExecutorEmitter.AppendIndented(c, staging, 16);
+            c.Append("                WorkflowWait ").Append(camel).Append("Wait = await run.SuspendForTimerAsync(__state, TimeSpan.FromSeconds(")
+                .Append(camel).AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false);");
+            c.Append("                return WorkflowRunResult<").Append(options.OutputsTypeName).Append(">.Suspended(").Append(camel).AppendLine("Wait);");
+            c.AppendLine("            }");
+            c.AppendLine();
+            WorkflowExecutorEmitter.AppendIndented(c, checkpoint, 12);
+            c.AppendLine("            continue;");
+            c.AppendLine("        }");
+            c.AppendLine();
+            c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
+                .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
+            c.AppendLine("        continue;");
+        }
+        else
+        {
+            c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
+                .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
+            c.Append("        __state = ").Append(indexLiteral).AppendLine(";");
+            c.AppendLine("        continue;");
+        }
+
         c.AppendLine("    }");
+
+        // ── next ──
         c.Append("    __state = ").Append(camel).AppendLine("Next;");
         WorkflowExecutorEmitter.AppendIndented(c, checkpoint, 4);
         c.AppendLine("    continue;");
     }
 
-    // The durable checkpoint statements for a step: stage its products (outputs + retry counter) on the run
-    // and persist at the current cursor. Empty in non-durable mode.
-    private static string BuildCheckpoint(in ControlFlowStep step, bool durable)
+    // Stages a step's products (outputs + retry counter) on the run, so the next persist (a checkpoint, a
+    // suspend, or a fault) serialises them. Empty in non-durable mode.
+    private static string BuildStaging(in ControlFlowStep step, bool durable)
     {
         if (!durable)
         {
@@ -298,8 +355,19 @@ internal static class ControlFlowEmitter
                 .Append(RetryCounter(step.StepId)).AppendLine(");");
         }
 
-        sb.AppendLine("if (run is not null) { await run.CheckpointAsync(__state, cancellationToken).ConfigureAwait(false); }");
         return sb.ToString();
+    }
+
+    // The durable checkpoint statements for a step: stage its products then persist at the current cursor.
+    // Empty in non-durable mode.
+    private static string BuildCheckpoint(in ControlFlowStep step, bool durable)
+    {
+        if (!durable)
+        {
+            return string.Empty;
+        }
+
+        return BuildStaging(step, durable) + "if (run is not null) { await run.CheckpointAsync(__state, cancellationToken).ConfigureAwait(false); }\n";
     }
 
     // Emits the linked-CTS setup for a step that declares a `timeout` and returns the token expression to
@@ -446,7 +514,7 @@ internal static class ControlFlowEmitter
         WorkflowExecutorEmitter.AppendIndented(c, failureDispatch.ToString(), 8);
         c.AppendLine("    }");
 
-        AppendApply(c, step, index, camel, options.Durable);
+        AppendApply(c, step, index, camel, options);
         c.AppendLine("}");
 
         WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
@@ -535,7 +603,7 @@ internal static class ControlFlowEmitter
         WorkflowExecutorEmitter.AppendIndented(c, failureDispatch.ToString(), 8);
         c.AppendLine("    }");
 
-        AppendApply(c, step, index, camel, options.Durable);
+        AppendApply(c, step, index, camel, options);
         c.AppendLine("}");
 
         WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
