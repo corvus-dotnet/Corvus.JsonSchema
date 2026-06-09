@@ -237,6 +237,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         lock (this.syncRoot)
         {
             this.subscriptions.Remove(channel);
+            this.replySubscriptions.Remove(channel);
         }
 
         return ValueTask.CompletedTask;

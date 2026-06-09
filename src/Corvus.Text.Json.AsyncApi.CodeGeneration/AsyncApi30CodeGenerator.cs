@@ -626,10 +626,12 @@ public sealed class AsyncApi30CodeGenerator
             bool isSend = op.Action == OperationAction.Send;
             string? producerClassName = isSend ? $"{this.rootNamespace}.{ToPascalCase(op.Name)}Producer" : null;
 
-            // A send operation that declares a reply is request/reply: the producer exposes a
-            // SendAndReceive{Message}Async method returning the reply payload.
-            bool isRequestReply = isSend && op.Reply is not null;
-            string? replyPayloadTypeName = isRequestReply
+            // An operation that declares a reply is request/reply. On the send side the producer exposes a
+            // SendAndReceive{Message}Async method; on the receive side the descriptor still carries the reply
+            // payload type so a responder (consumer / Arazzo responder step) knows what reply to produce.
+            bool hasReply = op.Reply is not null;
+            bool isSendRequestReply = isSend && hasReply;
+            string? replyPayloadTypeName = hasReply
                 ? (op.Reply!.Value.Messages.Count == 1 ? op.Reply.Value.Messages[0].PayloadTypeName : null) ?? "Corvus.Text.Json.JsonElement"
                 : null;
 
@@ -642,7 +644,7 @@ public sealed class AsyncApi30CodeGenerator
                     message.HeadersTypeName,
                     message.ContentType,
                     isSend ? $"Publish{ToPascalCase(message.Name)}Async" : null,
-                    isRequestReply ? $"SendAndReceive{ToPascalCase(message.Name)}Async" : null));
+                    isSendRequestReply ? $"SendAndReceive{ToPascalCase(message.Name)}Async" : null));
             }
 
             descriptors.Add(new AsyncApiChannelDescriptor(
