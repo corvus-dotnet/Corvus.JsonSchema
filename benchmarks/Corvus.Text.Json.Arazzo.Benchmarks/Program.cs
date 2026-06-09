@@ -41,6 +41,7 @@ Measure("ControlFlow", executor.RunControlFlowWorkflow);
 Measure("SubWorkflow", executor.RunSubWorkflow);
 Measure("ChannelSend", executor.RunChannelSendWorkflow);
 Measure("ChannelReceive", executor.RunChannelReceiveWorkflow);
+Measure("CorrelatedReceive", executor.RunCorrelatedReceiveWorkflow);
 Measure("ChannelReqReply", executor.RunChannelRequestReplyWorkflow);
 Measure("Responder", executor.RunResponderWorkflow);
 Measure("CompositeReply", executor.RunCompositeReplyWorkflow);

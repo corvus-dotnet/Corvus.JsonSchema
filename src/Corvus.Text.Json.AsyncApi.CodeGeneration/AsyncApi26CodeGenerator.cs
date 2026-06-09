@@ -355,7 +355,18 @@ public sealed class AsyncApi26CodeGenerator
             }
         }
 
-        return new(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, contentType, messageBindingsJson);
+        // The message's correlationId is inline ({ location, ... }) or a $ref to a named definition under
+        // components.correlationIds — the $ref key is the name an Arazzo receive step's `correlationId` matches.
+        string? correlationIdName = null;
+        string? correlationIdLocation = null;
+        if (resolved.TryGetProperty("correlationId"u8, out JsonElement correlationId) &&
+            correlationId.ValueKind != JsonValueKind.Undefined)
+        {
+            correlationIdName = ExtractLastPointerSegment(TryGetRef(correlationId, resolver));
+            correlationIdLocation = GetString(ResolveRef(correlationId, doc, resolver), "location"u8);
+        }
+
+        return new(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, contentType, messageBindingsJson, correlationIdName, correlationIdLocation);
     }
 
     private AsyncApi30CodeGenerator.ReplyInfo? CollectReplyInfo(

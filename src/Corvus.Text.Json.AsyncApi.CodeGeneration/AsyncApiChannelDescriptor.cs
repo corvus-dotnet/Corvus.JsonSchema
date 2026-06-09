@@ -37,10 +37,14 @@ public readonly record struct AsyncApiChannelDescriptor(
 /// <param name="ContentType">The message content type, if declared.</param>
 /// <param name="ProducerMethodName">The generated producer's publish method for this message (e.g. <c>PublishTurnOnOffAsync</c>), or <see langword="null"/> for a receive operation.</param>
 /// <param name="RequestReplyMethodName">The generated producer's request/reply method for this message (e.g. <c>SendAndReceiveQueryAsync</c>) when the operation declares a <c>reply</c>; otherwise <see langword="null"/>.</param>
+/// <param name="CorrelationIdName">The name of the AsyncAPI Correlation ID this message declares (the <c>components.correlationIds</c> key it <c>$ref</c>s), or <see langword="null"/> when the message declares no named correlation id. An Arazzo receive step's <c>correlationId</c> matches this name.</param>
+/// <param name="CorrelationIdLocation">The correlation id's <c>location</c> runtime expression (e.g. <c>$message.header#/correlationId</c>) — where the correlation token lives in the message — or <see langword="null"/>.</param>
 public readonly record struct AsyncApiChannelMessageDescriptor(
     string MessageName,
     string? PayloadTypeName,
     string? HeadersTypeName,
     string? ContentType,
     string? ProducerMethodName,
-    string? RequestReplyMethodName = null);
+    string? RequestReplyMethodName = null,
+    string? CorrelationIdName = null,
+    string? CorrelationIdLocation = null);

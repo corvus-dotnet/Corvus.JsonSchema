@@ -245,6 +245,24 @@ public class WorkflowExecutorBenchmarks
         }
         """;
 
+    private const string CorrelationDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./e.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "correlate",
+              "steps": [
+                { "stepId": "ask", "channelPath": "bench", "action": "send", "requestBody": { "payload": { "correlationId": "bench-corr", "data": "x" } } },
+                { "stepId": "listen", "channelPath": "bench", "action": "receive", "correlationId": "corr", "outputs": { "v": "$message.payload#/v" } }
+              ],
+              "outputs": { "v": "$steps.listen.outputs.v" }
+            }
+          ]
+        }
+        """;
+
     private const string ChannelRequestReplyDocument = """
         {
           "arazzo": "1.1.0",
@@ -305,6 +323,7 @@ public class WorkflowExecutorBenchmarks
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeSubWorkflow = null!;
     private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelSend = null!;
     private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelReceive = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeCorrelatedReceive = null!;
     private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelRequestReply = null!;
     private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeResponder = null!;
     private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeCompositeReply = null!;
@@ -330,6 +349,7 @@ public class WorkflowExecutorBenchmarks
         this.executeSubWorkflow = CompileSubWorkflow();
         this.executeChannelSend = CompileChannelSend();
         this.executeChannelReceive = CompileChannel(ChannelReceiveDocument, "ListenWorkflow", ReceiveDescriptor());
+        this.executeCorrelatedReceive = CompileCorrelation();
         this.executeChannelRequestReply = CompileChannel(ChannelRequestReplyDocument, "AskWorkflow", RequestReplySendDescriptor());
         this.executeResponder = CompileChannel(ResponderDocument, "ServeWorkflow", ResponderDescriptor());
         this.executeCompositeReply = CompileChannel(CompositeReplyDocument, "ServeWorkflow", ResponderDescriptor());
@@ -456,6 +476,18 @@ public class WorkflowExecutorBenchmarks
         return result.TryGetProperty("v"u8, out _);
     }
 
+    /// <summary>Runs a send-then-correlated-receive workflow: the send registers a correlation token and the
+    /// receive accepts only the message carrying it (correlationId filtering).</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunCorrelatedReceiveWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeCorrelatedReceive(this.transport, this.messageTransport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("v"u8, out _);
+    }
+
     /// <summary>Runs a request/reply send channel step (SendAndReceive…, reply captured as outputs).</summary>
     /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
     [Benchmark]
@@ -520,6 +552,39 @@ public class WorkflowExecutorBenchmarks
             ChannelParameters: [],
             Messages: [new AsyncApiChannelMessageDescriptor("bench", "Corvus.Text.Json.JsonElement", null, null, null)],
             ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+    private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileCorrelation()
+    {
+        const string location = "$message.payload#/correlationId";
+        var send = new AsyncApiChannelDescriptor(
+            "bench",
+            OperationAction.Send,
+            "ask",
+            typeof(BenchProducer).FullName!,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("bench", "Corvus.Text.Json.JsonElement", null, null, "PublishBenchAsync", null, "corr", location)]);
+
+        var receive = new AsyncApiChannelDescriptor(
+            "bench",
+            OperationAction.Receive,
+            "onBench",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("bench", "Corvus.Text.Json.JsonElement", null, null, null, null, "corr", location)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [send, receive])]);
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(CorrelationDocument));
+        ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+        string source = WorkflowExecutorEmitter.Emit(
+            workflow,
+            binder,
+            new WorkflowExecutorOptions("GeneratedWorkflows", "CorrelateWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo method = assembly.GetType("GeneratedWorkflows.CorrelateWorkflow")!.GetMethod("ExecuteAsync")!;
+        return method.CreateDelegate<Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+    }
 
     private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileChannel(string document, string className, AsyncApiChannelDescriptor descriptor)
     {

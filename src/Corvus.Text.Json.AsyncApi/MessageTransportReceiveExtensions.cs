@@ -36,12 +36,14 @@ public static class MessageTransportReceiveExtensions
     /// <param name="channelUtf8">The channel address as UTF-8 bytes.</param>
     /// <param name="onMessage">The handler invoked with the first delivered payload and its headers while the payload is live.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="accept">An optional predicate that selects which delivered message to handle (e.g. a correlation match). Messages for which it returns <see langword="false"/> are ignored and the subscription keeps waiting; when <see langword="null"/> the first message is handled.</param>
     /// <returns>A <see cref="ValueTask"/> that completes once a message has been handled and the subscription removed.</returns>
     public static async ValueTask ReceiveOneAsync<TPayload>(
         this IMessageTransport transport,
         ReadOnlyMemory<byte> channelUtf8,
         Func<TPayload, JsonElement, ValueTask> onMessage,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Func<TPayload, JsonElement, bool>? accept = null)
         where TPayload : struct, IJsonElement<TPayload>
     {
         ArgumentNullException.ThrowIfNull(transport);
@@ -56,6 +58,13 @@ public static class MessageTransportReceiveExtensions
             channelUtf8,
             async (payload, headers, ct) =>
             {
+                // A selector (e.g. a correlation-id match) lets non-matching messages flow past: ignore them
+                // and leave the subscription open so a later, matching message completes the receive.
+                if (accept is not null && !accept(payload, headers))
+                {
+                    return;
+                }
+
                 try
                 {
                     await onMessage(payload, headers).ConfigureAwait(false);

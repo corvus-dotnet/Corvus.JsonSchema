@@ -644,7 +644,9 @@ public sealed class AsyncApi30CodeGenerator
                     message.HeadersTypeName,
                     message.ContentType,
                     isSend ? $"Publish{ToPascalCase(message.Name)}Async" : null,
-                    isSendRequestReply ? $"SendAndReceive{ToPascalCase(message.Name)}Async" : null));
+                    isSendRequestReply ? $"SendAndReceive{ToPascalCase(message.Name)}Async" : null,
+                    message.CorrelationIdName,
+                    message.CorrelationIdLocation));
             }
 
             descriptors.Add(new AsyncApiChannelDescriptor(
@@ -738,7 +740,9 @@ public sealed class AsyncApi30CodeGenerator
         string? HeadersPointer,
         string? HeadersTypeName,
         string? ContentType,
-        string? MessageBindingsJson);
+        string? MessageBindingsJson,
+        string? CorrelationIdName = null,
+        string? CorrelationIdLocation = null);
 
     internal readonly record struct ChannelParameter(
         string Name,
@@ -994,7 +998,9 @@ public sealed class AsyncApi30CodeGenerator
                 }
             }
 
-            messages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, contentType, messageBindingsJson));
+            (string? correlationIdName, string? correlationIdLocation) = ExtractCorrelationId(resolved, doc, resolver);
+
+            messages.Add(new MessageInfo(messageName, payloadPointer, payloadTypeName, headersPointer, headersTypeName, contentType, messageBindingsJson, correlationIdName, correlationIdLocation));
             index++;
         }
 
@@ -1309,6 +1315,38 @@ public sealed class AsyncApi30CodeGenerator
     private static JsonElement ResolveRef(JsonElement element, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver = null)
     {
         return ResolveRef(element, doc, resolver, out _);
+    }
+
+    // Extracts a message's AsyncAPI Correlation ID as (name, location). The message's `correlationId` is
+    // either inline ({ location, ... }, which has no referable name) or a $ref to a named definition under
+    // components.correlationIds — the latter's key is the name an Arazzo receive step's `correlationId`
+    // matches. The location is the runtime expression (e.g. $message.header#/correlationId) saying where the
+    // correlation token lives in the message.
+    internal static (string? Name, string? Location) ExtractCorrelationId(JsonElement message, AsyncApiDocument doc, IAsyncApiReferenceResolver? resolver)
+    {
+        if (!TryGetPropertyWithTraits(message, "correlationId"u8, doc, resolver, out JsonElement corrEl))
+        {
+            return (null, null);
+        }
+
+        JsonElement resolved = ResolveRef(corrEl, doc, resolver, out string? refPointer);
+
+        string? name = null;
+        if (refPointer is { } pointer)
+        {
+            int slash = pointer.LastIndexOf('/');
+            name = slash >= 0 ? pointer[(slash + 1)..] : pointer;
+        }
+
+        string? location = null;
+        if (resolved.ValueKind == JsonValueKind.Object &&
+            resolved.TryGetProperty("location"u8, out JsonElement locEl) &&
+            locEl.ValueKind == JsonValueKind.String)
+        {
+            location = locEl.GetString();
+        }
+
+        return (name, location);
     }
 
     private static JsonElement ResolveRef(

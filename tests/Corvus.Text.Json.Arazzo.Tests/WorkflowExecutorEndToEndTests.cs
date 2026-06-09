@@ -1094,6 +1094,7 @@ public partial class WorkflowExecutorEndToEndTests
         _ = typeof(NodaTime.OffsetTime).Assembly;
         _ = typeof(Corvus.Text.Json.JsonPath.JsonPathResult).Assembly;
         _ = typeof(Corvus.Text.Json.Patch.JsonPatchExtensions).Assembly;
+        _ = typeof(System.Numerics.BigInteger).Assembly;
 
         var references = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
