@@ -31,6 +31,7 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
     private readonly List<PublishedMessage> publishedMessages = [];
     private readonly List<DeadLetteredMessage> deadLetteredMessages = [];
     private readonly Dictionary<string, Delegate> subscriptions = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Delegate> replySubscriptions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, TaskCompletionSource<(byte[] Payload, byte[] Headers)>> pendingRequests = new(StringComparer.Ordinal);
 
     /// <inheritdoc/>
@@ -135,6 +136,19 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
             this.publishedMessages.Add(new PublishedMessage(requestChannel, requestBytes, headerBytes));
         }
 
+        // If a responder is registered on the request channel, deliver the request to it in-process and
+        // route its reply back; otherwise park the request for the test helper CompleteRequest.
+        Delegate? responder;
+        lock (this.syncRoot)
+        {
+            this.replySubscriptions.TryGetValue(requestChannel, out responder);
+        }
+
+        if (responder is not null)
+        {
+            return RespondAsync<TRequest, TReply>(responder, requestBytes, headerBytes, cancellationToken);
+        }
+
         TaskCompletionSource<(byte[] Payload, byte[] Headers)> tcs = new();
 
         lock (this.syncRoot)
@@ -143,6 +157,59 @@ public sealed class InMemoryMessageTransport : IMessageTransport, IHealthCheckab
         }
 
         return CompleteRequestAsync<TReply>(tcs, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+
+        lock (this.syncRoot)
+        {
+            this.replySubscriptions[channel] = handler;
+        }
+
+        return ValueTask.CompletedTask;
+    }
+
+    // Parses a delivered request, invokes the responder handler, and returns its reply (the request and
+    // reply documents are GC-backed, matching CompleteRequestAsync's semantics).
+    private static async ValueTask<(TReply Payload, JsonElement Headers)> RespondAsync<TRequest, TReply>(
+        Delegate responder,
+        byte[] requestBytes,
+        byte[] headerBytes,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        using ParsedJsonDocument<TRequest> requestDoc = ParsedJsonDocument<TRequest>.Parse(requestBytes);
+        JsonElement requestHeaders = default;
+        ParsedJsonDocument<JsonElement>? headersDoc = null;
+        if (headerBytes.Length > 0)
+        {
+            headersDoc = ParsedJsonDocument<JsonElement>.Parse(headerBytes);
+            requestHeaders = headersDoc.RootElement;
+        }
+
+        try
+        {
+            var handler = (Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>>)responder;
+            TReply reply = await handler(requestDoc.RootElement, requestHeaders, cancellationToken).ConfigureAwait(false);
+
+            // Re-parse the reply into its own GC-backed document so it outlives the handler's workspace.
+            byte[] replyBytes = SerializeToOwnedBytes(in reply);
+            return (ParsedJsonDocument<TReply>.Parse(replyBytes).RootElement, default);
+        }
+        finally
+        {
+            headersDoc?.Dispose();
+        }
     }
 
     /// <inheritdoc/>
