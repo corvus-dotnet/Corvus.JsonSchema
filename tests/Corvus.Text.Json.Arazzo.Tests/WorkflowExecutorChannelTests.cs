@@ -978,6 +978,75 @@ public partial class WorkflowExecutorEndToEndTests
         lumens.GetInt32().ShouldBe(150);
     }
 
+    private const string ChannelReceiveParameterisedDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listen",
+              "steps": [
+                {
+                  "stepId": "receive",
+                  "channelPath": "measurements/{sensorId}",
+                  "action": "receive",
+                  "parameters": [ { "name": "sensorId", "value": "$inputs.sensorId" } ],
+                  "outputs": { "v": "$message.payload#/v" }
+                }
+              ],
+              "outputs": { "v": "$steps.receive.outputs.v" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_receives_from_a_parameterised_channel()
+    {
+        // The channel address is built at runtime from the step's sensorId parameter, so the executor
+        // subscribes to "measurements/s1".
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements/{sensorId}",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: ["sensorId"],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveParameterisedDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        source.ShouldContain("System.Text.Encoding.UTF8.GetBytes($\"measurements/");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"sensorId":"s1"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        await messageTransport.DeliverAsync<JsonElement>("measurements/s1", Encoding.UTF8.GetBytes("""{"v":150}"""));
+        JsonElement outputs = await pending;
+
+        outputs.TryGetProperty("v"u8, out JsonElement v).ShouldBeTrue();
+        v.GetInt32().ShouldBe(150);
+    }
+
     private const string ChannelReceiveWithOutputsDocument = """
         {
           "arazzo": "1.1.0",

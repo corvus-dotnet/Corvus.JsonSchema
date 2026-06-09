@@ -372,7 +372,7 @@ internal static class ControlFlowEmitter
             // Send: publish the payload, then the step succeeds unconditionally. (Request/reply with
             // actions is rejected up front, so this is always a fire-and-forget publish.)
             string send = SendChannelStepEmitter.Emit(
-                step.StepId, channel, step.RequestBody, step.Outputs, step.SuccessCriteria, "messageTransport", "workspace",
+                step.StepId, channel, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, "messageTransport", "workspace",
                 stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace);
             WorkflowExecutorEmitter.AppendIndented(c, send, 4);
             c.Append("    ").Append(camel).AppendLine("Success = true;");
@@ -418,11 +418,6 @@ internal static class ControlFlowEmitter
         Dictionary<string, string> stepOutputLocals,
         in WorkflowExecutorOptions options)
     {
-        if (descriptor.ChannelParameters.Count > 0)
-        {
-            throw new NotSupportedException($"Channel step '{step.StepId}' receives on a parameterised channel '{descriptor.ChannelAddress}'; parameterised channel addresses are a later phase.");
-        }
-
         ReceiveChannelStepEmitter.ValidateCriteria(step.StepId, step.SuccessCriteria);
 
         string payloadType = descriptor.Messages.Count > 0 && descriptor.Messages[0].PayloadTypeName is { } typeName
@@ -470,6 +465,14 @@ internal static class ControlFlowEmitter
         lambdaBody.AppendLine("}");
 
         c.AppendLine("    ArazzoTelemetry.StepsExecuted.Add(1);");
+
+        // The subscription address — a constant for a static channel, or built at runtime from the step's
+        // parameters for a parameterised channel (emitted into the case body, indented).
+        var addressStatements = new StringBuilder();
+        string address = ChannelAddressEmitter.EmitReceiveAddress(
+            descriptor, step.Arguments, fields, addressStatements, $"{prefix}ch", stepOutputLocals, "inputs", options.InputAccessors);
+        WorkflowExecutorEmitter.AppendIndented(c, addressStatements.ToString(), 4);
+
         if (isResponder)
         {
             // Request/reply responder: resolve and return the reply (the step's requestBody) regardless of
@@ -481,7 +484,7 @@ internal static class ControlFlowEmitter
             lambdaBody.Append("return new ValueTask<").Append(replyType).Append(">(").Append(replyExpression).AppendLine(");");
 
             c.Append("    await messageTransport.ReceiveOneAndReplyAsync<").Append(payloadType).Append(", ").Append(replyType).Append(">(")
-                .Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
+                .Append(address).AppendLine(", (message, messageHeaders) =>");
             c.AppendLine("    {");
             WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 8);
             c.AppendLine("    }, cancellationToken).ConfigureAwait(false);");
@@ -491,7 +494,7 @@ internal static class ControlFlowEmitter
         lambdaBody.AppendLine("return default;");
 
         c.Append("    await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
-            .Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
+            .Append(address).AppendLine(", (message, messageHeaders) =>");
         c.AppendLine("    {");
         WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 8);
         c.AppendLine("    }, cancellationToken).ConfigureAwait(false);");

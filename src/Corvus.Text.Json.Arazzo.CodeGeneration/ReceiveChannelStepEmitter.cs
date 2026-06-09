@@ -57,6 +57,7 @@ internal static class ReceiveChannelStepEmitter
         IReadOnlyList<OutputMapping> outputs,
         IReadOnlyList<StepCriterion> successCriteria,
         StepBody? requestBody,
+        IReadOnlyList<StepArgument> arguments,
         string workspaceVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
@@ -66,11 +67,6 @@ internal static class ReceiveChannelStepEmitter
         string namespaceName)
     {
         AsyncApiChannelDescriptor descriptor = channel.Channel;
-
-        if (descriptor.ChannelParameters.Count > 0)
-        {
-            throw new NotSupportedException($"Channel step '{stepId}' receives on a parameterised channel '{descriptor.ChannelAddress}'; parameterised channel addresses are a later phase.");
-        }
 
         ValidateCriteria(stepId, successCriteria);
 
@@ -151,6 +147,11 @@ internal static class ReceiveChannelStepEmitter
                 .Append(".CloneAsBuilder(").Append(workspaceVariable).AppendLine(").RootElement;");
         }
 
+        // The subscription address — a constant for a static channel, or built at runtime from the step's
+        // parameters for a parameterised channel.
+        string address = ChannelAddressEmitter.EmitReceiveAddress(
+            descriptor, arguments, fields, statements, $"{identifier}_Ch", stepOutputLocals, inputsVariable, inputAccessors);
+
         if (isResponder)
         {
             // Resolve the reply payload (the step's requestBody) against the live request, $inputs, and
@@ -163,7 +164,7 @@ internal static class ReceiveChannelStepEmitter
 
             statements.Append("await ").Append(messageTransportVariable).Append(".ReceiveOneAndReplyAsync<")
                 .Append(payloadType).Append(", ").Append(replyType).Append(">(")
-                .Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
+                .Append(address).AppendLine(", (message, messageHeaders) =>");
             statements.AppendLine("{");
             statements.Append(lambdaBody);
             statements.AppendLine("}, cancellationToken).ConfigureAwait(false);");
@@ -173,7 +174,7 @@ internal static class ReceiveChannelStepEmitter
             lambdaBody.AppendLine("return default;");
 
             statements.Append("await ").Append(messageTransportVariable).Append(".ReceiveOneAsync<").Append(payloadType)
-                .Append(">(").Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
+                .Append(">(").Append(address).AppendLine(", (message, messageHeaders) =>");
             statements.AppendLine("{");
             statements.Append(lambdaBody);
             statements.AppendLine("}, cancellationToken).ConfigureAwait(false);");
