@@ -228,6 +228,74 @@ public class WorkflowExecutorBenchmarks
         }
         """;
 
+    private const string ChannelReceiveDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./e.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listen",
+              "steps": [
+                { "stepId": "recv", "channelPath": "bench", "action": "receive", "outputs": { "v": "$message.payload#/v" } }
+              ],
+              "outputs": { "v": "$steps.recv.outputs.v" }
+            }
+          ]
+        }
+        """;
+
+    private const string ChannelRequestReplyDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./e.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "ask",
+              "steps": [
+                { "stepId": "query", "channelPath": "bench", "action": "send", "requestBody": { "payload": "$inputs.petId" }, "outputs": { "answer": "$message.payload#/answer" } }
+              ],
+              "outputs": { "answer": "$steps.query.outputs.answer" }
+            }
+          ]
+        }
+        """;
+
+    private const string ResponderDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./e.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "serve",
+              "steps": [
+                { "stepId": "serve", "channelPath": "bench", "action": "receive", "requestBody": { "payload": "$message.payload" }, "outputs": { "v": "$message.payload#/v" } }
+              ],
+              "outputs": { "v": "$steps.serve.outputs.v" }
+            }
+          ]
+        }
+        """;
+
+    private const string CompositeReplyDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./e.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "serve",
+              "steps": [
+                { "stepId": "serve", "channelPath": "bench", "action": "receive", "requestBody": { "payload": { "echo": "$message.payload#/v", "status": "ok" } }, "outputs": { "v": "$message.payload#/v" } }
+              ],
+              "outputs": { "v": "$steps.serve.outputs.v" }
+            }
+          ]
+        }
+        """;
+
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> execute = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeStatusOnly = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeInterpolation = null!;
@@ -236,9 +304,17 @@ public class WorkflowExecutorBenchmarks
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeControlFlow = null!;
     private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeSubWorkflow = null!;
     private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelSend = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelReceive = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelRequestReply = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeResponder = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeCompositeReply = null!;
     private BenchTransport transport = null!;
     private BenchMessageTransport messageTransport = null!;
     private JsonWorkspace workspace = null!;
+
+    // A responder workflow's post-receive code resumes off the delivery thread (the reply wrapper uses
+    // asynchronous continuations), so its products must be built in a non-thread-affine workspace.
+    private JsonWorkspace responderWorkspace = null!;
     private ParsedJsonDocument<JsonElement> inputsDocument = default!;
     private JsonElement inputs;
 
@@ -253,10 +329,15 @@ public class WorkflowExecutorBenchmarks
         this.executeControlFlow = Compile(ControlFlowDocument, "ControlFlowWorkflow");
         this.executeSubWorkflow = CompileSubWorkflow();
         this.executeChannelSend = CompileChannelSend();
+        this.executeChannelReceive = CompileChannel(ChannelReceiveDocument, "ListenWorkflow", ReceiveDescriptor());
+        this.executeChannelRequestReply = CompileChannel(ChannelRequestReplyDocument, "AskWorkflow", RequestReplySendDescriptor());
+        this.executeResponder = CompileChannel(ResponderDocument, "ServeWorkflow", ResponderDescriptor());
+        this.executeCompositeReply = CompileChannel(CompositeReplyDocument, "ServeWorkflow", ResponderDescriptor());
 
         this.transport = new BenchTransport();
         this.messageTransport = new BenchMessageTransport();
         this.workspace = JsonWorkspace.Create();
+        this.responderWorkspace = JsonWorkspace.CreateUnrented();
         this.inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42","id":"42"}"""));
         this.inputs = this.inputsDocument.RootElement;
 
@@ -272,6 +353,7 @@ public class WorkflowExecutorBenchmarks
     public void Cleanup()
     {
         this.workspace.Dispose();
+        this.responderWorkspace.Dispose();
         this.inputsDocument.Dispose();
     }
 
@@ -361,6 +443,97 @@ public class WorkflowExecutorBenchmarks
         ValueTask<JsonElement> pending = this.executeChannelSend(this.transport, this.messageTransport, this.workspace, this.inputs, default);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("id"u8, out _);
+    }
+
+    /// <summary>Runs a receive channel-step workflow (awaits one message via ReceiveOneAsync).</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunChannelReceiveWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeChannelReceive(this.transport, this.messageTransport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("v"u8, out _);
+    }
+
+    /// <summary>Runs a request/reply send channel step (SendAndReceive…, reply captured as outputs).</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunChannelRequestReplyWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeChannelRequestReply(this.transport, this.messageTransport, this.workspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("answer"u8, out _);
+    }
+
+    /// <summary>Runs a request/reply receive responder step (ReceiveOneAndReplyAsync; reply echoes the request).</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunResponderWorkflow()
+    {
+        this.responderWorkspace.Reset();
+        ValueTask<JsonElement> pending = this.executeResponder(this.transport, this.messageTransport, this.responderWorkspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("v"u8, out _);
+    }
+
+    /// <summary>Runs a responder step whose reply is a composite template built from the request fields.</summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunCompositeReplyWorkflow()
+    {
+        this.responderWorkspace.Reset();
+        ValueTask<JsonElement> pending = this.executeCompositeReply(this.transport, this.messageTransport, this.responderWorkspace, this.inputs, default);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("v"u8, out _);
+    }
+
+    private static AsyncApiChannelDescriptor ReceiveDescriptor()
+        => new(
+            "bench",
+            OperationAction.Receive,
+            "onBench",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("bench", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+    private static AsyncApiChannelDescriptor RequestReplySendDescriptor()
+        => new(
+            "bench",
+            OperationAction.Send,
+            "ask",
+            typeof(BenchProducer).FullName!,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("bench", "Corvus.Text.Json.JsonElement", null, null, "PublishBenchAsync", "SendAndReceiveBenchAsync")],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+    private static AsyncApiChannelDescriptor ResponderDescriptor()
+        => new(
+            "bench",
+            OperationAction.Receive,
+            "onBench",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("bench", "Corvus.Text.Json.JsonElement", null, null, null)],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+    private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileChannel(string document, string className, AsyncApiChannelDescriptor descriptor)
+    {
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
+        ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+        string source = WorkflowExecutorEmitter.Emit(
+            workflow,
+            binder,
+            new WorkflowExecutorOptions("GeneratedWorkflows", className, "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo method = assembly.GetType($"GeneratedWorkflows.{className}")!.GetMethod("ExecuteAsync")!;
+        return method.CreateDelegate<Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
     }
 
     private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileChannelSend()

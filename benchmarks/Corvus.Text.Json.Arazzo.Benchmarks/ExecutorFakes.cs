@@ -144,9 +144,20 @@ public sealed class BenchTransport : IApiTransport
 
     public ValueTask DisposeAsync() => default;
 }
-/// <summary>A no-op message transport for the channel-step probe (publish discards).</summary>
+/// <summary>
+/// A message transport for the channel-step probes. Publish discards; <see cref="SubscribeAsync"/> and
+/// <see cref="SubscribeReplyAsync"/> deliver a single fixed message synchronously (so the one-shot
+/// <c>ReceiveOneAsync</c>/<c>ReceiveOneAndReplyAsync</c> wrappers complete), reusing a per-type parsed
+/// document so the transport itself allocates nothing per delivery.
+/// </summary>
 public sealed class BenchMessageTransport : Corvus.Text.Json.AsyncApi.IMessageTransport
 {
+    private static class Fixed<T>
+        where T : struct, IJsonElement<T>
+    {
+        public static readonly ParsedJsonDocument<T> Message = ParsedJsonDocument<T>.Parse("""{"v":42}"""u8.ToArray());
+    }
+
     public ValueTask PublishAsync<TPayload>(ReadOnlyMemory<byte> channelUtf8, in TPayload payload, in JsonElement headers = default, CancellationToken cancellationToken = default)
         where TPayload : struct, IJsonElement<TPayload> => default;
 
@@ -155,7 +166,16 @@ public sealed class BenchMessageTransport : Corvus.Text.Json.AsyncApi.IMessageTr
         where TReply : struct, IJsonElement<TReply> => throw new NotSupportedException();
 
     public ValueTask SubscribeAsync<TPayload>(ReadOnlyMemory<byte> channelUtf8, Func<TPayload, JsonElement, CancellationToken, ValueTask> handler, CancellationToken cancellationToken = default)
-        where TPayload : struct, IJsonElement<TPayload> => default;
+        where TPayload : struct, IJsonElement<TPayload> => handler(Fixed<TPayload>.Message.RootElement, default, cancellationToken);
+
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(ReadOnlyMemory<byte> channelUtf8, Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler, CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        return DeliverAsync();
+
+        async ValueTask DeliverAsync() => _ = await handler(Fixed<TRequest>.Message.RootElement, default, cancellationToken).ConfigureAwait(false);
+    }
 
     public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default) => default;
 
@@ -169,11 +189,23 @@ public sealed class BenchProducer(Corvus.Text.Json.AsyncApi.IMessageTransport tr
 {
     private readonly Corvus.Text.Json.AsyncApi.IMessageTransport transport = transport;
 
+    private static readonly ParsedJsonDocument<JsonElement> ReplyDoc = ParsedJsonDocument<JsonElement>.Parse("""{"answer":42,"status":"ok"}"""u8.ToArray());
+
     public ValueTask PublishBenchAsync(JsonElement.Source payload, CancellationToken cancellationToken = default)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         JsonElement built = JsonElement.CreateBuilder(workspace, payload).RootElement;
         return this.PublishCoreAsync(workspace, built, cancellationToken);
+    }
+
+    /// <summary>Sends a request and returns a fixed reply (materialising the request as the real producer would).</summary>
+    public ValueTask<JsonElement> SendAndReceiveBenchAsync(JsonElement.Source payload, CancellationToken cancellationToken = default)
+    {
+        _ = this.transport;
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        _ = JsonElement.CreateBuilder(workspace, payload).RootElement;
+        workspace.Dispose();
+        return new ValueTask<JsonElement>(ReplyDoc.RootElement);
     }
 
     private async ValueTask PublishCoreAsync(JsonWorkspace workspace, JsonElement payload, CancellationToken cancellationToken)
