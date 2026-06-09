@@ -568,7 +568,7 @@ internal static class ControlFlowEmitter
 
         if (isReceive)
         {
-            EmitReceiveBody(work, step, descriptor, camel, prefix, fields, auxiliaryTypes, stepOutputLocals, options, channelToken);
+            EmitReceiveBody(work, step, index, descriptor, camel, prefix, fields, auxiliaryTypes, stepOutputLocals, options, channelToken);
         }
         else
         {
@@ -615,6 +615,7 @@ internal static class ControlFlowEmitter
     private static void EmitReceiveBody(
         StringBuilder c,
         in ControlFlowStep step,
+        int index,
         in AsyncApiChannelDescriptor descriptor,
         string camel,
         string prefix,
@@ -633,10 +634,9 @@ internal static class ControlFlowEmitter
         string payloadLocal = $"{camel}MessagePayload";
         string outputsLocal = EmitText.StepOutputsElementLocal(step.StepId);
 
-        // The message handler reads the live payload: evaluate the success gate, then project outputs.
-        var lambdaBody = new StringBuilder();
-        lambdaBody.Append("JsonElement ").Append(payloadLocal).AppendLine(" = JsonElement.From(message);");
-
+        // The success gate + output projection, written to run against a live payload that is already in
+        // scope as `JsonElement {payloadLocal}` (and `JsonElement messageHeaders`). It is shared by the
+        // subscription handler (Tier-1 blocking receive) and the durable resume-with-delivered-message path.
         var sources = new CriterionSources(payloadLocal, "messageHeaders");
         var gateOps = new StringBuilder();
         string gateExpression = step.SuccessCriteria.Count == 0
@@ -644,31 +644,37 @@ internal static class ControlFlowEmitter
             : StepBodyEmitter.EmitCriteriaExpression(
                 step.SuccessCriteria, fields, gateOps, auxiliaryTypes, $"{prefix}recv", "context",
                 responseVar: string.Empty, sources, "inputs", stepOutputLocals, options.InputAccessors, null, default, options.Namespace);
+        bool usesContext = ReceiveChannelStepEmitter.UsesContext(gateOps, gateExpression);
 
-        // A dynamic-pattern criterion that could not be inlined evaluates a CompiledCriterion against the
-        // context; feed the received message into it (the context's inputs are set at method scope).
-        if (ReceiveChannelStepEmitter.UsesContext(gateOps, gateExpression))
+        var handleCore = new StringBuilder();
+        if (usesContext)
         {
-            lambdaBody.Append("context.SetMessagePayload(").Append(payloadLocal).AppendLine(");");
+            handleCore.Append("context.SetMessagePayload(").Append(payloadLocal).AppendLine(");");
         }
 
-        lambdaBody.Append(gateOps);
-        lambdaBody.Append(camel).Append("Success = (").Append(gateExpression).AppendLine(");");
-        lambdaBody.Append("if (").Append(camel).AppendLine("Success)");
-        lambdaBody.AppendLine("{");
+        handleCore.Append(gateOps);
+        handleCore.Append(camel).Append("Success = (").Append(gateExpression).AppendLine(");");
+        handleCore.Append("if (").Append(camel).AppendLine("Success)");
+        handleCore.AppendLine("{");
         if (step.Outputs.Count > 0)
         {
             OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
                 step.StepId, step.Outputs, "workspace", "context", stepOutputLocals, "inputs", options.InputAccessors, responseBodyLocal: null, messagePayloadLocal: payloadLocal, messageHeadersLocal: "messageHeaders");
             fields.Append(outputCode.Fields);
-            WorkflowExecutorEmitter.AppendIndented(lambdaBody, outputCode.Statements, 4);
+            WorkflowExecutorEmitter.AppendIndented(handleCore, outputCode.Statements, 4);
         }
         else
         {
-            lambdaBody.Append("    ").Append(outputsLocal).Append(" = ").Append(payloadLocal).AppendLine(".CloneAsBuilder(workspace).RootElement;");
+            handleCore.Append("    ").Append(outputsLocal).Append(" = ").Append(payloadLocal).AppendLine(".CloneAsBuilder(workspace).RootElement;");
         }
 
-        lambdaBody.AppendLine("}");
+        handleCore.AppendLine("}");
+        string handleCoreText = handleCore.ToString();
+
+        // The subscription handler reads the typed payload as a JsonElement, then runs the shared core.
+        var lambdaBody = new StringBuilder();
+        lambdaBody.Append("JsonElement ").Append(payloadLocal).AppendLine(" = JsonElement.From(message);");
+        lambdaBody.Append(handleCoreText);
 
         c.AppendLine("    ArazzoTelemetry.StepsExecuted.Add(1);");
 
@@ -683,7 +689,8 @@ internal static class ControlFlowEmitter
         {
             // Request/reply responder: resolve and return the reply (the step's requestBody) regardless of
             // the success gate — the responder received a request and must reply; the gate only governs the
-            // step's success (and thus its onSuccess/onFailure dispatch) after the reply has been sent.
+            // step's success (and thus its onSuccess/onFailure dispatch) after the reply has been sent. A
+            // responder is a synchronous reply, so it does not suspend even in durable mode.
             string replyType = descriptor.ReplyPayloadTypeName!;
             string replyExpression = ReceiveChannelStepEmitter.EmitReplyResolution(
                 step.StepId, step.RequestBody, replyType, payloadLocal, "workspace", $"{prefix}reply", "inputs", stepOutputLocals, options.InputAccessors, fields, lambdaBody);
@@ -699,30 +706,94 @@ internal static class ControlFlowEmitter
 
         lambdaBody.AppendLine("return default;");
 
-        if (step.CorrelationName is { } correlationName)
+        string? correlationName = step.CorrelationName;
+        string correlationLocation = step.CorrelationLocation ?? string.Empty;
+        string expectedLocal = $"{camel}Expected";
+
+        // Emits the Tier-1 blocking receive (subscribe and wait inline) into the given builder at the case
+        // body indent — used directly when not durable, and as the run-less fallback in durable mode.
+        void EmitBlockingReceive(StringBuilder t)
         {
-            // Correlated receive: accept only the message carrying the token a prior send registered under
-            // this name. With no registered token the workflow never published the request, so Success stays
-            // false and the step's onFailure dispatch handles it.
-            string expectedLocal = $"{camel}Expected";
-            c.Append("    if (correlationTokens.TryGetValue(").Append(EmitText.Quote(correlationName)).Append(", out byte[]? ").Append(expectedLocal).AppendLine("))");
-            c.AppendLine("    {");
-            c.Append("        await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
-                .Append(address).AppendLine(", (message, messageHeaders) =>");
-            c.AppendLine("        {");
-            WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 12);
-            c.Append("        }, ").Append(cancellationTokenExpression)
-                .Append(", (message, messageHeaders) => CorrelationToken.Matches(JsonElement.From(message), ")
-                .Append(EmitText.Quote(step.CorrelationLocation!)).Append("u8, ").Append(expectedLocal).AppendLine(")).ConfigureAwait(false);");
-            c.AppendLine("    }");
+            if (correlationName is not null)
+            {
+                t.Append("    if (correlationTokens.TryGetValue(").Append(EmitText.Quote(correlationName)).Append(", out byte[]? ").Append(expectedLocal).AppendLine("))");
+                t.AppendLine("    {");
+                t.Append("        await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
+                    .Append(address).AppendLine(", (message, messageHeaders) =>");
+                t.AppendLine("        {");
+                WorkflowExecutorEmitter.AppendIndented(t, lambdaBody.ToString(), 12);
+                t.Append("        }, ").Append(cancellationTokenExpression)
+                    .Append(", (message, messageHeaders) => CorrelationToken.Matches(JsonElement.From(message), ")
+                    .Append(EmitText.Quote(correlationLocation)).Append("u8, ").Append(expectedLocal).AppendLine(")).ConfigureAwait(false);");
+                t.AppendLine("    }");
+            }
+            else
+            {
+                t.Append("    await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
+                    .Append(address).AppendLine(", (message, messageHeaders) =>");
+                t.AppendLine("    {");
+                WorkflowExecutorEmitter.AppendIndented(t, lambdaBody.ToString(), 8);
+                t.Append("    }, ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+            }
+        }
+
+        // Durable suspension applies to a static-address, non-responder receive: with a run present the step
+        // either consumes a message a worker delivered (resume) or checkpoints a message wait and returns
+        // Suspended (plan §9.4). A null run, a dynamic/parameterised address, or a responder keeps the
+        // Tier-1 blocking receive.
+        bool supportsSuspend = options.Durable && !descriptor.IsDynamicAddress && descriptor.ChannelParameters.Count == 0;
+        if (!supportsSuspend)
+        {
+            EmitBlockingReceive(c);
             return;
         }
 
-        c.Append("    await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
-            .Append(address).AppendLine(", (message, messageHeaders) =>");
+        string deliveredLocal = $"{camel}Delivered";
+        string indexLiteral = index.ToString(CultureInfo.InvariantCulture);
+        string channelLiteral = EmitText.Quote(descriptor.ChannelAddress);
+        string correlationIdExpression = correlationName is not null
+            ? $"System.Text.Encoding.UTF8.GetString({expectedLocal})"
+            : "null";
+
+        var delivered = new StringBuilder();
+        delivered.Append("JsonElement ").Append(payloadLocal).Append(" = ").Append(deliveredLocal).AppendLine(";");
+        if (handleCoreText.Contains("messageHeaders", StringComparison.Ordinal))
+        {
+            delivered.AppendLine("JsonElement messageHeaders = default;");
+        }
+
+        delivered.Append(handleCoreText);
+
+        c.AppendLine("    if (run is not null)");
         c.AppendLine("    {");
-        WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 8);
-        c.Append("    }, ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+        c.Append("        if (run.TryTakeDeliveredMessage(out JsonElement ").Append(deliveredLocal).AppendLine("))");
+        c.AppendLine("        {");
+        WorkflowExecutorEmitter.AppendIndented(c, delivered.ToString(), 12);
+        c.AppendLine("        }");
+        if (correlationName is not null)
+        {
+            // Suspend awaiting the correlated reply only once the request was actually published (a token is
+            // registered); with no token the receive cannot match, so Success stays false → onFailure.
+            c.Append("        else if (correlationTokens.TryGetValue(").Append(EmitText.Quote(correlationName)).Append(", out byte[]? ").Append(expectedLocal).AppendLine("))");
+            c.AppendLine("        {");
+            c.Append("            WorkflowWait ").Append(camel).Append("Wait = await run.SuspendForMessageAsync(").Append(indexLiteral).Append(", ").Append(channelLiteral).Append(", ").Append(correlationIdExpression).AppendLine(", cancellationToken).ConfigureAwait(false);");
+            c.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).Append(">.Suspended(").Append(camel).AppendLine("Wait);");
+            c.AppendLine("        }");
+        }
+        else
+        {
+            c.AppendLine("        else");
+            c.AppendLine("        {");
+            c.Append("            WorkflowWait ").Append(camel).Append("Wait = await run.SuspendForMessageAsync(").Append(indexLiteral).Append(", ").Append(channelLiteral).Append(", ").Append(correlationIdExpression).AppendLine(", cancellationToken).ConfigureAwait(false);");
+            c.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).Append(">.Suspended(").Append(camel).AppendLine("Wait);");
+            c.AppendLine("        }");
+        }
+
+        c.AppendLine("    }");
+        c.AppendLine("    else");
+        c.AppendLine("    {");
+        EmitBlockingReceive(c);
+        c.AppendLine("    }");
     }
 
     private static void ValidateChannelActionCriteria(string stepId, IReadOnlyList<StepActionInfo> actions)
