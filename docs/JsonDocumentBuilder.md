@@ -341,7 +341,7 @@ base schema carries a single required `const` discriminator that every branch re
 on the base schema (`title`, `description`, `$comment`, `examples`, and so on) do not affect this.
 
 > Note: a branch can always be read back out of the union with the generated `TryGetAs…` / `Match`
-> methods — see [Polymorphism with Discriminators](ExampleRecipes/013-PolymorphismWithDiscriminators/).
+> methods — see [Polymorphism with Discriminators](../ExampleRecipes/013-PolymorphismWithDiscriminators/).
 
 ## Working with Existing JSON
 
