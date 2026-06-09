@@ -39,6 +39,8 @@ public static class WorkflowCheckpointSerializer
     /// <param name="inputs">The workflow inputs (an undefined element writes <c>null</c>).</param>
     /// <param name="stepOutputs">The per-step <c>outputs</c> products.</param>
     /// <param name="outputs">The final workflow <c>outputs</c>, if the run has completed (an undefined element omits the field).</param>
+    /// <param name="wait">The wait describing why the run is suspended, if it is (Tier 2).</param>
+    /// <param name="fault">The fault record if the run is faulted (Tier 2).</param>
     /// <returns>The serialized checkpoint document (UTF-8 JSON).</returns>
     public static byte[] Serialize(
         WorkflowRunId runId,
@@ -50,7 +52,9 @@ public static class WorkflowCheckpointSerializer
         IReadOnlyDictionary<string, byte[]> correlationTokens,
         in JsonElement inputs,
         IReadOnlyDictionary<string, JsonElement> stepOutputs,
-        in JsonElement outputs)
+        in JsonElement outputs,
+        WorkflowWait? wait = null,
+        WorkflowFault? fault = null)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -99,6 +103,36 @@ public static class WorkflowCheckpointSerializer
             {
                 writer.WritePropertyName("outputs"u8);
                 outputs.WriteTo(writer);
+            }
+
+            if (wait is { } w)
+            {
+                writer.WriteStartObject("wait"u8);
+                writer.WriteString("kind"u8, w.Kind.ToString());
+                if (w.Kind == WorkflowWaitKind.Timer)
+                {
+                    writer.WriteString("dueAt"u8, w.DueAt);
+                }
+                else
+                {
+                    writer.WriteString("channel"u8, w.Channel);
+                    if (w.CorrelationId is { } correlationId)
+                    {
+                        writer.WriteString("correlationId"u8, correlationId);
+                    }
+                }
+
+                writer.WriteEndObject();
+            }
+
+            if (fault is { } f)
+            {
+                writer.WriteStartObject("fault"u8);
+                writer.WriteString("stepId"u8, f.StepId);
+                writer.WriteNumber("attempt"u8, f.Attempt);
+                writer.WriteString("error"u8, f.Error);
+                writer.WriteString("at"u8, f.At);
+                writer.WriteEndObject();
             }
 
             writer.WriteEndObject();
@@ -159,7 +193,28 @@ public static class WorkflowCheckpointSerializer
 
             JsonElement outputs = root.TryGetProperty("outputs"u8, out JsonElement outputsElement) ? outputsElement : default;
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs);
+            WorkflowWait? wait = null;
+            if (root.TryGetProperty("wait"u8, out JsonElement waitElement))
+            {
+                WorkflowWaitKind kind = Enum.Parse<WorkflowWaitKind>(waitElement.GetProperty("kind"u8).GetString() ?? nameof(WorkflowWaitKind.Timer));
+                wait = kind == WorkflowWaitKind.Timer
+                    ? WorkflowWait.Timer(waitElement.GetProperty("dueAt"u8).GetDateTimeOffset())
+                    : WorkflowWait.Message(
+                        waitElement.GetProperty("channel"u8).GetString() ?? string.Empty,
+                        waitElement.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null);
+            }
+
+            WorkflowFault? fault = null;
+            if (root.TryGetProperty("fault"u8, out JsonElement faultElement))
+            {
+                fault = new WorkflowFault(
+                    faultElement.GetProperty("stepId"u8).GetString() ?? string.Empty,
+                    faultElement.GetProperty("attempt"u8).GetInt32(),
+                    faultElement.GetProperty("error"u8).GetString() ?? string.Empty,
+                    faultElement.GetProperty("at"u8).GetDateTimeOffset());
+            }
+
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault);
         }
         catch
         {

@@ -29,6 +29,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private readonly WorkflowCheckpointState? resumedState;
     private readonly JsonElement inputs;
     private WorkflowEtag etag;
+    private WorkflowWait? wait;
+    private WorkflowFault? fault;
+    private JsonElement deliveredMessage;
+    private bool hasDeliveredMessage;
 
     private WorkflowRun(
         IWorkflowStateStore store,
@@ -43,6 +47,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         Dictionary<string, JsonElement> stepOutputs,
         WorkflowEtag etag,
         DateTimeOffset createdAt,
+        WorkflowWait? wait,
+        WorkflowFault? fault,
         WorkflowCheckpointState? resumedState)
     {
         this.store = store;
@@ -57,6 +63,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.stepOutputs = stepOutputs;
         this.etag = etag;
         this.createdAt = createdAt;
+        this.wait = wait;
+        this.fault = fault;
         this.resumedState = resumedState;
     }
 
@@ -74,6 +82,12 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
 
     /// <summary>Gets the workflow inputs (so a worker can reconstruct the executor's <c>inputs</c> argument on resume).</summary>
     public JsonElement Inputs => this.inputs;
+
+    /// <summary>Gets the wait describing why the run is suspended, if it is (so a worker knows what to wait for).</summary>
+    public WorkflowWait? Wait => this.wait;
+
+    /// <summary>Gets the fault record if the run is faulted.</summary>
+    public WorkflowFault? Fault => this.fault;
 
     /// <inheritdoc/>
     public int Cursor { get; private set; }
@@ -112,6 +126,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             stepOutputs: [],
             etag: WorkflowEtag.None,
             createdAt: time.GetUtcNow(),
+            wait: null,
+            fault: null,
             resumedState: null);
     }
 
@@ -143,6 +159,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             state.StepOutputs,
             etag,
             createdAt: state.CreatedAt,
+            wait: state.Wait,
+            fault: state.Fault,
             resumedState: state);
     }
 
@@ -193,6 +211,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     {
         this.Cursor = cursor;
         this.Status = WorkflowRunStatus.Running;
+        this.wait = null;
+        this.fault = null;
         return this.PersistAsync(default, cancellationToken);
     }
 
@@ -200,7 +220,74 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public ValueTask CompleteAsync(JsonElement outputs, CancellationToken cancellationToken)
     {
         this.Status = WorkflowRunStatus.Completed;
+        this.wait = null;
+        this.fault = null;
         return this.PersistAsync(outputs, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowWait> SuspendForTimerAsync(int cursor, TimeSpan delay, CancellationToken cancellationToken)
+    {
+        this.Cursor = cursor;
+        this.Status = WorkflowRunStatus.Suspended;
+        this.fault = null;
+        var w = WorkflowWait.Timer(this.timeProvider.GetUtcNow() + delay);
+        this.wait = w;
+        await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
+        return w;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowWait> SuspendForMessageAsync(int cursor, string channel, string? correlationId, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(channel);
+        this.Cursor = cursor;
+        this.Status = WorkflowRunStatus.Suspended;
+        this.fault = null;
+        var w = WorkflowWait.Message(channel, correlationId);
+        this.wait = w;
+        await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
+        return w;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowFault> FaultAsync(string stepId, int attempt, string error, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(stepId);
+        ArgumentNullException.ThrowIfNull(error);
+        this.Status = WorkflowRunStatus.Faulted;
+        this.wait = null;
+        var f = new WorkflowFault(stepId, attempt, error, this.timeProvider.GetUtcNow());
+        this.fault = f;
+        await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
+        return f;
+    }
+
+    /// <inheritdoc/>
+    public bool TryTakeDeliveredMessage(out JsonElement payload)
+    {
+        if (this.hasDeliveredMessage)
+        {
+            payload = this.deliveredMessage;
+            this.hasDeliveredMessage = false;
+            this.deliveredMessage = default;
+            return true;
+        }
+
+        payload = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Hands a delivered message to a run being resumed from a <see cref="WorkflowWaitKind.Message"/> wait, so
+    /// the awaited receive step completes immediately with it instead of blocking. The worker calls this
+    /// before re-entering <c>ExecuteAsync</c>; the payload must outlive that call.
+    /// </summary>
+    /// <param name="payload">The delivered message payload.</param>
+    public void DeliverMessage(in JsonElement payload)
+    {
+        this.deliveredMessage = payload;
+        this.hasDeliveredMessage = true;
     }
 
     /// <inheritdoc/>
@@ -218,13 +305,19 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.CorrelationTokens,
             this.inputs,
             this.stepOutputs,
-            outputs);
+            outputs,
+            this.wait,
+            this.fault);
 
         var index = new WorkflowRunIndexEntry(
             this.WorkflowId,
             this.Status,
             this.createdAt,
-            this.timeProvider.GetUtcNow());
+            this.timeProvider.GetUtcNow(),
+            DueAt: this.wait is { Kind: WorkflowWaitKind.Timer } timer ? timer.DueAt : null,
+            AwaitingChannel: this.wait is { Kind: WorkflowWaitKind.Message } message ? message.Channel : null,
+            AwaitingCorrelationId: this.wait is { Kind: WorkflowWaitKind.Message } messageCorrelation ? messageCorrelation.CorrelationId : null,
+            ErrorType: this.fault?.Error);
 
         this.etag = await this.store.SaveAsync(this.Id, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);
     }
