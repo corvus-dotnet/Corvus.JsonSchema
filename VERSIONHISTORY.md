@@ -1,5 +1,17 @@
 # Version History
 
+## V5.1.14
+
+V5.1.14 fixes a concurrency bug in OpenAPI 3.2 generated streaming server endpoints.
+
+### Bug fixes
+
+- **OpenAPI 3.2 streaming endpoints no longer hold a thread-local rented `Utf8JsonWriter` across an `await`** — Generated server endpoints for streaming (`itemSchema`/NDJSON/SSE) responses rented a `Utf8JsonWriter` from the thread-local writer cache (`workspace.RentWriter(...)`) and held it across the `await` on `WriteStreamAsync`. Because the cache is backed by `[ThreadStatic]` state, the writer is bound to the renting thread; when the streaming continuation resumed on a different thread pool thread (the normal case under Kestrel, which has no `SynchronizationContext`), the matching `ReturnWriter` ran on the wrong thread and corrupted the cache — throwing a `NullReferenceException` (or, in debug builds, failing fast) when the continuation thread had no cache state, and otherwise silently poisoning another thread's cache. Streaming endpoints now use a new `JsonWorkspace.CreateWriter(IBufferWriter<byte>)` that returns a dedicated, non-pooled writer with no thread affinity, disposed via `await writer.DisposeAsync()` — which is safe to release on any thread. The non-streaming response path was unaffected (it rents and returns the writer synchronously with no intervening `await`) and is unchanged, as are the OpenAPI 3.0 and 3.1 generators (which have no streaming path). See [#814](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/814).
+
+### New features
+
+- **`JsonWorkspace.CreateWriter(IBufferWriter<byte>)`** — Creates a dedicated `Utf8JsonWriter` that is **not** drawn from the thread-local writer cache, so it carries no thread affinity and is safe to hold across an `await` boundary (for example while streaming a response). The caller owns the writer and disposes it; it must not be passed to `ReturnWriter`. Use `RentWriter`/`RentWriterAndBuffer` for the common synchronous case where the writer is rented and returned on the same thread without an intervening `await`. See [#814](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/814).
+
 ## V5.1.13
 
 V5.1.13 fixes three V5 bugs — `CreatePatch` failing on frozen `JsonDocumentBuilder` elements, schema `default` values being invisible through the mutable view, and circular schemas producing non-terminating generated code — and adds the ability to construct a discriminated union directly from one of its branches.

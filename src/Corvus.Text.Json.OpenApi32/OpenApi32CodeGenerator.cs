@@ -7893,7 +7893,13 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine("if (result.HasStreamingBody)");
                     w.OpenBrace();
                     w.WriteLine("context.Response.ContentType = result.ContentType!;");
-                    w.WriteLine("Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);");
+
+                    // Streaming responses hold the writer across the await on WriteStreamAsync,
+                    // whose continuations can resume on a different thread. Use a dedicated
+                    // (non-thread-local-cached) writer that is safe across await boundaries; a
+                    // rented writer would corrupt the thread-local cache when released on the
+                    // continuation thread. See issue #814.
+                    w.WriteLine("Utf8JsonWriter writer = workspace.CreateWriter(context.Response.BodyWriter);");
                     w.WriteLine("try");
                     w.OpenBrace();
                     w.WriteLine("JsonStreamWriter streamWriter = new(context.Response.BodyWriter, writer, result.ContentType!);");
@@ -7901,7 +7907,7 @@ public sealed class OpenApi32CodeGenerator
                     w.CloseBrace();
                     w.WriteLine("finally");
                     w.OpenBrace();
-                    w.WriteLine("workspace.ReturnWriter(writer);");
+                    w.WriteLine("await writer.DisposeAsync().ConfigureAwait(false);");
                     w.CloseBrace();
                     w.WriteLine();
                     w.WriteLine("await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);");
