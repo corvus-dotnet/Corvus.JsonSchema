@@ -336,6 +336,90 @@ public partial class WorkflowExecutorEndToEndTests
         vk.GetInt32().ShouldBe(7);
     }
 
+    private const string ChannelReceiveConstantReplyDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "respond",
+              "steps": [
+                {
+                  "stepId": "serve",
+                  "channelPath": "requests",
+                  "action": "receive",
+                  "requestBody": { "payload": { "status": "accepted", "code": 202 } },
+                  "outputs": { "n": "$message.payload#/n" }
+                }
+              ],
+              "outputs": { "served": "$steps.serve.outputs.n" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_responder_replies_with_a_constant_object()
+    {
+        // A responder whose reply is a constant object (no embedded expressions): it is parsed once into a
+        // standalone document and returned regardless of the request, while outputs still project the request.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "requests",
+            OperationAction.Receive,
+            "onRequest",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("request", "Corvus.Text.Json.JsonElement", null, null, null)],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveConstantReplyDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "RespondWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The constant reply is baked into a static document and referenced.
+        source.ShouldContain("ParsedJsonDocument<JsonElement>");
+        source.ShouldContain("messageTransport.ReceiveOneAndReplyAsync<Corvus.Text.Json.JsonElement, Corvus.Text.Json.JsonElement>(");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.RespondWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+        using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"n":99}"""));
+        (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
+            "requests"u8.ToArray(),
+            "replies"u8.ToArray(),
+            requestDocument.RootElement,
+            "corr-const"u8.ToArray());
+
+        JsonElement outputs = await pending;
+
+        // The reply is the constant object; the output projected the request field.
+        reply.TryGetProperty("status"u8, out JsonElement status).ShouldBeTrue();
+        status.GetString().ShouldBe("accepted");
+        reply.TryGetProperty("code"u8, out JsonElement code).ShouldBeTrue();
+        code.GetInt32().ShouldBe(202);
+        outputs.TryGetProperty("served"u8, out JsonElement served).ShouldBeTrue();
+        served.GetInt32().ShouldBe(99);
+    }
+
     [TestMethod]
     public void Responder_step_without_requestBody_is_rejected()
     {
@@ -344,10 +428,10 @@ public partial class WorkflowExecutorEndToEndTests
     }
 
     [TestMethod]
-    public void Responder_step_with_non_expression_reply_is_rejected()
+    public void Responder_step_with_interpolated_reply_is_rejected()
     {
-        NotSupportedException ex = EmitResponder("""{ "stepId": "serve", "channelPath": "requests", "action": "receive", "requestBody": { "payload": "literal-reply" } }""");
-        ex.Message.ShouldContain("non-expression reply");
+        NotSupportedException ex = EmitResponder("""{ "stepId": "serve", "channelPath": "requests", "action": "receive", "requestBody": { "payload": "echo-{$message.payload#/n}" } }""");
+        ex.Message.ShouldContain("interpolated reply");
     }
 
     [TestMethod]
