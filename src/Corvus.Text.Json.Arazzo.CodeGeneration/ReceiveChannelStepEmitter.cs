@@ -241,7 +241,7 @@ internal static class ReceiveChannelStepEmitter
                 (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(body.Value);
                 if (expression.Source == ArazzoExpressionSource.Literal)
                 {
-                    string literalField = ReplyTemplateEmitter.EmitConstant(System.Text.Json.JsonSerializer.Serialize(body.Value), fields, $"{baseName}Constant");
+                    string literalField = JsonTemplateEmitter.EmitConstant(System.Text.Json.JsonSerializer.Serialize(body.Value), fields, $"{baseName}Constant");
                     return $"({replyType})({literalField})";
                 }
 
@@ -257,7 +257,7 @@ internal static class ReceiveChannelStepEmitter
             case ArgumentValueKind.Interpolation:
             {
                 // An interpolated reply string (literal segments + embedded $message/$inputs/$steps values).
-                string local = ReplyTemplateEmitter.EmitInterpolation(
+                string local = JsonTemplateEmitter.EmitInterpolation(
                     stepId, body.Value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, baseName);
                 return $"({replyType})({local})";
             }
@@ -265,7 +265,7 @@ internal static class ReceiveChannelStepEmitter
             case ArgumentValueKind.CompositeTemplate:
             {
                 // A reply object/array built from request fields (a template with embedded expressions).
-                string local = ReplyTemplateEmitter.EmitComposite(
+                string local = JsonTemplateEmitter.EmitComposite(
                     stepId, body.Value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, baseName);
                 return $"({replyType})({local})";
             }
@@ -282,7 +282,7 @@ internal static class ReceiveChannelStepEmitter
                     _ => throw new NotSupportedException($"Request/reply receive step '{stepId}' binds an unsupported reply payload kind '{body.Kind}'."),
                 };
 
-                string field = ReplyTemplateEmitter.EmitConstant(constantJson, fields, $"{baseName}Constant");
+                string field = JsonTemplateEmitter.EmitConstant(constantJson, fields, $"{baseName}Constant");
                 return $"({replyType})({field})";
             }
         }
