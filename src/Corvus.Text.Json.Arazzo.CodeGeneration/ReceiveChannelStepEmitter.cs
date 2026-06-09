@@ -231,60 +231,91 @@ internal static class ReceiveChannelStepEmitter
 
         var sources = new CriterionSources(payloadLocal, "messageHeaders");
 
-        switch (body.Kind)
+        // Resolve the base reply payload to a JsonElement expression (message/inputs/step-aware).
+        string baseExpression = EmitReplyValueElement(stepId, body.Value, body.Kind, sources, workspaceVariable, baseName, inputsVariable, stepOutputLocals, inputAccessors, fields, statements);
+
+        // No replacements: the base is the reply.
+        if (body.Replacements is not { Count: > 0 } replacements)
+        {
+            return $"({replyType})({baseExpression})";
+        }
+
+        // Replacements overlay values onto the base reply at JSON Pointer targets — the same build-and-patch
+        // the request side uses, but with message-aware value resolution.
+        string builderLocal = $"{baseName}Builder";
+        string mutableLocal = $"{baseName}Mutable";
+        statements.Append("var ").Append(builderLocal).Append(" = ").Append(baseExpression).Append('.').Append("CreateBuilder(").Append(workspaceVariable).AppendLine(");");
+        statements.Append("JsonElement.Mutable ").Append(mutableLocal).Append(" = ").Append(builderLocal).AppendLine(".RootElement;");
+
+        for (int i = 0; i < replacements.Count; i++)
+        {
+            PayloadReplacement replacement = replacements[i];
+            string valueExpression = EmitReplyValueElement(
+                stepId, replacement.Value, replacement.Kind, sources, workspaceVariable, $"{baseName}Repl{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}", inputsVariable, stepOutputLocals, inputAccessors, fields, statements);
+            statements.Append(mutableLocal).Append(".TryAdd(").Append(EmitText.Quote(replacement.Target)).Append("u8, ").Append(valueExpression).AppendLine(");");
+        }
+
+        string patchedLocal = $"{baseName}Patched";
+        statements.Append("JsonElement ").Append(patchedLocal).Append(" = ").Append(mutableLocal).AppendLine(";");
+        return $"({replyType})({patchedLocal})";
+    }
+
+    /// <summary>
+    /// Resolves a responder reply value (the base payload or a replacement value) of any kind to a
+    /// <see cref="JsonElement"/> expression, message/inputs/step-aware. A leading-<c>$</c> string that
+    /// matches no known runtime-expression form is treated as a literal (Arazzo defines no <c>$</c> escape).
+    /// </summary>
+    private static string EmitReplyValueElement(
+        string stepId,
+        string value,
+        ArgumentValueKind kind,
+        in CriterionSources sources,
+        string workspaceVariable,
+        string baseName,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        StringBuilder fields,
+        StringBuilder statements)
+    {
+        switch (kind)
         {
             case ArgumentValueKind.Expression:
             {
-                // A runtime expression resolves to a reference into the live request / inputs / step outputs.
-                // A leading-'$' string that matches no known runtime-expression form is a literal (Arazzo
-                // defines no '$' escape, and the runtime ArazzoExpression.Parse treats an unrecognized
-                // '$'-form as a literal) — bake it as a constant rather than failing.
-                (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(body.Value);
+                (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(value);
                 if (expression.Source == ArazzoExpressionSource.Literal)
                 {
-                    string literalField = JsonTemplateEmitter.EmitConstant(System.Text.Json.JsonSerializer.Serialize(body.Value), fields, $"{baseName}Constant");
-                    return $"({replyType})({literalField})";
+                    return JsonTemplateEmitter.EmitConstant(System.Text.Json.JsonSerializer.Serialize(value), fields, $"{baseName}Constant");
                 }
 
                 if (!CriterionExpressionParsing.TryEmitElementNavigation(
                         expression, navigationPointer, baseName, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, out string elementLocal))
                 {
-                    throw new NotSupportedException($"Request/reply receive step '{stepId}' has a reply payload expression '{body.Value}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.");
+                    throw new NotSupportedException($"Request/reply receive step '{stepId}' has a reply value '{value}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.");
                 }
 
-                return $"({replyType})({elementLocal})";
+                return elementLocal;
             }
 
             case ArgumentValueKind.Interpolation:
-            {
-                // An interpolated reply string (literal segments + embedded $message/$inputs/$steps values).
-                string local = JsonTemplateEmitter.EmitInterpolation(
-                    stepId, body.Value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, baseName);
-                return $"({replyType})({local})";
-            }
+                return JsonTemplateEmitter.EmitInterpolation(
+                    stepId, value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, baseName);
 
             case ArgumentValueKind.CompositeTemplate:
-            {
-                // A reply object/array built from request fields (a template with embedded expressions).
-                string local = JsonTemplateEmitter.EmitComposite(
-                    stepId, body.Value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, baseName);
-                return $"({replyType})({local})";
-            }
+                return JsonTemplateEmitter.EmitComposite(
+                    stepId, value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, baseName);
 
             default:
             {
-                // A constant reply: bake the literal's JSON once into a standalone (GC-backed) document and
-                // reference its root.
-                string constantJson = body.Kind switch
+                string constantJson = kind switch
                 {
-                    ArgumentValueKind.LiteralComposite or ArgumentValueKind.LiteralNumber or ArgumentValueKind.LiteralBoolean => body.Value,
+                    ArgumentValueKind.LiteralComposite or ArgumentValueKind.LiteralNumber or ArgumentValueKind.LiteralBoolean => value,
                     ArgumentValueKind.LiteralNull => "null",
-                    ArgumentValueKind.LiteralString => System.Text.Json.JsonSerializer.Serialize(body.Value),
-                    _ => throw new NotSupportedException($"Request/reply receive step '{stepId}' binds an unsupported reply payload kind '{body.Kind}'."),
+                    ArgumentValueKind.LiteralString => System.Text.Json.JsonSerializer.Serialize(value),
+                    _ => throw new NotSupportedException($"Request/reply receive step '{stepId}' binds an unsupported reply payload kind '{kind}'."),
                 };
 
-                string field = JsonTemplateEmitter.EmitConstant(constantJson, fields, $"{baseName}Constant");
-                return $"({replyType})({field})";
+                return JsonTemplateEmitter.EmitConstant(constantJson, fields, $"{baseName}Constant");
             }
         }
     }
