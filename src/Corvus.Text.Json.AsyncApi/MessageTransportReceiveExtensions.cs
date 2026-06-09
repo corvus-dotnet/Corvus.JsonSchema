@@ -82,4 +82,83 @@ public static class MessageTransportReceiveExtensions
 
         failure?.Throw();
     }
+
+    /// <summary>
+    /// Awaits a single request on a channel and replies to it once: subscribes with the request/reply
+    /// responder (<see cref="IMessageTransport.SubscribeReplyAsync{TRequest, TReply}"/>), invokes
+    /// <paramref name="onRequest"/> with the first delivered request to obtain the reply, lets the transport
+    /// publish that reply correlated to the request, then unsubscribes — the responder counterpart of
+    /// <see cref="ReceiveOneAsync{TPayload}"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The delivered request is valid only for the duration of <paramref name="onRequest"/>; the reply it
+    /// returns is serialized by the transport synchronously as the handler completes (before the request and
+    /// the caller's workspace are recycled), so the reply may reference the live request, the workflow
+    /// inputs, or prior step outputs without being copied. A caller that needs values projected from the
+    /// request to outlive the receive must copy them into its own workspace <em>inside</em> the handler.
+    /// </para>
+    /// <para>
+    /// The handler runs inline on the delivering thread (continuations are not forced asynchronous), so a
+    /// thread-affine pooled <see cref="JsonWorkspace"/> the handler writes into stays on its owning thread.
+    /// An exception thrown by the handler is captured and re-thrown to the awaiting caller after the
+    /// subscription is torn down; the transport still publishes whatever reply the responder produced.
+    /// </para>
+    /// </remarks>
+    /// <typeparam name="TRequest">The request payload type the responder parses into.</typeparam>
+    /// <typeparam name="TReply">The reply payload type the handler returns.</typeparam>
+    /// <param name="transport">The message transport.</param>
+    /// <param name="channelUtf8">The request channel address as UTF-8 bytes.</param>
+    /// <param name="onRequest">The handler invoked with the first delivered request and its headers, returning the reply payload.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="ValueTask"/> that completes once a request has been handled and the subscription removed.</returns>
+    public static async ValueTask ReceiveOneAndReplyAsync<TRequest, TReply>(
+        this IMessageTransport transport,
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, ValueTask<TReply>> onRequest,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ArgumentNullException.ThrowIfNull(transport);
+        ArgumentNullException.ThrowIfNull(onRequest);
+
+        // Continuations run inline on the delivering thread (as in ReceiveOneAsync) so the awaiting caller —
+        // and the workflow output-building that follows it — resumes there rather than hopping to the thread
+        // pool (a pooled JsonWorkspace the responder writes into is thread-affine). The transport publishes
+        // the reply on its own channel after the handler returns, so it is unaffected by the unsubscribe.
+        var completion = new TaskCompletionSource();
+        ExceptionDispatchInfo? failure = null;
+
+        await transport.SubscribeReplyAsync<TRequest, TReply>(
+            channelUtf8,
+            async (request, headers, ct) =>
+            {
+                try
+                {
+                    return await onRequest(request, headers).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    failure = ExceptionDispatchInfo.Capture(ex);
+                    return default;
+                }
+                finally
+                {
+                    completion.TrySetResult();
+                }
+            },
+            cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            await completion.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            await transport.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+        }
+
+        failure?.Throw();
+    }
 }

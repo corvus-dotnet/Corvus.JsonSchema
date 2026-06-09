@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text;
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
@@ -40,6 +41,7 @@ internal static class ReceiveChannelStepEmitter
     /// <param name="messageTransportVariable">The in-scope <c>IMessageTransport</c> variable name.</param>
     /// <param name="outputs">The step's declared outputs (name → runtime expression); empty for whole-payload capture.</param>
     /// <param name="successCriteria">The step's success criteria (may reference only <c>$message.*</c>/<c>$inputs</c>/<c>$steps</c>).</param>
+    /// <param name="requestBody">The step's request body — for a request/reply <c>receive</c> (responder), the reply payload to send back; <see langword="null"/> for fire-and-forget receive.</param>
     /// <param name="workspaceVariable">The in-scope <c>JsonWorkspace</c> variable name.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputsVariable">The workflow inputs variable name (for <c>$inputs</c> navigation).</param>
@@ -54,6 +56,7 @@ internal static class ReceiveChannelStepEmitter
         string messageTransportVariable,
         IReadOnlyList<OutputMapping> outputs,
         IReadOnlyList<StepCriterion> successCriteria,
+        StepBody? requestBody,
         string workspaceVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
@@ -75,6 +78,10 @@ internal static class ReceiveChannelStepEmitter
         string payloadType = descriptor.Messages.Count > 0 && descriptor.Messages[0].PayloadTypeName is { } typeName
             ? typeName
             : "Corvus.Text.Json.JsonElement";
+
+        // A receive operation that declares a reply is a request/reply responder: the step receives one
+        // request, replies with its requestBody (correlated by the transport), and unsubscribes (one-shot).
+        bool isResponder = descriptor.ReplyPayloadTypeName is not null;
 
         string identifier = EmitText.SanitizeIdentifier(stepId);
         string camel = EmitText.ToCamelCase(identifier);
@@ -144,13 +151,33 @@ internal static class ReceiveChannelStepEmitter
                 .Append(".CloneAsBuilder(").Append(workspaceVariable).AppendLine(").RootElement;");
         }
 
-        lambdaBody.AppendLine("return default;");
+        if (isResponder)
+        {
+            // Resolve the reply payload (the step's requestBody) against the live request, $inputs, and
+            // prior step outputs, and return it; the transport serializes it synchronously while the
+            // request and the workspace are still live, so the reply is a reference (never copied).
+            string replyType = descriptor.ReplyPayloadTypeName!;
+            string replyExpression = EmitReplyResolution(
+                stepId, requestBody, replyType, payloadLocal, $"{identifier}Reply", inputsVariable, stepOutputLocals, inputAccessors, lambdaBody);
+            lambdaBody.Append("return new ValueTask<").Append(replyType).Append(">(").Append(replyExpression).AppendLine(");");
 
-        statements.Append("await ").Append(messageTransportVariable).Append(".ReceiveOneAsync<").Append(payloadType)
-            .Append(">(").Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
-        statements.AppendLine("{");
-        statements.Append(lambdaBody);
-        statements.AppendLine("}, cancellationToken).ConfigureAwait(false);");
+            statements.Append("await ").Append(messageTransportVariable).Append(".ReceiveOneAndReplyAsync<")
+                .Append(payloadType).Append(", ").Append(replyType).Append(">(")
+                .Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
+            statements.AppendLine("{");
+            statements.Append(lambdaBody);
+            statements.AppendLine("}, cancellationToken).ConfigureAwait(false);");
+        }
+        else
+        {
+            lambdaBody.AppendLine("return default;");
+
+            statements.Append("await ").Append(messageTransportVariable).Append(".ReceiveOneAsync<").Append(payloadType)
+                .Append(">(").Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
+            statements.AppendLine("{");
+            statements.Append(lambdaBody);
+            statements.AppendLine("}, cancellationToken).ConfigureAwait(false);");
+        }
 
         if (hasCriteria)
         {
@@ -162,6 +189,57 @@ internal static class ReceiveChannelStepEmitter
         }
 
         return statements.ToString();
+    }
+
+    /// <summary>
+    /// Emits the statements that resolve a request/reply <c>receive</c> step's reply payload (its
+    /// <c>requestBody</c>) to a <see cref="JsonElement"/> reference against the live request payload,
+    /// <c>$inputs</c>, and prior step outputs, and returns the expression that yields the typed reply.
+    /// </summary>
+    /// <remarks>
+    /// The reply is a transient message (not a durable product), so it is resolved by static navigation —
+    /// a reference into the live request / inputs / step outputs, never copied. The first cut supports a
+    /// single runtime-expression reply (e.g. <c>$message.payload</c> to echo the request, a pointer
+    /// projection of it, an <c>$inputs</c> value, or a prior step's output); literal, interpolated, and
+    /// composite reply bodies are a later phase.
+    /// </remarks>
+    internal static string EmitReplyResolution(
+        string stepId,
+        StepBody? requestBody,
+        string replyType,
+        string payloadLocal,
+        string baseName,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        StringBuilder statements)
+    {
+        if (requestBody is not { } body)
+        {
+            throw new NotSupportedException($"Request/reply receive step '{stepId}' has no requestBody; a responder step must declare the reply payload to send back.");
+        }
+
+        if (body.Kind != ArgumentValueKind.Expression)
+        {
+            throw new NotSupportedException($"Request/reply receive step '{stepId}' binds a non-expression reply payload; only runtime-expression reply payloads are supported on a responder step.");
+        }
+
+        (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(body.Value);
+        if (!CriterionExpressionParsing.TryEmitElementNavigation(
+                expression,
+                navigationPointer,
+                baseName,
+                new CriterionSources(payloadLocal, "messageHeaders"),
+                inputsVariable,
+                stepOutputLocals,
+                inputAccessors,
+                statements,
+                out string elementLocal))
+        {
+            throw new NotSupportedException($"Request/reply receive step '{stepId}' has a reply payload expression '{body.Value}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.");
+        }
+
+        return $"({replyType})({elementLocal})";
     }
 
     // True when the emitted gate still resolves through the WorkflowExecutionContext (a criterion that

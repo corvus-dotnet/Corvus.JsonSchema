@@ -428,6 +428,7 @@ internal static class ControlFlowEmitter
         string payloadType = descriptor.Messages.Count > 0 && descriptor.Messages[0].PayloadTypeName is { } typeName
             ? typeName
             : "Corvus.Text.Json.JsonElement";
+        bool isResponder = descriptor.ReplyPayloadTypeName is not null;
         string payloadLocal = $"{camel}MessagePayload";
         string outputsLocal = EmitText.StepOutputsElementLocal(step.StepId);
 
@@ -467,9 +468,28 @@ internal static class ControlFlowEmitter
         }
 
         lambdaBody.AppendLine("}");
-        lambdaBody.AppendLine("return default;");
 
         c.AppendLine("    ArazzoTelemetry.StepsExecuted.Add(1);");
+        if (isResponder)
+        {
+            // Request/reply responder: resolve and return the reply (the step's requestBody) regardless of
+            // the success gate — the responder received a request and must reply; the gate only governs the
+            // step's success (and thus its onSuccess/onFailure dispatch) after the reply has been sent.
+            string replyType = descriptor.ReplyPayloadTypeName!;
+            string replyExpression = ReceiveChannelStepEmitter.EmitReplyResolution(
+                step.StepId, step.RequestBody, replyType, payloadLocal, $"{prefix}reply", "inputs", stepOutputLocals, options.InputAccessors, lambdaBody);
+            lambdaBody.Append("return new ValueTask<").Append(replyType).Append(">(").Append(replyExpression).AppendLine(");");
+
+            c.Append("    await messageTransport.ReceiveOneAndReplyAsync<").Append(payloadType).Append(", ").Append(replyType).Append(">(")
+                .Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
+            c.AppendLine("    {");
+            WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 8);
+            c.AppendLine("    }, cancellationToken).ConfigureAwait(false);");
+            return;
+        }
+
+        lambdaBody.AppendLine("return default;");
+
         c.Append("    await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
             .Append(EmitText.Quote(descriptor.ChannelAddress)).AppendLine("u8.ToArray(), (message, messageHeaders) =>");
         c.AppendLine("    {");
