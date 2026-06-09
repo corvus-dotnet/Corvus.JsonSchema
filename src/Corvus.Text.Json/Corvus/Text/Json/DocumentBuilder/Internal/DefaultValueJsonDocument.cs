@@ -383,6 +383,10 @@ public sealed class DefaultValueJsonDocument(IJsonDocument inner) : IMutableJson
         => this.Create<TElement>(index);
 
     /// <inheritdoc />
+    JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace)
+        => this.inner.CloneElementAsBuilder(index, workspace);
+
+    /// <inheritdoc />
     public int GetDbSize(int index, bool includeEndElement) => this.inner.GetDbSize(index, includeEndElement);
 
     /// <inheritdoc />
