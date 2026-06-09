@@ -626,6 +626,13 @@ public sealed class AsyncApi30CodeGenerator
             bool isSend = op.Action == OperationAction.Send;
             string? producerClassName = isSend ? $"{this.rootNamespace}.{ToPascalCase(op.Name)}Producer" : null;
 
+            // A send operation that declares a reply is request/reply: the producer exposes a
+            // SendAndReceive{Message}Async method returning the reply payload.
+            bool isRequestReply = isSend && op.Reply is not null;
+            string? replyPayloadTypeName = isRequestReply
+                ? (op.Reply!.Value.Messages.Count == 1 ? op.Reply.Value.Messages[0].PayloadTypeName : null) ?? "Corvus.Text.Json.JsonElement"
+                : null;
+
             var messages = new List<AsyncApiChannelMessageDescriptor>(op.Messages.Count);
             foreach (MessageInfo message in op.Messages)
             {
@@ -634,7 +641,8 @@ public sealed class AsyncApi30CodeGenerator
                     message.PayloadTypeName,
                     message.HeadersTypeName,
                     message.ContentType,
-                    isSend ? $"Publish{ToPascalCase(message.Name)}Async" : null));
+                    isSend ? $"Publish{ToPascalCase(message.Name)}Async" : null,
+                    isRequestReply ? $"SendAndReceive{ToPascalCase(message.Name)}Async" : null));
             }
 
             descriptors.Add(new AsyncApiChannelDescriptor(
@@ -644,7 +652,8 @@ public sealed class AsyncApi30CodeGenerator
                 producerClassName,
                 op.IsDynamicAddress,
                 op.Parameters.Select(static p => p.Name).ToList(),
-                messages));
+                messages,
+                replyPayloadTypeName));
         }
 
         return descriptors;

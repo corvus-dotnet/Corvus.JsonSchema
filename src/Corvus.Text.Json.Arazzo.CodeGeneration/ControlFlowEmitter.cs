@@ -369,11 +369,12 @@ internal static class ControlFlowEmitter
         }
         else
         {
-            // Send: publish the payload, then the step succeeds unconditionally.
-            SendChannelStepCode send = SendChannelStepEmitter.Emit(
-                step.StepId, channel, step.RequestBody, "messageTransport", stepOutputLocals, "inputs", options.InputAccessors);
-            fields.Append(send.Fields);
-            WorkflowExecutorEmitter.AppendIndented(c, send.Statements, 4);
+            // Send: publish the payload, then the step succeeds unconditionally. (Request/reply with
+            // actions is rejected up front, so this is always a fire-and-forget publish.)
+            string send = SendChannelStepEmitter.Emit(
+                step.StepId, channel, step.RequestBody, step.Outputs, step.SuccessCriteria, "messageTransport", "workspace",
+                stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace);
+            WorkflowExecutorEmitter.AppendIndented(c, send, 4);
             c.Append("    ").Append(camel).AppendLine("Success = true;");
         }
 
