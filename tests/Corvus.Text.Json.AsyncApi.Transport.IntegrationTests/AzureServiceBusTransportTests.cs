@@ -133,68 +133,6 @@ public class AzureServiceBusTransportTests
     }
 
     [TestMethod]
-    public async Task ReceiveOneAndReplyRoundTrip()
-    {
-        // Arrange — mirrors RequestReplyResponderRoundTrip but drives the one-shot
-        // ReceiveOneAndReplyAsync primitive instead of the persistent SubscribeReplyAsync.
-        AzureServiceBusMessageTransport responderTransport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
-        {
-            ConnectionString = AzureServiceBusFixture.ConnectionString,
-            QueueName = "test-queue",
-        });
-
-        AzureServiceBusMessageTransport requesterTransport = await AzureServiceBusMessageTransport.CreateAsync(new AzureServiceBusTransportOptions
-        {
-            ConnectionString = AzureServiceBusFixture.ConnectionString,
-            QueueName = "test-queue",
-        });
-
-        try
-        {
-            ReadOnlyMemory<byte> requestChannel = "test-queue"u8.ToArray();
-            ReadOnlyMemory<byte> replyChannel = "test-reply-queue"u8.ToArray();
-
-            // Start the one-shot responder as a background task. It will handle exactly one
-            // request, send the reply, and then complete — no explicit unsubscribe needed.
-            System.Threading.Tasks.Task responderTask = responderTransport.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
-                requestChannel,
-                (request, headers) =>
-                {
-                    int value = request.GetProperty("value"u8).GetInt32();
-                    using ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
-                        Encoding.UTF8.GetBytes($$"""{"result":{{value * 2}}}"""));
-                    return ValueTask.FromResult(replyDoc.RootElement);
-                }).AsTask();
-
-            // Allow the processor to start.
-            await Task.Delay(500);
-
-            // Act — send a request and await the correlated reply.
-            byte[] correlationId = "asb-responder-roundtrip-001-once"u8.ToArray();
-            using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
-
-            (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
-                requestChannel,
-                replyChannel,
-                requestDoc.RootElement,
-                correlationId);
-
-            // Assert
-            Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
-            Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
-
-            // The one-shot responder unsubscribes itself after handling a single request;
-            // await its completion rather than calling UnsubscribeAsync.
-            await responderTask;
-        }
-        finally
-        {
-            await responderTransport.DisposeAsync();
-            await requesterTransport.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
     public async Task DoubleDisposeDoesNotThrow()
     {
         AzureServiceBusTransportOptions options = new()

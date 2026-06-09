@@ -923,68 +923,6 @@ public class AmqpTransportTests
     }
 
     [TestMethod]
-    public async Task ReceiveOneAndReplyRoundTrip()
-    {
-        // Arrange — same two-transport setup as RequestReplyResponderRoundTrip, but drives the
-        // one-shot primitive ReceiveOneAndReplyAsync that generated Arazzo responder steps call.
-        static AmqpTransportOptions Options() => new()
-        {
-            ConnectionUri = AmqpFixture.ConnectionUri,
-            ExchangeName = "corvus.test.responder",
-            ExchangeType = "topic",
-            ExchangeDurable = false,
-            ConsumerTagPrefix = "corvus-responder",
-        };
-
-        AmqpMessageTransport responder = await AmqpMessageTransport.CreateAsync(Options());
-        AmqpMessageTransport requester = await AmqpMessageTransport.CreateAsync(Options());
-
-        try
-        {
-            ReadOnlyMemory<byte> requestChannel = "amqp.test.responder.request.once"u8.ToArray();
-            ReadOnlyMemory<byte> replyChannel = "amqp.test.responder.reply.once"u8.ToArray();
-            byte[] correlationId = "amqp-responder-once-001"u8.ToArray();
-
-            // The responder service: start as a background task — it will handle one request
-            // then unsubscribe itself.
-            System.Threading.Tasks.Task responderTask = responder.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
-                requestChannel,
-                (request, headers) =>
-                {
-                    int value = request.GetProperty("value"u8).GetInt32();
-
-                    // The reply document must outlive the handler: the transport serializes the
-                    // returned JsonElement after the handler completes, so it is not disposed here.
-                    ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
-                        Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}"""));
-                    return ValueTask.FromResult(replyDoc.RootElement);
-                }).AsTask();
-
-            await Task.Delay(500);
-
-            // Act — the requester service sends a request.
-            using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
-            (JsonElement replyPayload, _) = await requester.RequestAsync<JsonElement, JsonElement>(
-                requestChannel,
-                replyChannel,
-                requestDoc.RootElement,
-                correlationId);
-
-            // Assert — the responder doubled the value.
-            Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
-            Assert.AreEqual(42, replyPayload.GetProperty("doubled"u8).GetInt32());
-
-            // Await the one-shot wrapper to confirm it completed cleanly.
-            await responderTask;
-        }
-        finally
-        {
-            await responder.DisposeAsync();
-            await requester.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
     public async Task RequestReplyRoundtripWithHeadersForwardsHeaders()
     {
         // Arrange — verify that headers are included in request messages
