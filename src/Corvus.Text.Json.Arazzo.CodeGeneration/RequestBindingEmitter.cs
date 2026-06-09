@@ -149,10 +149,12 @@ public static class RequestBindingEmitter
                 return $"{typeName}.Source.Null()";
 
             case ArgumentValueKind.CompositeTemplate:
-                // A request body that embeds runtime expressions in an object/array template is not yet
-                // supported on operation/send steps (only request/reply receive steps build a reply this way).
-                throw new NotSupportedException(
-                    $"Request body for property '{propertyName}' is a composite template with embedded runtime expressions, which is only supported on a request/reply receive step's reply.");
+                // A request body that embeds runtime expressions in an object/array template: build it into
+                // the run workspace (resolving $inputs/$steps; there is no message/response source for a
+                // request) and pass the resulting JsonElement as the client method's Source. The generated
+                // client materialises the Source synchronously, so the workspace-built value is safe.
+                return JsonTemplateEmitter.EmitComposite(
+                    propertyName, value, "workspace", default, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{fieldName}Tmpl");
 
             default:
                 // Object/array constant: parsed once into a standalone document, passed as a Source.
