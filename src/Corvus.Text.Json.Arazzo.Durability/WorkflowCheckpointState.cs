@@ -26,7 +26,9 @@ public sealed class WorkflowCheckpointState : IDisposable
         Dictionary<string, byte[]> correlationTokens,
         JsonElement inputs,
         Dictionary<string, JsonElement> stepOutputs,
-        JsonElement outputs)
+        JsonElement outputs,
+        WorkflowWait? wait,
+        WorkflowFault? fault)
     {
         this.document = document;
         this.RunId = runId;
@@ -39,6 +41,8 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.Inputs = inputs;
         this.StepOutputs = stepOutputs;
         this.Outputs = outputs;
+        this.Wait = wait;
+        this.Fault = fault;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -70,6 +74,12 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the final workflow <c>outputs</c> if the run had completed (an <see cref="JsonValueKind.Undefined"/> element otherwise).</summary>
     public JsonElement Outputs { get; }
+
+    /// <summary>Gets the wait describing why the run is suspended, if it is (Tier 2).</summary>
+    public WorkflowWait? Wait { get; }
+
+    /// <summary>Gets the fault record if the run is faulted (Tier 2).</summary>
+    public WorkflowFault? Fault { get; }
 
     /// <inheritdoc/>
     public void Dispose() => this.document.Dispose();
