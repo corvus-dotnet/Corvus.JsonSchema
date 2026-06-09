@@ -291,6 +291,20 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
     }
 
     /// <inheritdoc/>
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return this.SubscribeReplyToCoreNatsAsync(channel, channelUtf8, handler, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
@@ -817,6 +831,209 @@ public sealed class NatsMessageTransport : IMessageTransport, IHealthCheckableTr
                                         else
                                         {
                                             await handler(payload, headers, cts.Token).ConfigureAwait(false);
+                                        }
+                                    }
+                                }
+                                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                                {
+                                    break;
+                                }
+                                catch (Exception ex)
+                                {
+                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler);
+                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                    if (action == MessageErrorAction.Abort)
+                                    {
+                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Handler);
+                                        break;
+                                    }
+
+                                    if (action == MessageErrorAction.DeadLetter)
+                                    {
+                                        try
+                                        {
+                                            await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                        }
+                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                        {
+                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Handler);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                {
+                    // Normal shutdown via UnsubscribeAsync or parent cancellation
+                }
+                finally
+                {
+                    this.options.Heartbeat?.Stop(channel, "nats");
+                }
+            },
+            CancellationToken.None);
+
+        SubscriptionState state = new(cts, consumeTask);
+        this.subscriptions[channel] = state;
+    }
+
+    private async ValueTask SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
+        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        // Build dead-letter channel UTF-8 bytes
+        Span<byte> dlChannelUtf8 = stackalloc byte[channelUtf8.Length + this.deadLetterSuffixUtf8.Length];
+        channelUtf8.Span.CopyTo(dlChannelUtf8);
+        this.deadLetterSuffixUtf8.CopyTo(dlChannelUtf8[channelUtf8.Length..]);
+        string dlChannel = Encoding.UTF8.GetString(dlChannelUtf8);
+
+        this.options.Heartbeat?.Start(channel, "nats");
+
+        // Register the subscription with the server before starting the background
+        // consumption loop so the SUB command is sent before this method returns,
+        // matching SubscribeToCoreNatsAsync.
+        INatsSub<byte[]> sub = await this.connection.SubscribeCoreAsync<byte[]>(
+            subject: channel,
+            cancellationToken: cts.Token).ConfigureAwait(false);
+
+        Task consumeTask = Task.Run(
+            async () =>
+            {
+                try
+                {
+                    await using (sub)
+                    {
+                        await foreach (NatsMsg<byte[]> msg in sub.Msgs.ReadAllAsync(cts.Token).ConfigureAwait(false))
+                        {
+                            this.options.Heartbeat?.Tick(channel, "nats");
+
+                            if (msg.Data is null)
+                            {
+                                continue;
+                            }
+
+                            // Parse the request
+                            ParsedJsonDocument<TRequest> requestDoc;
+                            try
+                            {
+                                requestDoc = ParsedJsonDocument<TRequest>.Parse(msg.Data);
+                            }
+                            catch (Exception ex) when (ex is not OperationCanceledException)
+                            {
+                                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                if (action == MessageErrorAction.Abort)
+                                {
+                                    AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
+                                    break;
+                                }
+
+                                if (action == MessageErrorAction.DeadLetter)
+                                {
+                                    try
+                                    {
+                                        await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                        AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                    }
+                                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                    {
+                                        AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                    }
+                                }
+                                else
+                                {
+                                    AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
+                                }
+
+                                continue;
+                            }
+
+                            // Handle the request and publish the reply
+                            using (requestDoc)
+                            {
+                                TRequest request = requestDoc.RootElement;
+
+                                ParsedJsonDocument<JsonElement>? headersDoc;
+                                try
+                                {
+                                    headersDoc = DecodeHeadersDocument(msg.Headers);
+                                }
+                                catch (Exception ex) when (ex is not OperationCanceledException)
+                                {
+                                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                                    if (action == MessageErrorAction.Abort)
+                                    {
+                                        AsyncApiTelemetry.RecordAbort(channel, "nats", MessageErrorKind.Deserialization);
+                                        break;
+                                    }
+
+                                    if (action == MessageErrorAction.DeadLetter)
+                                    {
+                                        try
+                                        {
+                                            await this.DeadLetterRawAsync(dlChannel, channel, msg.Data, ex, cts.Token).ConfigureAwait(false);
+                                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "nats");
+                                        }
+                                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                                        {
+                                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "nats", dlEx);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        AsyncApiTelemetry.RecordSkip(channel, "nats", MessageErrorKind.Deserialization);
+                                    }
+
+                                    continue;
+                                }
+
+                                try
+                                {
+                                    using (headersDoc)
+                                    {
+                                        JsonElement headers = headersDoc?.RootElement ?? default;
+
+                                        TReply reply;
+                                        if (this.middleware is not null)
+                                        {
+                                            TReply captured = default;
+                                            await this.middleware(
+                                                async (ct) => captured = await handler(request, headers, ct).ConfigureAwait(false),
+                                                cts.Token).ConfigureAwait(false);
+                                            reply = captured;
+                                        }
+                                        else
+                                        {
+                                            reply = await handler(request, headers, cts.Token).ConfigureAwait(false);
+                                        }
+
+                                        // Publish the reply to the request's reply-to subject. NATS correlates
+                                        // the reply with the original RequestAsync caller via its inbox subject,
+                                        // so a Corvus requester receives this without any explicit correlation id.
+                                        if (msg.ReplyTo is not null)
+                                        {
+                                            await this.connection.PublishAsync(
+                                                subject: msg.ReplyTo,
+                                                data: reply,
+                                                headers: null,
+                                                replyTo: null,
+                                                serializer: JsonElementSerializer<TReply>.Instance,
+                                                opts: default,
+                                                cancellationToken: cts.Token).ConfigureAwait(false);
                                         }
                                     }
                                 }

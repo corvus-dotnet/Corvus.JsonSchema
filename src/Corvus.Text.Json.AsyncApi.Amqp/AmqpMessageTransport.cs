@@ -184,6 +184,19 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
     }
 
     /// <inheritdoc/>
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return SubscribeReplyCoreAsync(channel, channelUtf8, handler, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
@@ -668,6 +681,255 @@ public sealed class AmqpMessageTransport : IMessageTransport, IHealthCheckableTr
 
         SubscriptionState state = new(replyConsumerChannel, cts, actualTag);
         this.subscriptions[replyChannel] = state;
+    }
+
+    private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
+        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        string dlChannel = channel + this.options.DeadLetterRoutingKeySuffix;
+        IChannel consumerChannel = await this.connection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        await consumerChannel.BasicQosAsync(prefetchSize: 0, prefetchCount: this.options.PrefetchCount, global: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        string queueName = $"{this.options.ConsumerTagPrefix}.{channel}";
+
+        await consumerChannel.QueueDeclareAsync(
+            queue: queueName,
+            durable: this.options.QueueDurable,
+            exclusive: false,
+            autoDelete: false,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        if (!string.IsNullOrEmpty(this.options.ExchangeName))
+        {
+            await consumerChannel.QueueBindAsync(
+                queue: queueName,
+                exchange: this.options.ExchangeName,
+                routingKey: channel,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
+        AsyncEventingBasicConsumer consumer = new(consumerChannel);
+        string? actualTag = null;
+        consumer.ReceivedAsync += async (_, args) =>
+        {
+            if (cts.Token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            this.options.Heartbeat?.Tick(channel, "amqp");
+
+            ParsedJsonDocument<TRequest> requestDoc;
+            try
+            {
+                requestDoc = ParsedJsonDocument<TRequest>.Parse(args.Body);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                if (action == MessageErrorAction.DeadLetter)
+                {
+                    try
+                    {
+                        await this.DeadLetterRawAsync(dlChannel, channelUtf8, args.Body, ex, cts.Token).ConfigureAwait(false);
+                        AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "amqp");
+                    }
+                    catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                    {
+                        AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "amqp", dlEx);
+                    }
+
+                    await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
+                }
+                else if (action == MessageErrorAction.Abort)
+                {
+                    AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
+                    if (actualTag is not null)
+                    {
+                        await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                    }
+
+                    await cts.CancelAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    AsyncApiTelemetry.RecordSkip(channel, "amqp", MessageErrorKind.Deserialization);
+                    await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
+                }
+
+                return;
+            }
+
+            using (requestDoc)
+            {
+                TRequest request = requestDoc.RootElement;
+                JsonElement requestElement = JsonElement.From(in request);
+
+                ParsedJsonDocument<JsonElement>? headersDoc;
+                try
+                {
+                    headersDoc = ExtractHeadersDocument(args);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Deserialization);
+                    MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                    if (action == MessageErrorAction.DeadLetter)
+                    {
+                        try
+                        {
+                            await this.DeadLetterRawAsync(dlChannel, channelUtf8, args.Body, ex, cts.Token).ConfigureAwait(false);
+                            AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "amqp");
+                        }
+                        catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                        {
+                            AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "amqp", dlEx);
+                        }
+
+                        await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
+                    }
+                    else if (action == MessageErrorAction.Abort)
+                    {
+                        AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Deserialization);
+                        if (actualTag is not null)
+                        {
+                            await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                        }
+
+                        await cts.CancelAsync().ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        AsyncApiTelemetry.RecordSkip(channel, "amqp", MessageErrorKind.Deserialization);
+                        await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
+                    }
+
+                    return;
+                }
+
+                using (headersDoc)
+                {
+                    JsonElement headers = headersDoc?.RootElement ?? default;
+
+                    try
+                    {
+                        TReply reply;
+                        if (this.middleware is not null)
+                        {
+                            // Capture the typed reply produced inside the middleware pipeline.
+                            TReply captured = default;
+                            await this.middleware(
+                                async (ct) => captured = await handler(request, headers, ct).ConfigureAwait(false),
+                                cts.Token).ConfigureAwait(false);
+                            reply = captured;
+                        }
+                        else
+                        {
+                            reply = await handler(request, headers, cts.Token).ConfigureAwait(false);
+                        }
+
+                        // Publish the reply to the request's reply-to routing key, echoing the
+                        // request's correlation ID so the requester's reply consumer can correlate it.
+                        string? replyTo = args.BasicProperties?.ReplyTo;
+                        string? corrId = args.BasicProperties?.CorrelationId;
+                        if (!string.IsNullOrEmpty(replyTo))
+                        {
+                            (byte[] replyRented, int replyLen) = SerializeToRented(in reply);
+                            try
+                            {
+                                BasicProperties replyProps = new()
+                                {
+                                    ContentType = "application/json",
+                                    DeliveryMode = DeliveryModes.Persistent,
+                                };
+
+                                if (corrId is not null)
+                                {
+                                    replyProps.CorrelationId = corrId;
+                                }
+
+                                await this.publishChannel.BasicPublishAsync(
+                                    exchange: this.options.ExchangeName,
+                                    routingKey: replyTo,
+                                    mandatory: false,
+                                    basicProperties: replyProps,
+                                    body: new ReadOnlyMemory<byte>(replyRented, 0, replyLen),
+                                    cancellationToken: cts.Token).ConfigureAwait(false);
+                            }
+                            finally
+                            {
+                                ArrayPool<byte>.Shared.Return(replyRented);
+                            }
+                        }
+
+                        await consumerChannel.BasicAckAsync(args.DeliveryTag, multiple: false, cts.Token).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+                    {
+                        // Shutting down — don't ack
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, requestElement, headers);
+                        MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cts.Token).ConfigureAwait(false);
+                        if (action == MessageErrorAction.DeadLetter)
+                        {
+                            try
+                            {
+                                (byte[] payloadRented, int payloadLen) = SerializeToRented(in requestElement);
+                                byte[]? headerBytes = headers.ValueKind != JsonValueKind.Undefined
+                                    ? SerializeToOwnedBytes(in headers)
+                                    : null;
+                                await this.DeadLetterCoreAsync(dlChannel, channelUtf8, payloadRented, payloadLen, headerBytes, ex, cts.Token).ConfigureAwait(false);
+                                AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "amqp");
+                            }
+                            catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                            {
+                                AsyncApiTelemetry.RecordDeadLetterFailure(dlChannel, channel, "amqp", dlEx);
+                            }
+
+                            await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
+                        }
+                        else if (action == MessageErrorAction.Abort)
+                        {
+                            AsyncApiTelemetry.RecordAbort(channel, "amqp", MessageErrorKind.Handler);
+                            if (actualTag is not null)
+                            {
+                                await consumerChannel.BasicCancelAsync(actualTag, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                            }
+
+                            await cts.CancelAsync().ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            AsyncApiTelemetry.RecordSkip(channel, "amqp", MessageErrorKind.Handler);
+                            await consumerChannel.BasicNackAsync(args.DeliveryTag, multiple: false, requeue: false, cts.Token).ConfigureAwait(false);
+                        }
+                    }
+                }
+            }
+        };
+
+        string consumerTag = $"{this.options.ConsumerTagPrefix}.{channel}";
+        actualTag = await consumerChannel.BasicConsumeAsync(
+            queue: queueName,
+            autoAck: false,
+            consumerTag: consumerTag,
+            consumer: consumer,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        this.options.Heartbeat?.Start(channel, "amqp");
+
+        SubscriptionState state = new(consumerChannel, cts, actualTag);
+        this.subscriptions[channel] = state;
     }
 
     private async ValueTask DeadLetterCoreAsync(
