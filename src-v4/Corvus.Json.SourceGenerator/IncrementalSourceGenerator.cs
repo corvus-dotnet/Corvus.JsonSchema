@@ -42,6 +42,15 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
+    private static readonly DiagnosticDescriptor Crv1002CircularSchemaReference =
+        new(
+            id: "CRV1002",
+            title: "Circular JSON Schema reference",
+            messageFormat: "Circular schema reference: the schema at '{0}' references '{1}' for the same instance, so validation would never terminate and terminating code cannot be generated. Break the cycle before generating types.",
+            category: "JsonSchemaCodeGenerator",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
+
     private static readonly IVocabulary Corvus202012Vocab = CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabularyWith([CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance]);
 
     /// <inheritdoc/>
@@ -146,6 +155,17 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                     languageProvider,
                     typesToGenerate,
                     context.CancellationToken);
+        }
+        catch (CircularSchemaReferenceException ex)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    Crv1002CircularSchemaReference,
+                    Location.None,
+                    ex.ReferencingLocation,
+                    ex.ReferencedLocation));
+
+            return;
         }
         catch (Exception ex)
         {

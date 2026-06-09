@@ -465,6 +465,9 @@
   <data name="CannotModifyAnImmutableDocument" xml:space="preserve">
     <value>You cannot modify an immutable document.</value>
   </data>
+  <data name="CannotModifyADefaultValue" xml:space="preserve">
+    <value>You cannot modify a default value. Set this value on its parent (for example using the corresponding Set... method) before modifying it.</value>
+  </data>
   <data name="CannotCreateBuilderFromMutableDocument" xml:space="preserve">
     <value>You cannot create a mutable copy of a mutable document. Consider calling Freeze() on the source document.</value>
   </data>

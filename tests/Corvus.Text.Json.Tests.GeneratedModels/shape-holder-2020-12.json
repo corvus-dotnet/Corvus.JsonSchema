@@ -1,0 +1,45 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "ShapeHolder",
+    "type": "object",
+    "required": [ "shape" ],
+    "properties": {
+        "shape": { "$ref": "#/$defs/shape" }
+    },
+    "$defs": {
+        "shape": {
+            "title": "HeldShape",
+            "type": "object",
+            "required": [ "kind" ],
+            "properties": {
+                "kind": {
+                    "type": "string",
+                    "enum": [ "Circle", "Rectangle" ]
+                }
+            },
+            "oneOf": [
+                { "$ref": "#/$defs/circle" },
+                { "$ref": "#/$defs/rectangle" }
+            ]
+        },
+        "circle": {
+            "title": "HeldCircle",
+            "type": "object",
+            "required": [ "kind", "radius" ],
+            "properties": {
+                "kind": { "const": "Circle" },
+                "radius": { "type": "number" }
+            }
+        },
+        "rectangle": {
+            "title": "HeldRectangle",
+            "type": "object",
+            "required": [ "kind", "width", "height" ],
+            "properties": {
+                "kind": { "const": "Rectangle" },
+                "width": { "type": "number" },
+                "height": { "type": "number" }
+            }
+        }
+    }
+}

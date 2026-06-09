@@ -2580,8 +2580,10 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     /// <inheritdoc />
     void IJsonDocument.AppendElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db)
     {
+        // Copying an element out of this document into another document's metadata DB only
+        // reads from this document, so it is permitted even when this document is frozen
+        // (immutable). See issue #809.
         CheckNotDisposed();
-        CheckNotImmutable();
 
         int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
         AppendElement(index, workspace, ref db, workspaceDocumentIndex);
@@ -2590,8 +2592,9 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     /// <inheritdoc />
     int IJsonDocument.WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition)
     {
+        // As with AppendElementToMetadataDb, this is a read-only copy out of this document
+        // and is permitted on a frozen (immutable) document. See issue #809.
         CheckNotDisposed();
-        CheckNotImmutable();
 
         int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
         return WriteElementAt(index, workspace, ref db, workspaceDocumentIndex, writePosition);

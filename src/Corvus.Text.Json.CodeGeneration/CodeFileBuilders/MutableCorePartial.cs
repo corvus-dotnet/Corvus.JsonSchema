@@ -74,6 +74,7 @@ public sealed class MutableCorePartial : ICodeFileBuilder
                             isReadOnly: false)
                             .AppendBackingFields(forMutable: true)
                             .AppendInternalConstructor(typeDeclaration, forMutable: true)
+                            .AppendMutableDefaultInstanceStaticProperty(typeDeclaration)
                             .AppendValueKindProperty()
                             .AppendTokenTypeProperty()
                             .AppendConversionToCompositionTypes(typeDeclaration, forMutable: true)

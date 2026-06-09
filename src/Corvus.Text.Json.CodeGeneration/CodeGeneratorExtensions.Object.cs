@@ -734,7 +734,14 @@ internal static partial class CodeGeneratorExtensions
             string propertyType = $"{property.ReducedPropertyType.FullyQualifiedDotnetTypeName()}{(forMutable ? ".Mutable" : "")}";
 
             string immutableTypeName = property.ReducedPropertyType.FullyQualifiedDotnetTypeName();
-            bool hasDefaultValue = !forMutable && hasDefault && !flipBackNullDefault;
+
+            // A non-null defaulted property returns its (read-only) default instance when absent.
+            // For the immutable view this is the immutable DefaultInstance; for the mutable view it
+            // is the Mutable.DefaultInstance, which is backed by a frozen document so reads return
+            // the default but mutation throws (issue #811). A property whose default is JSON null
+            // (flipBackNullDefault) instead returns C# null/default when absent.
+            bool hasDefaultValue = hasDefault && !flipBackNullDefault;
+            string defaultInstanceTypeName = forMutable ? propertyType : immutableTypeName;
 
             generator
                 .AppendSeparatorLine()
@@ -764,7 +771,7 @@ internal static partial class CodeGeneratorExtensions
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendSeparatorLine()
-                    .AppendLineIndent(hasDefaultValue ? $"return {immutableTypeName}.DefaultInstance;" : "return default;")
+                    .AppendLineIndent(hasDefaultValue ? $"return {defaultInstanceTypeName}.DefaultInstance;" : "return default;")
                 .EndReadOnlyPropertyDeclaration();
         }
 

@@ -193,16 +193,18 @@ public class GeneratedNonNullDefaultedTests
     }
 
     [TestMethod]
-    public void Mutable_NonNullDefault_Status_Absent_NotSynthesised()
+    public void Mutable_NonNullDefault_Status_Absent_ReturnsReadOnlyDefault()
     {
         using var workspace = JsonWorkspace.Create();
         using var doc = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse("""{"name":"test"}""");
         using JsonDocumentBuilder<ObjectWithDefaultProperties.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
 
-        // The mutable view does not synthesise the schema default for an absent property
-        // (the default is materialised on the immutable read), exercising the absent path.
+        // For an absent non-nullable defaulted property the mutable view returns the read-only
+        // default instance (issue #811): the value reads as the schema default, but the document
+        // itself is not mutated, so it is not synthesised into the stored JSON.
         ObjectWithDefaultProperties.Mutable root = builder.RootElement;
-        _ = root.Status;
+        ObjectWithDefaultProperties.StatusEntity.Mutable status = root.Status;
+        Assert.AreEqual("active", (string)status);
         Assert.IsFalse(root.ToString().Contains("status"));
     }
 
@@ -219,6 +221,74 @@ public class GeneratedNonNullDefaultedTests
 
         using var roundTrip = ParsedJsonDocument<ObjectWithDefaultProperties>.Parse(json);
         Assert.AreEqual("archived", (string)roundTrip.RootElement.Status);
+    }
+
+    #endregion
+
+    #region Issue #811 — defaulted array property in a mutable document
+
+    [TestMethod]
+    public void Immutable_NonNullDefault_Values_Absent_ReturnsDefaultArray()
+    {
+        using var doc = ParsedJsonDocument<ObjectWithDefaultArray>.Parse("""{}""");
+
+        ObjectWithDefaultArray.JsonIntegerArray values = doc.RootElement.Values;
+        Assert.AreEqual(1, values.GetArrayLength());
+        Assert.AreEqual(1, (int)values[0]);
+    }
+
+    [TestMethod]
+    public void Mutable_NonNullDefault_Values_Absent_ReadsDefaultWithoutThrowing()
+    {
+        // Issue #811: parsing "{}" into a builder and reading the absent, non-nullable defaulted
+        // array property previously returned an Undefined value, so GetArrayLength()/indexing
+        // threw InvalidOperationException ("Operation is not valid due to the current state of
+        // the object"). It must now return the read-only schema default instead.
+        using JsonWorkspace ws = JsonWorkspace.Create();
+        using JsonDocumentBuilder<ObjectWithDefaultArray.Mutable> builder =
+            JsonDocumentBuilder<ObjectWithDefaultArray.Mutable>.Parse(ws, """{}""");
+
+        ObjectWithDefaultArray.Mutable obj = builder.RootElement;
+
+        ObjectWithDefaultArray.JsonIntegerArray.Mutable values = obj.Values;
+        Assert.AreEqual(1, values.GetArrayLength());
+        Assert.AreEqual(1, (int)values[0]);
+
+        // The default is read-only (backed by a frozen document): the underlying document is
+        // not mutated by reading it.
+        Assert.IsFalse(obj.ToString().Contains("values"));
+    }
+
+    [TestMethod]
+    public void Mutable_NonNullDefault_Values_Absent_MutatingDefaultThrows()
+    {
+        // The read-only default is backed by a frozen document, so attempting to mutate it
+        // (rather than assigning a fresh value through SetValues) throws.
+        using JsonWorkspace ws = JsonWorkspace.Create();
+        using JsonDocumentBuilder<ObjectWithDefaultArray.Mutable> builder =
+            JsonDocumentBuilder<ObjectWithDefaultArray.Mutable>.Parse(ws, """{}""");
+
+        ObjectWithDefaultArray.Mutable obj = builder.RootElement;
+
+        InvalidOperationException ex = Assert.ThrowsExactly<InvalidOperationException>(() => obj.Values.AddItem(42));
+
+        // The message must be the indicative "default value" guidance, not the generic immutable error.
+        StringAssert.Contains(ex.Message, "default value");
+    }
+
+    [TestMethod]
+    public void Mutable_NonNullDefault_Values_Present_IsMutable()
+    {
+        // When the property is actually present it remains fully mutable.
+        using JsonWorkspace ws = JsonWorkspace.Create();
+        using JsonDocumentBuilder<ObjectWithDefaultArray.Mutable> builder =
+            JsonDocumentBuilder<ObjectWithDefaultArray.Mutable>.Parse(ws, """{"values":[1]}""");
+
+        ObjectWithDefaultArray.Mutable obj = builder.RootElement;
+        obj.Values.AddItem(42);
+
+        Assert.AreEqual(2, obj.Values.GetArrayLength());
+        Assert.IsTrue(obj.ToString().Contains("42"));
     }
 
     #endregion

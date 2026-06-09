@@ -1,5 +1,19 @@
 # Version History
 
+## V5.1.13
+
+V5.1.13 fixes three V5 bugs — `CreatePatch` failing on frozen `JsonDocumentBuilder` elements, schema `default` values being invisible through the mutable view, and circular schemas producing non-terminating generated code — and adds the ability to construct a discriminated union directly from one of its branches.
+
+### New features
+
+- **Construct a discriminated union from a constituent branch** — A well-formed discriminated union (a `oneOf` whose branches carry a required `const` discriminator, with no further required structure on the base) can now be built directly from one of its branches. A branch's mutable view converts to the union in a single implicit hop (`Circle.Mutable` → `Shape`), and the union's builder `Source` accepts a branch by value, so a built branch flows straight into a containing type's `CreateBuilder` for a union-typed property — for example `ShapeHolder.CreateBuilder(ws, ShapeHolder.Circle.Build(...))` — with no intermediate union document. Detection is precise: extra required properties on the base, a missing or non-required `const`, or an `anyOf` (rather than `oneOf`) do not enable the wiring, while additional non-structural keywords (`title`, `description`, and so on) on the base still do. See [#812](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/812).
+
+### Bug fixes
+
+- **Circular same-instance composition now fails generation with a diagnostic** — A `oneOf`/`allOf`/`anyOf`/`$ref` cycle that evaluates against the *same instance* previously produced infinitely-recursive `Match()`/`TryGetAs` code (or silently-omitted code). Code generation now detects the non-terminating composition cycle and fails with a `CircularSchemaReferenceException` naming the referencing and referenced schema locations, surfaced by the V4 and V5 source generators as diagnostic `CRV1002`. Data-driven recursion through properties or items is correctly not flagged. Applies to both the V4 and V5 engines. See [#810](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/810).
+- **Schema `default` values are surfaced through the mutable view** — A non-null `default` declared on a property was invisible through a type's mutable view, and reading it could corrupt the pooled workspace. The mutable getter now returns a zero-copy frozen facade over the immutable default: reads forward to the underlying value, child elements rebase onto the facade, and any attempt to mutate the default throws an `InvalidOperationException` instructing the caller to set the value on its parent first. See [#811](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/811).
+- **`CreatePatch` works with frozen `JsonDocumentBuilder` elements** — Generating a JSON Patch from a frozen `JsonDocumentBuilder` element threw because the read-only metadata copy-out paths performed an unnecessary immutability check. The check has been removed from the copy-out paths (which only read data), so `CreatePatch` round-trips correctly when either side is a frozen builder element. See [#809](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/809).
+
 ## V5.1.12
 
 V5.1.12 fixes two V5 bugs: `Corvus.Text.Json.Period` could emit `duration` strings that are invalid under the JSON Schema `duration` format, and calling `Freeze()` on a `JsonDocumentBuilder` created via `Parse` threw an exception.

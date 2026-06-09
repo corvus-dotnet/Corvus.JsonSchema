@@ -29,6 +29,32 @@ namespace Corvus.Text.Json.Internal;
 public static partial class JsonElementHelpers
 {
     /// <summary>
+    /// Creates a read-only mutable element that surfaces a schema <c>default</c> value through the
+    /// mutable view (issue #811), without copying the underlying data.
+    /// </summary>
+    /// <typeparam name="TImmutable">The immutable element type that holds the default value.</typeparam>
+    /// <typeparam name="TMutable">The corresponding mutable element type to return.</typeparam>
+    /// <param name="immutableDefault">The immutable default instance to surface.</param>
+    /// <returns>
+    /// A <typeparamref name="TMutable"/> backed by a <see cref="DefaultValueJsonDocument"/> facade over the
+    /// immutable default's document. Reads return the default value; any attempt to mutate it throws an
+    /// <see cref="InvalidOperationException"/> directing the caller to set the value on its parent first.
+    /// </returns>
+    [CLSCompliant(false)]
+    public static TMutable CreateDefaultValueElement<TImmutable, TMutable>(in TImmutable immutableDefault)
+        where TImmutable : struct, IJsonElement<TImmutable>
+        where TMutable : struct, IMutableJsonElement<TMutable>
+    {
+        var facade = new DefaultValueJsonDocument(immutableDefault.ParentDocument);
+        int index = immutableDefault.ParentDocumentIndex;
+#if NET
+        return TMutable.CreateInstance(facade, index);
+#else
+        return CreateInstance<TMutable>(facade, index);
+#endif
+    }
+
+    /// <summary>
     /// Sets a property value on a target element.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target element.</typeparam>

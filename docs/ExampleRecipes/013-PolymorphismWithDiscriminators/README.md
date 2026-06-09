@@ -104,6 +104,54 @@ string DescribeShape(in Shape shape)
 
 Note that the match handlers use named parameters (`matchRequiredRadiusAndType`, `matchRequiredHeightAndTypeAndWidth`) generated from the required properties in each discriminated variant.
 
+### Creating polymorphic types from a branch
+
+You don't have to hand-write JSON to construct a discriminated union. Because the generator recognises the `oneOf` + `const` pattern, each branch exposes a strongly-typed `CreateBuilder` that sets the discriminator (`type`) for you, and the resulting mutable branch converts *implicitly* to the union in a single hop:
+
+```csharp
+using var ws = JsonWorkspace.Create();
+
+// The branch's CreateBuilder sets the `type` const ("circle") automatically.
+using var circleBuilder = Shape.RequiredRadiusAndType.CreateBuilder(ws, radius: 5.0);
+Shape builtCircle = circleBuilder.RootElement; // RequiredRadiusAndType.Mutable -> Shape (implicit)
+
+using var rectangleBuilder = Shape.RequiredHeightAndTypeAndWidth.CreateBuilder(ws, height: 20.0, width: 10.0);
+Shape builtRectangle = rectangleBuilder.RootElement;
+
+Console.WriteLine(DescribeShape(builtCircle));    // A circle with radius 5
+Console.WriteLine(DescribeShape(builtRectangle)); // A rectangle 10x20
+```
+
+This single-hop conversion (branch → union) is what lets a branch value flow wherever the union is expected — for example into a containing type's `CreateBuilder` for a property typed as the union, without first materialising the union document. It applies whenever the union is a well-formed discriminated union (a `oneOf` whose branches carry a required `const` discriminator and whose base adds no further required structure), and continues to apply when the base schema carries additional non-structural keywords such as `title` or `description`.
+
+#### Building an object whose property is the union
+
+The same wiring lets you build a containing object directly from a branch. Given `drawing.json`, an object with a required `shape` property typed as the union:
+
+```json
+{
+  "type": "object",
+  "required": ["name", "shape"],
+  "properties": {
+    "name": { "type": "string" },
+    "shape": { "$ref": "shape.json" }
+  }
+}
+```
+
+`BranchType.Build(...)` produces the branch's `Source`, which converts implicitly to the union's `Source` — exactly the type `Drawing.CreateBuilder` expects for its `shape` parameter. So the branch flows straight into the containing object, with no intermediate `Shape` document materialised:
+
+```csharp
+using var drawingBuilder = Drawing.CreateBuilder(
+    ws,
+    name: "Sketch #1",
+    shape: Shape.RequiredRadiusAndType.Build(radius: 5.0));
+Drawing drawing = drawingBuilder.RootElement;
+
+Console.WriteLine(drawing);                       // {"name":"Sketch #1","shape":{"radius":5,"type":"circle"}}
+Console.WriteLine(DescribeShape(drawing.Shape));  // A circle with radius 5
+```
+
 ## Key Differences from V4
 
 ### V4 (Corvus.Json)
@@ -140,7 +188,7 @@ string desc = shape.Match(
 ```
 
 **Key differences:**
-- V5 parses from JSON rather than providing `Create()` methods for discriminated types
+- V5 constructs discriminated types by building one of their branches (`Branch.CreateBuilder(...)` / `Branch.Build(...)`) and relying on the implicit branch → union conversion, rather than a single `Shape.Create()` factory — see [Creating polymorphic types from a branch](#creating-polymorphic-types-from-a-branch) above
 - V5 names variant types by their required properties (e.g., `RequiredRadiusAndType`, `RequiredHeightAndTypeAndWidth`) instead of using ordinal `OneOfNEntity` names
 - V5 requires explicit `From()` conversion to access variant-specific properties
 - V5 pattern matching uses named parameters based on the variant type names

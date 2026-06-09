@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["name", "shape"],
+  "properties": {
+    "name": { "type": "string" },
+    "shape": { "$ref": "shape.json" }
+  }
+}

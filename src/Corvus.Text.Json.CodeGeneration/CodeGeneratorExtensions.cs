@@ -1385,6 +1385,56 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append the static property which provides a read-only default instance of the mutable
+    /// type declaration, materialised from the schema default value.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the property.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    /// <remarks>
+    /// This mirrors <see cref="AppendDefaultInstanceStaticProperty"/> for the nested
+    /// <c>Mutable</c> struct. A mutable value must be backed by an <c>IMutableJsonDocument</c>,
+    /// so the default is materialised into a builder and then frozen: the resulting instance
+    /// reads as the schema default but throws if mutated, matching the immutable read semantics
+    /// for an absent non-nullable defaulted property (issue #811).
+    /// </remarks>
+    public static CodeGenerator AppendMutableDefaultInstanceStaticProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        // Only emit a default instance when the type actually declares a default value; this is
+        // the same set of types for which the immutable DefaultInstance carries an initializer.
+        if (typeDeclaration.DefaultValue().ValueKind == JsonValueKind.Undefined)
+        {
+            return generator;
+        }
+
+        return generator
+            .ReserveName("DefaultInstance")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+        /// <summary>
+        /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
+        /// </summary>
+        /// <remarks>
+        /// The instance is a zero-copy facade over the immutable default, so it can be read but not
+        /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
+        /// the caller to set the value on its parent first.
+        /// </remarks>
+        """)
+            .AppendLineIndent(
+                "public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<",
+                typeDeclaration.DotnetTypeName(),
+                ", Mutable>(",
+                typeDeclaration.DotnetTypeName(),
+                ".DefaultInstance);");
+    }
+
+    /// <summary>
     /// Append a property which gets the <see cref="JsonValueKind"/> for the instance.
     /// </summary>
     /// <param name="generator">The code generator.</param>

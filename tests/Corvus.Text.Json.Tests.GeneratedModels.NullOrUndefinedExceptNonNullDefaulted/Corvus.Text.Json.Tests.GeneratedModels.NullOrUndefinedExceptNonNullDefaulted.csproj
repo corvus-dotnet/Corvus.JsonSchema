@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <AdditionalFiles Include="object-with-default-properties-2020-12.json" />
+    <AdditionalFiles Include="object-with-default-array-2020-12.json" />
   </ItemGroup>
 
   <ItemGroup>
