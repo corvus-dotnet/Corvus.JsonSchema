@@ -40,6 +40,10 @@ Measure("JsonPath", executor.RunJsonPathWorkflow);
 Measure("ControlFlow", executor.RunControlFlowWorkflow);
 Measure("SubWorkflow", executor.RunSubWorkflow);
 Measure("ChannelSend", executor.RunChannelSendWorkflow);
+Measure("ChannelReceive", executor.RunChannelReceiveWorkflow);
+Measure("ChannelReqReply", executor.RunChannelRequestReplyWorkflow);
+Measure("Responder", executor.RunResponderWorkflow);
+Measure("CompositeReply", executor.RunCompositeReplyWorkflow);
 
 executor.Cleanup();
 
