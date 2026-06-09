@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Diagnostics;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -24,20 +23,12 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
 {
     private readonly IWorkflowStateStore store;
     private readonly TimeProvider timeProvider;
-    private readonly PooledUtf8Map<int> retryCounts;
-    private readonly PooledUtf8Map<JsonElement> stepOutputs;
+    private readonly Dictionary<string, int> retryCounts;
+    private readonly Dictionary<string, JsonElement> stepOutputs;
     private readonly DateTimeOffset createdAt;
-    private readonly string? correlationId;
-    private readonly TagSet tags;
-    private readonly SecurityTagSet securityTags;
-    private readonly string? environment;
     private readonly WorkflowCheckpointState? resumedState;
     private readonly JsonElement inputs;
     private WorkflowEtag etag;
-    private WorkflowWait? wait;
-    private WorkflowFault? fault;
-    private JsonElement deliveredMessage;
-    private bool hasDeliveredMessage;
 
     private WorkflowRun(
         IWorkflowStateStore store,
@@ -46,18 +37,12 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         TimeProvider timeProvider,
         WorkflowRunStatus status,
         int cursor,
-        PooledUtf8Map<int> retryCounts,
+        Dictionary<string, int> retryCounts,
         Dictionary<string, byte[]> correlationTokens,
         JsonElement inputs,
-        PooledUtf8Map<JsonElement> stepOutputs,
+        Dictionary<string, JsonElement> stepOutputs,
         WorkflowEtag etag,
         DateTimeOffset createdAt,
-        string? correlationId,
-        TagSet tags,
-        SecurityTagSet securityTags,
-        string? environment,
-        WorkflowWait? wait,
-        WorkflowFault? fault,
         WorkflowCheckpointState? resumedState)
     {
         this.store = store;
@@ -72,12 +57,6 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.stepOutputs = stepOutputs;
         this.etag = etag;
         this.createdAt = createdAt;
-        this.correlationId = correlationId;
-        this.tags = tags;
-        this.securityTags = securityTags;
-        this.environment = environment;
-        this.wait = wait;
-        this.fault = fault;
         this.resumedState = resumedState;
     }
 
@@ -96,30 +75,11 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <summary>Gets the workflow inputs (so a worker can reconstruct the executor's <c>inputs</c> argument on resume).</summary>
     public JsonElement Inputs => this.inputs;
 
-    /// <summary>Gets the wait describing why the run is suspended, if it is (so a worker knows what to wait for).</summary>
-    public WorkflowWait? Wait => this.wait;
-
-    /// <summary>Gets the fault record if the run is faulted.</summary>
-    public WorkflowFault? Fault => this.fault;
-
     /// <inheritdoc/>
     public int Cursor { get; private set; }
 
     /// <inheritdoc/>
     public Dictionary<string, byte[]> CorrelationTokens { get; }
-
-    /// <summary>Gets the run-wide telemetry correlation id (the W3C trace id captured at creation), if any.</summary>
-    public string? CorrelationId => this.correlationId;
-
-    /// <summary>Gets the deployment environment the run is pinned to (design §5.5), if any — its credential set and the
-    /// runners it can be dispatched to. Absent on a run created before run→environment pinning.</summary>
-    public string? Environment => this.environment;
-
-    /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
-    public TagSet Tags => this.tags;
-
-    /// <summary>Gets the security tags (KVP labels) applied to the run at creation, if any (design §14.2).</summary>
-    public SecurityTagSet SecurityTags => this.securityTags;
 
     /// <summary>Creates a fresh run that starts at cursor <c>0</c> with empty state.</summary>
     /// <param name="store">The state store to persist checkpoints to.</param>
@@ -127,21 +87,13 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <param name="workflowId">The id of the workflow the run executes.</param>
     /// <param name="inputs">The workflow inputs.</param>
     /// <param name="timeProvider">The time source for checkpoint timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
-    /// <param name="correlationId">The run-wide telemetry correlation id; defaults to the ambient
-    /// <see cref="Activity.Current"/> trace id, so the run correlates to the trace that created it.</param>
-    /// <param name="tags">Free-form tags to apply to the run (for visibility/filtering); set once at creation.</param>
-    /// <param name="securityTags">Security tags (KVP labels) to apply to the run (for row authorization, §14.2); set once at creation, typically inherited from the workflow version.</param>
     /// <returns>The new run.</returns>
     public static WorkflowRun CreateNew(
         IWorkflowStateStore store,
         WorkflowRunId id,
         string workflowId,
         JsonElement inputs,
-        TimeProvider? timeProvider = null,
-        string? correlationId = null,
-        TagSet tags = default,
-        SecurityTagSet securityTags = default,
-        string? environment = null)
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(workflowId);
@@ -154,18 +106,12 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             time,
             WorkflowRunStatus.Pending,
             cursor: 0,
-            retryCounts: PooledUtf8Map<int>.Rent(0),
+            retryCounts: [],
             correlationTokens: [],
             inputs,
-            stepOutputs: PooledUtf8Map<JsonElement>.Rent(0),
+            stepOutputs: [],
             etag: WorkflowEtag.None,
             createdAt: time.GetUtcNow(),
-            correlationId: correlationId ?? Activity.Current?.TraceId.ToString(),
-            tags: tags,
-            securityTags: securityTags,
-            environment: environment,
-            wait: null,
-            fault: null,
             resumedState: null);
     }
 
@@ -197,12 +143,6 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             state.StepOutputs,
             etag,
             createdAt: state.CreatedAt,
-            correlationId: state.CorrelationId,
-            tags: state.Tags,
-            securityTags: state.SecurityTags,
-            environment: state.Environment,
-            wait: state.Wait,
-            fault: state.Fault,
             resumedState: state);
     }
 
@@ -234,36 +174,25 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public bool TryGetStepOutputs(string stepId, out JsonElement outputs) => this.stepOutputs.TryGetValue(stepId, out outputs);
 
     /// <inheritdoc/>
-    public int GetRetryCount(string stepId) => this.retryCounts.TryGetValue(stepId, out int count) ? count : 0;
+    public int GetRetryCount(string stepId) => this.retryCounts.GetValueOrDefault(stepId);
 
     /// <inheritdoc/>
     public void SetStepOutputs(string stepId, in JsonElement outputs)
     {
         if (outputs.ValueKind != JsonValueKind.Undefined)
         {
-            this.stepOutputs.Set(stepId, outputs);
+            this.stepOutputs[stepId] = outputs;
         }
     }
 
     /// <inheritdoc/>
-    public void SetRetryCount(string stepId, int count) => this.retryCounts.Set(stepId, count);
-
-    /// <summary>
-    /// Persists this freshly created run in its <see cref="WorkflowRunStatus.Pending"/> state so a dispatcher
-    /// can claim and start it — the store is the queue. Call once, after <see cref="CreateNew"/>, before
-    /// handing the run off to a runner; the run does not execute here.
-    /// </summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A task that completes when the pending run is durable.</returns>
-    public ValueTask EnqueueAsync(CancellationToken cancellationToken) => this.PersistAsync(default, cancellationToken);
+    public void SetRetryCount(string stepId, int count) => this.retryCounts[stepId] = count;
 
     /// <inheritdoc/>
     public ValueTask CheckpointAsync(int cursor, CancellationToken cancellationToken)
     {
         this.Cursor = cursor;
         this.Status = WorkflowRunStatus.Running;
-        this.wait = null;
-        this.fault = null;
         return this.PersistAsync(default, cancellationToken);
     }
 
@@ -271,109 +200,14 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public ValueTask CompleteAsync(JsonElement outputs, CancellationToken cancellationToken)
     {
         this.Status = WorkflowRunStatus.Completed;
-        this.wait = null;
-        this.fault = null;
         return this.PersistAsync(outputs, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowWait> SuspendForTimerAsync(int cursor, TimeSpan delay, CancellationToken cancellationToken)
-    {
-        this.Cursor = cursor;
-        this.Status = WorkflowRunStatus.Suspended;
-        this.fault = null;
-        var w = WorkflowWait.Timer(this.timeProvider.GetUtcNow() + delay);
-        this.wait = w;
-        await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
-        ArazzoTelemetry.WorkflowsSuspended.Add(1, new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId));
-        return w;
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<WorkflowWait> SuspendForMessageAsync(int cursor, string channel, string? correlationId, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(channel);
-        this.Cursor = cursor;
-        this.Status = WorkflowRunStatus.Suspended;
-        this.fault = null;
-        var w = WorkflowWait.Message(channel, correlationId);
-        this.wait = w;
-        await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
-        ArazzoTelemetry.WorkflowsSuspended.Add(1, new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId));
-        return w;
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<WorkflowFault> FaultAsync(string stepId, int attempt, string error, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(stepId);
-        ArgumentNullException.ThrowIfNull(error);
-        this.Status = WorkflowRunStatus.Faulted;
-        this.wait = null;
-        var f = new WorkflowFault(stepId, attempt, error, this.timeProvider.GetUtcNow());
-        this.fault = f;
-        await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
-        return f;
-    }
-
-    /// <inheritdoc/>
-    public bool TryTakeDeliveredMessage(out JsonElement payload)
-    {
-        if (this.hasDeliveredMessage)
-        {
-            payload = this.deliveredMessage;
-            this.hasDeliveredMessage = false;
-            this.deliveredMessage = default;
-            return true;
-        }
-
-        payload = default;
-        return false;
-    }
-
-    /// <summary>
-    /// Hands a delivered message to a run being resumed from a <see cref="WorkflowWaitKind.Message"/> wait, so
-    /// the awaited receive step completes immediately with it instead of blocking. The worker calls this
-    /// before re-entering <c>ExecuteAsync</c>; the payload must outlive that call.
-    /// </summary>
-    /// <param name="payload">The delivered message payload.</param>
-    public void DeliverMessage(in JsonElement payload)
-    {
-        this.deliveredMessage = payload;
-        this.hasDeliveredMessage = true;
-    }
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        if (this.resumedState is { } state)
-        {
-            // A resumed run shares the state's working maps; the state owns and disposes them (with its document).
-            state.Dispose();
-        }
-        else
-        {
-            // A fresh run owns the maps it created in CreateNew.
-            this.retryCounts.Dispose();
-            this.stepOutputs.Dispose();
-        }
-    }
+    public void Dispose() => this.resumedState?.Dispose();
 
     private async ValueTask PersistAsync(JsonElement outputs, CancellationToken cancellationToken)
     {
-        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.checkpoint");
-        if (activity is { IsAllDataRequested: true })
-        {
-            activity.SetTag(ArazzoTelemetry.RunIdTag, this.Id.Value);
-            activity.SetTag(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId);
-            activity.SetTag(ArazzoTelemetry.StatusTag, this.Status.ToString());
-            activity.SetTag("corvus.arazzo.cursor", this.Cursor);
-            if (this.correlationId is { } cid)
-            {
-                activity.SetTag(ArazzoTelemetry.CorrelationIdTag, cid);
-            }
-        }
-
         byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
             this.Id,
             this.WorkflowId,
@@ -384,33 +218,14 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.CorrelationTokens,
             this.inputs,
             this.stepOutputs,
-            outputs,
-            this.wait,
-            this.fault,
-            this.correlationId,
-            this.tags,
-            this.securityTags,
-            this.environment);
+            outputs);
 
         var index = new WorkflowRunIndexEntry(
             this.WorkflowId,
             this.Status,
             this.createdAt,
-            this.timeProvider.GetUtcNow(),
-            DueAt: this.wait is { Kind: WorkflowWaitKind.Timer } timer ? timer.DueAt : null,
-            AwaitingChannel: this.wait is { Kind: WorkflowWaitKind.Message } message ? message.Channel : null,
-            AwaitingCorrelationId: this.wait is { Kind: WorkflowWaitKind.Message } messageCorrelation ? messageCorrelation.CorrelationId : null,
-            ErrorType: this.fault?.Error,
-            CorrelationId: this.correlationId,
-            Tags: this.tags,
-            SecurityTags: this.securityTags,
-            Environment: this.environment);
+            this.timeProvider.GetUtcNow());
 
-        long startedAt = Stopwatch.GetTimestamp();
         this.etag = await this.store.SaveAsync(this.Id, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);
-        ArazzoTelemetry.CheckpointDuration.Record(
-            Stopwatch.GetElapsedTime(startedAt).TotalSeconds,
-            new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId),
-            new KeyValuePair<string, object?>(ArazzoTelemetry.StatusTag, this.Status.ToString()));
     }
 }

@@ -22,17 +22,11 @@ public sealed class WorkflowCheckpointState : IDisposable
         WorkflowRunStatus status,
         int cursor,
         DateTimeOffset createdAt,
-        PooledUtf8Map<int> retryCounters,
+        Dictionary<string, int> retryCounters,
         Dictionary<string, byte[]> correlationTokens,
         JsonElement inputs,
-        PooledUtf8Map<JsonElement> stepOutputs,
-        JsonElement outputs,
-        WorkflowWait? wait,
-        WorkflowFault? fault,
-        string? correlationId = null,
-        TagSet tags = default,
-        SecurityTagSet securityTags = default,
-        string? environment = null)
+        Dictionary<string, JsonElement> stepOutputs,
+        JsonElement outputs)
     {
         this.document = document;
         this.RunId = runId;
@@ -45,12 +39,6 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.Inputs = inputs;
         this.StepOutputs = stepOutputs;
         this.Outputs = outputs;
-        this.Wait = wait;
-        this.Fault = fault;
-        this.CorrelationId = correlationId;
-        this.Tags = tags;
-        this.SecurityTags = securityTags;
-        this.Environment = environment;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -68,8 +56,8 @@ public sealed class WorkflowCheckpointState : IDisposable
     /// <summary>Gets the instant the run was first created.</summary>
     public DateTimeOffset CreatedAt { get; }
 
-    /// <summary>Gets the restored per-step retry attempt counts (a pooled UTF-8-keyed map; disposed with this state).</summary>
-    public PooledUtf8Map<int> RetryCounters { get; }
+    /// <summary>Gets the restored per-step retry attempt counts.</summary>
+    public Dictionary<string, int> RetryCounters { get; }
 
     /// <summary>Gets the restored correlation register (correlation-id name → token bytes).</summary>
     public Dictionary<string, byte[]> CorrelationTokens { get; }
@@ -77,37 +65,12 @@ public sealed class WorkflowCheckpointState : IDisposable
     /// <summary>Gets the workflow inputs (an <see cref="JsonValueKind.Undefined"/> element if none were stored).</summary>
     public JsonElement Inputs { get; }
 
-    /// <summary>Gets the restored per-step <c>outputs</c> products (a pooled UTF-8-keyed map of borrowed views into the parsed document; disposed with this state).</summary>
-    public PooledUtf8Map<JsonElement> StepOutputs { get; }
+    /// <summary>Gets the restored per-step <c>outputs</c> products.</summary>
+    public Dictionary<string, JsonElement> StepOutputs { get; }
 
     /// <summary>Gets the final workflow <c>outputs</c> if the run had completed (an <see cref="JsonValueKind.Undefined"/> element otherwise).</summary>
     public JsonElement Outputs { get; }
 
-    /// <summary>Gets the wait describing why the run is suspended, if it is (Tier 2).</summary>
-    public WorkflowWait? Wait { get; }
-
-    /// <summary>Gets the fault record if the run is faulted (Tier 2).</summary>
-    public WorkflowFault? Fault { get; }
-
-    /// <summary>Gets the run-wide telemetry correlation id (the W3C trace id) set at creation, if any.</summary>
-    public string? CorrelationId { get; }
-
-    /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
-    public TagSet Tags { get; }
-
-    /// <summary>Gets the security tags (KVP labels) applied to the run at creation, if any (design §14.2).</summary>
-    public SecurityTagSet SecurityTags { get; }
-
-    /// <summary>Gets the deployment environment the run is pinned to (design §5.5), if any — its credential set and the
-    /// runners it can be dispatched to. Absent on a run created before run→environment pinning.</summary>
-    public string? Environment { get; }
-
     /// <inheritdoc/>
-    public void Dispose()
-    {
-        // The maps hold views into the document; return their pooled buffers before the document's.
-        this.RetryCounters.Dispose();
-        this.StepOutputs.Dispose();
-        this.document.Dispose();
-    }
+    public void Dispose() => this.document.Dispose();
 }

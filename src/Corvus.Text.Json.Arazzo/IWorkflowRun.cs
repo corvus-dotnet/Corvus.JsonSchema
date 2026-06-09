@@ -29,13 +29,6 @@ public interface IWorkflowRun
     int Cursor { get; }
 
     /// <summary>
-    /// Gets the run-wide telemetry correlation id (the W3C trace id captured at creation), if any, so the
-    /// generated executor can re-establish the run's trace context on resume — pinning resumed steps'
-    /// outbound OpenAPI/AsyncAPI calls to the original trace.
-    /// </summary>
-    string? CorrelationId { get; }
-
-    /// <summary>
     /// Gets the correlation register (correlation-id name → token bytes) restored from the checkpoint, owned
     /// by the run so the generated executor can read and mutate it in place. Empty for a fresh run.
     /// </summary>
@@ -73,46 +66,4 @@ public interface IWorkflowRun
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the terminal checkpoint is durable.</returns>
     ValueTask CompleteAsync(JsonElement outputs, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Suspends the run on a durable timer (Tier 2): persists <see cref="WorkflowRunStatus.Suspended"/> with a
-    /// timer wait at <paramref name="cursor"/>, due <paramref name="delay"/> from now (the run owns the clock).
-    /// </summary>
-    /// <param name="cursor">The state index to resume at when the timer is due.</param>
-    /// <param name="delay">How far in the future the run becomes due to resume.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The persisted wait (its <see cref="WorkflowWait.DueAt"/> is the computed due instant).</returns>
-    ValueTask<WorkflowWait> SuspendForTimerAsync(int cursor, TimeSpan delay, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Suspends the run on a correlated message (Tier 2): persists <see cref="WorkflowRunStatus.Suspended"/>
-    /// with a message wait at <paramref name="cursor"/>, so a worker can resume when a matching message
-    /// arrives and hand the payload back via <see cref="TryTakeDeliveredMessage"/>.
-    /// </summary>
-    /// <param name="cursor">The state index to resume at when a matching message is delivered.</param>
-    /// <param name="channel">The channel the run is awaiting a message on.</param>
-    /// <param name="correlationId">The correlation id the run is awaiting, if any.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The persisted wait.</returns>
-    ValueTask<WorkflowWait> SuspendForMessageAsync(int cursor, string channel, string? correlationId, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Records the run as faulted (Tier 2 terminal-but-recoverable checkpoint). The run stamps the fault time
-    /// (it owns the clock) and returns the constructed record for the executor's <c>Faulted</c> result.
-    /// </summary>
-    /// <param name="stepId">The id of the step that failed.</param>
-    /// <param name="attempt">The attempt number on which it failed (1-based).</param>
-    /// <param name="error">A description of the failure.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The persisted fault record.</returns>
-    ValueTask<WorkflowFault> FaultAsync(string stepId, int attempt, string error, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Takes the message a worker delivered for a resumed correlated-receive step, if any. The first call
-    /// after a message-wait resume returns the payload (so the receive completes immediately without
-    /// blocking); subsequent calls and fresh runs return <see langword="false"/>.
-    /// </summary>
-    /// <param name="payload">The delivered message payload when present.</param>
-    /// <returns><see langword="true"/> if a delivered message was handed in.</returns>
-    bool TryTakeDeliveredMessage(out JsonElement payload);
 }

@@ -2,8 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Text.Json;
 using Corvus.Text.Json;
-using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -25,8 +26,6 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </remarks>
 public static class WorkflowCheckpointSerializer
 {
-    private const int DefaultBufferSize = 1024;
-
     private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
 
     /// <summary>Serializes a run's state to the checkpoint document.</summary>
@@ -40,8 +39,6 @@ public static class WorkflowCheckpointSerializer
     /// <param name="inputs">The workflow inputs (an undefined element writes <c>null</c>).</param>
     /// <param name="stepOutputs">The per-step <c>outputs</c> products.</param>
     /// <param name="outputs">The final workflow <c>outputs</c>, if the run has completed (an undefined element omits the field).</param>
-    /// <param name="wait">The wait describing why the run is suspended, if it is (Tier 2).</param>
-    /// <param name="fault">The fault record if the run is faulted (Tier 2).</param>
     /// <returns>The serialized checkpoint document (UTF-8 JSON).</returns>
     public static byte[] Serialize(
         WorkflowRunId runId,
@@ -49,66 +46,31 @@ public static class WorkflowCheckpointSerializer
         WorkflowRunStatus status,
         int cursor,
         DateTimeOffset createdAt,
-        PooledUtf8Map<int> retryCounters,
+        IReadOnlyDictionary<string, int> retryCounters,
         IReadOnlyDictionary<string, byte[]> correlationTokens,
         in JsonElement inputs,
-        PooledUtf8Map<JsonElement> stepOutputs,
-        in JsonElement outputs,
-        WorkflowWait? wait = null,
-        WorkflowFault? fault = null,
-        string? correlationId = null,
-        TagSet tags = default,
-        SecurityTagSet securityTags = default,
-        string? environment = null)
+        IReadOnlyDictionary<string, JsonElement> stepOutputs,
+        in JsonElement outputs)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
         ArgumentNullException.ThrowIfNull(correlationTokens);
         ArgumentNullException.ThrowIfNull(stepOutputs);
 
-        // Serialize through the pooled writer cache (the same primitive PersistedJson.ToArray uses) rather than a fresh
-        // ArrayBufferWriter + Utf8JsonWriter — this is the run-state checkpoint write hotpath for every backend. Inlined
-        // (not via PersistedJson.ToArray's callback) because the parameter set is too large for a context tuple. The only
-        // retained allocation is the owned byte[] the stores' drivers demand.
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
-        try
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
         {
             writer.WriteStartObject();
             writer.WriteString("runId"u8, runId.Value);
             writer.WriteString("workflowId"u8, workflowId);
-            writer.WriteString("status"u8, StatusName(status));
+            writer.WriteString("status"u8, status.ToString());
             writer.WriteNumber("cursor"u8, cursor);
             writer.WriteString("createdAt"u8, createdAt);
 
-            // Run-creation metadata (immutable): the telemetry correlation id, the pinned environment, and free-form tags.
-            if (correlationId is { } cid)
-            {
-                writer.WriteString("correlationId"u8, cid);
-            }
-
-            if (environment is { } env)
-            {
-                writer.WriteString("environment"u8, env);
-            }
-
-            if (!tags.IsEmpty)
-            {
-                writer.WritePropertyName("tags"u8);
-                tags.WriteTo(writer);
-            }
-
-            if (!securityTags.IsEmpty)
-            {
-                writer.WritePropertyName("securityTags"u8);
-                securityTags.WriteTo(writer);
-            }
-
             writer.WriteStartObject("retryCounters"u8);
-            PooledUtf8Map<int>.Enumerator retryEnumerator = retryCounters.GetEnumerator();
-            while (retryEnumerator.MoveNext())
+            foreach (KeyValuePair<string, int> counter in retryCounters)
             {
-                writer.WriteNumber(retryEnumerator.CurrentKey, retryEnumerator.CurrentValue);
+                writer.WriteNumber(counter.Key, counter.Value);
             }
 
             writer.WriteEndObject();
@@ -121,24 +83,14 @@ public static class WorkflowCheckpointSerializer
 
             writer.WriteEndObject();
 
-            // Optional values are omitted when undefined (not written as null): "not present" is Undefined.
-            if (inputs.ValueKind != JsonValueKind.Undefined)
-            {
-                writer.WritePropertyName("inputs"u8);
-                inputs.WriteTo(writer);
-            }
+            writer.WritePropertyName("inputs"u8);
+            WriteValueOrNull(writer, inputs);
 
             writer.WriteStartObject("stepOutputs"u8);
-            PooledUtf8Map<JsonElement>.Enumerator stepEnumerator = stepOutputs.GetEnumerator();
-            while (stepEnumerator.MoveNext())
+            foreach (KeyValuePair<string, JsonElement> step in stepOutputs)
             {
-                if (stepEnumerator.CurrentValue.ValueKind == JsonValueKind.Undefined)
-                {
-                    continue;
-                }
-
-                writer.WritePropertyName(stepEnumerator.CurrentKey);
-                stepEnumerator.CurrentValue.WriteTo(writer);
+                writer.WritePropertyName(step.Key);
+                WriteValueOrNull(writer, step.Value);
             }
 
             writer.WriteEndObject();
@@ -149,44 +101,10 @@ public static class WorkflowCheckpointSerializer
                 outputs.WriteTo(writer);
             }
 
-            if (wait is { } w)
-            {
-                writer.WriteStartObject("wait"u8);
-                writer.WriteString("kind"u8, WaitKindName(w.Kind));
-                if (w.Kind == WorkflowWaitKind.Timer)
-                {
-                    writer.WriteString("dueAt"u8, w.DueAt);
-                }
-                else
-                {
-                    writer.WriteString("channel"u8, w.Channel);
-                    if (w.CorrelationId is { } waitCorrelationId)
-                    {
-                        writer.WriteString("correlationId"u8, waitCorrelationId);
-                    }
-                }
-
-                writer.WriteEndObject();
-            }
-
-            if (fault is { } f)
-            {
-                writer.WriteStartObject("fault"u8);
-                writer.WriteString("stepId"u8, f.StepId);
-                writer.WriteNumber("attempt"u8, f.Attempt);
-                writer.WriteString("error"u8, f.Error);
-                writer.WriteString("at"u8, f.At);
-                writer.WriteEndObject();
-            }
-
             writer.WriteEndObject();
-            writer.Flush();
-            return buffer.WrittenSpan.ToArray();
         }
-        finally
-        {
-            workspace.ReturnWriterAndBuffer(writer, buffer);
-        }
+
+        return buffer.WrittenSpan.ToArray();
     }
 
     /// <summary>Deserializes a checkpoint document into the run's resumable state.</summary>
@@ -198,10 +116,6 @@ public static class WorkflowCheckpointSerializer
     public static WorkflowCheckpointState Deserialize(ReadOnlyMemory<byte> checkpointUtf8)
     {
         ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
-
-        // Hoisted so the catch can return their pooled buffers if a later read throws on a corrupt checkpoint.
-        PooledUtf8Map<int>? retryCounters = null;
-        PooledUtf8Map<JsonElement>? stepOutputs = null;
         try
         {
             JsonElement root = document.RootElement;
@@ -214,186 +128,55 @@ public static class WorkflowCheckpointSerializer
                 ? createdAtElement.GetDateTimeOffset()
                 : default;
 
-            string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdMeta) ? correlationIdMeta.GetString() : null;
-            string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentMeta) ? environmentMeta.GetString() : null;
-
-            TagSet tags = default;
-            if (root.TryGetProperty("tags"u8, out JsonElement tagsElement) && tagsElement.ValueKind == JsonValueKind.Array)
-            {
-                tags = TagSet.CopyFrom(tagsElement);
-            }
-
-            SecurityTagSet securityTags = default;
-            if (root.TryGetProperty("securityTags"u8, out JsonElement securityTagsElement) && securityTagsElement.ValueKind == JsonValueKind.Array)
-            {
-                securityTags = SecurityTagSet.CopyFrom(securityTagsElement);
-            }
-
-            // Pre-size each working map to its persisted element count so a long workflow's restore does not re-allocate
-            // the backing as it grows (GetPropertyCount is a no-alloc scan), and read keys as borrowed UTF-8 spans
-            // (Utf8NameSpan) copied into the map's pooled arena — no per-step key string is materialized.
+            Dictionary<string, int> retryCounters = [];
             if (root.TryGetProperty("retryCounters"u8, out JsonElement retryCountersElement))
             {
-                retryCounters = PooledUtf8Map<int>.Rent(retryCountersElement.GetPropertyCount());
                 foreach (JsonProperty<JsonElement> counter in retryCountersElement.EnumerateObject())
                 {
-                    using UnescapedUtf8JsonString name = counter.Utf8NameSpan;
-                    retryCounters.Set(name.Span, counter.Value.GetInt32());
+                    retryCounters[counter.Name] = counter.Value.GetInt32();
                 }
             }
-            else
-            {
-                retryCounters = PooledUtf8Map<int>.Rent(0);
-            }
 
-            Dictionary<string, byte[]> correlationTokens;
+            Dictionary<string, byte[]> correlationTokens = [];
             if (root.TryGetProperty("correlationTokens"u8, out JsonElement correlationTokensElement))
             {
-                correlationTokens = new Dictionary<string, byte[]>(correlationTokensElement.GetPropertyCount());
                 foreach (JsonProperty<JsonElement> token in correlationTokensElement.EnumerateObject())
                 {
                     correlationTokens[token.Name] = token.Value.GetBytesFromBase64();
                 }
             }
-            else
-            {
-                correlationTokens = [];
-            }
 
             JsonElement inputs = root.TryGetProperty("inputs"u8, out JsonElement inputsElement) ? inputsElement : default;
 
+            Dictionary<string, JsonElement> stepOutputs = [];
             if (root.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputsElement))
             {
-                stepOutputs = PooledUtf8Map<JsonElement>.Rent(stepOutputsElement.GetPropertyCount());
                 foreach (JsonProperty<JsonElement> step in stepOutputsElement.EnumerateObject())
                 {
-                    using UnescapedUtf8JsonString name = step.Utf8NameSpan;
-                    stepOutputs.Set(name.Span, step.Value);
+                    stepOutputs[step.Name] = step.Value;
                 }
-            }
-            else
-            {
-                stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
             }
 
             JsonElement outputs = root.TryGetProperty("outputs"u8, out JsonElement outputsElement) ? outputsElement : default;
 
-            WorkflowWait? wait = null;
-            if (root.TryGetProperty("wait"u8, out JsonElement waitElement))
-            {
-                WorkflowWaitKind kind = Enum.Parse<WorkflowWaitKind>(waitElement.GetProperty("kind"u8).GetString() ?? nameof(WorkflowWaitKind.Timer));
-                wait = kind == WorkflowWaitKind.Timer
-                    ? WorkflowWait.Timer(waitElement.GetProperty("dueAt"u8).GetDateTimeOffset())
-                    : WorkflowWait.Message(
-                        waitElement.GetProperty("channel"u8).GetString() ?? string.Empty,
-                        waitElement.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null);
-            }
-
-            WorkflowFault? fault = null;
-            if (root.TryGetProperty("fault"u8, out JsonElement faultElement))
-            {
-                fault = new WorkflowFault(
-                    faultElement.GetProperty("stepId"u8).GetString() ?? string.Empty,
-                    faultElement.GetProperty("attempt"u8).GetInt32(),
-                    faultElement.GetProperty("error"u8).GetString() ?? string.Empty,
-                    faultElement.GetProperty("at"u8).GetDateTimeOffset());
-            }
-
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment);
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs);
         }
         catch
         {
-            retryCounters?.Dispose();
-            stepOutputs?.Dispose();
             document.Dispose();
             throw;
         }
     }
 
-    /// <summary>
-    /// Rewrites a checkpoint's <c>status</c> (and optionally drops its <c>wait</c>) by copying every other property's
-    /// raw bytes verbatim — the working state (retry counters, correlation tokens, step outputs, inputs, outputs) is
-    /// passed straight through with no dictionary materialized. For status-only transitions such as cancel, this
-    /// replaces a full <see cref="Deserialize"/> + <see cref="Serialize"/> round-trip.
-    /// </summary>
-    /// <param name="source">The current checkpoint document (UTF-8 JSON).</param>
-    /// <param name="newStatus">The status to write.</param>
-    /// <param name="dropWait">Whether to omit the <c>wait</c> property (clearing a suspended run's wait).</param>
-    /// <returns>The rewritten checkpoint document.</returns>
-    public static byte[] RewriteStatus(ReadOnlySpan<byte> source, WorkflowRunStatus newStatus, bool dropWait)
+    private static void WriteValueOrNull(Utf8JsonWriter writer, in JsonElement value)
     {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
-        try
+        if (value.ValueKind == JsonValueKind.Undefined)
         {
-            var reader = new Utf8JsonReader(source);
-            reader.Read(); // the root StartObject
-            writer.WriteStartObject();
-            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
-            {
-                if (reader.ValueTextEquals("status"u8))
-                {
-                    reader.Read();
-                    writer.WriteString("status"u8, StatusName(newStatus));
-                }
-                else if (dropWait && reader.ValueTextEquals("wait"u8))
-                {
-                    reader.Read();
-                    reader.Skip();
-                }
-                else
-                {
-                    // Checkpoint property names are simple ASCII (never escaped), so the raw name span round-trips;
-                    // the value (scalar or whole subtree) is copied verbatim, so no working dictionary is built.
-                    ReadOnlySpan<byte> name = reader.ValueSpan;
-                    reader.Read();
-                    int valueStart = (int)reader.TokenStartIndex;
-                    reader.Skip();
-                    writer.WritePropertyName(name);
-                    writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
-                }
-            }
-
-            writer.WriteEndObject();
-            writer.Flush();
-            return buffer.WrittenSpan.ToArray();
+            writer.WriteNullValue();
         }
-        finally
+        else
         {
-            workspace.ReturnWriterAndBuffer(writer, buffer);
+            value.WriteTo(writer);
         }
     }
-
-    /// <summary>Reads just the security tags from a parsed checkpoint (for the index projection), without materializing the working dictionaries.</summary>
-    /// <param name="root">The parsed checkpoint root.</param>
-    /// <returns>The security tags as a deferred holder over the persisted bytes (empty if absent).</returns>
-    public static SecurityTagSet ReadSecurityTags(in JsonElement root)
-    {
-        if (!root.TryGetProperty("securityTags"u8, out JsonElement element) || element.ValueKind != JsonValueKind.Array)
-        {
-            return default;
-        }
-
-        return SecurityTagSet.CopyFrom(element);
-    }
-
-    // Map the enums to their names via constant strings, so serialising a checkpoint does not allocate a
-    // string per call the way Enum.ToString() does. Names match the enum members so Enum.Parse round-trips.
-    private static string StatusName(WorkflowRunStatus status) => status switch
-    {
-        WorkflowRunStatus.Pending => nameof(WorkflowRunStatus.Pending),
-        WorkflowRunStatus.Running => nameof(WorkflowRunStatus.Running),
-        WorkflowRunStatus.Suspended => nameof(WorkflowRunStatus.Suspended),
-        WorkflowRunStatus.Completed => nameof(WorkflowRunStatus.Completed),
-        WorkflowRunStatus.Cancelled => nameof(WorkflowRunStatus.Cancelled),
-        WorkflowRunStatus.Faulted => nameof(WorkflowRunStatus.Faulted),
-        _ => status.ToString(),
-    };
-
-    private static string WaitKindName(WorkflowWaitKind kind) => kind switch
-    {
-        WorkflowWaitKind.Timer => nameof(WorkflowWaitKind.Timer),
-        WorkflowWaitKind.Message => nameof(WorkflowWaitKind.Message),
-        _ => kind.ToString(),
-    };
 }
