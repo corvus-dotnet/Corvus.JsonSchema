@@ -21,6 +21,7 @@ public sealed class MockApiTransport : IApiTransport
     private readonly Dictionary<RouteKey, Queue<MockResponse>> routes = new();
     private readonly List<MockApiRequest> requests = [];
     private readonly int defaultStatusCode;
+    private TimeSpan responseDelay;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MockApiTransport"/> class.
@@ -30,6 +31,19 @@ public sealed class MockApiTransport : IApiTransport
 
     /// <summary>Gets the requests observed so far, in order — the workflow's call path.</summary>
     public IReadOnlyList<MockApiRequest> Requests => this.requests;
+
+    /// <summary>
+    /// Sets an artificial delay applied before every response is produced. The delay honours the call's
+    /// cancellation token, so a step whose <c>timeout</c> elapses first observes an
+    /// <see cref="OperationCanceledException"/> — used to exercise step timeouts.
+    /// </summary>
+    /// <param name="delay">The delay to apply before each response.</param>
+    /// <returns>This instance, for chaining.</returns>
+    public MockApiTransport SetResponseDelay(TimeSpan delay)
+    {
+        this.responseDelay = delay;
+        return this;
+    }
 
     /// <summary>
     /// Scripts the response for a route (method + path template), replacing any previously scripted
@@ -142,9 +156,23 @@ public sealed class MockApiTransport : IApiTransport
         this.requests.Add(new MockApiRequest(TRequest.Method, ResolvePath(in request)));
 
         MockResponse response = this.Match(TRequest.Method, template);
+        if (this.responseDelay > TimeSpan.Zero)
+        {
+            return RespondAfterDelayAsync<TResponse>(this.responseDelay, response, cancellationToken);
+        }
+
         var stream = new MemoryStream(response.Body, writable: false);
         IResponseHeaders? headers = response.Headers is null ? null : new DictionaryResponseHeaders(response.Headers);
         return TResponse.CreateAsync(response.StatusCode, stream, response.ContentType, headers, cancellationToken: cancellationToken);
+    }
+
+    private static async ValueTask<TResponse> RespondAfterDelayAsync<TResponse>(TimeSpan delay, MockResponse response, CancellationToken cancellationToken)
+        where TResponse : struct, IApiResponse<TResponse>
+    {
+        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+        var stream = new MemoryStream(response.Body, writable: false);
+        IResponseHeaders? headers = response.Headers is null ? null : new DictionaryResponseHeaders(response.Headers);
+        return await TResponse.CreateAsync(response.StatusCode, stream, response.ContentType, headers, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     private static string ResolvePath<TRequest>(in TRequest request)

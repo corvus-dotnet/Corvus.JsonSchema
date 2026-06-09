@@ -159,6 +159,8 @@ internal static class ControlFlowEmitter
         string gateText = gate.ToString();
         bool usesContext = gateText.Contains("context", StringComparison.Ordinal);
 
+        string gateBody = BuildOperationGateBody(step, operation, usesContext, responseVar, responseBodyLocal, gateText);
+
         // ---- assemble the case block ----
         var c = new StringBuilder();
         c.AppendLine("{");
@@ -166,49 +168,68 @@ internal static class ControlFlowEmitter
         WorkflowExecutorEmitter.AppendIndented(c, request.Statements, 4);
         c.Append("    var ").Append(clientVar).Append(" = new ").Append(operation.Operation.ClientTypeName).Append('(').AppendLine("transport);");
 
-        var callArguments = new List<string>(request.NamedArguments) { "cancellationToken: cancellationToken" };
-        c.Append("    var ").Append(responseVar).Append(" = await ").Append(clientVar).Append('.')
-            .Append(operation.Operation.ClientMethodName).Append('(').Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
-        WorkflowExecutorEmitter.AppendIndented(c, request.Cleanup, 4);
+        string callToken = EmitTimeoutToken(step, camel, c);
+        var callArguments = new List<string>(request.NamedArguments) { $"cancellationToken: {callToken}" };
 
         c.Append("    int ").Append(camel).Append("Next = ").Append((index + 1).ToString(CultureInfo.InvariantCulture)).AppendLine(";");
         c.Append("    bool ").Append(camel).AppendLine("End = false;");
         c.Append("    bool ").Append(camel).AppendLine("Fail = false;");
         c.Append("    bool ").Append(camel).AppendLine("Retry = false;");
         c.Append("    double ").Append(camel).AppendLine("RetryDelay = 0;");
-        c.AppendLine("    try");
-        c.AppendLine("    {");
-        c.AppendLine("        ArazzoTelemetry.StepsExecuted.Add(1);");
-        if (usesContext)
+
+        if (step.TimeoutMs.HasValue)
         {
-            c.Append("        context.SetResponseStatusCode(").Append(responseVar).AppendLine(".StatusCode);");
-        }
+            // Timed step: hoist the response so the timed call sits in its own try. An
+            // OperationCanceledException raised by the step timeout (and not by the caller's cancellation)
+            // routes to the step's onFailure dispatch, evaluated without response context — there is no
+            // response — so only $inputs/$steps criteria (typically an unconditional retry/goto) apply.
+            var timeoutFailure = new StringBuilder();
+            EmitDispatch(timeoutFailure, step.OnFailure, isFailure: true, camel, $"{prefix}to_", string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options);
 
-        if (step.BindResponseBody)
+            c.Append("    ").Append(operation.Operation.ResponseTypeName).Append(' ').Append(responseVar).AppendLine(" = default;");
+            c.Append("    bool ").Append(camel).AppendLine("Got = false;");
+            c.AppendLine("    try");
+            c.AppendLine("    {");
+            c.Append("        ").Append(responseVar).Append(" = await ").Append(clientVar).Append('.')
+                .Append(operation.Operation.ClientMethodName).Append('(').Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
+            c.Append("        ").Append(camel).AppendLine("Got = true;");
+            c.AppendLine("    }");
+            c.AppendLine("    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)");
+            c.AppendLine("    {");
+            c.AppendLine("    }");
+            WorkflowExecutorEmitter.AppendIndented(c, request.Cleanup, 4);
+
+            c.Append("    if (").Append(camel).AppendLine("Got)");
+            c.AppendLine("    {");
+            c.AppendLine("        try");
+            c.AppendLine("        {");
+            WorkflowExecutorEmitter.AppendIndented(c, gateBody, 12);
+            c.AppendLine("        }");
+            c.AppendLine("        finally");
+            c.AppendLine("        {");
+            c.Append("            await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
+            c.AppendLine("        }");
+            c.AppendLine("    }");
+            c.AppendLine("    else");
+            c.AppendLine("    {");
+            WorkflowExecutorEmitter.AppendIndented(c, timeoutFailure.ToString(), 8);
+            c.AppendLine("    }");
+        }
+        else
         {
-            c.Append("        JsonElement ").Append(responseBodyLocal).AppendLine(" = default;");
-            foreach (ResponseDescriptor response in operation.Operation.Responses)
-            {
-                if (response.BodyPropertyName is { } bodyProperty
-                    && int.TryParse(response.StatusCode, NumberStyles.Integer, CultureInfo.InvariantCulture, out int statusCode))
-                {
-                    c.Append("        if (").Append(responseVar).Append(".StatusCode == ").Append(statusCode.ToString(CultureInfo.InvariantCulture))
-                        .Append(") { ").Append(responseBodyLocal).Append(" = (JsonElement)").Append(responseVar).Append('.').Append(bodyProperty).AppendLine("; }");
-                }
-            }
+            c.Append("    var ").Append(responseVar).Append(" = await ").Append(clientVar).Append('.')
+                .Append(operation.Operation.ClientMethodName).Append('(').Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
+            WorkflowExecutorEmitter.AppendIndented(c, request.Cleanup, 4);
 
-            if (usesContext)
-            {
-                c.Append("        context.SetResponseBody(").Append(responseBodyLocal).AppendLine(");");
-            }
+            c.AppendLine("    try");
+            c.AppendLine("    {");
+            WorkflowExecutorEmitter.AppendIndented(c, gateBody, 8);
+            c.AppendLine("    }");
+            c.AppendLine("    finally");
+            c.AppendLine("    {");
+            c.Append("        await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
+            c.AppendLine("    }");
         }
-
-        WorkflowExecutorEmitter.AppendIndented(c, gateText, 8);
-        c.AppendLine("    }");
-        c.AppendLine("    finally");
-        c.AppendLine("    {");
-        c.Append("        await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
-        c.AppendLine("    }");
 
         // Apply the captured control-flow decision now the response is disposed.
         c.Append("    if (").Append(camel).Append("Fail) { throw new WorkflowStepFailedException(")
@@ -226,6 +247,61 @@ internal static class ControlFlowEmitter
         c.AppendLine("}");
 
         WorkflowExecutorEmitter.AppendIndented(loop, c.ToString(), 12);
+    }
+
+    // Emits the linked-CTS setup for a step that declares a `timeout` and returns the token expression to
+    // thread into the step's async call(s); emits nothing and returns "cancellationToken" for an untimed step.
+    private static string EmitTimeoutToken(in ControlFlowStep step, string camel, StringBuilder c)
+    {
+        if (step.TimeoutMs is not { } milliseconds)
+        {
+            return "cancellationToken";
+        }
+
+        c.Append("    using var ").Append(camel).AppendLine("Cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);");
+        c.Append("    ").Append(camel).Append("Cts.CancelAfter(").Append(milliseconds.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
+        return $"{camel}Cts.Token";
+    }
+
+    // Builds the body of an operation step's success-gate try (telemetry, response context, optional response
+    // body binding, then the success/onSuccess/onFailure gate) with no base indentation, so the same block
+    // can be placed at the timed (deeper) or untimed indent.
+    private static string BuildOperationGateBody(
+        in ControlFlowStep step,
+        in ResolvedOperation operation,
+        bool usesContext,
+        string responseVar,
+        string responseBodyLocal,
+        string gateText)
+    {
+        var b = new StringBuilder();
+        b.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
+        if (usesContext)
+        {
+            b.Append("context.SetResponseStatusCode(").Append(responseVar).AppendLine(".StatusCode);");
+        }
+
+        if (step.BindResponseBody)
+        {
+            b.Append("JsonElement ").Append(responseBodyLocal).AppendLine(" = default;");
+            foreach (ResponseDescriptor response in operation.Operation.Responses)
+            {
+                if (response.BodyPropertyName is { } bodyProperty
+                    && int.TryParse(response.StatusCode, NumberStyles.Integer, CultureInfo.InvariantCulture, out int statusCode))
+                {
+                    b.Append("if (").Append(responseVar).Append(".StatusCode == ").Append(statusCode.ToString(CultureInfo.InvariantCulture))
+                        .Append(") { ").Append(responseBodyLocal).Append(" = (JsonElement)").Append(responseVar).Append('.').Append(bodyProperty).AppendLine("; }");
+                }
+            }
+
+            if (usesContext)
+            {
+                b.Append("context.SetResponseBody(").Append(responseBodyLocal).AppendLine(");");
+            }
+        }
+
+        b.Append(gateText);
+        return b.ToString();
     }
 
     private static void EmitSubWorkflowCase(
@@ -274,19 +350,28 @@ internal static class ControlFlowEmitter
         c.Append("    bool ").Append(camel).AppendLine("Retry = false;");
         c.Append("    double ").Append(camel).AppendLine("RetryDelay = 0;");
         c.Append("    bool ").Append(completedLocal).AppendLine(";");
+        string subToken = EmitTimeoutToken(step, camel, c);
 
         // The sub-workflow fails by throwing WorkflowStepFailedException; catch it so onFailure can act.
         c.AppendLine("    try");
         c.AppendLine("    {");
         c.AppendLine("        ArazzoTelemetry.StepsExecuted.Add(1);");
         c.Append("        ").Append(outputsLocal).Append(" = await ").Append(targetClass)
-            .Append(".ExecuteAsync(transport, workspace, ").Append(builderVariable).AppendLine(".RootElement, cancellationToken).ConfigureAwait(false);");
+            .Append(".ExecuteAsync(transport, workspace, ").Append(builderVariable).Append(".RootElement, ").Append(subToken).AppendLine(").ConfigureAwait(false);");
         c.Append("        ").Append(completedLocal).AppendLine(" = true;");
         c.AppendLine("    }");
         c.AppendLine("    catch (WorkflowStepFailedException)");
         c.AppendLine("    {");
         c.Append("        ").Append(completedLocal).AppendLine(" = false;");
         c.AppendLine("    }");
+        if (step.TimeoutMs.HasValue)
+        {
+            // A step timeout (not the caller's cancellation) is a step failure, not a workflow cancellation.
+            c.AppendLine("    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)");
+            c.AppendLine("    {");
+            c.Append("        ").Append(completedLocal).AppendLine(" = false;");
+            c.AppendLine("    }");
+        }
 
         c.Append("    bool ").Append(successLocal).AppendLine(";");
         c.Append("    if (").Append(completedLocal).AppendLine(")");
@@ -363,9 +448,16 @@ internal static class ControlFlowEmitter
         c.Append("    double ").Append(camel).AppendLine("RetryDelay = 0;");
         c.Append("    bool ").Append(camel).AppendLine("Success = false;");
 
+        string channelToken = EmitTimeoutToken(step, camel, c);
+        bool timed = step.TimeoutMs.HasValue;
+
+        // For a timed step the receive/send is built into a buffer and wrapped in a try below; an untimed
+        // step writes straight into the case body (byte-identical to the pre-timeout output).
+        StringBuilder work = timed ? new StringBuilder() : c;
+
         if (isReceive)
         {
-            EmitReceiveBody(c, step, descriptor, camel, prefix, fields, auxiliaryTypes, stepOutputLocals, options);
+            EmitReceiveBody(work, step, descriptor, camel, prefix, fields, auxiliaryTypes, stepOutputLocals, options, channelToken);
         }
         else
         {
@@ -373,9 +465,22 @@ internal static class ControlFlowEmitter
             // actions is rejected up front, so this is always a fire-and-forget publish.)
             string send = SendChannelStepEmitter.Emit(
                 step.StepId, channel, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, "messageTransport", "workspace",
-                stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace);
-            WorkflowExecutorEmitter.AppendIndented(c, send, 4);
-            c.Append("    ").Append(camel).AppendLine("Success = true;");
+                stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, channelToken);
+            WorkflowExecutorEmitter.AppendIndented(work, send, 4);
+            work.Append("    ").Append(camel).AppendLine("Success = true;");
+        }
+
+        if (timed)
+        {
+            // A step timeout (not the caller's cancellation) leaves Success false so the onFailure dispatch
+            // below handles it — for a receive the message simply never arrived in time.
+            c.AppendLine("    try");
+            c.AppendLine("    {");
+            WorkflowExecutorEmitter.AppendIndented(c, work.ToString(), 4);
+            c.AppendLine("    }");
+            c.AppendLine("    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)");
+            c.AppendLine("    {");
+            c.AppendLine("    }");
         }
 
         c.Append("    if (").Append(camel).AppendLine("Success)");
@@ -416,7 +521,8 @@ internal static class ControlFlowEmitter
         StringBuilder fields,
         StringBuilder auxiliaryTypes,
         Dictionary<string, string> stepOutputLocals,
-        in WorkflowExecutorOptions options)
+        in WorkflowExecutorOptions options,
+        string cancellationTokenExpression)
     {
         ReceiveChannelStepEmitter.ValidateCriteria(step.StepId, step.SuccessCriteria);
 
@@ -487,7 +593,7 @@ internal static class ControlFlowEmitter
                 .Append(address).AppendLine(", (message, messageHeaders) =>");
             c.AppendLine("    {");
             WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 8);
-            c.AppendLine("    }, cancellationToken).ConfigureAwait(false);");
+            c.Append("    }, ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
             return;
         }
 
@@ -497,7 +603,7 @@ internal static class ControlFlowEmitter
             .Append(address).AppendLine(", (message, messageHeaders) =>");
         c.AppendLine("    {");
         WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 8);
-        c.AppendLine("    }, cancellationToken).ConfigureAwait(false);");
+        c.Append("    }, ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
     }
 
     private static void ValidateChannelActionCriteria(string stepId, IReadOnlyList<StepActionInfo> actions)
