@@ -766,6 +766,61 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderRoundTrip()
+    {
+        // Arrange — a responder transport subscribes to the request channel via SubscribeReplyAsync,
+        // and a requester transport subscribes to the reply channel so the relay forwards replies to it.
+        WebSocketMessageTransport responderTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        WebSocketMessageTransport requesterTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "ws/test/reqreply-responder/request"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "ws/test/reqreply-responder/reply"u8.ToArray();
+
+        // The requester must be subscribed to the reply channel so the relay forwards the reply to it
+        // (correlationId match takes priority over the dummy handler).
+        await requesterTransport.SubscribeAsync<JsonElement>(
+            replyChannel,
+            (_, _, _) => ValueTask.CompletedTask);
+
+        // Register the responder: it reads the request's "value", computes value + 1, and replies.
+        await responderTransport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers, ct) =>
+            {
+                int input = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input + 1}}}""");
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        await Task.Delay(500);
+
+        // Act — send a request through the requester transport.
+        byte[] correlationId = "ws-responder-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":41}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId);
+
+        // Assert
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+
+        await responderTransport.DisposeAsync();
+        await requesterTransport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
         WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
