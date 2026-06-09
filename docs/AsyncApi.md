@@ -1138,6 +1138,46 @@ AsyncAPI 3.0 uses the standard operation `reply` object. AsyncAPI 2.6 has `corre
 
 The extension is intentionally explicit. The generator does not infer request/reply pairs from matching `correlationId` values because that is ambiguous in real-world 2.6 documents.
 
+### Responder (request/reply receive)
+
+The methods above are the *requester* half of request/reply (send a request, await the reply). The *responder* half — receive a request and send back a correlated reply — is modelled by a **receive** operation that declares a `reply`. For these operations the generator produces a reply-returning handler and a consumer that publishes the reply for you.
+
+The handler returns the reply payload instead of `void`:
+
+```csharp
+public sealed class CalculateHandler : ICalculateHandler
+{
+    // A receive operation with a reply: return the reply payload; the consumer publishes it.
+    public ValueTask<CalculateResponse> HandleCalculateRequestAsync(
+        CalculateRequest payload,
+        CancellationToken cancellationToken = default)
+    {
+        int sum = payload.A + payload.B;
+        return ValueTask.FromResult(new CalculateResponse.Source((ref CalculateResponse.Builder b) =>
+        {
+            b.Create(result: sum);
+        }));
+    }
+}
+```
+
+The generated consumer subscribes through the transport's responder primitive:
+
+```csharp
+ValueTask SubscribeReplyAsync<TRequest, TReply>(
+    ReadOnlyMemory<byte> channelUtf8,
+    Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+    CancellationToken cancellationToken = default)
+    where TRequest : struct, IJsonElement<TRequest>
+    where TReply : struct, IJsonElement<TReply>;
+```
+
+The transport owns correlation: for each delivered request it reads the request's reply-to address and correlation id (native broker fields — the same `CorrelationId`/`ReplyTo` the requester sets), invokes the handler, and publishes the returned reply to the reply-to address correlated to the request. The handler never sees the correlation plumbing.
+
+**Implementation status.** `SubscribeReplyAsync` is a default interface member that throws `NotSupportedException`, so a transport opts in by overriding it. The in-memory testing transport implements a full in-process round-trip: a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call (with no responder registered, `RequestAsync` parks the request for the test helper `CompleteRequest`, as before). The broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) inherit the default until responder support is implemented for each.
+
+This responder foundation is what the Arazzo workflow engine's request/reply *receive* step builds on.
+
 ## Bindings
 
 AsyncAPI bindings provide protocol-specific configuration. The generator captures bindings at three levels and makes them available to the transport via `MessageContext`:
