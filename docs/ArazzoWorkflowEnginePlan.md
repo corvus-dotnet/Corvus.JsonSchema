@@ -595,6 +595,22 @@ ignores suspension entirely (timers stay in-process `Task.Delay`, receives block
 and only uses 9.3's checkpoint-after-step for crash recovery — so Tier 2 is a
 pure superset that adds the tri-state return + the wait index (§10) + the worker.
 
+> **Tier 2 — implemented.** The full superset is built. A durable executor returns
+> `WorkflowRunResult<TOutputs>`; a step failure returns `Faulted` (recoverably
+> persisted), a `retry` with a delay suspends on a durable timer (`SuspendForTimerAsync`),
+> and a correlated/plain AsyncAPI receive suspends on a message wait
+> (`SuspendForMessageAsync`) — all only when a run is present; with a `null` run the
+> executor keeps the Tier-1 behaviour (`Task.Delay`, blocking `ReceiveOneAsync`,
+> throw on fault) and only ever completes. The run owns the clock (it computes
+> `dueAt` and stamps fault times) and the message handoff (`TryTakeDeliveredMessage`/
+> `DeliverMessage`). The store's optional `IWorkflowWaitIndex` (`QueryDueAsync`,
+> `QueryAwaitingAsync`, and the §11 visibility `QueryAsync`) is implemented on the
+> in-memory store, and a `WorkflowWorker` polls it, takes a per-run lease, loads the
+> checkpoint, hands in any delivered message, and re-enters the generated executor
+> through a host-supplied `WorkflowResumer`. End-to-end: a run suspends on a timer or
+> a receive and a worker resumes it to completion. Responders and dynamic/parameterised
+> receive addresses keep the Tier-1 blocking path (no suspension) for now.
+
 ### 9.5 Delivery semantics
 
 Checkpoint-after-step gives **at-least-once** step execution: a crash *after* a
