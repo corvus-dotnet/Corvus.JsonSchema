@@ -304,6 +304,55 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task ReceiveOneAndReplyRoundTrip()
+    {
+        // Arrange — model two services: a responder service (its own connection) registers a
+        // ReceiveOneAndReplyAsync that doubles the supplied number, and a separate requester
+        // service (s_transport) calls RequestAsync. The two round-trip through the broker's
+        // native request/reply. Unlike SubscribeReplyAsync the one-shot wrapper unsubscribes
+        // itself after handling a single request — exactly the primitive the generated Arazzo
+        // responder step calls.
+        ReadOnlyMemory<byte> requestChannel = "test.responder-roundtrip-once"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "test.responder-roundtrip-reply-once"u8.ToArray();
+
+        await using NatsMessageTransport responder = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+        });
+
+        System.Threading.Tasks.Task responderTask = responder.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers) =>
+            {
+                int value = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}""");
+
+                // The responder owns the lifetime of the parsed reply document; the transport
+                // serializes the returned element synchronously before this scope unwinds.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            }).AsTask();
+
+        await Task.Delay(500);
+
+        // Act — the requester service sends a request and captures the computed reply.
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+        byte[] correlationId = "responder-once-corr-001"u8.ToArray();
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await s_transport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId);
+
+        // Assert — the responder doubled the number and the requester received the exact value
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("doubled"u8).GetInt32());
+
+        await responderTask;
+    }
+
+    [TestMethod]
     public async Task MultipleSubscribersOnDifferentChannels()
     {
         // Arrange

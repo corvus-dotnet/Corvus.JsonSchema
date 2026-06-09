@@ -355,7 +355,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var apiTransport = new MockApiTransport();
         await using var messageTransport = new InMemoryMessageTransport();
-        using var workspace = JsonWorkspace.Create();
+        using var workspace = JsonWorkspace.CreateUnrented();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
 
         // Start the responder: it subscribes synchronously, then awaits one request.
@@ -441,7 +441,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var apiTransport = new MockApiTransport();
         await using var messageTransport = new InMemoryMessageTransport();
-        using var workspace = JsonWorkspace.Create();
+        using var workspace = JsonWorkspace.CreateUnrented();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
@@ -529,7 +529,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var apiTransport = new MockApiTransport();
         await using var messageTransport = new InMemoryMessageTransport();
-        using var workspace = JsonWorkspace.Create();
+        using var workspace = JsonWorkspace.CreateUnrented();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
@@ -605,7 +605,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var apiTransport = new MockApiTransport();
         await using var messageTransport = new InMemoryMessageTransport();
-        using var workspace = JsonWorkspace.Create();
+        using var workspace = JsonWorkspace.CreateUnrented();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
@@ -680,7 +680,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var apiTransport = new MockApiTransport();
         await using var messageTransport = new InMemoryMessageTransport();
-        using var workspace = JsonWorkspace.Create();
+        using var workspace = JsonWorkspace.CreateUnrented();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
@@ -797,7 +797,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var apiTransport = new MockApiTransport();
         await using var messageTransport = new InMemoryMessageTransport();
-        using var workspace = JsonWorkspace.Create();
+        using var workspace = JsonWorkspace.CreateUnrented();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
