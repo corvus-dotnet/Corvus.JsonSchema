@@ -118,6 +118,54 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeReplyAsync_RespondsToRequestInProcess()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        // A responder echoes the request's value back, doubled, as the reply.
+        await transport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            "rpc/double"u8.ToArray(),
+            (request, _, _) =>
+            {
+                int n = request.GetProperty("n"u8).GetInt32();
+                JsonElement reply = JsonElement.ParseValue(Encoding.UTF8.GetBytes($$"""{"result":{{n * 2}}}"""));
+                return ValueTask.FromResult(reply);
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":21}"""u8);
+        (JsonElement reply, JsonElement _) = await transport.RequestAsync<JsonElement, JsonElement>(
+            "rpc/double"u8.ToArray(),
+            "rpc/double/replies"u8.ToArray(),
+            request,
+            "corr-rr"u8.ToArray());
+
+        Assert.AreEqual(42, reply.GetProperty("result"u8).GetInt32());
+
+        // The request was still recorded as a published message.
+        Assert.AreEqual(1, transport.PublishedMessages.Count);
+        Assert.AreEqual("rpc/double", transport.PublishedMessages[0].Channel);
+    }
+
+    [TestMethod]
+    public async Task RequestAsync_WithoutResponder_StillParksForCompleteRequest()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        JsonElement request = JsonElement.ParseValue("""{"n":1}"""u8);
+        Task<(JsonElement Payload, JsonElement Headers)> requestTask =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/none"u8.ToArray(),
+                "rpc/none/replies"u8.ToArray(),
+                request,
+                "corr-none"u8.ToArray()).AsTask();
+
+        transport.CompleteRequest("corr-none", Encoding.UTF8.GetBytes("""{"result":7}"""));
+
+        (JsonElement reply, JsonElement _) = await requestTask;
+        Assert.AreEqual(7, reply.GetProperty("result"u8).GetInt32());
+    }
+
+    [TestMethod]
     public async Task Reset_ClearsAllState()
     {
         await using Testing.InMemoryMessageTransport transport = new();
