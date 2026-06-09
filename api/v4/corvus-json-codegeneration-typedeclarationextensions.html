@@ -173,6 +173,10 @@
 <td>Gets the 'else' subschema type, if available.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclarationextensions.ensureterminatingcompositionevaluation.html#ensureterminatingcompositionevaluation-typedeclaration">EnsureTerminatingCompositionEvaluation(TypeDeclaration)</a> <code>static</code></td>
+<td>Throws a <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-circularschemareferenceexception.html"><code>CircularSchemaReferenceException</code></a> if evaluating this type's schema would not terminate because of a circular sa...</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclarationextensions.examples.html#examples-typedeclaration">Examples(TypeDeclaration)</a> <code>static</code></td>
 <td>Gets the (optional) examples for this type declaration.</td>
 </tr>
@@ -221,6 +225,10 @@
 <td>Gets the type of properties in a strongly-typed object, or <code>null</code> if the type is not a strongly-typed object.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclarationextensions.findnonterminatingcompositioncycle.html#findnonterminatingcompositioncycle-typedeclaration">FindNonTerminatingCompositionCycle(TypeDeclaration)</a> <code>static</code></td>
+<td>Finds a non-terminating same-instance composition cycle reachable from this type, if any.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclarationextensions.format.html#format-typedeclaration">Format(TypeDeclaration)</a> <code>static</code></td>
 <td>Gets the format for the type.</td>
 </tr>
@@ -235,6 +243,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclarationextensions.hasexclusiveminimummodifier.html#hasexclusiveminimummodifier-typedeclaration">HasExclusiveMinimumModifier(TypeDeclaration)</a> <code>static</code></td>
 <td>Gets a value indicating whether the type has an exclusive minimum modifier.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclarationextensions.hasnonterminatingcompositionevaluation.html#hasnonterminatingcompositionevaluation-typedeclaration">HasNonTerminatingCompositionEvaluation(TypeDeclaration)</a> <code>static</code></td>
+<td>Gets a value indicating whether evaluating this type's schema would recurse forever, because its same-instance composition graph (<code>allOf</code>/<code>$ref</code>, <code>anyOf</code>, <code>oneOf</code>) contains a cycle.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclarationextensions.hassiblinghidingkeyword.html#hassiblinghidingkeyword-typedeclaration">HasSiblingHidingKeyword(TypeDeclaration)</a> <code>static</code></td>

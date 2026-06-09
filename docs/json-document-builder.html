@@ -542,6 +542,71 @@ using var usersDoc = JsonElement.CreateBuilder(
 
 Console.WriteLine(usersDoc.RootElement.ToString());
 </code></pre>
+<h3 id="creating-discriminated-unions">Creating Discriminated Unions</h3>
+<p>A <em>discriminated union</em> is a <code>oneOf</code> (or <code>anyOf</code>) whose branches are distinguished by a constant
+discriminator property — for example a <code>Shape</code> that is either a <code>Circle</code> or a <code>Rectangle</code>, keyed by
+<code>kind</code>:</p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;Shape&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [ &quot;kind&quot; ],
+  &quot;properties&quot;: { &quot;kind&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [ &quot;Circle&quot;, &quot;Rectangle&quot; ] } },
+  &quot;oneOf&quot;: [ { &quot;$ref&quot;: &quot;#/$defs/circle&quot; }, { &quot;$ref&quot;: &quot;#/$defs/rectangle&quot; } ]
+}
+</code></pre>
+<p>You do not have to materialise the union to work with it — you can build a single branch and use it
+wherever the union is expected. Because a valid branch is always a valid union, the generator lets a
+branch flow straight into the union in a <strong>single</strong> implicit conversion (there is no need to spell out
+an intermediate step, which C# would otherwise require because it will not chain two implicit
+conversions):</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Build a Circle branch directly...
+using JsonDocumentBuilder&lt;Shape.Circle.Mutable&gt; circleBuilder =
+    JsonDocumentBuilder&lt;Shape.Circle.Mutable&gt;.Parse(workspace, &quot;&quot;&quot;{&quot;kind&quot;:&quot;Circle&quot;,&quot;radius&quot;:2.5}&quot;&quot;&quot;);
+
+// ...and assign it where a Shape is expected. This is a single hop, even though the value is a
+// Shape.Circle.Mutable — no intermediate Shape.Circle is needed.
+Shape shape = circleBuilder.RootElement;
+</code></pre>
+<p>The same applies when <em>creating</em> a larger document: a branch can be passed straight into the
+<code>Build</code>/<code>CreateBuilder</code> of a type that contains the union. Here a <code>ShapeHolder</code> has a required <code>shape</code>
+property of the <code>Shape</code> union, and we build it from a <code>Circle</code>:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using ParsedJsonDocument&lt;ShapeHolder.Circle&gt; circleDoc =
+    ParsedJsonDocument&lt;ShapeHolder.Circle&gt;.Parse(&quot;&quot;&quot;{&quot;kind&quot;:&quot;Circle&quot;,&quot;radius&quot;:2.5}&quot;&quot;&quot;);
+ShapeHolder.Circle circle = circleDoc.RootElement;
+
+// 'circle' converts implicitly to the union's Source for the 'shape' property.
+using JsonDocumentBuilder&lt;ShapeHolder.Mutable&gt; holder = ShapeHolder.CreateBuilder(workspace, circle);
+
+Console.WriteLine(holder.RootElement.ToString());
+// {&quot;shape&quot;:{&quot;kind&quot;:&quot;Circle&quot;,&quot;radius&quot;:2.5}}
+</code></pre>
+<p>You can also <em>build</em> the branch inline rather than starting from an existing instance, by passing the
+result of the branch's <code>Build(...)</code> straight in — it converts implicitly to the union's <code>Source</code>:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using JsonDocumentBuilder&lt;ShapeHolder.Mutable&gt; holder = ShapeHolder.CreateBuilder(
+    workspace,
+    ShapeHolder.Circle.Build(static (ref ShapeHolder.Circle.Builder b) =&gt;
+    {
+        b.AddProperty(&quot;kind&quot;u8, &quot;Circle&quot;u8);
+        b.AddProperty(&quot;radius&quot;u8, 2.5);
+    }));
+</code></pre>
+<p>So a branch flows into a containing type wherever its <code>Source</code> is expected, in three forms — a branch
+<strong>instance</strong>, a branch <strong>builder delegate</strong> (<code>new ShapeHolder.Shape.Source(buildDelegate)</code>), and the
+<strong>result of <code>Branch.Build(...)</code></strong> (a <code>Branch.Source</code>), as shown above.</p>
+<p>This works for <em>pure</em> <code>oneOf</code>/<code>anyOf</code> unions (branches discriminated by structure) and for unions whose
+base schema carries a single required <code>const</code> discriminator that every branch repeats — the common
+&quot;tagged union&quot; shape used by OpenAPI discriminators and JSON Patch operations. Non-structural keywords
+on the base schema (<code>title</code>, <code>description</code>, <code>$comment</code>, <code>examples</code>, and so on) do not affect this.</p>
+<blockquote>
+<p>Note: a branch can always be read back out of the union with the generated <code>TryGetAs…</code> / <code>Match</code>
+methods — see <a href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminators</a>.</p>
+</blockquote>
 <h2 id="working-with-existing-json">Working with Existing JSON</h2>
 <p>In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward — parse, mutate, serialize.</p>
 <h3 id="direct-parse-to-builder-recommended">Direct Parse to Builder (Recommended)</h3>

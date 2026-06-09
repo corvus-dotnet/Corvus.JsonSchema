@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
     <meta name="description" content="This recipe demonstrates how to use JSON Schema `oneOf` with `const` properties to create polymorphic types with discriminators - a pattern similar to OpenAPI&#x27;s polymorphism feature and `System.Text.Json`&#x27;s polymorphic serialization." />
-    <meta name="keywords" content="recipe, JSON Schema, C#, polymorphism, discriminator, properties, oneOf, type, required, const, Match, From" />
+    <meta name="keywords" content="recipe, JSON Schema, C#, polymorphism, discriminator, properties, oneOf, type, required, const, $ref, Match, CreateBuilder, From" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:description" content="This recipe demonstrates how to use JSON Schema `oneOf` with `const` properties to create polymorphic types with discriminators - a pattern similar to OpenAPI&#x27;s polymorphism feature and `System.Text.Json`&#x27;s polymorphic serialization." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
@@ -20,7 +20,9 @@
     <meta property="article:tag" content="type" />
     <meta property="article:tag" content="required" />
     <meta property="article:tag" content="const" />
+    <meta property="article:tag" content="$ref" />
     <meta property="article:tag" content="Match" />
+    <meta property="article:tag" content="CreateBuilder" />
     <meta property="article:tag" content="From" />
     <meta property="og:description" content="This recipe demonstrates how to use JSON Schema `oneOf` with `const` properties to create polymorphic types with discriminators - a pattern similar to OpenAPI&#x27;s polymorphism feature and `System.Text.Json`&#x27;s polymorphic serialization." />
     <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
@@ -320,7 +322,9 @@
                         <span class="card__tag">type</span>
                         <span class="card__tag">required</span>
                         <span class="card__tag">const</span>
+                        <span class="card__tag">$ref</span>
                         <span class="card__tag">Match</span>
+                        <span class="card__tag">CreateBuilder</span>
                         <span class="card__tag">From</span>
                 </div>
 <p>This recipe demonstrates how to use JSON Schema <code>oneOf</code> with <code>const</code> properties to create polymorphic types with discriminators - a pattern similar to OpenAPI's polymorphism feature and <code>System.Text.Json</code>'s polymorphic serialization.</p>
@@ -404,6 +408,42 @@ Console.WriteLine($&quot;Circle radius: {circleEntity.Radius}&quot;);
 }
 </code></pre>
 <p>Note that the match handlers use named parameters (<code>matchRequiredRadiusAndType</code>, <code>matchRequiredHeightAndTypeAndWidth</code>) generated from the required properties in each discriminated variant.</p>
+<h3 id="creating-polymorphic-types-from-a-branch">Creating polymorphic types from a branch</h3>
+<p>You don't have to hand-write JSON to construct a discriminated union. Because the generator recognises the <code>oneOf</code> + <code>const</code> pattern, each branch exposes a strongly-typed <code>CreateBuilder</code> that sets the discriminator (<code>type</code>) for you, and the resulting mutable branch converts <em>implicitly</em> to the union in a single hop:</p>
+<pre><code class="language-csharp">using var ws = JsonWorkspace.Create();
+
+// The branch's CreateBuilder sets the `type` const (&quot;circle&quot;) automatically.
+using var circleBuilder = Shape.RequiredRadiusAndType.CreateBuilder(ws, radius: 5.0);
+Shape builtCircle = circleBuilder.RootElement; // RequiredRadiusAndType.Mutable -&gt; Shape (implicit)
+
+using var rectangleBuilder = Shape.RequiredHeightAndTypeAndWidth.CreateBuilder(ws, height: 20.0, width: 10.0);
+Shape builtRectangle = rectangleBuilder.RootElement;
+
+Console.WriteLine(DescribeShape(builtCircle));    // A circle with radius 5
+Console.WriteLine(DescribeShape(builtRectangle)); // A rectangle 10x20
+</code></pre>
+<p>This single-hop conversion (branch → union) is what lets a branch value flow wherever the union is expected — for example into a containing type's <code>CreateBuilder</code> for a property typed as the union, without first materialising the union document. It applies whenever the union is a well-formed discriminated union (a <code>oneOf</code> whose branches carry a required <code>const</code> discriminator and whose base adds no further required structure), and continues to apply when the base schema carries additional non-structural keywords such as <code>title</code> or <code>description</code>.</p>
+<h4 id="building-an-object-whose-property-is-the-union">Building an object whose property is the union</h4>
+<p>The same wiring lets you build a containing object directly from a branch. Given <code>drawing.json</code>, an object with a required <code>shape</code> property typed as the union:</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;name&quot;, &quot;shape&quot;],
+  &quot;properties&quot;: {
+    &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; },
+    &quot;shape&quot;: { &quot;$ref&quot;: &quot;shape.json&quot; }
+  }
+}
+</code></pre>
+<p><code>BranchType.Build(...)</code> produces the branch's <code>Source</code>, which converts implicitly to the union's <code>Source</code> — exactly the type <code>Drawing.CreateBuilder</code> expects for its <code>shape</code> parameter. So the branch flows straight into the containing object, with no intermediate <code>Shape</code> document materialised:</p>
+<pre><code class="language-csharp">using var drawingBuilder = Drawing.CreateBuilder(
+    ws,
+    name: &quot;Sketch #1&quot;,
+    shape: Shape.RequiredRadiusAndType.Build(radius: 5.0));
+Drawing drawing = drawingBuilder.RootElement;
+
+Console.WriteLine(drawing);                       // {&quot;name&quot;:&quot;Sketch #1&quot;,&quot;shape&quot;:{&quot;radius&quot;:5,&quot;type&quot;:&quot;circle&quot;}}
+Console.WriteLine(DescribeShape(drawing.Shape));  // A circle with radius 5
+</code></pre>
 <h2 id="key-differences-from-v4">Key Differences from V4</h2>
 <h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
 <pre><code class="language-csharp">// Create instances directly
@@ -436,7 +476,7 @@ string desc = shape.Match(
 </code></pre>
 <p><strong>Key differences:</strong></p>
 <ul>
-<li>V5 parses from JSON rather than providing <code>Create()</code> methods for discriminated types</li>
+<li>V5 constructs discriminated types by building one of their branches (<code>Branch.CreateBuilder(...)</code> / <code>Branch.Build(...)</code>) and relying on the implicit branch → union conversion, rather than a single <code>Shape.Create()</code> factory — see <a href="#creating-polymorphic-types-from-a-branch">Creating polymorphic types from a branch</a> above</li>
 <li>V5 names variant types by their required properties (e.g., <code>RequiredRadiusAndType</code>, <code>RequiredHeightAndTypeAndWidth</code>) instead of using ordinal <code>OneOfNEntity</code> names</li>
 <li>V5 requires explicit <code>From()</code> conversion to access variant-specific properties</li>
 <li>V5 pattern matching uses named parameters based on the variant type names</li>

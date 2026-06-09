@@ -8638,6 +8638,573 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.html",
+    "Title": "DefaultValueJsonDocument",
+    "Description": "A read-only [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) facade over an immutable document, used to back the mutable view of a schema `default` value (issue #811).",
+    "Keywords": "DefaultValueJsonDocument class Corvus.Text.Json.Internal",
+    "Body": "A read-only [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) facade over an immutable document, used to back the mutable view of a schema `default` value (issue #811).\nA mutable element (`T.Mutable`) must be backed by an [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html), but a schema default is materialised as an immutable instance. This facade lets an absent, non-nullable defaulted property be surfaced through the mutable view without copying any data: every read is forwarded to the wrapped immutable `inner` document, and every mutating operation throws an [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception) whose message tells the caller to set the value on its parent before modifying it. This type owns no resources — it merely wraps `inner` — so [`Dispose`](/api/v5/corvus-text-json-internal-defaultvaluejsondocument.dispose.html) is a no-op and never disposes the wrapped document.\nDispose: Does nothing: this facade does not own the wrapped document, so it must not dispose it."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.ctor.html",
+    "Title": "DefaultValueJsonDocument Constructor",
+    "Description": "A read-only [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) facade over an immutable document, used to back the mutable view of a schema `default` value (issue #811).",
+    "Keywords": "DefaultValueJsonDocument constructor new Corvus.Text.Json.Internal",
+    "Body": "A read-only [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) facade over an immutable document, used to back the mutable view of a schema `default` value (issue #811)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.isimmutable.html",
+    "Title": "DefaultValueJsonDocument.IsImmutable",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument IsImmutable property Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.isdisposable.html",
+    "Title": "DefaultValueJsonDocument.IsDisposable",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument IsDisposable property Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.version.html",
+    "Title": "DefaultValueJsonDocument.Version",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument Version property Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.cachedworkspace.html",
+    "Title": "DefaultValueJsonDocument.CachedWorkspace",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument CachedWorkspace property Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.cachedworkspacedocumentindex.html",
+    "Title": "DefaultValueJsonDocument.CachedWorkspaceDocumentIndex",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument CachedWorkspaceDocumentIndex property Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.cachedworkspacegeneration.html",
+    "Title": "DefaultValueJsonDocument.CachedWorkspaceGeneration",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument CachedWorkspaceGeneration property Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.parentworkspaceindex.html",
+    "Title": "DefaultValueJsonDocument.ParentWorkspaceIndex",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument ParentWorkspaceIndex property Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.workspace.html",
+    "Title": "DefaultValueJsonDocument.Workspace",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument Workspace property Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.freezeelement.html",
+    "Title": "DefaultValueJsonDocument.FreezeElement",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument FreezeElement method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getarrayindexelement.html",
+    "Title": "DefaultValueJsonDocument.GetArrayIndexElement",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetArrayIndexElement method Corvus.Text.Json.Internal",
+    "Body": "  "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.trygetnamedpropertyvalue.html",
+    "Title": "DefaultValueJsonDocument.TryGetNamedPropertyValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryGetNamedPropertyValue method Corvus.Text.Json.Internal",
+    "Body": "       "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.trygetnamedpropertyvalueindex.html",
+    "Title": "DefaultValueJsonDocument.TryGetNamedPropertyValueIndex",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryGetNamedPropertyValueIndex method Corvus.Text.Json.Internal",
+    "Body": "  "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.ensurepropertymap.html",
+    "Title": "DefaultValueJsonDocument.EnsurePropertyMap",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument EnsurePropertyMap method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.gethashcode.html",
+    "Title": "DefaultValueJsonDocument.GetHashCode",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetHashCode method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.tostring.html",
+    "Title": "DefaultValueJsonDocument.ToString",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument ToString method Corvus.Text.Json.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getjsontokentype.html",
+    "Title": "DefaultValueJsonDocument.GetJsonTokenType",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetJsonTokenType method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getarrayinsertionindex.html",
+    "Title": "DefaultValueJsonDocument.GetArrayInsertionIndex",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetArrayInsertionIndex method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getarraylength.html",
+    "Title": "DefaultValueJsonDocument.GetArrayLength",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetArrayLength method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getpropertycount.html",
+    "Title": "DefaultValueJsonDocument.GetPropertyCount",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetPropertyCount method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getstring.html",
+    "Title": "DefaultValueJsonDocument.GetString",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetString method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.trygetstring.html",
+    "Title": "DefaultValueJsonDocument.TryGetString",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryGetString method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getutf8jsonstring.html",
+    "Title": "DefaultValueJsonDocument.GetUtf8JsonString",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetUtf8JsonString method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getutf16jsonstring.html",
+    "Title": "DefaultValueJsonDocument.GetUtf16JsonString",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetUtf16JsonString method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.trygetvalue.html",
+    "Title": "DefaultValueJsonDocument.TryGetValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryGetValue method Corvus.Text.Json.Internal",
+    "Body": "                          "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getnameofpropertyvalue.html",
+    "Title": "DefaultValueJsonDocument.GetNameOfPropertyValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetNameOfPropertyValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getpropertynameraw.html",
+    "Title": "DefaultValueJsonDocument.GetPropertyNameRaw",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetPropertyNameRaw method Corvus.Text.Json.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getpropertyname.html",
+    "Title": "DefaultValueJsonDocument.GetPropertyName",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetPropertyName method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getpropertynameunescaped.html",
+    "Title": "DefaultValueJsonDocument.GetPropertyNameUnescaped",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetPropertyNameUnescaped method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getrawvalueasstring.html",
+    "Title": "DefaultValueJsonDocument.GetRawValueAsString",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetRawValueAsString method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getpropertyrawvalueasstring.html",
+    "Title": "DefaultValueJsonDocument.GetPropertyRawValueAsString",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetPropertyRawValueAsString method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getrawvalue.html",
+    "Title": "DefaultValueJsonDocument.GetRawValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetRawValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getrawsimplevalue.html",
+    "Title": "DefaultValueJsonDocument.GetRawSimpleValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetRawSimpleValue method Corvus.Text.Json.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getrawsimplevalueunsafe.html",
+    "Title": "DefaultValueJsonDocument.GetRawSimpleValueUnsafe",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetRawSimpleValueUnsafe method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.valueisescaped.html",
+    "Title": "DefaultValueJsonDocument.ValueIsEscaped",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument ValueIsEscaped method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.textequals.html",
+    "Title": "DefaultValueJsonDocument.TextEquals",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TextEquals method Corvus.Text.Json.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.writeelementto.html",
+    "Title": "DefaultValueJsonDocument.WriteElementTo",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument WriteElementTo method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.writepropertyname.html",
+    "Title": "DefaultValueJsonDocument.WritePropertyName",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument WritePropertyName method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.cloneelement.html",
+    "Title": "DefaultValueJsonDocument.CloneElement",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument CloneElement method Corvus.Text.Json.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getdbsize.html",
+    "Title": "DefaultValueJsonDocument.GetDbSize",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetDbSize method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.tryfindnextdescendantpropertyvalue.html",
+    "Title": "DefaultValueJsonDocument.TryFindNextDescendantPropertyValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryFindNextDescendantPropertyValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.getstartindex.html",
+    "Title": "DefaultValueJsonDocument.GetStartIndex",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument GetStartIndex method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.buildrentedmetadatadb.html",
+    "Title": "DefaultValueJsonDocument.BuildRentedMetadataDb",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument BuildRentedMetadataDb method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.appendelementtometadatadb.html",
+    "Title": "DefaultValueJsonDocument.AppendElementToMetadataDb",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument AppendElementToMetadataDb method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.writeelementtometadatadb.html",
+    "Title": "DefaultValueJsonDocument.WriteElementToMetadataDb",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument WriteElementToMetadataDb method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.tryresolvejsonpointer.html",
+    "Title": "DefaultValueJsonDocument.TryResolveJsonPointer",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryResolveJsonPointer method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.tryformat.html",
+    "Title": "DefaultValueJsonDocument.TryFormat",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryFormat method Corvus.Text.Json.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.trygetlineandoffset.html",
+    "Title": "DefaultValueJsonDocument.TryGetLineAndOffset",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryGetLineAndOffset method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.trygetlineandoffsetforpointer.html",
+    "Title": "DefaultValueJsonDocument.TryGetLineAndOffsetForPointer",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryGetLineAndOffsetForPointer method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.trygetline.html",
+    "Title": "DefaultValueJsonDocument.TryGetLine",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryGetLine method Corvus.Text.Json.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.dispose.html",
+    "Title": "DefaultValueJsonDocument.Dispose",
+    "Description": "Does nothing: this facade does not own the wrapped document, so it must not dispose it.",
+    "Keywords": "DefaultValueJsonDocument Dispose method Corvus.Text.Json.Internal",
+    "Body": "Does nothing: this facade does not own the wrapped document, so it must not dispose it."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.storerawnumbervalue.html",
+    "Title": "DefaultValueJsonDocument.StoreRawNumberValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument StoreRawNumberValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.storeprebakedvalue.html",
+    "Title": "DefaultValueJsonDocument.StorePrebakedValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument StorePrebakedValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.storenullvalue.html",
+    "Title": "DefaultValueJsonDocument.StoreNullValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument StoreNullValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.storebooleanvalue.html",
+    "Title": "DefaultValueJsonDocument.StoreBooleanValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument StoreBooleanValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.escapeandstorerawstringvalue.html",
+    "Title": "DefaultValueJsonDocument.EscapeAndStoreRawStringValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument EscapeAndStoreRawStringValue method Corvus.Text.Json.Internal",
+    "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.storerawstringvalue.html",
+    "Title": "DefaultValueJsonDocument.StoreRawStringValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument StoreRawStringValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.storevalue.html",
+    "Title": "DefaultValueJsonDocument.StoreValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument StoreValue method Corvus.Text.Json.Internal",
+    "Body": "                       "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.removerange.html",
+    "Title": "DefaultValueJsonDocument.RemoveRange",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument RemoveRange method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.setanddispose.html",
+    "Title": "DefaultValueJsonDocument.SetAndDispose",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument SetAndDispose method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.replacerootanddispose.html",
+    "Title": "DefaultValueJsonDocument.ReplaceRootAndDispose",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument ReplaceRootAndDispose method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.insertanddispose.html",
+    "Title": "DefaultValueJsonDocument.InsertAndDispose",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument InsertAndDispose method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.overwriteanddispose.html",
+    "Title": "DefaultValueJsonDocument.OverwriteAndDispose",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument OverwriteAndDispose method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.insertsimplevalue.html",
+    "Title": "DefaultValueJsonDocument.InsertSimpleValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument InsertSimpleValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.overwritesimplevalue.html",
+    "Title": "DefaultValueJsonDocument.OverwriteSimpleValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument OverwriteSimpleValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.insertsimpleproperty.html",
+    "Title": "DefaultValueJsonDocument.InsertSimpleProperty",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument InsertSimpleProperty method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.insertfromdocument.html",
+    "Title": "DefaultValueJsonDocument.InsertFromDocument",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument InsertFromDocument method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.overwritefromdocument.html",
+    "Title": "DefaultValueJsonDocument.OverwriteFromDocument",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument OverwriteFromDocument method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.insertpropertyfromdocument.html",
+    "Title": "DefaultValueJsonDocument.InsertPropertyFromDocument",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument InsertPropertyFromDocument method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.tryreplacepropertyvalue.html",
+    "Title": "DefaultValueJsonDocument.TryReplacePropertyValue",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryReplacePropertyValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.tryreplacepropertyfromdocument.html",
+    "Title": "DefaultValueJsonDocument.TryReplacePropertyFromDocument",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument TryReplacePropertyFromDocument method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.copyvaluetoproperty.html",
+    "Title": "DefaultValueJsonDocument.CopyValueToProperty",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument CopyValueToProperty method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.copyvaluetoarrayindex.html",
+    "Title": "DefaultValueJsonDocument.CopyValueToArrayIndex",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument CopyValueToArrayIndex method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.copyvaluetoarrayend.html",
+    "Title": "DefaultValueJsonDocument.CopyValueToArrayEnd",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument CopyValueToArrayEnd method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.movepropertytoproperty.html",
+    "Title": "DefaultValueJsonDocument.MovePropertyToProperty",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument MovePropertyToProperty method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.movepropertytoarray.html",
+    "Title": "DefaultValueJsonDocument.MovePropertyToArray",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument MovePropertyToArray method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.movepropertytoarrayend.html",
+    "Title": "DefaultValueJsonDocument.MovePropertyToArrayEnd",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument MovePropertyToArrayEnd method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.moveitemtoarray.html",
+    "Title": "DefaultValueJsonDocument.MoveItemToArray",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument MoveItemToArray method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.moveitemtoarrayend.html",
+    "Title": "DefaultValueJsonDocument.MoveItemToArrayEnd",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument MoveItemToArrayEnd method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-defaultvaluejsondocument.moveitemtoproperty.html",
+    "Title": "DefaultValueJsonDocument.MoveItemToProperty",
+    "Description": "",
+    "Keywords": "DefaultValueJsonDocument MoveItemToProperty method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-enumstringmap.html",
     "Title": "EnumStringMap",
     "Description": "A hash map from UTF-8 string keys to integer values for efficient O(1) average-case lookup.",
@@ -9531,7 +10098,7 @@
     "Title": "JsonElementHelpers",
     "Description": "Core helper methods for parsing and processing JSON numeric values into their component parts.",
     "Keywords": "JsonElementHelpers class Corvus.Text.Json.Internal",
-    "Body": "Core helper methods for parsing and processing JSON numeric values into their component parts.\nParseNumber: Parses a JSON number into its component parts using normal-form decimal representation.\nTryParseNumber: Parses a JSON number into its component parts using normal-form decimal representation.\nCompareNormalizedJsonNumbers: Compares two normalized JSON numbers for equality.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nCountRunes: Count the runes in a UTF-8 string.\nParseDateCore: Parses a date string in ISO 8601 format (YYYY-MM-DD) and extracts the year, month, and day components.\nParseOffsetTimeCore: Parses a time string with optional offset in ISO 8601 format and extracts the time and offset components.\nParseOffsetCore: Parses a timezone offset string in ISO 8601 format (±HH:MM or Z) and extracts the offset in seconds.\nParseTimeCore: Parses a time string in ISO 8601 format (HH:MM:SS[.nnnnnnnnn]) and extracts the time components.\nSetPropertyUnsafe: Sets a property value on a target element.\nRemovePropertyUnsafe: Removes a property value from a target element.\nRemovePropertyUnsafe: Removes a property value from a target element.\nRemoveRangeUnsafe: Removes a range of items from an array element.\nRemoveFirstUnsafe: Removes the first array element that equals the specified item.\nRemoveWhereUnsafe: Removes a items from an array element which match a predicate.\nApplyUnsafe: Applies all properties from a source JSON object element to a target JSON object element.\nToValueKind: Converts a [`JsonTokenType`](/api/v5/corvus-text-json-internal-jsontokentype.html) to its corresponding [`JsonValueKind`](/api/v5/corvus-text-json-jsonvaluekind.html).\nGetUtf8StringLength: Gets the length of a UTF-8 encoded string in characters (not bytes).\nGetParentDocumentAndIndex: Gets the parent document and document index for a JSON element.\nAreEqualJsonNumbers: Compares two valid UTF-8 encoded JSON numbers for decimal equality.\nAreEqualNormalizedJsonNumbers: Compares two valid normalized JSON numbers for decimal equality.\nIsIntegerNormalizedJsonNumber: Determines if a JSON number is an integer.\nIsMultipleOf: Determines whether the normalized JSON number is an exact multiple of the given integer divisor.\nIsMultipleOf: Determines whether the normalized JSON number is an exact multiple of the given integer divisor.\nTryFormatNumberAsString: Format the number as a string.\nTryGetNormalizedInt64: Attempts to convert a normalized JSON number to a [`Int64`](https://learn.microsoft.com/dotnet/api/system.int64) value.\nReinterpret: Reinterprets a source element as a different target element type, sharing the same underlying document and location. This is a zero-copy operation that creates a new struct view over the same data.\nTryFormatUri: Tries to format a [`Utf8Uri`](/api/v5/corvus-text-json-utf8uri.html) as a display (human-readable) or canonical (percent-encoded) string.\nTryFormatUri: Tries to format a [`Utf8Uri`](/api/v5/corvus-text-json-utf8uri.html) as a display (human-readable) or canonical (percent-encoded) string into a [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`Char`](https://learn.microsoft.com/dotnet/api/system.char).\nTryFormatUriReference: Tries to format a [`Utf8UriReference`](/api/v5/corvus-text-json-utf8urireference.html) as a display (human-readable) or canonical (percent-encoded) string.\nTryFormatUriReference: Tries to format a [`Utf8UriReference`](/api/v5/corvus-text-json-utf8urireference.html) as a display (human-readable) or canonical (percent-encoded) string into a [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`Char`](https://learn.microsoft.com/dotnet/api/system.char).\nTryFormatIri: Tries to format a [`Utf8Iri`](/api/v5/corvus-text-json-utf8iri.html) as a display (human-readable) or canonical (percent-encoded) string.\nTryFormatIri: Tries to format a [`Utf8Iri`](/api/v5/corvus-text-json-utf8iri.html) as a display (human-readable) or canonical (percent-encoded) string into a [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`Char`](https://learn.microsoft.com/dotnet/api/system.char).\nTryFormatIriReference: Tries to format a [`Utf8IriReference`](/api/v5/corvus-text-json-utf8irireference.html) as a display (human-readable) or canonical (percent-encoded) string.\nTryFormatIriReference: Tries to format a [`Utf8IriReference`](/api/v5/corvus-text-json-utf8irireference.html) as a display (human-readable) or canonical (percent-encoded) string into a [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`Char`](https://learn.microsoft.com/dotnet/api/system.char).\nDeepEquals: Compares the values of two [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html) values for equality, including the values of all descendant elements.\nDeepEqualsNoParentDocumentCheck: Compares the values of two [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html) values for equality, including the values of all descendant elements.\nDeepEqualsNoParentDocumentCheck: Compares the values of two JSON values for equality, including the values of all descendant elements.\nTryFormatLocalDate: Format a date as a UTF-8 string.\nTryFormatOffsetDate: Format a date as a UTF-8 string.\nTryFormatOffsetDateTime: Format an offset date time as a UTF-8 string.\nTryFormatOffsetTime: Format a time as a UTF-8 string.\nTryFormatPeriod: Format a period as a UTF-8 string for the `duration` format.\nParsePeriod: Parse a period from a UTF-8 encoded string for the `duration` format.\nTryParsePeriod: Parse a period from a string for the `duration` format.\nParseLocalDate: Parse a local date from a UTF-8 encoded string for the `date` format.\nTryParseLocalDate: Parse a date from a string for the `date` format.\nParseOffsetTime: Parse an offset time from a UTF-8 encoded string for the `time` format.\nTryParseOffsetTime: Parse a time from a string for the `time` format.\nCreateOffsetTimeCore: Creates an offset time from its individual components including nanosecond precision.\nCreateOffsetTimeCore: Creates an offset time from its individual components with millisecond precision.\nParseOffsetDateTime: Parse an offset date time from a UTF-8 encoded string for the `date-time` format.\nTryParseOffsetDateTime: Parse a date time from a string for the `date-time` format.\nCreateOffsetDateTimeCore: Creates an offset date time from its individual components including nanosecond precision.\nCreateOffsetDateTimeCore: Creates an offset date time from its individual components with millisecond precision.\nParseOffsetDate: Parse an offset date from a UTF-8 encoded string for the `date` format.\nTryParseOffsetDate: Parse a date time from a string for the `date-time` format."
+    "Body": "Core helper methods for parsing and processing JSON numeric values into their component parts.\nParseNumber: Parses a JSON number into its component parts using normal-form decimal representation.\nTryParseNumber: Parses a JSON number into its component parts using normal-form decimal representation.\nCompareNormalizedJsonNumbers: Compares two normalized JSON numbers for equality.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nCountRunes: Count the runes in a UTF-8 string.\nParseDateCore: Parses a date string in ISO 8601 format (YYYY-MM-DD) and extracts the year, month, and day components.\nParseOffsetTimeCore: Parses a time string with optional offset in ISO 8601 format and extracts the time and offset components.\nParseOffsetCore: Parses a timezone offset string in ISO 8601 format (±HH:MM or Z) and extracts the offset in seconds.\nParseTimeCore: Parses a time string in ISO 8601 format (HH:MM:SS[.nnnnnnnnn]) and extracts the time components.\nCreateDefaultValueElement: Creates a read-only mutable element that surfaces a schema `default` value through the mutable view (issue #811), without copying the underlying data.\nSetPropertyUnsafe: Sets a property value on a target element.\nRemovePropertyUnsafe: Removes a property value from a target element.\nRemovePropertyUnsafe: Removes a property value from a target element.\nRemoveRangeUnsafe: Removes a range of items from an array element.\nRemoveFirstUnsafe: Removes the first array element that equals the specified item.\nRemoveWhereUnsafe: Removes a items from an array element which match a predicate.\nApplyUnsafe: Applies all properties from a source JSON object element to a target JSON object element.\nToValueKind: Converts a [`JsonTokenType`](/api/v5/corvus-text-json-internal-jsontokentype.html) to its corresponding [`JsonValueKind`](/api/v5/corvus-text-json-jsonvaluekind.html).\nGetUtf8StringLength: Gets the length of a UTF-8 encoded string in characters (not bytes).\nGetParentDocumentAndIndex: Gets the parent document and document index for a JSON element.\nAreEqualJsonNumbers: Compares two valid UTF-8 encoded JSON numbers for decimal equality.\nAreEqualNormalizedJsonNumbers: Compares two valid normalized JSON numbers for decimal equality.\nIsIntegerNormalizedJsonNumber: Determines if a JSON number is an integer.\nIsMultipleOf: Determines whether the normalized JSON number is an exact multiple of the given integer divisor.\nIsMultipleOf: Determines whether the normalized JSON number is an exact multiple of the given integer divisor.\nTryFormatNumberAsString: Format the number as a string.\nTryGetNormalizedInt64: Attempts to convert a normalized JSON number to a [`Int64`](https://learn.microsoft.com/dotnet/api/system.int64) value.\nReinterpret: Reinterprets a source element as a different target element type, sharing the same underlying document and location. This is a zero-copy operation that creates a new struct view over the same data.\nTryFormatUri: Tries to format a [`Utf8Uri`](/api/v5/corvus-text-json-utf8uri.html) as a display (human-readable) or canonical (percent-encoded) string.\nTryFormatUri: Tries to format a [`Utf8Uri`](/api/v5/corvus-text-json-utf8uri.html) as a display (human-readable) or canonical (percent-encoded) string into a [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`Char`](https://learn.microsoft.com/dotnet/api/system.char).\nTryFormatUriReference: Tries to format a [`Utf8UriReference`](/api/v5/corvus-text-json-utf8urireference.html) as a display (human-readable) or canonical (percent-encoded) string.\nTryFormatUriReference: Tries to format a [`Utf8UriReference`](/api/v5/corvus-text-json-utf8urireference.html) as a display (human-readable) or canonical (percent-encoded) string into a [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`Char`](https://learn.microsoft.com/dotnet/api/system.char).\nTryFormatIri: Tries to format a [`Utf8Iri`](/api/v5/corvus-text-json-utf8iri.html) as a display (human-readable) or canonical (percent-encoded) string.\nTryFormatIri: Tries to format a [`Utf8Iri`](/api/v5/corvus-text-json-utf8iri.html) as a display (human-readable) or canonical (percent-encoded) string into a [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`Char`](https://learn.microsoft.com/dotnet/api/system.char).\nTryFormatIriReference: Tries to format a [`Utf8IriReference`](/api/v5/corvus-text-json-utf8irireference.html) as a display (human-readable) or canonical (percent-encoded) string.\nTryFormatIriReference: Tries to format a [`Utf8IriReference`](/api/v5/corvus-text-json-utf8irireference.html) as a display (human-readable) or canonical (percent-encoded) string into a [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`Char`](https://learn.microsoft.com/dotnet/api/system.char).\nDeepEquals: Compares the values of two [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html) values for equality, including the values of all descendant elements.\nDeepEqualsNoParentDocumentCheck: Compares the values of two [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html) values for equality, including the values of all descendant elements.\nDeepEqualsNoParentDocumentCheck: Compares the values of two JSON values for equality, including the values of all descendant elements.\nTryFormatLocalDate: Format a date as a UTF-8 string.\nTryFormatOffsetDate: Format a date as a UTF-8 string.\nTryFormatOffsetDateTime: Format an offset date time as a UTF-8 string.\nTryFormatOffsetTime: Format a time as a UTF-8 string.\nTryFormatPeriod: Format a period as a UTF-8 string for the `duration` format.\nParsePeriod: Parse a period from a UTF-8 encoded string for the `duration` format.\nTryParsePeriod: Parse a period from a string for the `duration` format.\nParseLocalDate: Parse a local date from a UTF-8 encoded string for the `date` format.\nTryParseLocalDate: Parse a date from a string for the `date` format.\nParseOffsetTime: Parse an offset time from a UTF-8 encoded string for the `time` format.\nTryParseOffsetTime: Parse a time from a string for the `time` format.\nCreateOffsetTimeCore: Creates an offset time from its individual components including nanosecond precision.\nCreateOffsetTimeCore: Creates an offset time from its individual components with millisecond precision.\nParseOffsetDateTime: Parse an offset date time from a UTF-8 encoded string for the `date-time` format.\nTryParseOffsetDateTime: Parse a date time from a string for the `date-time` format.\nCreateOffsetDateTimeCore: Creates an offset date time from its individual components including nanosecond precision.\nCreateOffsetDateTimeCore: Creates an offset date time from its individual components with millisecond precision.\nParseOffsetDate: Parse an offset date from a UTF-8 encoded string for the `date` format.\nTryParseOffsetDate: Parse a date time from a string for the `date-time` format."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.parsenumber.html",
@@ -9602,6 +10169,13 @@
     "Description": "Parses a time string in ISO 8601 format (HH:MM:SS[.nnnnnnnnn]) and extracts the time components.",
     "Keywords": "JsonElementHelpers ParseTimeCore method Corvus.Text.Json.Internal",
     "Body": "Parses a time string in ISO 8601 format (HH:MM:SS[.nnnnnnnnn]) and extracts the time components."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.createdefaultvalueelement.html",
+    "Title": "JsonElementHelpers.CreateDefaultValueElement",
+    "Description": "Creates a read-only mutable element that surfaces a schema `default` value through the mutable view (issue #811), without copying the underlying data.",
+    "Keywords": "JsonElementHelpers CreateDefaultValueElement method Corvus.Text.Json.Internal",
+    "Body": "Creates a read-only mutable element that surfaces a schema `default` value through the mutable view (issue #811), without copying the underlying data."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonelementhelpers.setpropertyunsafe.html",
@@ -18099,7 +18673,7 @@
     "Title": "JsonPatchDocument.PatchOperation Implicit Operator",
     "Description": "",
     "Keywords": "JsonPatchDocument.PatchOperation Implicit operator Corvus.Text.Json.Patch",
-    "Body": "        "
+    "Body": "              "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation.op-explicit.html",
@@ -18508,6 +19082,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-source.ctor.html",
+    "Title": "JsonPatchDocument.PatchOperation.Source Constructor",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperation.Source constructor new Corvus.Text.Json.Patch",
+    "Body": "           "
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-source.isundefined.html",
     "Title": "JsonPatchDocument.PatchOperation.Source.IsUndefined",
     "Description": "",
@@ -18519,7 +19100,7 @@
     "Title": "JsonPatchDocument.PatchOperation.Source Implicit Operator",
     "Description": "",
     "Keywords": "JsonPatchDocument.PatchOperation.Source Implicit operator Corvus.Text.Json.Patch",
-    "Body": ""
+    "Body": "            "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-source-tcontext.html",
@@ -18527,6 +19108,13 @@
     "Description": "",
     "Keywords": "JsonPatchDocument.PatchOperation.Source<TContext> struct Corvus.Text.Json.Patch TContext",
     "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-source-tcontext.ctor.html",
+    "Title": "JsonPatchDocument.PatchOperation.Source<TContext> Constructor",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperation.Source<TContext> constructor new Corvus.Text.Json.Patch",
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-source-tcontext.isundefined.html",
