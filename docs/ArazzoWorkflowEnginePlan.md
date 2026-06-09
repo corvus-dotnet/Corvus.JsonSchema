@@ -486,9 +486,141 @@ execution context). These are low-risk, high-leverage, and de-risk the hard
 parts (expression/criterion semantics) before committing to the generator
 integration in Phase 2.
 
-## 9. Phase 6 — out-of-process durability store packages
+## 9. Durability execution model — checkpoint & resume
 
-The durability layer (§ durability discussion) needs a pluggable
+This is the load-bearing design the store (§10) and control plane (§11) sit on:
+*how the reification-free generated executor persists its state and resumes* —
+both for crash recovery (**Tier 1**) and long-running suspension (**Tier 2**).
+
+### 9.1 Principle — the products *are* the checkpoint
+
+The executor only ever constructs the genuine products (each step's `outputs`
+`JsonElement` and the workflow `outputs`). Combined with a tiny scalar cursor,
+those products are the *entire* resumable state — so a checkpoint is almost free:
+serialize JSON that already exists. Nothing else (no reified expression context,
+no interpreted plan) needs persisting, because the generated executor *is* the
+plan.
+
+The as-built executor (supersedes the §5 sketch) is a static method whose control
+flow is a labelled `while(true){ switch(__state){ … } }` loop; per-step outputs
+are `JsonElement` locals hoisted at method scope (`{step}OutputsElement`), with
+hoisted retry counters and, for AsyncAPI correlation, a `correlationTokens`
+register. The complete resumable state is therefore exactly:
+
+- `__state` — the cursor (which `case` runs next);
+- each hoisted step-`outputs` `JsonElement`;
+- each retry counter; the correlation register;
+- the workflow `inputs` (a `JsonElement`).
+
+### 9.2 The checkpoint document (one JSON doc per run)
+
+```
+{ "runId", "workflowId", "status",          // Pending|Running|Suspended|Completed|Cancelled|Faulted
+  "cursor",                                  // __state
+  "retryCounters": { "<stepId>": n },
+  "correlationTokens": { "<name>": "<token>" },
+  "inputs":  <json>,
+  "stepOutputs": { "<stepId>": <json> },     // the built outputs products
+  "wait":  { "kind": "timer", "dueAt": "…" } // Tier 2: why it is Suspended
+         | { "kind": "message", "channel": "…", "correlationId": "…" },
+  "fault": { "stepId", "attempt", "error", "at" },
+  "history": [ … ],                          // lifecycle + management audit
+  "etag" }                                   // optimistic concurrency
+```
+
+The step-output `JsonElement`s and inputs serialize natively; everything else is
+scalar. The whole doc is small and backend-agnostic (§10).
+
+### 9.3 Generated-executor mechanism (opt-in codegen)
+
+Durability is a **generation option** (`WorkflowExecutorOptions.Durable`), so the
+default executor keeps its 0-alloc hot path with no checkpoint plumbing. When
+enabled, the emitter generates a second shape that threads an `IWorkflowRun? run`
+and returns a tri-state result (see 9.4):
+
+- **On entry — restore.** Locals initialise from the run instead of `default`:
+  `int __state = run?.Cursor ?? 0;`,
+  `JsonElement getPetOutputsElement = run is not null && run.TryLoadOutputs("getPet", out var v) ? v : default;`,
+  retry counters and `correlationTokens` likewise. A fresh run loads nothing and
+  behaves exactly like today.
+- **After each step — checkpoint.** Once a step's outputs local is assigned and
+  the next cursor chosen, before the loop iterates:
+  `run?.SetOutputs("getPet", getPetOutputsElement);`
+  `if (run is not null) { await run.CheckpointAsync(__state, ct); }`
+  The `run` object owns serialization (products → JSON), the store write, and
+  optimistic-concurrency/lease — the generated code stays declarative. Every
+  step-id and output local is known at gen time, so save/restore are fully static
+  (no reflection, no dynamic dispatch).
+
+**Resume is just re-calling the method** with a loaded `run`: the `while/switch`
+loop jumps to the restored cursor with its locals already populated and carries
+on. No separate "resume entrypoint" is generated.
+
+### 9.4 Tri-state result and suspension (Tier 2)
+
+A durable executor returns `WorkflowRunResult<TOutputs>` =
+`Completed(outputs) | Faulted(record) | Suspended(wait)` (the non-durable
+executor still returns `ValueTask<TOutputs>` unchanged). **Suspension boundaries**
+are the points where a run may wait indefinitely:
+
+- a **timer** — a `retry` with `retryAfter`, or any future workflow-level wait:
+  instead of `await Task.Delay(...)`, the executor checkpoints `status=Suspended`,
+  `wait={timer, dueAt}` and **returns** `Suspended`;
+- a **correlated receive** — an AsyncAPI receive (esp. `correlationId`): instead
+  of blocking on `ReceiveOneAsync`, it checkpoints `wait={message, channel,
+  correlationId}` and returns `Suspended`.
+
+A **worker** (the trigger loop) resumes a suspended run when its wait is
+satisfied — a due timer or a matching delivered message — by loading the
+checkpoint and re-calling `ExecuteAsync(…, run: loaded)`; for a message wait the
+delivered payload is handed in so the receive step completes immediately. Tier 1
+ignores suspension entirely (timers stay in-process `Task.Delay`, receives block)
+and only uses 9.3's checkpoint-after-step for crash recovery — so Tier 2 is a
+pure superset that adds the tri-state return + the wait index (§10) + the worker.
+
+### 9.5 Delivery semantics
+
+Checkpoint-after-step gives **at-least-once** step execution: a crash *after* a
+step's side effect but *before* its checkpoint persists re-runs that whole step on
+resume. Steps should therefore be idempotent, or rely on correlation /
+server-side idempotency keys — the same contract every checkpointing engine
+(DTFx, Temporal) carries. We document this and surface an idempotency-key hook on
+operation steps as a later refinement. Optimistic concurrency (ETag) plus a
+single-owner lease (§10) prevent a horizontally-scaled fleet from double-advancing
+a run.
+
+### 9.6 The `IWorkflowRun` seam
+
+```csharp
+public interface IWorkflowRun
+{
+    int Cursor { get; }
+    bool TryLoadOutputs(string stepId, out JsonElement outputs);
+    int RetryCount(string stepId);
+    bool TryGetCorrelationToken(string name, out ReadOnlySpan<byte> token);
+
+    void SetOutputs(string stepId, in JsonElement outputs);           // stage products for the next checkpoint
+    ValueTask CheckpointAsync(int cursor, CancellationToken ct);       // serialize + persist (CAS/lease)
+    WorkflowRunResult<T> Suspend<T>(in WorkflowWait wait);             // Tier 2: persist Suspended + return
+}
+```
+
+`IWorkflowRun` is the only new runtime seam the generated code touches; it is
+backed by an `IWorkflowStateStore` (§10) and constructed by the host/worker. The
+in-memory implementation (shipped in the runtime/testing layer) makes the whole
+mechanism unit-testable with no external store, exactly as `InMemoryMessageTransport`
+does for AsyncAPI — including a crash-and-resume test that drops the run after step
+N and re-enters from the checkpoint.
+
+### 9.7 Telemetry
+
+Checkpoint save/load emit spans under the workflow span; `suspended`/`resumed`/
+`checkpoint` counters join the existing `ArazzoTelemetry` meters. The execution
+trace already *is* the run history (9.2).
+
+## 10. Phase 6 — out-of-process durability store packages
+
+The durability layer (§9) needs a pluggable
 `IWorkflowStateStore`. Beyond the in-memory default, which out-of-process
 backends should we ship? This section captures the research.
 
@@ -513,6 +645,62 @@ scheduled messages). We therefore split the abstraction: a core
 `IWorkflowWaitIndex` / timer capability (4) that richer backends add. A
 blob-only store can implement the core and delegate timers to scheduled messages.
 
+### The abstraction (interfaces & seam)
+
+The generated executor only ever sees `IWorkflowRun` (§9.6); the **store is a
+host-level concern**, wired at startup and referenced by nothing generated. Two
+interfaces split by capability:
+
+```csharp
+// Universal — trivial on every backend.
+public interface IWorkflowStateStore
+{
+    // create-or-update under optimistic concurrency; returns the new etag (conflict if `expected` is stale).
+    ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8,
+                                      in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken ct);
+    ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken ct);   // bytes + etag
+    ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken ct);
+    ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken ct);
+    ValueTask DeleteAsync(WorkflowRunId id, CancellationToken ct);
+}
+
+// Optional — richer backends add it (or a *separate* package provides it).
+public interface IWorkflowWaitIndex
+{
+    IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken ct);             // timers
+    IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(ReadOnlyMemory<byte> channel,
+                                                       ReadOnlyMemory<byte> correlationId, CancellationToken ct); // msg wakeups
+    ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken ct);                       // §11 visibility
+}
+```
+
+- **Capability negotiation** is `store is IWorkflowWaitIndex`. A blob-only store
+  implements just the core and delegates timers to Service Bus scheduled messages;
+  SQL/Cosmos/Redis implement both. The same index serves Tier-2 wakeups *and* the
+  §11 control-plane queries — one mechanism, not two.
+- **Backends never parse the checkpoint.** The runtime serialises products → JSON
+  and projects a tiny `WorkflowRunIndexEntry` — `{ status, workflowId, createdAt,
+  updatedAt, dueAt?, awaitingChannel?, awaitingCorrelationId?, errorType?, tags }`
+  — alongside the opaque checkpoint bytes. A backend is a thin adapter: *store
+  these bytes by id at this etag; index these few fields.* That is what keeps each
+  backend cheap. (JSON-native stores *may* keep the checkpoint as a queryable
+  document, but never need to — the index entry covers every query.)
+- **Concurrency is contract, mapping is adapter.** The interface fixes the
+  semantics (save fails on etag mismatch → `WorkflowConflict`; lease is advisory
+  single-owner with TTL); each backend maps them to its native primitive (blob
+  ETag + lease; Postgres `xmin`/version column + advisory lock; SQL Server
+  `rowversion` + app lock; MySQL version column; Cosmos `_etag`; Mongo version
+  field; Redis `WATCH`/Lua + sorted-set timer index).
+- **Composition (DI).** `services.AddArazzoDurability().UsePostgres(conn)`; store
+  and index can come from *different* packages (e.g. blob checkpoints + Redis wait
+  index), composed at registration. The worker/host resolves `IWorkflowStateStore`
+  (+ optional `IWorkflowWaitIndex`) and builds the per-run `IWorkflowRun`.
+- **One conformance suite.** A shared store-conformance test suite (the
+  AsyncAPI-transport-tests pattern) — CAS conflict, lease contention, due-query,
+  correlation-query, round-trip — runs against every backend's real container
+  (the WSL+Podman broker harness applies directly). The in-memory store is the
+  reference implementation and runs the same suite.
+
 ### What the closest .NET analogs ship (evidence)
 
 | Engine | Persistence backends shipped |
@@ -522,31 +710,58 @@ blob-only store can implement the core and delegate timers to scheduled messages
 | MassTransit sagas | **EF Core** (SQL); **MongoDB**; **Redis**; **Marten** (PostgreSQL); NHibernate; **Azure Cosmos DB** (Mongo + Document APIs) |
 | Temporal | **PostgreSQL**, **MySQL**, **Cassandra** (core); SQLite / Elasticsearch (visibility) |
 
-The consensus is clear: **relational (SQL Server + PostgreSQL, usually via EF
-Core)**, a **document store (Mongo / Cosmos)**, **Redis**, and — in the Azure
-ecosystem specifically — **Azure Storage** are the backends customers expect.
+The consensus is clear: **relational (PostgreSQL + SQL Server, + MySQL)**, a
+**document store (Mongo / Cosmos)**, **Redis**, and — in the Azure ecosystem
+specifically — **Azure Storage** are the backends customers expect. But note the
+analogs reach relational via EF Core; **we deliberately do not.** The store is a
+thin checkpoint table (an opaque blob column + a handful of indexed projection
+columns + CAS + a lease), so an ORM adds dependency weight, a migrations
+framework, and an extra mapping layer for no benefit — and it would obscure the
+per-dialect concurrency primitive (`xmin` / `rowversion`) we depend on. We ship
+**direct ADO.NET adapters per database** instead (the Dapper/`durabletask-mssql`
+lineage), each owning its driver, its SQL dialect, and a `CREATE TABLE IF NOT
+EXISTS` schema script — no EF, no migrations runtime.
 
 ### Recommended set (naming mirrors the AsyncAPI binding convention)
 
 - `Corvus.Text.Json.Arazzo.Durability` — abstractions + **in-memory** default (in the testing/runtime layer).
 - `Corvus.Text.Json.Arazzo.Durability.AzureStorage` — Blob for the checkpoint (with **blob leases** for single-owner), Table for the wait/correlation index; durable timers via **Service Bus scheduled messages** (reuses the existing ASB binding) or Storage Queue visibility delays. *Best fit for Corvus' Azure lean.* SDKs: `Azure.Storage.Blobs`, `Azure.Data.Tables`, `Azure.Messaging.ServiceBus`.
-- `Corvus.Text.Json.Arazzo.Durability.EntityFrameworkCore` — one package covering **SQL Server, PostgreSQL, SQLite (dev), MySQL** via the respective EF providers; the wait index is an indexed column. The most portable, on-prem-friendly option (cf. DTFx-MSSQL, Elsa, Temporal).
+- **Relational — direct ADO.NET adapters, one package per database (no EF/ORM).** Each stores the checkpoint in a JSON/`JSONB`/`nvarchar(max)` column with the projection fields as indexed columns, maps CAS + lease to the native primitive, and ships a `CREATE TABLE IF NOT EXISTS` script (idempotent, no migrations runtime). They can share a small internal SQL helper but stay separate so each pulls only its own driver:
+  - `Corvus.Text.Json.Arazzo.Durability.Postgres` — **the relational default.** `Npgsql`; checkpoint as **`JSONB`** (queryable if ever needed), wait index as indexed columns, CAS via a version column / `xmin`, single-owner via **advisory locks**. Postgres's JSON-native fit makes it the strongest on-prem/portable option.
+  - `Corvus.Text.Json.Arazzo.Durability.SqlServer` — `Microsoft.Data.SqlClient`; `nvarchar(max)`/`json` column, CAS via **`rowversion`**, lease via `sp_getapplock` (the `durabletask-mssql` lineage). Covers **SQL Server *and* Azure SQL Database** (same driver/wire protocol — just a connection string) and Azure SQL Managed Instance.
+  - `Corvus.Text.Json.Arazzo.Durability.MySql` — `MySqlConnector`; `JSON` column, CAS via a version column. Covers **MySQL, MariaDB, and Aurora MySQL**.
+  - `Corvus.Text.Json.Arazzo.Durability.Sqlite` — `Microsoft.Data.Sqlite`; single-file, zero-setup **local-dev / embedded** option (the in-memory store is for tests; SQLite is for a real on-disk single-node run).
+
+  **Compatibility families (a direct-driver dividend).** Because each adapter speaks its driver's wire protocol rather than an ORM dialect, one package covers an entire engine family at no extra cost: the **Postgres** adapter also serves **CockroachDB, YugabyteDB, AlloyDB, Aurora PostgreSQL, Neon, and Citus**; **SqlServer** also serves **Azure SQL Database / Managed Instance**; **MySql** also serves **MariaDB / Aurora MySQL**. So "PostgreSQL + SQL Server + MySQL" adapters already reach most of the managed-relational market.
 - `Corvus.Text.Json.Arazzo.Durability.Cosmos` — JSON-native (stores the checkpoint document directly and queries it), **change feed** for timer/trigger dispatch, TTL. SDK: `Microsoft.Azure.Cosmos`.
 - `Corvus.Text.Json.Arazzo.Durability.Mongo` — ubiquitous document store; optimistic concurrency via a version field (the MassTransit/Elsa pattern). SDK: `MongoDB.Driver`.
 - `Corvus.Text.Json.Arazzo.Durability.Redis` — KV + **sorted-set timer index** (score = due-time) + streams for wake-ups; excellent as a *wait/timer index* even alongside another primary store. SDK: `StackExchange.Redis`.
-- *(Optional, cross-cloud, only on demand)* `…Durability.DynamoDb` (KV + TTL + streams) and `…Durability.Firestore`.
+- `Corvus.Text.Json.Arazzo.Durability.NatsJetStream` — reuses the **NATS** infrastructure the AsyncAPI side already ships: a JetStream **KV bucket** for checkpoints (native revisions = CAS), and JetStream consumers / a KV watch for timer + correlation wake-ups. Low marginal cost when NATS is already the broker, and keeps the wake-up path on the same bus as the messages. SDK: `NATS.Client` (already referenced).
+- *(Optional / on demand)*: `…Durability.DynamoDb` (KV + TTL + streams) and `…Durability.Firestore` (cross-cloud); `…Durability.Cassandra` (wide-column, the Temporal-core lineage; also ScyllaDB).
+
+**No separate search / analytics "visibility store."** Visibility queries (§11)
+are served by the **authoritative store's own `IWorkflowWaitIndex`** — SQL indexed
+columns, Cosmos/Mongo fields, Redis, or a blob store's companion Azure Table — so
+the one index already answers timers, correlation wake-ups, *and* operator
+queries. We considered a dedicated visibility layer (the Temporal
+state-vs-visibility split) backed by **Elasticsearch/OpenSearch** or an analytical
+column store such as **DuckDB**, and **decided against it**: it adds a second
+system to operate and keep in sync for query shapes the rich primary stores
+already handle. (The authoritative store is OLTP — frequent small point-writes +
+CAS + fleet concurrency — which is also why analytical/columnar engines like
+DuckDB are not candidates there: SQLite is the embedded authoritative choice.)
 
 ### Suggested shipping order
 
-1. **First wave:** abstractions + in-memory; **Azure Storage**; **EF Core** (SQL Server + PostgreSQL + SQLite). Covers Azure-native, portable/on-prem, and local-dev.
-2. **Second wave:** **Cosmos**; **Redis**; **MongoDB**.
-3. **Optional:** DynamoDB; Firestore.
+1. **First wave:** abstractions + in-memory; **Postgres** (relational default, JSONB); **SQLite** (local-dev/embedded); **Azure Storage** (Azure-native). Covers portable/on-prem, local, and Azure.
+2. **Second wave:** **SQL Server**; **Cosmos**; **Redis**.
+3. **Third wave / on demand:** **MySQL**; **MongoDB**; DynamoDB; Firestore.
 
 Each is a thin adapter over the same JSON checkpoint, so adding a backend is
 low cost; we ship the first wave with the durability feature and add the rest
 based on demand.
 
-## 10. Faulting, resume, and workflow management (control plane)
+## 11. Faulting, resume, and workflow management (control plane)
 
 Durability is only useful if operators can see and act on stuck runs. The engine
 needs a **control plane**: fault a run, query faulted/suspended runs, and resume
@@ -579,7 +794,7 @@ execution trace *is* the history).
 Following Temporal's split of authoritative state vs. *visibility*, the
 checkpoint store holds the source of truth while a **queryable index** answers
 management queries. This is the *same* index Tier 2 uses to find due/awaiting
-runs (§9.4) generalized to carry: status, `workflowId`, created/updated/faulted
+runs (§10) generalized to carry: status, `workflowId`, created/updated/faulted
 timestamps, error type, and user tags. Rich backends (SQL/Cosmos/Mongo) make
 this columns/fields; a blob-only store gets a companion Azure Table. So one
 index serves timers, correlation wake-ups, *and* operator queries.
