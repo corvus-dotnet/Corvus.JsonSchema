@@ -1,0 +1,182 @@
+// <copyright file="WorkflowCheckpointSerializer.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Buffers;
+using System.Text.Json;
+using Corvus.Text.Json;
+
+namespace Corvus.Text.Json.Arazzo.Durability;
+
+/// <summary>
+/// Turns a run's products and scalars into the single JSON checkpoint document, and back. The step-output
+/// and inputs <see cref="JsonElement"/>s serialize natively (they already exist — the executor only ever
+/// builds the genuine products), so a checkpoint is almost free; everything else is a handful of scalars.
+/// </summary>
+/// <remarks>
+/// The document shape (see <c>docs/ArazzoWorkflowEnginePlan.md</c> §9.2):
+/// <code>
+/// { "runId", "workflowId", "status", "cursor",
+///   "retryCounters": { "&lt;stepId&gt;": n },
+///   "correlationTokens": { "&lt;name&gt;": "&lt;base64&gt;" },
+///   "inputs": &lt;json&gt;,
+///   "stepOutputs": { "&lt;stepId&gt;": &lt;json&gt; },
+///   "outputs": &lt;json&gt; }   // present once the run has completed
+/// </code>
+/// </remarks>
+public static class WorkflowCheckpointSerializer
+{
+    private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
+
+    /// <summary>Serializes a run's state to the checkpoint document.</summary>
+    /// <param name="runId">The run id.</param>
+    /// <param name="workflowId">The id of the workflow the run executes.</param>
+    /// <param name="status">The run's lifecycle status.</param>
+    /// <param name="cursor">The cursor (state-machine index of the next step to run).</param>
+    /// <param name="createdAt">When the run was first created.</param>
+    /// <param name="retryCounters">The per-step retry attempt counts.</param>
+    /// <param name="correlationTokens">The correlation register (name → token bytes).</param>
+    /// <param name="inputs">The workflow inputs (an undefined element writes <c>null</c>).</param>
+    /// <param name="stepOutputs">The per-step <c>outputs</c> products.</param>
+    /// <param name="outputs">The final workflow <c>outputs</c>, if the run has completed (an undefined element omits the field).</param>
+    /// <returns>The serialized checkpoint document (UTF-8 JSON).</returns>
+    public static byte[] Serialize(
+        WorkflowRunId runId,
+        string workflowId,
+        WorkflowRunStatus status,
+        int cursor,
+        DateTimeOffset createdAt,
+        IReadOnlyDictionary<string, int> retryCounters,
+        IReadOnlyDictionary<string, byte[]> correlationTokens,
+        in JsonElement inputs,
+        IReadOnlyDictionary<string, JsonElement> stepOutputs,
+        in JsonElement outputs)
+    {
+        ArgumentNullException.ThrowIfNull(workflowId);
+        ArgumentNullException.ThrowIfNull(retryCounters);
+        ArgumentNullException.ThrowIfNull(correlationTokens);
+        ArgumentNullException.ThrowIfNull(stepOutputs);
+
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("runId"u8, runId.Value);
+            writer.WriteString("workflowId"u8, workflowId);
+            writer.WriteString("status"u8, status.ToString());
+            writer.WriteNumber("cursor"u8, cursor);
+            writer.WriteString("createdAt"u8, createdAt);
+
+            writer.WriteStartObject("retryCounters"u8);
+            foreach (KeyValuePair<string, int> counter in retryCounters)
+            {
+                writer.WriteNumber(counter.Key, counter.Value);
+            }
+
+            writer.WriteEndObject();
+
+            writer.WriteStartObject("correlationTokens"u8);
+            foreach (KeyValuePair<string, byte[]> token in correlationTokens)
+            {
+                writer.WriteBase64String(token.Key, token.Value);
+            }
+
+            writer.WriteEndObject();
+
+            writer.WritePropertyName("inputs"u8);
+            WriteValueOrNull(writer, inputs);
+
+            writer.WriteStartObject("stepOutputs"u8);
+            foreach (KeyValuePair<string, JsonElement> step in stepOutputs)
+            {
+                writer.WritePropertyName(step.Key);
+                WriteValueOrNull(writer, step.Value);
+            }
+
+            writer.WriteEndObject();
+
+            if (outputs.ValueKind != JsonValueKind.Undefined)
+            {
+                writer.WritePropertyName("outputs"u8);
+                outputs.WriteTo(writer);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        return buffer.WrittenSpan.ToArray();
+    }
+
+    /// <summary>Deserializes a checkpoint document into the run's resumable state.</summary>
+    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
+    /// <returns>
+    /// The resumable state. The returned value owns the parsed document the <see cref="WorkflowCheckpointState.Inputs"/>
+    /// and <see cref="WorkflowCheckpointState.StepOutputs"/> elements point into, so the caller must dispose it.
+    /// </returns>
+    public static WorkflowCheckpointState Deserialize(ReadOnlyMemory<byte> checkpointUtf8)
+    {
+        ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
+        try
+        {
+            JsonElement root = document.RootElement;
+
+            string runId = root.GetProperty("runId"u8).GetString() ?? string.Empty;
+            string workflowId = root.GetProperty("workflowId"u8).GetString() ?? string.Empty;
+            WorkflowRunStatus status = Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString() ?? nameof(WorkflowRunStatus.Pending));
+            int cursor = root.GetProperty("cursor"u8).GetInt32();
+            DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement)
+                ? createdAtElement.GetDateTimeOffset()
+                : default;
+
+            Dictionary<string, int> retryCounters = [];
+            if (root.TryGetProperty("retryCounters"u8, out JsonElement retryCountersElement))
+            {
+                foreach (JsonProperty<JsonElement> counter in retryCountersElement.EnumerateObject())
+                {
+                    retryCounters[counter.Name] = counter.Value.GetInt32();
+                }
+            }
+
+            Dictionary<string, byte[]> correlationTokens = [];
+            if (root.TryGetProperty("correlationTokens"u8, out JsonElement correlationTokensElement))
+            {
+                foreach (JsonProperty<JsonElement> token in correlationTokensElement.EnumerateObject())
+                {
+                    correlationTokens[token.Name] = token.Value.GetBytesFromBase64();
+                }
+            }
+
+            JsonElement inputs = root.TryGetProperty("inputs"u8, out JsonElement inputsElement) ? inputsElement : default;
+
+            Dictionary<string, JsonElement> stepOutputs = [];
+            if (root.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputsElement))
+            {
+                foreach (JsonProperty<JsonElement> step in stepOutputsElement.EnumerateObject())
+                {
+                    stepOutputs[step.Name] = step.Value;
+                }
+            }
+
+            JsonElement outputs = root.TryGetProperty("outputs"u8, out JsonElement outputsElement) ? outputsElement : default;
+
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs);
+        }
+        catch
+        {
+            document.Dispose();
+            throw;
+        }
+    }
+
+    private static void WriteValueOrNull(Utf8JsonWriter writer, in JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.Undefined)
+        {
+            writer.WriteNullValue();
+        }
+        else
+        {
+            value.WriteTo(writer);
+        }
+    }
+}
