@@ -60,6 +60,20 @@ public class Coverage_GeneratorInlinerTests
         source.ShouldContain("CompiledCriterion");
     }
 
+    [TestMethod]
+    public void Inlined_regex_is_translated_from_ecma_262_to_dotnet()
+    {
+        // Arazzo regex conditions are ECMAScript (ECMA-262), where \d is ASCII [0-9]. The inliner must
+        // translate the pattern before emitting [GeneratedRegex], so the AOT-compiled expression is the
+        // .NET-dialect equivalent rather than the raw ECMA shorthand (which .NET treats as Unicode \d).
+        string source = EmitWithSuccessCriteria(
+            """{ "context": "$response.body#/name", "type": "regex", "condition": "^\\d+$" }""");
+
+        source.ShouldContain("GeneratedRegex");
+        source.ShouldContain("[0-9]");
+        source.ShouldNotContain(@"\d");
+    }
+
     private static string EmitWithSuccessCriteria(string criterionJson)
     {
         string document = $$"""
