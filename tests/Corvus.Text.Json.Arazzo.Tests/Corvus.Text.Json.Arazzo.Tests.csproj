@@ -22,5 +22,6 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Testing\Corvus.Text.Json.AsyncApi.Testing.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Patch\Corvus.Text.Json.Patch.csproj" />
   </ItemGroup>
 </Project>
