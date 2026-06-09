@@ -60,6 +60,10 @@ public static class WorkflowExecutorEmitter
         List<StepActionInfo> workflowSuccessActions = ReadActions(workflow.SuccessActions, components);
         List<StepActionInfo> workflowFailureActions = ReadActions(workflow.FailureActions, components);
 
+        // Workflow-level parameters apply to every step as defaults (a step's own parameter of the same
+        // name overrides). Reusable $ref parameters are resolved the same way as step parameters.
+        List<StepArgument> workflowParameters = ReadArguments(workflow.Parameters, components);
+
         foreach (ArazzoDocument.StepObject step in workflow.Steps.EnumerateArray())
         {
             string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw new InvalidOperationException("A step is missing its required stepId.");
@@ -78,7 +82,7 @@ public static class WorkflowExecutorEmitter
             {
                 ValidateSubWorkflowCriteria(stepId, criteria, onSuccess, onFailure);
                 usesControlFlow |= criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0;
-                boundSteps.Add(new ControlFlowStep(stepId, null, ReadArguments(step, components), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId, dependsOn));
+                boundSteps.Add(new ControlFlowStep(stepId, null, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId, dependsOn));
                 continue;
             }
 
@@ -118,7 +122,7 @@ public static class WorkflowExecutorEmitter
             bool bindResponseBody = ReferencesResponseBody(criteria, stepOutputs, onSuccess, onFailure);
 
             boundSteps.Add(new ControlFlowStep(
-                stepId, operation, ReadArguments(step, components), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure, null, dependsOn));
+                stepId, operation, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure, null, dependsOn));
         }
 
         // A step may declare dependsOn (1.1): order steps so each step's same-workflow dependencies
@@ -203,12 +207,12 @@ public static class WorkflowExecutorEmitter
         return Compose(options, workflowId, fields.ToString(), bodyText, auxiliaryTypes.ToString(), needsContext, ReadWorkflowDependsOn(workflow), hasChannelStep);
     }
 
-    private static List<StepArgument> ReadArguments(in ArazzoDocument.StepObject step, in JsonElement components)
+    private static List<StepArgument> ReadArguments(in JsonElement parameters, in JsonElement components)
     {
         var arguments = new List<StepArgument>();
-        if (step.Parameters.IsNotUndefined())
+        if (parameters.IsNotUndefined())
         {
-            foreach (JsonElement element in step.Parameters.EnumerateArray())
+            foreach (JsonElement element in parameters.EnumerateArray())
             {
                 // A reusable-parameter reference ({reference:"$components.parameters.x", value?:…}):
                 // resolve the component parameter (name + value), letting a value on the reference
@@ -540,6 +544,35 @@ public static class WorkflowExecutorEmitter
         }
 
         return stepActions;
+    }
+
+    /// <summary>
+    /// Merges workflow-level parameter defaults into a step's arguments. A step's own argument for a given
+    /// name wins; a workflow-level default applies only when the step does not bind that name (Arazzo: a
+    /// workflow's <c>parameters</c> are "applicable for all steps").
+    /// </summary>
+    private static List<StepArgument> MergeArguments(List<StepArgument> stepArguments, IReadOnlyList<StepArgument> workflowDefaults)
+    {
+        if (workflowDefaults.Count == 0)
+        {
+            return stepArguments;
+        }
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (StepArgument argument in stepArguments)
+        {
+            names.Add(argument.Name);
+        }
+
+        foreach (StepArgument argument in workflowDefaults)
+        {
+            if (names.Add(argument.Name))
+            {
+                stepArguments.Add(argument);
+            }
+        }
+
+        return stepArguments;
     }
 
     /// <summary>
