@@ -28,6 +28,25 @@ Shape rectangle = parsedRectangle.RootElement;
 Console.WriteLine(DescribeShape(circle));
 Console.WriteLine(DescribeShape(rectangle));
 
+// Creating polymorphic shapes from a branch (issue #812)
+//
+// You don't have to hand-write JSON to construct a discriminated union. Each
+// branch exposes a strongly-typed CreateBuilder that sets the `const`
+// discriminator (`type`) for you, and the resulting mutable branch converts
+// implicitly to the union in a single hop. Because the generator recognises the
+// oneOf + const pattern, a branch value can be used wherever the union is
+// expected.
+using var ws = JsonWorkspace.Create();
+
+using var circleBuilder = Shape.RequiredRadiusAndType.CreateBuilder(ws, radius: 5.0);
+Shape builtCircle = circleBuilder.RootElement; // implicit RequiredRadiusAndType.Mutable -> Shape
+
+using var rectangleBuilder = Shape.RequiredHeightAndTypeAndWidth.CreateBuilder(ws, height: 20.0, width: 10.0);
+Shape builtRectangle = rectangleBuilder.RootElement;
+
+Console.WriteLine(DescribeShape(builtCircle));
+Console.WriteLine(DescribeShape(builtRectangle));
+
 // Pattern matching function that handles all shape types
 string DescribeShape(in Shape shape)
 {
