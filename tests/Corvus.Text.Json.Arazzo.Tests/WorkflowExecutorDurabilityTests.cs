@@ -4,9 +4,13 @@
 
 using System.Reflection;
 using System.Text;
+using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Testing;
 using Corvus.Text.Json.Arazzo.Tests.Fakes;
+using Corvus.Text.Json.Arazzo11;
+using Corvus.Text.Json.AsyncApi.CodeGeneration;
+using Corvus.Text.Json.AsyncApi.Testing;
 using Corvus.Text.Json.OpenApi;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
@@ -243,6 +247,204 @@ public partial class WorkflowExecutorEndToEndTests
             result.IsCompleted.ShouldBeTrue();
             result.Outputs.GetProperty("name"u8).GetString().ShouldBe("Charged");
         }
+    }
+
+    private const string DurableReceiveDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listenDurable",
+              "steps": [
+                { "stepId": "receive", "channelPath": "measurements", "action": "receive" }
+              ],
+              "outputs": { "lumens": "$steps.receive.outputs.lumens" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Durable_executor_suspends_on_a_receive_then_resumes_with_the_delivered_message()
+    {
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(DurableReceiveDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenDurableWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, true));
+        }
+
+        source.ShouldContain("run.TryTakeDeliveredMessage(out JsonElement");
+        source.ShouldContain("run.SuspendForMessageAsync(");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenDurableWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var store = new InMemoryWorkflowStateStore();
+        WorkflowRunId runId = "listen-1";
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+
+        // ── Run 1: no message available → the run suspends on a message wait and returns. ──
+        using (var workspace = JsonWorkspace.Create())
+        using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}")))
+        using (var run = WorkflowRun.CreateNew(store, runId, "listenDurable", inputsDocument.RootElement))
+        {
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
+                null,
+                [apiTransport, messageTransport, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+            WorkflowRunResult<JsonElement> result = await pending;
+
+            result.IsSuspended.ShouldBeTrue();
+            result.Wait.Kind.ShouldBe(WorkflowWaitKind.Message);
+            result.Wait.Channel.ShouldBe("measurements");
+        }
+
+        // ── Run 2: a worker hands the awaited message to the resumed run, which completes immediately. ──
+        using (var workspace = JsonWorkspace.Create())
+        using (ParsedJsonDocument<JsonElement> payloadDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"lumens":150}""")))
+        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, runId))
+        {
+            resumed.ShouldNotBeNull();
+            resumed.Status.ShouldBe(WorkflowRunStatus.Suspended);
+            resumed.DeliverMessage(payloadDocument.RootElement);
+
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
+                null,
+                [apiTransport, messageTransport, workspace, resumed.Inputs, resumed, default(CancellationToken)])!;
+            WorkflowRunResult<JsonElement> result = await pending;
+
+            result.IsCompleted.ShouldBeTrue();
+            result.Outputs.GetProperty("lumens"u8).GetInt32().ShouldBe(150);
+
+            // The message was consumed from the delivery handoff, not by subscribing to the transport.
+            messageTransport.PublishedMessages.Count.ShouldBe(0);
+        }
+    }
+
+    [TestMethod]
+    public async Task Worker_resumes_a_due_timer_run_to_completion()
+    {
+        string source = EmitGetPetExecutor(DurableRetryDocument, "WorkerTimerWorkflow", durable: true);
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.WorkerTimerWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var time = new MutableTimeProvider(new DateTimeOffset(2026, 8, 1, 0, 0, 0, TimeSpan.Zero));
+        var store = new InMemoryWorkflowStateStore(time);
+        WorkflowRunId runId = "worker-timer-1";
+
+        // Run 1 fails and suspends on a 60s durable timer.
+        using (var workspace = JsonWorkspace.Create())
+        using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"firstId":"1"}""")))
+        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurableRetry", inputsDocument.RootElement, time))
+        {
+            var failing = new MockApiTransport();
+            failing.SetResponse(OperationMethod.Get, "/pets/{petId}", 500, "{}");
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
+                null, [failing, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+            (await pending).IsSuspended.ShouldBeTrue();
+        }
+
+        // Before the timer is due, the worker resumes nothing.
+        var succeeding = new MockApiTransport();
+        succeeding.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Charged"}""");
+
+        async ValueTask<WorkflowRunResultKind> Resume(WorkflowRun run, CancellationToken ct)
+        {
+            using var ws = JsonWorkspace.Create();
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [succeeding, ws, run.Inputs, run, ct])!;
+            return (await pending).Kind;
+        }
+
+        var worker = new WorkflowWorker(store, "worker-1", time);
+        (await worker.ResumeDueTimersAsync(Resume, default)).ShouldBe(0);
+
+        // Once the timer is due, the worker resumes the run and it completes.
+        time.Advance(TimeSpan.FromSeconds(120));
+        (await worker.ResumeDueTimersAsync(Resume, default)).ShouldBe(1);
+
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, runId, time);
+        completed.ShouldNotBeNull();
+        completed.Status.ShouldBe(WorkflowRunStatus.Completed);
+    }
+
+    [TestMethod]
+    public async Task Worker_delivers_a_message_and_resumes_the_awaiting_run()
+    {
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(DurableReceiveDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "WorkerMessageWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, true));
+        }
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.WorkerMessageWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var store = new InMemoryWorkflowStateStore();
+        WorkflowRunId runId = "worker-msg-1";
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+
+        // Run 1 suspends awaiting a message on "measurements".
+        using (var workspace = JsonWorkspace.Create())
+        using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}")))
+        using (var run = WorkflowRun.CreateNew(store, runId, "listenDurable", inputsDocument.RootElement))
+        {
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
+                null, [apiTransport, messageTransport, workspace, inputsDocument.RootElement, run, default(CancellationToken)])!;
+            (await pending).IsSuspended.ShouldBeTrue();
+        }
+
+        async ValueTask<WorkflowRunResultKind> Resume(WorkflowRun run, CancellationToken ct)
+        {
+            using var ws = JsonWorkspace.Create();
+            var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [apiTransport, messageTransport, ws, run.Inputs, run, ct])!;
+            return (await pending).Kind;
+        }
+
+        var worker = new WorkflowWorker(store, "worker-1");
+        using (ParsedJsonDocument<JsonElement> payloadDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"lumens":150}""")))
+        {
+            int resumed = await worker.DeliverMessageAsync("measurements", null, payloadDocument.RootElement, Resume, default);
+            resumed.ShouldBe(1);
+        }
+
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, runId);
+        completed.ShouldNotBeNull();
+        completed.Status.ShouldBe(WorkflowRunStatus.Completed);
+        completed.TryGetStepOutputs("receive", out JsonElement received).ShouldBeTrue();
+        received.GetProperty("lumens"u8).GetInt32().ShouldBe(150);
     }
 
     [TestMethod]
