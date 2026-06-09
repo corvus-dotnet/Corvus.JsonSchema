@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Corvus.Text;
+using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.JsonPath;
 
 namespace Corvus.Text.Json.Arazzo;
@@ -110,7 +111,9 @@ public sealed class CompiledCriterion
                     return new CompiledCriterion(type, null, null, timeout, null, CompiledInterpolationTemplate.Compile(condition), ctx, true);
                 }
 
-                return new CompiledCriterion(type, null, new Regex(condition, RegexOptions.CultureInvariant, timeout), timeout, null, null, ctx, false);
+                // Arazzo regex conditions are ECMAScript (ECMA-262); translate to the equivalent .NET
+                // pattern before compiling (the same translator the generated [GeneratedRegex] path uses).
+                return new CompiledCriterion(type, null, new Regex(EcmaRegexTranslator.TranslateOrFallback(condition), RegexOptions.CultureInvariant, timeout), timeout, null, null, ctx, false);
             }
 
             case CriterionType.JsonPath:
@@ -241,7 +244,8 @@ public sealed class CompiledCriterion
                     return false;
                 }
 
-                string pattern = Encoding.UTF8.GetString(builder.AsSpan());
+                // The interpolated pattern is still ECMAScript (ECMA-262) — translate it before matching.
+                string pattern = EcmaRegexTranslator.TranslateOrFallback(Encoding.UTF8.GetString(builder.AsSpan()));
                 return Regex.IsMatch(input, pattern, RegexOptions.CultureInvariant, this.regexTimeout);
             }
             finally

@@ -4,6 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.Arazzo;
+using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
@@ -111,8 +112,13 @@ internal static class RegexCriterionInliner
             return false;
         }
 
+        // Arazzo regex conditions are ECMAScript (ECMA-262) — translate to the equivalent .NET pattern
+        // ahead of time (the same translator the JSON Schema generators use), so the source-generated
+        // [GeneratedRegex] compiles a dialect-correct expression. Translation that fails falls back to the
+        // original pattern verbatim.
+        string netPattern = EcmaRegexTranslator.TranslateOrFallback(pattern);
         string method = $"{tmpPrefix}Regex";
-        members.Append("[GeneratedRegex(").Append(EmitText.Quote(pattern)).AppendLine(", RegexOptions.CultureInvariant, 1000)]");
+        members.Append("[GeneratedRegex(").Append(EmitText.Quote(netPattern)).AppendLine(", RegexOptions.CultureInvariant, 1000)]");
         members.Append("private static partial Regex ").Append(method).AppendLine("();");
 
         statements = statementBuilder.ToString();

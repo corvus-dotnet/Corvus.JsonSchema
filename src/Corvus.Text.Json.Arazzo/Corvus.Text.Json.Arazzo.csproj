@@ -24,6 +24,10 @@
          as Corvus.Text.Json.JsonLogic / .Toon / .Jsonata do. -->
     <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.cs" Link="Common\Utf8ValueStringBuilder.cs" />
     <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.AppendHelpers.cs" Link="Common\Utf8ValueStringBuilder.AppendHelpers.cs" />
+    <!-- Share the codegen layer's ECMAScript→.NET regex translator as source (it has no codegen
+         dependencies), so the interpreted CompiledCriterion evaluates regex conditions in the spec's
+         ECMA-262 dialect — the same translation the inlined [GeneratedRegex] path applies at gen time. -->
+    <Compile Include="..\Corvus.Text.Json.CodeGeneration\EcmaRegexTranslator.cs" Link="Internal\EcmaRegexTranslator.cs" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Tests" />
