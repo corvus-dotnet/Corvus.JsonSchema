@@ -192,17 +192,24 @@ internal static class ReplyTemplateEmitter
                 if (value.StartsWith('$'))
                 {
                     (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(value);
-                    if (CriterionExpressionParsing.TryEmitElementNavigation(
-                            expression, navigationPointer, $"{baseName}E", sources, inputsVariable, stepOutputLocals, inputAccessors, statements, out string elementLocal))
-                    {
-                        return elementLocal;
-                    }
 
-                    throw new NotSupportedException(
-                        $"Request/reply receive step '{stepId}' has a reply value '{value}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.");
+                    // A leading-'$' string that matches a recognized runtime-expression source must resolve;
+                    // one that matches none is a literal (no '$' escape exists, and the runtime parser treats
+                    // an unrecognized '$'-form as a literal) — fall through to the constant bake below.
+                    if (expression.Source != ArazzoExpressionSource.Literal)
+                    {
+                        if (CriterionExpressionParsing.TryEmitElementNavigation(
+                                expression, navigationPointer, $"{baseName}E", sources, inputsVariable, stepOutputLocals, inputAccessors, statements, out string elementLocal))
+                        {
+                            return elementLocal;
+                        }
+
+                        throw new NotSupportedException(
+                            $"Request/reply receive step '{stepId}' has a reply value '{value}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.");
+                    }
                 }
 
-                // A literal string that merely contains a '$' elsewhere — bake it as a constant.
+                // A constant string (plain, or a leading-'$' form that is not a runtime expression).
                 return EmitConstant(raw, fields, $"{baseName}Const");
             }
 
