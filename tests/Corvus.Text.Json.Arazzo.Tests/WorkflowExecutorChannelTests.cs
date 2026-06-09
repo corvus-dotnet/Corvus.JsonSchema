@@ -92,6 +92,79 @@ public partial class WorkflowExecutorEndToEndTests
         Encoding.UTF8.GetString(messageTransport.PublishedMessages[0].PayloadBytes).ShouldContain("hi");
     }
 
+    private const string ChannelRequestReplyDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "ask",
+              "steps": [
+                {
+                  "stepId": "query",
+                  "channelPath": "queries",
+                  "action": "send",
+                  "requestBody": { "payload": "$inputs.q" },
+                  "outputs": { "answer": "$message.payload#/answer" }
+                }
+              ],
+              "outputs": { "answer": "$steps.query.outputs.answer" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_performs_request_reply_and_captures_the_reply()
+    {
+        // A request/reply descriptor: a send operation that declares a reply, so the producer exposes a
+        // SendAndReceive method returning the reply payload.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "queries",
+            OperationAction.Send,
+            "query",
+            "Acme.Rpc.QueryProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("query", "Corvus.Text.Json.JsonElement", null, null, "PublishQueryAsync", "SendAndReceiveQueryAsync")],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelRequestReplyDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "AskWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The step calls the producer's request/reply method and projects the reply.
+        source.ShouldContain("new Acme.Rpc.QueryProducer(messageTransport)");
+        source.ShouldContain(".SendAndReceiveQueryAsync(");
+        source.ShouldContain("JsonElement queryReplyPayload = JsonElement.From(queryReply)");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AskWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"q":{"text":"meaning"}}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        JsonElement outputs = await pending;
+
+        // The reply's projected field flowed to the workflow output.
+        outputs.TryGetProperty("answer"u8, out JsonElement answer).ShouldBeTrue();
+        answer.GetInt32().ShouldBe(42);
+    }
+
     private const string ChannelReceiveDocument = """
         {
           "arazzo": "1.1.0",

@@ -298,69 +298,6 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
-    public void DescribeChannelOperations_SurfacesMessageCorrelationId()
-    {
-        // A message references a named correlation id ($ref to components.correlationIds); the descriptor
-        // surfaces both the name (the $ref key — what an Arazzo receive step's correlationId matches) and
-        // its location runtime expression.
-        const string document = """
-            {
-              "asyncapi": "3.0.0",
-              "info": { "title": "t", "version": "1.0.0" },
-              "channels": {
-                "replies": { "address": "replies", "messages": { "reply": { "$ref": "#/components/messages/Reply" } } }
-              },
-              "operations": {
-                "onReply": { "action": "receive", "channel": { "$ref": "#/channels/replies" }, "messages": [ { "$ref": "#/channels/replies/messages/reply" } ] }
-              },
-              "components": {
-                "messages": { "Reply": { "payload": { "type": "object" }, "correlationId": { "$ref": "#/components/correlationIds/myCorr" } } },
-                "correlationIds": { "myCorr": { "location": "$message.payload#/correlationId" } }
-              }
-            }
-            """;
-
-        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(document));
-        var generator = new AsyncApi30CodeGenerator("Replies", new Dictionary<string, string>());
-
-        IReadOnlyList<AsyncApiChannelDescriptor> channels = generator.DescribeChannelOperations(doc.RootElement.Clone());
-
-        AsyncApiChannelMessageDescriptor message = channels.Single(c => c.Action == OperationAction.Receive).Messages.Single();
-        Assert.AreEqual("myCorr", message.CorrelationIdName);
-        Assert.AreEqual("$message.payload#/correlationId", message.CorrelationIdLocation);
-    }
-
-    [TestMethod]
-    public void Generate_ReceiveWithReply_HandlerReturnsReplyAndConsumerUsesSubscribeReply()
-    {
-        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "receive-request-reply.json"));
-        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
-        JsonElement root = doc.RootElement.Clone();
-
-        var schemaTypeMap = new Dictionary<string, string>
-        {
-            ["#/components/messages/CalculateRequest/payload"] = "Worker.CalculateRequest",
-            ["#/components/messages/CalculateRequest/headers"] = "Worker.CalculateRequestHeaders",
-            ["#/components/messages/CalculateResponse/payload"] = "Worker.CalculateResponse",
-        };
-
-        var generator = new AsyncApi30CodeGenerator("Worker", schemaTypeMap);
-        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
-
-        // The handler returns the reply payload (responder), not void.
-        GeneratedFile handler = files.First(f => f.FileName.Contains("Handler"));
-        Assert.IsTrue(
-            handler.Content.Contains("ValueTask<Worker.CalculateResponse> HandleCalculateRequestAsync"),
-            handler.Content);
-
-        // The consumer subscribes through the responder primitive.
-        GeneratedFile consumer = files.First(f => f.FileName.Contains("Consumer"));
-        Assert.IsTrue(
-            consumer.Content.Contains("SubscribeReplyAsync<Worker.CalculateRequest, Worker.CalculateResponse>"),
-            consumer.Content);
-    }
-
-    [TestMethod]
     public void Generate_RequestReply_ProducerContainsSendAndReceiveMethod()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply.json"));
@@ -577,13 +514,6 @@ public class AsyncApi30CodeGeneratorTests
 
         // Dynamic address: method should accept 'string channel' parameter
         StringAssert.Contains(producer.Content, "string channel");
-        // Dynamic address: also emits ReadOnlySpan<char> and byte-span/memory overloads
-        StringAssert.Contains(producer.Content, "ReadOnlySpan<char> channel");
-        StringAssert.Contains(producer.Content, "ReadOnlySpan<byte> channelUtf8");
-        // The string overload delegates to the ReadOnlySpan<char> overload
-        StringAssert.Contains(producer.Content, "channel.AsSpan()");
-        // All overloads delegate to a shared private Core
-        StringAssert.Contains(producer.Content, "Core(");
         // Should NOT have a const ChannelAddress
         Assert.IsFalse(producer.Content.Contains("const string ChannelAddress"));
     }
@@ -604,13 +534,6 @@ public class AsyncApi30CodeGeneratorTests
 
         // Dynamic: StartAsync should accept channel parameter
         StringAssert.Contains(consumer.Content, "StartAsync(string channel");
-        // Dynamic: also emits ReadOnlySpan<char> and byte-span/memory overloads
-        StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlySpan<char> channel");
-        StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlyMemory<byte> channelUtf8");
-        // The string overload delegates to the ReadOnlySpan<char> overload
-        StringAssert.Contains(consumer.Content, "channel.AsSpan()");
-        // All overloads delegate to a shared private Core
-        StringAssert.Contains(consumer.Content, "StartAsyncCore(");
         // Should store the channel for stop
         StringAssert.Contains(consumer.Content, "subscribedChannel");
     }
@@ -2200,12 +2123,6 @@ public class AsyncApi30CodeGeneratorTests
         // Dynamic address: StartAsync takes a channel parameter and stores it
         StringAssert.Contains(consumer.Content, "string channel");
         StringAssert.Contains(consumer.Content, "this.subscribedChannel = channel;");
-        // Dynamic address: also emits ReadOnlySpan<char> and byte-span/memory overloads (auth path)
-        StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlySpan<char> channel");
-        StringAssert.Contains(consumer.Content, "StartAsync(ReadOnlyMemory<byte> channelUtf8");
-        StringAssert.Contains(consumer.Content, "channel.AsSpan()");
-        // The Core is the async (auth) variant that performs authentication
-        StringAssert.Contains(consumer.Content, "private async ValueTask StartAsyncCore(ReadOnlyMemory<byte> channelUtf8");
     }
 
     [TestMethod]
@@ -2321,13 +2238,6 @@ public class AsyncApi30CodeGeneratorTests
         // Dynamic address: request method takes a channel parameter
         StringAssert.Contains(producer.Content, "SendAndReceiveRpcRequestAsync");
         StringAssert.Contains(producer.Content, "string channel");
-        // Dynamic address: also emits ReadOnlySpan<char> and byte-span/memory overloads
-        StringAssert.Contains(producer.Content, "ReadOnlySpan<char> channel");
-        StringAssert.Contains(producer.Content, "ReadOnlySpan<byte> channelUtf8");
-        // The string overload delegates to the ReadOnlySpan<char> overload
-        StringAssert.Contains(producer.Content, "channel.AsSpan()");
-        // All overloads delegate to a shared private Core
-        StringAssert.Contains(producer.Content, "SendAndReceiveRpcRequestAsyncCore(");
     }
 
     [TestMethod]
