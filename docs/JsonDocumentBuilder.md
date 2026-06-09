@@ -316,6 +316,25 @@ Console.WriteLine(holder.RootElement.ToString());
 // {"shape":{"kind":"Circle","radius":2.5}}
 ```
 
+You can also *build* the branch inline rather than starting from an existing instance, by passing the
+result of the branch's `Build(...)` straight in — it converts implicitly to the union's `Source`:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using JsonDocumentBuilder<ShapeHolder.Mutable> holder = ShapeHolder.CreateBuilder(
+    workspace,
+    ShapeHolder.Circle.Build(static (ref ShapeHolder.Circle.Builder b) =>
+    {
+        b.AddProperty("kind"u8, "Circle"u8);
+        b.AddProperty("radius"u8, 2.5);
+    }));
+```
+
+So a branch flows into a containing type wherever its `Source` is expected, in three forms — a branch
+**instance**, a branch **builder delegate** (`new ShapeHolder.Shape.Source(buildDelegate)`), and the
+**result of `Branch.Build(...)`** (a `Branch.Source`), as shown above.
+
 This works for *pure* `oneOf`/`anyOf` unions (branches discriminated by structure) and for unions whose
 base schema carries a single required `const` discriminator that every branch repeats — the common
 "tagged union" shape used by OpenAPI discriminators and JSON Patch operations. Non-structural keywords

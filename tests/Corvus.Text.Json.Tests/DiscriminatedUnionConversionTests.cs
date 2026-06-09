@@ -67,4 +67,26 @@ public class DiscriminatedUnionConversionTests
         Assert.IsTrue(shape.TryGetAsCircle(out ShapeHolder.Circle built));
         Assert.AreEqual(2.5, (double)built.Radius);
     }
+
+    [TestMethod]
+    public void Constituent_BuiltInline_FlowsIntoContainingTypeBuild()
+    {
+        // Issue #812: build a branch with Circle.Build(...) and pass the result straight into a
+        // containing type's CreateBuilder for the union property, with no intermediate document.
+        using JsonWorkspace ws = JsonWorkspace.Create();
+
+        using JsonDocumentBuilder<ShapeHolder.Mutable> holderBuilder = ShapeHolder.CreateBuilder(
+            ws,
+            ShapeHolder.Circle.Build(static (ref ShapeHolder.Circle.Builder b) =>
+            {
+                b.AddProperty("kind"u8, "Circle"u8);
+                b.AddProperty("radius"u8, 2.5);
+            }));
+        ShapeHolder.Mutable holder = holderBuilder.RootElement;
+
+        ShapeHolder.Shape shape = holder.ShapeValue;
+        Assert.AreEqual("Circle", (string)shape.Kind);
+        Assert.IsTrue(shape.TryGetAsCircle(out ShapeHolder.Circle built));
+        Assert.AreEqual(2.5, (double)built.Radius);
+    }
 }

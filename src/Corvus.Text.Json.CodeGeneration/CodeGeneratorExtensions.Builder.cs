@@ -399,6 +399,17 @@ internal static partial class CodeGeneratorExtensions
                 }
             }
 
+            if (!forContext && composedBuilder.SourceKindName is not null && composedBuilder.SourceInstanceName is not null && seenKinds.Add(composedBuilder.SourceKindName))
+            {
+                // #812: build the value by delegating to the stored constituent Source.
+                generator
+                    .AppendLineIndent("case Kind.", composedBuilder.SourceKindName, ":")
+                    .PushIndent()
+                        .AppendLineIndent("_", composedBuilder.SourceInstanceName, ".AddAsItem(ref valueBuilder);")
+                        .AppendLineIndent("break;")
+                    .PopIndent();
+            }
+
             if (composedBuilder.ArrayInstanceName is not null && composedBuilder.ArrayKindName is not null)
             {
                 if (seenKinds.Add(composedBuilder.ArrayKindName))
@@ -841,6 +852,17 @@ internal static partial class CodeGeneratorExtensions
                 }
             }
 
+            if (!forContext && composedBuilder.SourceKindName is not null && composedBuilder.SourceInstanceName is not null && seenKinds.Add(composedBuilder.SourceKindName))
+            {
+                // #812: build the value by delegating to the stored constituent Source.
+                generator
+                    .AppendLineIndent("case Kind.", composedBuilder.SourceKindName, ":")
+                    .PushIndent()
+                        .AppendLineIndent("_", composedBuilder.SourceInstanceName, ".AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);")
+                        .AppendLineIndent("break;")
+                    .PopIndent();
+            }
+
             if (composedBuilder.ArrayInstanceName is not null && composedBuilder.ArrayKindName is not null && composedBuilder.ArrayBuilderName is not null)
             {
                 if (seenKinds.Add(composedBuilder.ArrayKindName))
@@ -1273,6 +1295,17 @@ internal static partial class CodeGeneratorExtensions
                             .PopIndent();
                     }
                 }
+            }
+
+            if (!forContext && composedBuilder.SourceKindName is not null && composedBuilder.SourceInstanceName is not null && seenKinds.Add(composedBuilder.SourceKindName))
+            {
+                // #812: build the value by delegating to the stored constituent Source.
+                generator
+                    .AppendLineIndent("case Kind.", composedBuilder.SourceKindName, ":")
+                    .PushIndent()
+                        .AppendLineIndent("_", composedBuilder.SourceInstanceName, ".AddAsProperty(", nameName, ", ref valueBuilder", includeEscaping ? ", escapeName, nameRequiresUnescaping" : "", ");")
+                        .AppendLineIndent("break;")
+                    .PopIndent();
             }
 
             if (composedBuilder.ArrayInstanceName is not null && composedBuilder.ArrayKindName is not null && composedBuilder.ArrayBuilderName is not null)
@@ -3813,6 +3846,26 @@ internal static partial class CodeGeneratorExtensions
                 }
             }
 
+            if (!forContext && composedBuilder.SourceInstanceName is not null && composedBuilder.SourceKindName is not null)
+            {
+                // #812: construct this union's Source from a constituent's own Source (e.g. the result
+                // of Constituent.Build(...)). The parameter is by value (not 'in'): the implicit
+                // conversion operator passes a by-value local, so a by-value copy keeps it ref-safe.
+                string fqdtn = composedBuilder.TypeDeclaration.FullyQualifiedDotnetTypeName();
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent(
+                        "public ", generator.SourceClassName(), "(",
+                        fqdtn,
+                        ".",
+                        generator.SourceClassName(fqdtn),
+                        " value) { _",
+                        composedBuilder.SourceInstanceName,
+                        " = value; _kind = Kind.",
+                        composedBuilder.SourceKindName,
+                        "; }");
+            }
+
             if (composedBuilder.ArrayInstanceName is not null && composedBuilder.ArrayKindName is not null)
             {
                 string fqdtn = composedBuilder.TypeDeclaration.FullyQualifiedDotnetTypeName();
@@ -3981,6 +4034,21 @@ internal static partial class CodeGeneratorExtensions
                                 "public static implicit operator ", generator.SourceClassName(), "(",
                                 fqdtn,
                                 " instance) => new(JsonElement.From(instance));");
+                }
+
+                // #812: also convert the constituent's own Source (e.g. the result of
+                // Constituent.Build(...)) so it can be passed wherever this union's Source is expected.
+                if (composedBuilder.SourceKindName is not null && seenConversionOperators.Add($"{fqdtn}.{generator.SourceClassName(fqdtn)}"))
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                            .AppendLineIndent(
+                                "public static implicit operator ", generator.SourceClassName(), "(",
+                                fqdtn,
+                                ".",
+                                generator.SourceClassName(fqdtn),
+                                " value) => new(value);");
                 }
             }
         }
@@ -4247,6 +4315,23 @@ internal static partial class CodeGeneratorExtensions
                         oin,
                         ";");
                 }
+            }
+
+            if (!forContext && builder.SourceInstanceName is string sin)
+            {
+                // #812: a by-value backing field for the constituent's own Source, so the result of
+                // Constituent.Build(...) can be stored in (and built through) this union's Source.
+                string fqdtn = builder.TypeDeclaration.FullyQualifiedDotnetTypeName();
+                generator
+                    .ReserveNameIfNotReserved($"_{sin}")
+                    .AppendLineIndent(
+                    "private readonly ",
+                    fqdtn,
+                    ".",
+                    generator.SourceClassName(fqdtn),
+                    " _",
+                    sin,
+                    ";");
             }
 
             if (builder.ArrayInstanceName is string ain)
@@ -4940,6 +5025,9 @@ internal static partial class CodeGeneratorExtensions
             string? stringFormat = null;
             string? numericFormat = null;
 
+            string? sourceKindName = null;
+            string? sourceInstanceName = null;
+
             if (isString)
             {
                 stringFormat = t.Format();
@@ -5013,6 +5101,19 @@ internal static partial class CodeGeneratorExtensions
 
                     generator
                         .AppendLineIndent(objectKindName, ",");
+
+                    // #812: when the constituent object-builder wiring is enabled (a pure oneOf, or a
+                    // discriminated union), also surface the constituent's own Source through the
+                    // union's Source, so the result of Constituent.Build(...) can be passed wherever
+                    // the union's Source is expected.
+                    if (!typeDeclaration.HasPropertyDeclarations || typeDeclaration.ConstituentBuildYieldsValidInstance())
+                    {
+                        sourceKindName = generator.GetUniqueMethodNameInScope(t.DotnetTypeName(), suffix: "Source");
+                        sourceInstanceName = generator.GetUniqueFieldNameInScope(sourceKindName, suffix: "Instance");
+
+                        generator
+                            .AppendLineIndent(sourceKindName, ",");
+                    }
                 }
                 else
                 {
@@ -5022,7 +5123,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (shouldAdd)
             {
-                builders.Add(new(t, arrayKindName, objectKindName, arrayInstanceName, objectInstanceName, objectBuilderName, arrayBuilderName, numericArrayKindName, numericArrayTypeName, stringFormat, numericFormat));
+                builders.Add(new(t, arrayKindName, objectKindName, arrayInstanceName, objectInstanceName, objectBuilderName, arrayBuilderName, numericArrayKindName, numericArrayTypeName, stringFormat, numericFormat, sourceKindName, sourceInstanceName));
             }
         }
 
@@ -5289,7 +5390,9 @@ internal static partial class CodeGeneratorExtensions
             string? numericArrayKindName,
             NumericTypeName? numericArrayTypeName,
             string? stringFormat,
-            string? numericFormat)
+            string? numericFormat,
+            string? sourceKindName = null,
+            string? sourceInstanceName = null)
         {
             TypeDeclaration = typeDeclaration;
             ArrayKindName = arrayKindName;
@@ -5302,6 +5405,8 @@ internal static partial class CodeGeneratorExtensions
             NumericArrayTypeName = numericArrayTypeName;
             StringFormat = stringFormat;
             NumericFormat = numericFormat;
+            SourceKindName = sourceKindName;
+            SourceInstanceName = sourceInstanceName;
         }
 
         public string? ArrayBuilderName { get; }
@@ -5329,5 +5434,17 @@ internal static partial class CodeGeneratorExtensions
         public string? StringFormat { get; }
 
         public TypeDeclaration TypeDeclaration { get; }
+
+        /// <summary>
+        /// Gets the <c>Kind</c> enum value name for surfacing this constituent's own <c>Source</c>
+        /// (e.g. the result of <c>Constituent.Build(...)</c>) through the union's <c>Source</c>.
+        /// Non-null only for a discriminated-union object constituent (issue #812).
+        /// </summary>
+        public string? SourceKindName { get; }
+
+        /// <summary>
+        /// Gets the backing-field name for <see cref="SourceKindName"/>.
+        /// </summary>
+        public string? SourceInstanceName { get; }
     }
 }
