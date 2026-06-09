@@ -140,8 +140,11 @@ public static class MessageTransportReceiveExtensions
                 }
                 catch (Exception ex)
                 {
+                    // Capture the failure for the awaiting workflow, then let it propagate to the transport
+                    // so its error policy suppresses the reply rather than publishing an Undefined default
+                    // — a failed responder sends no reply (the requester times out), like a failed consumer.
                     failure = ExceptionDispatchInfo.Capture(ex);
-                    return default;
+                    throw;
                 }
                 finally
                 {
