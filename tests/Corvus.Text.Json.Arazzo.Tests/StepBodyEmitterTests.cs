@@ -80,6 +80,28 @@ public class StepBodyEmitterTests
     }
 
     [TestMethod]
+    public void Binds_a_literal_null_request_body()
+    {
+        StepBodyCode code = StepBodyEmitter.Emit(
+            "createPet",
+            CreatePet,
+            [],
+            [],
+            [],
+            "transport",
+            "workspace",
+            "context",
+            "cancellationToken",
+            NoSteps,
+            "inputs",
+            null,
+            "Acme.Pets",
+            new StepBody(string.Empty, ArgumentValueKind.LiteralNull));
+
+        code.Statements.ShouldContain("Acme.Pets.Pet.Source.Null()");
+    }
+
+    [TestMethod]
     public void Invokes_the_generated_client_method_with_named_arguments()
     {
         StepBodyCode code = Emit([]);
