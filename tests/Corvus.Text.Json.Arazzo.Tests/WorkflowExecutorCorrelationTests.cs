@@ -133,7 +133,7 @@ public partial class WorkflowExecutorEndToEndTests
         // The send runs synchronously and registers token "abc-123"; the receive then subscribes to "replies".
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
 
         // A message carrying the wrong correlation token is ignored; the receive keeps waiting...
         await messageTransport.DeliverAsync<JsonElement>("replies", Encoding.UTF8.GetBytes("""{"correlationId":"WRONG","v":1}"""));
@@ -170,7 +170,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
 
         await messageTransport.DeliverAsync<JsonElement>("replies", Encoding.UTF8.GetBytes("""{"correlationId":"WRONG","v":1}"""));
         await messageTransport.DeliverAsync<JsonElement>("replies", Encoding.UTF8.GetBytes("""{"correlationId":"abc-123","v":42}"""));
@@ -214,7 +214,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
 
         WorkflowStepFailedException? caught = null;
         try
@@ -230,7 +230,7 @@ public partial class WorkflowExecutorEndToEndTests
         caught!.Message.ShouldContain("correlation");
     }
 
-    private static string EmitCorrelation(string document, string correlationLocation = "$message.payload#/correlationId", bool durable = false)
+    private static string EmitCorrelation(string document, string correlationLocation = "$message.payload#/correlationId")
     {
         var send = new AsyncApiChannelDescriptor(
             "notifications",
@@ -257,23 +257,6 @@ public partial class WorkflowExecutorEndToEndTests
         return WorkflowExecutorEmitter.Emit(
             workflow,
             binder,
-            new WorkflowExecutorOptions("GeneratedWorkflows", "CorrelateWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, durable));
-    }
-
-    [TestMethod]
-    public void Durable_correlated_receive_suspends_on_a_message_wait()
-    {
-        // A durable correlated receive: with a run present it either consumes a worker-delivered message or
-        // checkpoints a message wait (guarded by a registered correlation token) and returns Suspended.
-        string source = EmitCorrelation(CorrelationDocument, durable: true);
-
-        source.ShouldContain("if (run.TryTakeDeliveredMessage(out JsonElement");
-        source.ShouldContain("else if (correlationTokens.TryGetValue(\"corr\"");
-        source.ShouldContain("await run.SuspendForMessageAsync(");
-        source.ShouldContain(".Suspended(");
-
-        // Compiles (the durable correlated receive shape is valid C#).
-        Assembly assembly = CompileInMemory(source);
-        assembly.GetType("GeneratedWorkflows.CorrelateWorkflow").ShouldNotBeNull();
+            new WorkflowExecutorOptions("GeneratedWorkflows", "CorrelateWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
     }
 }
