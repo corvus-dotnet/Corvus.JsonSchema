@@ -6,6 +6,8 @@ using System.Text;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo11;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
+using Corvus.Text.Json.OpenApi;
+using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -97,6 +99,68 @@ public class Coverage_GeneratorEmitterTests
             """);
 
         source.ShouldContain("ChildWorkflow");
+    }
+
+    [TestMethod]
+    public void Workflow_level_parameter_applies_to_a_step_that_omits_it()
+    {
+        // The step has no petId of its own; the workflow-level default supplies it.
+        string source = EmitOperationWorkflow(
+            """ "parameters": [ { "name": "petId", "value": "$inputs.fromWorkflow" } ], """,
+            string.Empty);
+
+        source.ShouldContain("petId:");
+        source.ShouldContain("fromWorkflow");
+    }
+
+    [TestMethod]
+    public void Step_parameter_overrides_the_workflow_level_default()
+    {
+        // Both scopes bind petId; the step's value wins and the workflow default is not applied.
+        string source = EmitOperationWorkflow(
+            """ "parameters": [ { "name": "petId", "value": "$inputs.fromWorkflow" } ], """,
+            """ , "parameters": [ { "name": "petId", "value": "$inputs.fromStep" } ] """);
+
+        source.ShouldContain("fromStep");
+        source.ShouldNotContain("fromWorkflow");
+    }
+
+    private static string EmitOperationWorkflow(string workflowParametersClause, string stepParametersClause)
+    {
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets/{petId}",
+                OperationMethod.Get,
+                "getPet",
+                "GetPet",
+                "Acme.Pets.GetPetRequest",
+                "Acme.Pets.GetPetResponse",
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", true, "petId")],
+                false,
+                [new ResponseDescriptor("200", "Acme.Pets.Pet", "OkBody")],
+                "Acme.Pets.PetsClient",
+                "GetPetAsync",
+                null),
+        ];
+
+        var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
+
+        string doc = $$"""
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+              "workflows": [ { "workflowId": "adopt", {{workflowParametersClause}} "steps": [ { "stepId": "getPet", "operationId": "getPet" {{stepParametersClause}} } ], "outputs": {} } ]
+            }
+            """;
+
+        using var parsed = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(doc));
+        ArazzoDocument.WorkflowObject workflow = parsed.RootElement.Workflows.EnumerateArray().First();
+        return WorkflowExecutorEmitter.Emit(
+            workflow,
+            binder,
+            new WorkflowExecutorOptions("Acme.Pets.Workflows", "AdoptWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
     }
 
     private static string Emit(WorkflowOperationBinder binder, string stepJson)
