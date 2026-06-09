@@ -111,10 +111,46 @@ public static class WorkflowExecutorEmitter
                 usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
                 hasChannelStep = true;
 
+                // A receive step may declare a correlationId (1.1) naming an AsyncAPI Correlation ID, so it
+                // only accepts a message carrying the token a prior send registered under that name. The
+                // token's location comes from the channel message's correlation id in the AsyncAPI document.
+                string? correlationName = ReadCorrelationId(step);
+                string? correlationLocation = null;
+                if (correlationName is not null)
+                {
+                    if (!isReceive)
+                    {
+                        throw new NotSupportedException(
+                            $"Channel step '{stepId}' declares a correlationId but is not a receive step; per the Arazzo specification correlationId applies only to AsyncAPI steps with action 'receive'.");
+                    }
+
+                    if (isRequestReply)
+                    {
+                        throw new NotSupportedException(
+                            $"Channel step '{stepId}' declares a correlationId on a request/reply (responder) step; request/reply correlation is handled by the transport, so a step-level correlationId applies only to plain receive steps.");
+                    }
+
+                    string rawLocation = ResolveCorrelationLocation(channel.Channel, correlationName)
+                        ?? throw new NotSupportedException(
+                            $"Channel step '{stepId}' declares correlationId '{correlationName}', but the channel's message defines no correlation id of that name (it must be in-sync with a correlationId defined in the AsyncAPI document).");
+
+                    // The correlation token must live in the message payload: the matching send step publishes
+                    // a payload (its requestBody) the engine can read the token from, but it does not set
+                    // message headers — so a header-located correlation cannot be captured.
+                    AsyncApi.CodeGeneration.AsyncApiRuntimeExpression locationExpression = AsyncApi.CodeGeneration.AsyncApiRuntimeExpression.Parse(rawLocation);
+                    if (locationExpression.Kind != AsyncApi.CodeGeneration.AsyncApiRuntimeExpressionKind.MessagePayload || locationExpression.JsonPointer is not { } pointer)
+                    {
+                        throw new NotSupportedException(
+                            $"Channel step '{stepId}' correlationId '{correlationName}' has location '{rawLocation}'; only $message.payload#/… correlation locations are supported (the workflow's send step cannot set message headers).");
+                    }
+
+                    correlationLocation = pointer;
+                }
+
                 // A channel step's parameters supply the channel address placeholders (parameterised
                 // channels); workflow-level parameter defaults apply here too.
                 List<StepArgument> channelArguments = MergeArguments(ReadArguments(step.Parameters, components), workflowParameters);
-                boundSteps.Add(new ControlFlowStep(stepId, null, channelArguments, criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel, timeout));
+                boundSteps.Add(new ControlFlowStep(stepId, null, channelArguments, criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel, timeout, correlationName, correlationLocation));
                 continue;
             }
 
@@ -138,9 +174,26 @@ public static class WorkflowExecutorEmitter
         // precede it. Sequential executors must honour this; document order is used as the tie-break.
         boundSteps = TopologicallyOrder(boundSteps);
 
+        // When a receive step correlates (1.1 correlationId), a per-execution register links the token a
+        // prior send published to the response this receive waits for; it is keyed by correlation id name.
+        bool usesCorrelation = false;
+        foreach (ControlFlowStep boundStep in boundSteps)
+        {
+            if (boundStep.CorrelationName is not null)
+            {
+                usesCorrelation = true;
+                break;
+            }
+        }
+
+        if (usesCorrelation)
+        {
+            body.AppendLine("            System.Collections.Generic.Dictionary<string, byte[]> correlationTokens = new(System.StringComparer.Ordinal);");
+        }
+
         if (usesControlFlow)
         {
-            ControlFlowEmitter.Emit(boundSteps, workflow, options, fields, body, auxiliaryTypes, stepOutputLocals);
+            ControlFlowEmitter.Emit(boundSteps, workflow, options, fields, body, auxiliaryTypes, stepOutputLocals, usesCorrelation);
         }
         else
         {
@@ -154,7 +207,7 @@ public static class WorkflowExecutorEmitter
                     {
                         string receiveStatements = ReceiveChannelStepEmitter.Emit(
                             step.StepId, channelStep, "messageTransport", step.Outputs, step.SuccessCriteria, step.RequestBody, step.Arguments, "workspace",
-                            stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace);
+                            stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, step.CorrelationName, step.CorrelationLocation);
                         AppendIndented(body, receiveStatements, 12);
                         stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
                         body.AppendLine();
@@ -163,7 +216,7 @@ public static class WorkflowExecutorEmitter
 
                     string sendStatements = SendChannelStepEmitter.Emit(
                         step.StepId, channelStep, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, "messageTransport", "workspace",
-                        stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace);
+                        stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, captureCorrelation: usesCorrelation);
                     AppendIndented(body, sendStatements, 12);
 
                     // A request/reply send captures the reply as the step's outputs.
@@ -365,6 +418,24 @@ public static class WorkflowExecutorEmitter
 
     private static int? ReadTimeout(in ArazzoDocument.StepObject step)
         => step.Timeout.IsNotUndefined() && ((JsonElement)step.Timeout).TryGetInt32(out int milliseconds) ? milliseconds : null;
+
+    private static string? ReadCorrelationId(in ArazzoDocument.StepObject step)
+        => step.CorrelationId.IsNotUndefined() ? step.CorrelationId.GetString() : null;
+
+    // Resolves the correlation token's location runtime expression for a receive step's correlationId by
+    // finding the channel message that declares an AsyncAPI Correlation ID of that name.
+    private static string? ResolveCorrelationLocation(in AsyncApi.CodeGeneration.AsyncApiChannelDescriptor channel, string correlationName)
+    {
+        foreach (AsyncApi.CodeGeneration.AsyncApiChannelMessageDescriptor message in channel.Messages)
+        {
+            if (string.Equals(message.CorrelationIdName, correlationName, StringComparison.Ordinal) && message.CorrelationIdLocation is { } location)
+            {
+                return location;
+            }
+        }
+
+        return null;
+    }
 
     private static StepBody? ReadRequestBody(in ArazzoDocument.StepObject step)
     {
@@ -1049,4 +1120,6 @@ internal readonly record struct ControlFlowStep(
     string? SubWorkflowId = null,
     IReadOnlyList<string>? DependsOn = null,
     ResolvedChannel? Channel = null,
-    int? TimeoutMs = null);
+    int? TimeoutMs = null,
+    string? CorrelationName = null,
+    string? CorrelationLocation = null);

@@ -35,7 +35,8 @@ internal static class ControlFlowEmitter
         StringBuilder fields,
         StringBuilder body,
         StringBuilder auxiliaryTypes,
-        Dictionary<string, string> stepOutputLocals)
+        Dictionary<string, string> stepOutputLocals,
+        bool usesCorrelation = false)
     {
         // A goto targets a step by id; build the id→state-index map and pre-register every step's
         // outputs local so $steps.<id>.outputs references resolve regardless of execution order.
@@ -81,7 +82,7 @@ internal static class ControlFlowEmitter
             }
             else if (steps[i].Channel is not null)
             {
-                EmitChannelCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals);
+                EmitChannelCase(steps[i], i, stepIndex, options, fields, loop, auxiliaryTypes, stepOutputLocals, usesCorrelation);
             }
             else
             {
@@ -418,7 +419,8 @@ internal static class ControlFlowEmitter
         StringBuilder fields,
         StringBuilder loop,
         StringBuilder auxiliaryTypes,
-        Dictionary<string, string> stepOutputLocals)
+        Dictionary<string, string> stepOutputLocals,
+        bool usesCorrelation)
     {
         ResolvedChannel channel = step.Channel!.Value;
         AsyncApiChannelDescriptor descriptor = channel.Channel;
@@ -465,7 +467,7 @@ internal static class ControlFlowEmitter
             // actions is rejected up front, so this is always a fire-and-forget publish.)
             string send = SendChannelStepEmitter.Emit(
                 step.StepId, channel, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, "messageTransport", "workspace",
-                stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, channelToken);
+                stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, channelToken, captureCorrelation: usesCorrelation);
             WorkflowExecutorEmitter.AppendIndented(work, send, 4);
             work.Append("    ").Append(camel).AppendLine("Success = true;");
         }
@@ -598,6 +600,25 @@ internal static class ControlFlowEmitter
         }
 
         lambdaBody.AppendLine("return default;");
+
+        if (step.CorrelationName is { } correlationName)
+        {
+            // Correlated receive: accept only the message carrying the token a prior send registered under
+            // this name. With no registered token the workflow never published the request, so Success stays
+            // false and the step's onFailure dispatch handles it.
+            string expectedLocal = $"{camel}Expected";
+            c.Append("    if (correlationTokens.TryGetValue(").Append(EmitText.Quote(correlationName)).Append(", out byte[]? ").Append(expectedLocal).AppendLine("))");
+            c.AppendLine("    {");
+            c.Append("        await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
+                .Append(address).AppendLine(", (message, messageHeaders) =>");
+            c.AppendLine("        {");
+            WorkflowExecutorEmitter.AppendIndented(c, lambdaBody.ToString(), 12);
+            c.Append("        }, ").Append(cancellationTokenExpression)
+                .Append(", (message, messageHeaders) => CorrelationToken.Matches(JsonElement.From(message), ")
+                .Append(EmitText.Quote(step.CorrelationLocation!)).Append("u8, ").Append(expectedLocal).AppendLine(")).ConfigureAwait(false);");
+            c.AppendLine("    }");
+            return;
+        }
 
         c.Append("    await messageTransport.ReceiveOneAsync<").Append(payloadType).Append(">(")
             .Append(address).AppendLine(", (message, messageHeaders) =>");

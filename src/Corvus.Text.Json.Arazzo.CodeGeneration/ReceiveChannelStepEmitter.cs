@@ -64,7 +64,9 @@ internal static class ReceiveChannelStepEmitter
         IReadOnlyDictionary<string, string>? inputAccessors,
         StringBuilder fields,
         StringBuilder auxiliaryTypes,
-        string namespaceName)
+        string namespaceName,
+        string? correlationName = null,
+        string? correlationLocation = null)
     {
         AsyncApiChannelDescriptor descriptor = channel.Channel;
 
@@ -78,6 +80,12 @@ internal static class ReceiveChannelStepEmitter
         // A receive operation that declares a reply is a request/reply responder: the step receives one
         // request, replies with its requestBody (correlated by the transport), and unsubscribes (one-shot).
         bool isResponder = descriptor.ReplyPayloadTypeName is not null;
+
+        if (correlationName is not null && isResponder)
+        {
+            throw new NotSupportedException(
+                $"Receive channel step '{stepId}' declares a correlationId on a request/reply (responder) step; request/reply correlation is handled by the transport, so a step-level correlationId applies only to plain receive steps.");
+        }
 
         string identifier = EmitText.SanitizeIdentifier(stepId);
         string camel = EmitText.ToCamelCase(identifier);
@@ -168,6 +176,27 @@ internal static class ReceiveChannelStepEmitter
             statements.AppendLine("{");
             statements.Append(lambdaBody);
             statements.AppendLine("}, cancellationToken).ConfigureAwait(false);");
+        }
+        else if (correlationName is not null)
+        {
+            lambdaBody.AppendLine("return default;");
+
+            // Correlated receive: only the message carrying the token a prior send registered under this
+            // name completes the step. With no registered token the workflow never published the request,
+            // so the step fails rather than waiting for a message that can never correlate.
+            string expectedLocal = $"{camel}Expected";
+            statements.Append("if (!correlationTokens.TryGetValue(").Append(EmitText.Quote(correlationName)).Append(", out byte[]? ").Append(expectedLocal).AppendLine("))");
+            statements.AppendLine("{");
+            statements.Append("    throw new WorkflowStepFailedException(").Append(EmitText.Quote(stepId)).Append(", ")
+                .Append(EmitText.Quote($"Step '{stepId}' has correlationId '{correlationName}' but no prior step registered a correlation token to match.")).AppendLine(");");
+            statements.AppendLine("}");
+
+            statements.Append("await ").Append(messageTransportVariable).Append(".ReceiveOneAsync<").Append(payloadType)
+                .Append(">(").Append(address).AppendLine(", (message, messageHeaders) =>");
+            statements.AppendLine("{");
+            statements.Append(lambdaBody);
+            statements.Append("}, cancellationToken, (message, messageHeaders) => CorrelationToken.Matches(JsonElement.From(message), ")
+                .Append(EmitText.Quote(correlationLocation!)).Append("u8, ").Append(expectedLocal).AppendLine(")).ConfigureAwait(false);");
         }
         else
         {

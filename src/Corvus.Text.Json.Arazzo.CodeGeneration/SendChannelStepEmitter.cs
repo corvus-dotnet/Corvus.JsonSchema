@@ -56,7 +56,8 @@ internal static class SendChannelStepEmitter
         StringBuilder fields,
         StringBuilder auxiliaryTypes,
         string namespaceName,
-        string cancellationTokenExpression = "cancellationToken")
+        string cancellationTokenExpression = "cancellationToken",
+        bool captureCorrelation = false)
     {
         AsyncApiChannelDescriptor descriptor = channel.Channel;
 
@@ -137,6 +138,8 @@ internal static class SendChannelStepEmitter
             }
 
             statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(payloadLocal).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+
+            EmitCorrelationCapture(captureCorrelation, descriptor.Messages[0], camel, payloadLocal, statements);
             return statements.ToString();
         }
 
@@ -193,5 +196,34 @@ internal static class SendChannelStepEmitter
         }
 
         return statements.ToString();
+    }
+
+    // When the workflow correlates (some receive step declares a correlationId) and this send's message
+    // declares a payload-located AsyncAPI Correlation ID, read the token from the published payload and
+    // register it under the correlation id name so a later correlated receive can match it. A header-located
+    // correlation id is skipped (the send does not set message headers); the receive binder rejects those.
+    private static void EmitCorrelationCapture(
+        bool captureCorrelation,
+        in AsyncApiChannelMessageDescriptor message,
+        string camel,
+        string payloadLocal,
+        StringBuilder statements)
+    {
+        if (!captureCorrelation || message.CorrelationIdName is not { } correlationName || message.CorrelationIdLocation is not { } location)
+        {
+            return;
+        }
+
+        AsyncApiRuntimeExpression locationExpression = AsyncApiRuntimeExpression.Parse(location);
+        if (locationExpression.Kind != AsyncApiRuntimeExpressionKind.MessagePayload || locationExpression.JsonPointer is not { } pointer)
+        {
+            return;
+        }
+
+        string tokenLocal = $"{camel}CorrelationToken";
+        statements.Append("if (CorrelationToken.TryRead(").Append(payloadLocal).Append(", ").Append(EmitText.Quote(pointer)).Append("u8, out byte[] ").Append(tokenLocal).AppendLine("))");
+        statements.AppendLine("{");
+        statements.Append("    correlationTokens[").Append(EmitText.Quote(correlationName)).Append("] = ").Append(tokenLocal).AppendLine(";");
+        statements.AppendLine("}");
     }
 }
