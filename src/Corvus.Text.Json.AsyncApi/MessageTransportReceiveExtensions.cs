@@ -123,11 +123,14 @@ public static class MessageTransportReceiveExtensions
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(onRequest);
 
-        // Continuations run inline on the delivering thread (as in ReceiveOneAsync) so the awaiting caller —
-        // and the workflow output-building that follows it — resumes there rather than hopping to the thread
-        // pool (a pooled JsonWorkspace the responder writes into is thread-affine). The transport publishes
-        // the reply on its own channel after the handler returns, so it is unaffected by the unsubscribe.
-        var completion = new TaskCompletionSource();
+        // Continuations run asynchronously: the unsubscribe (and the caller's post-receive code) must NOT run
+        // inline within the transport's delivery callback, because a transport publishes the reply right
+        // AFTER the handler returns and tears the subscription down on its own cancellation source — an inline
+        // unsubscribe would cancel that in-flight reply (observed as a hang on AMQP). Running the continuation
+        // off the delivery thread lets the transport finish publishing the reply before this method
+        // unsubscribes. Because the caller resumes off the delivering thread, a responder workflow must build
+        // its products in a non-thread-affine JsonWorkspace (JsonWorkspace.CreateUnrented).
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         ExceptionDispatchInfo? failure = null;
 
         await transport.SubscribeReplyAsync<TRequest, TReply>(
