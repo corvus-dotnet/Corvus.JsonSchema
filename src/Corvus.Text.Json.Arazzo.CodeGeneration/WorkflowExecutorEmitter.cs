@@ -52,7 +52,10 @@ public static class WorkflowExecutorEmitter
         // Bind every step up front; a workflow that declares any onSuccess/onFailure action is emitted
         // as a labelled-loop executor (control flow), otherwise as the straight-line form.
         var boundSteps = new List<ControlFlowStep>();
-        bool usesControlFlow = false;
+
+        // Durable mode always uses the labelled-loop state machine: the cursor (__state) is the resume point,
+        // so the executor must be the loop form even for an otherwise straight-line workflow.
+        bool usesControlFlow = options.Durable;
         bool hasChannelStep = false;
 
         // Workflow-level success/failure actions apply to every step as defaults (a step's own action
@@ -188,7 +191,12 @@ public static class WorkflowExecutorEmitter
 
         if (usesCorrelation)
         {
-            body.AppendLine("            System.Collections.Generic.Dictionary<string, byte[]> correlationTokens = new(System.StringComparer.Ordinal);");
+            // In durable mode the correlation register is the run's (restored from the checkpoint and
+            // checkpointed in place); otherwise it is a fresh per-run dictionary.
+            body.Append("            System.Collections.Generic.Dictionary<string, byte[]> correlationTokens = ")
+                .AppendLine(options.Durable
+                    ? "run is not null ? run.CorrelationTokens : new(System.StringComparer.Ordinal);"
+                    : "new(System.StringComparer.Ordinal);");
         }
 
         if (usesControlFlow)
@@ -1003,10 +1011,14 @@ public static class WorkflowExecutorEmitter
         // signature only when the workflow has a channel step (HTTP-only workflows are unchanged).
         string messageTransportParameter = needsMessageTransport ? "IMessageTransport messageTransport, " : string.Empty;
 
+        // The durable shape threads an optional run that carries the resumable state and persists checkpoints;
+        // a null run makes the executor behave exactly like the non-durable form.
+        string runParameter = options.Durable ? "IWorkflowRun? run = null, " : string.Empty;
+
         writer.Append("    /// <summary>Executes the '").Append(workflowId).AppendLine("' workflow.</summary>");
         writer.Append("    public static async ValueTask<").Append(options.OutputsTypeName)
             .Append("> ExecuteAsync(IApiTransport transport, ").Append(messageTransportParameter).Append("JsonWorkspace workspace, ")
-            .Append(options.InputsTypeName).AppendLine(" inputs, CancellationToken cancellationToken = default)");
+            .Append(options.InputsTypeName).Append(" inputs, ").Append(runParameter).AppendLine("CancellationToken cancellationToken = default)");
         writer.AppendLine("    {");
         writer.AppendLine("        ArgumentNullException.ThrowIfNull(transport);");
         if (needsMessageTransport)
@@ -1028,6 +1040,12 @@ public static class WorkflowExecutorEmitter
         writer.AppendLine("        try");
         writer.AppendLine("        {");
         writer.Append(body);
+        if (options.Durable)
+        {
+            // Record the terminal checkpoint with the final workflow outputs before returning.
+            writer.AppendLine("            if (run is not null) { await run.CompleteAsync(workflowOutputsElement, cancellationToken).ConfigureAwait(false); }");
+        }
+
         writer.AppendLine("            ArazzoTelemetry.WorkflowsCompleted.Add(1);");
         writer.AppendLine("            return workflowOutputsElement;");
         writer.AppendLine("        }");
@@ -1064,12 +1082,21 @@ public static class WorkflowExecutorEmitter
 /// <c>petId</c> → <c>PetId</c>), so <c>$inputs.&lt;name&gt;</c> compiles to a strongly-typed accessor.
 /// <see langword="null"/> when the inputs are an untyped <see cref="JsonElement"/>.
 /// </param>
+/// <param name="Durable">
+/// When <see langword="true"/>, emit the durable (checkpoint &amp; resume) executor shape (plan §9.3): the
+/// labelled-loop state machine is forced on, <c>ExecuteAsync</c> takes an extra optional
+/// <c>IWorkflowRun? run</c>, the resumable locals (cursor, step outputs, retry counters, correlation
+/// register) restore from the run on entry, a checkpoint is written after each step, and the run is marked
+/// complete with the final outputs. A <see langword="null"/> run behaves exactly like the non-durable form,
+/// so durability is purely additive.
+/// </param>
 public readonly record struct WorkflowExecutorOptions(
     string Namespace,
     string ClassName,
     string InputsTypeName,
     string OutputsTypeName,
-    IReadOnlyDictionary<string, string>? InputAccessors = null);
+    IReadOnlyDictionary<string, string>? InputAccessors = null,
+    bool Durable = false);
 
 /// <summary>The control-flow effect of an Arazzo success/failure action.</summary>
 internal enum StepActionKind
