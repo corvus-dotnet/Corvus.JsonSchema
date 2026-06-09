@@ -47,6 +47,7 @@ internal static class SendChannelStepEmitter
         StepBody? requestBody,
         IReadOnlyList<OutputMapping> outputs,
         IReadOnlyList<StepCriterion> successCriteria,
+        IReadOnlyList<StepArgument> arguments,
         string messageTransportVariable,
         string workspaceVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
@@ -61,11 +62,6 @@ internal static class SendChannelStepEmitter
         if (descriptor.ProducerClassName is not { } producerClass)
         {
             throw new NotSupportedException($"Channel step '{stepId}' targets a non-send channel '{descriptor.ChannelAddress}'; only send channel steps are supported so far.");
-        }
-
-        if (descriptor.ChannelParameters.Count > 0)
-        {
-            throw new NotSupportedException($"Channel step '{stepId}' targets a parameterised channel '{descriptor.ChannelAddress}'; parameterised channel addresses are a later phase.");
         }
 
         if (descriptor.Messages.Count == 0)
@@ -123,6 +119,15 @@ internal static class SendChannelStepEmitter
         statements.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
         statements.Append("var ").Append(producerVariable).Append(" = new ").Append(producerClass).Append('(').Append(messageTransportVariable).AppendLine(");");
 
+        // A parameterised channel: the generated producer method takes a string argument per channel
+        // parameter (in declaration order), resolved here from the step's parameters.
+        var channelArgs = new StringBuilder();
+        foreach ((string _, string local) in ChannelAddressEmitter.ResolveParameters(
+            descriptor.ChannelParameters, arguments, fields, statements, $"{identifier}_Ch", stepOutputLocals, inputsVariable, inputAccessors))
+        {
+            channelArgs.Append(", ").Append(local);
+        }
+
         if (!isRequestReply)
         {
             if (descriptor.Messages[0].ProducerMethodName is not { } publishMethod)
@@ -130,7 +135,7 @@ internal static class SendChannelStepEmitter
                 throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' with no publishable message.");
             }
 
-            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(payloadLocal).AppendLine(", cancellationToken).ConfigureAwait(false);");
+            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(payloadLocal).Append(channelArgs).AppendLine(", cancellationToken).ConfigureAwait(false);");
             return statements.ToString();
         }
 
@@ -148,7 +153,7 @@ internal static class SendChannelStepEmitter
         string outputsElementLocal = EmitText.StepOutputsElementLocal(stepId);
 
         statements.Append(replyType).Append(' ').Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.')
-            .Append(requestMethod).Append('(').Append(payloadLocal).AppendLine(", cancellationToken).ConfigureAwait(false);");
+            .Append(requestMethod).Append('(').Append(payloadLocal).Append(channelArgs).AppendLine(", cancellationToken).ConfigureAwait(false);");
         statements.Append("JsonElement ").Append(replyPayloadLocal).Append(" = JsonElement.From(").Append(replyLocal).AppendLine(");");
 
         if (successCriteria.Count > 0)

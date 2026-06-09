@@ -66,6 +66,46 @@ public class Coverage_GeneratorChannelTests
     }
 
     [TestMethod]
+    public void Send_to_parameterised_channel_passes_the_channel_parameter()
+    {
+        AsyncApiChannelDescriptor descriptor = new(
+            "orders/{region}",
+            OperationAction.Send,
+            "place",
+            "Gen.Events.PlaceProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: ["region"],
+            Messages: [new AsyncApiChannelMessageDescriptor("order", "Gen.Events.Order", null, null, "PublishOrderAsync")]);
+
+        string source = EmitSend(
+            descriptor,
+            """{ "stepId": "s", "channelPath": "orders/{region}", "action": "send", "requestBody": { "payload": "$inputs.m" }, "parameters": [ { "name": "region", "value": "$inputs.region" } ] }""");
+
+        source.ShouldContain(".GetString();");
+        source.ShouldContain(".PublishOrderAsync(");
+    }
+
+    [TestMethod]
+    public void Receive_from_parameterised_channel_builds_the_address()
+    {
+        AsyncApiChannelDescriptor descriptor = new(
+            "measurements/{sensorId}",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: ["sensorId"],
+            Messages: [new AsyncApiChannelMessageDescriptor("m", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        string source = EmitReceive(
+            descriptor,
+            """{ "stepId": "s", "channelPath": "measurements/{sensorId}", "action": "receive", "parameters": [ { "name": "sensorId", "value": "$inputs.sensorId" } ] }""");
+
+        source.ShouldContain("System.Text.Encoding.UTF8.GetBytes($\"measurements/");
+        source.ShouldContain("ReceiveOneAsync<");
+    }
+
+    [TestMethod]
     public void Send_with_no_publishable_message_is_not_supported()
     {
         Should.Throw<NotSupportedException>(() => EmitSend(

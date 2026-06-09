@@ -105,7 +105,11 @@ public static class WorkflowExecutorEmitter
                 // onSuccess/onFailure actions promote the channel step into the control-flow loop.
                 usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
                 hasChannelStep = true;
-                boundSteps.Add(new ControlFlowStep(stepId, null, [], criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel));
+
+                // A channel step's parameters supply the channel address placeholders (parameterised
+                // channels); workflow-level parameter defaults apply here too.
+                List<StepArgument> channelArguments = MergeArguments(ReadArguments(step.Parameters, components), workflowParameters);
+                boundSteps.Add(new ControlFlowStep(stepId, null, channelArguments, criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel));
                 continue;
             }
 
@@ -144,7 +148,7 @@ public static class WorkflowExecutorEmitter
                     if (channelStep.Channel.Action == AsyncApi.CodeGeneration.OperationAction.Receive)
                     {
                         string receiveStatements = ReceiveChannelStepEmitter.Emit(
-                            step.StepId, channelStep, "messageTransport", step.Outputs, step.SuccessCriteria, step.RequestBody, "workspace",
+                            step.StepId, channelStep, "messageTransport", step.Outputs, step.SuccessCriteria, step.RequestBody, step.Arguments, "workspace",
                             stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace);
                         AppendIndented(body, receiveStatements, 12);
                         stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
@@ -153,7 +157,7 @@ public static class WorkflowExecutorEmitter
                     }
 
                     string sendStatements = SendChannelStepEmitter.Emit(
-                        step.StepId, channelStep, step.RequestBody, step.Outputs, step.SuccessCriteria, "messageTransport", "workspace",
+                        step.StepId, channelStep, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, "messageTransport", "workspace",
                         stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace);
                     AppendIndented(body, sendStatements, 12);
 
