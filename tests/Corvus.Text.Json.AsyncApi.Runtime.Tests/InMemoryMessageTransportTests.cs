@@ -195,24 +195,18 @@ public class InMemoryMessageTransportTests
             "rpc/boom"u8.ToArray(),
             (_, _) => throw new InvalidOperationException("handler failed"));
 
-        // Drive a request at the responder; the failing handler produces no usable reply (its failure is
-        // captured), so the transport's own reply handling may surface an error too — that is not what this
-        // test asserts, so it is tolerated.
+        // The handler failure propagates (no bogus default reply is produced): in-process the requester
+        // observes it directly...
         JsonElement request = JsonElement.ParseValue("""{"n":1}"""u8);
-        try
-        {
-            _ = await transport.RequestAsync<JsonElement, JsonElement>(
+        InvalidOperationException requesterEx = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
+            await transport.RequestAsync<JsonElement, JsonElement>(
                 "rpc/boom"u8.ToArray(),
                 "rpc/boom/replies"u8.ToArray(),
                 request,
-                "corr-boom"u8.ToArray());
-        }
-        catch (InvalidOperationException)
-        {
-            // The default reply produced after a handler failure is not serializable; ignore.
-        }
+                "corr-boom"u8.ToArray()));
+        Assert.AreEqual("handler failed", requesterEx.Message);
 
-        // The captured handler failure is re-thrown to the awaiting responder.
+        // ...and the captured failure is re-thrown to the awaiting responder.
         InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await responder);
         Assert.AreEqual("handler failed", ex.Message);
     }
