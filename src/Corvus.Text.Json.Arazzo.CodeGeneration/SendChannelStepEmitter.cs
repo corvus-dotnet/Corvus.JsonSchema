@@ -78,11 +78,6 @@ internal static class SendChannelStepEmitter
             throw new NotSupportedException($"Channel step '{stepId}' has no requestBody payload to publish.");
         }
 
-        if (body.Kind != ArgumentValueKind.Expression)
-        {
-            throw new NotSupportedException($"Channel step '{stepId}' binds a non-expression payload; only runtime-expression payloads are supported on a send channel step.");
-        }
-
         bool isRequestReply = descriptor.ReplyPayloadTypeName is not null;
         string identifier = EmitText.SanitizeIdentifier(stepId);
         string camel = EmitText.ToCamelCase(identifier);
@@ -91,8 +86,23 @@ internal static class SendChannelStepEmitter
 
         var statements = new StringBuilder();
 
-        // Resolve the payload expression to a JsonElement reference, then call the producer.
-        ValueResolution.Emit(fields, statements, body.Value, payloadLocal, "context", stepOutputLocals, $"{identifier}_Payload", inputsVariable, inputAccessors);
+        // Resolve the payload to a JsonElement: a runtime expression resolves to a reference; a composite
+        // template (object/array embedding $inputs/$steps) is built into the run workspace.
+        switch (body.Kind)
+        {
+            case ArgumentValueKind.Expression:
+                ValueResolution.Emit(fields, statements, body.Value, payloadLocal, "context", stepOutputLocals, $"{identifier}_Payload", inputsVariable, inputAccessors);
+                break;
+
+            case ArgumentValueKind.CompositeTemplate:
+                string built = JsonTemplateEmitter.EmitComposite(
+                    stepId, body.Value, workspaceVariable, default, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{identifier}_Payload");
+                statements.Append("JsonElement ").Append(payloadLocal).Append(" = ").Append(built).AppendLine(";");
+                break;
+
+            default:
+                throw new NotSupportedException($"Channel step '{stepId}' binds a {body.Kind} payload; only runtime-expression and composite-template payloads are supported on a send channel step.");
+        }
 
         statements.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
         statements.Append("var ").Append(producerVariable).Append(" = new ").Append(producerClass).Append('(').Append(messageTransportVariable).AppendLine(");");

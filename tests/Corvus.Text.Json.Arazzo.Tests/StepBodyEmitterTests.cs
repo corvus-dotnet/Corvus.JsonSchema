@@ -35,6 +35,50 @@ public class StepBodyEmitterTests
                 new ResponseHeaderInfo("X-Count", "XCountHeader", "Acme.Pets.JsonInt32", false),
             ]));
 
+    private static readonly ResolvedOperation CreatePet = new(
+        "petstore",
+        new OperationDescriptor(
+            "/pets",
+            OperationMethod.Post,
+            "createPet",
+            "CreatePet",
+            "Acme.Pets.CreatePetRequest",
+            "Acme.Pets.CreatePetResponse",
+            [],
+            true,
+            [new ResponseDescriptor("201", "Acme.Pets.Pet", "CreatedBody")],
+            "Acme.Pets.PetsClient",
+            "CreatePetAsync",
+            "Acme.Pets.Pet",
+            null));
+
+    [TestMethod]
+    public void Builds_a_composite_template_request_body_from_inputs()
+    {
+        // A request body that embeds runtime expressions in an object template is assembled into the
+        // workspace and passed as the client method's body Source.
+        StepBodyCode code = StepBodyEmitter.Emit(
+            "createPet",
+            CreatePet,
+            [],
+            [],
+            [],
+            "transport",
+            "workspace",
+            "context",
+            "cancellationToken",
+            NoSteps,
+            "inputs",
+            null,
+            "Acme.Pets",
+            new StepBody("""{"name":"$inputs.name","status":"available"}""", ArgumentValueKind.CompositeTemplate));
+
+        code.Statements.ShouldContain("JsonElement.ObjectBuilder builder");
+        code.Statements.ShouldContain("builder.AddProperty(\"name\"u8");
+        code.Statements.ShouldContain("builder.AddProperty(\"status\"u8");
+        code.Statements.ShouldContain("CreatePetAsync(body:");
+    }
+
     [TestMethod]
     public void Invokes_the_generated_client_method_with_named_arguments()
     {
