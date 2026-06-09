@@ -55,7 +55,8 @@ internal static class SendChannelStepEmitter
         IReadOnlyDictionary<string, string>? inputAccessors,
         StringBuilder fields,
         StringBuilder auxiliaryTypes,
-        string namespaceName)
+        string namespaceName,
+        string cancellationTokenExpression = "cancellationToken")
     {
         AsyncApiChannelDescriptor descriptor = channel.Channel;
 
@@ -135,7 +136,7 @@ internal static class SendChannelStepEmitter
                 throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' with no publishable message.");
             }
 
-            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(payloadLocal).Append(channelArgs).AppendLine(", cancellationToken).ConfigureAwait(false);");
+            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(payloadLocal).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
             return statements.ToString();
         }
 
@@ -153,7 +154,7 @@ internal static class SendChannelStepEmitter
         string outputsElementLocal = EmitText.StepOutputsElementLocal(stepId);
 
         statements.Append(replyType).Append(' ').Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.')
-            .Append(requestMethod).Append('(').Append(payloadLocal).Append(channelArgs).AppendLine(", cancellationToken).ConfigureAwait(false);");
+            .Append(requestMethod).Append('(').Append(payloadLocal).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
         statements.Append("JsonElement ").Append(replyPayloadLocal).Append(" = JsonElement.From(").Append(replyLocal).AppendLine(");");
 
         if (successCriteria.Count > 0)

@@ -69,6 +69,11 @@ public static class WorkflowExecutorEmitter
             string stepId = step.StepId.IsNotUndefined() ? step.StepId.GetString()! : throw new InvalidOperationException("A step is missing its required stepId.");
             StepBinding binding = binder.Bind(step);
 
+            // A step timeout (ms) bounds the step's async work; like onSuccess/onFailure it promotes the
+            // workflow into the control-flow loop, where a timeout routes to the step's onFailure path.
+            int? timeout = ReadTimeout(step);
+            usesControlFlow |= timeout.HasValue;
+
             List<OutputMapping> stepOutputs = ReadOutputs(step);
             List<StepCriterion> criteria = ReadCriteria(step);
             List<StepActionInfo> onSuccess = MergeActions(ReadActions(step.OnSuccess, components), workflowSuccessActions);
@@ -82,7 +87,7 @@ public static class WorkflowExecutorEmitter
             {
                 ValidateSubWorkflowCriteria(stepId, criteria, onSuccess, onFailure);
                 usesControlFlow |= criteria.Count > 0 || onSuccess.Count > 0 || onFailure.Count > 0;
-                boundSteps.Add(new ControlFlowStep(stepId, null, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId, dependsOn));
+                boundSteps.Add(new ControlFlowStep(stepId, null, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, null, false, onSuccess, onFailure, subWorkflowId, dependsOn, TimeoutMs: timeout));
                 continue;
             }
 
@@ -109,7 +114,7 @@ public static class WorkflowExecutorEmitter
                 // A channel step's parameters supply the channel address placeholders (parameterised
                 // channels); workflow-level parameter defaults apply here too.
                 List<StepArgument> channelArguments = MergeArguments(ReadArguments(step.Parameters, components), workflowParameters);
-                boundSteps.Add(new ControlFlowStep(stepId, null, channelArguments, criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel));
+                boundSteps.Add(new ControlFlowStep(stepId, null, channelArguments, criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel, timeout));
                 continue;
             }
 
@@ -126,7 +131,7 @@ public static class WorkflowExecutorEmitter
             bool bindResponseBody = ReferencesResponseBody(criteria, stepOutputs, onSuccess, onFailure);
 
             boundSteps.Add(new ControlFlowStep(
-                stepId, operation, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure, null, dependsOn));
+                stepId, operation, MergeArguments(ReadArguments(step.Parameters, components), workflowParameters), criteria, stepOutputs, ReadRequestBody(step), bindResponseBody, onSuccess, onFailure, null, dependsOn, TimeoutMs: timeout));
         }
 
         // A step may declare dependsOn (1.1): order steps so each step's same-workflow dependencies
@@ -357,6 +362,9 @@ public static class WorkflowExecutorEmitter
 
         return false;
     }
+
+    private static int? ReadTimeout(in ArazzoDocument.StepObject step)
+        => step.Timeout.IsNotUndefined() && ((JsonElement)step.Timeout).TryGetInt32(out int milliseconds) ? milliseconds : null;
 
     private static StepBody? ReadRequestBody(in ArazzoDocument.StepObject step)
     {
@@ -1040,4 +1048,5 @@ internal readonly record struct ControlFlowStep(
     IReadOnlyList<StepActionInfo> OnFailure,
     string? SubWorkflowId = null,
     IReadOnlyList<string>? DependsOn = null,
-    ResolvedChannel? Channel = null);
+    ResolvedChannel? Channel = null,
+    int? TimeoutMs = null);
