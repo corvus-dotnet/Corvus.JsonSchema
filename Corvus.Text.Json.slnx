@@ -82,6 +82,7 @@
   <Folder Name="/.tests/">
     <Project Path="Common/tests/TestUtilities/TestUtilities.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Tests/Corvus.Text.Json.Arazzo.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Tests/Corvus.Text.Json.Arazzo.Durability.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Analyzers.Tests/Corvus.Text.Json.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Migration.Analyzers.Tests/Corvus.Text.Json.Migration.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.JsonSchemaTestSuite.CodeGenerator/Corvus.JsonSchemaTestSuite.CodeGenerator.csproj" Id="fc46ebe0-6bd7-4a8a-abae-6271aff53420" />
@@ -128,6 +129,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo10/Corvus.Text.Json.Arazzo10.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo11/Corvus.Text.Json.Arazzo11.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo/Corvus.Text.Json.Arazzo.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability/Corvus.Text.Json.Arazzo.Durability.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Testing/Corvus.Text.Json.Arazzo.Testing.csproj" />
   </Folder>
