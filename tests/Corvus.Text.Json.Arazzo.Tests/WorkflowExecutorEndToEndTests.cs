@@ -307,7 +307,8 @@ public partial class WorkflowExecutorEndToEndTests
         string document,
         string className,
         string inputsTypeName = "Corvus.Text.Json.JsonElement",
-        IReadOnlyDictionary<string, string>? inputAccessors = null)
+        IReadOnlyDictionary<string, string>? inputAccessors = null,
+        bool durable = false)
     {
         OperationDescriptor[] operations =
         [
@@ -340,7 +341,8 @@ public partial class WorkflowExecutorEndToEndTests
                     className,
                     inputsTypeName,
                     "Corvus.Text.Json.JsonElement",
-                    inputAccessors));
+                    inputAccessors,
+                    durable));
         }
 
         throw new InvalidOperationException("No workflow.");
@@ -1095,6 +1097,7 @@ public partial class WorkflowExecutorEndToEndTests
         _ = typeof(Corvus.Text.Json.JsonPath.JsonPathResult).Assembly;
         _ = typeof(Corvus.Text.Json.Patch.JsonPatchExtensions).Assembly;
         _ = typeof(System.Numerics.BigInteger).Assembly;
+        _ = typeof(Corvus.Text.Json.Arazzo.Durability.IWorkflowStateStore).Assembly;
 
         var references = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
