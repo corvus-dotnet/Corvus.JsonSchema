@@ -371,11 +371,12 @@ public static class WorkflowExecutorEmitter
 
         ArgumentValueKind kind = Classify(requestBody.Payload, out string text);
 
-        // A composite (object/array) literal that contains embedded runtime expressions needs
-        // substitution, which is a later phase — defer it (conservatively, any '$' in its raw JSON).
+        // A composite (object/array) literal that embeds runtime expressions is a template to substitute
+        // (supported on a request/reply receive step's reply; rejected on operation/send steps). Detect it
+        // conservatively (any '$' in its raw JSON) and carry it as a distinct kind.
         if (kind == ArgumentValueKind.LiteralComposite && requestBody.Payload.GetRawText().Contains('$'))
         {
-            return null;
+            return new StepBody(requestBody.Payload.GetRawText(), ArgumentValueKind.CompositeTemplate);
         }
 
         return new StepBody(text, kind);
