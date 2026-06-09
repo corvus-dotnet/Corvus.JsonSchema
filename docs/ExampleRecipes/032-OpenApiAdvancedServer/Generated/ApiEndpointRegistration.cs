@@ -756,7 +756,7 @@ public static class ApiEndpointRegistration
                 if (result.HasStreamingBody)
                 {
                     context.Response.ContentType = result.ContentType!;
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    Utf8JsonWriter writer = workspace.CreateWriter(context.Response.BodyWriter);
                     try
                     {
                         JsonStreamWriter streamWriter = new(context.Response.BodyWriter, writer, result.ContentType!);
@@ -764,7 +764,7 @@ public static class ApiEndpointRegistration
                     }
                     finally
                     {
-                        workspace.ReturnWriter(writer);
+                        await writer.DisposeAsync().ConfigureAwait(false);
                     }
 
                     await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
@@ -867,7 +867,7 @@ public static class ApiEndpointRegistration
                 if (result.HasStreamingBody)
                 {
                     context.Response.ContentType = result.ContentType!;
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    Utf8JsonWriter writer = workspace.CreateWriter(context.Response.BodyWriter);
                     try
                     {
                         JsonStreamWriter streamWriter = new(context.Response.BodyWriter, writer, result.ContentType!);
@@ -875,7 +875,7 @@ public static class ApiEndpointRegistration
                     }
                     finally
                     {
-                        workspace.ReturnWriter(writer);
+                        await writer.DisposeAsync().ConfigureAwait(false);
                     }
 
                     await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);

@@ -104,6 +104,29 @@ public class JsonWorkspace : IDisposable
         return Utf8JsonWriterCache.RentWriter(Options, bufferWriter);
     }
 
+    /// <summary>
+    /// Creates a new, dedicated UTF-8 JSON writer that writes to the specified buffer writer.
+    /// </summary>
+    /// <param name="bufferWriter">The buffer writer to write JSON data to.</param>
+    /// <returns>A new UTF-8 JSON writer configured with the workspace options.</returns>
+    /// <remarks>
+    /// <para>
+    /// Unlike <see cref="RentWriter(IBufferWriter{byte})"/>, the returned writer is <strong>not</strong>
+    /// drawn from the thread-local writer cache, so it carries no thread affinity and is safe to hold
+    /// across an <see langword="await"/> boundary — for example while streaming a response whose
+    /// continuations may resume on a different thread.
+    /// </para>
+    /// <para>
+    /// The caller owns the returned writer and must dispose it (via <see cref="Utf8JsonWriter.Dispose"/>
+    /// or <see cref="Utf8JsonWriter.DisposeAsync"/>) when finished. Do not pass it to
+    /// <see cref="ReturnWriter(Utf8JsonWriter)"/>.
+    /// </para>
+    /// </remarks>
+    public Utf8JsonWriter CreateWriter(IBufferWriter<byte> bufferWriter)
+    {
+        return new Utf8JsonWriter(bufferWriter, Options);
+    }
+
 #pragma warning disable CA1822 // Mark members as static
 
     /// <summary>
