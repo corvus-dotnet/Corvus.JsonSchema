@@ -162,6 +162,34 @@ public partial class WorkflowExecutorEndToEndTests
     }
 
     [TestMethod]
+    public async Task Generated_executor_sends_a_payload_with_replacements()
+    {
+        // The send payload is a base object with replacements overlaid at JSON Pointer targets:
+        // /a replaced with a literal, /added set from $inputs.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "notifications",
+            OperationAction.Send,
+            "notify",
+            "Acme.Notifications.NotifyProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("notify", "Corvus.Text.Json.JsonElement", null, null, "PublishNotifyAsync")]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        await SendPayloadRoundTrip(
+            binder,
+            """{ "payload": { "a": 1, "keep": "yes" }, "replacements": [ { "target": "/a", "value": 2 }, { "target": "/added", "value": "$inputs.extra" } ] }""",
+            """{"extra":"hi"}""",
+            published =>
+            {
+                published.ShouldContain("\"a\":2");
+                published.ShouldContain("\"keep\":\"yes\"");
+                published.ShouldContain("\"added\":\"hi\"");
+            });
+    }
+
+    [TestMethod]
     public async Task Generated_executor_sends_an_interpolated_and_a_constant_payload()
     {
         // Send payloads now support every kind an operation body does: here an interpolated string and a
