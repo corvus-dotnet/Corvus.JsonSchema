@@ -497,6 +497,118 @@ public partial class WorkflowExecutorEndToEndTests
         reply.GetString().ShouldBe("echo:7");
     }
 
+    private const string ChannelReceiveDollarLiteralReplyDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "respond",
+              "steps": [
+                {
+                  "stepId": "serve",
+                  "channelPath": "requests",
+                  "action": "receive",
+                  "requestBody": { "payload": { "price": "$5.00", "item": "$message.payload#/item" } }
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_responder_treats_an_unrecognized_dollar_form_as_a_literal()
+    {
+        // Arazzo defines no escape for a leading '$'; a '$'-string that is not a recognized runtime
+        // expression (here "$5.00") is a literal, matching the runtime ArazzoExpression.Parse, while a real
+        // expression in the same object ($message.payload#/item) still resolves.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "requests",
+            OperationAction.Receive,
+            "onRequest",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("request", "Corvus.Text.Json.JsonElement", null, null, null)],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveDollarLiteralReplyDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "RespondWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.RespondWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+        using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"item":"widget"}"""));
+        (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
+            "requests"u8.ToArray(),
+            "replies"u8.ToArray(),
+            requestDocument.RootElement,
+            "corr-dollar"u8.ToArray());
+
+        await pending;
+
+        // "$5.00" is emitted verbatim as a literal; the real expression resolved.
+        reply.GetProperty("price"u8).GetString().ShouldBe("$5.00");
+        reply.GetProperty("item"u8).GetString().ShouldBe("widget");
+    }
+
+    [TestMethod]
+    public void Responder_step_with_a_whole_value_dollar_literal_reply_compiles()
+    {
+        // A whole-value reply of "$5.00" is a literal (not a runtime expression), so emission succeeds.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "requests",
+            OperationAction.Receive,
+            "onRequest",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("request", "Corvus.Text.Json.JsonElement", null, null, null)],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        const string document = """
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+              "workflows": [ { "workflowId": "respond", "steps": [ { "stepId": "serve", "channelPath": "requests", "action": "receive", "requestBody": { "payload": "$5.00" } } ] } ]
+            }
+            """;
+
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
+        ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+        string source = WorkflowExecutorEmitter.Emit(
+            workflow,
+            binder,
+            new WorkflowExecutorOptions("GeneratedWorkflows", "RespondWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+
+        // The literal is baked (not navigated) and the responder still compiles.
+        source.ShouldContain("ParsedJsonDocument<JsonElement>");
+        _ = CompileInMemory(source);
+    }
+
     private const string ChannelReceiveConstantReplyDocument = """
         {
           "arazzo": "1.1.0",

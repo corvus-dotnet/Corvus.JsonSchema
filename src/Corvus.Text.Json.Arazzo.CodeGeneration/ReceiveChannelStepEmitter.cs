@@ -235,7 +235,16 @@ internal static class ReceiveChannelStepEmitter
             case ArgumentValueKind.Expression:
             {
                 // A runtime expression resolves to a reference into the live request / inputs / step outputs.
+                // A leading-'$' string that matches no known runtime-expression form is a literal (Arazzo
+                // defines no '$' escape, and the runtime ArazzoExpression.Parse treats an unrecognized
+                // '$'-form as a literal) — bake it as a constant rather than failing.
                 (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(body.Value);
+                if (expression.Source == ArazzoExpressionSource.Literal)
+                {
+                    string literalField = ReplyTemplateEmitter.EmitConstant(System.Text.Json.JsonSerializer.Serialize(body.Value), fields, $"{baseName}Constant");
+                    return $"({replyType})({literalField})";
+                }
+
                 if (!CriterionExpressionParsing.TryEmitElementNavigation(
                         expression, navigationPointer, baseName, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, out string elementLocal))
                 {
