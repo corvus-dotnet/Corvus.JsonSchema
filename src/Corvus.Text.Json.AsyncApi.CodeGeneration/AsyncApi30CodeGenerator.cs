@@ -1869,6 +1869,16 @@ public sealed class AsyncApi30CodeGenerator
         return new GeneratedFile($"{className}.cs", w.ToString());
     }
 
+    // A single-message receive operation that declares a reply is a responder: its handler returns the
+    // reply payload (the consumer publishes it via SubscribeReplyAsync).
+    private static bool IsResponderOperation(in OperationInfo op) => op.Reply is not null && op.Messages.Count == 1;
+
+    private static string ReplyPayloadTypeNameOf(in OperationInfo op)
+        => (op.Reply!.Value.Messages.Count == 1 ? op.Reply.Value.Messages[0].PayloadTypeName : null) ?? "Corvus.Text.Json.JsonElement";
+
+    private static string ReplyHandlerReturnType(in OperationInfo op)
+        => IsResponderOperation(op) ? $"ValueTask<{ReplyPayloadTypeNameOf(op)}>" : "ValueTask";
+
     private GeneratedFile EmitConsumerHandler(OperationInfo op)
     {
         string interfaceName = $"I{ToPascalCase(op.Name)}Handler";
@@ -1891,12 +1901,14 @@ public sealed class AsyncApi30CodeGenerator
 
         if (op.Messages.Count == 1)
         {
-            // Single message: handler receives the typed payload directly
+            // Single message: handler receives the typed payload directly. A receive operation that
+            // declares a reply returns the reply payload (the consumer publishes it); otherwise void.
             MessageInfo msg = op.Messages[0];
             string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
             string methodName = $"Handle{ToPascalCase(msg.Name)}Async";
+            string returnType = ReplyHandlerReturnType(op);
             w.WriteLine($"/// <summary>");
-            w.WriteLine($"/// Handles a <c>{msg.Name}</c> message.");
+            w.WriteLine($"/// Handles a <c>{msg.Name}</c> message{(op.Reply is not null ? " and returns the reply payload" : string.Empty)}.");
             w.WriteLine($"/// </summary>");
             w.WriteLine($"/// <param name=\"payload\">The deserialized message payload.</param>");
 
@@ -1904,12 +1916,12 @@ public sealed class AsyncApi30CodeGenerator
             {
                 w.WriteLine($"/// <param name=\"headers\">The deserialized message headers.</param>");
                 w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"ValueTask {methodName}({payloadType} payload, {msg.HeadersTypeName} headers, CancellationToken cancellationToken = default);");
+                w.WriteLine($"{returnType} {methodName}({payloadType} payload, {msg.HeadersTypeName} headers, CancellationToken cancellationToken = default);");
             }
             else
             {
                 w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
-                w.WriteLine($"ValueTask {methodName}({payloadType} payload, CancellationToken cancellationToken = default);");
+                w.WriteLine($"{returnType} {methodName}({payloadType} payload, CancellationToken cancellationToken = default);");
             }
         }
         else
@@ -2079,7 +2091,12 @@ public sealed class AsyncApi30CodeGenerator
             w.WriteLine();
 
             string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
-            if (op.Messages.Count == 1)
+            if (IsResponderOperation(op))
+            {
+                string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
+                w.WriteLine($"await this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);");
+            }
+            else if (op.Messages.Count == 1)
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
                 w.WriteLine($"await this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken).ConfigureAwait(false);");
@@ -2103,7 +2120,12 @@ public sealed class AsyncApi30CodeGenerator
             }
 
             string subscribeAddr = op.IsDynamicAddress ? "this.subscribedChannelUtf8" : "ChannelAddressUtf8";
-            if (op.Messages.Count == 1)
+            if (IsResponderOperation(op))
+            {
+                string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
+                w.WriteLine($"return this.transport.SubscribeReplyAsync<{payloadType}, {ReplyPayloadTypeNameOf(op)}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
+            }
+            else if (op.Messages.Count == 1)
             {
                 string payloadType = op.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
                 w.WriteLine($"return this.transport.SubscribeAsync<{payloadType}>({subscribeAddr}, this.HandleMessageAsync, cancellationToken);");
@@ -2144,7 +2166,39 @@ public sealed class AsyncApi30CodeGenerator
         // HandleMessageAsync — with error policy
         w.WriteLine();
 
-        if (op.Messages.Count == 1)
+        if (IsResponderOperation(op))
+        {
+            // Responder: validate the request, return the handler's reply payload. The transport
+            // publishes it correlated; an exception propagates to the requester (no dead-letter path).
+            MessageInfo msg = op.Messages[0];
+            string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
+            string handlerMethod = $"Handle{ToPascalCase(msg.Name)}Async";
+            string replyType = ReplyPayloadTypeNameOf(op);
+
+            w.WriteLine($"private ValueTask<{replyType}> HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
+            w.OpenBrace();
+            w.WriteLine("if (this.validationMode != ValidationMode.None)");
+            w.OpenBrace();
+            w.WriteLine("ValidatePayload(payload, this.validationMode);");
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"ValidateHeaders({msg.HeadersTypeName}.From(headers), this.validationMode);");
+            }
+
+            w.CloseBrace();
+            w.WriteLine();
+            if (msg.HeadersTypeName is not null)
+            {
+                w.WriteLine($"return this.handler.{handlerMethod}(payload, {msg.HeadersTypeName}.From(headers), cancellationToken);");
+            }
+            else
+            {
+                w.WriteLine($"return this.handler.{handlerMethod}(payload, cancellationToken);");
+            }
+
+            w.CloseBrace();
+        }
+        else if (op.Messages.Count == 1)
         {
             MessageInfo msg = op.Messages[0];
             string payloadType = msg.PayloadTypeName ?? "Corvus.Text.Json.JsonElement";
