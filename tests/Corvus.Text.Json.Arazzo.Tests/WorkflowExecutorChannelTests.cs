@@ -165,6 +165,231 @@ public partial class WorkflowExecutorEndToEndTests
         answer.GetInt32().ShouldBe(42);
     }
 
+    private const string ChannelReceiveReplyDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "respond",
+              "steps": [
+                {
+                  "stepId": "serve",
+                  "channelPath": "requests",
+                  "action": "receive",
+                  "requestBody": { "payload": "$message.payload" },
+                  "successCriteria": [ { "condition": "$message.payload#/n == 21" } ],
+                  "outputs": { "n": "$message.payload#/n" }
+                }
+              ],
+              "outputs": { "served": "$steps.serve.outputs.n" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_receives_a_request_and_replies_one_shot()
+    {
+        // A request/reply receive descriptor: a receive operation that declares a reply, so the step is a
+        // one-shot responder — it receives one request, replies with its requestBody (here echoing the
+        // request payload), gates on the request, projects an output, and unsubscribes.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "requests",
+            OperationAction.Receive,
+            "onRequest",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("request", "Corvus.Text.Json.JsonElement", null, null, null)],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveReplyDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "RespondWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The responder step subscribes via the one-shot reply wrapper and returns the reply payload.
+        source.ShouldContain("messageTransport.ReceiveOneAndReplyAsync<Corvus.Text.Json.JsonElement, Corvus.Text.Json.JsonElement>(");
+        source.ShouldContain("return new ValueTask<Corvus.Text.Json.JsonElement>(");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.RespondWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        // Start the responder: it subscribes synchronously, then awaits one request.
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+        // Send a request; the in-process responder replies with the echoed request payload (the whole round
+        // trip completes synchronously on this thread, keeping the thread-affine workspace on its owner).
+        using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"n":21}"""));
+        (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
+            "requests"u8.ToArray(),
+            "replies"u8.ToArray(),
+            requestDocument.RootElement,
+            "corr-serve"u8.ToArray());
+
+        JsonElement outputs = await pending;
+
+        // The reply echoes the request payload; the request's field flowed to the workflow output.
+        reply.TryGetProperty("n"u8, out JsonElement replyN).ShouldBeTrue();
+        replyN.GetInt32().ShouldBe(21);
+        outputs.TryGetProperty("served"u8, out JsonElement served).ShouldBeTrue();
+        served.GetInt32().ShouldBe(21);
+    }
+
+    private const string ChannelReceiveReplyControlFlowDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "respond",
+              "steps": [
+                {
+                  "stepId": "serve",
+                  "channelPath": "requests",
+                  "action": "receive",
+                  "requestBody": { "payload": "$message.payload#/echo" },
+                  "onSuccess": [ { "name": "stop", "type": "end" } ],
+                  "outputs": { "v": "$message.payload#/echo" }
+                }
+              ],
+              "outputs": { "v": "$steps.serve.outputs.v" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_responder_runs_in_the_control_flow_loop()
+    {
+        // A responder step with an onSuccess action is promoted into the control-flow loop; the reply is a
+        // pointer projection of the request payload (exercising the navigated-reply path).
+        var descriptor = new AsyncApiChannelDescriptor(
+            "requests",
+            OperationAction.Receive,
+            "onRequest",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("request", "Corvus.Text.Json.JsonElement", null, null, null)],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelReceiveReplyControlFlowDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "RespondWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The responder is promoted into the control-flow loop and still replies via the one-shot wrapper.
+        source.ShouldContain("while (true)");
+        source.ShouldContain("messageTransport.ReceiveOneAndReplyAsync<Corvus.Text.Json.JsonElement, Corvus.Text.Json.JsonElement>(");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.RespondWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+
+        using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"echo":{"k":7}}"""));
+        (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
+            "requests"u8.ToArray(),
+            "replies"u8.ToArray(),
+            requestDocument.RootElement,
+            "corr-cf"u8.ToArray());
+
+        JsonElement outputs = await pending;
+
+        // The reply is the nested object the pointer addressed; the same value flowed to the output.
+        reply.TryGetProperty("k"u8, out JsonElement replyK).ShouldBeTrue();
+        replyK.GetInt32().ShouldBe(7);
+        outputs.TryGetProperty("v"u8, out JsonElement v).ShouldBeTrue();
+        v.TryGetProperty("k"u8, out JsonElement vk).ShouldBeTrue();
+        vk.GetInt32().ShouldBe(7);
+    }
+
+    [TestMethod]
+    public void Responder_step_without_requestBody_is_rejected()
+    {
+        NotSupportedException ex = EmitResponder("""{ "stepId": "serve", "channelPath": "requests", "action": "receive" }""");
+        ex.Message.ShouldContain("requestBody");
+    }
+
+    [TestMethod]
+    public void Responder_step_with_non_expression_reply_is_rejected()
+    {
+        NotSupportedException ex = EmitResponder("""{ "stepId": "serve", "channelPath": "requests", "action": "receive", "requestBody": { "payload": "literal-reply" } }""");
+        ex.Message.ShouldContain("non-expression reply");
+    }
+
+    [TestMethod]
+    public void Responder_step_with_unresolvable_reply_expression_is_rejected()
+    {
+        NotSupportedException ex = EmitResponder("""{ "stepId": "serve", "channelPath": "requests", "action": "receive", "requestBody": { "payload": "$url" } }""");
+        ex.Message.ShouldContain("cannot be resolved");
+    }
+
+    // Emits a single-step responder workflow whose only step is the supplied JSON, returning the
+    // NotSupportedException the emitter throws (failing the test if it does not throw one).
+    private static NotSupportedException EmitResponder(string stepJson)
+    {
+        string document = $$"""
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+              "workflows": [ { "workflowId": "respond", "steps": [ {{stepJson}} ] } ]
+            }
+            """;
+
+        var descriptor = new AsyncApiChannelDescriptor(
+            "requests",
+            OperationAction.Receive,
+            "onRequest",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("request", "Corvus.Text.Json.JsonElement", null, null, null)],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
+        ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+        return Should.Throw<NotSupportedException>(() => WorkflowExecutorEmitter.Emit(
+            workflow,
+            binder,
+            new WorkflowExecutorOptions("GeneratedWorkflows", "RespondWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement")));
+    }
+
     private const string ChannelReceiveDocument = """
         {
           "arazzo": "1.1.0",

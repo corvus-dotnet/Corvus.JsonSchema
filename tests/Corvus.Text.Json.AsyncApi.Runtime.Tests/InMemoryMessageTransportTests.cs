@@ -147,6 +147,77 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
+    public async Task ReceiveOneAndReplyAsync_RepliesToOneRequestThenUnsubscribes()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        // The one-shot responder wrapper handles exactly one request, replies, and unsubscribes.
+        ValueTask responder = transport.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
+            "rpc/once"u8.ToArray(),
+            (request, _) =>
+            {
+                int n = request.GetProperty("n"u8).GetInt32();
+                JsonElement reply = JsonElement.ParseValue(Encoding.UTF8.GetBytes($$"""{"result":{{n * 2}}}"""));
+                return new ValueTask<JsonElement>(reply);
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":21}"""u8);
+        (JsonElement reply, JsonElement _) = await transport.RequestAsync<JsonElement, JsonElement>(
+            "rpc/once"u8.ToArray(),
+            "rpc/once/replies"u8.ToArray(),
+            request,
+            "corr-once"u8.ToArray());
+
+        await responder;
+        Assert.AreEqual(42, reply.GetProperty("result"u8).GetInt32());
+
+        // After the one-shot responder unsubscribed, a further request parks for CompleteRequest (it is no
+        // longer routed to the now-removed responder).
+        JsonElement second = JsonElement.ParseValue("""{"n":5}"""u8);
+        Task<(JsonElement Payload, JsonElement Headers)> parked =
+            transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/once"u8.ToArray(),
+                "rpc/once/replies"u8.ToArray(),
+                second,
+                "corr-once-2"u8.ToArray()).AsTask();
+        Assert.IsFalse(parked.IsCompleted);
+        transport.CompleteRequest("corr-once-2", Encoding.UTF8.GetBytes("""{"result":99}"""));
+        (JsonElement parkedReply, JsonElement _) = await parked;
+        Assert.AreEqual(99, parkedReply.GetProperty("result"u8).GetInt32());
+    }
+
+    [TestMethod]
+    public async Task ReceiveOneAndReplyAsync_RethrowsHandlerFailure()
+    {
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        ValueTask responder = transport.ReceiveOneAndReplyAsync<JsonElement, JsonElement>(
+            "rpc/boom"u8.ToArray(),
+            (_, _) => throw new InvalidOperationException("handler failed"));
+
+        // Drive a request at the responder; the failing handler produces no usable reply (its failure is
+        // captured), so the transport's own reply handling may surface an error too — that is not what this
+        // test asserts, so it is tolerated.
+        JsonElement request = JsonElement.ParseValue("""{"n":1}"""u8);
+        try
+        {
+            _ = await transport.RequestAsync<JsonElement, JsonElement>(
+                "rpc/boom"u8.ToArray(),
+                "rpc/boom/replies"u8.ToArray(),
+                request,
+                "corr-boom"u8.ToArray());
+        }
+        catch (InvalidOperationException)
+        {
+            // The default reply produced after a handler failure is not serializable; ignore.
+        }
+
+        // The captured handler failure is re-thrown to the awaiting responder.
+        InvalidOperationException ex = await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () => await responder);
+        Assert.AreEqual("handler failed", ex.Message);
+    }
+
+    [TestMethod]
     public async Task RequestAsync_WithoutResponder_StillParksForCompleteRequest()
     {
         await using Testing.InMemoryMessageTransport transport = new();
