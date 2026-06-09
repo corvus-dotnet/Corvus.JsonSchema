@@ -158,7 +158,7 @@ internal static class ReceiveChannelStepEmitter
             // request and the workspace are still live, so the reply is a reference (never copied).
             string replyType = descriptor.ReplyPayloadTypeName!;
             string replyExpression = EmitReplyResolution(
-                stepId, requestBody, replyType, payloadLocal, $"{identifier}Reply", inputsVariable, stepOutputLocals, inputAccessors, lambdaBody);
+                stepId, requestBody, replyType, payloadLocal, $"{identifier}Reply", inputsVariable, stepOutputLocals, inputAccessors, fields, lambdaBody);
             lambdaBody.Append("return new ValueTask<").Append(replyType).Append(">(").Append(replyExpression).AppendLine(");");
 
             statements.Append("await ").Append(messageTransportVariable).Append(".ReceiveOneAndReplyAsync<")
@@ -193,15 +193,22 @@ internal static class ReceiveChannelStepEmitter
 
     /// <summary>
     /// Emits the statements that resolve a request/reply <c>receive</c> step's reply payload (its
-    /// <c>requestBody</c>) to a <see cref="JsonElement"/> reference against the live request payload,
-    /// <c>$inputs</c>, and prior step outputs, and returns the expression that yields the typed reply.
+    /// <c>requestBody</c>) and returns the expression that yields the typed reply.
     /// </summary>
     /// <remarks>
-    /// The reply is a transient message (not a durable product), so it is resolved by static navigation —
-    /// a reference into the live request / inputs / step outputs, never copied. The first cut supports a
-    /// single runtime-expression reply (e.g. <c>$message.payload</c> to echo the request, a pointer
-    /// projection of it, an <c>$inputs</c> value, or a prior step's output); literal, interpolated, and
-    /// composite reply bodies are a later phase.
+    /// <para>
+    /// A runtime-expression reply (e.g. <c>$message.payload</c> to echo the request, a pointer projection
+    /// of it, an <c>$inputs</c> value, or a prior step's output) is resolved by static navigation — a
+    /// reference into the live request / inputs / step outputs, never copied. A constant reply (a literal
+    /// scalar or a literal object/array with no embedded expressions) is parsed once into a standalone
+    /// document and referenced. Both reference forms outlive the handler because the transport serializes
+    /// the reply synchronously while the request, the workspace, and these constants are all live.
+    /// </para>
+    /// <para>
+    /// Interpolated replies and composite replies that embed runtime expressions (building a reply object
+    /// from request fields) are a later phase — they need the template-substitution engine the request
+    /// side does not yet share for the message-payload source.
+    /// </para>
     /// </remarks>
     internal static string EmitReplyResolution(
         string stepId,
@@ -212,6 +219,7 @@ internal static class ReceiveChannelStepEmitter
         string inputsVariable,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         IReadOnlyDictionary<string, string>? inputAccessors,
+        StringBuilder fields,
         StringBuilder statements)
     {
         if (requestBody is not { } body)
@@ -219,27 +227,48 @@ internal static class ReceiveChannelStepEmitter
             throw new NotSupportedException($"Request/reply receive step '{stepId}' has no requestBody; a responder step must declare the reply payload to send back.");
         }
 
-        if (body.Kind != ArgumentValueKind.Expression)
+        // A runtime expression resolves to a reference into the live request / inputs / prior step outputs.
+        if (body.Kind == ArgumentValueKind.Expression)
         {
-            throw new NotSupportedException($"Request/reply receive step '{stepId}' binds a non-expression reply payload; only runtime-expression reply payloads are supported on a responder step.");
+            (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(body.Value);
+            if (!CriterionExpressionParsing.TryEmitElementNavigation(
+                    expression,
+                    navigationPointer,
+                    baseName,
+                    new CriterionSources(payloadLocal, "messageHeaders"),
+                    inputsVariable,
+                    stepOutputLocals,
+                    inputAccessors,
+                    statements,
+                    out string elementLocal))
+            {
+                throw new NotSupportedException($"Request/reply receive step '{stepId}' has a reply payload expression '{body.Value}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.");
+            }
+
+            return $"({replyType})({elementLocal})";
         }
 
-        (ArazzoExpression expression, string? navigationPointer) = CriterionExpressionParsing.SplitNavigation(body.Value);
-        if (!CriterionExpressionParsing.TryEmitElementNavigation(
-                expression,
-                navigationPointer,
-                baseName,
-                new CriterionSources(payloadLocal, "messageHeaders"),
-                inputsVariable,
-                stepOutputLocals,
-                inputAccessors,
-                statements,
-                out string elementLocal))
+        // A constant reply: parse the literal's JSON once into a standalone (GC-backed) document and
+        // reference its root. (Composite literals that embed runtime expressions are filtered out before
+        // reaching here, so a composite's raw text is a faithful constant.)
+        string? constantJson = body.Kind switch
         {
-            throw new NotSupportedException($"Request/reply receive step '{stepId}' has a reply payload expression '{body.Value}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.");
+            ArgumentValueKind.LiteralComposite or ArgumentValueKind.LiteralNumber or ArgumentValueKind.LiteralBoolean => body.Value,
+            ArgumentValueKind.LiteralNull => "null",
+            ArgumentValueKind.LiteralString => System.Text.Json.JsonSerializer.Serialize(body.Value),
+            _ => null,
+        };
+
+        if (constantJson is null)
+        {
+            throw new NotSupportedException($"Request/reply receive step '{stepId}' binds an interpolated reply payload; only runtime-expression and constant reply payloads are supported on a responder step (interpolated/expression-bearing composite replies are a later phase).");
         }
 
-        return $"({replyType})({elementLocal})";
+        string field = $"{baseName}Constant";
+        fields.Append("private static readonly ParsedJsonDocument<JsonElement> ").Append(field)
+            .Append(" = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(")
+            .Append(EmitText.Quote(constantJson)).AppendLine("));");
+        return $"({replyType})({field}.RootElement)";
     }
 
     // True when the emitted gate still resolves through the WorkflowExecutionContext (a criterion that
