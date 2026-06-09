@@ -477,7 +477,7 @@ internal static class ControlFlowEmitter
             // step's success (and thus its onSuccess/onFailure dispatch) after the reply has been sent.
             string replyType = descriptor.ReplyPayloadTypeName!;
             string replyExpression = ReceiveChannelStepEmitter.EmitReplyResolution(
-                step.StepId, step.RequestBody, replyType, payloadLocal, $"{prefix}reply", "inputs", stepOutputLocals, options.InputAccessors, fields, lambdaBody);
+                step.StepId, step.RequestBody, replyType, payloadLocal, "workspace", $"{prefix}reply", "inputs", stepOutputLocals, options.InputAccessors, fields, lambdaBody);
             lambdaBody.Append("return new ValueTask<").Append(replyType).Append(">(").Append(replyExpression).AppendLine(");");
 
             c.Append("    await messageTransport.ReceiveOneAndReplyAsync<").Append(payloadType).Append(", ").Append(replyType).Append(">(")
