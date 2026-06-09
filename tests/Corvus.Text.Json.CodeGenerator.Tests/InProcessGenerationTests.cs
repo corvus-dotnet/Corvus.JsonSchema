@@ -335,6 +335,53 @@ public class InProcessGenerationTests
     }
 
     [TestMethod]
+    public async Task GenerateCode_CircularOneOfRefs_FailsWithSchemaLocations()
+    {
+        // Issue #810: a discriminated union whose oneOf branches $ref back to the union has a
+        // circular (same-instance) composition. The branches' Evaluate would recurse forever, so
+        // generating Match/TryGetAs that call Evaluate caused a runtime stack overflow. The
+        // generator must instead detect the cycle and fail generation, naming the source and
+        // target schema locations of the recursion.
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$ref": "#/$defs/miniUnion",
+              "$defs": {
+                "miniUnion": {
+                  "title": "MiniUnion",
+                  "type": "object",
+                  "required": [ "kind" ],
+                  "properties": { "kind": { "type": "string", "enum": [ "LeafA", "LeafB" ] } },
+                  "oneOf": [ { "$ref": "#/$defs/miniLeafA" }, { "$ref": "#/$defs/miniLeafB" } ]
+                },
+                "miniLeafA": {
+                  "title": "MiniLeafA",
+                  "$ref": "#/$defs/miniUnion",
+                  "required": [ "a" ],
+                  "properties": { "kind": { "const": "LeafA" }, "a": { "type": "integer" } }
+                },
+                "miniLeafB": {
+                  "title": "MiniLeafB",
+                  "$ref": "#/$defs/miniUnion",
+                  "required": [ "b" ],
+                  "properties": { "kind": { "const": "LeafB" }, "b": { "type": "integer" } }
+                }
+              }
+            }
+            """;
+
+        CircularSchemaReferenceException ex = await Assert.ThrowsExactlyAsync<CircularSchemaReferenceException>(
+            () => GenerateInProcessFromContent(schemaContent));
+
+        // The error must name the source and target schema locations of the recursion (the cycle
+        // runs miniUnion <-> miniLeaf; either edge direction is a valid report).
+        string locations = ex.ReferencingLocation + "|" + ex.ReferencedLocation;
+        StringAssert.Contains(locations, "miniUnion");
+        StringAssert.Contains(locations, "miniLeaf");
+        StringAssert.Contains(ex.Message, "Circular schema reference");
+    }
+
+    [TestMethod]
     public async Task GenerateCode_BothMode_ProducesMoreOrEqualFiles()
     {
         string schemaPath = Path.Combine(SchemasDir, "numeric-and-format.json");

@@ -742,7 +742,7 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                var subschema = allOf[keyword].Select(o => o.ReducedTypeDeclaration().ReducedType).Distinct().ToList();
+                var subschema = EnsureMatchTypesTerminate(allOf[keyword].Select(o => o.ReducedTypeDeclaration().ReducedType).Distinct().ToList());
                 if (subschema.Count > 1)
                 {
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++, forMutable);
@@ -760,7 +760,7 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                var subschema = anyOf[keyword].Select(o => o.ReducedTypeDeclaration().ReducedType).Distinct().ToList();
+                var subschema = EnsureMatchTypesTerminate(anyOf[keyword].Select(o => o.ReducedTypeDeclaration().ReducedType).Distinct().ToList());
                 if (subschema.Count > 1)
                 {
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++, forMutable);
@@ -778,7 +778,7 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                var subschema = oneOf[keyword].Select(o => o.ReducedTypeDeclaration().ReducedType).Distinct().ToList();
+                var subschema = EnsureMatchTypesTerminate(oneOf[keyword].Select(o => o.ReducedTypeDeclaration().ReducedType).Distinct().ToList());
                 if (subschema.Count > 1)
                 {
                     AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++, forMutable);
@@ -812,6 +812,19 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator;
+
+        // A Match overload would call each member's Evaluate; if any member has a circular
+        // same-instance composition that does not terminate, generation fails with the source and
+        // target schema locations rather than emitting code that would stack-overflow (issue #810).
+        static List<TypeDeclaration> EnsureMatchTypesTerminate(List<TypeDeclaration> subschema)
+        {
+            foreach (TypeDeclaration t in subschema)
+            {
+                t.EnsureTerminatingCompositionEvaluation();
+            }
+
+            return subschema;
+        }
 
         static void AppendMatchCompositionMethod(CodeGenerator generator, TypeDeclaration typeDeclaration, IReadOnlyCollection<TypeDeclaration> subschema, bool includeContext, int matchOverloadIndex, bool forMutable)
         {
@@ -1487,6 +1500,12 @@ internal static partial class CodeGeneratorExtensions
                 // You can never TryGetAs the not any type - it will always fail
                 continue;
             }
+
+            // A TryGetAs method would call the target's Evaluate; if its schema has a circular
+            // same-instance composition that does not terminate, generation fails with the source
+            // and target schema locations rather than emitting code that would stack-overflow at
+            // runtime (issue #810).
+            t.EnsureTerminatingCompositionEvaluation();
 
             string methodName = generator.GetMethodNameInScope("TryGetAs", suffix: t.DotnetTypeName());
             string typeName = t.FullyQualifiedDotnetTypeName();

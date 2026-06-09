@@ -1540,6 +1540,134 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating whether evaluating this type's schema would recurse forever,
+    /// because its <em>same-instance</em> composition graph (<c>allOf</c>/<c>$ref</c>,
+    /// <c>anyOf</c>, <c>oneOf</c>) contains a cycle.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if evaluating the schema would never terminate.</returns>
+    /// <remarks>
+    /// <para>
+    /// Composition keywords evaluate the <em>same</em> instance node, so a cycle in that graph
+    /// re-evaluates the same node forever. This is the case for a discriminated union whose
+    /// branches <c>$ref</c> back to the union (issue #810). Contrast a tree-shaped schema that
+    /// recurses through <c>properties</c>/<c>items</c>: that recursion descends to child instance
+    /// nodes and so terminates with the finite data, and is <em>not</em> flagged here.
+    /// </para>
+    /// <para>
+    /// Generated <c>Match</c>/<c>TryGetAs</c> methods call the target type's <c>Evaluate</c>
+    /// directly, so they would stack-overflow at runtime for such a type. Code generation fails
+    /// instead (see <see cref="EnsureTerminatingCompositionEvaluation"/>).
+    /// </para>
+    /// </remarks>
+    public static bool HasNonTerminatingCompositionEvaluation(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(HasNonTerminatingCompositionEvaluation), out bool result))
+        {
+            result = that.FindNonTerminatingCompositionCycle() is not null;
+            that.SetMetadata(nameof(HasNonTerminatingCompositionEvaluation), result);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Throws a <see cref="CircularSchemaReferenceException"/> if evaluating this type's schema
+    /// would not terminate because of a circular same-instance composition (issue #810).
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <exception cref="CircularSchemaReferenceException">
+    /// The schema has a circular <c>allOf</c>/<c>$ref</c>/<c>anyOf</c>/<c>oneOf</c> composition whose
+    /// validation would never terminate. The exception names the source and target schema locations.
+    /// </exception>
+    public static void EnsureTerminatingCompositionEvaluation(this TypeDeclaration that)
+    {
+        // The cached boolean short-circuits the common (acyclic) case; the cycle edge is only
+        // recomputed for the rare schema that actually fails.
+        if (that.HasNonTerminatingCompositionEvaluation() &&
+            that.FindNonTerminatingCompositionCycle() is (TypeDeclaration referencing, TypeDeclaration referenced))
+        {
+            throw new CircularSchemaReferenceException(
+                referencing.LocatedSchema.Location,
+                referenced.LocatedSchema.Location);
+        }
+    }
+
+    /// <summary>
+    /// Finds a non-terminating same-instance composition cycle reachable from this type, if any.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns>
+    /// The back-edge of the cycle as a <c>(referencing, referenced)</c> pair — the type that holds the
+    /// offending composition reference and the type it references that is already being evaluated — or
+    /// <see langword="null"/> if evaluation terminates. Data-driven recursion through
+    /// <c>properties</c>/<c>items</c> descends to child instance nodes and so is never reported here.
+    /// </returns>
+    public static (TypeDeclaration Referencing, TypeDeclaration Referenced)? FindNonTerminatingCompositionCycle(this TypeDeclaration that)
+    {
+        return Visit(that, [], []);
+
+        static (TypeDeclaration, TypeDeclaration)? Visit(TypeDeclaration current, HashSet<TypeDeclaration> onPath, HashSet<TypeDeclaration> fullyExplored)
+        {
+            if (fullyExplored.Contains(current))
+            {
+                // We have already proven this subtree contains no cycle.
+                return null;
+            }
+
+            onPath.Add(current);
+
+            foreach (TypeDeclaration next in SameInstanceCompositionTypeDeclarations(current))
+            {
+                if (onPath.Contains(next))
+                {
+                    // 'current' references 'next', which is already on the evaluation path: a cycle.
+                    return (current, next);
+                }
+
+                if (Visit(next, onPath, fullyExplored) is { } cycle)
+                {
+                    return cycle;
+                }
+            }
+
+            onPath.Remove(current);
+            fullyExplored.Add(current);
+            return null;
+        }
+
+        static IEnumerable<TypeDeclaration> SameInstanceCompositionTypeDeclarations(TypeDeclaration that)
+        {
+            // allOf includes $ref (IReferenceKeyword is an IAllOfSubschemaValidationKeyword), so
+            // these three accessors together cover every subschema that is evaluated against the
+            // same instance node.
+            if (that.AllOfCompositionTypes() is IReadOnlyDictionary<IAllOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> allOf)
+            {
+                foreach (TypeDeclaration subschema in allOf.SelectMany(k => k.Value))
+                {
+                    yield return subschema.ReducedTypeDeclaration().ReducedType;
+                }
+            }
+
+            if (that.AnyOfCompositionTypes() is IReadOnlyDictionary<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> anyOf)
+            {
+                foreach (TypeDeclaration subschema in anyOf.SelectMany(k => k.Value))
+                {
+                    yield return subschema.ReducedTypeDeclaration().ReducedType;
+                }
+            }
+
+            if (that.OneOfCompositionTypes() is IReadOnlyDictionary<IOneOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> oneOf)
+            {
+                foreach (TypeDeclaration subschema in oneOf.SelectMany(k => k.Value))
+                {
+                    yield return subschema.ReducedTypeDeclaration().ReducedType;
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets the <see cref="IKeyword" /> keywords for the type declaration.
     /// </summary>
     /// <param name="that">The type declaration.</param>
