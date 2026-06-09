@@ -89,7 +89,17 @@ internal static class SendChannelStepEmitter
         // Resolve the payload to a JsonElement. A runtime expression resolves to a reference; everything
         // else (a composite template, an interpolated string, or a literal) is built/baked and assigned —
         // matching the kinds an operation step's request body supports.
-        if (body.Kind == ArgumentValueKind.Expression)
+        if (body.Replacements is { Count: > 0 } replacements)
+        {
+            // Payload replacements overlay values (referencing $inputs/$steps) onto the base payload at
+            // JSON Pointer targets — the same build-and-patch the operation request body uses.
+            var replacementCleanup = new StringBuilder();
+            string built = RequestBindingEmitter.EmitBodyWithReplacements(
+                fields, statements, replacementCleanup, body, replacements, "context", stepOutputLocals, inputsVariable, inputAccessors, $"{identifier}_Payload");
+            statements.Append("JsonElement ").Append(payloadLocal).Append(" = ").Append(built).AppendLine(";");
+            statements.Append(replacementCleanup);
+        }
+        else if (body.Kind == ArgumentValueKind.Expression)
         {
             ValueResolution.Emit(fields, statements, body.Value, payloadLocal, "context", stepOutputLocals, $"{identifier}_Payload", inputsVariable, inputAccessors);
         }

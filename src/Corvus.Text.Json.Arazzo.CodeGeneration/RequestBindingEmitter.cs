@@ -174,7 +174,7 @@ public static class RequestBindingEmitter
     /// value at its JSON Pointer target (JSON Patch <c>add</c> semantics — create-or-replace), and returns
     /// the patched element (which converts to the client body's <c>Source</c>).
     /// </summary>
-    private static string EmitBodyWithReplacements(
+    internal static string EmitBodyWithReplacements(
         StringBuilder fields,
         StringBuilder statements,
         StringBuilder cleanup,
