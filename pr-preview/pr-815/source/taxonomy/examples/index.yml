@@ -1,0 +1,27 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: Examples
+Navigation:
+  Title: Examples
+  Description: "Practical recipes showing common JSON Schema patterns and their generated C# types."
+  Parent: /
+  Url: /examples/index.html
+  Rank: 3
+  Header:
+    Visible: True
+    Link: True
+  Footer:
+    Visible: True
+    Link: True
+MetaData:
+  Title: "Examples — Corvus.Text.Json"
+  Description: "Hands-on recipes demonstrating data objects, validation, polymorphism, arrays, tuples, enumerations, maps, and more with Corvus.Text.Json and JSON Schema."
+  Keywords: [examples, recipes, JSON Schema, patterns, C#, data objects, validation, polymorphism, arrays]
+OpenGraph:
+  Title: "Examples — Corvus.Text.Json"
+  Description: "Hands-on recipes demonstrating common JSON Schema patterns and their generated C# types."
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Overview
+    Spec:
+      Path: ../../content/Examples/Overview.md
