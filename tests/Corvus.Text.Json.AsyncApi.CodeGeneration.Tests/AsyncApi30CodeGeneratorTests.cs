@@ -298,6 +298,36 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_ReceiveWithReply_HandlerReturnsReplyAndConsumerUsesSubscribeReply()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "receive-request-reply.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/messages/CalculateRequest/payload"] = "Worker.CalculateRequest",
+            ["#/components/messages/CalculateRequest/headers"] = "Worker.CalculateRequestHeaders",
+            ["#/components/messages/CalculateResponse/payload"] = "Worker.CalculateResponse",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Worker", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        // The handler returns the reply payload (responder), not void.
+        GeneratedFile handler = files.First(f => f.FileName.Contains("Handler"));
+        Assert.IsTrue(
+            handler.Content.Contains("ValueTask<Worker.CalculateResponse> HandleCalculateRequestAsync"),
+            handler.Content);
+
+        // The consumer subscribes through the responder primitive.
+        GeneratedFile consumer = files.First(f => f.FileName.Contains("Consumer"));
+        Assert.IsTrue(
+            consumer.Content.Contains("SubscribeReplyAsync<Worker.CalculateRequest, Worker.CalculateResponse>"),
+            consumer.Content);
+    }
+
+    [TestMethod]
     public void Generate_RequestReply_ProducerContainsSendAndReceiveMethod()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply.json"));
