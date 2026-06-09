@@ -277,6 +277,27 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void DescribeChannelOperations_PopulatesReplyForRequestReply()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(bytes);
+        JsonElement root = doc.RootElement.Clone();
+
+        var schemaTypeMap = new Dictionary<string, string>
+        {
+            ["#/components/messages/CalculateRequest/payload"] = "Calculator.CalculateRequest",
+            ["#/components/messages/CalculateResponse/payload"] = "Calculator.CalculateResponse",
+        };
+
+        var generator = new AsyncApi30CodeGenerator("Calculator", schemaTypeMap);
+        IReadOnlyList<AsyncApiChannelDescriptor> channels = generator.DescribeChannelOperations(root);
+
+        AsyncApiChannelDescriptor send = channels.Single(c => c.Action == OperationAction.Send && c.ReplyPayloadTypeName is not null);
+        Assert.AreEqual("Calculator.CalculateResponse", send.ReplyPayloadTypeName);
+        Assert.AreEqual("SendAndReceiveCalculateRequestAsync", send.Messages.Single().RequestReplyMethodName);
+    }
+
+    [TestMethod]
     public void Generate_RequestReply_ProducerContainsSendAndReceiveMethod()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "request-reply.json"));
