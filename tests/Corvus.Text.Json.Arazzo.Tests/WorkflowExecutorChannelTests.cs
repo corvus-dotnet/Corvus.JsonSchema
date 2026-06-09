@@ -161,6 +161,66 @@ public partial class WorkflowExecutorEndToEndTests
         published.ShouldContain("\"kind\":\"alert\"");
     }
 
+    [TestMethod]
+    public async Task Generated_executor_sends_an_interpolated_and_a_constant_payload()
+    {
+        // Send payloads now support every kind an operation body does: here an interpolated string and a
+        // constant object, each published through the producer.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "notifications",
+            OperationAction.Send,
+            "notify",
+            "Acme.Notifications.NotifyProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("notify", "Corvus.Text.Json.JsonElement", null, null, "PublishNotifyAsync")]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        await SendPayloadRoundTrip(binder, """{ "payload": "msg-{$inputs.message}" }""", """{"message":"hi"}""", published => published.ShouldBe("\"msg-hi\""));
+        await SendPayloadRoundTrip(binder, """{ "payload": { "kind": "ping" } }""", "{}", published => published.ShouldContain("\"kind\":\"ping\""));
+    }
+
+    // Emits a single send-step workflow with the given requestBody, runs it, and hands the published
+    // payload bytes (as a string) to the assertion.
+    private static async Task SendPayloadRoundTrip(WorkflowOperationBinder binder, string requestBodyJson, string inputsJson, Action<string> assert)
+    {
+        string document = $$"""
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+              "workflows": [ { "workflowId": "notify", "steps": [ { "stepId": "send", "channelPath": "notifications", "action": "send", "requestBody": {{requestBodyJson}} } ], "outputs": {} } ]
+            }
+            """;
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "NotifyWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.NotifyWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputsJson));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        await pending;
+
+        messageTransport.PublishedMessages.Count.ShouldBe(1);
+        assert(Encoding.UTF8.GetString(messageTransport.PublishedMessages[0].PayloadBytes));
+    }
+
     private const string ChannelRequestReplyDocument = """
         {
           "arazzo": "1.1.0",
