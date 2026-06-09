@@ -298,6 +298,39 @@ public class AsyncApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void DescribeChannelOperations_SurfacesMessageCorrelationId()
+    {
+        // A message references a named correlation id ($ref to components.correlationIds); the descriptor
+        // surfaces both the name (the $ref key — what an Arazzo receive step's correlationId matches) and
+        // its location runtime expression.
+        const string document = """
+            {
+              "asyncapi": "3.0.0",
+              "info": { "title": "t", "version": "1.0.0" },
+              "channels": {
+                "replies": { "address": "replies", "messages": { "reply": { "$ref": "#/components/messages/Reply" } } }
+              },
+              "operations": {
+                "onReply": { "action": "receive", "channel": { "$ref": "#/channels/replies" }, "messages": [ { "$ref": "#/channels/replies/messages/reply" } ] }
+              },
+              "components": {
+                "messages": { "Reply": { "payload": { "type": "object" }, "correlationId": { "$ref": "#/components/correlationIds/myCorr" } } },
+                "correlationIds": { "myCorr": { "location": "$message.payload#/correlationId" } }
+              }
+            }
+            """;
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(document));
+        var generator = new AsyncApi30CodeGenerator("Replies", new Dictionary<string, string>());
+
+        IReadOnlyList<AsyncApiChannelDescriptor> channels = generator.DescribeChannelOperations(doc.RootElement.Clone());
+
+        AsyncApiChannelMessageDescriptor message = channels.Single(c => c.Action == OperationAction.Receive).Messages.Single();
+        Assert.AreEqual("myCorr", message.CorrelationIdName);
+        Assert.AreEqual("$message.payload#/correlationId", message.CorrelationIdLocation);
+    }
+
+    [TestMethod]
     public void Generate_ReceiveWithReply_HandlerReturnsReplyAndConsumerUsesSubscribeReply()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine("TestData", "receive-request-reply.json"));
