@@ -155,7 +155,8 @@ public sealed class BenchMessageTransport : Corvus.Text.Json.AsyncApi.IMessageTr
     private static class Fixed<T>
         where T : struct, IJsonElement<T>
     {
-        public static readonly ParsedJsonDocument<T> Message = ParsedJsonDocument<T>.Parse("""{"v":42}"""u8.ToArray());
+        // Carries a correlationId so the correlated-receive probe's filter matches (other probes ignore it).
+        public static readonly ParsedJsonDocument<T> Message = ParsedJsonDocument<T>.Parse("""{"v":42,"correlationId":"bench-corr"}"""u8.ToArray());
     }
 
     public ValueTask PublishAsync<TPayload>(ReadOnlyMemory<byte> channelUtf8, in TPayload payload, in JsonElement headers = default, CancellationToken cancellationToken = default)
