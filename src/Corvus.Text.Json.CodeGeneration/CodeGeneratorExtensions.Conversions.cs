@@ -714,6 +714,30 @@ internal static partial class CodeGeneratorExtensions
                 .PopIndent()
                 .AppendLineIndent("}");
 
+            // Also offer the conversion directly from the composed type's mutable view to the
+            // immutable composing type (issue #812 / #806). Without this, converting e.g. a
+            // discriminated-union branch's .Mutable to the union requires two implicit hops
+            // (Branch.Mutable -> Branch -> Union), which C# will not chain, forcing callers to
+            // spell out an intermediate. The general principle: if there is an implicit conversion
+            // from TypeA to TypeB, also offer one from TypeA.Mutable to TypeB.
+            if (!forMutable && isImplicitFrom)
+            {
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("/// <summary>")
+                    .AppendLineIndent("/// Conversion from the <see cref=\"", subschema.ReducedTypeDeclaration().ReducedType.FullyQualifiedDotnetTypeName(), "\"/> mutable view.")
+                    .AppendLineIndent("/// </summary>")
+                    .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
+                    .AppendIndent("public static implicit operator ", rootDeclaration.DotnetTypeName(), "(")
+                    .Append(subschema.ReducedTypeDeclaration().ReducedType.FullyQualifiedDotnetTypeName())
+                    .AppendLine(".Mutable value)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return From(value);")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+            }
+
             return true;
         }
     }

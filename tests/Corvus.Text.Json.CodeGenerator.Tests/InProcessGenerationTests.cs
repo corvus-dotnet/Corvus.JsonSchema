@@ -381,6 +381,147 @@ public class InProcessGenerationTests
         StringAssert.Contains(ex.Message, "Circular schema reference");
     }
 
+    // ── Issue #812: discriminated-union constituent-builder Source wiring ──────────────────────
+    // The constituent object-builder Source wiring (a "<Constituent>BuilderInstance" backing field
+    // and matching Kind cases) is normally suppressed when the parent has its own properties. It is
+    // re-enabled for a discriminated union (a oneOf whose branches all carry a required const
+    // discriminator and whose parent requires nothing else). These tests cover the detection branches.
+
+    private const string DiscriminatedUnionDefs = """
+        ,
+        "$defs": {
+          "circle": {
+            "title": "Circle",
+            "type": "object",
+            "required": [ "kind", "radius" ],
+            "properties": { "kind": { "const": "Circle" }, "radius": { "type": "number" } }
+          },
+          "rectangle": {
+            "title": "Rectangle",
+            "type": "object",
+            "required": [ "kind", "width", "height" ],
+            "properties": { "kind": { "const": "Rectangle" }, "width": { "type": "number" }, "height": { "type": "number" } }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public async Task GenerateCode_DiscriminatedUnion_EnablesConstituentBuilderWiring()
+    {
+        string schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "title": "Shape",
+              "type": "object",
+              "required": [ "kind" ],
+              "properties": { "kind": { "type": "string", "enum": [ "Circle", "Rectangle" ] } },
+              "oneOf": [ { "$ref": "#/$defs/circle" }, { "$ref": "#/$defs/rectangle" } ]
+            """.TrimEnd().TrimEnd('}') + DiscriminatedUnionDefs + "\n}";
+
+        await AssertConstituentBuilderWiring(schema, expectedPresent: true);
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_DiscriminatedUnion_WithNonStructuralKeywords_StillEnabled()
+    {
+        // Non-structural keywords (title/description/$comment/examples/deprecated/readOnly) on the
+        // base schema must NOT disqualify the discriminated union (they are INonStructuralKeyword).
+        string schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "title": "Shape",
+              "description": "A shape that is either a circle or a rectangle.",
+              "$comment": "Authoring note: discriminated by kind.",
+              "examples": [ { "kind": "Circle", "radius": 1 } ],
+              "deprecated": false,
+              "readOnly": false,
+              "type": "object",
+              "required": [ "kind" ],
+              "properties": { "kind": { "type": "string", "enum": [ "Circle", "Rectangle" ] } },
+              "oneOf": [ { "$ref": "#/$defs/circle" }, { "$ref": "#/$defs/rectangle" } ]
+            """.TrimEnd().TrimEnd('}') + DiscriminatedUnionDefs + "\n}";
+
+        await AssertConstituentBuilderWiring(schema, expectedPresent: true);
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_OneOf_WithExtraRequiredProperty_DoesNotEnableWiring()
+    {
+        // The parent requires a structural property ("color") that the branches do not carry, so a
+        // constituent build would be incomplete: the wiring must stay suppressed.
+        string schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "title": "Shape",
+              "type": "object",
+              "required": [ "kind", "color" ],
+              "properties": {
+                "kind": { "type": "string", "enum": [ "Circle", "Rectangle" ] },
+                "color": { "type": "string" }
+              },
+              "oneOf": [ { "$ref": "#/$defs/circle" }, { "$ref": "#/$defs/rectangle" } ]
+            """.TrimEnd().TrimEnd('}') + DiscriminatedUnionDefs + "\n}";
+
+        await AssertConstituentBuilderWiring(schema, expectedPresent: false);
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_OneOf_WithoutConstDiscriminator_DoesNotEnableWiring()
+    {
+        // The parent has its own property but the branches have no required const discriminator, so
+        // there is no discriminator guaranteeing a valid parent: the wiring must stay suppressed.
+        string schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "title": "Shape",
+              "type": "object",
+              "required": [ "id" ],
+              "properties": { "id": { "type": "string" } },
+              "oneOf": [
+                { "title": "Circle", "type": "object", "properties": { "radius": { "type": "number" } } },
+                { "title": "Rectangle", "type": "object", "properties": { "width": { "type": "number" } } }
+              ]
+            }
+            """;
+
+        await AssertConstituentBuilderWiring(schema, expectedPresent: false);
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_AnyOf_WithProperties_DoesNotEnableOneOfWiring()
+    {
+        // The detection only relaxes for oneOf; an anyOf parent with its own properties is not
+        // treated as a oneOf discriminated union (covers the no-oneOf branch).
+        string schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "title": "Shape",
+              "type": "object",
+              "required": [ "kind" ],
+              "properties": { "kind": { "type": "string", "enum": [ "Circle", "Rectangle" ] } },
+              "anyOf": [ { "$ref": "#/$defs/circle" }, { "$ref": "#/$defs/rectangle" } ]
+            """.TrimEnd().TrimEnd('}') + DiscriminatedUnionDefs + "\n}";
+
+        await AssertConstituentBuilderWiring(schema, expectedPresent: false);
+    }
+
+    private static async Task AssertConstituentBuilderWiring(string schemaContent, bool expectedPresent)
+    {
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        // "BuilderInstance" appears only as the backing field for a composed constituent builder in
+        // a parent Source (the parent's own object builder field is "_objectBuilder").
+        bool present = allCode.Contains("BuilderInstance");
+
+        Assert.AreEqual(
+            expectedPresent,
+            present,
+            expectedPresent
+                ? "Expected constituent-builder Source wiring for the discriminated union."
+                : "Did not expect constituent-builder Source wiring for this schema.");
+    }
+
     [TestMethod]
     public async Task GenerateCode_BothMode_ProducesMoreOrEqualFiles()
     {

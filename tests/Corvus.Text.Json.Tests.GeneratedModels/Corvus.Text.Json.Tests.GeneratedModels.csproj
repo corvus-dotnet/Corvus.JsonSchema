@@ -12,6 +12,8 @@
 
   <ItemGroup>
     <AdditionalFiles Include="format-types-2020-12.json" />
+    <AdditionalFiles Include="shape-discriminated-2020-12.json" />
+    <AdditionalFiles Include="shape-holder-2020-12.json" />
     <AdditionalFiles Include="object-with-mixed-properties-2020-12.json" />
     <AdditionalFiles Include="nested-object-2020-12.json" />
     <AdditionalFiles Include="context-named-property-2020-12.json" />

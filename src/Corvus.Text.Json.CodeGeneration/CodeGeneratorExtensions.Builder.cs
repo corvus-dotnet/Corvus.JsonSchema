@@ -373,7 +373,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (composedBuilder.ObjectInstanceName is not null && composedBuilder.ObjectKindName is not null)
             {
-                if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations))
+                if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations) || typeDeclaration.ConstituentBuildYieldsValidInstance())
                 {
                     if (seenKinds.Add(composedBuilder.ObjectKindName))
                     {
@@ -815,7 +815,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (composedBuilder.ObjectInstanceName is not null && composedBuilder.ObjectKindName is not null && composedBuilder.ObjectBuilderName is not null)
             {
-                if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations))
+                if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations) || typeDeclaration.ConstituentBuildYieldsValidInstance())
                 {
                     if (seenKinds.Add(composedBuilder.ObjectKindName))
                     {
@@ -1249,7 +1249,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (composedBuilder.ObjectInstanceName is not null && composedBuilder.ObjectKindName is not null && composedBuilder.ObjectBuilderName is not null)
             {
-                if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations))
+                if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations) || typeDeclaration.ConstituentBuildYieldsValidInstance())
                 {
                     if (seenKinds.Add(composedBuilder.ObjectKindName))
                     {
@@ -1636,6 +1636,61 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether building a single composed <c>oneOf</c> constituent always
+    /// yields a valid instance of this type, so the constituent object-builder <c>Source</c> wiring
+    /// may be emitted even though this type has its own properties (issue #812).
+    /// </summary>
+    /// <param name="typeDeclaration">The composing (union) type declaration.</param>
+    /// <returns><see langword="true"/> for a discriminated union whose only required property is a const discriminator carried by every branch.</returns>
+    /// <remarks>
+    /// The constituent object-builder wiring is normally suppressed when the parent has its own
+    /// properties, because building a single constituent might omit a property the parent requires.
+    /// For a discriminated union that cannot happen: the parent requires only a const discriminator
+    /// that every branch also requires, so any valid branch is a valid parent.
+    /// </remarks>
+    internal static bool ConstituentBuildYieldsValidInstance(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.TryGetMetadata(nameof(ConstituentBuildYieldsValidInstance), out bool result))
+        {
+            result = Compute(typeDeclaration);
+            typeDeclaration.SetMetadata(nameof(ConstituentBuildYieldsValidInstance), result);
+        }
+
+        return result;
+
+        static bool Compute(TypeDeclaration typeDeclaration)
+        {
+            if (typeDeclaration.OneOfCompositionTypes() is not IReadOnlyDictionary<IOneOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> oneOf
+                || oneOf.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (IReadOnlyCollection<TypeDeclaration> branches in oneOf.Values)
+            {
+                if (!CodeGenerationExtensions.TryGetOneOfDiscriminator(branches, out string? discriminator, out _, out _, requireRequired: true))
+                {
+                    return false;
+                }
+
+                // Every required local property of the parent must be the discriminator; otherwise a
+                // constituent build could omit a property the parent requires.
+                foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
+                {
+                    if (property.LocalOrComposed == LocalOrComposed.Local
+                        && property.RequiredOrOptional == RequiredOrOptional.Required
+                        && property.JsonPropertyName != discriminator)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
     }
 
     private static CodeGenerator AppendSourceRefStruct(this CodeGenerator generator, TypeDeclaration typeDeclaration, List<ComposedBuilder> builders)
@@ -3739,7 +3794,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (composedBuilder.ObjectInstanceName is not null && composedBuilder.ObjectKindName is not null)
             {
-                if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations))
+                if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations) || typeDeclaration.ConstituentBuildYieldsValidInstance())
                 {
                     string fqdtn = composedBuilder.TypeDeclaration.FullyQualifiedDotnetTypeName();
                     generator
@@ -3913,7 +3968,7 @@ internal static partial class CodeGeneratorExtensions
                 }
             }
 
-            if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations))
+            if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations) || typeDeclaration.ConstituentBuildYieldsValidInstance())
             {
                 string fqdtn = composedBuilder.TypeDeclaration.FullyQualifiedDotnetTypeName();
 
@@ -4178,7 +4233,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (builder.ObjectInstanceName is string oin)
             {
-                if (!(builder.IsObject && typeDeclaration.HasPropertyDeclarations))
+                if (!(builder.IsObject && typeDeclaration.HasPropertyDeclarations) || typeDeclaration.ConstituentBuildYieldsValidInstance())
                 {
                     string fqdtn = builder.TypeDeclaration.FullyQualifiedDotnetTypeName();
                     generator

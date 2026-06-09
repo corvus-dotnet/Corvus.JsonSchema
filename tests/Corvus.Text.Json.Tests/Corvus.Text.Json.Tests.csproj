@@ -162,6 +162,7 @@
     <Compile Include="GeneratedMixedCompositionTests.cs" />
     <Compile Include="GeneratedNullableOptionalTests.cs" />
     <Compile Include="GeneratedNonNullDefaultedTests.cs" />
+    <Compile Include="DiscriminatedUnionConversionTests.cs" />
     <Compile Include="GeneratedV4NonNullDefaultedTests.cs" />
     <Compile Include="GeneratedTupleArrayTests.cs" />
     <Compile Include="GeneratedComposedTupleTests.cs" />

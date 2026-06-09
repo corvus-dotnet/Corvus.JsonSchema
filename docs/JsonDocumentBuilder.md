@@ -264,6 +264,66 @@ using var usersDoc = JsonElement.CreateBuilder(
 Console.WriteLine(usersDoc.RootElement.ToString());
 ```
 
+### Creating Discriminated Unions
+
+A *discriminated union* is a `oneOf` (or `anyOf`) whose branches are distinguished by a constant
+discriminator property — for example a `Shape` that is either a `Circle` or a `Rectangle`, keyed by
+`kind`:
+
+```json
+{
+  "title": "Shape",
+  "type": "object",
+  "required": [ "kind" ],
+  "properties": { "kind": { "type": "string", "enum": [ "Circle", "Rectangle" ] } },
+  "oneOf": [ { "$ref": "#/$defs/circle" }, { "$ref": "#/$defs/rectangle" } ]
+}
+```
+
+You do not have to materialise the union to work with it — you can build a single branch and use it
+wherever the union is expected. Because a valid branch is always a valid union, the generator lets a
+branch flow straight into the union in a **single** implicit conversion (there is no need to spell out
+an intermediate step, which C# would otherwise require because it will not chain two implicit
+conversions):
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Build a Circle branch directly...
+using JsonDocumentBuilder<Shape.Circle.Mutable> circleBuilder =
+    JsonDocumentBuilder<Shape.Circle.Mutable>.Parse(workspace, """{"kind":"Circle","radius":2.5}""");
+
+// ...and assign it where a Shape is expected. This is a single hop, even though the value is a
+// Shape.Circle.Mutable — no intermediate Shape.Circle is needed.
+Shape shape = circleBuilder.RootElement;
+```
+
+The same applies when *creating* a larger document: a branch can be passed straight into the
+`Build`/`CreateBuilder` of a type that contains the union. Here a `ShapeHolder` has a required `shape`
+property of the `Shape` union, and we build it from a `Circle`:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using ParsedJsonDocument<ShapeHolder.Circle> circleDoc =
+    ParsedJsonDocument<ShapeHolder.Circle>.Parse("""{"kind":"Circle","radius":2.5}""");
+ShapeHolder.Circle circle = circleDoc.RootElement;
+
+// 'circle' converts implicitly to the union's Source for the 'shape' property.
+using JsonDocumentBuilder<ShapeHolder.Mutable> holder = ShapeHolder.CreateBuilder(workspace, circle);
+
+Console.WriteLine(holder.RootElement.ToString());
+// {"shape":{"kind":"Circle","radius":2.5}}
+```
+
+This works for *pure* `oneOf`/`anyOf` unions (branches discriminated by structure) and for unions whose
+base schema carries a single required `const` discriminator that every branch repeats — the common
+"tagged union" shape used by OpenAPI discriminators and JSON Patch operations. Non-structural keywords
+on the base schema (`title`, `description`, `$comment`, `examples`, and so on) do not affect this.
+
+> Note: a branch can always be read back out of the union with the generated `TryGetAs…` / `Match`
+> methods — see [Polymorphism with Discriminators](ExampleRecipes/013-PolymorphismWithDiscriminators/).
+
 ## Working with Existing JSON
 
 In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward — parse, mutate, serialize.
