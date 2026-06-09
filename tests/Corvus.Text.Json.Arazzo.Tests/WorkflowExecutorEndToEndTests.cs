@@ -139,6 +139,68 @@ public partial class WorkflowExecutorEndToEndTests
         transport.Requests[0].Path.ShouldBe("/pets");
     }
 
+    private const string ReplacementsDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "register",
+              "steps": [
+                {
+                  "stepId": "createPet",
+                  "operationId": "createPet",
+                  "requestBody": {
+                    "payload": "$inputs.pet",
+                    "replacements": [
+                      { "target": "/name", "value": "$inputs.newName" },
+                      { "target": "/status", "value": "available" }
+                    ]
+                  },
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.createPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_applies_payload_replacements()
+    {
+        CreatePetClient.CapturedBodies.Clear();
+        string source = EmitCreatePetExecutor(ReplacementsDocument, "ReplaceWorkflow");
+
+        // The base payload is built into a mutable copy and patched at each JSON Pointer target.
+        source.ShouldContain("using Corvus.Text.Json.Patch;");
+        source.ShouldContain(".CreateBuilder(workspace)");
+        source.ShouldContain(".TryAdd(\"/name\"u8");
+        source.ShouldContain(".TryAdd(\"/status\"u8");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ReplaceWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Post, "/pets", 200, """{"name":"ignored"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"pet":{"name":"Rex"},"newName":"Buddy"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        _ = await pending;
+
+        // The body sent to the client: the base pet with /name replaced ($inputs.newName) and /status added.
+        CreatePetClient.CapturedBodies.Count.ShouldBe(1);
+        using var captured = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(CreatePetClient.CapturedBodies[0]));
+        captured.RootElement.GetProperty("name"u8).GetString().ShouldBe("Buddy");
+        captured.RootElement.GetProperty("status"u8).GetString().ShouldBe("available");
+    }
+
     private const string LiteralParamDocument = """
         {
           "arazzo": "1.0.1",
@@ -1031,6 +1093,7 @@ public partial class WorkflowExecutorEndToEndTests
         // the loaded-assembly reference set.
         _ = typeof(NodaTime.OffsetTime).Assembly;
         _ = typeof(Corvus.Text.Json.JsonPath.JsonPathResult).Assembly;
+        _ = typeof(Corvus.Text.Json.Patch.JsonPatchExtensions).Assembly;
 
         var references = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))

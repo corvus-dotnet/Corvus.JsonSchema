@@ -81,9 +81,12 @@ public static class RequestBindingEmitter
 
         if (requestBody is { } body && operation.Operation.RequestBodyTypeName is { } bodyType)
         {
-            string source = EmitValue(
-                fields, statements, cleanup, body.Kind, body.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
-                $"{fieldPrefix}Body", "Body", bodyType);
+            string source = body.Replacements is { Count: > 0 } replacements
+                ? EmitBodyWithReplacements(
+                    fields, statements, cleanup, body, replacements, contextVariable, stepOutputLocals, inputsVariable, inputAccessors, $"{fieldPrefix}Body")
+                : EmitValue(
+                    fields, statements, cleanup, body.Kind, body.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
+                    $"{fieldPrefix}Body", "Body", bodyType);
             namedArguments.Add($"body: {source}");
         }
 
@@ -164,6 +167,100 @@ public static class RequestBindingEmitter
                 return $"{fieldName}.RootElement";
         }
     }
+
+    /// <summary>
+    /// Emits a request body built by overlaying payload replacements onto a base payload: resolves the base
+    /// to a <see cref="JsonElement"/>, builds a mutable copy in the run workspace, sets each replacement's
+    /// value at its JSON Pointer target (JSON Patch <c>add</c> semantics — create-or-replace), and returns
+    /// the patched element (which converts to the client body's <c>Source</c>).
+    /// </summary>
+    private static string EmitBodyWithReplacements(
+        StringBuilder fields,
+        StringBuilder statements,
+        StringBuilder cleanup,
+        in StepBody body,
+        IReadOnlyList<PayloadReplacement> replacements,
+        string contextVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        string fieldName)
+    {
+        string prefix = EmitText.ToCamelCase(fieldName);
+        string baseLocal = $"{prefix}Base";
+        EmitBaseElement(fields, statements, cleanup, body, contextVariable, stepOutputLocals, inputsVariable, inputAccessors, fieldName, baseLocal);
+
+        string builderLocal = $"{prefix}Builder";
+        string mutableLocal = $"{prefix}Mutable";
+        statements.Append("var ").Append(builderLocal).Append(" = ").Append(baseLocal).AppendLine(".CreateBuilder(workspace);");
+        statements.Append("JsonElement.Mutable ").Append(mutableLocal).Append(" = ").Append(builderLocal).AppendLine(".RootElement;");
+
+        for (int i = 0; i < replacements.Count; i++)
+        {
+            PayloadReplacement replacement = replacements[i];
+            string valueSource = EmitValue(
+                fields, statements, cleanup, replacement.Kind, replacement.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
+                $"{fieldName}Repl{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}", $"Repl{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}", "Corvus.Text.Json.JsonElement");
+            statements.Append(mutableLocal).Append(".TryAdd(").Append(EmitText.Quote(replacement.Target)).Append("u8, ").Append(valueSource).AppendLine(");");
+        }
+
+        string resultLocal = $"{prefix}Patched";
+        statements.Append("JsonElement ").Append(resultLocal).Append(" = ").Append(mutableLocal).AppendLine(";");
+        return resultLocal;
+    }
+
+    /// <summary>Resolves a request-body base payload (of any kind) to a <see cref="JsonElement"/> local.</summary>
+    private static void EmitBaseElement(
+        StringBuilder fields,
+        StringBuilder statements,
+        StringBuilder cleanup,
+        in StepBody body,
+        string contextVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        string fieldName,
+        string baseLocal)
+    {
+        switch (body.Kind)
+        {
+            case ArgumentValueKind.Expression:
+                // A runtime expression resolves to a reference; CreateBuilder copies it before mutation.
+                ValueResolution.Emit(fields, statements, body.Value, baseLocal, contextVariable, stepOutputLocals, $"{fieldName}BaseExpr", inputsVariable, inputAccessors);
+                break;
+
+            case ArgumentValueKind.CompositeTemplate:
+            {
+                // EmitComposite appends its build statements as a side effect, so capture the result first.
+                string built = JsonTemplateEmitter.EmitComposite(
+                    fieldName, body.Value, "workspace", default, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{fieldName}BaseTmpl");
+                statements.Append("JsonElement ").Append(baseLocal).Append(" = ").Append(built).AppendLine(";");
+                break;
+            }
+
+            case ArgumentValueKind.Interpolation:
+            {
+                string built = JsonTemplateEmitter.EmitInterpolation(
+                    fieldName, body.Value, "workspace", default, inputsVariable, stepOutputLocals, inputAccessors, statements, $"{fieldName}BaseInterp");
+                statements.Append("JsonElement ").Append(baseLocal).Append(" = ").Append(built).AppendLine(";");
+                break;
+            }
+
+            default:
+            {
+                string json = body.Kind switch
+                {
+                    ArgumentValueKind.LiteralComposite or ArgumentValueKind.LiteralNumber or ArgumentValueKind.LiteralBoolean => body.Value,
+                    ArgumentValueKind.LiteralNull => "null",
+                    ArgumentValueKind.LiteralString => System.Text.Json.JsonSerializer.Serialize(body.Value),
+                    _ => throw new NotSupportedException($"Request body kind '{body.Kind}' is not supported as a base for payload replacements."),
+                };
+                string constant = JsonTemplateEmitter.EmitConstant(json, fields, $"{fieldName}BaseConst");
+                statements.Append("JsonElement ").Append(baseLocal).Append(" = ").Append(constant).AppendLine(";");
+                break;
+            }
+        }
+    }
 }
 
 /// <summary>
@@ -209,7 +306,17 @@ public readonly record struct StepArgument(string Name, string Value, ArgumentVa
 /// </summary>
 /// <param name="Value">The expression, interpolation template, or literal value text (see <paramref name="Kind"/>).</param>
 /// <param name="Kind">How the value is produced.</param>
-public readonly record struct StepBody(string Value, ArgumentValueKind Kind);
+/// <param name="Replacements">Payload replacements to overlay onto the base payload at JSON Pointer targets, or <see langword="null"/> when there are none.</param>
+public readonly record struct StepBody(string Value, ArgumentValueKind Kind, IReadOnlyList<PayloadReplacement>? Replacements = null);
+
+/// <summary>
+/// A single payload replacement (Arazzo <c>requestBody.replacements[]</c>): a value to set within the
+/// payload at a JSON Pointer location.
+/// </summary>
+/// <param name="Target">The JSON Pointer (e.g. <c>/status</c>) at which to set the value.</param>
+/// <param name="Value">The replacement value's expression/interpolation/literal text (see <paramref name="Kind"/>).</param>
+/// <param name="Kind">How the replacement value is produced.</param>
+public readonly record struct PayloadReplacement(string Target, string Value, ArgumentValueKind Kind);
 
 /// <summary>
 /// The request-side values of a step, used to resolve <c>$method</c> and <c>$request.*</c> criterion

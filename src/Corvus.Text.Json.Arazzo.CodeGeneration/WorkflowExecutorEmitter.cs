@@ -367,12 +367,6 @@ public static class WorkflowExecutorEmitter
             return null;
         }
 
-        // Payload replacements need substitution into the payload — a later phase.
-        if (requestBody.Replacements.IsNotUndefined())
-        {
-            return null;
-        }
-
         ArgumentValueKind kind = Classify(requestBody.Payload, out string text);
 
         // A composite (object/array) literal that embeds runtime expressions is a template to substitute
@@ -380,10 +374,41 @@ public static class WorkflowExecutorEmitter
         // conservatively (any '$' in its raw JSON) and carry it as a distinct kind.
         if (kind == ArgumentValueKind.LiteralComposite && requestBody.Payload.GetRawText().Contains('$'))
         {
-            return new StepBody(requestBody.Payload.GetRawText(), ArgumentValueKind.CompositeTemplate);
+            kind = ArgumentValueKind.CompositeTemplate;
+            text = requestBody.Payload.GetRawText();
         }
 
-        return new StepBody(text, kind);
+        // Payload replacements overlay values onto the base payload at JSON Pointer targets.
+        return new StepBody(text, kind, ReadReplacements(requestBody.Replacements));
+    }
+
+    private static IReadOnlyList<PayloadReplacement>? ReadReplacements(in JsonElement replacements)
+    {
+        if (!replacements.IsNotUndefined() || replacements.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var list = new List<PayloadReplacement>();
+        foreach (JsonElement element in replacements.EnumerateArray())
+        {
+            if (!element.TryGetProperty("target"u8, out JsonElement target) || target.ValueKind != JsonValueKind.String
+                || !element.TryGetProperty("value"u8, out JsonElement value))
+            {
+                continue;
+            }
+
+            ArgumentValueKind kind = Classify(value, out string valueText);
+            if (kind == ArgumentValueKind.LiteralComposite && value.GetRawText().Contains('$'))
+            {
+                kind = ArgumentValueKind.CompositeTemplate;
+                valueText = value.GetRawText();
+            }
+
+            list.Add(new PayloadReplacement(target.GetString()!, valueText, kind));
+        }
+
+        return list.Count > 0 ? list : null;
     }
 
     private static List<StepCriterion> ReadCriteria(in ArazzoDocument.StepObject step)
@@ -860,6 +885,14 @@ public static class WorkflowExecutorEmitter
         writer.AppendLine("using Corvus.Text.Json.AsyncApi;");
         writer.AppendLine("using Corvus.Text.Json.JsonPath;");
         writer.AppendLine("using Corvus.Text.Json.OpenApi;");
+
+        // The JSON Patch extensions (TryAdd at a JSON Pointer) are emitted only for steps that use payload
+        // replacements, so only those consumers need the Corvus.Text.Json.Patch reference.
+        if (body.Contains(".TryAdd(", StringComparison.Ordinal))
+        {
+            writer.AppendLine("using Corvus.Text.Json.Patch;");
+        }
+
         writer.AppendLine();
         writer.Append("namespace ").Append(options.Namespace).AppendLine(";");
         writer.AppendLine();
