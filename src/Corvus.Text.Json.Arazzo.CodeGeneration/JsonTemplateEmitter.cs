@@ -1,4 +1,4 @@
-// <copyright file="ReplyTemplateEmitter.cs" company="Endjin Limited">
+// <copyright file="JsonTemplateEmitter.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -10,46 +10,49 @@ using Stj = System.Text.Json;
 namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 
 /// <summary>
-/// Builds a request/reply <c>receive</c> step's reply payload from a template that may mix constant JSON
-/// with embedded runtime expressions (<c>$message.payload</c>, <c>$inputs</c>, <c>$steps</c>) — so a
-/// responder can construct a reply object/array from request fields, or an interpolated reply string,
-/// rather than only echoing a single value.
+/// Builds a JSON value from a template that may mix constant JSON with embedded runtime expressions
+/// (resolved against the supplied <see cref="CriterionSources"/>, plus <c>$inputs</c> and <c>$steps</c>) —
+/// so a step can construct an object/array (or an interpolated string) from live values rather than only
+/// binding a single expression. Used both for a request/reply <c>receive</c> step's reply (with the live
+/// request payload as the body source) and for an operation/send step's request body (with no message
+/// source).
 /// </summary>
 /// <remarks>
 /// <para>
 /// The template is walked at generation time. A subtree with no embedded expression is baked once into a
 /// static constant document and referenced. A subtree that embeds expressions is built into the run's
 /// <see cref="JsonWorkspace"/> via the object/array builder: each property/item value is resolved first
-/// (an expression to a reference into the live request/inputs/step-outputs, an interpolation to a pooled
+/// (an expression to a reference into the live source/inputs/step-outputs, an interpolation to a pooled
 /// build, a constant to a baked reference, a nested object/array by recursion) and then assembled. The
-/// result outlives the handler because the transport serializes the reply synchronously while the
-/// workspace, the live request, and the baked constants are all alive.
+/// result lives in the workspace, so it is valid for as long as the caller needs it (a reply serialized
+/// synchronously by the transport, or a request value the generated client materialises synchronously).
 /// </para>
 /// <para>
 /// A string value beginning with <c>$</c> is treated as a runtime expression and a string containing
-/// <c>{$…}</c> as an interpolation, mirroring how the request side classifies argument values; a literal
-/// string that merely contains a <c>$</c> elsewhere is emitted as a constant.
+/// <c>{$…}</c> as an interpolation, mirroring how the request side classifies argument values; a string
+/// whose <c>$</c>-form is not a recognized runtime expression (and a literal string that merely contains a
+/// <c>$</c> elsewhere) is emitted as a constant.
 /// </para>
 /// </remarks>
-internal static class ReplyTemplateEmitter
+internal static class JsonTemplateEmitter
 {
     /// <summary>
-    /// Emits the statements that build a composite (object/array) reply template into the workspace and
-    /// returns the C# expression yielding the resulting <see cref="JsonElement"/>.
+    /// Emits the statements that build a composite (object/array) template into the workspace and returns
+    /// the C# expression yielding the resulting <see cref="JsonElement"/>.
     /// </summary>
-    /// <param name="stepId">The step id (for diagnostics).</param>
+    /// <param name="context">A short description of the value being built (for diagnostics, e.g. the step id).</param>
     /// <param name="rawJson">The template's raw JSON text.</param>
     /// <param name="workspaceVariable">The in-scope <c>JsonWorkspace</c> variable name.</param>
-    /// <param name="sources">The criterion sources bundle (the live request payload as the body, the headers).</param>
+    /// <param name="sources">The criterion sources bundle (e.g. the live request payload as the body); pass <see langword="default"/> for none.</param>
     /// <param name="inputsVariable">The workflow inputs variable name.</param>
     /// <param name="stepOutputLocals">Map of step id → the local holding that step's outputs object.</param>
     /// <param name="inputAccessors">The input accessor map, or <see langword="null"/> for untyped inputs.</param>
     /// <param name="fields">Accumulates <c>static readonly</c> field declarations (baked constants).</param>
     /// <param name="statements">Accumulates the in-method build statements.</param>
     /// <param name="baseName">A unique prefix for the emitted temporaries/fields.</param>
-    /// <returns>The expression yielding the built reply <see cref="JsonElement"/>.</returns>
+    /// <returns>The expression yielding the built <see cref="JsonElement"/>.</returns>
     public static string EmitComposite(
-        string stepId,
+        string context,
         string rawJson,
         string workspaceVariable,
         in CriterionSources sources,
@@ -61,15 +64,15 @@ internal static class ReplyTemplateEmitter
         string baseName)
     {
         using Stj.JsonDocument document = Stj.JsonDocument.Parse(rawJson);
-        return EmitValue(stepId, document.RootElement, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, baseName);
+        return EmitValue(context, document.RootElement, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, baseName);
     }
 
     /// <summary>
-    /// Emits the statements that build an interpolated string reply into the workspace and returns the
+    /// Emits the statements that build an interpolated string into the workspace and returns the
     /// expression yielding the resulting <see cref="JsonElement"/>.
     /// </summary>
     public static string EmitInterpolation(
-        string stepId,
+        string context,
         string template,
         string workspaceVariable,
         in CriterionSources sources,
@@ -83,7 +86,7 @@ internal static class ReplyTemplateEmitter
                 template, sources.BodyLocal, inputsVariable, stepOutputLocals, inputAccessors, $"{baseName}I", out InterpolationInlineCode code))
         {
             throw new NotSupportedException(
-                $"Request/reply receive step '{stepId}' has an interpolated reply fragment '{template}' that references a value other than $message, $inputs, or $steps.");
+                $"Step '{context}' has an interpolated value fragment '{template}' that references a value other than $message, $inputs, or $steps.");
         }
 
         statements.Append(code.Statements);
@@ -108,7 +111,7 @@ internal static class ReplyTemplateEmitter
     // Resolves one template node to a C# expression yielding its JsonElement value, emitting any build
     // statements/fields needed first.
     private static string EmitValue(
-        string stepId,
+        string context,
         in Stj.JsonElement template,
         string workspaceVariable,
         in CriterionSources sources,
@@ -135,7 +138,7 @@ internal static class ReplyTemplateEmitter
                 int index = 0;
                 foreach (Stj.JsonProperty property in template.EnumerateObject())
                 {
-                    locals.Add(EmitValue(stepId, property.Value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{baseName}_{index.ToString(CultureInfo.InvariantCulture)}"));
+                    locals.Add(EmitValue(context, property.Value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{baseName}_{index.ToString(CultureInfo.InvariantCulture)}"));
                     names.Add(property.Name);
                     index++;
                 }
@@ -162,7 +165,7 @@ internal static class ReplyTemplateEmitter
                 int index = 0;
                 foreach (Stj.JsonElement item in template.EnumerateArray())
                 {
-                    locals.Add(EmitValue(stepId, item, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{baseName}_{index.ToString(CultureInfo.InvariantCulture)}"));
+                    locals.Add(EmitValue(context, item, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{baseName}_{index.ToString(CultureInfo.InvariantCulture)}"));
                     index++;
                 }
 
@@ -186,7 +189,7 @@ internal static class ReplyTemplateEmitter
                 string value = template.GetString()!;
                 if (value.Contains("{$", StringComparison.Ordinal))
                 {
-                    return EmitInterpolation(stepId, value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, baseName);
+                    return EmitInterpolation(context, value, workspaceVariable, sources, inputsVariable, stepOutputLocals, inputAccessors, statements, baseName);
                 }
 
                 if (value.StartsWith('$'))
@@ -205,7 +208,7 @@ internal static class ReplyTemplateEmitter
                         }
 
                         throw new NotSupportedException(
-                            $"Request/reply receive step '{stepId}' has a reply value '{value}' that cannot be resolved; a responder reply may reference only $message, $inputs, and $steps.");
+                            $"Step '{context}' has a value '{value}' that cannot be resolved; it may reference only $message, $inputs, and $steps.");
                     }
                 }
 
