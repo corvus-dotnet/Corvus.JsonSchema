@@ -87,9 +87,15 @@ public static class WorkflowExecutorEmitter
             if (binding.Kind == StepTargetKind.ChannelPath && binding.Channel is { } channel)
             {
                 bool isReceive = channel.Channel.Action == AsyncApi.CodeGeneration.OperationAction.Receive;
-                if (criteria.Count > 0 && !isReceive)
+                bool isRequestReply = !isReceive && channel.Channel.ReplyPayloadTypeName is not null;
+                if (criteria.Count > 0 && !isReceive && !isRequestReply)
                 {
-                    throw new NotSupportedException($"Channel step '{stepId}' has success criteria on a send step; only receive channel steps support success criteria (against $message.*).");
+                    throw new NotSupportedException($"Channel step '{stepId}' has success criteria on a fire-and-forget send step; only receive and request/reply channel steps support success criteria (against $message.*).");
+                }
+
+                if (isRequestReply && (onSuccess.Count > 0 || onFailure.Count > 0))
+                {
+                    throw new NotSupportedException($"Channel step '{stepId}' is a request/reply send with onSuccess/onFailure actions; control flow on a request/reply step is a later phase.");
                 }
 
                 // onSuccess/onFailure actions promote the channel step into the control-flow loop.
@@ -142,10 +148,17 @@ public static class WorkflowExecutorEmitter
                         continue;
                     }
 
-                    SendChannelStepCode channelCode = SendChannelStepEmitter.Emit(
-                        step.StepId, channelStep, step.RequestBody, "messageTransport", stepOutputLocals, "inputs", options.InputAccessors);
-                    fields.Append(channelCode.Fields);
-                    AppendIndented(body, channelCode.Statements, 12);
+                    string sendStatements = SendChannelStepEmitter.Emit(
+                        step.StepId, channelStep, step.RequestBody, step.Outputs, step.SuccessCriteria, "messageTransport", "workspace",
+                        stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace);
+                    AppendIndented(body, sendStatements, 12);
+
+                    // A request/reply send captures the reply as the step's outputs.
+                    if (channelStep.Channel.ReplyPayloadTypeName is not null)
+                    {
+                        stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
+                    }
+
                     body.AppendLine();
                     continue;
                 }
