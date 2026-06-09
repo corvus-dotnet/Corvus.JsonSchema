@@ -11,7 +11,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// does for AsyncAPI. It is the reference against which the shared store-conformance suite runs, and is also
 /// usable for a real single-process run that does not need to survive a host restart.
 /// </summary>
-public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore
+public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
 {
     private readonly Dictionary<string, Entry> entries = [];
     private readonly Dictionary<string, LeaseRecord> leases = [];
@@ -120,6 +120,63 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore
         }
 
         return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        foreach (WorkflowRunId id in this.Snapshot(e =>
+            e.Index.Status == WorkflowRunStatus.Suspended && e.Index.DueAt is { } due && due <= before))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return id;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(channel);
+        await Task.CompletedTask.ConfigureAwait(false);
+        foreach (WorkflowRunId id in this.Snapshot(e =>
+            e.Index.Status == WorkflowRunStatus.Suspended
+            && e.Index.AwaitingChannel == channel
+            && (correlationId is null || e.Index.AwaitingCorrelationId is null || e.Index.AwaitingCorrelationId == correlationId)))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return id;
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        List<WorkflowRunListing> runs;
+        lock (this.gate)
+        {
+            runs = this.entries
+                .Where(kvp =>
+                    (query.Status is not { } status || kvp.Value.Index.Status == status)
+                    && (query.WorkflowId is not { } workflowId || kvp.Value.Index.WorkflowId == workflowId))
+                .Take(query.Limit)
+                .Select(kvp => new WorkflowRunListing(new WorkflowRunId(kvp.Key), kvp.Value.Index))
+                .ToList();
+        }
+
+        return ValueTask.FromResult(new WorkflowRunPage(runs));
+    }
+
+    private List<WorkflowRunId> Snapshot(Func<Entry, bool> predicate)
+    {
+        lock (this.gate)
+        {
+            return this.entries
+                .Where(kvp => predicate(kvp.Value))
+                .Select(kvp => new WorkflowRunId(kvp.Key))
+                .ToList();
+        }
     }
 
     private readonly record struct Entry(byte[] Checkpoint, WorkflowEtag Etag, WorkflowRunIndexEntry Index);
