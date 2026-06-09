@@ -1012,11 +1012,13 @@ public static class WorkflowExecutorEmitter
         string messageTransportParameter = needsMessageTransport ? "IMessageTransport messageTransport, " : string.Empty;
 
         // The durable shape threads an optional run that carries the resumable state and persists checkpoints;
-        // a null run makes the executor behave exactly like the non-durable form.
+        // a null run makes the executor behave exactly like the non-durable form. It returns the tri-state
+        // WorkflowRunResult (completed / faulted / suspended) instead of the bare outputs.
         string runParameter = options.Durable ? "IWorkflowRun? run = null, " : string.Empty;
+        string returnType = options.Durable ? $"WorkflowRunResult<{options.OutputsTypeName}>" : options.OutputsTypeName;
 
         writer.Append("    /// <summary>Executes the '").Append(workflowId).AppendLine("' workflow.</summary>");
-        writer.Append("    public static async ValueTask<").Append(options.OutputsTypeName)
+        writer.Append("    public static async ValueTask<").Append(returnType)
             .Append("> ExecuteAsync(IApiTransport transport, ").Append(messageTransportParameter).Append("JsonWorkspace workspace, ")
             .Append(options.InputsTypeName).Append(" inputs, ").Append(runParameter).AppendLine("CancellationToken cancellationToken = default)");
         writer.AppendLine("    {");
@@ -1042,12 +1044,17 @@ public static class WorkflowExecutorEmitter
         writer.Append(body);
         if (options.Durable)
         {
-            // Record the terminal checkpoint with the final workflow outputs before returning.
+            // Record the terminal checkpoint with the final workflow outputs, then return the completed result.
             writer.AppendLine("            if (run is not null) { await run.CompleteAsync(workflowOutputsElement, cancellationToken).ConfigureAwait(false); }");
+            writer.AppendLine("            ArazzoTelemetry.WorkflowsCompleted.Add(1);");
+            writer.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).AppendLine(">.Completed(workflowOutputsElement);");
+        }
+        else
+        {
+            writer.AppendLine("            ArazzoTelemetry.WorkflowsCompleted.Add(1);");
+            writer.AppendLine("            return workflowOutputsElement;");
         }
 
-        writer.AppendLine("            ArazzoTelemetry.WorkflowsCompleted.Add(1);");
-        writer.AppendLine("            return workflowOutputsElement;");
         writer.AppendLine("        }");
         writer.AppendLine("        catch (Exception ex)");
         writer.AppendLine("        {");
