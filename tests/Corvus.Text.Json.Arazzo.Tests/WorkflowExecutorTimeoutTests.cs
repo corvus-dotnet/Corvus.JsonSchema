@@ -93,7 +93,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
 
         WorkflowStepFailedException? caught = null;
         try
@@ -129,7 +129,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
         JsonElement outputs = await pending;
 
         outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
@@ -156,7 +156,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
         _ = await pending;
 
         // The timeout routed to onFailure's unconditional `end`, so the workflow completed gracefully
@@ -228,7 +228,7 @@ public partial class WorkflowExecutorEndToEndTests
         // No message is ever delivered, so the receive exceeds its 30ms budget and fails the step.
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
 
         WorkflowStepFailedException? caught = null;
         try
