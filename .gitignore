@@ -395,5 +395,13 @@ petstore-generated/
 petstore-regen-temp/
 asyncapi-sample-output/
 
-# Build-time generated code (regenerated from OpenAPI specs by MSBuild targets)
+# Build-time generated code (regenerated from OpenAPI/AsyncAPI specs by MSBuild targets)
 tests/Corvus.Text.Json.OpenApi.Runtime.Tests/Generated/
+tests/Corvus.Text.Json.OpenApi30.Runtime.Tests/Generated/
+tests/Corvus.Text.Json.OpenApi30.Server.Runtime.Tests/Generated/
+tests/Corvus.Text.Json.OpenApi31.Runtime.Tests/Generated/
+tests/Corvus.Text.Json.OpenApi31.Server.Runtime.Tests/Generated/
+tests/Corvus.Text.Json.OpenApi32.Runtime.Tests/Generated/
+tests/Corvus.Text.Json.OpenApi32.Server.Runtime.Tests/Generated/
+tests/Corvus.Text.Json.AsyncApi.Runtime.Tests/Generated/
+tests/Corvus.Text.Json.AsyncApi.Runtime.Tests/Generated26/
