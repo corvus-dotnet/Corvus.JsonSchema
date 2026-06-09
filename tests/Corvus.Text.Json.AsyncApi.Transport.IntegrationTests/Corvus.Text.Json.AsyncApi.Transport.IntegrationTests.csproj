@@ -24,6 +24,15 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.AzureServiceBus\Corvus.Text.Json.AsyncApi.AzureServiceBus.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
+  <!-- The Arazzo emit→compile pipeline (net10.0 only) for the compiled-responder-workflow-over-broker test. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.CodeGeneration\Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo11\Corvus.Text.Json.Arazzo11.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Testcontainers.Nats" />
     <PackageReference Include="Testcontainers.RabbitMq" />
