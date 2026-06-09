@@ -148,6 +148,12 @@ public static class RequestBindingEmitter
             case ArgumentValueKind.LiteralNull:
                 return $"{typeName}.Source.Null()";
 
+            case ArgumentValueKind.CompositeTemplate:
+                // A request body that embeds runtime expressions in an object/array template is not yet
+                // supported on operation/send steps (only request/reply receive steps build a reply this way).
+                throw new NotSupportedException(
+                    $"Request body for property '{propertyName}' is a composite template with embedded runtime expressions, which is only supported on a request/reply receive step's reply.");
+
             default:
                 // Object/array constant: parsed once into a standalone document, passed as a Source.
                 fields.Append("private static readonly ParsedJsonDocument<JsonElement> ").Append(fieldName)
@@ -183,6 +189,9 @@ public enum ArgumentValueKind
 
     /// <summary>A constant JSON object or array; the value is its raw JSON text.</summary>
     LiteralComposite,
+
+    /// <summary>A JSON object or array that embeds runtime expressions (a template to substitute); the value is its raw JSON text.</summary>
+    CompositeTemplate,
 }
 
 /// <summary>
