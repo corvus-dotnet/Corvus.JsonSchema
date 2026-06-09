@@ -64,6 +64,23 @@ public class Coverage_Runtime2Tests
     }
 
     [TestMethod]
+    public void Dynamic_regex_is_translated_from_ecma_262()
+    {
+        using ParsedJsonDocument<JsonElement> doc = Parse("""{ "prefix": "x", "value": "x5", "unicode": "x٥" }""");
+        var context = new WorkflowExecutionContext();
+        context.SetInputs(doc.RootElement);
+
+        // The interpolated pattern "x\d" is still ECMAScript: \d is ASCII, so an ASCII digit matches...
+        CompiledCriterion.Compile(CriterionType.Regex, @"{$inputs.prefix}\d", "$inputs.value")
+            .Evaluate(context).ShouldBeTrue();
+
+        // ...but an Arabic-Indic digit does not (it would under a raw .NET \d), proving the dynamic
+        // pattern is translated after interpolation.
+        CompiledCriterion.Compile(CriterionType.Regex, @"{$inputs.prefix}\d", "$inputs.unicode")
+            .Evaluate(context).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public void Dynamic_regex_with_unresolved_embedded_expression_is_false()
     {
         using ParsedJsonDocument<JsonElement> doc = Parse("""{ "value": "x" }""");

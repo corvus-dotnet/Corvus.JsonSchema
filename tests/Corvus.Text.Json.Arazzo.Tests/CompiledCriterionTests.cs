@@ -164,6 +164,21 @@ public class CompiledCriterionTests
     }
 
     [TestMethod]
+    public void Regex_translates_ecma_262_shorthand_to_dotnet_dialect()
+    {
+        using ParsedJsonDocument<JsonElement> doc = Parse("""{ "ascii": "123", "unicode": "٤٥٦" }""");
+        var context = new WorkflowExecutionContext();
+        context.SetResponseBody(doc.RootElement);
+
+        // ECMAScript \d is ASCII [0-9] (unlike .NET's Unicode \d). ASCII digits match...
+        CompiledCriterion.Compile(CriterionType.Regex, @"^\d+$", "$response.body#/ascii").Evaluate(context).ShouldBeTrue();
+
+        // ...but Arabic-Indic digits (U+0664..U+0666) do not — proving the condition was translated to
+        // the .NET dialect rather than run as a raw .NET pattern (where \d is Unicode and would match).
+        CompiledCriterion.Compile(CriterionType.Regex, @"^\d+$", "$response.body#/unicode").Evaluate(context).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public void Regex_against_non_string_json_does_not_match()
     {
         using ParsedJsonDocument<JsonElement> doc = Parse("""{ "count": 42 }""");
