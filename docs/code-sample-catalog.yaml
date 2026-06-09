@@ -602,9 +602,9 @@ main-docs:
     blocks:
       - {index: 0, language: csharp, lines: [255, 287], category: compilable, verified: false}
       - {index: 1, language: , lines: [517, 529]}
-      - {index: 2, language: csharp, lines: [611, 623], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [671, 692], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [824, 837], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [627, 639], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [687, 708], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [840, 853], category: compilable, verified: false}
   - path: "docs/AsyncApi.md"
     blocks:
       - {index: 0, language: bash, lines: [15, 21]}
