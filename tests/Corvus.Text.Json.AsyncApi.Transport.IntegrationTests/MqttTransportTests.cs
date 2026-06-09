@@ -744,6 +744,63 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderRoundTrip()
+    {
+        // Arrange — a Corvus responder transport answers requests via SubscribeReplyAsync,
+        // and a separate Corvus requester transport issues the request via RequestAsync.
+        MqttMessageTransport responderTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-responder-typed-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        MqttMessageTransport requesterTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-requester-typed-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "mqtt/test/reqreply-typed/request"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "mqtt/test/reqreply-typed/reply"u8.ToArray();
+
+        // Register the responder: it reads the request's "value" and returns value * 2.
+        await responderTransport.SubscribeReplyAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, headers, ct) =>
+            {
+                int input = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input * 2}}}""");
+
+                // The responder owns the lifetime of the parsed reply document; the transport
+                // serializes the returned element synchronously before this scope unwinds.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        await Task.Delay(500);
+
+        // Act — send a request through the requester transport.
+        byte[] correlationId = "mqtt-typed-roundtrip-1"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId);
+
+        // Assert — the responder computed 21 * 2 = 42.
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+
+        await requesterTransport.DisposeAsync();
+        await responderTransport.UnsubscribeAsync(requestChannel);
+        await responderTransport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task RequestReplyTimeoutThrows()
     {
         MqttMessageTransport transport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions

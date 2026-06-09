@@ -40,6 +40,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     private readonly IMessageErrorPolicy errorPolicy;
     private readonly MessageHandlerMiddleware? middleware;
     private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, CancellationToken, ValueTask>> handlers = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Func<JsonElement, JsonElement, string?, string?, CancellationToken, ValueTask>> replyHandlers = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> pendingReplies = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim sendSemaphore = new(1, 1);
     private CancellationTokenSource? receiveCts;
@@ -106,7 +107,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         string correlationId = Encoding.UTF8.GetString(correlationIdUtf8.Span);
         ObjectDisposedException.ThrowIf(this.disposed, this);
 
-        (byte[] rented, int length) = BuildPublishEnvelopeRented(requestChannel, in request, in headers, correlationId);
+        (byte[] rented, int length) = BuildPublishEnvelopeRented(requestChannel, in request, in headers, correlationId, replyChannel);
 
         return RequestCoreAsync<TReply>(replyChannel, rented, length, correlationId, cancellationToken);
     }
@@ -130,10 +131,31 @@ public sealed class WebSocketMessageTransport : IMessageTransport
     }
 
     /// <inheritdoc/>
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        this.replyHandlers[channel] = (payload, headers, replyChannel, correlationId, ct) =>
+            this.DispatchToReplyHandlerAsync(channel, channelUtf8, handler, payload, headers, replyChannel, correlationId, ct);
+
+        this.options.Heartbeat?.Start(channel, "websocket");
+
+        // Send a subscribe envelope to the server so requests are routed to this connection
+        (byte[] rented, int length) = BuildControlEnvelopeRented(channel, "subscribe"u8);
+        return SendAndReturnAsync(rented, length, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         this.handlers.TryRemove(channel, out _);
+        this.replyHandlers.TryRemove(channel, out _);
 
         this.options.Heartbeat?.Stop(channel, "websocket");
 
@@ -171,6 +193,7 @@ public sealed class WebSocketMessageTransport : IMessageTransport
 
         this.disposed = true;
         this.handlers.Clear();
+        this.replyHandlers.Clear();
         this.pendingReplies.Clear();
 
         if (this.receiveCts is not null)
@@ -270,11 +293,12 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             channelUtf8 = Encoding.UTF8.GetBytes(channel);
 
             JsonString corrIdProp = envelope.CorrelationId;
+            string? envelopeCorrelationId = null;
             if (corrIdProp.ValueKind != JsonValueKind.Undefined)
             {
-                string? correlationId = corrIdProp.GetString();
-                if (correlationId is not null &&
-                    this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<byte[]>? tcs))
+                envelopeCorrelationId = corrIdProp.GetString();
+                if (envelopeCorrelationId is not null &&
+                    this.pendingReplies.TryRemove(envelopeCorrelationId, out TaskCompletionSource<byte[]>? tcs))
                 {
                     tcs.SetResult(envelopeBytes);
                     return;
@@ -283,6 +307,21 @@ public sealed class WebSocketMessageTransport : IMessageTransport
 
             JsonElement payload = envelope.Payload;
             JsonElement headers = envelope.Headers;
+
+            if (payload.ValueKind != JsonValueKind.Undefined &&
+                this.replyHandlers.TryGetValue(channel, out Func<JsonElement, JsonElement, string?, string?, CancellationToken, ValueTask>? replyHandler))
+            {
+                string? replyChannel = null;
+                if (envelope.TryGetProperty("replyChannel"u8, out JsonElement replyChannelEl) &&
+                    replyChannelEl.ValueKind == JsonValueKind.String)
+                {
+                    replyChannel = replyChannelEl.GetString();
+                }
+
+                this.options.Heartbeat?.Tick(channel, "websocket");
+                await replyHandler(payload, headers, replyChannel, envelopeCorrelationId, cancellationToken).ConfigureAwait(false);
+                return;
+            }
 
             if (payload.ValueKind != JsonValueKind.Undefined &&
                 this.handlers.TryGetValue(channel, out Func<JsonElement, JsonElement, CancellationToken, ValueTask>? handler))
@@ -346,6 +385,83 @@ public sealed class WebSocketMessageTransport : IMessageTransport
             {
                 await handler(typedPayload, headers, cancellationToken).ConfigureAwait(false);
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, payload, headers);
+            MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+            if (action == MessageErrorAction.DeadLetter)
+            {
+                try
+                {
+                    string dlChannel = channel + this.options.DeadLetterSuffix;
+                    (byte[] rented, int length) = BuildDeadLetterEnvelopeRented(dlChannel, channel, in payload, in headers, ex);
+                    await this.SendAndReturnAsync(rented, length, cancellationToken).ConfigureAwait(false);
+                    AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "websocket");
+                }
+                catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                {
+                    AsyncApiTelemetry.RecordDeadLetterFailure(channel + this.options.DeadLetterSuffix, channel, "websocket", dlEx);
+                }
+            }
+            else if (action == MessageErrorAction.Abort)
+            {
+                AsyncApiTelemetry.RecordAbort(channel, "websocket", MessageErrorKind.Handler);
+                await this.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                AsyncApiTelemetry.RecordSkip(channel, "websocket", MessageErrorKind.Handler);
+            }
+        }
+    }
+
+    private async ValueTask DispatchToReplyHandlerAsync<TRequest, TReply>(
+        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        JsonElement payload,
+        JsonElement headers,
+        string? replyChannel,
+        string? correlationId,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        try
+        {
+            TRequest typedRequest = JsonElementHelpers.Reinterpret<JsonElement, TRequest>(in payload);
+
+            TReply reply;
+            if (this.middleware is not null)
+            {
+                TReply captured = default;
+                await this.middleware(
+                    async (ct) => captured = await handler(typedRequest, headers, ct).ConfigureAwait(false),
+                    cancellationToken).ConfigureAwait(false);
+                reply = captured;
+            }
+            else
+            {
+                reply = await handler(typedRequest, headers, cancellationToken).ConfigureAwait(false);
+            }
+
+            // Without a reply channel there is nowhere to send the response; the request cannot be answered.
+            if (replyChannel is null)
+            {
+                AsyncApiTelemetry.RecordSkip(channel, "websocket", MessageErrorKind.Handler);
+                return;
+            }
+
+            // Send the reply on the reply channel with the request's correlation id so the requester's
+            // RequestAsync (which correlates by that id) receives it.
+            JsonElement replyHeaders = default;
+            (byte[] rented, int length) = BuildPublishEnvelopeRented(replyChannel, in reply, in replyHeaders, correlationId);
+            await this.SendAndReturnAsync(rented, length, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -516,7 +632,8 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         string channel,
         in TPayload payload,
         in JsonElement headers,
-        string? correlationId)
+        string? correlationId,
+        string? replyChannel = null)
         where TPayload : struct, IJsonElement<TPayload>
     {
         ArrayBufferWriter<byte> buffer = t_serializeBuffer ??= new(512);
@@ -539,6 +656,11 @@ public sealed class WebSocketMessageTransport : IMessageTransport
         if (correlationId is not null)
         {
             writer.WriteString("correlationId"u8, correlationId);
+        }
+
+        if (replyChannel is not null)
+        {
+            writer.WriteString("replyChannel"u8, replyChannel);
         }
 
         writer.WriteEndObject();
