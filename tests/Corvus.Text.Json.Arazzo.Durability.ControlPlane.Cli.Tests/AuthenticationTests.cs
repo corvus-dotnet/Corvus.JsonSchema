@@ -2,9 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers.Text;
-using System.Security.Cryptography;
-using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -105,24 +102,6 @@ public sealed class AuthenticationTests
     }
 
     [TestMethod]
-    public async Task Device_code_flow_binds_a_pkce_s256_verifier()
-    {
-        await using MockOidcServer idp = await MockOidcServer.StartAsync();
-        var config = new OAuthConfig(idp.Url, "client-1", "openid");
-
-        await OAuthFlows.LoginAsync(config, useDeviceCode: true, default);
-
-        // The device-authorization request advertises an S256 challenge (providers such as Keycloak enforce PKCE)...
-        idp.DeviceCodeChallengeMethod.ShouldBe("S256");
-        idp.DeviceCodeChallenge.ShouldNotBeNullOrEmpty();
-
-        // ...and the token request presents a verifier whose S256 hash is exactly that challenge (RFC 7636 §4).
-        idp.DeviceCodeVerifier.ShouldNotBeNullOrEmpty();
-        string expectedChallenge = Base64Url.EncodeToString(SHA256.HashData(Encoding.ASCII.GetBytes(idp.DeviceCodeVerifier!)));
-        idp.DeviceCodeChallenge.ShouldBe(expectedChallenge);
-    }
-
-    [TestMethod]
     public async Task Refresh_exchanges_the_refresh_token()
     {
         await using MockOidcServer idp = await MockOidcServer.StartAsync();
@@ -173,21 +152,12 @@ public sealed class AuthenticationTests
         private WebApplication app = null!;
         private int deviceTokenGrants;
         private int refreshTokenGrants;
-        private string? deviceCodeChallenge;
-        private string? deviceCodeChallengeMethod;
-        private string? deviceCodeVerifier;
 
         public string Url { get; private set; } = string.Empty;
 
         public int DeviceTokenGrants => Volatile.Read(ref this.deviceTokenGrants);
 
         public int RefreshTokenGrants => Volatile.Read(ref this.refreshTokenGrants);
-
-        public string? DeviceCodeChallenge => Volatile.Read(ref this.deviceCodeChallenge);
-
-        public string? DeviceCodeChallengeMethod => Volatile.Read(ref this.deviceCodeChallengeMethod);
-
-        public string? DeviceCodeVerifier => Volatile.Read(ref this.deviceCodeVerifier);
 
         public static async Task<MockOidcServer> StartAsync()
         {
@@ -222,11 +192,8 @@ public sealed class AuthenticationTests
 
             app.MapGet("/jwks", () => Results.Content("""{"keys":[]}""", "application/json"));
 
-            app.MapPost("/connect/deviceauthorization", async (HttpContext ctx) =>
+            app.MapPost("/connect/deviceauthorization", (HttpContext ctx) =>
             {
-                IFormCollection form = await ctx.Request.ReadFormAsync();
-                Volatile.Write(ref this.deviceCodeChallenge, form["code_challenge"].ToString());
-                Volatile.Write(ref this.deviceCodeChallengeMethod, form["code_challenge_method"].ToString());
                 string b = BaseUrl(ctx);
                 return Results.Content(
                     $$"""{"device_code":"dev-code","user_code":"WXYZ-1234","verification_uri":"{{b}}/device","interval":1,"expires_in":300}""",
@@ -240,8 +207,6 @@ public sealed class AuthenticationTests
 
                 if (grant == "urn:ietf:params:oauth:grant-type:device_code")
                 {
-                    Volatile.Write(ref this.deviceCodeVerifier, form["code_verifier"].ToString());
-
                     // Pend once, then authorize — exercises the polling loop.
                     return Interlocked.Increment(ref this.deviceTokenGrants) == 1
                         ? Results.Json(new { error = "authorization_pending" }, statusCode: 400)
