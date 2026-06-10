@@ -174,6 +174,99 @@ public partial class WorkflowExecutorEndToEndTests
         recorded.Sum("corvus.arazzo.workflows.faulted").ShouldBe(1);
     }
 
+    private const string UrlQueryDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "search",
+              "steps": [
+                {
+                  "stepId": "searchPet",
+                  "operationId": "searchPets",
+                  "parameters": [
+                    { "name": "petId", "in": "path", "value": "$inputs.petId" },
+                    { "name": "status", "in": "query", "value": "available" }
+                  ],
+                  "successCriteria": [
+                    { "condition": "$statusCode == 200" },
+                    { "condition": "$url == '/pets/42?status=available'" }
+                  ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.searchPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_executor_resolves_a_url_criterion_with_a_query_parameter()
+    {
+        // The resolved relative URL includes the query string ("/pets/42?status=available"), so the $url
+        // criterion exercises the path + query assembly end to end.
+        string source = EmitSearchPetsExecutor(UrlQueryDocument, "SearchUrlWorkflow");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.SearchUrlWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var recorded = new RecordedTelemetry();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        JsonElement outputs = await pending;
+
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Fido");
+        recorded.Sum("corvus.arazzo.workflows.completed").ShouldBe(1);
+        recorded.Sum("corvus.arazzo.workflows.faulted").ShouldBe(0);
+    }
+
+    private static string EmitSearchPetsExecutor(string document, string className)
+    {
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets/{petId}",
+                OperationMethod.Get,
+                "searchPets",
+                "SearchPets",
+                typeof(SearchPetsRequest).FullName!,
+                typeof(PetByIdResponse).FullName!,
+                [
+                    new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true, "petId"),
+                    new RequestParameterInfo("status", ParameterLocation.Query, "Status", "Corvus.Text.Json.JsonElement", false, "status"),
+                ],
+                false,
+                [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
+                typeof(SearchPetsClient).FullName!,
+                "SearchPetsAsync",
+                null),
+        ];
+
+        var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
+
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
+        foreach (ArazzoDocument.WorkflowObject workflow in doc.RootElement.Workflows.EnumerateArray())
+        {
+            return WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", className, "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        throw new InvalidOperationException("No workflow.");
+    }
+
     private const string CreatePetDocument = """
         {
           "arazzo": "1.0.1",
