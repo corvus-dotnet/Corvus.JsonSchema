@@ -29,5 +29,5 @@ public readonly struct PurgeRunsParams
     /// <summary>
     /// Gets the 'limit' query parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit Limit { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Schema Limit { get; init; }
 }

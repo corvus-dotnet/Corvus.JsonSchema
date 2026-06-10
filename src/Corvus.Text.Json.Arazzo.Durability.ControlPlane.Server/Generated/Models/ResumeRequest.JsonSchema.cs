@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// How to resume a faulted run — a union on `mode`. Each form carries only the fields its mode needs; the `const` mode discriminates the variant.
+/// How to resume a faulted run.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -32,17 +32,38 @@ public readonly partial struct ResumeRequest
 {
     public static partial class JsonSchema
     {
-        private static EnumStringMap BuildOneOfDiscriminatorMap()
+        private static readonly JsonSchemaPathProvider ModeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/mode"u8, buffer, out written);
+
+        private static void MatchMode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
-            return new EnumStringMap([
-                static () => "RetryFaultedStep"u8,
-                static () => "Rewind"u8,
-                static () => "Skip"u8,
-                static () => "StatePatch"u8,
-            ]);
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.ModeUtf8,
+                    evaluationPath: ModeSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static EnumStringMap OneOfDiscriminatorMap { get; } = BuildOneOfDiscriminatorMap();
+        private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
+#if NET
+        [NotNullWhen(true)]
+#endif
+        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
+        {
+            if (span.SequenceEqual(JsonPropertyNames.ModeUtf8))
+            {
+                matcher = MatchMode;
+                return true;
+            }
+
+            matcher = default;
+            return false;
+        }
 
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
@@ -58,10 +79,6 @@ public readonly partial struct ResumeRequest
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
         public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/ResumeRequest"u8;
-        private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0/$ref"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1/$ref"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider OneOf2SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/2/$ref"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider OneOf3SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/3/$ref"u8, buffer, out written);
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -74,197 +91,45 @@ public readonly partial struct ResumeRequest
             int parentIndex,
             ref JsonSchemaContext context)
         {
+            JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
+
             // You're not allowed to ask about non-value-like entities
             Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
                 (JsonTokenType.None or
                 JsonTokenType.EndObject or
                 JsonTokenType.EndArray));
 
-            if (!context.HasCollector)
+            if (!JsonSchemaEvaluation.MatchTypeObject(tokenType,"type"u8, ref context))
             {
-                int oneOfDiscriminatorBranch = -1;
-                if (parentDocument.GetJsonTokenType(parentIndex) == JsonTokenType.StartObject)
+                if (!context.HasCollector)
                 {
-                    if (parentDocument.TryGetNamedPropertyValue(parentIndex, "mode"u8, out IJsonDocument? oneOfDiscriminator_doc, out int oneOfDiscriminator_idx))
-                    {
-                        if (oneOfDiscriminator_doc.GetJsonTokenType(oneOfDiscriminator_idx) == JsonTokenType.String)
-                        {
-                            using UnescapedUtf8JsonString discriminatorValue = oneOfDiscriminator_doc.GetUtf8JsonString(oneOfDiscriminator_idx, JsonTokenType.String);
-                            OneOfDiscriminatorMap.TryGetValue(discriminatorValue.Span, out oneOfDiscriminatorBranch);
-                        }
-                    }
-                }
-
-                switch (oneOfDiscriminatorBranch)
-                {
-                    case 0:
-                    {
-                        JsonSchemaContext discriminatorContext0 =
-                            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf0SchemaEvaluationPath);
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(parentDocument, parentIndex, ref discriminatorContext0);
-                        if (discriminatorContext0.IsMatch)
-                        {
-                            context.ApplyEvaluated(ref discriminatorContext0);
-                            context.CommitChildContext(true, ref discriminatorContext0);
-                            context.EvaluatedKeyword(true, JsonSchemaEvaluation.MatchedExactlyOneSchema, "oneOf"u8);
-                        }
-                        else
-                        {
-                            context.CommitChildContext(false, ref discriminatorContext0);
-                            context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedNoSchema, "oneOf"u8);
-                        }
-
-                        return;
-                    }
-                    case 1:
-                    {
-                        JsonSchemaContext discriminatorContext1 =
-                            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(parentDocument, parentIndex, ref discriminatorContext1);
-                        if (discriminatorContext1.IsMatch)
-                        {
-                            context.ApplyEvaluated(ref discriminatorContext1);
-                            context.CommitChildContext(true, ref discriminatorContext1);
-                            context.EvaluatedKeyword(true, JsonSchemaEvaluation.MatchedExactlyOneSchema, "oneOf"u8);
-                        }
-                        else
-                        {
-                            context.CommitChildContext(false, ref discriminatorContext1);
-                            context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedNoSchema, "oneOf"u8);
-                        }
-
-                        return;
-                    }
-                    case 2:
-                    {
-                        JsonSchemaContext discriminatorContext2 =
-                            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf2SchemaEvaluationPath);
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(parentDocument, parentIndex, ref discriminatorContext2);
-                        if (discriminatorContext2.IsMatch)
-                        {
-                            context.ApplyEvaluated(ref discriminatorContext2);
-                            context.CommitChildContext(true, ref discriminatorContext2);
-                            context.EvaluatedKeyword(true, JsonSchemaEvaluation.MatchedExactlyOneSchema, "oneOf"u8);
-                        }
-                        else
-                        {
-                            context.CommitChildContext(false, ref discriminatorContext2);
-                            context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedNoSchema, "oneOf"u8);
-                        }
-
-                        return;
-                    }
-                    case 3:
-                    {
-                        JsonSchemaContext discriminatorContext3 =
-                            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf3SchemaEvaluationPath);
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(parentDocument, parentIndex, ref discriminatorContext3);
-                        if (discriminatorContext3.IsMatch)
-                        {
-                            context.ApplyEvaluated(ref discriminatorContext3);
-                            context.CommitChildContext(true, ref discriminatorContext3);
-                            context.EvaluatedKeyword(true, JsonSchemaEvaluation.MatchedExactlyOneSchema, "oneOf"u8);
-                        }
-                        else
-                        {
-                            context.CommitChildContext(false, ref discriminatorContext3);
-                            context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedNoSchema, "oneOf"u8);
-                        }
-
-                        return;
-                    }
-                    default:
-                        context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedNoSchema, "oneOf"u8);
-                        return;
-                }
-            }
-
-            int oneOfMatchedCount = 0;
-
-            JsonSchemaContext oneOfContext0 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf0SchemaEvaluationPath);
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext0);
-
-            if (oneOfContext0.IsMatch)
-            {
-                oneOfMatchedCount++;
-                if (oneOfMatchedCount > 1 && !context.HasCollector)
-                {
-                    context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedMoreThanOneSchema, "oneOf"u8);
                     return;
                 }
-
-                context.ApplyEvaluated(ref oneOfContext0);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
             }
-
-            if (!context.HasCollector && !context.IsMatch)
+            else
             {
-                return;
-            }
+                int objectValidation_propertyCount = 0;
 
-            JsonSchemaContext oneOfContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
-
-            if (oneOfContext1.IsMatch)
-            {
-                oneOfMatchedCount++;
-                if (oneOfMatchedCount > 1 && !context.HasCollector)
+                var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
+                while (objectValidation_enumerator.MoveNext())
                 {
-                    context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedMoreThanOneSchema, "oneOf"u8);
-                    return;
+                    int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
+                    using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
+
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? validator))
+                    {
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+
+                        if (!context.HasCollector && !context.IsMatch)
+                        {
+                            return;
+                        }
+                    }
+
+                    objectValidation_propertyCount++;
                 }
-
-                context.ApplyEvaluated(ref oneOfContext1);
             }
-
-            if (!context.HasCollector && !context.IsMatch)
-            {
-                return;
-            }
-
-            JsonSchemaContext oneOfContext2 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf2SchemaEvaluationPath);
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext2);
-
-            if (oneOfContext2.IsMatch)
-            {
-                oneOfMatchedCount++;
-                if (oneOfMatchedCount > 1 && !context.HasCollector)
-                {
-                    context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedMoreThanOneSchema, "oneOf"u8);
-                    return;
-                }
-
-                context.ApplyEvaluated(ref oneOfContext2);
-            }
-
-            if (!context.HasCollector && !context.IsMatch)
-            {
-                return;
-            }
-
-            JsonSchemaContext oneOfContext3 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf3SchemaEvaluationPath);
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext3);
-
-            if (oneOfContext3.IsMatch)
-            {
-                oneOfMatchedCount++;
-                if (oneOfMatchedCount > 1 && !context.HasCollector)
-                {
-                    context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedMoreThanOneSchema, "oneOf"u8);
-                    return;
-                }
-
-                context.ApplyEvaluated(ref oneOfContext3);
-            }
-
-            context.CommitChildContext(oneOfMatchedCount == 1, ref oneOfContext3);
-            context.CommitChildContext(oneOfMatchedCount == 1, ref oneOfContext2);
-            context.CommitChildContext(oneOfMatchedCount == 1, ref oneOfContext1);
-            context.CommitChildContext(oneOfMatchedCount == 1, ref oneOfContext0);
-            context.EvaluatedKeyword(oneOfMatchedCount == 1, oneOfMatchedCount == 0 ? JsonSchemaEvaluation.MatchedNoSchema : oneOfMatchedCount == 1 ? JsonSchemaEvaluation.MatchedExactlyOneSchema : JsonSchemaEvaluation.MatchedMoreThanOneSchema, "oneOf"u8);
         }
 
         internal static bool Evaluate(

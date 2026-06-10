@@ -12,7 +12,7 @@
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <Description>An ASP.NET Core server for the Arazzo durability control-plane REST API (generated from its OpenAPI 3.2 description), wiring the generated endpoints to ISecuredWorkflowManagement.</Description>
+    <Description>An ASP.NET Core server for the Arazzo durability control-plane REST API (generated from its OpenAPI 3.2 description), wiring the generated endpoints to IWorkflowManagementClient.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
@@ -20,17 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests" />
-    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.Benchmarks" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Directories\Corvus.Text.Json.Arazzo.Directories.csproj" />
-    <!-- The validate endpoint builds a target schema from the package and validates against it at runtime. -->
-    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.CodeGeneration\Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />

@@ -48,15 +48,6 @@ public interface IApiRunsHandler
     ValueTask<GetRunResult> HandleGetRunAsync(GetRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Handles DELETE /runs/{runId} — Delete a run
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<DeleteRunResult> HandleDeleteRunAsync(DeleteRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Handles POST /runs/{runId}/resume — Resume a faulted run
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

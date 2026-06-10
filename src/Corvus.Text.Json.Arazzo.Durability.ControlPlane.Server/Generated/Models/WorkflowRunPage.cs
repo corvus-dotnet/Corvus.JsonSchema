@@ -166,11 +166,11 @@ public readonly partial struct WorkflowRunPage
     /// An opaque token to fetch the next page, or null/absent if this is the last page.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NextPageToken
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunPage.NextPageTokenEntity NextPageToken
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunPage.NextPageTokenEntity value))
             {
                 return value;
             }

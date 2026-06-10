@@ -9,9 +9,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
-    <!-- The validate endpoint compiles a JSON Schema at runtime; the host (here, the test) must preserve its
-         compilation context so the dynamic compiler has the right defines + reference assemblies. -->
-    <PreserveCompilationContext>true</PreserveCompilationContext>
     <NoWarn>$(NoWarn);NU1504;IDE0065;IDE0290;IDE0079;IDE0130;CS1591;CS1572;CS1573</NoWarn>
   </PropertyGroup>
   <ItemGroup>

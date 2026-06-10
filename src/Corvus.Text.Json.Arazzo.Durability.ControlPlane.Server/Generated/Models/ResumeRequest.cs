@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// How to resume a faulted run — a union on `mode`. Each form carries only the fields its mode needs; the `const` mode discriminates the variant.
+/// How to resume a faulted run.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -159,6 +159,22 @@ public readonly partial struct ResumeRequest
     }
 
     /// <summary>
+    /// Gets the (optional) <c>mode</c> property.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity Mode
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity value))
+            {
+                return value;
+            }
+
+            return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest.ModeEntity.DefaultInstance;
+        }
+    }
+
+    /// <summary>
     /// Gets the number of properties in the object.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -183,114 +199,6 @@ public readonly partial struct ResumeRequest
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
-
-    /// <summary>
-    /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume(ResumeRequest value)
-    {
-        return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.From(value);
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion from the <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/> mutable view.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume(ResumeRequest value)
-    {
-        return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.From(value);
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion from the <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/> mutable view.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume(ResumeRequest value)
-    {
-        return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.From(value);
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion from the <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/> mutable view.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume(ResumeRequest value)
-    {
-        return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.From(value);
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion from the <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/> mutable view.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable value)
-    {
-        return From(value);
-    }
 
     /// <summary>
     /// Operator ==.
@@ -705,156 +613,41 @@ public readonly partial struct ResumeRequest
     }
 
     /// <summary>
-    /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume" />.
+    /// Provides UTF8 and string versions of the JSON property names on the object.
     /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsRetryFaultedStepResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume result)
+    public static class JsonPropertyNames
     {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.From(this);
-            return true;
-        }
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Mode"/>.
+        /// </summary>
+        public const string Mode = "mode";
 
-        result = default;
-        return false;
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Mode"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ModeUtf8 => "mode"u8;
     }
 
     /// <summary>
-    /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume" />.
+    /// Provides escaped UTF-8 versions of the JSON property names on the object.
     /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsRewindResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume result)
+    private static class JsonPropertyNamesEscaped
     {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.From(this);
-            return true;
-        }
-
-        result = default;
-        return false;
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Mode"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Mode => "mode"u8;
     }
 
     /// <summary>
-    /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume" />.
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
     /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsSkipResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume result)
+    private static class JsonPropertyNamesPrebaked
     {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.From(this);
-            return true;
-        }
-
-        result = default;
-        return false;
-    }
-
-    /// <summary>
-    /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume" />.
-    /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsStatePatchResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume result)
-    {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.From(this);
-            return true;
-        }
-
-        result = default;
-        return false;
-    }
-
-    /// <summary>
-    /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the immutable context to pass in to the match function.</typeparam>
-    /// <typeparam name="TResult">The result of calling the match function.</typeparam>
-    /// <param name="context">The context to pass to the match function.</param>
-    /// <param name="matchRetryFaultedStepResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.</param>
-    /// <param name="matchRewindResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.</param>
-    /// <param name="matchSkipResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.</param>
-    /// <param name="matchStatePatchResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.</param>
-    /// <param name="defaultMatch">Match any other value.</param>
-    /// <returns>An instance of the value returned by the match function.</returns>
-    public TResult Match<TContext, TResult>(
-        in TContext context,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume, TContext, TResult> matchRetryFaultedStepResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume, TContext, TResult> matchRewindResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume, TContext, TResult> matchSkipResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume, TContext, TResult> matchStatePatchResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest, TContext, TResult> defaultMatch)
-#if NET9_0_OR_GREATER
-    where TContext : allows ref struct
-#endif
-    {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchRetryFaultedStepResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.From(this), context);
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchRewindResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.From(this), context);
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchSkipResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.From(this), context);
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchStatePatchResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.From(this), context);
-        }
-
-        return defaultMatch(this, context);
-    }
-
-    /// <summary>
-    /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
-    /// </summary>
-    /// <typeparam name="TResult">The result of calling the match function.</typeparam>
-    /// <param name="matchRetryFaultedStepResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.</param>
-    /// <param name="matchRewindResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.</param>
-    /// <param name="matchSkipResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.</param>
-    /// <param name="matchStatePatchResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.</param>
-    /// <param name="defaultMatch">Match any other value.</param>
-    /// <returns>An instance of the value returned by the match function.</returns>
-    public TResult Match<TResult>(
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume, TResult> matchRetryFaultedStepResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume, TResult> matchRewindResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume, TResult> matchSkipResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume, TResult> matchStatePatchResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest, TResult> defaultMatch)
-    {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchRetryFaultedStepResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.From(this));
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchRewindResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.From(this));
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchSkipResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.From(this));
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchStatePatchResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.From(this));
-        }
-
-        return defaultMatch(this);
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Mode"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Mode => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x64, 0x65, 0x22];
     }
 }

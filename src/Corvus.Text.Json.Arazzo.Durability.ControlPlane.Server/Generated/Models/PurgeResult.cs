@@ -166,7 +166,7 @@ public readonly partial struct PurgeResult
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The number of runs or versions deleted.
+    /// The number of runs deleted.
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger PurgedCount
