@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Migration.Analyzers;
 internal static class DiagnosticDescriptors
 {
     private const string Category = "Corvus.Json.Migration";
-    private const string HelpLinkBase = "https://corvus-text-json.dev/docs/migrating-from-v4-to-v5.html";
+    private const string HelpLinkBase = "https://corvus-oss.org/Corvus.JsonSchema/docs/migration-analyzers.html";
 
     // Tier 1: Automatable
 
@@ -31,7 +31,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#namespace-changes");
+        helpLinkUri: HelpLinkBase + "#cvj001-migrate-namespace");
 
     /// <summary>
     /// CVJ002: ParsedValue to ParsedJsonDocument.
@@ -43,7 +43,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#parsing");
+        helpLinkUri: HelpLinkBase + "#cvj002-migrate-parsedvaluet-to-parsedjsondocumentt");
 
     /// <summary>
     /// CVJ003: IsValid or Validate to EvaluateSchema.
@@ -55,7 +55,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#validation");
+        helpLinkUri: HelpLinkBase + "#cvj003-migrate-validation-to-evaluateschema");
 
     /// <summary>
     /// CVJ004: As of T to T.From.
@@ -67,7 +67,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#type-coercion");
+        helpLinkUri: HelpLinkBase + "#cvj004-migrate-ast-to-tfrom");
 
     /// <summary>
     /// CVJ005: Count property to GetPropertyCount method.
@@ -79,7 +79,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#property-access");
+        helpLinkUri: HelpLinkBase + "#cvj005-migrate-count-to-getpropertycount");
 
     /// <summary>
     /// CVJ006: FromJson to From.
@@ -91,7 +91,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#type-coercion");
+        helpLinkUri: HelpLinkBase + "#cvj006-migrate-fromjson-to-from");
 
     /// <summary>
     /// CVJ007: V4 core types to JsonElement.
@@ -103,7 +103,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#core-types");
+        helpLinkUri: HelpLinkBase + "#cvj007-migrate-v4-core-type-to-jsonelement");
 
     /// <summary>
     /// CVJ008: JsonDocument.Parse to ParsedJsonDocument.
@@ -115,7 +115,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#parsing");
+        helpLinkUri: HelpLinkBase + "#cvj008-migrate-jsondocumentparse-to-parsedjsondocumenttparse");
 
     /// <summary>
     /// CVJ009: V4 typed core types may have generated V5 equivalents.
@@ -127,7 +127,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#core-types");
+        helpLinkUri: HelpLinkBase + "#cvj009-v4-typed-core-type-may-need-replacement");
 
     // Tier 2: Guidance-only
 
@@ -141,7 +141,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#core-type-accessors");
+        helpLinkUri: HelpLinkBase + "#cvj010-v4-as-accessors-removed");
 
     /// <summary>
     /// CVJ011: V4 immutable mutation should use V5 mutable builder.
@@ -153,7 +153,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#mutation");
+        helpLinkUri: HelpLinkBase + "#cvj011-v4-immutable-mutation-replaced-by-mutable-builder");
 
     /// <summary>
     /// CVJ012: Functional array operations to mutable builder.
@@ -165,7 +165,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#arrays");
+        helpLinkUri: HelpLinkBase + "#cvj012-v4-functional-array-operations");
 
     /// <summary>
     /// CVJ013: Create to CreateBuilder.
@@ -177,7 +177,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#creating-objects");
+        helpLinkUri: HelpLinkBase + "#cvj013-v4-create-replaced-by-createbuilder-or-build");
 
     /// <summary>
     /// CVJ014: FromItems to Build pattern.
@@ -189,7 +189,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#arrays");
+        helpLinkUri: HelpLinkBase + "#cvj014-v4-fromitems-replaced-by-build-pattern");
 
     /// <summary>
     /// CVJ015: FromValues to CreateBuilder.
@@ -201,7 +201,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#numeric-arrays");
+        helpLinkUri: HelpLinkBase + "#cvj015-v4-fromvalues-replaced-by-createbuilder");
 
     /// <summary>
     /// CVJ016: WriteTo uses different writer type in V5.
@@ -213,7 +213,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#serialization");
+        helpLinkUri: HelpLinkBase + "#cvj016-v5-uses-corvustextjsonutf8jsonwriter");
 
     // CVJ017: Removed — [JsonConverter(typeof(JsonValueConverter<T>))] is on V4 generated code,
     // which is replaced when the V5 generator takes over.
@@ -228,7 +228,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#string-access");
+        helpLinkUri: HelpLinkBase + "#cvj018-migrate-trygetstring-to-trygetvalue");
 
     /// <summary>
     /// CVJ019: V4 backing model APIs removed in V5.
@@ -240,7 +240,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase);
+        helpLinkUri: HelpLinkBase + "#cvj019-v4-backing-model-apis-removed");
 
     // CVJ020: Removed — V5 has the same null/undefined extensions as V4, no migration needed.
 
@@ -254,7 +254,7 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#mutation");
+        helpLinkUri: HelpLinkBase + "#cvj021-nested-mutation-chain-can-use-deep-property-setter");
 
     /// <summary>
     /// CVJ025: V4 package reference should be replaced with V5 equivalent.
@@ -266,6 +266,6 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        helpLinkUri: HelpLinkBase + "#packages",
+        helpLinkUri: HelpLinkBase + "#cvj025-replace-v4-package-reference",
         customTags: new[] { WellKnownDiagnosticTags.CompilationEnd });
 }
