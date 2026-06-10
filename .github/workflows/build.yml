@@ -207,18 +207,23 @@ jobs:
           NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
 
       - name: Run Integration Tests
+        # Runs every integration-categorised test across the solution: the AsyncApi broker transports and the
+        # Arazzo durability backends (Postgres, SQL Server, MySQL, Redis, MongoDB, NATS JetStream, Azure
+        # Storage), each spinning up its container via Testcontainers on the runner's Docker. The Cosmos
+        # backend carries its own "cosmos" category and is excluded here because the emulator is heavy and
+        # comparatively flaky on CI; run it on demand with --filter TestCategory=cosmos.
         run: |
           dotnet-coverage collect \
             --output integration-tests.cobertura.xml \
             --output-format cobertura \
             -s dotnet-coverage.settings.xml \
-            "dotnet test --project tests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests/Corvus.Text.Json.AsyncApi.Transport.IntegrationTests.csproj \
+            "dotnet test --solution Corvus.Text.Json.slnx \
               -f net10.0 \
               -c Release \
               --no-build \
-              --filter TestCategory=integration&TestCategory!=failing \
+              --filter TestCategory=integration&TestCategory!=failing&TestCategory!=cosmos \
               --report-trx --report-trx-filename integration-tests.trx"
-        timeout-minutes: 10
+        timeout-minutes: 30
         env:
           NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
 
