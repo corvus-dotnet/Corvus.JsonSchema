@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Text.Json;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
@@ -87,14 +86,23 @@ public static class WorkflowCheckpointSerializer
 
             writer.WriteEndObject();
 
-            writer.WritePropertyName("inputs"u8);
-            WriteValueOrNull(writer, inputs);
+            // Optional values are omitted when undefined (not written as null): "not present" is Undefined.
+            if (inputs.ValueKind != JsonValueKind.Undefined)
+            {
+                writer.WritePropertyName("inputs"u8);
+                inputs.WriteTo(writer);
+            }
 
             writer.WriteStartObject("stepOutputs"u8);
             foreach (KeyValuePair<string, JsonElement> step in stepOutputs)
             {
+                if (step.Value.ValueKind == JsonValueKind.Undefined)
+                {
+                    continue;
+                }
+
                 writer.WritePropertyName(step.Key);
-                WriteValueOrNull(writer, step.Value);
+                step.Value.WriteTo(writer);
             }
 
             writer.WriteEndObject();
@@ -242,16 +250,4 @@ public static class WorkflowCheckpointSerializer
         WorkflowWaitKind.Message => nameof(WorkflowWaitKind.Message),
         _ => kind.ToString(),
     };
-
-    private static void WriteValueOrNull(Utf8JsonWriter writer, in JsonElement value)
-    {
-        if (value.ValueKind == JsonValueKind.Undefined)
-        {
-            writer.WriteNullValue();
-        }
-        else
-        {
-            value.WriteTo(writer);
-        }
-    }
 }

@@ -38,6 +38,24 @@ public static class ArazzoTelemetry
     /// </summary>
     public const string MeterName = "Corvus.Arazzo";
 
+    /// <summary>The span/measurement tag carrying a run id.</summary>
+    public const string RunIdTag = "corvus.arazzo.run_id";
+
+    /// <summary>The span/measurement tag carrying a workflow id.</summary>
+    public const string WorkflowIdTag = "corvus.arazzo.workflow_id";
+
+    /// <summary>The span/measurement tag carrying the identity that performed a control-plane action (for audit).</summary>
+    public const string ActorTag = "corvus.arazzo.actor";
+
+    /// <summary>The span/measurement tag carrying the <c>ResumeMode</c> of a resume action.</summary>
+    public const string ResumeModeTag = "corvus.arazzo.resume_mode";
+
+    /// <summary>The span tag carrying the outcome of a control-plane action (e.g. <c>resumed</c>, <c>not-faulted</c>, <c>conflict</c>).</summary>
+    public const string OutcomeTag = "corvus.arazzo.outcome";
+
+    /// <summary>The span/measurement tag carrying a run's lifecycle status.</summary>
+    public const string StatusTag = "corvus.arazzo.status";
+
     private static readonly string Version =
         typeof(ArazzoTelemetry).Assembly.GetName().Version?.ToString() ?? "1.0.0";
 
@@ -102,4 +120,40 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Histogram<double> StepDuration { get; } =
         Meter.CreateHistogram<double>("corvus.arazzo.step.duration", "s", "Duration of step execution");
+
+    /// <summary>
+    /// Gets the counter for runs an operator resumed through the control plane (tagged with the resume mode).
+    /// </summary>
+    public static Counter<long> WorkflowsResumed { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.workflows.resumed", "{workflow}", "Faulted runs resumed via the control plane");
+
+    /// <summary>
+    /// Gets the counter for runs an operator cancelled through the control plane.
+    /// </summary>
+    public static Counter<long> WorkflowsCancelled { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.workflows.cancelled", "{workflow}", "Runs cancelled via the control plane");
+
+    /// <summary>
+    /// Gets the counter for runs that suspended awaiting a durable timer or correlated message (Tier 2).
+    /// </summary>
+    public static Counter<long> WorkflowsSuspended { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.workflows.suspended", "{workflow}", "Runs suspended awaiting a timer or message");
+
+    /// <summary>
+    /// Gets the counter for terminal runs reaped by a control-plane purge.
+    /// </summary>
+    public static Counter<long> WorkflowsPurged { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.workflows.purged", "{workflow}", "Terminal runs reaped via the control plane");
+
+    /// <summary>
+    /// Gets the counter for runs an operator deleted individually through the control plane.
+    /// </summary>
+    public static Counter<long> WorkflowsDeleted { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.workflows.deleted", "{workflow}", "Runs deleted individually via the control plane");
+
+    /// <summary>
+    /// Gets the histogram measuring how long persisting a checkpoint takes, in seconds.
+    /// </summary>
+    public static Histogram<double> CheckpointDuration { get; } =
+        Meter.CreateHistogram<double>("corvus.arazzo.checkpoint.duration", "s", "Duration of persisting a run checkpoint");
 }

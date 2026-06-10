@@ -81,8 +81,8 @@ public sealed class WorkflowCheckpointSerializerTests
 
         state.Status.ShouldBe(WorkflowRunStatus.Completed);
         state.Outputs.GetProperty("ok"u8).GetBoolean().ShouldBeTrue();
-        // Undefined inputs serialise as a JSON null, so they round-trip as a Null element, not Undefined.
-        state.Inputs.ValueKind.ShouldBe(JsonValueKind.Null);
+        // Undefined inputs are omitted (not written as null), so they round-trip as Undefined.
+        state.Inputs.ValueKind.ShouldBe(JsonValueKind.Undefined);
     }
 
     [TestMethod]
