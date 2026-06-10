@@ -294,6 +294,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
+        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -303,11 +304,14 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 SELECT RunId, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType
                 FROM WorkflowRuns
                 WHERE (@status IS NULL OR Status = @status) AND (@workflowId IS NULL OR WorkflowId = @workflowId)
+                  AND (@after IS NULL OR RunId > @after)
+                ORDER BY RunId
                 LIMIT @limit;
                 """;
             select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
             select.Parameters.AddWithValue("@workflowId", (object?)query.WorkflowId ?? DBNull.Value);
-            select.Parameters.AddWithValue("@limit", query.Limit);
+            select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
+            select.Parameters.AddWithValue("@limit", query.Limit + 1);
 
             var runs = new List<WorkflowRunListing>();
             using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -325,7 +329,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
             }
 
-            return new WorkflowRunPage(runs);
+            return WorkflowContinuationToken.Paginate(runs, query.Limit);
         }
         finally
         {

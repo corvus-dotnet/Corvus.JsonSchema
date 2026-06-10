@@ -290,18 +290,25 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             filter += TableClient.CreateQueryFilter($" and WorkflowId eq {workflowId}");
         }
 
+        // Table storage returns entities ordered by PartitionKey then RowKey, and the run id is the RowKey
+        // within the single index partition — so results arrive in ascending run-id order and a RowKey keyset
+        // gives the continuation.
+        if (WorkflowContinuationToken.Decode(query.ContinuationToken) is { } after)
+        {
+            filter += TableClient.CreateQueryFilter($" and RowKey gt {after}");
+        }
+
         var runs = new List<WorkflowRunListing>();
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (runs.Count >= query.Limit)
+            runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), ReadIndexEntity(entity)));
+            if (runs.Count > query.Limit)
             {
                 break;
             }
-
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), ReadIndexEntity(entity)));
         }
 
-        return new WorkflowRunPage(runs);
+        return WorkflowContinuationToken.Paginate(runs, query.Limit);
     }
 
     private static TableEntity BuildIndexEntity(WorkflowRunId id, in WorkflowRunIndexEntry index)

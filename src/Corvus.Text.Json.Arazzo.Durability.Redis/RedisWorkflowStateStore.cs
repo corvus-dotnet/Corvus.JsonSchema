@@ -256,17 +256,21 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
-        RedisValue[] ids = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
+        // Redis has no server-side ordering over the run set, so sort the ids and keyset-page client-side.
+        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+        RedisValue[] members = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
+        string[] ids = [.. members.Select(v => (string)v!).OrderBy(static s => s, StringComparer.Ordinal)];
+
         var runs = new List<WorkflowRunListing>();
-        foreach (RedisValue id in ids)
+        foreach (string id in ids)
         {
-            if (runs.Count >= query.Limit)
+            if (after is not null && string.CompareOrdinal(id, after) <= 0)
             {
-                break;
+                continue;
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            HashEntry[] entries = await this.database.HashGetAllAsync(RunKey(id!)).ConfigureAwait(false);
+            HashEntry[] entries = await this.database.HashGetAllAsync(RunKey(id)).ConfigureAwait(false);
             if (entries.Length == 0)
             {
                 continue;
@@ -294,10 +298,14 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 fields.TryGetValue("awaiting_channel", out RedisValue ch) ? (string)ch! : null,
                 fields.TryGetValue("awaiting_correlation_id", out RedisValue corr) ? (string)corr! : null,
                 fields.TryGetValue("error_type", out RedisValue err) ? (string)err! : null);
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(id!), entry));
+            runs.Add(new WorkflowRunListing(new WorkflowRunId(id), entry));
+            if (runs.Count > query.Limit)
+            {
+                break;
+            }
         }
 
-        return new WorkflowRunPage(runs);
+        return WorkflowContinuationToken.Paginate(runs, query.Limit);
     }
 
     /// <inheritdoc/>

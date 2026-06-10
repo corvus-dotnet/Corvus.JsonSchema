@@ -283,7 +283,15 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             filter = b.And(filter, b.Eq("workflowId", workflowId));
         }
 
-        List<BsonDocument> documents = await this.runs.Find(filter).Limit(query.Limit).ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (WorkflowContinuationToken.Decode(query.ContinuationToken) is { } after)
+        {
+            filter = b.And(filter, b.Gt("_id", after));
+        }
+
+        List<BsonDocument> documents = await this.runs.Find(filter)
+            .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
+            .Limit(query.Limit + 1)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
         var listings = new List<WorkflowRunListing>(documents.Count);
         foreach (BsonDocument document in documents)
         {
@@ -299,7 +307,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             listings.Add(new WorkflowRunListing(new WorkflowRunId(document["_id"].AsString), entry));
         }
 
-        return new WorkflowRunPage(listings);
+        return WorkflowContinuationToken.Paginate(listings, query.Limit);
     }
 
     /// <inheritdoc/>
