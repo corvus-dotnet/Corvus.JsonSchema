@@ -230,7 +230,7 @@ public partial class WorkflowExecutorEndToEndTests
         caught!.Message.ShouldContain("correlation");
     }
 
-    private static string EmitCorrelation(string document, string correlationLocation = "$message.payload#/correlationId")
+    private static string EmitCorrelation(string document, string correlationLocation = "$message.payload#/correlationId", bool durable = false)
     {
         var send = new AsyncApiChannelDescriptor(
             "notifications",
@@ -257,6 +257,23 @@ public partial class WorkflowExecutorEndToEndTests
         return WorkflowExecutorEmitter.Emit(
             workflow,
             binder,
-            new WorkflowExecutorOptions("GeneratedWorkflows", "CorrelateWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+            new WorkflowExecutorOptions("GeneratedWorkflows", "CorrelateWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, durable));
+    }
+
+    [TestMethod]
+    public void Durable_correlated_receive_suspends_on_a_message_wait()
+    {
+        // A durable correlated receive: with a run present it either consumes a worker-delivered message or
+        // checkpoints a message wait (guarded by a registered correlation token) and returns Suspended.
+        string source = EmitCorrelation(CorrelationDocument, durable: true);
+
+        source.ShouldContain("if (run.TryTakeDeliveredMessage(out JsonElement");
+        source.ShouldContain("else if (correlationTokens.TryGetValue(\"corr\"");
+        source.ShouldContain("await run.SuspendForMessageAsync(");
+        source.ShouldContain(".Suspended(");
+
+        // Compiles (the durable correlated receive shape is valid C#).
+        Assembly assembly = CompileInMemory(source);
+        assembly.GetType("GeneratedWorkflows.CorrelateWorkflow").ShouldNotBeNull();
     }
 }

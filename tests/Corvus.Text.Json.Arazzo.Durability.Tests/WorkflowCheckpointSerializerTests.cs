@@ -106,4 +106,58 @@ public sealed class WorkflowCheckpointSerializerTests
         state.CorrelationTokens.ShouldBeEmpty();
         state.StepOutputs.ShouldBeEmpty();
     }
+
+    [TestMethod]
+    public void Deserialize_of_a_minimal_checkpoint_defaults_missing_sections()
+    {
+        // A checkpoint that omits every optional section (forward/back-compat): each missing section defaults
+        // to empty/undefined rather than throwing.
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(
+            """{ "runId": "r", "workflowId": "w", "status": "Pending", "cursor": 0 }"""u8.ToArray());
+
+        state.CreatedAt.ShouldBe(default);
+        state.RetryCounters.ShouldBeEmpty();
+        state.CorrelationTokens.ShouldBeEmpty();
+        state.StepOutputs.ShouldBeEmpty();
+        state.Inputs.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        state.Outputs.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        state.Wait.ShouldBeNull();
+        state.Fault.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public void Deserialize_tolerates_explicit_null_string_fields()
+    {
+        // Defensive: null string fields fall back to their defaults rather than producing null state, and a
+        // wait with a null kind falls back to a timer.
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(
+            """{ "runId": null, "workflowId": null, "status": null, "cursor": 0, "wait": { "kind": null, "dueAt": "2026-01-01T00:00:00+00:00" } }"""u8.ToArray());
+
+        state.RunId.ShouldBe(new WorkflowRunId(string.Empty));
+        state.WorkflowId.ShouldBe(string.Empty);
+        state.Status.ShouldBe(WorkflowRunStatus.Pending);
+        state.Wait!.Value.Kind.ShouldBe(WorkflowWaitKind.Timer);
+    }
+
+    [TestMethod]
+    public void Deserialize_tolerates_null_message_wait_and_fault_fields()
+    {
+        // Defensive: a message wait with a null channel and a fault with null stepId/error fall back to empty
+        // strings rather than nulls.
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(
+            """{ "runId": "r", "workflowId": "w", "status": "Suspended", "cursor": 0, "wait": { "kind": "Message", "channel": null }, "fault": { "stepId": null, "attempt": 0, "error": null, "at": "2026-01-01T00:00:00+00:00" } }"""u8.ToArray());
+
+        state.Wait!.Value.Kind.ShouldBe(WorkflowWaitKind.Message);
+        state.Wait.Value.Channel.ShouldBe(string.Empty);
+        state.Fault!.Value.StepId.ShouldBe(string.Empty);
+        state.Fault.Value.Error.ShouldBe(string.Empty);
+    }
+
+    [TestMethod]
+    public void Deserialize_of_a_non_checkpoint_document_throws_and_disposes()
+    {
+        // Valid JSON, but not a checkpoint (no runId): the parse succeeds, a property access fails, and the
+        // owned parsed document is disposed before the exception propagates.
+        Should.Throw<Exception>(() => WorkflowCheckpointSerializer.Deserialize("{}"u8.ToArray()));
+    }
 }

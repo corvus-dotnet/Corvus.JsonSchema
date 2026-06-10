@@ -52,18 +52,16 @@ public sealed class WorkflowWorkerTests
 
         // A stale index: it reports the run as suspended-and-due, but the checkpoint says completed (the run
         // finished between the index query and the lease).
-        using var retryCounters = PooledUtf8Map<int>.Rent(0);
-        using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
             "stale",
             "wf",
             WorkflowRunStatus.Completed,
             cursor: 0,
             Start,
-            retryCounters,
+            new Dictionary<string, int>(),
             new Dictionary<string, byte[]>(),
             inputs: default,
-            stepOutputs,
+            new Dictionary<string, JsonElement>(),
             outputs: default);
         var index = new WorkflowRunIndexEntry("wf", WorkflowRunStatus.Suspended, Start, Start, DueAt: Start);
         await store.SaveAsync("stale", checkpoint, index, WorkflowEtag.None, default);
@@ -166,6 +164,6 @@ public sealed class WorkflowWorkerTests
 #pragma warning restore CS1998
 
         public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
-            => ValueTask.FromResult(WorkflowRunPage.Create([]));
+            => ValueTask.FromResult(new WorkflowRunPage([]));
     }
 }
