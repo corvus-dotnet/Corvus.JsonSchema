@@ -1020,7 +1020,7 @@ public static class WorkflowExecutorEmitter
         writer.Append("    /// <summary>Executes the '").Append(workflowId).AppendLine("' workflow.</summary>");
         writer.Append("    public static async ValueTask<").Append(returnType)
             .Append("> ExecuteAsync(IApiTransport transport, ").Append(messageTransportParameter).Append("JsonWorkspace workspace, ")
-            .Append(options.InputsTypeName).Append(" inputs, ").Append(runParameter).AppendLine("CancellationToken cancellationToken = default)");
+            .Append(options.InputsTypeName).Append(" inputs, ").Append(runParameter).AppendLine("CancellationToken cancellationToken = default, TimeProvider? timeProvider = null)");
         writer.AppendLine("    {");
         writer.AppendLine("        ArgumentNullException.ThrowIfNull(transport);");
         if (needsMessageTransport)

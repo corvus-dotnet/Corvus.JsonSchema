@@ -93,7 +93,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
 
-        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await pending;
 
         // Despite stepA being declared first, stepB ran first because stepA dependsOn stepB.

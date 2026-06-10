@@ -83,7 +83,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await pending;
 
         // The step published the $inputs.message payload on the 'notifications' channel.
@@ -152,7 +152,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await pending;
 
         messageTransport.PublishedMessages.Count.ShouldBe(1);
@@ -242,7 +242,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await pending;
 
         messageTransport.PublishedMessages.Count.ShouldBe(1);
@@ -314,7 +314,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         JsonElement outputs = await pending;
 
         // The reply's projected field flowed to the workflow output.
@@ -389,7 +389,7 @@ public partial class WorkflowExecutorEndToEndTests
         // Start the responder: it subscribes synchronously, then awaits one request.
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         // Send a request; the in-process responder replies with the echoed request payload (the whole round
         // trip completes synchronously on this thread, keeping the thread-affine workspace on its owner).
@@ -474,7 +474,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"echo":{"k":7}}"""));
         (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
@@ -562,7 +562,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"question":"meaning","n":42}"""));
         (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
@@ -638,7 +638,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"n":7}"""));
         (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
@@ -713,7 +713,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"item":"widget"}"""));
         (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
@@ -835,7 +835,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"n":21}"""));
         (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
@@ -916,7 +916,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         using var requestDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"n":99}"""));
         (JsonElement reply, JsonElement _) = await messageTransport.RequestAsync<JsonElement, JsonElement>(
@@ -1055,7 +1055,7 @@ public partial class WorkflowExecutorEndToEndTests
         // so the subscriber wrapper completes, then await the run.
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"lumens":150}"""));
         JsonElement outputs = await pending;
 
@@ -1125,7 +1125,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await messageTransport.DeliverAsync<JsonElement>("measurements/s1", Encoding.UTF8.GetBytes("""{"v":150}"""));
         JsonElement outputs = await pending;
 
@@ -1194,7 +1194,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"temp":21,"humidity":80}"""));
         JsonElement outputs = await pending;
 
@@ -1243,7 +1243,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"status":"ready","id":"x1"}"""));
         JsonElement outputs = await pending;
 
@@ -1263,7 +1263,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         // A message that misses the criterion fails the step. The criterion gate runs inline on the
         // delivering thread, so the failure may surface from DeliverAsync or from awaiting the run.
@@ -1341,7 +1341,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await messageTransport.DeliverAsync<JsonElement>(
             "measurements",
             Encoding.UTF8.GetBytes("""{"temp":21}"""),
@@ -1416,7 +1416,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await messageTransport.DeliverAsync<JsonElement>(
             "measurements",
             Encoding.UTF8.GetBytes("""{"temp":21}"""),
@@ -1430,7 +1430,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace2 = JsonWorkspace.Create();
         var pending2 = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport2, workspace2, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport2, workspace2, inputsDocument.RootElement, default(CancellationToken), null])!;
         WorkflowStepFailedException? caught = null;
         try
         {
@@ -1510,7 +1510,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
 
         // First message misses the criterion → the step retries (re-subscribes); the second matches.
         await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"status":"pending","id":"R1"}"""));
@@ -1584,7 +1584,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         var pending = (ValueTask<JsonElement>)execute.Invoke(
             null,
-            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken)])!;
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
         await messageTransport.DeliverAsync<JsonElement>("measurements", Encoding.UTF8.GetBytes("""{"name":"id-42"}"""));
         JsonElement outputs = await pending;
 

@@ -314,13 +314,13 @@ internal static class ControlFlowEmitter
             c.AppendLine("        }");
             c.AppendLine();
             c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
-                .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
+                .AppendLine("RetryDelay), timeProvider ?? TimeProvider.System, cancellationToken).ConfigureAwait(false); }");
             c.AppendLine("        continue;");
         }
         else
         {
             c.Append("        if (").Append(camel).Append("RetryDelay > 0) { await Task.Delay(TimeSpan.FromSeconds(").Append(camel)
-                .AppendLine("RetryDelay), cancellationToken).ConfigureAwait(false); }");
+                .AppendLine("RetryDelay), timeProvider ?? TimeProvider.System, cancellationToken).ConfigureAwait(false); }");
             c.Append("        __state = ").Append(indexLiteral).AppendLine(";");
             c.AppendLine("        continue;");
         }
