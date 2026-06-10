@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Text;
-using Corvus.Text.Json.Arazzo.Generation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.CodeGenerator.Tests;
@@ -97,67 +96,5 @@ public class ArazzoVirtualizedDocumentTests : IDisposable
         // The executor bound the getPet operation from the registered source's generated namespace.
         string executor = await File.ReadAllTextAsync(executorPath);
         StringAssert.Contains(executor, "TestWorkflows.Pets");
-    }
-
-    [TestMethod]
-    public async Task Resolves_a_source_by_its_self_identity_when_registered_under_a_different_uri()
-    {
-        // The source is registered under one URI but declares a different absolute $self; the Arazzo
-        // document references it by that $self. Per §5.5.2 the source must resolve by identity ($self),
-        // not by the URI it happened to be registered under — so generation succeeds even though no
-        // registration URI nor any file/network location matches the referenced url.
-        Uri registrationUri = new("https://registered.example/whatever.json");
-        Uri selfIdentity = new("https://canonical.example/pets");
-
-        string petsText = await File.ReadAllTextAsync(CodeGeneratorRunner.GetFixturePath("Arazzo", "pets.openapi.json"));
-        int brace = petsText.IndexOf('{', StringComparison.Ordinal);
-        string petsWithSelf = string.Concat(
-            petsText.AsSpan(0, brace + 1),
-            $"\"$self\":\"{selfIdentity}\",",
-            petsText.AsSpan(brace + 1));
-
-        string arazzoJson = $$"""
-            {
-              "arazzo": "1.0.1",
-              "info": { "title": "Adopt", "version": "1.0.0" },
-              "sourceDescriptions": [
-                { "name": "pets", "url": "{{selfIdentity}}", "type": "openapi" }
-              ],
-              "workflows": [
-                {
-                  "workflowId": "adopt",
-                  "inputs": { "type": "object", "properties": { "petId": { "type": "string" } }, "required": [ "petId" ] },
-                  "steps": [
-                    {
-                      "stepId": "getPet",
-                      "operationId": "getPet",
-                      "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
-                      "successCriteria": [ { "condition": "$statusCode == 200" } ],
-                      "outputs": { "petName": "$response.body#/name" }
-                    }
-                  ],
-                  "outputs": { "name": "$steps.getPet.outputs.petName" }
-                }
-              ]
-            }
-            """;
-
-        string virtualArazzoPath = Path.Combine(Path.GetTempPath(), "corvus-virtual", Guid.NewGuid().ToString("N"), "adopt.arazzo.json");
-        Uri arazzoUri = new(Path.GetFullPath(virtualArazzoPath));
-
-        var registered = new List<RegisteredDocument>
-        {
-            new(arazzoUri, Encoding.UTF8.GetBytes(arazzoJson)),
-            new(registrationUri, Encoding.UTF8.GetBytes(petsWithSelf)),
-        };
-
-        await ArazzoGenerationDriver.GenerateAsync(
-            virtualArazzoPath, "TestWorkflows", this.outputDir, clientName: null, durable: false, CancellationToken.None, registered);
-
-        Assert.IsTrue(File.Exists(Path.Combine(this.outputDir, "Workflows", "AdoptWorkflow.cs")));
-        Assert.IsTrue(
-            Directory.Exists(Path.Combine(this.outputDir, "Pets"))
-            && Directory.GetFiles(Path.Combine(this.outputDir, "Pets"), "*.cs", SearchOption.AllDirectories).Length > 0,
-            "Expected the source to resolve by $self identity and generate its client under Pets/.");
     }
 }

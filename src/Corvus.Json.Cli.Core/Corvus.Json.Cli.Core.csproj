@@ -35,6 +35,9 @@
     <PackageReference Include="System.Reflection.Metadata" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.CodeGenerator.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj" />

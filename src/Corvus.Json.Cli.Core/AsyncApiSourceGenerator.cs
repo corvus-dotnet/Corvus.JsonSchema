@@ -47,16 +47,65 @@ internal static class AsyncApiSourceGenerator
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
         JsonElement specRoot = doc.RootElement;
+        using AsyncApiExternalReferenceResolver referenceResolver = new(specRoot, specFilePath);
+
+        return await GenerateCoreAsync(
+            specRoot, referenceResolver, specFilePath, entryUri: null, documentLoader: null, useYaml,
+            rootNamespace, outputPath, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Generates the producers/consumers and models for one AsyncAPI source description whose document —
+    /// and any it references — are supplied through a virtualized loader rather than read from disk,
+    /// returning its channel operations.
+    /// </summary>
+    /// <param name="specUri">The absolute URI the AsyncAPI spec was retrieved from (its reference-resolution base).</param>
+    /// <param name="documentLoader">Loads a document's raw UTF-8 JSON bytes by absolute URI, or returns <see langword="null"/>.</param>
+    /// <param name="rootNamespace">The root namespace for the generated code.</param>
+    /// <param name="outputPath">The directory the producers/consumers are written to (models under <c>Models/</c>).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>One descriptor per channel operation the spec declares.</returns>
+    public static async Task<IReadOnlyList<AsyncApiChannelDescriptor>> GenerateAsync(
+        Uri specUri,
+        Func<Uri, byte[]?> documentLoader,
+        string rootNamespace,
+        string outputPath,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(specUri);
+        ArgumentNullException.ThrowIfNull(documentLoader);
+
+        byte[] specBytes = documentLoader(specUri)
+            ?? throw new FileNotFoundException($"The AsyncAPI source document '{specUri}' could not be loaded.");
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
+        JsonElement specRoot = doc.RootElement;
+        using AsyncApiExternalReferenceResolver referenceResolver = new(specRoot, specUri, documentLoader);
+
+        return await GenerateCoreAsync(
+            specRoot, referenceResolver, specUri.AbsoluteUri, specUri, documentLoader, useYaml: false,
+            rootNamespace, outputPath, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<IReadOnlyList<AsyncApiChannelDescriptor>> GenerateCoreAsync(
+        JsonElement specRoot,
+        AsyncApiExternalReferenceResolver referenceResolver,
+        string schemaEntryKey,
+        Uri? entryUri,
+        Func<Uri, byte[]?>? documentLoader,
+        bool useYaml,
+        string rootNamespace,
+        string outputPath,
+        CancellationToken cancellationToken)
+    {
         string version = AsyncApiShowCommand.DetectAsyncApiVersion(specRoot, null);
 
         bool is26 = AsyncApiShowCommand.IsAsyncApi26Version(version);
         if (!is26 && !AsyncApiShowCommand.IsAsyncApi30Version(version))
         {
             throw new NotSupportedException(
-                $"AsyncAPI source '{Path.GetFileName(specFilePath)}' is version {version}; Arazzo channel steps require AsyncAPI 2.6 or 3.0.");
+                $"AsyncAPI source '{schemaEntryKey}' is version {version}; Arazzo channel steps require AsyncAPI 2.6 or 3.0.");
         }
-
-        using AsyncApiExternalReferenceResolver referenceResolver = new(specRoot, specFilePath);
 
         string[] pointers = is26
             ? AsyncApi26CodeGenerator.CollectSchemaPointers(specRoot, null, referenceResolver)
@@ -64,7 +113,7 @@ internal static class AsyncApiSourceGenerator
 
         string modelsPath = Path.Combine(outputPath, "Models");
         Dictionary<string, string> schemaTypeMap = pointers.Length > 0
-            ? await GenerateSchemaTypesAsync(specFilePath, rootNamespace, modelsPath, pointers, useYaml, cancellationToken).ConfigureAwait(false)
+            ? await GenerateSchemaTypesAsync(schemaEntryKey, rootNamespace, modelsPath, pointers, useYaml, entryUri, documentLoader, cancellationToken).ConfigureAwait(false)
             : new Dictionary<string, string>(StringComparer.Ordinal);
 
         IReadOnlyList<GeneratedFile> clientFiles;
@@ -97,18 +146,36 @@ internal static class AsyncApiSourceGenerator
         string outputPath,
         string[] pointers,
         bool useYaml,
+        Uri? entryUri,
+        Func<Uri, byte[]?>? documentLoader,
         CancellationToken cancellationToken)
     {
-        CompoundDocumentResolver documentResolver;
+        // The entry document key: its virtualized URI when supplied, otherwise its file path.
+        string schemaEntryKey = entryUri is not null ? entryUri.AbsoluteUri : specFilePath;
+
+        IDocumentResolver fileResolver;
+        IDocumentResolver httpResolver;
         if (useYaml)
         {
             YamlPreProcessor preProcessor = new();
-            documentResolver = new(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
+            fileResolver = new FileSystemDocumentResolver(preProcessor);
+            httpResolver = new HttpClientDocumentResolver(new HttpClient(), preProcessor);
         }
         else
         {
-            documentResolver = new(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+            fileResolver = new FileSystemDocumentResolver();
+            httpResolver = new HttpClientDocumentResolver(new HttpClient());
         }
+
+        CompoundDocumentResolver documentResolver = documentLoader is { } loader
+            ? new(
+                new CallbackDocumentResolver(uriString =>
+                    Uri.TryCreate(uriString, UriKind.Absolute, out Uri? uri) && loader(uri) is { } bytes
+                        ? System.Text.Json.JsonDocument.Parse(bytes)
+                        : null),
+                fileResolver,
+                httpResolver)
+            : new(fileResolver, httpResolver);
 
         documentResolver.AddMetaschema();
 
@@ -130,7 +197,7 @@ internal static class AsyncApiSourceGenerator
         foreach (string pointer in pointers)
         {
             // All AsyncAPI schema pointers are same-document fragment-only.
-            JsonReference reference = new(specFilePath, pointer);
+            JsonReference reference = new(schemaEntryKey, pointer);
             TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
                 reference, defaultVocabulary, rebaseAsRoot: false).ConfigureAwait(false);
             pointerToType[pointer] = rootType;
