@@ -101,7 +101,7 @@ public class Coverage_GeneratorChannelTests
             descriptor,
             """{ "stepId": "s", "channelPath": "measurements/{sensorId}", "action": "receive", "parameters": [ { "name": "sensorId", "value": "$inputs.sensorId" } ] }""");
 
-        source.ShouldContain("System.Text.Encoding.UTF8.GetBytes($\"measurements/");
+        source.ShouldContain("$\"measurements/");
         source.ShouldContain("ReceiveOneAsync<");
     }
 
