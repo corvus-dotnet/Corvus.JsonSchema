@@ -23,3 +23,7 @@ uses; pass that user in the configuration string, or hand a pre-authenticated co
 > Targets a single Redis instance (or a primary); the index-maintenance Lua touches multiple keys. The
 > in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend runs
 > the same store-conformance suite.
+
+**Encryption at rest:** Azure Cache for Redis / Redis Enterprise encrypt persisted data at rest. For
+encryption the Redis operator cannot read, wrap this store in `ProtectedWorkflowStateStore` (see the
+`Corvus.Text.Json.Arazzo.Durability` README).

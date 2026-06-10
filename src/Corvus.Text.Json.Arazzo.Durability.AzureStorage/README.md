@@ -30,3 +30,7 @@ Azurite emulator.
 
 > The in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend
 > runs the same store-conformance suite.
+
+**Encryption at rest:** Azure Storage encrypts blobs and tables at rest by default (customer-managed key
+optional). For encryption the storage operator cannot read, wrap this store in `ProtectedWorkflowStateStore`
+(see the `Corvus.Text.Json.Arazzo.Durability` README).
