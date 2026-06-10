@@ -476,26 +476,32 @@ criteria half of this phase.
 12. **Attribute cardinality / PII** — telemetry attributes drawn from params and
     bodies risk high cardinality and leaking sensitive data; provide redaction
     hooks and bounded cardinality by default.
-13. **Document referencing conformance (backlog — review against v1.1.0)** — audit
-    how we resolve references against the Arazzo 1.1.0 spec, specifically
+13. **Document referencing conformance (reviewed against v1.1.0 — mostly implemented)** —
+    audited how we resolve references against the Arazzo 1.1.0 spec, specifically
     [§5.5.2 Identity-Based Referencing](https://spec.openapis.org/arazzo/v1.1.0.html#identity-based-referencing)
     and [§5.6 Relative References in Arazzo Description URIs](https://spec.openapis.org/arazzo/v1.1.0.html#relative-references-in-arazzo-description-uris).
-    Two concrete areas to check:
-    - **Relative reference resolution base (§5.6).** `ArazzoGenerationDriver`
-      resolves a `sourceDescriptions[].url` with `Path.GetFullPath(Path.Combine(arazzoDirectory, url))`
-      — i.e. *filesystem*-relative to the Arazzo file's directory. The spec resolves
-      relative references as **URI references against the Arazzo description's
-      base/retrieval URI** (RFC 3986), which differs for absolute URLs, `file:`/
-      `http(s):` schemes, fragments, and `.`/`..` segments. Confirm our behaviour
-      matches (and decide how non-file URLs are fetched), or document the
-      filesystem-only limitation.
-    - **Identity-based referencing (§5.5.2).** Verify the identity forms the binder/
-      generator resolve — `$sourceDescriptions.<name>`, `$components.<section>.<name>`,
-      `operationId`, `operationPath`, `workflowId` (incl. cross-document
-      `<sourceName>.<id>` forms) — line up with the 1.1.0 identity-vs-URI rules and
-      precedence, including the `{$sourceDescriptions...}` runtime-expression form in
-      `operationPath`/`workflowId` and ambiguity when an id is duplicated across
-      sources (see open question 2). Pin the conclusions with conformance tests.
+    - **Relative reference resolution base (§5.6) — implemented.** `ArazzoGenerationDriver`
+      now resolves a `sourceDescriptions[].url` as a **URI reference (RFC 3986)** against
+      the description's base URI — an absolute `$self` when present, otherwise the Arazzo
+      document's retrieval URI — via `new Uri(baseUri, url)`, covering absolute URLs,
+      `file:`/`http(s):` schemes, fragments, and `.`/`..` segments. Source documents resolve
+      through a single loader (registered in-memory documents → file system → `http(s)`), so
+      they may be **virtualized** (supplied in memory rather than read from disk); callers
+      register them as `RegisteredDocument` (URI, bytes). The two `ExternalReferenceResolver`s
+      gained a `Uri` base constructor + a loader hook, and the V4 schema-model pipeline is fed
+      the same documents via a `CallbackDocumentResolver` bridge.
+    - **Identity-based referencing (§5.5.2) — mostly implemented.** `operationId` now supports
+      the source-qualified runtime-expression form `$sourceDescriptions.<name>.<operationId>`,
+      and a plain `operationId` defined by more than one source raises an ambiguity error
+      pointing at that form (rather than silently binding the first match). `operationPath`
+      already resolves the `{$sourceDescriptions.<name>.url}#/…` form; `$components.<section>.<name>`
+      reusable parameters/actions resolve same-document (correct, since components are within the
+      description). All pinned with conformance tests (`WorkflowOperationBinderTests`,
+      `ArazzoVirtualizedDocumentTests`).
+    - **Still open:** cross-**document** `workflowId` (`$sourceDescriptions.<name>.<workflowId>`
+      into a separate Arazzo description) — sub-workflows resolve same-document only; and
+      absolute-URI **identity** matching via a target document's `$self` (§5.5.2) — the base URI
+      honours `$self` but cross-document `$self`-identity resolution is not yet implemented.
 
 ## 8. Recommended next step
 
