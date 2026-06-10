@@ -9,7 +9,7 @@ operation onto the corresponding `IWorkflowManagementClient` method over a chose
 
 | HTTP | operationId | `IWorkflowManagementClient` | Notes |
 |------|-------------|-----------------------------|-------|
-| `GET /runs` | `listRuns` | `ListAsync` | Visibility query (`status`, `workflowId`, `limit`, `pageToken`) over the wait/visibility index. |
+| `GET /runs` | `listRuns` | `ListAsync` | Visibility query (`status`, `workflowId`, `limit`, `pageToken`) over the wait/visibility index. Keyset pagination: a non-empty `nextPageToken` (and a `next` link) is returned when more pages remain. |
 | `GET /runs/{runId}` | `getRun` | `GetAsync` | Status, cursor, wait/fault detail, etag. `404` if unknown. |
 | `POST /runs/{runId}/resume` | `resumeRun` | `ResumeAsync` | Retry a faulted run from its last checkpoint. `409` if not faulted / held / changed concurrently. |
 | `POST /runs/{runId}/cancel` | `cancelRun` | `CancelAsync` | Mark a non-terminal run `Cancelled`. `409` if already terminal / held. |
@@ -64,5 +64,5 @@ methods and strongly-typed models (`WorkflowRunDetail`, `WorkflowRunPage`, `Work
 ## Scope
 
 This describes the implemented control-plane surface. Reserved for later iterations (see plan §11): richer
-resume modes (`Rewind`/`Skip`/`StatePatch`), real pagination tokens, single-run delete, a run history/trace
+resume modes (`Rewind`/`Skip`/`StatePatch`), single-run delete, a run history/trace
 resource, and the hosting service + `arazzo-runs` CLI that consume this contract.

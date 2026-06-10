@@ -77,6 +77,47 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task List_pages_with_a_continuation_token()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            for (int i = 1; i <= 5; i++)
+            {
+                await CompleteRunAsync(host.Store, $"run-{i:00}", host.Clock);
+            }
+
+            var collected = new List<string>();
+            string? token = null;
+            int pages = 0;
+            do
+            {
+                string url = token is null
+                    ? "/runs?status=Completed&limit=2"
+                    : $"/runs?status=Completed&limit=2&pageToken={Uri.EscapeDataString(token)}";
+                HttpResponseMessage response = await host.Client.GetAsync(url);
+                response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+                using Stj.JsonDocument doc = await ReadJsonAsync(response);
+                Stj.JsonElement runs = doc.RootElement.GetProperty("runs");
+                runs.GetArrayLength().ShouldBeLessThanOrEqualTo(2);
+                foreach (Stj.JsonElement run in runs.EnumerateArray())
+                {
+                    collected.Add(run.GetProperty("id").GetString()!);
+                }
+
+                token = doc.RootElement.TryGetProperty("nextPageToken", out Stj.JsonElement t) && t.ValueKind == Stj.JsonValueKind.String
+                    ? t.GetString()
+                    : null;
+                (++pages).ShouldBeLessThanOrEqualTo(10);
+            }
+            while (token is not null);
+
+            collected.ShouldBe(["run-01", "run-02", "run-03", "run-04", "run-05"]);
+        }
+    }
+
+    [TestMethod]
     public async Task Resume_retries_a_faulted_run()
     {
         Host host = await StartAsync();

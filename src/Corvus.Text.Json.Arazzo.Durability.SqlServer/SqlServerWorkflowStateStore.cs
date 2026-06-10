@@ -237,17 +237,21 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
+        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
         select.CommandText =
             """
             SELECT TOP (@limit) run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type
             FROM workflow_runs
-            WHERE (@status IS NULL OR status = @status) AND (@workflow_id IS NULL OR workflow_id = @workflow_id);
+            WHERE (@status IS NULL OR status = @status) AND (@workflow_id IS NULL OR workflow_id = @workflow_id)
+              AND (@after IS NULL OR run_id > @after)
+            ORDER BY run_id;
             """;
         select.Parameters.Add(NullableText("@status", query.Status?.ToString()));
         select.Parameters.Add(NullableText("@workflow_id", query.WorkflowId));
-        select.Parameters.AddWithValue("@limit", query.Limit);
+        select.Parameters.Add(NullableText("@after", after));
+        select.Parameters.AddWithValue("@limit", query.Limit + 1);
 
         var runs = new List<WorkflowRunListing>();
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -265,7 +269,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
             runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
         }
 
-        return new WorkflowRunPage(runs);
+        return WorkflowContinuationToken.Paginate(runs, query.Limit);
     }
 
     private static void BindRun(SqlCommand command, WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index)

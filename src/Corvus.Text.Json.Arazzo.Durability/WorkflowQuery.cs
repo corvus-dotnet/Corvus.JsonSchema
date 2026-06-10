@@ -11,11 +11,17 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </summary>
 /// <param name="Status">Restrict to runs in this status, if set.</param>
 /// <param name="WorkflowId">Restrict to runs of this workflow, if set.</param>
-/// <param name="Limit">The maximum number of runs to return.</param>
+/// <param name="Limit">The maximum number of runs to return in this page.</param>
+/// <param name="ContinuationToken">
+/// The opaque token from a previous page's <see cref="WorkflowRunPage.ContinuationToken"/> to resume from, or
+/// <see langword="null"/> for the first page. Stores page by ascending run id (keyset), so the token encodes the
+/// last run id of the previous page.
+/// </param>
 public readonly record struct WorkflowQuery(
     WorkflowRunStatus? Status = null,
     string? WorkflowId = null,
-    int Limit = 100);
+    int Limit = 100,
+    string? ContinuationToken = null);
 
 /// <summary>One run in a <see cref="WorkflowRunPage"/>: its id and the indexed projection.</summary>
 /// <param name="Id">The run id.</param>
@@ -23,5 +29,9 @@ public readonly record struct WorkflowQuery(
 public readonly record struct WorkflowRunListing(WorkflowRunId Id, WorkflowRunIndexEntry Index);
 
 /// <summary>A page of runs matching a <see cref="WorkflowQuery"/>.</summary>
-/// <param name="Runs">The matching runs (at most <see cref="WorkflowQuery.Limit"/>).</param>
-public readonly record struct WorkflowRunPage(IReadOnlyList<WorkflowRunListing> Runs);
+/// <param name="Runs">The matching runs (at most <see cref="WorkflowQuery.Limit"/>), ordered by ascending run id.</param>
+/// <param name="ContinuationToken">
+/// The opaque token to pass as the next query's <see cref="WorkflowQuery.ContinuationToken"/> to fetch the next
+/// page, or <see langword="null"/> when this is the last page.
+/// </param>
+public readonly record struct WorkflowRunPage(IReadOnlyList<WorkflowRunListing> Runs, string? ContinuationToken = null);
