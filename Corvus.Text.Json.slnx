@@ -87,6 +87,7 @@
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests/Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.Postgres.Tests/Corvus.Text.Json.Arazzo.Durability.Postgres.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.MySql.Tests/Corvus.Text.Json.Arazzo.Durability.MySql.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Arazzo.Durability.SqlServer.Tests/Corvus.Text.Json.Arazzo.Durability.SqlServer.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Analyzers.Tests/Corvus.Text.Json.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Migration.Analyzers.Tests/Corvus.Text.Json.Migration.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.JsonSchemaTestSuite.CodeGenerator/Corvus.JsonSchemaTestSuite.CodeGenerator.csproj" Id="fc46ebe0-6bd7-4a8a-abae-6271aff53420" />
@@ -137,6 +138,7 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Sqlite/Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Postgres/Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.MySql/Corvus.Text.Json.Arazzo.Durability.MySql.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.SqlServer/Corvus.Text.Json.Arazzo.Durability.SqlServer.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Testing/Corvus.Text.Json.Arazzo.Testing.csproj" />
   </Folder>
