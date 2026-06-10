@@ -1,0 +1,466 @@
+// <copyright file="Commands.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.ComponentModel;
+using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
+using Corvus.Text.Json.OpenApi.HttpTransport;
+using Corvus.Text.Json.Patch;
+using Spectre.Console.Cli;
+using Models = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
+
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli;
+
+/// <summary>Settings shared by every command: how to reach (and authenticate to) the control plane.</summary>
+internal class RunsSettings : CommandSettings
+{
+    [CommandOption("--server <URL>")]
+    [Description("Control-plane base origin (or env ARAZZO_RUNS_SERVER), e.g. https://host:8080.")]
+    public string? Server { get; init; }
+
+    [CommandOption("--token <TOKEN>")]
+    [Description("OAuth2 bearer access token (or env ARAZZO_RUNS_TOKEN).")]
+    public string? Token { get; init; }
+
+    /// <inheritdoc/>
+    public override Spectre.Console.ValidationResult Validate()
+        => this.ResolveServer() is null
+            ? Spectre.Console.ValidationResult.Error("--server <url> is required (or set ARAZZO_RUNS_SERVER).")
+            : Spectre.Console.ValidationResult.Success();
+
+    /// <summary>Builds the API client (and the HTTP client / transport it owns) for this invocation, resolving the
+    /// access token from the <c>--token</c> flag, the environment, or the login cache (refreshing if stale).</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiRunsClient Client)> CreateClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        var http = new HttpClient { BaseAddress = new Uri(this.ResolveServer()!, UriKind.Absolute) };
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiRunsClient(transport));
+    }
+
+    private string? ResolveServer() => this.Server ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_SERVER");
+}
+
+/// <summary>Settings for a command that targets a single run by id.</summary>
+internal class RunIdSettings : RunsSettings
+{
+    [CommandArgument(0, "<runId>")]
+    [Description("The run id.")]
+    public string RunId { get; init; } = string.Empty;
+}
+
+internal sealed class ListSettings : RunsSettings
+{
+    [CommandOption("--status <STATUS>")]
+    [Description("Restrict to runs in this lifecycle status (Pending/Running/Suspended/Completed/Cancelled/Faulted).")]
+    public string? Status { get; init; }
+
+    [CommandOption("--workflow-id <ID>")]
+    [Description("Restrict to runs of this workflow.")]
+    public string? WorkflowId { get; init; }
+
+    [CommandOption("--limit <N>")]
+    [Description("Maximum runs per page.")]
+    public int? Limit { get; init; }
+
+    [CommandOption("--page-token <TOKEN>")]
+    [Description("Continuation token from a previous page's nextPageToken.")]
+    public string? PageToken { get; init; }
+}
+
+internal sealed class ResumeSettings : RunIdSettings
+{
+    [CommandOption("--mode <MODE>")]
+    [Description("RetryFaultedStep (default), Rewind, Skip or StatePatch.")]
+    [DefaultValue("RetryFaultedStep")]
+    public string Mode { get; init; } = "RetryFaultedStep";
+
+    [CommandOption("--target-cursor <N>")]
+    [Description("Rewind: the cursor to rewind to (required). Skip: the cursor to resume at (default faulted + 1).")]
+    public int? TargetCursor { get; init; }
+
+    [CommandOption("--skip-outputs-file <PATH>")]
+    [Description("Skip: path to a JSON file of outputs to record for the skipped step.")]
+    public string? SkipOutputsFile { get; init; }
+
+    [CommandOption("--patch-file <PATH>")]
+    [Description("StatePatch: path to a file containing an RFC 6902 JSON Patch array.")]
+    public string? PatchFile { get; init; }
+}
+
+internal sealed class CancelSettings : RunIdSettings
+{
+    [CommandOption("--reason <TEXT>")]
+    [Description("An operator-supplied reason for the cancellation (recorded for audit).")]
+    public string? Reason { get; init; }
+
+    /// <inheritdoc/>
+    public override Spectre.Console.ValidationResult Validate()
+        => string.IsNullOrEmpty(this.Reason)
+            ? Spectre.Console.ValidationResult.Error("--reason <text> is required for cancel.")
+            : base.Validate();
+}
+
+internal sealed class PurgeSettings : RunsSettings
+{
+    [CommandOption("--older-than <RFC3339>")]
+    [Description("Reap terminal runs last updated strictly before this instant.")]
+    public string? OlderThan { get; init; }
+
+    [CommandOption("--limit <N>")]
+    [Description("Maximum runs to delete in one call.")]
+    public int? Limit { get; init; }
+
+    /// <inheritdoc/>
+    public override Spectre.Console.ValidationResult Validate()
+        => string.IsNullOrEmpty(this.OlderThan)
+            ? Spectre.Console.ValidationResult.Error("--older-than <rfc3339-timestamp> is required for purge.")
+            : base.Validate();
+}
+
+internal sealed class ListCommand : AsyncCommand<ListSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListSettings settings, CancellationToken cancellationToken)
+    {
+        (HttpClient http, HttpClientTransport transport, ApiRunsClient client) = await settings.CreateClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            Models.WorkflowRunStatus.Source status = default;
+            if (settings.Status is { } s)
+            {
+                status = s;
+            }
+
+            Models.JsonString.Source workflowId = default;
+            if (settings.WorkflowId is { } w)
+            {
+                workflowId = w;
+            }
+
+            Models.Schema.Source limit = default;
+            if (settings.Limit is { } l)
+            {
+                limit = l;
+            }
+
+            Models.JsonString.Source pageToken = default;
+            if (settings.PageToken is { } p)
+            {
+                pageToken = p;
+            }
+
+            await using ListRunsResponse response = await client.ListRunsAsync(status, workflowId, limit, pageToken, cancellationToken);
+            return response.MatchResult(
+                page => Output.Print(page.ToString()),
+                Output.Problem,
+                Output.Unexpected);
+        }
+    }
+}
+
+internal sealed class GetCommand : AsyncCommand<RunIdSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, RunIdSettings settings, CancellationToken cancellationToken)
+    {
+        (HttpClient http, HttpClientTransport transport, ApiRunsClient client) = await settings.CreateClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            await using GetRunResponse response = await client.GetRunAsync(settings.RunId, cancellationToken);
+            return response.MatchResult(
+                detail => Output.Print(detail.ToString()),
+                Output.Problem,
+                Output.Unexpected);
+        }
+    }
+}
+
+internal sealed class ResumeCommand : AsyncCommand<ResumeSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, ResumeSettings settings, CancellationToken cancellationToken)
+    {
+        (HttpClient http, HttpClientTransport transport, ApiRunsClient client) = await settings.CreateClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            // Each mode builds its union variant from native values via the generated Build()/CreateBuilder()
+            // factories — no hand-composed JSON. The file-valued modes (Skip outputs / StatePatch) load the
+            // operator's JSON document and materialize the variant into a workspace so the immutable value
+            // (not a captured ref) feeds the client.
+            switch (settings.Mode)
+            {
+                case "RetryFaultedStep":
+                {
+                    await using ResumeRunResponse response = await client.ResumeRunAsync(
+                        settings.RunId,
+                        Models.ResumeRequest.Build(static (ref Models.RetryFaultedStepResume.Builder b) => b.Create()),
+                        cancellationToken);
+                    return RenderResume(response);
+                }
+
+                case "Rewind":
+                {
+                    if (settings.TargetCursor is not { } targetCursor)
+                    {
+                        Console.Error.WriteLine("--target-cursor <n> is required for --mode Rewind.");
+                        return 1;
+                    }
+
+                    await using ResumeRunResponse response = await client.ResumeRunAsync(
+                        settings.RunId,
+                        Models.RewindResume.Build(targetCursor),
+                        cancellationToken);
+                    return RenderResume(response);
+                }
+
+                case "Skip":
+                    return await ResumeSkipAsync(client, settings, cancellationToken);
+
+                case "StatePatch":
+                    return await ResumeStatePatchAsync(client, settings, cancellationToken);
+
+                default:
+                    Console.Error.WriteLine($"Unknown --mode '{settings.Mode}'. Use RetryFaultedStep, Rewind, Skip or StatePatch.");
+                    return 1;
+            }
+        }
+    }
+
+    private static async Task<int> ResumeSkipAsync(ApiRunsClient client, ResumeSettings settings, CancellationToken cancellationToken)
+    {
+        if (settings.SkipOutputsFile is { } outputsFile)
+        {
+            if (!File.Exists(outputsFile))
+            {
+                Console.Error.WriteLine($"--skip-outputs-file not found: {outputsFile}");
+                return 1;
+            }
+
+            using ParsedJsonDocument<JsonElement> outputs = ParsedJsonDocument<JsonElement>.Parse(File.ReadAllBytes(outputsFile));
+            await using ResumeRunResponse response = await client.ResumeRunAsync(
+                settings.RunId,
+                Models.SkipResume.Build(
+                    skipOutputs: outputs.RootElement,
+                    targetCursor: settings.TargetCursor is { } c ? (Models.JsonInt32.Source)c : default),
+                cancellationToken);
+            return RenderResume(response);
+        }
+
+        await using ResumeRunResponse noOutputs = await client.ResumeRunAsync(
+            settings.RunId,
+            Models.SkipResume.Build(targetCursor: settings.TargetCursor is { } cursor ? (Models.JsonInt32.Source)cursor : default),
+            cancellationToken);
+        return RenderResume(noOutputs);
+    }
+
+    private static async Task<int> ResumeStatePatchAsync(ApiRunsClient client, ResumeSettings settings, CancellationToken cancellationToken)
+    {
+        if (settings.PatchFile is not { } patchFile)
+        {
+            Console.Error.WriteLine("--patch-file <path> is required for --mode StatePatch.");
+            return 1;
+        }
+
+        if (!File.Exists(patchFile))
+        {
+            Console.Error.WriteLine($"--patch-file not found: {patchFile}");
+            return 1;
+        }
+
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(File.ReadAllBytes(patchFile));
+
+        // Reject a non-conformant patch up front (RFC 6902, via the JSON Patch document's own schema)
+        // rather than sending a malformed body the server would refuse.
+        JsonPatchDocument patchDocument = document.RootElement;
+        if (!patchDocument.EvaluateSchema())
+        {
+            Console.Error.WriteLine($"--patch-file is not a conformant RFC 6902 JSON Patch document: {patchFile}");
+            return 1;
+        }
+
+        Models.StatePatchResume.JsonObjectArray patch = document.RootElement;
+        await using ResumeRunResponse response = await client.ResumeRunAsync(
+            settings.RunId,
+            Models.StatePatchResume.Build(patch),
+            cancellationToken);
+        return RenderResume(response);
+    }
+
+    private static int RenderResume(ResumeRunResponse response) => response.MatchResult(
+        detail => Output.Print(detail.ToString()),
+        Output.Problem,
+        Output.Problem,
+        Output.Unexpected);
+}
+
+internal sealed class CancelCommand : AsyncCommand<CancelSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, CancelSettings settings, CancellationToken cancellationToken)
+    {
+        (HttpClient http, HttpClientTransport transport, ApiRunsClient client) = await settings.CreateClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            await using CancelRunResponse response = await client.CancelRunAsync(
+                settings.RunId,
+                Models.CancelRequest.Build(settings.Reason!),
+                cancellationToken);
+            return response.MatchResult(
+                detail => Output.Print(detail.ToString()),
+                Output.Problem,
+                Output.Problem,
+                Output.Problem,
+                Output.Unexpected);
+        }
+    }
+}
+
+internal sealed class DeleteCommand : AsyncCommand<RunIdSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, RunIdSettings settings, CancellationToken cancellationToken)
+    {
+        (HttpClient http, HttpClientTransport transport, ApiRunsClient client) = await settings.CreateClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            await using DeleteRunResponse response = await client.DeleteRunAsync(settings.RunId, cancellationToken);
+            if (response.StatusCode == 204)
+            {
+                Console.WriteLine($"Deleted run '{settings.RunId}'.");
+                return 0;
+            }
+
+            return response.MatchResult(
+                Output.Problem,
+                Output.Problem,
+                Output.Unexpected);
+        }
+    }
+}
+
+internal sealed class PurgeCommand : AsyncCommand<PurgeSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, PurgeSettings settings, CancellationToken cancellationToken)
+    {
+        (HttpClient http, HttpClientTransport transport, ApiRunsClient client) = await settings.CreateClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            Models.JsonDateTime.Source olderThan = settings.OlderThan!;
+            Models.Schema.Source limit = default;
+            if (settings.Limit is { } l)
+            {
+                limit = l;
+            }
+
+            await using PurgeRunsResponse response = await client.PurgeRunsAsync(olderThan, limit, cancellationToken);
+            return response.MatchResult(
+                result => Output.Print(result.ToString()),
+                Output.Problem,
+                Output.Unexpected);
+        }
+    }
+}
+
+internal sealed class LoginSettings : CommandSettings
+{
+    [CommandOption("--authority <URL>")]
+    [Description("OIDC issuer/authority base URL (or env ARAZZO_RUNS_AUTHORITY); discovery at {authority}/.well-known/openid-configuration.")]
+    public string? Authority { get; init; }
+
+    [CommandOption("--client-id <ID>")]
+    [Description("OAuth2 client id (or env ARAZZO_RUNS_CLIENT_ID).")]
+    public string? ClientId { get; init; }
+
+    [CommandOption("--scope <SCOPES>")]
+    [Description("Space-separated scopes to request.")]
+    [DefaultValue("openid offline_access runs:read runs:write runs:purge")]
+    public string Scope { get; init; } = "openid offline_access runs:read runs:write runs:purge";
+
+    [CommandOption("--use-device-code")]
+    [Description("Use the device authorization grant (RFC 8628) instead of a browser loopback redirect (RFC 8252).")]
+    public bool UseDeviceCode { get; init; }
+
+    public string? ResolveAuthority() => this.Authority ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_AUTHORITY");
+
+    public string? ResolveClientId() => this.ClientId ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_CLIENT_ID");
+
+    /// <inheritdoc/>
+    public override Spectre.Console.ValidationResult Validate()
+    {
+        if (this.ResolveAuthority() is null)
+        {
+            return Spectre.Console.ValidationResult.Error("--authority <url> is required (or set ARAZZO_RUNS_AUTHORITY).");
+        }
+
+        return this.ResolveClientId() is null
+            ? Spectre.Console.ValidationResult.Error("--client-id <id> is required (or set ARAZZO_RUNS_CLIENT_ID).")
+            : Spectre.Console.ValidationResult.Success();
+    }
+}
+
+internal sealed class LoginCommand : AsyncCommand<LoginSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, LoginSettings settings, CancellationToken cancellationToken)
+    {
+        var config = new OAuthConfig(settings.ResolveAuthority()!, settings.ResolveClientId()!, settings.Scope);
+        try
+        {
+            TokenSet token = await OAuthFlows.LoginAsync(config, settings.UseDeviceCode, cancellationToken);
+            TokenCache.Save(token);
+            Console.WriteLine($"Signed in. Access token cached (expires {token.ExpiresAtUtc:u}).");
+            return 0;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or HttpRequestException)
+        {
+            Console.Error.WriteLine($"Login failed: {ex.Message}");
+            return 1;
+        }
+    }
+}
+
+internal sealed class LogoutCommand : Command
+{
+    protected override int Execute(CommandContext context, CancellationToken cancellationToken)
+    {
+        TokenCache.Clear();
+        Console.WriteLine("Signed out (cached token removed).");
+        return 0;
+    }
+}
+
+/// <summary>Console output helpers shared by the commands: results to stdout (JSON), errors to stderr.</summary>
+internal static class Output
+{
+    public static int Print(string json)
+    {
+        Console.WriteLine(json);
+        return 0;
+    }
+
+    public static int Problem(Models.ProblemDetails problem)
+    {
+        Console.Error.WriteLine(problem.ToString());
+        return 1;
+    }
+
+    public static int Unexpected(int statusCode)
+    {
+        Console.Error.WriteLine($"Unexpected response status {statusCode}.");
+        return 1;
+    }
+}
+
+/// <summary>Adds a static OAuth2 bearer token to each outgoing request.</summary>
+internal sealed class BearerTokenAuthentication(string token) : IHttpAuthenticationProvider
+{
+    public ValueTask AuthenticateAsync(HttpRequestMessage request, CancellationToken cancellationToken = default)
+    {
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        return ValueTask.CompletedTask;
+    }
+}
