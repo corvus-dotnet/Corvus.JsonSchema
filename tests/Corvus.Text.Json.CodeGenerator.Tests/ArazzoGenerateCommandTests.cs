@@ -54,6 +54,39 @@ public class ArazzoGenerateCommandTests : IDisposable
     }
 
     [TestMethod]
+    public async Task ArazzoGenerate_WithoutDurable_ProducesStraightLineExecutor()
+    {
+        string arazzo = CodeGeneratorRunner.GetFixturePath("Arazzo", "adopt.arazzo.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"arazzo-generate \"{arazzo}\" --rootNamespace TestWorkflows --outputPath \"{_outputDir}\"");
+
+        Assert.AreEqual(0, result.ExitCode, $"Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+
+        // Without --durable the executor returns the plain workflow outputs, not a durable WorkflowRunResult.
+        string executor = await File.ReadAllTextAsync(Path.Combine(_outputDir, "Workflows", "AdoptWorkflow.cs"));
+        Assert.IsFalse(executor.Contains("WorkflowRunResult<"), "A non-durable executor should not return WorkflowRunResult.");
+    }
+
+    [TestMethod]
+    public async Task ArazzoGenerate_Durable_ProducesDurableExecutor()
+    {
+        string arazzo = CodeGeneratorRunner.GetFixturePath("Arazzo", "adopt.arazzo.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"arazzo-generate \"{arazzo}\" --rootNamespace TestWorkflows --outputPath \"{_outputDir}\" --durable");
+
+        Assert.AreEqual(0, result.ExitCode, $"Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+
+        string executorPath = Path.Combine(_outputDir, "Workflows", "AdoptWorkflow.cs");
+        Assert.IsTrue(File.Exists(executorPath), $"Expected {executorPath}. Stdout: {result.StandardOutput}");
+
+        // With --durable the executor returns a checkpoint/resume-capable WorkflowRunResult.
+        string executor = await File.ReadAllTextAsync(executorPath);
+        StringAssert.Contains(executor, "WorkflowRunResult<");
+    }
+
+    [TestMethod]
     public async Task ArazzoGenerate_WithAsyncApiSource_ProducesProducerAndChannelStep()
     {
         string arazzo = CodeGeneratorRunner.GetFixturePath("Arazzo", "notify.arazzo.json");

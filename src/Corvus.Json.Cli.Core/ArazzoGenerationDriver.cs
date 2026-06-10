@@ -27,6 +27,7 @@ internal static class ArazzoGenerationDriver
     /// <param name="rootNamespace">The root namespace for all generated code.</param>
     /// <param name="outputPath">The directory to write generated files to.</param>
     /// <param name="clientName">The OpenAPI client name prefix, or <see langword="null"/> for the default.</param>
+    /// <param name="durable">When <see langword="true"/>, generate durable (checkpoint &amp; resume) executors.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The absolute paths of all files written.</returns>
     public static async Task<IReadOnlyList<string>> GenerateAsync(
@@ -34,6 +35,7 @@ internal static class ArazzoGenerationDriver
         string rootNamespace,
         string outputPath,
         string? clientName,
+        bool durable,
         CancellationToken cancellationToken)
     {
         byte[] arazzoBytes = await File.ReadAllBytesAsync(arazzoFilePath, cancellationToken).ConfigureAwait(false);
@@ -94,7 +96,7 @@ internal static class ArazzoGenerationDriver
 
         var binder = new WorkflowOperationBinder(clients, channelSources);
         IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration
-            .GenerateAsync(arazzoBytes, binder, new ArazzoGenerationOptions(rootNamespace), cancellationToken)
+            .GenerateAsync(arazzoBytes, binder, new ArazzoGenerationOptions(rootNamespace, Durable: durable), cancellationToken)
             .ConfigureAwait(false);
 
         var written = new List<string>(files.Count);
