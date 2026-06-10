@@ -239,6 +239,38 @@ public abstract class WorkflowStateStoreConformance
         byMissingWorkflow.Runs.ShouldBeEmpty();
     }
 
+    [TestMethod]
+    public async Task Query_pages_through_results_with_a_continuation_token()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        string[] ids = ["run-01", "run-02", "run-03", "run-04", "run-05"];
+        foreach (string id in ids)
+        {
+            await store.SaveAsync(id, Bytes("x"), Index(), WorkflowEtag.None, default);
+        }
+
+        var index = (IWorkflowWaitIndex)store;
+        var collected = new List<string>();
+        string? token = null;
+        int pages = 0;
+        do
+        {
+            WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(Limit: 2, ContinuationToken: token), default);
+            page.Runs.Count.ShouldBeLessThanOrEqualTo(2);
+            foreach (WorkflowRunListing listing in page.Runs)
+            {
+                collected.Add(listing.Id.Value);
+            }
+
+            token = page.ContinuationToken;
+            (++pages).ShouldBeLessThanOrEqualTo(10); // guard against a non-terminating cursor
+        }
+        while (token is not null);
+
+        // Every run returned exactly once, in ascending id order, and the last page cleared the token.
+        collected.ShouldBe(ids);
+    }
+
     private static WorkflowRunIndexEntry Index(WorkflowRunStatus status = WorkflowRunStatus.Running)
         => new("wf", status, T0, T0);
 

@@ -307,6 +307,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
+        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
         select.CommandText =
@@ -314,11 +315,14 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             SELECT run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type
             FROM workflow_runs
             WHERE (@status IS NULL OR status = @status) AND (@workflow_id IS NULL OR workflow_id = @workflow_id)
+              AND (@after IS NULL OR run_id > @after)
+            ORDER BY run_id
             LIMIT @limit;
             """;
         select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
         select.Parameters.AddWithValue("@workflow_id", (object?)query.WorkflowId ?? DBNull.Value);
-        select.Parameters.AddWithValue("@limit", query.Limit);
+        select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
+        select.Parameters.AddWithValue("@limit", query.Limit + 1);
 
         var runs = new List<WorkflowRunListing>();
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -336,7 +340,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
         }
 
-        return new WorkflowRunPage(runs);
+        return WorkflowContinuationToken.Paginate(runs, query.Limit);
     }
 
     private static void BindRun(MySqlCommand command, WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index)

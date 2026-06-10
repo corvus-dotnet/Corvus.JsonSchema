@@ -153,19 +153,30 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
         List<WorkflowRunListing> runs;
         lock (this.gate)
         {
+            // Keyset page by ascending run id, taking one extra row to detect whether a next page exists.
             runs = this.entries
                 .Where(kvp =>
                     (query.Status is not { } status || kvp.Value.Index.Status == status)
-                    && (query.WorkflowId is not { } workflowId || kvp.Value.Index.WorkflowId == workflowId))
-                .Take(query.Limit)
+                    && (query.WorkflowId is not { } workflowId || kvp.Value.Index.WorkflowId == workflowId)
+                    && (after is null || string.CompareOrdinal(kvp.Key, after) > 0))
+                .OrderBy(kvp => kvp.Key, StringComparer.Ordinal)
+                .Take(query.Limit + 1)
                 .Select(kvp => new WorkflowRunListing(new WorkflowRunId(kvp.Key), kvp.Value.Index))
                 .ToList();
         }
 
-        return ValueTask.FromResult(new WorkflowRunPage(runs));
+        string? continuation = null;
+        if (runs.Count > query.Limit)
+        {
+            runs.RemoveAt(runs.Count - 1);
+            continuation = WorkflowContinuationToken.Encode(runs[^1].Id.Value);
+        }
+
+        return ValueTask.FromResult(new WorkflowRunPage(runs, continuation));
     }
 
     private List<WorkflowRunId> Snapshot(Func<Entry, bool> predicate)

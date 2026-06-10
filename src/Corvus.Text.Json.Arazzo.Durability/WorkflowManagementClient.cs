@@ -176,22 +176,30 @@ public sealed class WorkflowManagementClient : IWorkflowManagementClient
         int purged = 0;
         foreach (WorkflowRunStatus status in new[] { WorkflowRunStatus.Completed, WorkflowRunStatus.Cancelled })
         {
-            WorkflowRunPage page = await waitIndex.QueryAsync(new WorkflowQuery(status, null, query.Limit), cancellationToken).ConfigureAwait(false);
-            foreach (WorkflowRunListing listing in page.Runs)
+            // Page through every run of this status (keyset paging is unaffected by the deletions we make).
+            string? token = null;
+            do
             {
-                if (purged >= query.Limit)
+                WorkflowRunPage page = await waitIndex.QueryAsync(new WorkflowQuery(status, null, query.Limit, token), cancellationToken).ConfigureAwait(false);
+                foreach (WorkflowRunListing listing in page.Runs)
                 {
-                    return purged;
+                    if (purged >= query.Limit)
+                    {
+                        return purged;
+                    }
+
+                    if (listing.Index.UpdatedAt >= query.OlderThan)
+                    {
+                        continue;
+                    }
+
+                    await this.store.DeleteAsync(listing.Id, cancellationToken).ConfigureAwait(false);
+                    purged++;
                 }
 
-                if (listing.Index.UpdatedAt >= query.OlderThan)
-                {
-                    continue;
-                }
-
-                await this.store.DeleteAsync(listing.Id, cancellationToken).ConfigureAwait(false);
-                purged++;
+                token = page.ContinuationToken;
             }
+            while (token is not null);
         }
 
         return purged;

@@ -301,8 +301,14 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             conditions.Add("c.workflowId = @workflowId");
         }
 
+        string? after = WorkflowContinuationToken.Decode(query.ContinuationToken);
+        if (after is not null)
+        {
+            conditions.Add("c.id > @after");
+        }
+
         string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
-        var definition = new QueryDefinition("SELECT * FROM c" + where);
+        var definition = new QueryDefinition("SELECT * FROM c" + where + " ORDER BY c.id");
         if (query.Status is { } s)
         {
             definition = definition.WithParameter("@status", s.ToString());
@@ -313,18 +319,23 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             definition = definition.WithParameter("@workflowId", w);
         }
 
+        if (after is not null)
+        {
+            definition = definition.WithParameter("@after", after);
+        }
+
         var runs = new List<WorkflowRunListing>();
         await foreach (RunDocument document in this.QueryRunsAsync<RunDocument>(definition, cancellationToken).ConfigureAwait(false))
         {
-            if (runs.Count >= query.Limit)
+            runs.Add(new WorkflowRunListing(new WorkflowRunId(document.Id), document.ToIndexEntry()));
+            if (runs.Count > query.Limit)
             {
+                // Fetched one beyond the page — a next page exists; stop early to avoid draining the iterator.
                 break;
             }
-
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(document.Id), document.ToIndexEntry()));
         }
 
-        return new WorkflowRunPage(runs);
+        return WorkflowContinuationToken.Paginate(runs, query.Limit);
     }
 
     /// <inheritdoc/>
