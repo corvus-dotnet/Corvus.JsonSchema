@@ -132,17 +132,29 @@ internal static class ArazzoGenerationDriver
 
     /// <summary>
     /// Builds the document loader the generation pipeline resolves every document through: registered
-    /// (in-memory) documents first, then the local file system (YAML auto-converted), then <c>http(s)</c>.
+    /// (in-memory) documents — by their registration URI, then by their declared <c>$self</c> identity
+    /// (Arazzo §5.5.2) — then the local file system (YAML auto-converted), then <c>http(s)</c>.
     /// </summary>
     private static Func<Uri, byte[]?> BuildDocumentLoader(IReadOnlyList<RegisteredDocument>? registeredDocuments)
     {
         Dictionary<string, byte[]>? registry = null;
+
+        // Identity index (Arazzo §5.5.2): a registered document that declares a top-level absolute $self
+        // also resolves under that $self URI, so an absolute sourceDescriptions[].url is matched by
+        // identity rather than by where the document happens to have been registered.
+        Dictionary<string, byte[]>? bySelf = null;
         if (registeredDocuments is { Count: > 0 })
         {
             registry = new Dictionary<string, byte[]>(StringComparer.Ordinal);
             foreach (RegisteredDocument document in registeredDocuments)
             {
                 registry[document.Uri.AbsoluteUri] = document.Content;
+
+                if (TryReadSelfIdentity(document.Content) is { } self
+                    && Uri.TryCreate(self, UriKind.Absolute, out Uri? selfUri))
+                {
+                    (bySelf ??= new Dictionary<string, byte[]>(StringComparer.Ordinal))[selfUri.AbsoluteUri] = document.Content;
+                }
             }
         }
 
@@ -151,6 +163,11 @@ internal static class ArazzoGenerationDriver
             if (registry is not null && registry.TryGetValue(uri.AbsoluteUri, out byte[]? registered))
             {
                 return registered;
+            }
+
+            if (bySelf is not null && bySelf.TryGetValue(uri.AbsoluteUri, out byte[]? byIdentity))
+            {
+                return byIdentity;
             }
 
             if (uri.IsFile)
@@ -180,6 +197,27 @@ internal static class ArazzoGenerationDriver
 
             return null;
         };
+    }
+
+    /// <summary>
+    /// Reads a document's top-level <c>$self</c> identity (Arazzo §5.5.2; also present on OpenAPI 3.1+),
+    /// or <see langword="null"/> when it declares none or is not parseable JSON.
+    /// </summary>
+    private static string? TryReadSelfIdentity(byte[] content)
+    {
+        try
+        {
+            using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(content);
+            return document.RootElement.ValueKind == JsonValueKind.Object
+                && document.RootElement.TryGetProperty("$self"u8, out JsonElement self)
+                && self.ValueKind == JsonValueKind.String
+                ? self.GetString()
+                : null;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
     }
 
     private static string ToIdentifier(string value)
