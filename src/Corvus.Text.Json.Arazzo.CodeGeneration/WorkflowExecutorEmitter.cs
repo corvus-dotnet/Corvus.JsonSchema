@@ -585,6 +585,17 @@ public static class WorkflowExecutorEmitter
             ? stepIdElement.GetString() : null;
         string? targetWorkflowId = entity.TryGetProperty("workflowId"u8, out JsonElement workflowIdElement) && workflowIdElement.ValueKind == JsonValueKind.String
             ? workflowIdElement.GetString() : null;
+
+        // A cross-document goto/retry target uses the source-qualified runtime expression
+        // $sourceDescriptions.<name>.<workflowId> (§5.5.2); a plain id is same-document.
+        string? targetWorkflowSource = null;
+        if (targetWorkflowId is not null
+            && WorkflowOperationBinder.TryExtractSourceQualifiedId(targetWorkflowId, out string? workflowSource, out string? bareWorkflowId))
+        {
+            targetWorkflowSource = workflowSource;
+            targetWorkflowId = bareWorkflowId;
+        }
+
         double? retryAfter = entity.TryGetProperty("retryAfter"u8, out JsonElement retryAfterElement) && retryAfterElement.ValueKind == JsonValueKind.Number
             ? retryAfterElement.GetDouble() : null;
         int? retryLimit = entity.TryGetProperty("retryLimit"u8, out JsonElement retryLimitElement) && retryLimitElement.ValueKind == JsonValueKind.Number
@@ -592,7 +603,7 @@ public static class WorkflowExecutorEmitter
         List<StepCriterion> criteria = entity.TryGetProperty("criteria"u8, out JsonElement criteriaElement)
             ? ReadCriteriaArray(criteriaElement) : [];
 
-        return new StepActionInfo(nameElement.GetString()!, kind, targetStepId, targetWorkflowId, retryAfter, retryLimit, criteria);
+        return new StepActionInfo(nameElement.GetString()!, kind, targetStepId, targetWorkflowId, retryAfter, retryLimit, criteria, targetWorkflowSource);
     }
 
     /// <summary>
@@ -1146,10 +1157,15 @@ internal enum StepActionKind
 /// <param name="Name">The action name.</param>
 /// <param name="Kind">The effect (end/goto/retry).</param>
 /// <param name="TargetStepId">The goto target step id, if any.</param>
-/// <param name="TargetWorkflowId">The goto/retry target workflow id, if any (sub-workflow — later phase).</param>
+/// <param name="TargetWorkflowId">The goto/retry target workflow id, if any.</param>
 /// <param name="RetryAfter">The retry delay in seconds, if specified.</param>
 /// <param name="RetryLimit">The retry limit, if specified (defaults to a single retry).</param>
 /// <param name="Criteria">The criteria gating this action (an empty set always matches).</param>
+/// <param name="TargetWorkflowSource">
+/// The <c>sourceDescriptions</c> name a cross-document goto/retry target workflow lives in (from the
+/// <c>$sourceDescriptions.&lt;name&gt;.&lt;workflowId&gt;</c> form), or <see langword="null"/> for a
+/// same-document target.
+/// </param>
 internal readonly record struct StepActionInfo(
     string Name,
     StepActionKind Kind,
@@ -1157,7 +1173,8 @@ internal readonly record struct StepActionInfo(
     string? TargetWorkflowId,
     double? RetryAfter,
     int? RetryLimit,
-    IReadOnlyList<StepCriterion> Criteria);
+    IReadOnlyList<StepCriterion> Criteria,
+    string? TargetWorkflowSource = null);
 
 /// <summary>
 /// A fully-bound workflow step (its resolved operation plus everything the emitter reads off the typed
