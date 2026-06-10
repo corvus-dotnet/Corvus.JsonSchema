@@ -45,9 +45,19 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
+        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
+
+    // The interface passes the index by `in`; an async method cannot take an `in` parameter, so SaveAsync
+    // copies it (a small struct) and this private core does the encrypt-then-write.
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(
+        WorkflowRunId id,
+        ReadOnlyMemory<byte> checkpointUtf8,
+        WorkflowRunIndexEntry index,
+        WorkflowEtag expected,
+        CancellationToken cancellationToken)
     {
-        ReadOnlyMemory<byte> protectedCheckpoint = this.protector.Protect(checkpointUtf8.Span, id);
-        return this.inner.SaveAsync(id, protectedCheckpoint, index, expected, cancellationToken);
+        ReadOnlyMemory<byte> protectedCheckpoint = await this.protector.ProtectAsync(checkpointUtf8, id, cancellationToken).ConfigureAwait(false);
+        return await this.inner.SaveAsync(id, protectedCheckpoint, index, expected, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -59,7 +69,7 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
             return null;
         }
 
-        ReadOnlyMemory<byte> plaintext = this.protector.Unprotect(checkpoint.Utf8.Span, id);
+        ReadOnlyMemory<byte> plaintext = await this.protector.UnprotectAsync(checkpoint.Utf8, id, cancellationToken).ConfigureAwait(false);
         return new WorkflowCheckpoint(plaintext, checkpoint.Etag);
     }
 

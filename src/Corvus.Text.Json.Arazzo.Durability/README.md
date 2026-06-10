@@ -59,13 +59,20 @@ await using var store = new ProtectedWorkflowStateStore(
     await CosmosWorkflowStateStore.ConnectAsync(client), protector);
 ```
 
-`AesGcmCheckpointProtector` uses AES-GCM (authenticated) and binds the ciphertext to the run id, so a
-checkpoint cannot be tampered with or moved between runs (decrypt fails closed). Only the checkpoint
-**payload** is encrypted; the projected index fields (status, workflow id, due time, awaiting
-channel/correlation, error type) stay in the clear so the backend can still serve the wait/visibility
-queries — if a correlation id is itself sensitive, index a deterministic hash of it. For managed key
-custody and rotation, source the key from Key Vault/KMS, or implement `ICheckpointProtector` over an
-envelope scheme (a per-checkpoint data key wrapped by a Key Vault key).
+`AesGcmCheckpointProtector` uses AES-GCM (authenticated) under a single symmetric key and binds the ciphertext
+to the run id, so a checkpoint cannot be tampered with or moved between runs (decrypt fails closed). Only the
+checkpoint **payload** is encrypted; the projected index fields (status, workflow id, due time, awaiting
+channel/correlation, error type) stay in the clear so the backend can still serve the wait/visibility queries —
+if a correlation id is itself sensitive, index a deterministic hash of it.
+
+For managed key custody and rotation, use a key-management service via **envelope encryption** — a fresh
+per-checkpoint data key wrapped by a KMS/Key Vault key. `EnvelopeCheckpointProtector` is the base that does the
+AES-GCM and framing; the satellite packages supply the wrap/unwrap:
+
+- `Corvus.Text.Json.Arazzo.Durability.KeyVault` — `KeyVaultCheckpointProtector` (Azure Key Vault).
+- `Corvus.Text.Json.Arazzo.Durability.Kms` — `KmsCheckpointProtector` (AWS KMS).
+
+Implement `EnvelopeCheckpointProtector` (or `ICheckpointProtector`) directly for any other KMS.
 
 ## Related Packages
 
