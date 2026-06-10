@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using Corvus.Text.Json.Arazzo11;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
 
@@ -111,15 +112,92 @@ public sealed class WorkflowOperationBinder
 
     private StepBinding BindOperationId(string operationId)
     {
+        // Per Arazzo §5.5.2, when several source descriptions are present an operationId MUST be
+        // qualified with a runtime expression ($sourceDescriptions.<name>.<operationId>) to avoid
+        // ambiguity; resolve that form against the named source.
+        if (TryExtractSourceQualifiedId(operationId, out string? qualifiedSource, out string? qualifiedId))
+        {
+            if (!this.byName.TryGetValue(qualifiedSource, out SourceDescriptionClient named))
+            {
+                throw new InvalidOperationException(
+                    $"operationId '{operationId}' references source description '{qualifiedSource}', which is not defined.");
+            }
+
+            if (named.Resolver.TryResolveOperationId(qualifiedId, out ResolvedOperation qualifiedOperation))
+            {
+                return new StepBinding(StepTargetKind.OperationId, qualifiedOperation, null);
+            }
+
+            throw new InvalidOperationException(
+                $"operationId '{operationId}' does not resolve to an operation in source '{qualifiedSource}'.");
+        }
+
+        // A plain operationId: search every source. More than one match is genuinely ambiguous — the
+        // spec requires the $sourceDescriptions.<name>.<operationId> form to disambiguate, so fail
+        // rather than bind an arbitrary source's operation.
+        ResolvedOperation? match = null;
+        string? matchedSource = null;
         foreach (SourceDescriptionClient client in this.clients)
         {
             if (client.Resolver.TryResolveOperationId(operationId, out ResolvedOperation operation))
             {
-                return new StepBinding(StepTargetKind.OperationId, operation, null);
+                if (match is not null)
+                {
+                    throw new InvalidOperationException(
+                        $"operationId '{operationId}' is defined by more than one source description "
+                        + $"('{matchedSource}' and '{operation.SourceName}'); qualify it with a runtime "
+                        + $"expression ($sourceDescriptions.<name>.{operationId}) to select one.");
+                }
+
+                match = operation;
+                matchedSource = operation.SourceName;
             }
         }
 
+        if (match is { } resolved)
+        {
+            return new StepBinding(StepTargetKind.OperationId, resolved, null);
+        }
+
         throw new InvalidOperationException($"No source description defines operationId '{operationId}'.");
+    }
+
+    /// <summary>
+    /// Recognises the source-qualified runtime-expression form of an operationId,
+    /// <c>$sourceDescriptions.&lt;name&gt;.&lt;operationId&gt;</c> (optionally wrapped in the
+    /// <c>{…}</c> embedding braces), splitting it into the source name and the bare operationId.
+    /// </summary>
+    private static bool TryExtractSourceQualifiedId(
+        string operationId,
+        [NotNullWhen(true)] out string? sourceName,
+        [NotNullWhen(true)] out string? id)
+    {
+        sourceName = null;
+        id = null;
+
+        ReadOnlySpan<char> span = operationId;
+        if (span.Length >= 2 && span[0] == '{' && span[^1] == '}')
+        {
+            span = span[1..^1];
+        }
+
+        const string marker = "$sourceDescriptions.";
+        if (!span.StartsWith(marker, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        // The operationId itself may contain dots, so split only on the first dot after the source name.
+        ReadOnlySpan<char> rest = span[marker.Length..];
+        int dot = rest.IndexOf('.');
+        if (dot <= 0 || dot == rest.Length - 1)
+        {
+            return false;
+        }
+
+        sourceName = rest[..dot].ToString();
+        id = rest[(dot + 1)..].ToString();
+        return true;
     }
 
     private StepBinding BindOperationPath(string operationPath)
