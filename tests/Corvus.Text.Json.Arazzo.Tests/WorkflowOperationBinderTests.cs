@@ -139,6 +139,87 @@ public class WorkflowOperationBinderTests
             () => binder.Bind(this.OperationIdStep("$sourceDescriptions.missing.listPets")));
     }
 
+    [TestMethod]
+    public void Source_qualified_operation_id_unresolved_in_the_named_source_throws()
+    {
+        WorkflowOperationBinder binder = CreateMultiSourceBinder();
+
+        // billing exists, but defines no 'getPet' — the named-source lookup fails.
+        Should.Throw<InvalidOperationException>(
+            () => binder.Bind(this.OperationIdStep("$sourceDescriptions.billing.getPet")));
+    }
+
+    [TestMethod]
+    public void Brace_wrapped_source_qualified_operation_id_resolves()
+    {
+        WorkflowOperationBinder binder = CreateMultiSourceBinder();
+        StepBinding binding = binder.Bind(this.OperationIdStep("{$sourceDescriptions.billing.chargeCard}"));
+
+        binding.Operation!.Value.SourceName.ShouldBe("billing");
+        binding.Operation!.Value.Operation.RequestTypeName.ShouldBe("Acme.Billing.ChargeCardRequest");
+    }
+
+    [TestMethod]
+    public void Source_qualified_form_without_a_second_dot_is_treated_as_a_plain_operation_id()
+    {
+        WorkflowOperationBinder binder = CreateMultiSourceBinder();
+
+        // No operationId segment after the source name: not the qualified form, so it falls through to a
+        // plain (and here unresolvable) operationId lookup.
+        Should.Throw<InvalidOperationException>(
+            () => binder.Bind(this.OperationIdStep("$sourceDescriptions.billing")));
+    }
+
+    [TestMethod]
+    public void Source_qualified_workflow_id_carries_the_source_onto_the_binding()
+    {
+        WorkflowOperationBinder binder = CreateMultiSourceBinder();
+        StepBinding binding = binder.Bind(this.WorkflowIdStep("$sourceDescriptions.billing.settle"));
+
+        binding.Kind.ShouldBe(StepTargetKind.WorkflowId);
+        binding.SubWorkflowId.ShouldBe("settle");
+        binding.SubWorkflowSource.ShouldBe("billing");
+    }
+
+    [TestMethod]
+    public void Plain_workflow_id_carries_no_source()
+    {
+        WorkflowOperationBinder binder = CreateMultiSourceBinder();
+        StepBinding binding = binder.Bind(this.WorkflowIdStep("settle"));
+
+        binding.Kind.ShouldBe(StepTargetKind.WorkflowId);
+        binding.SubWorkflowId.ShouldBe("settle");
+        binding.SubWorkflowSource.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public void Operation_path_in_a_named_source_that_does_not_resolve_throws()
+    {
+        WorkflowOperationBinder binder = CreateBinder();
+
+        Should.Throw<InvalidOperationException>(
+            () => binder.Bind(this.OperationPathStep("{$sourceDescriptions.petstore.url}#/paths/~1nope/get")));
+    }
+
+    [TestMethod]
+    public void Operation_path_without_a_source_marker_resolves_via_the_fallback_scan()
+    {
+        WorkflowOperationBinder binder = CreateBinder();
+        StepBinding binding = binder.Bind(this.OperationPathStep("#/paths/~1pets~1{petId}/get"));
+
+        binding.Kind.ShouldBe(StepTargetKind.OperationPath);
+        binding.Operation!.Value.Operation.OperationId.ShouldBe("getPet");
+    }
+
+    [TestMethod]
+    public void Operation_path_that_resolves_to_no_source_throws()
+    {
+        WorkflowOperationBinder binder = CreateBinder();
+
+        Should.Throw<InvalidOperationException>(
+            () => binder.Bind(this.OperationPathStep("#/paths/~1nope/get")));
+    }
+
     private static WorkflowOperationBinder CreateBinder()
     {
         OperationDescriptor[] operations =
@@ -206,8 +287,17 @@ public class WorkflowOperationBinderTests
     }
 
     private ArazzoDocument.StepObject OperationIdStep(string operationId)
+        => this.StepWith($"\"operationId\": \"{operationId}\"");
+
+    private ArazzoDocument.StepObject WorkflowIdStep(string workflowId)
+        => this.StepWith($"\"workflowId\": \"{workflowId}\"");
+
+    private ArazzoDocument.StepObject OperationPathStep(string operationPath)
+        => this.StepWith($"\"operationPath\": \"{operationPath.Replace("\"", "\\\"", StringComparison.Ordinal)}\"");
+
+    private ArazzoDocument.StepObject StepWith(string targetProperty)
     {
-        // The binder reads the operationId from the live document, so keep it alive for the test.
+        // The binder reads the target off the live document, so keep it alive for the test.
         string json = $$"""
             {
               "arazzo": "1.0.1",
@@ -217,7 +307,7 @@ public class WorkflowOperationBinderTests
                 { "name": "billing", "url": "./billing.yaml", "type": "openapi" }
               ],
               "workflows": [
-                { "workflowId": "w", "steps": [ { "stepId": "s", "operationId": "{{operationId}}" } ] }
+                { "workflowId": "w", "steps": [ { "stepId": "s", {{targetProperty}} } ] }
               ]
             }
             """;

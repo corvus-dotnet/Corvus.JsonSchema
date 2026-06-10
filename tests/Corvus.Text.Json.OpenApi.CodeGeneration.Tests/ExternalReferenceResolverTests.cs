@@ -891,4 +891,55 @@ public class ExternalReferenceResolverTests
             resolver.TryResolve("#/components/schemas/Pet", out _),
             "After all pops, fragment should resolve against entry doc");
     }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Uri base constructor + virtualized external-document loader
+    // ══════════════════════════════════════════════════════════════════
+    [TestMethod]
+    public void Constructor_NullBaseUri_ThrowsArgumentNullException()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(EntryDoc);
+
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
+            new ExternalReferenceResolver(doc.RootElement, (Uri)null!));
+    }
+
+    [TestMethod]
+    public void UriBase_FragmentOnly_ResolvesInEntryDoc()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(EntryDoc);
+        using ExternalReferenceResolver resolver = new(doc.RootElement, new Uri("https://example.com/api/openapi.json"));
+
+        Assert.IsTrue(resolver.TryResolve("#/components/schemas/Pet", out JsonElement pet));
+        Assert.IsTrue(pet.TryGetProperty("properties"u8, out _));
+    }
+
+    [TestMethod]
+    public void ExternalDocumentLoader_ResolvesRelativeRefAgainstNonFileBase()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(EntryDoc);
+        byte[] externalBytes = Encoding.UTF8.GetBytes(ExternalSchemaDoc);
+
+        // The loader serves the document the relative ref resolves to (an http URI, never fetched).
+        using ExternalReferenceResolver resolver = new(
+            doc.RootElement,
+            new Uri("https://example.com/api/openapi.json"),
+            uri => uri.AbsoluteUri == "https://example.com/api/common.json" ? externalBytes : null);
+
+        Assert.IsTrue(resolver.TryResolve("./common.json#/definitions/Error", out JsonElement error));
+        Assert.IsTrue(error.TryGetProperty("properties"u8, out _));
+
+        // A second resolution of the same doc is served from the owned cache (loader not needed again).
+        Assert.IsTrue(resolver.TryResolve("./common.json#/properties/id", out _));
+    }
+
+    [TestMethod]
+    public void ExternalDocumentLoader_ReturningNull_DoesNotResolve()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(EntryDoc);
+        using ExternalReferenceResolver resolver = new(
+            doc.RootElement, new Uri("https://example.com/api/openapi.json"), _ => null);
+
+        Assert.IsFalse(resolver.TryResolve("./missing.json#/definitions/Error", out _));
+    }
 }
