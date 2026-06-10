@@ -19,7 +19,7 @@ internal static class DiagnosticDescriptors
     private const string Category = "Performance";
     private const string UsageCategory = "Usage";
     private const string ReliabilityCategory = "Reliability";
-    private const string HelpLinkBase = "https://corvus-text-json.dev/docs/analyzers.html";
+    private const string HelpLinkBase = "https://corvus-oss.org/Corvus.JsonSchema/docs/analyzers.html";
 
     /// <summary>
     /// CTJ001: Prefer UTF-8 string literal.

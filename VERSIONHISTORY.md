@@ -1,5 +1,13 @@
 # Version History
 
+## V5.1.15
+
+V5.1.15 fixes the analyzer diagnostic documentation links, which pointed at a non-existent domain.
+
+### Bug fixes
+
+- **Analyzer `helpLinkUri` values now resolve to the live documentation site** — The `HelpLinkUri` for every diagnostic in both analyzer packages pointed at `https://corvus-text-json.dev/docs/...`, a domain that does not exist, so clicking "Show documentation" on a diagnostic (or following the link in build output) reached a dead link. Both packages now point at the real site, `https://corvus-oss.org/Corvus.JsonSchema/docs/...`. For the production analyzers (`CTJ001`–`CTJ010`) the per-diagnostic anchors on `analyzers.html` already matched. For the migration analyzers (`CVJ001`–`CVJ025`) the base page was additionally retargeted from the prose migration guide to the dedicated `migration-analyzers.html`, and every diagnostic now deep-links to its own `#cvjNNN-…` section anchor (previously several fragments such as `#namespace-changes`, `#core-types`, and `#mutation` did not match any anchor on the target page). See [#766](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/766).
+
 ## V5.1.14
 
 V5.1.14 fixes a concurrency bug in OpenAPI 3.2 generated streaming server endpoints.
