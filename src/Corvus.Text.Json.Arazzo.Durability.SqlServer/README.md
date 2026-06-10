@@ -12,12 +12,18 @@ columns; optimistic concurrency maps to a version column and the single-owner le
 (a race-safe `MERGE`).
 
 ```csharp
-await using var store = await SqlServerWorkflowStateStore.CreateAsync("Server=localhost;Database=workflows;User Id=sa;Password=…;TrustServerCertificate=true");
+// Once, at deploy/migration time — with a login permitted to create tables:
+await SqlServerWorkflowStateStore.PrepareAsync("Server=localhost;Database=workflows;User Id=ddl_admin;Password=…;TrustServerCertificate=true");
+
+// At runtime — with a least-privileged operational login; performs no DDL:
+await using var store = await SqlServerWorkflowStateStore.ConnectAsync("Server=localhost;Database=workflows;Authentication=Active Directory Managed Identity");
 // ... use as IWorkflowStateStore / IWorkflowWaitIndex.
 ```
 
-`CreateAsync` runs an idempotent schema (`IF OBJECT_ID(...) IS NULL`). The same driver and wire protocol
-cover **SQL Server, Azure SQL Database and Azure SQL Managed Instance** — just a connection string.
+`PrepareAsync` runs the idempotent schema (`IF OBJECT_ID(...) IS NULL`, provisioning rights); `ConnectAsync`
+performs no DDL, so the running app can use a login granted only data access (or an Entra/managed-identity
+connection string, as above). The same driver and wire protocol cover **SQL Server, Azure SQL Database and
+Azure SQL Managed Instance** — just a connection string.
 
 > The in-memory store (in `Corvus.Text.Json.Arazzo.Durability`) is the reference implementation; this backend
 > runs the same store-conformance suite.

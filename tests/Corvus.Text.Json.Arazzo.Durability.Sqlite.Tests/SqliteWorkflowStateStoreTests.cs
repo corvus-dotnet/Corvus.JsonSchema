@@ -47,13 +47,13 @@ public sealed class SqliteWorkflowStateStoreTests
     public async Task Reopening_a_database_file_preserves_a_checkpoint()
     {
         WorkflowEtag etag;
-        await using (SqliteWorkflowStateStore store = await SqliteWorkflowStateStore.CreateAsync(this.connectionString))
+        await using (SqliteWorkflowStateStore store = await SqliteWorkflowStateStore.ConnectAsync(this.connectionString))
         {
             etag = await store.SaveAsync("p1", Encoding.UTF8.GetBytes("""{"v":42}"""), Index(), WorkflowEtag.None, default);
         }
 
-        // Re-open: CreateAsync re-runs the idempotent schema; the checkpoint and its etag survive.
-        await using (SqliteWorkflowStateStore reopened = await SqliteWorkflowStateStore.CreateAsync(this.connectionString))
+        // Re-open: ConnectAsync re-runs the idempotent schema; the checkpoint and its etag survive.
+        await using (SqliteWorkflowStateStore reopened = await SqliteWorkflowStateStore.ConnectAsync(this.connectionString))
         {
             WorkflowCheckpoint? loaded = await reopened.LoadAsync("p1", default);
             loaded.ShouldNotBeNull();
@@ -65,7 +65,7 @@ public sealed class SqliteWorkflowStateStoreTests
     [TestMethod]
     public async Task Reopening_a_database_file_preserves_the_wait_index()
     {
-        await using (SqliteWorkflowStateStore store = await SqliteWorkflowStateStore.CreateAsync(this.connectionString))
+        await using (SqliteWorkflowStateStore store = await SqliteWorkflowStateStore.ConnectAsync(this.connectionString))
         {
             await store.SaveAsync(
                 "timer",
@@ -75,7 +75,7 @@ public sealed class SqliteWorkflowStateStoreTests
                 default);
         }
 
-        await using (SqliteWorkflowStateStore reopened = await SqliteWorkflowStateStore.CreateAsync(this.connectionString))
+        await using (SqliteWorkflowStateStore reopened = await SqliteWorkflowStateStore.ConnectAsync(this.connectionString))
         {
             var due = new List<WorkflowRunId>();
             await foreach (WorkflowRunId id in reopened.QueryDueAsync(T0 + TimeSpan.FromMinutes(5), default))
