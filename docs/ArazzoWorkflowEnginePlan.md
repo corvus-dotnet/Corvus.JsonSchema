@@ -628,8 +628,30 @@ pure superset that adds the tri-state return + the wait index (§10) + the worke
 > in-memory store, and a `WorkflowWorker` polls it, takes a per-run lease, loads the
 > checkpoint, hands in any delivered message, and re-enters the generated executor
 > through a host-supplied `WorkflowResumer`. End-to-end: a run suspends on a timer or
-> a receive and a worker resumes it to completion. Responders and dynamic/parameterised
-> receive addresses keep the Tier-1 blocking path (no suspension) for now.
+> a receive and a worker resumes it to completion. Responders and fully runtime-computed
+> (dynamic) receive addresses keep the Tier-1 blocking path (no suspension); a
+> *parameterised* receive (a static template with `{param}` placeholders) now suspends
+> on its resolved concrete channel — see the executor-polish note below.
+
+> **Executor polish — implemented.** Four refinements layered on top of Tier 2:
+> - **Determinism (`TimeProvider`).** `ExecuteAsync` takes an optional trailing
+>   `TimeProvider? timeProvider`; retry delays run through
+>   `Task.Delay(…, timeProvider ?? TimeProvider.System, …)`, so a virtual clock drives
+>   `retryAfter` under test (§3.4) while the default keeps the system clock.
+> - **Durable parameterised receive.** A receive on a *parameterised* channel address
+>   resolves the concrete channel once (the same interpolated string the subscription
+>   uses) and suspends on it (`wait={message, <resolved channel>}`); only a fully
+>   runtime-computed (dynamic) address still blocks (§9.4).
+> - **`$workflows.<id>.outputs.*` criteria.** A parent step's criteria can read a
+>   completed sub-workflow's outputs: the sub-workflow case records the child's outputs
+>   in the context's workflow-outputs register so the operand resolves.
+> - **`$url` criteria.** A step's criteria can compare `$url` against the request's
+>   *relative* URL. The executor calls the generated client's convenience method and
+>   never holds the request struct, so it rebuilds the request from the already-resolved
+>   parameter `Source`s and reuses the request type's own
+>   `WriteResolvedPath`/`WriteQueryString` to produce the URL (path + query, escaped as
+>   the transport sends it) — contained in the generated code, with no change to the
+>   OpenAPI runtime. (`$method` was already baked as a compile-time constant.)
 
 ### 9.5 Delivery semantics
 
