@@ -1113,7 +1113,7 @@ public partial class WorkflowExecutorEndToEndTests
                 new WorkflowExecutorOptions("GeneratedWorkflows", "ListenWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
         }
 
-        source.ShouldContain("System.Text.Encoding.UTF8.GetBytes($\"measurements/");
+        source.ShouldContain("$\"measurements/");
 
         Assembly assembly = CompileInMemory(source);
         MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenWorkflow")!.GetMethod("ExecuteAsync")!;

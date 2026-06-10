@@ -84,10 +84,13 @@ internal static class ChannelAddressEmitter
         string prefix,
         IReadOnlyDictionary<string, string> stepOutputLocals,
         string inputsVariable,
-        IReadOnlyDictionary<string, string>? inputAccessors)
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        out string addressText)
     {
         if (descriptor.ChannelParameters.Count == 0)
         {
+            // A static address: the channel text is the literal; the subscription wants its UTF-8 bytes.
+            addressText = EmitText.Quote(descriptor.ChannelAddress);
             return $"{EmitText.Quote(descriptor.ChannelAddress)}u8.ToArray()";
         }
 
@@ -100,9 +103,15 @@ internal static class ChannelAddressEmitter
             locals[name] = local;
         }
 
+        // The resolved address is built once as a string (so the durable wait can persist the concrete
+        // channel a parameterised receive is suspended on) and reused as the subscription's UTF-8 bytes.
+        string addressTextLocal = $"{prefix}AddressText";
         string addressLocal = $"{prefix}Address";
+        statements.Append("string ").Append(addressTextLocal)
+            .Append(" = ").Append(BuildInterpolatedAddress(descriptor.ChannelAddress, locals)).AppendLine(";");
         statements.Append("ReadOnlyMemory<byte> ").Append(addressLocal)
-            .Append(" = System.Text.Encoding.UTF8.GetBytes(").Append(BuildInterpolatedAddress(descriptor.ChannelAddress, locals)).AppendLine(");");
+            .Append(" = System.Text.Encoding.UTF8.GetBytes(").Append(addressTextLocal).AppendLine(");");
+        addressText = addressTextLocal;
         return addressLocal;
     }
 
