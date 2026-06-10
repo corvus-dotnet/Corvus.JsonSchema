@@ -16,131 +16,47 @@ namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
-/// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
+/// <see cref="CreateAsync"/>, which runs the idempotent schema.
 /// </remarks>
-public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
+public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
-    private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
-    private const string RunningStatus = nameof(WorkflowRunStatus.Running);
 
-    private readonly MySqlDataSource dataSource;
-    private readonly bool ownsDataSource;
+    private readonly string connectionString;
     private readonly TimeProvider timeProvider;
 
-    private MySqlWorkflowStateStore(MySqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider)
+    private MySqlWorkflowStateStore(string connectionString, TimeProvider timeProvider)
     {
-        this.dataSource = dataSource;
-        this.ownsDataSource = ownsDataSource;
+        this.connectionString = connectionString;
         this.timeProvider = timeProvider;
     }
 
-    /// <summary>
-    /// Provisions the store's schema (tables and indexes). This performs DDL, so it requires a user
-    /// permitted to create tables; run it once at deploy/migration time, separately from the least-privileged
-    /// user used to <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> the store for operation.
-    /// </summary>
-    /// <param name="connectionString">A MySqlConnector connection string for a user permitted to create tables.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A task that completes once the schema exists (the operation is idempotent).</returns>
-    public static async ValueTask PrepareAsync(string connectionString, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(connectionString);
-
-        await using var connection = new MySqlConnection(connectionString);
-        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        foreach (string statement in SchemaStatements)
-        {
-            await using MySqlCommand schema = connection.CreateCommand();
-            schema.CommandText = statement;
-            await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>Opens the store for operation against an already-provisioned schema.</summary>
-    /// <remarks>
-    /// This performs no DDL, so it is safe to use a least-privileged operational user granted only data
-    /// access on the tables. Call <see cref="PrepareAsync(string, CancellationToken)"/> once beforehand — with an elevated user — to
-    /// create the schema.
-    /// </remarks>
+    /// <summary>Opens a store over the given connection string and ensures its schema exists.</summary>
     /// <param name="connectionString">A MySqlConnector connection string.</param>
     /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened store.</returns>
-    public static ValueTask<MySqlWorkflowStateStore> ConnectAsync(
+    /// <returns>The opened, schema-initialised store.</returns>
+    public static async ValueTask<MySqlWorkflowStateStore> CreateAsync(
         string connectionString,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
-        cancellationToken.ThrowIfCancellationRequested();
 
         // Optimistic-concurrency and lease grants are detected from rows-affected, so the store needs the
         // server's "changed rows" semantics (not the default "found rows"): an ON DUPLICATE KEY UPDATE that
         // changes nothing must report 0 affected.
         var builder = new MySqlConnectionStringBuilder(connectionString) { UseAffectedRows = true };
-        return new ValueTask<MySqlWorkflowStateStore>(
-            new MySqlWorkflowStateStore(new MySqlDataSource(builder.ConnectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System));
-    }
-
-    /// <summary>Provisions the store's schema over a caller-supplied data source.</summary>
-    /// <remarks>
-    /// Supply a data source the caller configured — for example one whose credential provider supplies Entra
-    /// ID/IAM tokens — so provisioning runs under a deliberate credential. The caller retains ownership.
-    /// </remarks>
-    /// <param name="dataSource">A MySqlConnector data source whose user is permitted to create tables.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A task that completes once the schema exists (the operation is idempotent).</returns>
-    public static async ValueTask PrepareAsync(MySqlDataSource dataSource, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        await using MySqlConnection connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var store = new MySqlWorkflowStateStore(builder.ConnectionString, timeProvider ?? TimeProvider.System);
+        await using MySqlConnection connection = await store.OpenAsync(cancellationToken).ConfigureAwait(false);
         foreach (string statement in SchemaStatements)
         {
             await using MySqlCommand schema = connection.CreateCommand();
             schema.CommandText = statement;
             await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
-    }
 
-    /// <summary>Opens the store for operation over a caller-supplied data source (the caller retains ownership).</summary>
-    /// <remarks>
-    /// Supply a data source the caller configured — for example with a least-privileged operational user — so
-    /// the store runs under a least-privileged principal. The data source <strong>must</strong> have
-    /// <c>UseAffectedRows=true</c> (required for correct optimistic-concurrency and lease semantics); this is
-    /// validated. Performs no DDL — call <see cref="PrepareAsync(MySqlDataSource, CancellationToken)"/> first.
-    /// </remarks>
-    /// <param name="dataSource">A MySqlConnector data source configured with <c>UseAffectedRows=true</c>.</param>
-    /// <param name="timeProvider">The time source for lease expiry; defaults to <see cref="TimeProvider.System"/>.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The opened store (it does not dispose the supplied data source).</returns>
-    public static ValueTask<MySqlWorkflowStateStore> ConnectAsync(
-        MySqlDataSource dataSource,
-        TimeProvider? timeProvider = null,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        if (!new MySqlConnectionStringBuilder(dataSource.ConnectionString).UseAffectedRows)
-        {
-            throw new ArgumentException(
-                "The MySqlDataSource must be configured with UseAffectedRows=true for correct optimistic-concurrency and lease semantics.",
-                nameof(dataSource));
-        }
-
-        return new ValueTask<MySqlWorkflowStateStore>(
-            new MySqlWorkflowStateStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System));
-    }
-
-    /// <summary>Disposes the data source if this store created it (from a connection string).</summary>
-    /// <returns>A task that completes when disposal finishes.</returns>
-    public async ValueTask DisposeAsync()
-    {
-        if (this.ownsDataSource)
-        {
-            await this.dataSource.DisposeAsync().ConfigureAwait(false);
-        }
+        return store;
     }
 
     /// <inheritdoc/>
@@ -150,9 +66,9 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
+        => this.SaveCoreAsync(id, checkpointUtf8.ToArray(), index, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         if (expected.IsNone)
@@ -160,8 +76,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             await using MySqlCommand insert = connection.CreateCommand();
             insert.CommandText =
                 """
-                INSERT INTO workflow_runs (run_id, checkpoint, version, status, workflow_id, environment, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags)
-                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @environment, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags)
+                INSERT INTO workflow_runs (run_id, checkpoint, version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type)
+                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type)
                 ON DUPLICATE KEY UPDATE run_id = run_id;
                 """;
             BindRun(insert, id, checkpoint, index);
@@ -171,7 +87,6 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 throw new WorkflowConflictException(id, expected);
             }
 
-            await SyncSecurityTagsAsync(connection, id, index.SecurityTags, cancellationToken).ConfigureAwait(false);
             return new WorkflowEtag("1");
         }
 
@@ -181,9 +96,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             """
             UPDATE workflow_runs
             SET checkpoint = @checkpoint, version = version + 1, status = @status, workflow_id = @workflow_id,
-                environment = @environment, created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
-                awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type,
-                correlation_id = @correlation_id, tags = @tags
+                created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
+                awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type
             WHERE run_id = @id AND version = @expected_version;
             """;
         BindRun(update, id, checkpoint, index);
@@ -194,34 +108,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             throw new WorkflowConflictException(id, expected);
         }
 
-        await SyncSecurityTagsAsync(connection, id, index.SecurityTags, cancellationToken).ConfigureAwait(false);
         return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
-    }
-
-    private static async Task SyncSecurityTagsAsync(MySqlConnection connection, WorkflowRunId id, SecurityTagSet securityTags, CancellationToken cancellationToken)
-    {
-        await using (MySqlCommand delete = connection.CreateCommand())
-        {
-            delete.CommandText = "DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
-            delete.Parameters.AddWithValue("@id", id.Value);
-            await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        if (securityTags.IsEmpty)
-        {
-            return;
-        }
-
-        // Materialize at this write leaf: the ref-struct enumerator cannot cross the per-row await below.
-        foreach (SecurityTag tag in securityTags.ToList())
-        {
-            await using MySqlCommand insert = connection.CreateCommand();
-            insert.CommandText = "INSERT INTO workflow_run_security_tags (run_id, tag_key, tag_value) VALUES (@id, @key, @value);";
-            insert.Parameters.AddWithValue("@id", id.Value);
-            insert.Parameters.AddWithValue("@key", tag.Key);
-            insert.Parameters.AddWithValue("@value", tag.Value);
-            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
     }
 
     /// <inheritdoc/>
@@ -287,7 +174,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand deleteRun = connection.CreateCommand();
-        deleteRun.CommandText = "DELETE FROM workflow_runs WHERE run_id = @id; DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
+        deleteRun.CommandText = "DELETE FROM workflow_runs WHERE run_id = @id;";
         deleteRun.Parameters.AddWithValue("@id", id.Value);
         await deleteRun.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
@@ -305,55 +192,6 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         select.CommandText = "SELECT run_id FROM workflow_runs WHERE status = @status AND due_at IS NOT NULL AND due_at <= @before;";
         select.Parameters.AddWithValue("@status", SuspendedStatus);
         select.Parameters.AddWithValue("@before", before.ToUnixTimeMilliseconds());
-        await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-        {
-            yield return new WorkflowRunId(reader.GetString(0));
-        }
-    }
-
-    /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
-        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
-
-    /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
-        if (hostedWorkflowIds.Count == 0)
-        {
-            yield break;
-        }
-
-        var ids = new List<string>(hostedWorkflowIds);
-        var placeholders = new string[ids.Count];
-        for (int i = 0; i < ids.Count; i++)
-        {
-            placeholders[i] = "@w" + i.ToString(CultureInfo.InvariantCulture);
-        }
-
-        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlCommand select = connection.CreateCommand();
-
-        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
-        // unpinned run (environment IS NULL) or an unscoped dispatcher (@runner_environment IS NULL) matches anything.
-        select.CommandText =
-            $"""
-            SELECT r.run_id FROM workflow_runs r
-            LEFT JOIN workflow_leases l ON l.run_id = r.run_id
-            WHERE r.workflow_id IN ({string.Join(", ", placeholders)})
-              AND (@runner_environment IS NULL OR r.environment IS NULL OR r.environment = @runner_environment)
-              AND (r.status = @pending OR (r.status = @running AND (l.run_id IS NULL OR l.expires_at <= @now)));
-            """;
-        select.Parameters.AddWithValue("@pending", PendingStatus);
-        select.Parameters.AddWithValue("@running", RunningStatus);
-        select.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
-        select.Parameters.AddWithValue("@runner_environment", (object?)runnerEnvironment ?? DBNull.Value);
-        for (int i = 0; i < ids.Count; i++)
-        {
-            select.Parameters.AddWithValue(placeholders[i], ids[i]);
-        }
-
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
@@ -387,82 +225,18 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
-        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
-        if (query.ContinuationToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
-        }
-
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
         select.CommandText =
             """
-            SELECT run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, environment
+            SELECT run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type
             FROM workflow_runs
             WHERE (@status IS NULL OR status = @status) AND (@workflow_id IS NULL OR workflow_id = @workflow_id)
-              AND (@created_after IS NULL OR created_at >= @created_after)
-              AND (@created_before IS NULL OR created_at < @created_before)
-              AND (@updated_after IS NULL OR updated_at >= @updated_after)
-              AND (@updated_before IS NULL OR updated_at < @updated_before)
-              AND (@correlation_id IS NULL OR correlation_id = @correlation_id)
-              {{tagPredicates}}
-              {{securityPredicate}}
-              AND (@after IS NULL OR run_id > @after)
-            ORDER BY run_id
             LIMIT @limit;
             """;
         select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
         select.Parameters.AddWithValue("@workflow_id", (object?)query.WorkflowId ?? DBNull.Value);
-        select.Parameters.AddWithValue("@created_after", (object?)query.CreatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@created_before", (object?)query.CreatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@updated_after", (object?)query.UpdatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@updated_before", (object?)query.UpdatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@correlation_id", (object?)query.CorrelationId ?? DBNull.Value);
-        select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
-        select.Parameters.AddWithValue("@limit", query.Limit + 1);
-
-        if (!query.Tags.IsEmpty)
-        {
-            List<string> tags = query.Tags.ToList();
-            var predicates = new System.Text.StringBuilder();
-            for (int i = 0; i < tags.Count; i++)
-            {
-                string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
-                predicates.Append("AND tags LIKE ").Append(name).Append(" ESCAPE '\\\\'\n              ");
-                select.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
-            }
-
-            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", predicates.ToString().TrimEnd());
-        }
-        else
-        {
-            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
-        }
-
-        // Row-security reach (§14.4): correlated EXISTS over the run's security tags.
-        if (query.Security is { } security)
-        {
-            int securityParam = 0;
-            var emitter = new SqlSecurityRuleEmitter(
-                "workflow_run_security_tags",
-                ["run_id"],
-                "tag_key",
-                "tag_value",
-                "workflow_runs",
-                value =>
-                {
-                    string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
-                    select.Parameters.AddWithValue(name, value);
-                    return name;
-                });
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
-        }
-        else
-        {
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
-        }
+        select.Parameters.AddWithValue("@limit", query.Limit);
 
         var runs = new List<WorkflowRunListing>();
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -476,38 +250,41 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 reader.IsDBNull(5) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(5)),
                 reader.IsDBNull(6) ? null : reader.GetString(6),
                 reader.IsDBNull(7) ? null : reader.GetString(7),
-                reader.IsDBNull(8) ? null : reader.GetString(8),
-                CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
-                Tags: TagSet.FromDelimited(reader.IsDBNull(10) ? null : reader.GetString(10), '\u001F'),
-                Environment: reader.IsDBNull(11) ? null : reader.GetString(11));
+                reader.IsDBNull(8) ? null : reader.GetString(8));
             runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
         }
 
-        return WorkflowContinuationToken.Paginate(runs, query.Limit);
+        return new WorkflowRunPage(runs);
     }
 
-    private static void BindRun(MySqlCommand command, WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, in WorkflowRunIndexEntry index)
+    private static void BindRun(MySqlCommand command, WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index)
     {
         command.Parameters.AddWithValue("@id", id.Value);
         command.Parameters.AddWithValue("@checkpoint", checkpoint);
         command.Parameters.AddWithValue("@status", index.Status.ToString());
         command.Parameters.AddWithValue("@workflow_id", index.WorkflowId);
-        command.Parameters.AddWithValue("@environment", (object?)index.Environment ?? DBNull.Value);
         command.Parameters.AddWithValue("@created_at", index.CreatedAt.ToUnixTimeMilliseconds());
         command.Parameters.AddWithValue("@updated_at", index.UpdatedAt.ToUnixTimeMilliseconds());
         command.Parameters.AddWithValue("@due_at", (object?)index.DueAt?.ToUnixTimeMilliseconds() ?? DBNull.Value);
         command.Parameters.AddWithValue("@awaiting_channel", (object?)index.AwaitingChannel ?? DBNull.Value);
         command.Parameters.AddWithValue("@awaiting_correlation_id", (object?)index.AwaitingCorrelationId ?? DBNull.Value);
         command.Parameters.AddWithValue("@error_type", (object?)index.ErrorType ?? DBNull.Value);
-        command.Parameters.AddWithValue("@correlation_id", (object?)index.CorrelationId ?? DBNull.Value);
-        command.Parameters.AddWithValue("@tags", (object?)index.Tags.ToDelimitedOrNull('\u001F') ?? DBNull.Value);
     }
 
-    private static string EscapeLike(string value)
-        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
-
-    private ValueTask<MySqlConnection> OpenAsync(CancellationToken cancellationToken)
-        => this.dataSource.OpenConnectionAsync(cancellationToken);
+    private async ValueTask<MySqlConnection> OpenAsync(CancellationToken cancellationToken)
+    {
+        var connection = new MySqlConnection(this.connectionString);
+        try
+        {
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            return connection;
+        }
+        catch
+        {
+            await connection.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
 
     private static readonly string[] SchemaStatements =
     [
@@ -518,26 +295,14 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             version BIGINT NOT NULL,
             status VARCHAR(64) NOT NULL,
             workflow_id VARCHAR(255) NOT NULL,
-            environment VARCHAR(255) NULL,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL,
             due_at BIGINT NULL,
             awaiting_channel VARCHAR(255) NULL,
             awaiting_correlation_id VARCHAR(255) NULL,
             error_type VARCHAR(1024) NULL,
-            correlation_id VARCHAR(512) NULL,
-            tags TEXT NULL,
             INDEX ix_workflow_runs_due (status, due_at),
             INDEX ix_workflow_runs_awaiting (status, awaiting_channel, awaiting_correlation_id)
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS workflow_run_security_tags (
-            run_id VARCHAR(255) NOT NULL,
-            tag_key VARCHAR(255) NOT NULL,
-            tag_value VARCHAR(255) NOT NULL,
-            INDEX ix_workflow_run_security_tags_run (run_id),
-            INDEX ix_workflow_run_security_tags_kv (tag_key, tag_value)
         );
         """,
         """
