@@ -158,7 +158,7 @@ internal static class ReceiveChannelStepEmitter
         // The subscription address — a constant for a static channel, or built at runtime from the step's
         // parameters for a parameterised channel.
         string address = ChannelAddressEmitter.EmitReceiveAddress(
-            descriptor, arguments, fields, statements, $"{identifier}_Ch", stepOutputLocals, inputsVariable, inputAccessors);
+            descriptor, arguments, fields, statements, $"{identifier}_Ch", stepOutputLocals, inputsVariable, inputAccessors, out _);
 
         if (isResponder)
         {

@@ -336,6 +336,72 @@ public partial class WorkflowExecutorEndToEndTests
         }
         """;
 
+    private const string DurableReceiveParameterisedDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "listenDurableParam",
+              "steps": [
+                { "stepId": "receive", "channelPath": "measurements/{sensorId}", "action": "receive", "parameters": [ { "name": "sensorId", "value": "$inputs.sensorId" } ] }
+              ],
+              "outputs": { "lumens": "$steps.receive.outputs.lumens" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Durable_executor_suspends_on_a_parameterised_receive_using_the_resolved_channel()
+    {
+        // A parameterised receive now suspends durably on its RESOLVED address (e.g. "measurements/s1"),
+        // so a worker that observes a message on that concrete channel can wake exactly this run.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "measurements/{sensorId}",
+            OperationAction.Receive,
+            "onMeasured",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: ["sensorId"],
+            Messages: [new AsyncApiChannelMessageDescriptor("measured", "Corvus.Text.Json.JsonElement", null, null, null)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(DurableReceiveParameterisedDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ListenDurableParamWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, true));
+        }
+
+        source.ShouldContain("run.SuspendForMessageAsync(");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ListenDurableParamWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var store = new InMemoryWorkflowStateStore();
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+
+        using var workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"sensorId":"s1"}"""));
+        using var run = WorkflowRun.CreateNew(store, "listen-param-1", "listenDurableParam", inputsDocument.RootElement);
+
+        var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;
+        WorkflowRunResult<JsonElement> result = await pending;
+
+        result.IsSuspended.ShouldBeTrue();
+        result.Wait.Kind.ShouldBe(WorkflowWaitKind.Message);
+        result.Wait.Channel.ShouldBe("measurements/s1");
+    }
+
     [TestMethod]
     public void Durable_receive_that_projects_a_message_header_declares_headers_on_the_delivered_path()
     {
