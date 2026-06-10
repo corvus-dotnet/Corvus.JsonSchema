@@ -29,6 +29,13 @@ internal static class ArazzoGenerationDriver
     /// <param name="clientName">The OpenAPI client name prefix, or <see langword="null"/> for the default.</param>
     /// <param name="durable">When <see langword="true"/>, generate durable (checkpoint &amp; resume) executors.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="registeredDocuments">
+    /// Documents the caller has already loaded (the Arazzo document and/or any of its OpenAPI/AsyncAPI
+    /// sources), keyed by the absolute URI they should resolve as. A <c>sourceDescriptions[].url</c> (or
+    /// the Arazzo document itself) that resolves to a registered URI is taken from memory instead of the
+    /// file system — so source documents may come from anywhere. Unregistered references fall back to the
+    /// file system (and <c>http(s)</c>). <see langword="null"/> or empty means file-system loading only.
+    /// </param>
     /// <returns>The absolute paths of all files written.</returns>
     public static async Task<IReadOnlyList<string>> GenerateAsync(
         string arazzoFilePath,
@@ -36,15 +43,16 @@ internal static class ArazzoGenerationDriver
         string outputPath,
         string? clientName,
         bool durable,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyList<RegisteredDocument>? registeredDocuments = null)
     {
-        byte[] arazzoBytes = await File.ReadAllBytesAsync(arazzoFilePath, cancellationToken).ConfigureAwait(false);
-        if (IsYamlFile(arazzoFilePath))
-        {
-            arazzoBytes = YamlToJson(arazzoBytes);
-        }
+        Func<Uri, byte[]?> documentLoader = BuildDocumentLoader(registeredDocuments);
 
-        string arazzoDirectory = Path.GetDirectoryName(Path.GetFullPath(arazzoFilePath))!;
+        // The Arazzo document is itself resolved through the loader (keyed by its retrieval URI), so it too
+        // can be supplied in memory; otherwise the loader reads (and YAML-converts) it from disk.
+        Uri arazzoRetrievalUri = new(Path.GetFullPath(arazzoFilePath));
+        byte[] arazzoBytes = documentLoader(arazzoRetrievalUri)
+            ?? throw new FileNotFoundException($"The Arazzo document '{arazzoFilePath}' could not be loaded.", arazzoFilePath);
 
         // Generate the client/models for each source description and collect its operations (OpenAPI)
         // or channel operations (AsyncAPI).
@@ -53,6 +61,17 @@ internal static class ArazzoGenerationDriver
         using (ParsedJsonDocument<ArazzoDocument> document = ParsedJsonDocument<ArazzoDocument>.Parse(arazzoBytes))
         {
             ArazzoDocument arazzo = document.RootElement;
+
+            // Per Arazzo §5.6, relative source references resolve as URI references (RFC 3986) against the
+            // description's base URI: an absolute $self when present, otherwise the document's retrieval URI.
+            Uri baseUri = arazzoRetrievalUri;
+            if (arazzo.Self.IsNotUndefined()
+                && arazzo.Self.GetString() is { Length: > 0 } self
+                && Uri.TryCreate(self, UriKind.Absolute, out Uri? selfUri))
+            {
+                baseUri = selfUri;
+            }
+
             if (arazzo.SourceDescriptions.IsNotUndefined())
             {
                 foreach (ArazzoDocument.SourceDescriptionObject source in arazzo.SourceDescriptions.EnumerateArray())
@@ -69,7 +88,7 @@ internal static class ArazzoGenerationDriver
 
                     string name = source.Name.GetString()!;
                     string url = source.Url.GetString()!;
-                    string specPath = Path.GetFullPath(Path.Combine(arazzoDirectory, url));
+                    Uri specUri = new(baseUri, url);
                     string sourceSegment = ToIdentifier(name);
                     string sourceNamespace = $"{rootNamespace}.{sourceSegment}";
                     string sourceOutput = Path.Combine(outputPath, sourceSegment);
@@ -77,7 +96,7 @@ internal static class ArazzoGenerationDriver
                     if (sourceType == "openapi")
                     {
                         IReadOnlyList<OpenApi.CodeGeneration.OperationDescriptor> operations = await OpenApiSourceGenerator
-                            .GenerateAsync(specPath, sourceNamespace, sourceOutput, clientName, cancellationToken)
+                            .GenerateAsync(specUri, documentLoader, sourceNamespace, sourceOutput, clientName, cancellationToken)
                             .ConfigureAwait(false);
 
                         clients.Add(new SourceDescriptionClient(name, OperationResolver.Create(name, operations)));
@@ -85,7 +104,7 @@ internal static class ArazzoGenerationDriver
                     else if (sourceType == "asyncapi")
                     {
                         IReadOnlyList<AsyncApiChannelDescriptor> channels = await AsyncApiSourceGenerator
-                            .GenerateAsync(specPath, sourceNamespace, sourceOutput, cancellationToken)
+                            .GenerateAsync(specUri, documentLoader, sourceNamespace, sourceOutput, cancellationToken)
                             .ConfigureAwait(false);
 
                         channelSources.Add(new SourceDescriptionChannels(name, channels));
@@ -109,6 +128,58 @@ internal static class ArazzoGenerationDriver
         }
 
         return written;
+    }
+
+    /// <summary>
+    /// Builds the document loader the generation pipeline resolves every document through: registered
+    /// (in-memory) documents first, then the local file system (YAML auto-converted), then <c>http(s)</c>.
+    /// </summary>
+    private static Func<Uri, byte[]?> BuildDocumentLoader(IReadOnlyList<RegisteredDocument>? registeredDocuments)
+    {
+        Dictionary<string, byte[]>? registry = null;
+        if (registeredDocuments is { Count: > 0 })
+        {
+            registry = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+            foreach (RegisteredDocument document in registeredDocuments)
+            {
+                registry[document.Uri.AbsoluteUri] = document.Content;
+            }
+        }
+
+        return uri =>
+        {
+            if (registry is not null && registry.TryGetValue(uri.AbsoluteUri, out byte[]? registered))
+            {
+                return registered;
+            }
+
+            if (uri.IsFile)
+            {
+                string path = uri.LocalPath;
+                if (!File.Exists(path))
+                {
+                    return null;
+                }
+
+                byte[] fileBytes = File.ReadAllBytes(path);
+                return IsYamlFile(path) ? YamlToJson(fileBytes) : fileBytes;
+            }
+
+            if (uri.Scheme is "http" or "https")
+            {
+                try
+                {
+                    using HttpClient http = new();
+                    return http.GetByteArrayAsync(uri).GetAwaiter().GetResult();
+                }
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException)
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        };
     }
 
     private static string ToIdentifier(string value)
@@ -157,5 +228,18 @@ internal static class ArazzoGenerationDriver
             || ext.Equals(".yml", StringComparison.OrdinalIgnoreCase);
     }
 }
+
+/// <summary>
+/// A document the caller supplies to Arazzo generation in memory, keyed by the absolute URI it should
+/// resolve as — so OpenAPI/AsyncAPI source documents (and the Arazzo document itself) can come from
+/// anywhere (a build artifact store, an embedded resource, a network fetch the caller already made)
+/// rather than the local file system.
+/// </summary>
+/// <param name="Uri">
+/// The absolute URI this document resolves as. It must match the URI a <c>sourceDescriptions[].url</c>
+/// resolves to against the Arazzo description's base URI (or the Arazzo document's own retrieval URI).
+/// </param>
+/// <param name="Content">The document's raw UTF-8 JSON bytes.</param>
+public readonly record struct RegisteredDocument(Uri Uri, byte[] Content);
 
 #endif

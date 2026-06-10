@@ -44,9 +44,61 @@ internal static class OpenApiSourceGenerator
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
         JsonElement specRoot = doc.RootElement;
-        string version = OpenApiCommandHelpers.DetectSpecVersion(specRoot, null);
-
         using ExternalReferenceResolver resolver = new(specRoot, specFilePath);
+
+        return await GenerateCoreAsync(
+            specRoot, resolver, specFilePath, entryUri: null, documentLoader: null, useYaml,
+            rootNamespace, outputPath, clientName, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Generates the client and models for one OpenAPI source description whose document — and any it
+    /// references — are supplied through a virtualized loader rather than read from disk, returning its
+    /// operations. The document the loader returns for <paramref name="specUri"/> is the entry spec.
+    /// </summary>
+    /// <param name="specUri">The absolute URI the OpenAPI spec was retrieved from (its reference-resolution base).</param>
+    /// <param name="documentLoader">Loads a document's raw UTF-8 JSON bytes by absolute URI, or returns <see langword="null"/>.</param>
+    /// <param name="rootNamespace">The root namespace for the generated client/models.</param>
+    /// <param name="outputPath">The directory the client + models are written to (models under <c>Models/</c>).</param>
+    /// <param name="clientName">The client name prefix, or <see langword="null"/> for the default.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operations the spec declares, with generated request/response/client type names.</returns>
+    public static async Task<IReadOnlyList<OperationDescriptor>> GenerateAsync(
+        Uri specUri,
+        Func<Uri, byte[]?> documentLoader,
+        string rootNamespace,
+        string outputPath,
+        string? clientName,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(specUri);
+        ArgumentNullException.ThrowIfNull(documentLoader);
+
+        byte[] specBytes = documentLoader(specUri)
+            ?? throw new FileNotFoundException($"The OpenAPI source document '{specUri}' could not be loaded.");
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
+        JsonElement specRoot = doc.RootElement;
+        using ExternalReferenceResolver resolver = new(specRoot, specUri, documentLoader);
+
+        return await GenerateCoreAsync(
+            specRoot, resolver, specUri.AbsoluteUri, specUri, documentLoader, useYaml: false,
+            rootNamespace, outputPath, clientName, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<IReadOnlyList<OperationDescriptor>> GenerateCoreAsync(
+        JsonElement specRoot,
+        ExternalReferenceResolver resolver,
+        string schemaEntryKey,
+        Uri? entryUri,
+        Func<Uri, byte[]?>? documentLoader,
+        bool useYaml,
+        string rootNamespace,
+        string outputPath,
+        string? clientName,
+        CancellationToken cancellationToken)
+    {
+        string version = OpenApiCommandHelpers.DetectSpecVersion(specRoot, null);
         string modelsPath = Path.Combine(outputPath, "Models");
 
         IReadOnlyList<GeneratedFile> clientFiles;
@@ -55,7 +107,7 @@ internal static class OpenApiSourceGenerator
         if (version is "3.2")
         {
             SchemaReference[] schemaRefs = OpenApi32CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, null, resolver);
-            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(specFilePath, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(schemaEntryKey, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, entryUri, documentLoader, cancellationToken).ConfigureAwait(false);
             OpenApi32CodeGenerator generator = new(rootNamespace, schemaTypeMap, clientName, false);
             clientFiles = generator.Generate(specRoot, null, resolver);
             operations = generator.DescribeOperations(specRoot, null, resolver);
@@ -63,7 +115,7 @@ internal static class OpenApiSourceGenerator
         else if (version is "3.0")
         {
             SchemaReference[] schemaRefs = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, null, resolver);
-            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(specFilePath, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(schemaEntryKey, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, entryUri, documentLoader, cancellationToken).ConfigureAwait(false);
             OpenApi30CodeGenerator generator = new(rootNamespace, schemaTypeMap, clientName, false);
             clientFiles = generator.Generate(specRoot, null, resolver);
             operations = generator.DescribeOperations(specRoot, null, resolver);
@@ -71,7 +123,7 @@ internal static class OpenApiSourceGenerator
         else
         {
             SchemaReference[] schemaRefs = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, null, resolver);
-            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(specFilePath, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, string> schemaTypeMap = await ResolveSchemaTypesAsync(schemaEntryKey, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, entryUri, documentLoader, cancellationToken).ConfigureAwait(false);
             OpenApi31CodeGenerator generator = new(rootNamespace, schemaTypeMap, clientName, false);
             clientFiles = generator.Generate(specRoot, null, resolver);
             operations = generator.DescribeOperations(specRoot, null, resolver);
@@ -94,6 +146,8 @@ internal static class OpenApiSourceGenerator
         SchemaReference[] schemaRefs,
         Dictionary<string, string> parameterNames,
         bool useYaml,
+        Uri? entryUri,
+        Func<Uri, byte[]?>? documentLoader,
         CancellationToken cancellationToken)
     {
         if (schemaRefs.Length == 0)
@@ -102,7 +156,7 @@ internal static class OpenApiSourceGenerator
         }
 
         (Dictionary<string, string> schemaTypeMap, _) = await OpenApiSchemaTypeGeneration.GenerateSchemaTypesAsync(
-            specFilePath, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
+            specFilePath, version, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken, entryUri, documentLoader)
             .ConfigureAwait(false);
         return schemaTypeMap;
     }
