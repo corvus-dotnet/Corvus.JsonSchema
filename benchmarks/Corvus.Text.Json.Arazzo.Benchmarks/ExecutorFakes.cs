@@ -11,9 +11,15 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Benchmarks.Fakes;
 
 /// <summary>A minimal generated-style request (<c>GET /pets/{petId}</c>).</summary>
-public readonly struct BenchRequest(JsonElement petId) : IApiRequest<BenchRequest>
+public readonly struct BenchRequest : IApiRequest<BenchRequest>
 {
-    private readonly JsonElement petId = petId;
+    public BenchRequest(JsonElement petId)
+    {
+        this.PetId = petId;
+    }
+
+    /// <summary>Gets the petId path parameter (mirrors the generator's init-settable request property).</summary>
+    public JsonElement PetId { get; init; }
 
     public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets/{petId}"u8;
 

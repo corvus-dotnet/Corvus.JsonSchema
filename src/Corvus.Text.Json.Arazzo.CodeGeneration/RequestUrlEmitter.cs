@@ -76,15 +76,14 @@ internal static class RequestUrlEmitter
         string requestType = operation.Operation.RequestTypeName;
         string requestLocal = $"{prefix}UrlRequest";
         string bufferLocal = $"{prefix}UrlBuffer";
-        string urlLocal = $"{prefix}Url";
+        string methodLiteral = $"{EmitText.Quote(operation.Operation.Method.ToString().ToUpperInvariant())}u8";
 
+        // Rebuild the request struct from the resolved Sources (default constructor plus init setters),
+        // materialising each into its model type exactly as the generated client does. A static-path,
+        // no-query operation needs no parameters, so a default instance suffices.
         var sb = new StringBuilder();
-        sb.Append("var ").Append(bufferLocal).AppendLine(" = new System.Buffers.ArrayBufferWriter<byte>();");
-
         if (pathAndQuery.Count > 0)
         {
-            // Rebuild the request struct from the resolved Sources (the default constructor plus init
-            // setters), materialising each into its model type exactly as the generated client does.
             sb.Append("var ").Append(requestLocal).Append(" = new ").Append(requestType).Append(" {");
             for (int i = 0; i < pathAndQuery.Count; i++)
             {
@@ -97,7 +96,15 @@ internal static class RequestUrlEmitter
 
             sb.AppendLine("};");
         }
+        else
+        {
+            sb.Append("var ").Append(requestLocal).Append(" = default(").Append(requestType).AppendLine(");");
+        }
 
+        // Write the relative URL into a buffer the context owns and reuses across steps (never a per-step
+        // heap-allocated writer), then store it via the context — so the $url path allocates only the
+        // stored URL bytes, no intermediate writer or managed string.
+        sb.Append("var ").Append(bufferLocal).Append(" = ").Append(contextVariable).AppendLine(".BeginRequestUrl();");
         if (hasPath)
         {
             sb.Append(requestLocal).Append(".WriteResolvedPath(").Append(bufferLocal).AppendLine(");");
@@ -111,19 +118,11 @@ internal static class RequestUrlEmitter
         if (hasQuery)
         {
             string queryLocal = $"{prefix}UrlQuery";
-            sb.Append("var ").Append(queryLocal).AppendLine(" = new System.Buffers.ArrayBufferWriter<byte>();");
+            sb.Append("var ").Append(queryLocal).Append(" = ").Append(contextVariable).AppendLine(".BeginRequestUrlQuery();");
             sb.Append(requestLocal).Append(".WriteQueryString(").Append(queryLocal).AppendLine(");");
-            sb.Append("if (").Append(queryLocal).AppendLine(".WrittenCount > 0)");
-            sb.AppendLine("{");
-            sb.Append("    ").Append(bufferLocal).AppendLine(".Write(\"?\"u8);");
-            sb.Append("    ").Append(bufferLocal).Append(".Write(").Append(queryLocal).AppendLine(".WrittenSpan);");
-            sb.AppendLine("}");
         }
 
-        sb.Append("string ").Append(urlLocal).Append(" = System.Text.Encoding.UTF8.GetString(")
-            .Append(bufferLocal).AppendLine(".WrittenSpan);");
-        sb.Append(contextVariable).Append(".SetRequest(").Append(urlLocal).Append(", ")
-            .Append(EmitText.Quote(operation.Operation.Method.ToString().ToUpperInvariant())).AppendLine(");");
+        sb.Append(contextVariable).Append(".EndRequestUrl(").Append(methodLiteral).AppendLine(");");
 
         return sb.ToString();
     }

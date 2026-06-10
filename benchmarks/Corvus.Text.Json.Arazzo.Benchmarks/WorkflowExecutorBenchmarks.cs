@@ -315,20 +315,48 @@ public class WorkflowExecutorBenchmarks
         }
         """;
 
-    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> execute = null!;
-    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeStatusOnly = null!;
-    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeInterpolation = null!;
-    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeSimpleCriteria = null!;
-    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeJsonPath = null!;
-    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeControlFlow = null!;
-    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeSubWorkflow = null!;
-    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelSend = null!;
-    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelReceive = null!;
-    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeCorrelatedReceive = null!;
-    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeChannelRequestReply = null!;
-    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeResponder = null!;
-    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> executeCompositeReply = null!;
-    private Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, ValueTask<WorkflowRunResult<JsonElement>>> executeDurable = null!;
+    // The step carries a $url success criterion: the executor builds the request, writes its resolved
+    // path, and hands the URL string to the context for the criterion to compare ('/pets/x' is what the
+    // benchmark request writes). This is the one criterion path that allocates per run (the URL string +
+    // the path buffer), so the benchmark documents its cost against the 0 B/op criterion paths.
+    private const string UrlCriteriaDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" }, { "condition": "$url == '/pets/x'" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> execute = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeStatusOnly = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeUrlCriteria = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeInterpolation = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeSimpleCriteria = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeJsonPath = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeControlFlow = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeSubWorkflow = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeChannelSend = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeChannelReceive = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeCorrelatedReceive = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeChannelRequestReply = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeResponder = null!;
+    private Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> executeCompositeReply = null!;
+    private Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, TimeProvider?, ValueTask<WorkflowRunResult<JsonElement>>> executeDurable = null!;
     private InMemoryWorkflowStateStore durableStore = null!;
     private BenchTransport transport = null!;
     private BenchMessageTransport messageTransport = null!;
@@ -345,6 +373,7 @@ public class WorkflowExecutorBenchmarks
     {
         this.execute = Compile(Document, "AdoptWorkflow");
         this.executeStatusOnly = Compile(StatusOnlyDocument, "StatusOnlyWorkflow");
+        this.executeUrlCriteria = Compile(UrlCriteriaDocument, "UrlCriteriaWorkflow");
         this.executeInterpolation = Compile(InterpolationDocument, "InterpolationWorkflow");
         this.executeSimpleCriteria = Compile(SimpleCriteriaDocument, "SimpleCriteriaWorkflow");
         this.executeJsonPath = Compile(JsonPathDocument, "JsonPathWorkflow");
@@ -360,7 +389,7 @@ public class WorkflowExecutorBenchmarks
         Assembly durableAssembly = CompileInMemory(EmitExecutor(Document, "DurableAdoptWorkflow", durable: true));
         this.executeDurable = durableAssembly.GetType("GeneratedWorkflows.DurableAdoptWorkflow")!
             .GetMethod("ExecuteAsync")!
-            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, ValueTask<WorkflowRunResult<JsonElement>>>>();
+            .CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, IWorkflowRun?, CancellationToken, TimeProvider?, ValueTask<WorkflowRunResult<JsonElement>>>>();
         this.durableStore = new InMemoryWorkflowStateStore();
 
         this.transport = new BenchTransport();
@@ -370,11 +399,11 @@ public class WorkflowExecutorBenchmarks
         this.inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42","id":"42"}"""));
         this.inputs = this.inputsDocument.RootElement;
 
-        static Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> Compile(string document, string className)
+        static Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> Compile(string document, string className)
         {
             Assembly assembly = CompileInMemory(EmitExecutor(document, className));
             MethodInfo method = assembly.GetType($"GeneratedWorkflows.{className}")!.GetMethod("ExecuteAsync")!;
-            return method.CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+            return method.CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
         }
     }
 
@@ -392,7 +421,23 @@ public class WorkflowExecutorBenchmarks
     public bool RunWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.execute(this.transport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.execute(this.transport, this.workspace, this.inputs, default, null);
+        JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
+        return result.TryGetProperty("name"u8, out _);
+    }
+
+    /// <summary>
+    /// Runs a workflow whose step carries a <c>$url</c> success criterion: the executor builds the request
+    /// struct, writes its resolved path/query into a buffer, and feeds the resulting URL string to the
+    /// context for the criterion to compare. Unlike the inlined 0 B/op criterion paths, this allocates the
+    /// URL string (and the path buffer) per run — the benchmark documents that cost.
+    /// </summary>
+    /// <returns>Whether the workflow produced the expected output (a sink for the probe).</returns>
+    [Benchmark]
+    public bool RunUrlCriteriaWorkflow()
+    {
+        this.workspace.Reset();
+        ValueTask<JsonElement> pending = this.executeUrlCriteria(this.transport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("name"u8, out _);
     }
@@ -407,7 +452,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunDurableWorkflowNullRun()
     {
         this.workspace.Reset();
-        ValueTask<WorkflowRunResult<JsonElement>> pending = this.executeDurable(this.transport, this.workspace, this.inputs, null, default);
+        ValueTask<WorkflowRunResult<JsonElement>> pending = this.executeDurable(this.transport, this.workspace, this.inputs, null, default, null);
         WorkflowRunResult<JsonElement> result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.IsCompleted;
     }
@@ -423,7 +468,7 @@ public class WorkflowExecutorBenchmarks
         this.workspace.Reset();
         this.durableStore.DeleteAsync("bench", default).GetAwaiter().GetResult();
         using var run = WorkflowRun.CreateNew(this.durableStore, "bench", "adopt", this.inputs);
-        ValueTask<WorkflowRunResult<JsonElement>> pending = this.executeDurable(this.transport, this.workspace, this.inputs, run, default);
+        ValueTask<WorkflowRunResult<JsonElement>> pending = this.executeDurable(this.transport, this.workspace, this.inputs, run, default, null);
         WorkflowRunResult<JsonElement> result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.IsCompleted;
     }
@@ -434,7 +479,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunStatusOnlyWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeStatusOnly(this.transport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeStatusOnly(this.transport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("id"u8, out _);
     }
@@ -445,7 +490,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunInterpolationWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeInterpolation(this.transport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeInterpolation(this.transport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("name"u8, out _);
     }
@@ -456,7 +501,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunSimpleCriteriaWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeSimpleCriteria(this.transport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeSimpleCriteria(this.transport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("name"u8, out _);
     }
@@ -467,7 +512,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunJsonPathWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeJsonPath(this.transport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeJsonPath(this.transport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("name"u8, out _);
     }
@@ -478,7 +523,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunControlFlowWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeControlFlow(this.transport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeControlFlow(this.transport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("name"u8, out _);
     }
@@ -489,7 +534,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunSubWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeSubWorkflow(this.transport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeSubWorkflow(this.transport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("name"u8, out _);
     }
@@ -500,7 +545,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunChannelSendWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeChannelSend(this.transport, this.messageTransport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeChannelSend(this.transport, this.messageTransport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("id"u8, out _);
     }
@@ -511,7 +556,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunChannelReceiveWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeChannelReceive(this.transport, this.messageTransport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeChannelReceive(this.transport, this.messageTransport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("v"u8, out _);
     }
@@ -523,7 +568,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunCorrelatedReceiveWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeCorrelatedReceive(this.transport, this.messageTransport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeCorrelatedReceive(this.transport, this.messageTransport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("v"u8, out _);
     }
@@ -534,7 +579,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunChannelRequestReplyWorkflow()
     {
         this.workspace.Reset();
-        ValueTask<JsonElement> pending = this.executeChannelRequestReply(this.transport, this.messageTransport, this.workspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeChannelRequestReply(this.transport, this.messageTransport, this.workspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("answer"u8, out _);
     }
@@ -545,7 +590,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunResponderWorkflow()
     {
         this.responderWorkspace.Reset();
-        ValueTask<JsonElement> pending = this.executeResponder(this.transport, this.messageTransport, this.responderWorkspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeResponder(this.transport, this.messageTransport, this.responderWorkspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("v"u8, out _);
     }
@@ -556,7 +601,7 @@ public class WorkflowExecutorBenchmarks
     public bool RunCompositeReplyWorkflow()
     {
         this.responderWorkspace.Reset();
-        ValueTask<JsonElement> pending = this.executeCompositeReply(this.transport, this.messageTransport, this.responderWorkspace, this.inputs, default);
+        ValueTask<JsonElement> pending = this.executeCompositeReply(this.transport, this.messageTransport, this.responderWorkspace, this.inputs, default, null);
         JsonElement result = pending.IsCompletedSuccessfully ? pending.Result : pending.AsTask().GetAwaiter().GetResult();
         return result.TryGetProperty("v"u8, out _);
     }
@@ -593,7 +638,7 @@ public class WorkflowExecutorBenchmarks
             Messages: [new AsyncApiChannelMessageDescriptor("bench", "Corvus.Text.Json.JsonElement", null, null, null)],
             ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
 
-    private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileCorrelation()
+    private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> CompileCorrelation()
     {
         const string location = "$message.payload#/correlationId";
         var send = new AsyncApiChannelDescriptor(
@@ -623,10 +668,10 @@ public class WorkflowExecutorBenchmarks
             new WorkflowExecutorOptions("GeneratedWorkflows", "CorrelateWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
         Assembly assembly = CompileInMemory(source);
         MethodInfo method = assembly.GetType("GeneratedWorkflows.CorrelateWorkflow")!.GetMethod("ExecuteAsync")!;
-        return method.CreateDelegate<Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+        return method.CreateDelegate<Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
     }
 
-    private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileChannel(string document, string className, AsyncApiChannelDescriptor descriptor)
+    private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> CompileChannel(string document, string className, AsyncApiChannelDescriptor descriptor)
     {
         var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
         using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
@@ -638,10 +683,10 @@ public class WorkflowExecutorBenchmarks
 
         Assembly assembly = CompileInMemory(source);
         MethodInfo method = assembly.GetType($"GeneratedWorkflows.{className}")!.GetMethod("ExecuteAsync")!;
-        return method.CreateDelegate<Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+        return method.CreateDelegate<Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
     }
 
-    private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileChannelSend()
+    private static Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> CompileChannelSend()
     {
         var descriptor = new AsyncApiChannelDescriptor(
             "bench",
@@ -663,16 +708,16 @@ public class WorkflowExecutorBenchmarks
 
         Assembly assembly = CompileInMemory(source);
         MethodInfo method = assembly.GetType("GeneratedWorkflows.NotifyWorkflow")!.GetMethod("ExecuteAsync")!;
-        return method.CreateDelegate<Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+        return method.CreateDelegate<Func<IApiTransport, IMessageTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
     }
 
-    private static Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>> CompileSubWorkflow()
+    private static Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>> CompileSubWorkflow()
     {
         string parent = EmitWorkflowAt(SubWorkflowDocument, 0, "ParentWorkflow");
         string child = EmitWorkflowAt(SubWorkflowDocument, 1, "ChildWorkflow");
         Assembly assembly = CompileInMemory(parent, child);
         MethodInfo method = assembly.GetType("GeneratedWorkflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!;
-        return method.CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, ValueTask<JsonElement>>>();
+        return method.CreateDelegate<Func<IApiTransport, JsonWorkspace, JsonElement, CancellationToken, TimeProvider?, ValueTask<JsonElement>>>();
     }
 
     private static string EmitExecutor(string document, string className, bool durable = false) => EmitWorkflowAt(document, 0, className, durable);

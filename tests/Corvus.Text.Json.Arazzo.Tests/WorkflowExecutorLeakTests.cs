@@ -58,6 +58,19 @@ public partial class WorkflowExecutorEndToEndTests
     }
 
     [TestMethod]
+    public async Task Url_criterion_executor_does_not_retain_memory_across_runs()
+    {
+        // The $url path rebuilds the request, writes its resolved path into the context's reused
+        // (thread-static) buffer, and stores the URL/method bytes per run — none of which should
+        // accumulate across runs (the buffer is reused, the stored bytes are released with the context).
+        await AssertNoRetainedGrowthAsync(
+            EmitGetPetExecutor(UrlCriterionDocument, "AdoptUrlWorkflow"),
+            "GeneratedWorkflows.AdoptUrlWorkflow",
+            """{"petId":"42"}""",
+            """{"name":"Fido"}""");
+    }
+
+    [TestMethod]
     public async Task Inlined_interpolation_allocates_little_more_than_the_base_path_per_run()
     {
         // The base path binds petId from $inputs.petId; the interpolation path binds "pet-{$inputs.id}".
