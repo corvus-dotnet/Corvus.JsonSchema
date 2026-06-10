@@ -23,18 +23,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// How to resume a run. Only `RetryFaultedStep` is supported today; `Rewind`, `Skip`, and `StatePatch` are reserved.
+/// Re-execute from the last checkpoint — the faulted step. The common case.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct ResumeMode
+public readonly partial struct RetryFaultedStepResume
 #if NET8_0_OR_GREATER
-    : IJsonElement<ResumeMode>,
+    : IJsonElement<RetryFaultedStepResume>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<ResumeMode>,
+    : IJsonElement<RetryFaultedStepResume>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct ResumeMode
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="ResumeMode"/> struct.
+    /// Initializes a new instance of the <see cref="RetryFaultedStepResume"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal ResumeMode(IJsonDocument parent, int idx)
+    internal RetryFaultedStepResume(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,28 +57,153 @@ public readonly partial struct ResumeMode
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static ResumeMode DefaultInstance { get; }
+    public static RetryFaultedStepResume DefaultInstance { get; }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
+    /// <summary>
+    /// Gets the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The value of the property with the given name.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public JsonElement this[ReadOnlySpan<byte> propertyName]
+    {
+        get
+        {
+            CheckValidInstance();
+            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            {
+                return default;
+            }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
+            return value;
+        }
+    }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
+    /// <summary>
+    /// Gets the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The value of the property with the given name.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public JsonElement this[ReadOnlySpan<char> propertyName]
+    {
+        get
+        {
+            CheckValidInstance();
+            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            {
+                return default;
+            }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Gets the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The value of the property with the given name.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public JsonElement this[string propertyName]
+    {
+        get
+        {
+            CheckValidInstance();
+            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            {
+                return default;
+            }
+
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Tries to get the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The value of the property, if present.</param>
+    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement value)
+    {
+        CheckValidInstance();
+        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
+    /// Tries to get the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The value of the property, if present.</param>
+    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement value)
+    {
+        CheckValidInstance();
+        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
+    /// Tries to get the value of the property with the given name.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The value of the property, if present.</param>
+    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(string propertyName, out JsonElement value)
+    {
+        CheckValidInstance();
+        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
+    /// Gets the <c>mode</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.ModeEntity Mode
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.ModeEntity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the number of properties in the object.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public int GetPropertyCount()
+    {
+        CheckValidInstance();
+        return _parent.GetPropertyCount(_idx);
+    }
+
+    /// <summary>
+    /// Enumerates the object.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public ObjectEnumerator<JsonElement> EnumerateObject()
+    {
+        CheckValidInstance();
+        return EnumeratorCreator.CreateObjectEnumerator<JsonElement>(_parent, _idx);
+    }
 
     /// <inheritdoc/>
     public JsonValueKind ValueKind => TokenType.ToValueKind();
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator string(ResumeMode value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
     /// <summary>
     /// Operator ==.
@@ -88,7 +213,7 @@ public readonly partial struct ResumeMode
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in ResumeMode left, in ResumeMode right)
+    public static bool operator ==(in RetryFaultedStepResume left, in RetryFaultedStepResume right)
     {
         return left.Equals(right);
     }
@@ -101,7 +226,7 @@ public readonly partial struct ResumeMode
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in ResumeMode left, in ResumeMode right)
+    public static bool operator !=(in RetryFaultedStepResume left, in RetryFaultedStepResume right)
     {
         return !left.Equals(right);
     }
@@ -114,7 +239,7 @@ public readonly partial struct ResumeMode
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in ResumeMode left, in JsonElement right)
+    public static bool operator ==(in RetryFaultedStepResume left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -127,7 +252,7 @@ public readonly partial struct ResumeMode
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in ResumeMode left, in JsonElement right)
+    public static bool operator !=(in RetryFaultedStepResume left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -138,7 +263,7 @@ public readonly partial struct ResumeMode
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(ResumeMode instance)
+    public static implicit operator JsonElement(RetryFaultedStepResume instance)
     {
         return JsonElement.From(instance);
     }
@@ -149,9 +274,9 @@ public readonly partial struct ResumeMode
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator ResumeMode(JsonElement instance)
+    public static implicit operator RetryFaultedStepResume(JsonElement instance)
     {
-        return ResumeMode.From(instance);
+        return RetryFaultedStepResume.From(instance);
     }
 
     /// <summary>
@@ -160,7 +285,7 @@ public readonly partial struct ResumeMode
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ResumeMode From<T>(in T instance)
+    public static RetryFaultedStepResume From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -185,10 +310,10 @@ public readonly partial struct ResumeMode
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ResumeMode ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static RetryFaultedStepResume ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<ResumeMode>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<RetryFaultedStepResume>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -211,10 +336,10 @@ public readonly partial struct ResumeMode
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ResumeMode ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static RetryFaultedStepResume ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<ResumeMode>(json, options);
+        return JsonElementHelpers.ParseValue<RetryFaultedStepResume>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -237,10 +362,10 @@ public readonly partial struct ResumeMode
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ResumeMode ParseValue(string json, JsonDocumentOptions options = default)
+    public static RetryFaultedStepResume ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<ResumeMode>(json, options);
+        return JsonElementHelpers.ParseValue<RetryFaultedStepResume>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -280,10 +405,10 @@ public readonly partial struct ResumeMode
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static ResumeMode ParseValue(ref Utf8JsonReader reader)
+    public static RetryFaultedStepResume ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<ResumeMode>(ref reader);
+        return JsonElementHelpers.ParseValue<RetryFaultedStepResume>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -325,16 +450,16 @@ public readonly partial struct ResumeMode
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out ResumeMode? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out RetryFaultedStepResume? result)
     {
-        return JsonElementHelpers.TryParseValue<ResumeMode>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<RetryFaultedStepResume>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new ResumeMode(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new RetryFaultedStepResume(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -347,57 +472,6 @@ public readonly partial struct ResumeMode
         where T : struct, IJsonElement
     {
         return JsonElementHelpers.DeepEquals(this, other);
-    }
-
-    /// <summary>
-    /// Compare with a UTF-8 string.
-    /// </summary>
-    /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
-    /// <returns><see langword="true"/> if the values are equal.</returns>
-    public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
-    {
-        CheckValidInstance();
-
-        if (TokenType != JsonTokenType.String)
-        {
-            return false;
-        }
-
-        return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
-    }
-
-    /// <summary>
-    /// Compare with a string.
-    /// </summary>
-    /// <param ref="utf8Text">The text to compare with.</param>
-    /// <returns><see langword="true"/> if the values are equal.</returns>
-    public bool ValueEquals(ReadOnlySpan<char> text)
-    {
-        CheckValidInstance();
-
-        if (TokenType != JsonTokenType.String)
-        {
-            return false;
-        }
-
-        return _parent.TextEquals(_idx, text, isPropertyName: false);
-    }
-
-    /// <summary>
-    /// Compare with a string.
-    /// </summary>
-    /// <param ref="utf8Text">The text to compare with.</param>
-    /// <returns><see langword="true"/> if the values are equal.</returns>
-    public bool ValueEquals(string text)
-    {
-        CheckValidInstance();
-
-        if (TokenType != JsonTokenType.String)
-        {
-            return false;
-        }
-
-        return _parent.TextEquals(_idx, text, isPropertyName: false);
     }
 
     /// <inheritdoc/>
@@ -475,11 +549,11 @@ public readonly partial struct ResumeMode
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static ResumeMode IJsonElement<ResumeMode>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static RetryFaultedStepResume IJsonElement<RetryFaultedStepResume>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"ResumeMode: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"RetryFaultedStepResume: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -494,11 +568,11 @@ public readonly partial struct ResumeMode
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="ResumeMode"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="RetryFaultedStepResume"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="ResumeMode"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="RetryFaultedStepResume"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -507,10 +581,10 @@ public readonly partial struct ResumeMode
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public ResumeMode Clone()
+    public RetryFaultedStepResume Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<ResumeMode>(_idx);
+        return _parent.CloneElement<RetryFaultedStepResume>(_idx);
     }
 
     /// <summary>
@@ -518,7 +592,7 @@ public readonly partial struct ResumeMode
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="ResumeMode"/> that lives for the lifetime of its
+    /// An immutable <see cref="RetryFaultedStepResume"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -532,14 +606,53 @@ public readonly partial struct ResumeMode
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public ResumeMode Freeze()
+    public RetryFaultedStepResume Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<ResumeMode>(_idx);
+            return mutable.FreezeElement<RetryFaultedStepResume>(_idx);
         }
 
         return this;
+    }
+
+    /// <summary>
+    /// Provides UTF8 and string versions of the JSON property names on the object.
+    /// </summary>
+    public static class JsonPropertyNames
+    {
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Mode"/>.
+        /// </summary>
+        public const string Mode = "mode";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Mode"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ModeUtf8 => "mode"u8;
+    }
+
+    /// <summary>
+    /// Provides escaped UTF-8 versions of the JSON property names on the object.
+    /// </summary>
+    private static class JsonPropertyNamesEscaped
+    {
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Mode"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Mode => "mode"u8;
+    }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Mode"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Mode => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x64, 0x65, 0x22];
     }
 }

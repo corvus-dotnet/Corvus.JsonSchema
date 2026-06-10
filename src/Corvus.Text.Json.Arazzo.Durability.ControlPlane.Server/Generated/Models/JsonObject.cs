@@ -21,20 +21,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// How to resume a faulted run — a union on `mode`. Each form carries only the fields its mode needs; the `const` mode discriminates the variant.
-/// </para>
-/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct ResumeRequest
+public readonly partial struct JsonObject
 #if NET8_0_OR_GREATER
-    : IJsonElement<ResumeRequest>,
+    : IJsonElement<JsonObject>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<ResumeRequest>,
+    : IJsonElement<JsonObject>,
       IFormattable
 #endif
 {
@@ -44,10 +39,10 @@ public readonly partial struct ResumeRequest
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="ResumeRequest"/> struct.
+    /// Initializes a new instance of the <see cref="JsonObject"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal ResumeRequest(IJsonDocument parent, int idx)
+    internal JsonObject(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,7 +52,7 @@ public readonly partial struct ResumeRequest
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static ResumeRequest DefaultInstance { get; }
+    public static JsonObject DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -185,114 +180,6 @@ public readonly partial struct ResumeRequest
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
     /// <summary>
-    /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume(ResumeRequest value)
-    {
-        return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.From(value);
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion from the <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/> mutable view.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.Mutable value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume(ResumeRequest value)
-    {
-        return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.From(value);
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion from the <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/> mutable view.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.Mutable value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume(ResumeRequest value)
-    {
-        return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.From(value);
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion from the <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/> mutable view.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Mutable value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static explicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume(ResumeRequest value)
-    {
-        return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.From(value);
-    }
-
-    /// <summary>
-    /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
-    /// Conversion from the <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/> mutable view.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ResumeRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.Mutable value)
-    {
-        return From(value);
-    }
-
-    /// <summary>
     /// Operator ==.
     /// </summary>
     /// <param name="left">The lhs of the operator.</param>
@@ -300,7 +187,7 @@ public readonly partial struct ResumeRequest
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in ResumeRequest left, in ResumeRequest right)
+    public static bool operator ==(in JsonObject left, in JsonObject right)
     {
         return left.Equals(right);
     }
@@ -313,7 +200,7 @@ public readonly partial struct ResumeRequest
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in ResumeRequest left, in ResumeRequest right)
+    public static bool operator !=(in JsonObject left, in JsonObject right)
     {
         return !left.Equals(right);
     }
@@ -326,7 +213,7 @@ public readonly partial struct ResumeRequest
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in ResumeRequest left, in JsonElement right)
+    public static bool operator ==(in JsonObject left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -339,7 +226,7 @@ public readonly partial struct ResumeRequest
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in ResumeRequest left, in JsonElement right)
+    public static bool operator !=(in JsonObject left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -350,7 +237,7 @@ public readonly partial struct ResumeRequest
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(ResumeRequest instance)
+    public static implicit operator JsonElement(JsonObject instance)
     {
         return JsonElement.From(instance);
     }
@@ -361,9 +248,9 @@ public readonly partial struct ResumeRequest
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator ResumeRequest(JsonElement instance)
+    public static implicit operator JsonObject(JsonElement instance)
     {
-        return ResumeRequest.From(instance);
+        return JsonObject.From(instance);
     }
 
     /// <summary>
@@ -372,7 +259,7 @@ public readonly partial struct ResumeRequest
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ResumeRequest From<T>(in T instance)
+    public static JsonObject From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -397,10 +284,10 @@ public readonly partial struct ResumeRequest
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ResumeRequest ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static JsonObject ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<ResumeRequest>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<JsonObject>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -423,10 +310,10 @@ public readonly partial struct ResumeRequest
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ResumeRequest ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static JsonObject ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<ResumeRequest>(json, options);
+        return JsonElementHelpers.ParseValue<JsonObject>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -449,10 +336,10 @@ public readonly partial struct ResumeRequest
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ResumeRequest ParseValue(string json, JsonDocumentOptions options = default)
+    public static JsonObject ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<ResumeRequest>(json, options);
+        return JsonElementHelpers.ParseValue<JsonObject>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -492,10 +379,10 @@ public readonly partial struct ResumeRequest
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static ResumeRequest ParseValue(ref Utf8JsonReader reader)
+    public static JsonObject ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<ResumeRequest>(ref reader);
+        return JsonElementHelpers.ParseValue<JsonObject>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -537,16 +424,16 @@ public readonly partial struct ResumeRequest
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out ResumeRequest? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out JsonObject? result)
     {
-        return JsonElementHelpers.TryParseValue<ResumeRequest>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<JsonObject>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new ResumeRequest(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new JsonObject(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -636,11 +523,11 @@ public readonly partial struct ResumeRequest
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static ResumeRequest IJsonElement<ResumeRequest>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static JsonObject IJsonElement<JsonObject>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"ResumeRequest: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"JsonObject: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -655,11 +542,11 @@ public readonly partial struct ResumeRequest
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="ResumeRequest"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="JsonObject"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="ResumeRequest"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="JsonObject"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -668,10 +555,10 @@ public readonly partial struct ResumeRequest
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public ResumeRequest Clone()
+    public JsonObject Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<ResumeRequest>(_idx);
+        return _parent.CloneElement<JsonObject>(_idx);
     }
 
     /// <summary>
@@ -679,7 +566,7 @@ public readonly partial struct ResumeRequest
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="ResumeRequest"/> that lives for the lifetime of its
+    /// An immutable <see cref="JsonObject"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -693,168 +580,14 @@ public readonly partial struct ResumeRequest
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public ResumeRequest Freeze()
+    public JsonObject Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<ResumeRequest>(_idx);
+            return mutable.FreezeElement<JsonObject>(_idx);
         }
 
         return this;
-    }
-
-    /// <summary>
-    /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume" />.
-    /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsRetryFaultedStepResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume result)
-    {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.From(this);
-            return true;
-        }
-
-        result = default;
-        return false;
-    }
-
-    /// <summary>
-    /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume" />.
-    /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsRewindResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume result)
-    {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.From(this);
-            return true;
-        }
-
-        result = default;
-        return false;
-    }
-
-    /// <summary>
-    /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume" />.
-    /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsSkipResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume result)
-    {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.From(this);
-            return true;
-        }
-
-        result = default;
-        return false;
-    }
-
-    /// <summary>
-    /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume" />.
-    /// </summary>
-    /// <param name="result">The result of the conversions.</param>
-    /// <returns><see langword="true" /> if the conversion was valid.</returns>
-    public bool TryGetAsStatePatchResume(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume result)
-    {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.From(this);
-            return true;
-        }
-
-        result = default;
-        return false;
-    }
-
-    /// <summary>
-    /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the immutable context to pass in to the match function.</typeparam>
-    /// <typeparam name="TResult">The result of calling the match function.</typeparam>
-    /// <param name="context">The context to pass to the match function.</param>
-    /// <param name="matchRetryFaultedStepResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.</param>
-    /// <param name="matchRewindResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.</param>
-    /// <param name="matchSkipResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.</param>
-    /// <param name="matchStatePatchResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.</param>
-    /// <param name="defaultMatch">Match any other value.</param>
-    /// <returns>An instance of the value returned by the match function.</returns>
-    public TResult Match<TContext, TResult>(
-        in TContext context,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume, TContext, TResult> matchRetryFaultedStepResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume, TContext, TResult> matchRewindResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume, TContext, TResult> matchSkipResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume, TContext, TResult> matchStatePatchResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest, TContext, TResult> defaultMatch)
-#if NET9_0_OR_GREATER
-    where TContext : allows ref struct
-#endif
-    {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchRetryFaultedStepResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.From(this), context);
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchRewindResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.From(this), context);
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchSkipResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.From(this), context);
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchStatePatchResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.From(this), context);
-        }
-
-        return defaultMatch(this, context);
-    }
-
-    /// <summary>
-    /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
-    /// </summary>
-    /// <typeparam name="TResult">The result of calling the match function.</typeparam>
-    /// <param name="matchRetryFaultedStepResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume"/>.</param>
-    /// <param name="matchRewindResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume"/>.</param>
-    /// <param name="matchSkipResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume"/>.</param>
-    /// <param name="matchStatePatchResume">Match a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume"/>.</param>
-    /// <param name="defaultMatch">Match any other value.</param>
-    /// <returns>An instance of the value returned by the match function.</returns>
-    public TResult Match<TResult>(
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume, TResult> matchRetryFaultedStepResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume, TResult> matchRewindResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume, TResult> matchSkipResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume, TResult> matchStatePatchResume,
-        Matcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest, TResult> defaultMatch)
-    {
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchRetryFaultedStepResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.From(this));
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchRewindResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RewindResume.From(this));
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchSkipResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.From(this));
-        }
-
-        if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.JsonSchema.Evaluate(_parent, _idx))
-        {
-            return matchStatePatchResume(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.StatePatchResume.From(this));
-        }
-
-        return defaultMatch(this);
     }
 }

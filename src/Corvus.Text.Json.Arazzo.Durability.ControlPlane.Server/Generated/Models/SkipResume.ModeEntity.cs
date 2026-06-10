@@ -24,24 +24,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// How to resume a faulted run.
+/// Advance the cursor past the faulted step, optionally recording operator-supplied outputs for it.
 /// </para>
 /// </remarks>
-public readonly partial struct ResumeRequest
+public readonly partial struct SkipResume
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Examples:
-    /// <example>
-    /// <code>
-    /// &quot;RetryFaultedStep&quot;
-    /// </code>
-    /// </example>
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct ModeEntity
 #if NET8_0_OR_GREATER
@@ -73,7 +63,12 @@ public readonly partial struct ResumeRequest
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static ModeEntity DefaultInstance { get; } = ParsedJsonDocument<ModeEntity>.StringConstant([.."\"RetryFaultedStep\""u8]);
+        public static ModeEntity DefaultInstance { get; }
+
+        /// <summary>
+        /// Gets the const instance.
+        /// </summary>
+        public static ModeEntity ConstInstance => Constants.ConstJson;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
@@ -92,24 +87,6 @@ public readonly partial struct ResumeRequest
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
-
-        /// <summary>
-        /// Conversion to <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode(ModeEntity value)
-        {
-            return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.From(value);
-        }
-
-        /// <summary>
-        /// Conversion from <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static explicit operator ModeEntity(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode value)
-        {
-            return From(value);
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator string(ModeEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
@@ -575,23 +552,6 @@ public readonly partial struct ResumeRequest
             }
 
             return this;
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode" />.
-        /// </summary>
-        /// <param name="result">The result of the conversions.</param>
-        /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsResumeMode(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode result)
-        {
-            if (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.JsonSchema.Evaluate(_parent, _idx))
-            {
-                result = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeMode.From(this);
-                return true;
-            }
-
-            result = default;
-            return false;
         }
     }
 }

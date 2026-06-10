@@ -23,61 +23,29 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// How to resume a run. Only `RetryFaultedStep` is supported today; `Rewind`, `Skip`, and `StatePatch` are reserved.
+/// The cursor to rewind to.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct ResumeMode
-    : IJsonElement<ResumeMode>
+public readonly partial struct JsonInt32
+    : IJsonElement<JsonInt32>
 {
-    /// <summary>
-    /// Provides accesors for enumerated values
-    /// </summary>
-    private static class Constants
-    {
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly byte[] Enum = "RetryFaultedStep"u8.ToArray();
-        /// <summary>
-        /// A constant for the <c>enum</c> keyword.
-        /// </summary>
-        public static readonly ResumeMode EnumJson = ParsedJsonDocument<ResumeMode>.StringConstant([.."\"RetryFaultedStep\""u8]);
-    }
-
-    /// <summary>
-    /// Provides named constants for enum values.
-    /// </summary>
-    public static class EnumValues
-    {
-        /// <summary>
-        /// Gets the string "RetryFaultedStep"
-        /// as a <see cref="ResumeMode"/>.
-        /// </summary>
-        public static ResumeMode RetryFaultedStep { get; } = Constants.EnumJson;
-        /// <summary>
-        /// Gets the string "RetryFaultedStep"
-        /// as a UTF8 byte array.
-        /// </summary>
-        public static ReadOnlySpan<byte> RetryFaultedStepUtf8 => Constants.Enum;
-    }
-
     public static partial class JsonSchema
     {
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/ResumeMode"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider? SchemaLocationProvider = null;
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/components/schemas/ResumeMode";
+        public const string SchemaLocation = "";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/ResumeMode"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -98,35 +66,20 @@ public readonly partial struct ResumeMode
                 JsonTokenType.EndObject or
                 JsonTokenType.EndArray));
 
-            if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
+            ReadOnlyMemory<byte> rawSimpleValue = tokenType is JsonTokenType.Number or JsonTokenType.String ? parentDocument.GetRawSimpleValue(parentIndex) : default;
+
+            JsonElementHelpers.TryParseNumber(rawSimpleValue.Span, out bool isNegative,out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
+            if (!JsonSchemaEvaluation.MatchTypeInteger(tokenType,"type"u8, exponent, ref context))
             {
                 if (!context.HasCollector)
                 {
                     return;
                 }
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeInteger, "format"u8);
             }
             else
             {
-                using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
-
-                if (unescapedUtf8JsonString.Span.SequenceEqual("RetryFaultedStep"u8))
-                {
-                    goto enumShortCircuitSuccess;
-                }
-
-                context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
-
-                if (!context.HasCollector)
-                {
-                    return;
-                }
-
-                goto enumAfterFailure;
-
-enumShortCircuitSuccess:
-                context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
-
-enumAfterFailure:;
+                JsonSchemaEvaluation.MatchInt32(isNegative, integral, fractional, exponent, "format"u8, ref context);
             }
         }
 
