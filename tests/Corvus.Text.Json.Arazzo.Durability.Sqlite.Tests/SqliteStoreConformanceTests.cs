@@ -17,5 +17,5 @@ namespace Corvus.Text.Json.Arazzo.Durability.Sqlite.Tests;
 public sealed class SqliteStoreConformanceTests : WorkflowStateStoreConformance
 {
     protected override async ValueTask<IWorkflowStateStore> CreateStoreAsync(TimeProvider timeProvider)
-        => await SqliteWorkflowStateStore.ConnectAsync("Data Source=:memory:", timeProvider);
+        => await SqliteWorkflowStateStore.CreateAsync("Data Source=:memory:", timeProvider);
 }

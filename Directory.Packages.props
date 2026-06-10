@@ -3,11 +3,6 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <!-- OAuth2/OIDC client for the control-plane CLI's interactive login -->
-    <PackageVersion Include="Duende.IdentityModel.OidcClient" Version="7.1.0" />
-    <!-- External directory adapters (IPrincipalDirectory, design §16.5.4): pure-managed cross-platform LDAP -->
-    <PackageVersion Include="Novell.Directory.Ldap.NETStandard" Version="4.0.0" />
-    <PackageVersion Include="Testcontainers.Keycloak" Version="4.12.0" />
     <!-- Build & analysis tooling -->
     <PackageVersion Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" />
     <PackageVersion Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114" />
@@ -30,25 +25,8 @@
     <PackageVersion Include="IndexRange" Version="1.1.1" />
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
-    <PackageVersion Include="AWSSDK.KeyManagementService" Version="4.0.12.3" />
-    <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.5.5" />
-    <PackageVersion Include="Azure.Data.Tables" Version="12.11.0" />
-    <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.10.0" />
-    <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.29.0" />
-    <PackageVersion Include="VaultSharp" Version="1.17.5.1" />
-    <PackageVersion Include="Microsoft.Azure.Cosmos" Version="3.61.0" />
     <PackageVersion Include="Microsoft.Bcl.Memory" Version="10.0.7" />
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.1" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.7" />
-    <!-- Direct-referenced by the Sqlite store to bump the SQLitePCLRaw family past the native-binary advisory NU1903 /
-         GHSA-2m69-gcr7-jv3q on lib.e_sqlite3 2.1.11 (which Microsoft.Data.Sqlite 10.0.7 otherwise pulls transitively).
-         bundle 3.0.3 carries the patched native binary lib.e_sqlite3 3.50.3 and flows to every store consumer. -->
-    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
-    <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
-    <PackageVersion Include="MySqlConnector" Version="2.6.0" />
-    <PackageVersion Include="Npgsql" Version="10.0.3" />
-    <PackageVersion Include="StackExchange.Redis" Version="2.13.17" />
     <PackageVersion Include="PolySharp" Version="1.15.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Collections.Immutable" Version="10.0.7" />
@@ -106,17 +84,9 @@
     <PackageVersion Include="MSTest.TestFramework" Version="4.2.2" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="Testcontainers" Version="4.12.0" />
-    <PackageVersion Include="Testcontainers.Azurite" Version="4.12.0" />
-    <PackageVersion Include="Testcontainers.CosmosDb" Version="4.12.0" />
     <PackageVersion Include="Testcontainers.Kafka" Version="4.12.0" />
-    <PackageVersion Include="Testcontainers.LocalStack" Version="4.12.0" />
-    <PackageVersion Include="Testcontainers.MongoDb" Version="4.12.0" />
-    <PackageVersion Include="Testcontainers.MsSql" Version="4.12.0" />
-    <PackageVersion Include="Testcontainers.MySql" Version="4.12.0" />
     <PackageVersion Include="Testcontainers.Nats" Version="4.12.0" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.12.0" />
     <PackageVersion Include="Testcontainers.RabbitMq" Version="4.12.0" />
-    <PackageVersion Include="Testcontainers.Redis" Version="4.12.0" />
     <PackageVersion Include="azurepipelines.testlogger" Version="1.2.3" />
     <!-- Benchmark tooling -->
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
@@ -138,17 +108,5 @@
     <!-- Azure Identity (example recipes only) -->
     <PackageVersion Include="Azure.Identity" Version="1.13.2" />
     <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
-    <!-- .NET Aspire composition + OpenTelemetry (arazzo demo AppHost + ServiceDefaults; versions track aspire CLI 13.4.4).
-         Aspire.Hosting.AppHost is *not* listed here: the Aspire.AppHost.Sdk injects it already-versioned, and CPM
-         forbids a PackageVersion for an implicitly-versioned reference (NU1009). -->
-    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.4.5-preview.1.26316.12" />
-    <PackageVersion Include="Aspire.Keycloak.Authentication" Version="13.4.5-preview.1.26316.12" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
   </ItemGroup>
 </Project>
